@@ -708,8 +708,10 @@ void main() {
     final g = dynasty(6)..setKing(0);
     g.flags.add('karsk_paid');
     var tribute = 0;
+    g.flags.add('seen:An Envoy from Karsk');
     for (int i = 0; i < 40; i++) {
       g.flags.remove('seen:Tribute Doubled');
+      g.mainBeatRound = -99; // the main story is due
       final d = dilemmas[g.pickDilemma(Random(i))];
       if (d.title == 'Tribute Doubled') tribute++;
     }
@@ -726,6 +728,30 @@ void main() {
     final copy = GameState.fromJson(
         jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)!;
     expect(copy.flags, contains('karsk_defied'));
+  });
+
+  test('In solo Dynasty people come and go', () {
+    final g = dynasty(4)
+      ..cards = MatchState(players: 4, target: 8)
+      ..setKing(0);
+    expect(g.solo, isTrue);
+    expect(g.people.toSet(), hasLength(4));
+    final seat = 2;
+    final role = g.courtiers[seat];
+    final before = g.people[seat];
+    g.applyChoice(Choice('x', 'y', [Depart(role)]));
+    g.nextDynastyRound(4, 8);
+    expect(g.people[seat], isNot(before));
+    expect(g.players[seat].name, g.people[seat]);
+    expect(g.loyalty[seat], GameState.startingLoyalty);
+    expect(g.courtNews.map((n) => n.$3), [false, true]);
+    // Nobody comes back once they've left.
+    for (int i = 0; i < 30; i++) {
+      g.applyChoice(Choice('x', 'y', [Depart(g.courtiers[seat])]));
+      g.nextDynastyRound(4, 8);
+    }
+    expect(g.people[seat], isNot(before));
+    expect(g.kingIndex, 0);
   });
 
   test('Every seat gets a different courtier shape', () {
@@ -940,7 +966,7 @@ void main() {
     await tester.tap(find.byType(SeatToken).first);
     await tester.pumpAndSettle();
     // Every Dynasty round opens with tidings.
-    expect(find.text('Tidings'), findsOneWidget);
+    expect(find.byIcon(Icons.history_edu), findsOneWidget);
     await tester.tap(find.text('So it begins'));
     await tester.pumpAndSettle();
     expect(find.byType(ShapedToken), findsWidgets);
