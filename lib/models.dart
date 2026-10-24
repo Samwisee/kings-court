@@ -848,6 +848,14 @@ class GameState {
     if (openers.isNotEmpty && openStories < 2 && rand.nextDouble() < 0.8) {
       return _face(openers[rand.nextInt(openers.length)]);
     }
+    // In solo Dynasty, often a private word with one courtier.
+    final audiences = [
+      for (final i in ready)
+        if (dilemmas[i].audience && !facedDilemmas.contains(i)) i
+    ];
+    if (solo && audiences.isNotEmpty && rand.nextDouble() < 0.45) {
+      return _face(audiences[rand.nextInt(audiences.length)]);
+    }
     // Otherwise the everyday business of the court.
     var options = [
       for (final i in ready)
