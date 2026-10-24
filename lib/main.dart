@@ -1242,6 +1242,8 @@ class _HomePageState extends State<HomePage>
             ),
             ..._digiTrickLayer(),
             for (final f in _flights) f.build(),
+            if (_crowning != null)
+              Positioned.fill(child: IgnorePointer(child: _digiCrowning())),
             if (_decreePending) Positioned.fill(child: _buildDecreeOverlay()),
             Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
             if (game.outcome != RoundOutcome.inProgress && _lastTrick == null)
@@ -1319,15 +1321,34 @@ class _HomePageState extends State<HomePage>
               owner: t.assignedPlayerIndex == null
                   ? null
                   : game.players[t.assignedPlayerIndex!],
-              ownerLabel: t.assignedPlayerIndex == null
-                  ? null
-                  : seatLabels(game.players)[t.assignedPlayerIndex!],
+
               charged: game.isCharged(t),
               progress: _progressOf(t),
             ),
           ),
         ),
       );
+
+  /// The crowning on the on-screen table: from the middle of the table to
+  /// the new King's token, with a trumpet from everyone else.
+  Widget _digiCrowning() {
+    final king = _crowning!;
+    final middle = _rectOn(_middleKey);
+    final seat = _rectOn(_seatKey(king));
+    if (middle == null || seat == null) return const SizedBox.shrink();
+    return _crowningScene(
+      from: middle.center,
+      // The crown sits in the slot above the token.
+      to: seat.topCenter + const Offset(0, 8),
+      spinTo: 0,
+      seatSize: 44,
+      king: king,
+      seats: {
+        for (int j = 0; j < game.players.length; j++)
+          if (_rectOn(_seatKey(j)) case final r?) j: r.center
+      },
+    );
+  }
 
   /// The bots across the top, each with their tasks under them.
   Widget _digiOpponents(double width, double maxHeight) {
@@ -2809,9 +2830,31 @@ class _HomePageState extends State<HomePage>
   Widget _buildCrowning(_TableGeometry geo, int seat) {
     final a = geo.facing(seat);
     final up = Offset(math.sin(a), -math.cos(a));
-    final from = geo.center;
-    final to = geo.seatCenter(seat) + up * (geo.seatSize / 2 + 9);
+    return _crowningScene(
+      from: geo.center,
+      to: geo.seatCenter(seat) + up * (geo.seatSize / 2 + 9),
+      spinTo: a,
+      seatSize: geo.seatSize,
+      king: seat,
+      seats: {
+        for (int j = 0; j < game.players.length; j++) j: geo.seatCenter(j)
+      },
+    );
+  }
 
+  /// The crown flies from [from] to the new King at [to] and lands in a
+  /// burst of gold, "Long live the King" glows, and every other seat in
+  /// [seats] sounds a trumpet.
+  Widget _crowningScene({
+    required Offset from,
+    required Offset to,
+    required double spinTo,
+    required double seatSize,
+    required int king,
+    required Map<int, Offset> seats,
+  }) {
+    final seat = king;
+    final a = spinTo;
     return AnimatedBuilder(
       animation: _crown,
       builder: (context, _) {
@@ -2853,8 +2896,9 @@ class _HomePageState extends State<HomePage>
               ),
             // The rest of the court sounds a fanfare: a trumpet at every
             // other seat, pointed at the new King, with notes floating out.
-            for (int j = 0; j < game.players.length; j++)
-              if (j != seat) ..._trumpet(geo, j, to, t),
+            for (final e in seats.entries)
+              if (e.key != seat)
+                ..._trumpet(e.value, seatSize, e.key, to, t),
             Positioned(
               left: p.dx - size / 2,
               top: p.dy - size * 0.375,
@@ -2871,20 +2915,20 @@ class _HomePageState extends State<HomePage>
 
   /// One player's trumpet in the crowning fanfare. It pops up just before
   /// the crown lands, toots (a little kick) and blows notes towards the King.
-  List<Widget> _trumpet(_TableGeometry geo, int j, Offset king, double t) {
+  List<Widget> _trumpet(
+      Offset seat, double seatSize, int j, Offset king, double t) {
     // Each trumpet starts a moment after the last, like a ragged fanfare.
     final start = 0.45 + 0.04 * j;
     final local = clampD((t - start) / (1 - start), 0, 1);
     if (local <= 0) return const [];
-    final seat = geo.seatCenter(j);
     final toKing = king - seat;
     final dir = toKing / toKing.distance;
-    final pos = seat + dir * (geo.seatSize * 0.75);
+    final pos = seat + dir * (seatSize * 0.75);
     final angle = math.atan2(dir.dy, dir.dx);
     final pop = Curves.elasticOut.transform(clampD(local / 0.35, 0, 1));
     final toot = math.sin(local * math.pi * 6) * 0.12 * (1 - local);
     final fade = local < 0.8 ? 1.0 : (1 - local) / 0.2;
-    final size = clampD(geo.seatSize * 0.6, 22, 32);
+    final size = clampD(seatSize * 0.6, 22, 32);
 
     return [
       Positioned(
@@ -3191,7 +3235,6 @@ class _HomePageState extends State<HomePage>
       builder: (context, _) {
         final n = game.tasks.length;
         final dealing = _deal.isAnimating;
-        final labels = seatLabels(game.players);
 
         return Stack(
           clipBehavior: Clip.none,
@@ -3272,7 +3315,7 @@ class _HomePageState extends State<HomePage>
                             width: cw,
                             height: ch,
                             owner: owner == null ? null : game.players[owner],
-                            ownerLabel: owner == null ? null : labels[owner],
+
                             lifted: lifted,
                             faceDown: faceDown,
                             charged: game.isCharged(t),
@@ -4335,7 +4378,7 @@ Future<void> showRulesDialog(BuildContext context) {
         'Tap a task to read it up close and mark it done or failed. Done tasks flip face down.',
         'Mark a task failed as soon as it can no longer be completed. The round ends there.',
         'Press and hold the felt in front of you to turn every task towards you. Let go and they turn back to their owners.',
-        'Each player\'s seat shows their seat number or initials, and the same badge appears on every task they hold.',
+        'Each player\'s seat shows their seat number or initials, and every task they hold is edged in their colour.',
         'Some tasks show icons under their points. 🚫 means the King can\'t take it. ⓘ means there is an extra condition: tap the task to read it.',
       ]
     ),
