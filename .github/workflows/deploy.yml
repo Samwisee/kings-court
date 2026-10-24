@@ -38,12 +38,7 @@ jobs:
           flutter test --reporter expanded > test.txt 2>&1
           code=$?
           tail -5 test.txt
-          if [ $code -ne 0 ]; then
-            # The failures, with context, as one annotation per failing test.
-            awk '/\[E\]$/ {if (buf!="") print buf; buf=$0; n=1; next}
-                 buf!="" && n<60 {buf=buf"%0A"$0; n++}
-                 END {if (buf!="") print buf}' test.txt | head -20 | sed 's/^/::error::/'
-          fi
+          if [ $code -ne 0 ]; then python3 tool/ci_annotate.py test.txt; fi
           exit $code
 
   # Builds and publishes even if a test fails, so there's always something
