@@ -1030,6 +1030,7 @@ class _HomePageState extends State<HomePage>
     final legal =
         yourTurn ? c.legalFor(_you).toSet() : const <PlayingCard>{};
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
       decoration: const BoxDecoration(
         color: Palette.feltDeep,
@@ -1240,7 +1241,6 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
-            ..._digiTrickLayer(),
             for (final f in _flights) f.build(),
             if (_crowning != null)
               Positioned.fill(child: IgnorePointer(child: _digiCrowning())),
@@ -1299,7 +1299,8 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _miniTask(Task t, double width) => TweenAnimationBuilder<double>(
+  Widget _miniTask(Task t, double width, {double fontSize = 12}) =>
+      TweenAnimationBuilder<double>(
         // Fades in as the flying copy lands.
         key: ValueKey('mini-${t.description}'),
         tween: Tween(begin: 0, end: 1),
@@ -1307,24 +1308,19 @@ class _HomePageState extends State<HomePage>
         curve: const Interval(0.75, 1),
         builder: (context, o, child) => Opacity(opacity: o, child: child),
         child: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: GestureDetector(
-            onTapUp: (d) => _showTaskDetail(t, d.globalPosition),
-            child: TableCard(
-              task: t,
-              points: _points(t),
-              text: _cardText(t),
-              width: width,
-              height: TableCard.sizeFor(_cardText(t), width,
-                      sealed: t.seal != null)
-                  .height,
-              owner: t.assignedPlayerIndex == null
-                  ? null
-                  : game.players[t.assignedPlayerIndex!],
-
-              charged: game.isCharged(t),
-              progress: _progressOf(t),
-            ),
+          padding: const EdgeInsets.only(top: 5),
+          child: _TaskChip(
+            task: t,
+            points: _points(t),
+            text: _cardText(t),
+            color: t.assignedPlayerIndex == null
+                ? Palette.inkSoft
+                : game.players[t.assignedPlayerIndex!].color,
+            width: width,
+            fontSize: fontSize,
+            progress: _progressOf(t),
+            charged: game.isCharged(t),
+            onTap: () => _showTaskDetail(t, Offset.zero),
           ),
         ),
       );
@@ -1354,7 +1350,7 @@ class _HomePageState extends State<HomePage>
   Widget _digiOpponents(double width, double maxHeight) {
     final others = [for (int i = 0; i < game.players.length; i++) if (i != _you) i];
     final colWidth = width / others.length;
-    final taskWidth = math.min(colWidth - 8, 116.0);
+    final taskWidth = math.min(colWidth - 6, 130.0);
     final c = _cards;
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
@@ -1364,11 +1360,9 @@ class _HomePageState extends State<HomePage>
           for (final seat in others)
             SizedBox(
               width: colWidth,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: colWidth,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1383,14 +1377,17 @@ class _HomePageState extends State<HomePage>
                               fontSize: 13, color: Colors.white70)),
                       if (c.dealId == game.dealId)
                         Text(
-                            '${c.tricksWon(seat)} trick${c.tricksWon(seat) == 1 ? '' : 's'}'
-                            ' · ${c.hands[seat].length} cards',
+                            '${c.tricksWon(seat)} won · ${c.hands[seat].length} left',
+                            maxLines: 1,
+                            overflow: TextOverflow.fade,
+                            softWrap: false,
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white54)),
                       for (final t in game.tasks)
                         if (t.assignedPlayerIndex == seat &&
                             !_flights.any((f) => f.task == t))
-                          _miniTask(t, taskWidth),
+                          _miniTask(t, taskWidth,
+                              fontSize: colWidth < 80 ? 11 : 12),
                     ],
                   ),
                 ),
@@ -1412,7 +1409,15 @@ class _HomePageState extends State<HomePage>
       );
     }
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
-    if (open.isEmpty) return const SizedBox.expand();
+    if (open.isEmpty) {
+      // The trick, laid out right here so it always shows.
+      return LayoutBuilder(
+        builder: (context, box) => Stack(
+          clipBehavior: Clip.none,
+          children: _trickCards(box.biggest),
+        ),
+      );
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _openTaskRects = {
@@ -1522,7 +1527,8 @@ class _HomePageState extends State<HomePage>
                     for (final t in mine)
                       Padding(
                         padding: const EdgeInsets.only(right: 6),
-                        child: _miniTask(t, math.min(116.0, width / 3.4)),
+                        child: _miniTask(t, math.min(140.0, width / 3),
+                            fontSize: 13),
                       ),
                   ]),
                 ),
@@ -1531,12 +1537,10 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// The trick: each card glides in from whoever played it, and once won
-  /// the trick sweeps off to the winner.
-  List<Widget> _digiTrickLayer() {
+  /// The trick in the middle of the table: each card glides in from
+  /// whoever played it, and once won the trick sweeps off to the winner.
+  List<Widget> _trickCards(Size area) {
     if (_cards.dealId != game.dealId) return [];
-    final middle = _rectOn(_middleKey);
-    if (middle == null) return [];
     final c = _cards;
     final trick = _lastTrick;
     final seats = trick?.seats ?? c.currentSeats;
@@ -1544,22 +1548,27 @@ class _HomePageState extends State<HomePage>
     if (cards.isEmpty) return [];
     final number = trick != null ? c.tricks.length - 1 : c.tricks.length;
     final n = c.players;
-    final cardW = math.min(64.0, (middle.width - 10 * n) / n);
+    final cardW = clampD((area.width - 8 * n) / n, 40, 72);
     final cardH = PlayingCardView.heightFor(cardW);
+    // Where the middle sits on the table, to work out where cards come
+    // from; if it isn't known yet the cards simply fade in.
+    final middle = _rectOn(_middleKey);
     final hand = _rectOn(_handKey);
-
-    Offset origin(int seat, PlayingCard card) {
-      if (seat == _you) {
-        return _launchFrom[card.id] ?? hand?.topCenter ?? middle.bottomCenter;
-      }
-      return _rectOn(_seatKey(seat))?.center ?? middle.topCenter;
+    Offset? origin(int seat, PlayingCard card) {
+      if (middle == null) return null;
+      final Offset? p = seat == _you
+          ? _launchFrom[card.id] ?? hand?.topCenter
+          : _rectOn(_seatKey(seat))?.center;
+      return p == null ? null : p - middle.topLeft;
     }
 
     Offset topLeft(Offset centre) => centre - Offset(cardW / 2, cardH / 2);
     return [
       for (int i = 0; i < cards.length; i++)
         () {
-          final target = middle.center + Offset((i - (n - 1) / 2) * (cardW + 10), 0);
+          final target = Offset(
+              area.width / 2 + (i - (n - 1) / 2) * (cardW + 8),
+              area.height / 2);
           final seat = seats[i];
           final view = PlayingCardView(
             card: cards[i],
@@ -1569,7 +1578,7 @@ class _HomePageState extends State<HomePage>
             glow: trick != null && trick.winner == seat,
           );
           if (trick != null && _collecting) {
-            final to = origin(trick.winner, cards[i]);
+            final to = origin(trick.winner, cards[i]) ?? target;
             return TweenAnimationBuilder<double>(
               key: ValueKey('collect-$number-${cards[i].id}'),
               tween: Tween(begin: 0, end: 1),
@@ -1582,7 +1591,7 @@ class _HomePageState extends State<HomePage>
                   top: p.dy,
                   child: IgnorePointer(
                     child: Opacity(
-                      opacity: 1 - t * 0.9,
+                      opacity: clampD(1 - t, 0, 1),
                       child: Transform.scale(scale: 1 - 0.5 * t, child: child),
                     ),
                   ),
@@ -1598,9 +1607,16 @@ class _HomePageState extends State<HomePage>
             duration: const Duration(milliseconds: 380),
             curve: Curves.easeOutCubic,
             builder: (context, t, child) {
-              final p = topLeft(Offset.lerp(from, target, t)!);
+              final p = topLeft(Offset.lerp(from ?? target, target, t)!);
               return Positioned(
-                  left: p.dx, top: p.dy, child: IgnorePointer(child: child!));
+                left: p.dx,
+                top: p.dy,
+                child: IgnorePointer(
+                  child: Opacity(
+                      opacity: from == null ? clampD(t * 2, 0, 1) : 1,
+                      child: child),
+                ),
+              );
             },
             child: view,
           );
@@ -2438,7 +2454,6 @@ class _HomePageState extends State<HomePage>
                   min: 1,
                   max: 30,
                   divisions: 29,
-                  label: '$target',
                   onChanged: (v) => setDialogState(() => target = v.round()),
                 ),
                 const Text(
@@ -4052,7 +4067,6 @@ class _HomePageState extends State<HomePage>
                 min: 1,
                 max: 30,
                 divisions: 29,
-                label: '$_nextTarget',
                 onChanged: (v) => setCardState(() => _nextTarget = v.round()),
               ),
             ),
@@ -5014,7 +5028,6 @@ class _SetupPanelState extends State<_SetupPanel> {
               min: 1,
               max: 30,
               divisions: 29,
-              label: '$target',
               onChanged: (v) => setState(() => target = v.round()),
             ),
             const Text('Higher targets mean more or harder tasks.',
@@ -5383,4 +5396,110 @@ class _Flight {
           ),
         ),
       );
+}
+
+/// A task on the on-screen table, sized to be read rather than to look
+/// like a card: points, wording, and how far along it is.
+class _TaskChip extends StatelessWidget {
+  const _TaskChip({
+    required this.task,
+    required this.points,
+    required this.text,
+    required this.color,
+    required this.width,
+    this.fontSize = 12,
+    this.progress,
+    this.charged = false,
+    this.onTap,
+  });
+
+  final Task task;
+  final int points;
+  final String text;
+  final Color color;
+  final double width;
+  final double fontSize;
+  final String? progress;
+  final bool charged;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final done = task.isCompleted, failed = task.isFailed;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: width,
+        padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+        decoration: BoxDecoration(
+          color: done
+              ? const Color(0xFFE2F0E4)
+              : failed
+                  ? const Color(0xFFFBE4E1)
+                  : Palette.card,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: failed ? Palette.lost : color, width: 2.5),
+          boxShadow: const [
+            BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('$points',
+                    style: TextStyle(
+                        fontFamily: displayFont,
+                        fontWeight: FontWeight.w900,
+                        fontSize: fontSize + 3,
+                        height: 1,
+                        color: Palette.ink)),
+                const SizedBox(width: 2),
+                CrownIcon(size: fontSize * 0.85, color: Palette.goldDeep),
+                const Spacer(),
+                if (task.seal != null) WaxSeal(seal: task.seal!, size: fontSize + 3),
+                if (charged)
+                  Icon(Icons.workspace_premium,
+                      size: fontSize + 2, color: Palette.goldDeep),
+                if (done)
+                  Icon(Icons.check_circle, size: fontSize + 3, color: Palette.won),
+                if (failed)
+                  Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Opacity(
+              opacity: done ? 0.6 : 1,
+              child: SuitText(text,
+                  style: TextStyle(
+                      fontSize: fontSize,
+                      height: 1.15,
+                      fontWeight: FontWeight.w600,
+                      color: Palette.ink)),
+            ),
+            if (progress != null && !done) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Palette.ink,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(progress!,
+                    style: TextStyle(
+                        fontFamily: bodyFont,
+                        fontSize: fontSize - 1,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                        color: Palette.gold)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
