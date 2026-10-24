@@ -149,6 +149,15 @@ class _TableGeometry {
   /// the middle), so every card sits square to the person who holds it.
   Map<Task, Offset> layoutOwned(List<Task> order,
       {List<Rect> obstacles = const []}) {
+    // Keep clear of the loose cards too, unless that leaves no room.
+    final first = _layoutOwned(order, obstacles);
+    if (!first.crowded || obstacles.isEmpty) return first.spots;
+    return _layoutOwned(order, const []).spots;
+  }
+
+  ({Map<Task, Offset> spots, bool crowded}) _layoutOwned(
+      List<Task> order, List<Rect> obstacles) {
+    var crowded = false;
     final table = playArea;
     final placed = <Rect>[
       // Cards still waiting to be taken: owned cards keep clear of them.
@@ -197,23 +206,19 @@ class _TableGeometry {
         final size = ownedCardSize(i, t);
         Offset? chosen;
         Rect? chosenRect;
-        // First keep clear of the loose cards too; if there's no room,
-        // only of seats and other owned cards.
-        for (final avoid in [placed, placed.skip(obstacles.length).toList()]) {
-          for (final s in spots) {
-            final p = seat + right * s.dx + up * s.dy;
-            final rect = Rect.fromCenter(
-                center: p, width: size.width, height: size.height);
-            final onTable = table.contains(rect.topLeft) &&
-                table.contains(rect.bottomRight - const Offset(1, 1));
-            if (onTable && !avoid.any((r) => r.deflate(1).overlaps(rect))) {
-              chosen = p;
-              chosenRect = rect;
-              break;
-            }
+        for (final s in spots) {
+          final p = seat + right * s.dx + up * s.dy;
+          final rect = Rect.fromCenter(
+              center: p, width: size.width, height: size.height);
+          final onTable = table.contains(rect.topLeft) &&
+              table.contains(rect.bottomRight - const Offset(1, 1));
+          if (onTable && !placed.any((r) => r.deflate(1).overlaps(rect))) {
+            chosen = p;
+            chosenRect = rect;
+            break;
           }
-          if (chosen != null) break;
         }
+        if (chosen == null) crowded = true;
         // Table completely full: fall back to just in front of the seat.
         chosen ??= clampToTable(seat + up * (tokenHalfH + cardHeight / 2));
         chosenRect ??= Rect.fromCenter(
@@ -222,7 +227,7 @@ class _TableGeometry {
         placed.add(chosenRect);
       }
     }
-    return result;
+    return (spots: result, crowded: crowded);
   }
 
   /// Positions for freshly dealt cards: a neat grid in the open middle of
