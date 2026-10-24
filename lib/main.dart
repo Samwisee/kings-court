@@ -50,6 +50,7 @@ class HomePageTestHooks {
     _HomePageState.botDelay = const Duration(milliseconds: 1);
     _HomePageState.trickPause = const Duration(milliseconds: 4);
     _HomePageState.botBudget = 30;
+    CharacterToken.alive = false;
   }
 }
 
@@ -385,7 +386,8 @@ class _HomePageState extends State<HomePage>
   /// The Trial of Hearts being played on screen, if any.
   ContestState? _contest;
   final _contestKey = GlobalKey<ContestTableState>();
-  List<String> _verdict = const [];
+  /// What came of the King's choice: who (if anyone) and how they took it.
+  List<(int?, String, CharacterMood)> _verdict = const [];
   String _verdictStory = '';
 
   /// The last done/failed mark, so it can be undone from the round result.
@@ -691,7 +693,8 @@ class _HomePageState extends State<HomePage>
       c.dealFor(
         game.dealId,
         _rand,
-        king: game.kingIndex,
+        // Solo Dynasty: you are always the King.
+        king: game.kingIndex ?? (game.isDynasty ? _you : null),
         mayRule: (seat) => !game.isAntagonist(seat),
         accept: (hands, inPlay) => game.tasks
             .every((t) => playableWith(t.description, hands, inPlay)),
@@ -1388,7 +1391,14 @@ class _HomePageState extends State<HomePage>
     final labels = seatLabels(game.players);
     return KeyedSubtree(
       key: _seatKey(seat),
-      child: SeatToken(
+      // Each person at court breathes, and someone new springs into
+      // their seat.
+      child: CharacterToken(
+        key: ValueKey('person-$seat-${game.hasRoles ? game.personAt(seat) : ''}'),
+        mood: CharacterMood.arriving,
+        phase: seat * 0.37,
+        size: size,
+        child: SeatToken(
         player: game.players[seat],
         label: labels[seat],
         isKing: game.kingIndex == seat,
@@ -1404,6 +1414,7 @@ class _HomePageState extends State<HomePage>
         // keeping the table clear.
         onTap: game.hasRoles && !_choosingKing ? () => _showCourtier(seat) : null,
         tight: tight,
+      ),
       ),
     );
   }
@@ -2190,9 +2201,11 @@ class _HomePageState extends State<HomePage>
         for (int i = 0; i < count; i++) {
           game.players[i].name = i == _you
               ? 'You'
-              : game.hasRoles
-                  ? game.courtiers[i].title
-                  : 'Bot ${i + 1}';
+              : game.isDynasty
+                  ? game.personAt(i)
+                  : game.hasRoles
+                      ? game.courtiers[i].title
+                      : 'Bot ${i + 1}';
         }
       }
       _resetTable();
@@ -2470,7 +2483,9 @@ class _HomePageState extends State<HomePage>
                         courtier: courtier,
                         color: player.color,
                         name: isKing
-                            ? '${player.name}, the King'
+                            ? game.solo
+                                ? 'King ${game.reignName}'
+                                : '${player.name}, the King'
                             : player.name,
                         antagonist: game.isAntagonist(seat),
                       ),
@@ -3653,13 +3668,35 @@ class _HomePageState extends State<HomePage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Comings and goings at court, before the news.
+                if (game.courtNews.isNotEmpty) ...[
+                  for (final (i, (seat, text, arrived)) in game.courtNews.indexed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(children: [
+                        arrived
+                            ? _character(seat, 34,
+                                mood: CharacterMood.arriving,
+                                delay: Duration(milliseconds: 400 + 300 * i),
+                                key: ValueKey('news-$i'))
+                            : CharacterToken(
+                                key: ValueKey('news-$i'),
+                                mood: CharacterMood.leaving,
+                                size: 34,
+                                delay: Duration(milliseconds: 400 + 300 * i),
+                                child: const Icon(Icons.person_off_rounded,
+                                    size: 30, color: Palette.inkSoft)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(text,
+                              style: const TextStyle(
+                                  fontSize: 16, height: 1.35, color: Palette.ink)),
+                        ),
+                      ]),
+                    ),
+                  const Divider(height: 18),
+                ],
                 const Icon(Icons.history_edu, color: Palette.goldDeep, size: 28),
-                const Text('Tidings',
-                    style: TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: Palette.inkSoft)),
                 Text(t.title,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
@@ -3677,11 +3714,7 @@ class _HomePageState extends State<HomePage>
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ShapedToken(
-                          shape: game.courtiers[seat].shape,
-                          size: 30,
-                          color: game.players[seat].color,
-                          ring: Palette.goldDeep),
+                      _character(seat, 30, mood: CharacterMood.speaking),
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(_chargeLine!,
@@ -4178,55 +4211,32 @@ class _HomePageState extends State<HomePage>
 
   Widget _dilemmaCard(bool won) {
     final d = dilemmas[_dilemma ?? 0];
-    final king = game.kingIndex == null ? null : game.players[game.kingIndex!];
     final deciding = _step == _DynastyStep.dilemma;
+    final bringer = d.about == null ? -1 : game.courtiers.indexOf(d.about!);
+    const body = TextStyle(fontSize: 17, height: 1.4, color: Palette.ink);
     return _parchmentCard(
       color: const Color(0xFFF6EBD2),
       border: Palette.goldDeep,
       children: [
-        const CrownIcon(size: 26, color: Palette.goldDeep),
-        Text(deciding ? 'The King\u2019s Dilemma' : 'So it is decided',
-            style: const TextStyle(
-                fontFamily: displayFont,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-                color: Palette.inkSoft)),
+        // Whoever brings the matter, or the crown.
+        if (bringer >= 0)
+          _character(bringer, 44,
+              mood: CharacterMood.speaking, key: ValueKey('bringer-${d.title}'))
+        else
+          const CrownIcon(size: 30, color: Palette.goldDeep),
+        const SizedBox(height: 6),
         Text(d.title,
             textAlign: TextAlign.center,
             style: const TextStyle(
                 fontFamily: displayFont,
                 fontWeight: FontWeight.w900,
-                fontSize: 26,
+                fontSize: 24,
                 color: Palette.cardRed)),
-        if (deciding && (d.speaker ?? d.about?.title) != null)
-          Text(
-              d.requires.isNotEmpty
-                  ? '${d.speaker ?? d.about!.title} returns'
-                  : 'Brought before the throne by ${d.speaker ?? d.about!.title.replaceFirst('The', 'the')}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  color: Palette.inkSoft))
-        else if (deciding && d.requires.isNotEmpty)
-          const Text('The story continues',
-              style: TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  color: Palette.inkSoft)),
         const SizedBox(height: 8),
         Text(deciding ? d.story : _verdictStory,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 17, height: 1.4, color: Palette.ink)),
-        const SizedBox(height: 12),
+            textAlign: TextAlign.center, style: body),
+        const SizedBox(height: 14),
         if (deciding) ...[
-          if (king != null)
-            Text('${king.name}, what is your will?',
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontStyle: FontStyle.italic,
-                    color: Palette.inkSoft)),
-          const SizedBox(height: 10),
           if (d.council)
             ..._trial(d)
           else
@@ -4245,15 +4255,20 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
         ] else ...[
-          for (final line in _verdict)
+          for (final (i, (seat, text, mood)) in _verdict.indexed)
             Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(line,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Palette.ink)),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: seat == null
+                  ? Text(text, textAlign: TextAlign.center, style: body)
+                  : Row(children: [
+                      // Each reaction plays in turn, down the list.
+                      _character(seat, 34,
+                          mood: mood,
+                          delay: Duration(milliseconds: 300 * i),
+                          key: ValueKey('verdict-$i-$seat')),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(text, style: body)),
+                    ]),
             ),
           const SizedBox(height: 10),
           FilledButton(
@@ -4325,6 +4340,7 @@ class _HomePageState extends State<HomePage>
   /// A matter that divides the court: everyone takes a side, then the
   /// sides play a Trial of Hearts and the winners have their way.
   List<Widget> _trial(Dilemma d) {
+    const body = TextStyle(fontSize: 17, height: 1.4, color: Palette.ink);
     final king = game.kingIndex;
     final seats = [
       if (king != null) king,
@@ -4367,26 +4383,15 @@ class _HomePageState extends State<HomePage>
             ? game.courtiers[seat].short
             : game.players[seat].name;
     return [
-      const Text('The court is divided',
-          style: TextStyle(
-              fontFamily: displayFont,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: Palette.cardRed)),
       Text(
           _digital
-              ? 'Each takes a side in secret, and the cards will decide.'
-              : 'Pass the phone round: each takes a side in secret, and the cards will decide.',
+              ? 'The court is divided. Choose your side, and the Trial of Hearts will decide.'
+              : 'The court is divided. Pass the phone round: each takes a side in secret, and the Trial of Hearts will decide.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-              fontSize: 14, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
-      const SizedBox(height: 6),
-      if (chooser == null)
-      for (final (letter, c) in [('A', d.a), ('B', d.b)])
-        Text('$letter.  ${c.label}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
+          style: body),
+      if (chooser == null && !_digital)
+        for (final (letter, c) in [('A', d.a), ('B', d.b)])
+          Text('$letter.  ${c.label}', textAlign: TextAlign.center, style: body),
       const SizedBox(height: 8),
       // Sides are chosen in secret: you only ever see your own (on screen),
       // or the one being chosen now (passing the phone round).
@@ -4396,13 +4401,11 @@ class _HomePageState extends State<HomePage>
               '${seat == king ? '♛ ' : ''}${name(seat)}: ${_votes[seat] == true ? 'A' : 'B'}',
               style: const TextStyle(fontSize: 15, color: Palette.ink))
       else if (chooser != null) ...[
-        Text(
-            _digital
-                ? 'Choose your side in secret'
-                : 'Pass the phone to ${name(chooser)}${chooser == king ? ' (the King chooses first)' : ''}, who chooses in secret',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
+        if (!_digital)
+          Text(
+              'Pass the phone to ${name(chooser)}${chooser == king ? ' (the King chooses first)' : ''}.',
+              textAlign: TextAlign.center,
+              style: body),
         const SizedBox(height: 6),
         for (final a in [true, false])
           button('${a ? 'A' : 'B'}.  ${(a ? d.a : d.b).label}', () => setState(() {
@@ -4411,10 +4414,9 @@ class _HomePageState extends State<HomePage>
               })),
       ] else if (_digital && _votes.containsKey(_you))
         Text(
-            'You stand with ${_votes[_you]! ? 'A' : 'B'}. The rest of the court chooses in secret.',
+            'You stand for \u201c${(_votes[_you]! ? d.a : d.b).label}\u201d. The court has chosen in secret.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 15, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
+            style: body),
       const SizedBox(height: 8),
       if (!chosen)
         const SizedBox.shrink()
@@ -4483,46 +4485,87 @@ class _HomePageState extends State<HomePage>
       game.applyChoice(choice);
       if (overruled.isNotEmpty) game.overruled(overruled);
       if (heeded) game.heededCouncil();
-      final lines = <String>[...lead];
+      final lines = <(int?, String, CharacterMood)>[
+        for (final l in lead) (null, l, CharacterMood.idle)
+      ];
+      void line(String text) => lines.add((null, text, CharacterMood.idle));
+      // Courtiers speak their minds, then show how they took it.
+      for (final e in choice.effects.whereType<Say>()) {
+        final seat = game.courtiers.indexOf(e.courtier);
+        if (seat >= 0) {
+          lines.add((seat, '“${e.line}”', CharacterMood.speaking));
+        }
+      }
       for (int i = 0; i < game.players.length; i++) {
         final delta = game.loyalty[i] - loyaltyBefore[i];
         if (delta == 0) continue;
-        final who = game.courtiers[i].title;
+        final who = _who(i);
         if (game.isAntagonist(i) && !antagonistsBefore.contains(i)) {
-          lines.add('$who turns against the King!');
+          lines.add((i, '$who turns against you!', CharacterMood.angry));
         } else if (!game.isAntagonist(i) && antagonistsBefore.contains(i)) {
-          lines.add('$who returns to the King\u2019s side.');
+          lines.add((i, '$who returns to your side.', CharacterMood.pleased));
         } else {
-          // No numbers: the candles on the seats tell the rest.
           lines.add(delta > 0
-              ? '$who will remember this kindness.'
-              : '$who will remember this.');
+              ? (i, '$who will remember this kindness.', CharacterMood.pleased)
+              : (i, '$who will remember this.', CharacterMood.angry));
         }
       }
-      // Courtiers speak their minds.
-      for (final e in choice.effects.whereType<Say>()) {
-        if (game.courtiers.contains(e.courtier)) {
-          lines.add('${e.courtier.title}: \u201c${e.line}\u201d');
+      for (final c in game.pendingDepartures) {
+        final seat = game.courtiers.indexOf(c);
+        if (seat >= 0) {
+          lines.add((seat, '${_who(seat)} will leave the court.', CharacterMood.leaving));
         }
       }
       final wounds = game.kingWounds - woundsBefore;
-      if (wounds > 0) lines.add('The King takes a wound.');
-      if (wounds < 0) lines.add('A wound is healed.');
+      if (wounds > 0) line('You take a wound.');
+      if (wounds < 0) line('A wound is healed.');
       final points = game.pointsBonus - pointsBefore;
-      if (points > 0) lines.add('The court\u2019s burdens grow.');
-      if (points < 0) lines.add('The court\u2019s burdens ease.');
+      if (points > 0) line('The court’s burdens grow.');
+      if (points < 0) line('The court’s burdens ease.');
       if (game.pendingDecree != null) {
-        lines.add('Next round brings a decree: ${game.pendingDecree!.title}');
+        line('Next round brings a decree: ${game.pendingDecree!.title}');
       }
       if (game.pendingCharge != null) {
-        lines.add(
-            'Next round, ${game.pendingCharge!.title} is charged with a royal task.');
+        final seat = game.courtiers.indexOf(game.pendingCharge!);
+        lines.add((
+          seat >= 0 ? seat : null,
+          'Next round, ${seat >= 0 ? _who(seat) : game.pendingCharge!.title} is charged with a royal task.',
+          CharacterMood.idle
+        ));
       }
       _verdict = lines;
       _verdictStory = choice.outcome;
       _step = _DynastyStep.verdict;
     });
   }
+
+  /// How the story names whoever sits in [seat]: their own name when
+  /// characters come and go, otherwise their courtier title.
+  String _who(int seat) =>
+      game.solo ? game.personAt(seat) : game.courtiers[seat].title;
+
+  /// A courtier's token, alive.
+  Widget _character(int seat, double size,
+          {CharacterMood mood = CharacterMood.idle,
+          Duration delay = Duration.zero,
+          Key? key}) =>
+      CharacterToken(
+        key: key,
+        mood: mood,
+        delay: delay,
+        size: size,
+        phase: seat * 0.37,
+        child: ShapedToken(
+          shape: game.hasRoles
+              ? game.courtiers[seat].shape
+              : TokenShape.shield,
+          size: size,
+          color: game.players[seat].color,
+          ring: Palette.goldDeep,
+          child: OutlinedLabel(seatLabels(game.players)[seat],
+              fontSize: size * 0.36, strokeWidth: size * 0.07),
+        ),
+      );
 
   void _nextDynastyRound(bool won) {
     final target = (targetPoints + (won ? 1 : 0) + game.pointsBonus)
@@ -4538,7 +4581,11 @@ class _HomePageState extends State<HomePage>
 
   Widget _deathCard() {
     final seat = game.kingIndex;
-    final name = seat == null ? 'The King' : game.players[seat].name;
+    final name = game.solo
+        ? 'King ${game.reignName}'
+        : seat == null
+            ? 'The King'
+            : game.players[seat].name;
     final toughness = game.kingToughness;
     final last = game.fallenKings + 1 >= GameState.maxFallenKings;
     return _parchmentCard(
@@ -4588,7 +4635,11 @@ class _HomePageState extends State<HomePage>
               _nextDynastyRound(false);
             }
           }),
-          child: Text(last ? 'Close the annals' : 'Crown an heir'),
+          child: Text(last
+              ? 'Close the annals'
+              : game.solo
+                  ? 'Your heir takes the crown'
+                  : 'Crown an heir'),
         ),
       ],
     );
@@ -4602,8 +4653,8 @@ class _HomePageState extends State<HomePage>
     final kings = [
       ...game.annals,
       if (king != null)
-        Annal(game.players[king].name, game.epithet, game.reignRounds,
-            game.reign),
+        Annal(game.solo ? 'King ${game.reignName}' : game.players[king].name,
+            game.epithet, game.reignRounds, game.reign),
     ];
     final fg = golden ? Palette.ink : Colors.white;
     return _parchmentCard(

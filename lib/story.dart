@@ -203,6 +203,15 @@ const tidings = <Tiding>[
   ),
   // ------------------------------------------------------------- stories
   Tiding(
+    'Coronation Day',
+    'Bells ring across the city. Every house has come to kneel before the new King, and to take their measure.',
+    won: Outcome('The feast goes on until dawn. The court leaves in good spirits.',
+        [AllLoyalty(1)]),
+    lost: Outcome('Whispers follow you from the feast: too young, too weak, too soon.',
+        [AllLoyalty(-1)]),
+    arc: 'crown',
+  ),
+  Tiding(
     'The Siege of Ashford',
     'Varric of Karsk has crossed the river. His army is camped beneath Ashford’s walls.',
     house: Courtier.general,

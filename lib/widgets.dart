@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -1385,6 +1386,174 @@ class _PowerBadge extends StatelessWidget {
       ),
       child: Icon(Icons.bolt_rounded,
           size: size * 0.7, color: used ? Colors.white38 : Palette.gold),
+    );
+  }
+}
+
+/// How a character token is behaving.
+enum CharacterMood {
+  /// Sitting at the table: a slow, gentle breath (see [CharacterToken.alive]).
+  idle,
+
+  /// Has something to say: a little wobble and a speech bubble.
+  speaking,
+
+  /// Pleased with the King: a hop and a golden heart.
+  pleased,
+
+  /// Displeased: a shake and a red mark.
+  angry,
+
+  /// Just arrived at court: springs in, then breathes like the others.
+  arriving,
+
+  /// Leaving court: shrinks and fades.
+  leaving,
+}
+
+/// Brings a courtier's token to life: [child] is the token itself.
+class CharacterToken extends StatefulWidget {
+  const CharacterToken({
+    super.key,
+    required this.child,
+    this.mood = CharacterMood.idle,
+    this.phase = 0,
+    this.size = 40,
+    this.delay = Duration.zero,
+  });
+
+  final Widget child;
+  final CharacterMood mood;
+
+  /// Wait this long before reacting (to take turns down a list).
+  final Duration delay;
+
+  /// Offsets the idle breath so a table of tokens doesn't move in step.
+  final double phase;
+
+  /// Roughly how big the token is, to scale the hop and the marks.
+  final double size;
+
+  /// Idle breathing on or off (off in tests, which wait for stillness).
+  static bool alive = true;
+
+  @override
+  State<CharacterToken> createState() => _CharacterTokenState();
+}
+
+class _CharacterTokenState extends State<CharacterToken>
+    with TickerProviderStateMixin {
+  late final AnimationController _once = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 900));
+  late final AnimationController _breath = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 2800));
+
+  bool get _idles =>
+      widget.mood == CharacterMood.idle || widget.mood == CharacterMood.arriving;
+
+  Timer? _wait;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.delay == Duration.zero) {
+      _once.forward();
+    } else {
+      _wait = Timer(widget.delay, () {
+        if (mounted) _once.forward();
+      });
+    }
+    if (_idles && CharacterToken.alive) _breath.repeat();
+  }
+
+  @override
+  void didUpdateWidget(CharacterToken old) {
+    super.didUpdateWidget(old);
+    if (old.mood != widget.mood) {
+      _once.forward(from: 0);
+      if (_idles && CharacterToken.alive) {
+        if (!_breath.isAnimating) _breath.repeat();
+      } else {
+        _breath.stop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _wait?.cancel();
+    _once.dispose();
+    _breath.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_once, _breath]),
+      child: widget.child,
+      builder: (context, child) {
+        final t = _once.value;
+        final b = math.sin(2 * math.pi * (_breath.value + widget.phase));
+        final s = widget.size;
+        var dx = 0.0, dy = 0.0, scale = 1.0, angle = 0.0, opacity = 1.0;
+        IconData? mark;
+        Color markColor = Palette.gold;
+        switch (widget.mood) {
+          case CharacterMood.idle:
+            dy = b * s * 0.03;
+            scale = 1 + 0.015 * b;
+          case CharacterMood.arriving:
+            scale = Curves.elasticOut.transform(t) + 0.015 * b;
+            opacity = clampD(t * 3, 0, 1);
+            dy = b * s * 0.03;
+          case CharacterMood.speaking:
+            angle = math.sin(t * math.pi * 6) * 0.1 * (1 - t);
+            scale = 1 + 0.08 * math.sin(t * math.pi);
+            mark = Icons.chat_bubble_rounded;
+            markColor = Colors.white;
+          case CharacterMood.pleased:
+            dy = -s * 0.28 * math.sin(t * math.pi);
+            scale = 1 + 0.12 * math.sin(t * math.pi);
+            mark = Icons.favorite_rounded;
+          case CharacterMood.angry:
+            dx = math.sin(t * math.pi * 8) * s * 0.1 * (1 - t);
+            mark = Icons.priority_high_rounded;
+            markColor = Palette.lost;
+          case CharacterMood.leaving:
+            scale = 1 - 0.35 * Curves.easeIn.transform(t);
+            opacity = 1 - 0.65 * t;
+            dy = s * 0.1 * t;
+        }
+        final markOpacity = mark == null ? 0.0 : math.sin(clampD(t, 0, 1) * math.pi);
+        return Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            Opacity(
+              opacity: opacity,
+              child: Transform.translate(
+                offset: Offset(dx, dy),
+                child: Transform.rotate(
+                  angle: angle,
+                  child: Transform.scale(scale: scale, child: child),
+                ),
+              ),
+            ),
+            if (mark != null && markOpacity > 0.01)
+              Positioned(
+                top: -s * 0.25 - s * 0.35 * t,
+                right: -s * 0.15,
+                child: Opacity(
+                  opacity: markOpacity,
+                  child: Icon(mark, size: s * 0.45, color: markColor, shadows: const [
+                    Shadow(color: Colors.black54, blurRadius: 4),
+                  ]),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

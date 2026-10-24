@@ -202,6 +202,13 @@ class Say extends Effect {
   final String line;
 }
 
+/// A courtier leaves court before the next round (banished, ruined,
+/// arrested); someone new takes the seat.
+class Depart extends Effect {
+  const Depart(this.courtier);
+  final Courtier courtier;
+}
+
 class Choice {
   const Choice(this.label, this.outcome, this.effects);
   final String label;
@@ -541,6 +548,28 @@ const dilemmas = <Dilemma>[
     forbids: ['karsk_peace'],
   ),
 
+  Dilemma(
+    'The Vassal King',
+    'Lord Hask brings a summons: King Varric expects you at his court in Karsk, to kneel before his throne as a loyal vassal should.',
+    Choice('Go, and kneel', 'The realm is safe, and shamed.',
+        [AllLoyalty(-2), Unflag('karsk_vassal'), Flag('karsk_peace'), Say(Courtier.duke, 'I will not kneel to the man you knelt to.')]),
+    Choice('Tear up the summons', 'Hask goes white. The General goes to sharpen his sword.',
+        [Loyalty(Courtier.general, 2), Unflag('karsk_vassal'), Flag('karsk_defied')]),
+    arc: 'karsk',
+    speaker: 'Lord Hask, envoy of King Varric',
+    requires: ['karsk_vassal'],
+  ),
+  Dilemma(
+    'A Feast for Two Kingdoms',
+    'Peace with Karsk holds. The court wants a great feast to seal it, with King Varric himself at your table.',
+    Choice('Invite Varric', 'Two kings drink from one cup. Nobody is poisoned.',
+        [AllLoyalty(1), Wound(-1), Say(Courtier.spymaster, 'I counted his guards. Twice.')]),
+    Choice('Feast without him', 'The court celebrates. Karsk hears of it.',
+        [Loyalty(Courtier.general, 1), Points(1)]),
+    arc: 'karsk',
+    requires: ['karsk_peace'],
+  ),
+
   // Lady Elara, the Duke's daughter.
   Dilemma(
     'A Match for Elara',
@@ -600,7 +629,7 @@ const dilemmas = <Dilemma>[
     Choice('Stand surety', 'You save House Coyne, and inherit its debts.',
         [Points(2), Loyalty(Courtier.merchant, 3)]),
     Choice('Let Coyne fall', 'The Merchant sells his house, then his name.',
-        [Loyalty(Courtier.merchant, -3), Say(Courtier.merchant, 'I will not forget who watched me drown.')]),
+        [Loyalty(Courtier.merchant, -3), Say(Courtier.merchant, 'I will not forget who watched me drown.'), Depart(Courtier.merchant)]),
     arc: 'fleet',
     requires: ['fleet_lost'],
   ),
@@ -642,7 +671,7 @@ const dilemmas = <Dilemma>[
     'A Name in the Ledger',
     'One page in the ledger is about the Jester: he meets a Karsk agent every new moon.',
     Choice('Arrest the Jester', 'The bells on his cap are silent in the cell.',
-        [Loyalty(Courtier.jester, -3), Loyalty(Courtier.spymaster, 1)]),
+        [Loyalty(Courtier.jester, -3), Loyalty(Courtier.spymaster, 1), Depart(Courtier.jester)]),
     Choice('Use him to feed Varric lies', 'The Jester grins. "I always wanted to be a spy."',
         [Loyalty(Courtier.jester, 1), Flag('spies'), Charge(Courtier.spymaster)]),
     arc: 'ledger',
@@ -675,8 +704,8 @@ const dilemmas = <Dilemma>[
     'Lords who dislike you now toast the Jester as the rightful heir. He swears he wants none of it.',
     Choice('Name him your heir', 'The faction falls silent. The Duke does not.',
         [Loyalty(Courtier.jester, 2), Loyalty(Courtier.duke, -2), Say(Courtier.duke, 'A fool on the throne. How fitting.')]),
-    Choice('Banish him for a season', 'The Jester leaves the hall in silence.',
-        [Loyalty(Courtier.jester, -3), NextDecree(Decree.exile)]),
+    Choice('Banish him', 'The Jester leaves the hall in silence.',
+        [Loyalty(Courtier.jester, -3), Depart(Courtier.jester)]),
     arc: 'jester',
     requires: ['jester_known'],
     council: true,
@@ -737,6 +766,31 @@ const dilemmas = <Dilemma>[
     requires: ['plague'],
     council: true,
   ),
+];
+
+/// The people who may hold each seat at court, in the order they come.
+const characterNames = <Courtier, List<String>>{
+  Courtier.duke: ['Aldric Ashcombe', 'Maud Ashcombe', 'Piers Ashcombe', 'Isolde Ashcombe', 'Godwin Ashcombe'],
+  Courtier.bishop: ['Anselm Vell', 'Agathe Vell', 'Osric Vell', 'Hild Vell', 'Benedict Vell'],
+  Courtier.general: ['Bryn Strand', 'Rhosyn Strand', 'Garrick Strand', 'Wenna Strand', 'Owain Strand'],
+  Courtier.spymaster: ['Corvin Morrow', 'Sabine Morrow', 'Lucan Morrow', 'Nell Morrow', 'Silas Morrow'],
+  Courtier.merchant: ['Tobias Coyne', 'Ysolde Coyne', 'Hamon Coyne', 'Bettris Coyne', 'Jory Coyne'],
+  Courtier.jester: ['Pip Motley', 'Tansy Motley', 'Wat Motley', 'Kit Motley', 'Fenn Motley'],
+};
+
+/// Why someone leaves court of their own accord ({name} is filled in).
+const departures = <Courtier, List<String>>{
+  Courtier.duke: ['{name} rides north to the family estates, and stays there.', '{name} dies in the hunt. Ashcombe sends another.'],
+  Courtier.bishop: ['{name} goes on pilgrimage to the south.', '{name} is called to the Holy See.'],
+  Courtier.general: ['{name} retires to the coast, nursing old wounds.', '{name} falls in a border skirmish.'],
+  Courtier.spymaster: ['{name} vanishes one night. Nobody is surprised.', '{name} is found at the foot of the tower.'],
+  Courtier.merchant: ['{name} sails south to chase a fortune.', '{name} retires rich, and smug.'],
+  Courtier.jester: ['{name} runs off with a troupe of players.', '{name} tells one joke too many and is sent away.'],
+};
+
+/// Regnal names for the solo King, one per reign.
+const regnalNames = [
+  'Edmund', 'Matilda', 'Leofric', 'Eleanor', 'Aldous', 'Isabeau', 'Cedric', 'Rowena',
 ];
 
 /// Roman numerals for reigns: I, II, III ...
