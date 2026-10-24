@@ -26,5 +26,7 @@ for block in out:
     text = "%0A".join(l.replace("%", "%25") for l in block)[:6000]
     print("::error::" + text)
 # The last lines show which test was running if the run timed out.
-tail = [l for l in lines if l.strip()][-4:]
+import re
+progress = [l for l in lines if re.match(r"^\d\d:\d\d \+\d+", l)]
+tail = progress[-3:] + [l for l in lines if l.strip()][-3:]
 print("::warning::LAST " + "%0A".join(l.replace("%", "%25") for l in tail)[:3000])
