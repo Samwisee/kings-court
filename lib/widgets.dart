@@ -1669,3 +1669,73 @@ class _CharacterTokenState extends State<CharacterToken>
     );
   }
 }
+
+/// Words spoken at the table, in a bubble pointing back at the speaker
+/// (on its left).
+class SpeechBubble extends StatelessWidget {
+  const SpeechBubble(this.text, {super.key, this.who});
+  final String text;
+
+  /// Who is speaking, shown small above the words.
+  final String? who;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutBack,
+      builder: (context, t, child) => Transform.scale(
+        scale: 0.6 + 0.4 * t,
+        alignment: Alignment.centerLeft,
+        child: Opacity(opacity: clampD(t, 0, 1), child: child),
+      ),
+      child: CustomPaint(
+        painter: _BubbleTail(),
+        child: Container(
+          margin: const EdgeInsets.only(left: 8),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFBF5E6),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const [
+              BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (who != null)
+                Text(who!,
+                    style: const TextStyle(
+                        fontFamily: displayFont,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: Palette.goldDeep)),
+              Text(text,
+                  style: const TextStyle(
+                      fontSize: 16, height: 1.4, color: Palette.ink)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BubbleTail extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final y = math.min(22.0, size.height / 2);
+    final path = Path()
+      ..moveTo(0, y)
+      ..lineTo(10, y - 7)
+      ..lineTo(10, y + 7)
+      ..close();
+    canvas.drawPath(path, Paint()..color = const Color(0xFFFBF5E6));
+  }
+
+  @override
+  bool shouldRepaint(_BubbleTail old) => false;
+}

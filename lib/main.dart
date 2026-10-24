@@ -1350,7 +1350,7 @@ class _HomePageState extends State<HomePage>
                     child: SizedBox(
                       key: _middleKey,
                       width: double.infinity,
-                      child: _digiMiddle(width),
+                      child: _storyStage() ?? _digiMiddle(width),
                     ),
                   ),
                   KeyedSubtree(key: _yourRowKey, child: _digiYou(width)),
@@ -1517,7 +1517,8 @@ class _HomePageState extends State<HomePage>
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white54)),
                       for (final t in game.tasks)
-                        if (t.assignedPlayerIndex == seat &&
+                        if (!_storyActive &&
+                            t.assignedPlayerIndex == seat &&
                             !_flights.any((f) => f.task == t))
                           _miniTask(t, taskWidth,
                               fontSize: colWidth < 80 ? 11 : 12),
@@ -1726,7 +1727,9 @@ class _HomePageState extends State<HomePage>
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: mine.isEmpty
+          child: _storyActive
+              ? const SizedBox.shrink()
+              : mine.isEmpty
               ? Text(
                   game.pickTurn != null ? 'Your tasks will appear here' : 'No tasks for you this round',
                   style: const TextStyle(color: Colors.white54))
@@ -3073,7 +3076,14 @@ class _HomePageState extends State<HomePage>
                   ? _digital
                       ? Column(children: [
                           Expanded(child: _buildDigitalTable()),
-                          _buildHand(),
+                          // The story has the table: no hand to play.
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutCubic,
+                            child: !_storyActive
+                                ? _buildHand()
+                                : const SizedBox(width: double.infinity),
+                          ),
                         ])
                       : _buildTable()
                   : Stack(
@@ -3107,13 +3117,14 @@ class _HomePageState extends State<HomePage>
       ),
     ),
       // Tidings, decrees and the end of a round cover the whole screen.
-      if (_inGame && _setupArgs == null && _decreePending)
+      if (_inGame && _setupArgs == null && _decreePending && !(_onFelt && game.currentTiding != null))
         Positioned.fill(
             child: Material(
                 type: MaterialType.transparency,
                 child: SafeArea(child: _buildDecreeOverlay()))),
       if (_inGame &&
           _setupArgs == null &&
+          !_onFelt &&
           game.outcome != RoundOutcome.inProgress &&
           _lastTrick == null)
         Positioned.fill(
@@ -3649,6 +3660,17 @@ class _HomePageState extends State<HomePage>
         ? null
         : game.tasks.where(game.isCharged).firstOrNull;
     final king = game.kingIndex;
+    if (_onFelt) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(8),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: _tidingsColumn(t, seat, charged, onAccept),
+          ),
+        ),
+      );
+    }
     return RotatedBox(
       quarterTurns: king == null ? 0 : _geo.edge(king),
       child: TweenAnimationBuilder<double>(
@@ -3671,7 +3693,18 @@ class _HomePageState extends State<HomePage>
             boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
           ),
           child: SingleChildScrollView(
-            child: Column(
+            child: _tidingsColumn(t, seat, charged, onAccept),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The round's news: who came and went, the tidings, any royal charge
+  /// and decree, and the button to begin.
+  Widget _tidingsColumn(
+      Tiding t, int? seat, Task? charged, VoidCallback onAccept) {
+    return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Comings and goings at court, before the news.
@@ -3698,8 +3731,8 @@ class _HomePageState extends State<HomePage>
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(n.text,
-                              style: const TextStyle(
-                                  fontSize: 16, height: 1.35, color: Palette.ink)),
+                              style: TextStyle(
+                                  fontSize: 16, height: 1.35, color: _ink)),
                         ),
                       ]),
                     ),
@@ -3708,16 +3741,16 @@ class _HomePageState extends State<HomePage>
                 const Icon(Icons.history_edu, color: Palette.goldDeep, size: 28),
                 Text(t.title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 25,
-                        color: Palette.cardRed)),
+                        color: _storyRed)),
                 const SizedBox(height: 8),
                 Text(t.story,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 17, height: 1.4, color: Palette.ink)),
+                    style: TextStyle(
+                        fontSize: 17, height: 1.4, color: _ink)),
                 if (seat != null && _chargeLine != null) ...[
                   const SizedBox(height: 12),
                   Row(
@@ -3727,11 +3760,11 @@ class _HomePageState extends State<HomePage>
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(_chargeLine!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 16,
                                 height: 1.35,
                                 fontWeight: FontWeight.w700,
-                                color: Palette.ink)),
+                                color: _ink)),
                       ),
                     ],
                   ),
@@ -3739,48 +3772,44 @@ class _HomePageState extends State<HomePage>
                     const SizedBox(height: 6),
                     SuitText('Their royal charge: ${charged.description}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontStyle: FontStyle.italic,
-                            color: Palette.inkSoft)),
+                            color: _inkSoft)),
                   ],
                 ],
                 if (game.decree != null) ...[
                   const Divider(height: 24),
                   Text('Royal Decree: ${game.decree!.title}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontFamily: displayFont,
                           fontWeight: FontWeight.w700,
                           fontSize: 17,
-                          color: Palette.cardRed)),
+                          color: _storyRed)),
                   const SizedBox(height: 4),
                   Text(game.decree!.rule,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 15, height: 1.35, color: Palette.ink)),
+                      style: TextStyle(
+                          fontSize: 15, height: 1.35, color: _ink)),
                   if (_decreeDetail != null)
                     Text(_decreeDetail!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: Palette.ink)),
+                            color: _ink)),
                 ],
                 const SizedBox(height: 14),
                 FilledButton(
                   onPressed: onAccept,
                   style: FilledButton.styleFrom(
-                      backgroundColor: Palette.ink,
-                      foregroundColor: Palette.gold),
-                  child: const Text('So it begins'),
+                      backgroundColor: _btnBg,
+                      foregroundColor: _btnFg),
+                  child: Text('So it begins'),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
+            );
   }
 
   void _showDecree() {
@@ -4072,7 +4101,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _dynastyResult(bool won) {
-    final fg = won ? Palette.ink : Colors.white;
+    final fg = won && !_onFelt ? Palette.ink : Colors.white;
     final settled = game.schemesSettled;
     return _parchmentCard(
       color: won ? Palette.gold : Palette.feltDeep,
@@ -4178,31 +4207,54 @@ class _HomePageState extends State<HomePage>
     final bringer = d.about != null && game.courtRoles.contains(d.about)
         ? d.about
         : null;
-    const body = TextStyle(fontSize: 17, height: 1.4, color: Palette.ink);
+    final body = TextStyle(fontSize: 17, height: 1.4, color: _ink);
     return _parchmentCard(
       color: const Color(0xFFF6EBD2),
       border: Palette.goldDeep,
       children: [
-        // Whoever brings the matter, or the crown.
-        if (bringer != null)
-          CharacterToken(
-              key: ValueKey('bringer-${d.title}'),
-              mood: CharacterMood.speaking,
-              size: 44,
-              child: _roleToken(bringer, game.colorOf(bringer), 44))
-        else
-          const CrownIcon(size: 30, color: Palette.goldDeep),
-        const SizedBox(height: 6),
+        if (!_onFelt) ...[
+          // Whoever brings the matter, or the crown.
+          if (bringer != null)
+            CharacterToken(
+                key: ValueKey('bringer-${d.title}'),
+                mood: CharacterMood.speaking,
+                size: 44,
+                child: _roleToken(bringer, game.colorOf(bringer), 44))
+          else
+            const CrownIcon(size: 30, color: Palette.goldDeep),
+          const SizedBox(height: 6),
+        ],
         Text(d.title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontFamily: displayFont,
                 fontWeight: FontWeight.w900,
                 fontSize: 24,
-                color: Palette.cardRed)),
-        const SizedBox(height: 8),
-        Text(deciding ? d.story : _verdictStory,
-            textAlign: TextAlign.center, style: body),
+                color: _storyRed)),
+        const SizedBox(height: 10),
+        // At the table, whoever brings the matter says it themselves.
+        if (_onFelt && deciding && (bringer != null || d.speaker != null))
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: CharacterToken(
+                key: ValueKey('bringer-${d.title}'),
+                entrance: bringer == null ? Entrance.march : entranceOf(bringer),
+                size: 44,
+                child: bringer != null
+                    ? _roleToken(bringer, game.colorOf(bringer), 44)
+                    : _visitorToken(44),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SpeechBubble(d.story,
+                  who: d.speaker ?? bringer!.title),
+            ),
+          ])
+        else
+          Text(deciding ? d.story : _verdictStory,
+              textAlign: TextAlign.center, style: body),
         const SizedBox(height: 14),
         if (deciding) ...[
           if (d.council)
@@ -4216,8 +4268,8 @@ class _HomePageState extends State<HomePage>
                   child: FilledButton(
                     onPressed: () => _decide(choice),
                     style: FilledButton.styleFrom(
-                        backgroundColor: Palette.ink,
-                        foregroundColor: Palette.gold),
+                        backgroundColor: _btnBg,
+                        foregroundColor: _btnFg),
                     child: Text(choice.label),
                   ),
                 ),
@@ -4237,7 +4289,10 @@ class _HomePageState extends State<HomePage>
                           delay: Duration(milliseconds: 300 * i),
                           child: _roleToken(role, game.colorOf(role), 34)),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(text, style: body)),
+                      Expanded(
+                          child: mood == CharacterMood.speaking && _onFelt
+                              ? SpeechBubble(text, who: role.title)
+                              : Text(text, style: body)),
                     ]),
             ),
           const SizedBox(height: 10),
@@ -4310,7 +4365,7 @@ class _HomePageState extends State<HomePage>
   /// A matter that divides the court: everyone takes a side, then the
   /// sides play a Trial of Hearts and the winners have their way.
   List<Widget> _trial(Dilemma d) {
-    const body = TextStyle(fontSize: 17, height: 1.4, color: Palette.ink);
+    final body = TextStyle(fontSize: 17, height: 1.4, color: _ink);
     final king = game.kingIndex;
     final seats = [
       if (king != null) king,
@@ -4337,13 +4392,13 @@ class _HomePageState extends State<HomePage>
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
                         foregroundColor: Palette.ink,
-                        side: const BorderSide(color: Palette.ink)),
+                        side: const BorderSide(color: _ink)),
                     child: Text(text, textAlign: TextAlign.center))
                 : FilledButton(
                     onPressed: onPressed,
                     style: FilledButton.styleFrom(
-                        backgroundColor: Palette.ink,
-                        foregroundColor: Palette.gold),
+                        backgroundColor: _btnBg,
+                        foregroundColor: _btnFg),
                     child: Text(text, textAlign: TextAlign.center)),
           ),
         );
@@ -4369,7 +4424,7 @@ class _HomePageState extends State<HomePage>
         for (final seat in seats)
           Text(
               '${seat == king ? '♛ ' : ''}${name(seat)}: ${_votes[seat] == true ? 'A' : 'B'}',
-              style: const TextStyle(fontSize: 15, color: Palette.ink))
+              style: TextStyle(fontSize: 15, color: _ink))
       else if (chooser != null) ...[
         if (!_digital)
           Text(
@@ -4403,17 +4458,17 @@ class _HomePageState extends State<HomePage>
               rand: math.Random()));
         })
       else if (!_sidesShown) ...[
-        const Text(
+        Text(
             'The Trial of Hearts: deal out the whole deck (set any spare cards aside); the 2\u2663 leads. Here the Court Cards are just a suit of their own: only the suit led can win. No \u2665 or Q\u2660 on the first trick, and \u2665 can\u2019t be led until one has fallen. Every \u2665 you win is a mark of shame, and the Q\u2660 is five. Count your marks, then show the sides.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
+            style: TextStyle(fontSize: 14, height: 1.35, color: _inkSoft)),
         const SizedBox(height: 8),
         button('Show the sides', () => setState(() => _sidesShown = true)),
       ] else ...[
-        const Text(
+        Text(
             'Add up each side\u2019s marks and divide by its courtiers. Fewest wins; a tie goes to the King\u2019s side.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
+            style: TextStyle(fontSize: 14, height: 1.35, color: _inkSoft)),
         const SizedBox(height: 8),
         button('A has fewer marks', () => _settleTrial(d, true)),
         button('B has fewer marks', () => _settleTrial(d, false)),
@@ -4506,10 +4561,65 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  /// Solo Dynasty tells its story on the table itself, not in boxes.
+  bool get _onFelt => _digital && game.isDynasty;
+  Color get _ink => _onFelt ? Colors.white : Palette.ink;
+  Color get _inkSoft => _onFelt ? Colors.white70 : Palette.inkSoft;
+  Color get _storyRed => _onFelt ? Palette.gold : Palette.cardRed;
+  Color get _btnBg => _onFelt ? Palette.gold : Palette.ink;
+  Color get _btnFg => _onFelt ? Palette.ink : Palette.gold;
+
+  /// Whether the story has the table right now (see [_storyStage]).
+  bool get _storyActive =>
+      _onFelt &&
+      _inGame &&
+      _setupArgs == null &&
+      ((_decreePending && game.currentTiding != null) ||
+          (game.outcome != RoundOutcome.inProgress && _lastTrick == null));
+
+  /// The story at the table, in place of the cards: the round's news, its
+  /// end, the King's decision. Null while the cards are in play.
+  Widget? _storyStage() {
+    if (!_onFelt || !_inGame || _setupArgs != null) return null;
+    final Widget? stage;
+    final String key;
+    if (_decreePending && game.currentTiding != null) {
+      stage = _tidingsScroll(() => setState(() => _decreeReadFor = game.dealId));
+      key = 'news-${game.dealId}';
+    } else if (game.outcome != RoundOutcome.inProgress && _lastTrick == null) {
+      stage = _buildDynastyCard(game.outcome == RoundOutcome.won);
+      key = 'end-${game.dealId}-${_step.name}';
+    } else {
+      return null;
+    }
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      transitionBuilder: (child, a) => FadeTransition(
+        opacity: a,
+        child: SlideTransition(
+            position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(a),
+            child: child),
+      ),
+      child: KeyedSubtree(key: ValueKey(key), child: stage),
+    );
+  }
+
   /// How the story names whoever sits in [seat]: their own name when
   /// characters come and go, otherwise their courtier title.
   String _who(int seat) =>
       game.solo ? game.personAt(seat) : game.courtiers[seat].title;
+
+  /// Someone from beyond the court: an envoy, a petitioner.
+  Widget _visitorToken(double size) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: const Color(0xFF5A4632),
+          shape: BoxShape.circle,
+          border: Border.all(color: Palette.goldDeep, width: 2),
+        ),
+        child: Icon(Icons.person_rounded, size: size * 0.6, color: Palette.gold),
+      );
 
   /// A token for [role] in [color], for someone who may not have a seat
   /// (yet, or any more).
@@ -4636,7 +4746,7 @@ class _HomePageState extends State<HomePage>
         Annal(game.solo ? 'King ${game.reignName}' : game.players[king].name,
             game.epithet, game.reignRounds, game.reign),
     ];
-    final fg = golden ? Palette.ink : Colors.white;
+    final fg = golden && !_onFelt ? Palette.ink : Colors.white;
     return _parchmentCard(
       color: golden ? Palette.gold : const Color(0xFF14060A),
       border: golden ? null : Palette.lost,
@@ -4703,6 +4813,17 @@ class _HomePageState extends State<HomePage>
 
   Widget _parchmentCard(
       {required Color color, Color? border, required List<Widget> children}) {
+    if (_onFelt) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Column(mainAxisSize: MainAxisSize.min, children: children),
+          ),
+        ),
+      );
+    }
     return Container(
       margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 14),

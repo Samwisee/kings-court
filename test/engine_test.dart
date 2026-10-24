@@ -23,6 +23,11 @@ void main() {
         expect(d.setAside, isNot(contains(PlayingCard.king)));
       }
     }
+    // Two players hold 12 each, so the round doesn't drag.
+    final two = deal(2, Random(1));
+    expect(two.hands.map((h) => h.length).toSet(), {12});
+    expect(two.setAside, hasLength(16));
+    expect(two.setAside, isNot(contains(PlayingCard.king)));
   });
 
   test('Hands sort ♥ ♠ ♦ ♣, then the Court Cards', () {

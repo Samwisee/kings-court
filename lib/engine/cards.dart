@@ -114,7 +114,9 @@ List<PlayingCard> fullDeck() => [
     int players, Random rand) {
   while (true) {
     final deck = fullDeck()..shuffle(rand);
-    final each = deck.length ~/ players;
+    // Two players keep a hand of 12, so a quiet round stays quick; the
+    // rest of the deck is set aside unseen.
+    final each = players == 2 ? 12 : deck.length ~/ players;
     final setAside = deck.sublist(each * players);
     if (setAside.contains(PlayingCard.king)) continue;
     final hands = [
