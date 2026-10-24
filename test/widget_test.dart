@@ -463,8 +463,13 @@ void main() {
     // Seat 1 uses their card reveal.
     await tester.tap(find.byType(SeatToken).at(1));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(Switch));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
+    final live = (tester.state(find.byType(HomePage)) as dynamic).game as GameState;
+    expect(live.spoke[1], isTrue, reason: 'the switch marks the reveal');
+    await tester.ensureVisible(find.text('Close'));
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
 

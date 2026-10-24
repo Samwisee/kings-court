@@ -689,6 +689,7 @@ class _HomePageState extends State<HomePage>
     setState(() {
       final geo = _geo;
       final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
+      debugPrint('DRAGUPDATE delta=$delta from=${_toPx(_pos[t]!)} to=$p card=${geo.cardSize(t)} area=${geo.playArea}');
       _pos[t] = _toFrac(p);
       final seat = _geo.seatAt(p);
       _hoverSeat = seat != null && game.canTake(t, seat) ? seat : null;

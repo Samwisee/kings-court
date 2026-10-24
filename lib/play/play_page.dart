@@ -641,17 +641,16 @@ class _PlayPageState extends State<PlayPage> {
         Phase.roundOver => s.won == true ? 'Round won' : 'Round lost',
       };
     }
-    return AnimatedSwitcher(
+    return AnimatedDefaultTextStyle(
       duration: const Duration(milliseconds: 200),
-      child: Text(text,
-          key: ValueKey(text),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: match.yourPick || match.yourPlay
-                  ? Palette.gold
-                  : Colors.white70)),
+      style: TextStyle(
+          fontFamily: bodyFont,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: match.yourPick || match.yourPlay
+              ? Palette.gold
+              : Colors.white70),
+      child: Text(text, textAlign: TextAlign.center),
     );
   }
 
