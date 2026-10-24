@@ -1279,7 +1279,12 @@ class _HomePageState extends State<HomePage>
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
               child: Column(
                 children: [
-                  _digiOpponents(width, c.maxHeight * 0.4),
+                  // As much room as the bots' tasks need, leaving enough for
+                  // the trick and your own row.
+                  _digiOpponents(
+                      width,
+                      clampD(c.maxHeight - 175, 130,
+                          math.max(130.0, c.maxHeight * 0.6))),
                   Expanded(
                     child: SizedBox(
                       key: _middleKey,
@@ -1413,7 +1418,7 @@ class _HomePageState extends State<HomePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _digiToken(seat, 42),
+                      _digiToken(seat, 38),
                       Text(
                           game.hasRoles
                               ? game.courtiers[seat].short
@@ -1619,7 +1624,8 @@ class _HomePageState extends State<HomePage>
     if (cards.isEmpty) return [];
     final number = trick != null ? c.tricks.length - 1 : c.tricks.length;
     final n = c.players;
-    final cardW = clampD((area.width - 8 * n) / n, 40, 72);
+    final cardW = clampD(
+        math.min((area.width - 8 * n) / n, (area.height - 8) / 1.42), 34, 72);
     final cardH = PlayingCardView.heightFor(cardW);
     // Where the middle sits on the table, to work out where cards come
     // from; if it isn't known yet the cards simply fade in.
@@ -5789,12 +5795,36 @@ class _TaskChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = task.isCompleted, failed = task.isFailed;
+    // Points on the left, the wording beside them, and the tracker and
+    // any marks in the top-right corner: two lines of text fit most tasks.
+    final trailing = <Widget>[
+      if (progress != null && !done)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          decoration: BoxDecoration(
+            color: Palette.ink,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(progress!,
+              style: TextStyle(
+                  fontFamily: bodyFont,
+                  fontSize: fontSize - 1,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                  color: Palette.gold)),
+        ),
+      if (task.seal != null) WaxSeal(seal: task.seal!, size: fontSize + 3),
+      if (charged)
+        Icon(Icons.workspace_premium, size: fontSize + 2, color: Palette.goldDeep),
+      if (done) Icon(Icons.check_circle, size: fontSize + 3, color: Palette.won),
+      if (failed) Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost),
+    ];
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         width: width,
-        padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+        padding: const EdgeInsets.fromLTRB(5, 4, 5, 5),
         decoration: BoxDecoration(
           color: done
               ? const Color(0xFFE2F0E4)
@@ -5807,11 +5837,11 @@ class _TaskChip extends StatelessWidget {
             BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text('$points',
                     style: TextStyle(
@@ -5820,44 +5850,30 @@ class _TaskChip extends StatelessWidget {
                         fontSize: fontSize + 3,
                         height: 1,
                         color: Palette.ink)),
-                const SizedBox(width: 2),
-                CrownIcon(size: fontSize * 0.85, color: Palette.goldDeep),
-                const Spacer(),
-                if (task.seal != null) WaxSeal(seal: task.seal!, size: fontSize + 3),
-                if (charged)
-                  Icon(Icons.workspace_premium,
-                      size: fontSize + 2, color: Palette.goldDeep),
-                if (done)
-                  Icon(Icons.check_circle, size: fontSize + 3, color: Palette.won),
-                if (failed)
-                  Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost),
+                CrownIcon(size: fontSize * 0.8, color: Palette.goldDeep),
               ],
             ),
-            const SizedBox(height: 3),
-            Opacity(
-              opacity: done ? 0.6 : 1,
-              child: SuitText(text,
-                  style: TextStyle(
-                      fontSize: fontSize,
-                      height: 1.15,
-                      fontWeight: FontWeight.w600,
-                      color: Palette.ink)),
-            ),
-            if (progress != null && !done) ...[
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Palette.ink,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(progress!,
+            const SizedBox(width: 4),
+            Expanded(
+              child: Opacity(
+                opacity: done ? 0.6 : 1,
+                child: SuitText(text,
                     style: TextStyle(
-                        fontFamily: bodyFont,
-                        fontSize: fontSize - 1,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                        color: Palette.gold)),
+                        fontSize: fontSize,
+                        height: 1.15,
+                        fontWeight: FontWeight.w600,
+                        color: Palette.ink)),
+              ),
+            ),
+            if (trailing.isNotEmpty) ...[
+              const SizedBox(width: 3),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (final w in trailing)
+                    Padding(padding: const EdgeInsets.only(bottom: 2), child: w),
+                ],
               ),
             ],
           ],

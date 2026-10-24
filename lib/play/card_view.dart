@@ -65,15 +65,24 @@ class PlayingCardView extends StatelessWidget {
             borderRadius: BorderRadius.circular(width * 0.1),
             border: Border.all(
                 color: edge ??
-                    (glow
-                        ? Palette.gold
-                        : card.isCourt
-                            ? Palette.goldDeep
-                            : const Color(0xFFD9D2C3)),
-                width: glow || edge != null ? 3 : card.isCourt ? 2 : 1),
+                    (marks.isNotEmpty
+                        ? marks.first
+                        : glow
+                            ? Palette.gold
+                            : card.isCourt
+                                ? Palette.goldDeep
+                                : const Color(0xFFD9D2C3)),
+                width: glow || edge != null || marks.isNotEmpty
+                    ? 3
+                    : card.isCourt
+                        ? 2
+                        : 1),
             boxShadow: [
               if (glow)
                 const BoxShadow(color: Palette.gold, blurRadius: 14)
+              else if (marks.isNotEmpty)
+                BoxShadow(
+                    color: marks.first.withValues(alpha: 0.85), blurRadius: 10)
               else
                 const BoxShadow(
                     color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
@@ -86,10 +95,12 @@ class PlayingCardView extends StatelessWidget {
               : null,
           child: Stack(
             children: [
+              // Under the corner, where it shows even when the next card in
+              // a hand covers the rest.
               if (marks.isNotEmpty)
                 Positioned(
-                  right: width * 0.07,
-                  top: width * 0.07,
+                  left: width * 0.06,
+                  top: width * 0.6,
                   child: Column(
                     children: [
                       for (final m in marks)
