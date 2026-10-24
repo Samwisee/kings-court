@@ -1561,9 +1561,9 @@ class _HomePageState extends State<HomePage>
     for (final r in _lastRoles) {
       if (!roles.contains(r) && !_walkingOff.containsKey(r)) {
         _walkingOff[r] = game.colorOf(r);
-        Timer(const Duration(milliseconds: 1500), () {
+        _trickTimers.add(Timer(const Duration(milliseconds: 1500), () {
           if (mounted) setState(() => _walkingOff.remove(r));
-        });
+        }));
       }
     }
     _walkingOff.removeWhere((r, _) => roles.contains(r));
@@ -2551,9 +2551,9 @@ class _HomePageState extends State<HomePage>
   void _quip(int seat, String text) {
     if (text.isEmpty) return;
     _quips[seat] = text;
-    Timer(const Duration(milliseconds: 2800), () {
+    _trickTimers.add(Timer(const Duration(milliseconds: 2800), () {
       if (mounted && _quips[seat] == text) setState(() => _quips.remove(seat));
-    });
+    }));
   }
 
   void _setTaskStatus(Task task, TaskStatus status) {
