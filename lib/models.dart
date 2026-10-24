@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'chronicle.dart';
 import 'courtiers.dart';
 import 'story.dart';
+import 'engine/match.dart';
 import 'tasks.dart';
 
 enum TaskStatus { pending, completed, failed }
@@ -140,6 +141,11 @@ class GameState {
   /// a once-per-round power. Dynasty always has roles.
   bool roles = true;
   bool get hasRoles => isDynasty || roles;
+
+  /// On-screen cards: the round is played on the device, you in seat 0
+  /// and bots in the rest. Null when playing with a real deck.
+  MatchState? cards;
+  bool get digital => cards != null;
 
   /// Seals in this round, the decree in force, and the exiled seat.
   int sealCount = 0;
@@ -849,6 +855,7 @@ class GameState {
         'chapter': chapter,
         'surprise': surprise,
         'roles': roles,
+        'cards': cards?.toJson(),
         'reignWins': reignWins,
         'traits': traits,
         'annals': [for (final a in annals) a.toJson()],
@@ -908,6 +915,9 @@ class GameState {
         ..chapter = j['chapter'] as int?
         ..surprise = (j['surprise'] as bool?) ?? false
         ..roles = (j['roles'] as bool?) ?? true
+        ..cards = j['cards'] == null
+            ? null
+            : MatchState.fromJson(Map<String, dynamic>.from(j['cards'] as Map))
         ..reignWins = (j['reignWins'] as int?) ?? 0
         ..traits = Map<String, int>.from((j['traits'] as Map?) ?? const {})
         ..tiding = j['tiding'] as int?

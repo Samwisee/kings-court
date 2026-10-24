@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -11,7 +12,11 @@ import 'chronicle.dart';
 import 'courtiers.dart';
 import 'story.dart';
 import 'models.dart';
-import 'play/play_page.dart';
+import 'engine/bot.dart';
+import 'engine/cards.dart';
+import 'engine/match.dart';
+import 'engine/rules.dart';
+import 'play/card_view.dart';
 import 'sfx.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -34,6 +39,16 @@ class TheKingsCourtApp extends StatelessWidget {
   }
 }
 
+
+/// Speeds up the on-screen card game for widget tests.
+@visibleForTesting
+class HomePageTestHooks {
+  static void fast() {
+    _HomePageState.botDelay = const Duration(milliseconds: 1);
+    _HomePageState.trickPause = const Duration(milliseconds: 4);
+    _HomePageState.botBudget = 30;
+  }
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -420,6 +435,10 @@ class _HomePageState extends State<HomePage>
   void setState(VoidCallback fn) {
     super.setState(fn);
     if (_dragging == null && _inGame) _save();
+    if (_digital && _inGame) {
+      _syncCards();
+      _scheduleBot();
+    }
   }
 
   Future<void> _save() async {
@@ -510,6 +529,12 @@ class _HomePageState extends State<HomePage>
       _saved = null;
     });
     _keepAwake(true);
+    // A trick won just before the game was closed still needs judging.
+    if (_digital) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _playing) _judgeTasks();
+      });
+    }
   }
 
   @override
@@ -519,6 +544,11 @@ class _HomePageState extends State<HomePage>
     _play.dispose();
     _outcome.dispose();
     _keepAwake(false);
+    _botTimer?.cancel();
+    _crownTimer?.cancel();
+    for (final t in _trickTimers) {
+      t.cancel();
+    }
     super.dispose();
   }
 
@@ -550,17 +580,535 @@ class _HomePageState extends State<HomePage>
   _TableGeometry get _geo => _TableGeometry(
       _tableSize, game.players.length, (t) => t.cardText(playerCount),
       fixedCardWidth: _dealtFor == game.dealId ? _cardWidth : null,
-      upright: _upright);
+      upright: _upright || game.digital);
 
   Offset _toPx(Offset f) =>
       Offset(f.dx * _tableSize.width, f.dy * _tableSize.height);
   Offset _toFrac(Offset p) =>
       Offset(p.dx / _tableSize.width, p.dy / _tableSize.height);
 
+  // --------------------------------------------------------- on-screen cards
+  //
+  // With on-screen cards the table runs the round itself: it deals hands,
+  // the K♠ crowns the King, bots pick tasks and play for every seat but
+  // yours (seat 0), and each task marks itself as the tricks fall. Every
+  // mode works the same way on top of this.
+
+  bool get _digital => game.digital;
+  static const _you = 0;
+  final _rand = math.Random();
+  final _bot = Bot();
+  Timer? _botTimer;
+  Timer? _crownTimer;
+  final _trickTimers = <Timer>[];
+
+  /// How long bots think and a finished trick stays on the table.
+  @visibleForTesting
+  static Duration botDelay = const Duration(milliseconds: 700);
+  @visibleForTesting
+  static Duration trickPause = const Duration(milliseconds: 1300);
+
+  /// Playouts per bot decision.
+  static int botBudget = 900;
+
+  /// The trick just won, held on the table, and whether it's sweeping off.
+  Trick? _lastTrick;
+  bool _collecting = false;
+  bool _askingX = false;
+
+  MatchState get _cards => game.cards!;
+
+  /// The cards' view of the round, with this table's tasks, owners and
+  /// rules on who may take what.
+  MatchState _matchView() {
+    final c = _cards;
+    c.target = targetPoints;
+    c.king = game.kingIndex ?? c.king;
+    c.tasks = [
+      for (final t in game.tasks)
+        MatchTask(t,
+            owner: t.assignedPlayerIndex, x: c.announced[t.description])
+    ];
+    c.pickTurn = game.pickTurn;
+    c.takeRule = (i, seat) => game.canTake(game.tasks[i], seat);
+    return c;
+  }
+
+  bool get _tasksSettled =>
+      game.tasks.every((t) => t.assignedPlayerIndex != null) &&
+      game.tasks.every((t) =>
+          !needsX(t.description) || _cards.announced.containsKey(t.description));
+
+  bool get _playing =>
+      _digital &&
+      !_choosingKing &&
+      !_decreePending &&
+      _dealtFor == game.dealId &&
+      game.outcome == RoundOutcome.inProgress &&
+      _tasksSettled;
+
+  bool get _yourPlay => _playing && _lastTrick == null && _cards.turn == _you;
+
+  bool get _yourPick =>
+      _digital &&
+      !_choosingKing &&
+      !_decreePending &&
+      _dealtFor == game.dealId &&
+      game.pickTurn == _you;
+
+  /// Deals hands for a new round (or after a reload with an old deal), and
+  /// lets the K♠ choose the King.
+  void _syncCards() {
+    if (!_digital || !_inGame) return;
+    final c = _cards;
+    if (c.dealId != game.dealId) {
+      c.dealFor(
+        game.dealId,
+        _rand,
+        king: game.kingIndex,
+        mayRule: (seat) => !game.isAntagonist(seat),
+        accept: (hands, inPlay) => game.tasks
+            .every((t) => playableWith(t.description, hands, inPlay)),
+      );
+      _lastTrick = null;
+      _collecting = false;
+    }
+    if (_choosingKing && _crowning == null && _crownTimer == null) {
+      _crownTimer = Timer(const Duration(milliseconds: 900), () {
+        _crownTimer = null;
+        if (mounted && _choosingKing) _crownKing(_cards.king);
+      });
+    }
+  }
+
+  /// Lets whichever bot is due act, after a short pause.
+  void _scheduleBot() {
+    if (!_digital || _botTimer != null) return;
+    _botTimer = Timer(botDelay, () {
+      _botTimer = null;
+      if (mounted) _botStep();
+    });
+  }
+
+  void _botStep() {
+    if (!_digital ||
+        _choosingKing ||
+        _crowning != null ||
+        _decreePending ||
+        _dealtFor != game.dealId ||
+        _dragging != null ||
+        _lastTrick != null ||
+        game.outcome != RoundOutcome.inProgress) {
+      return;
+    }
+    final view = _matchView();
+    _bot.budget = botBudget;
+    final picker = game.pickTurn;
+    if (picker != null) {
+      if (picker == _you) return;
+      final open = [
+        for (int i = 0; i < game.tasks.length; i++)
+          if (game.tasks[i].assignedPlayerIndex == null) i
+      ];
+      if (open.isEmpty) return;
+      if (game.decree == Decree.kingsCommand) {
+        // The King hands every task to whoever is best placed for it.
+        final i = open.first;
+        final seats = [
+          for (int s = 0; s < game.players.length; s++)
+            if (game.canTake(game.tasks[i], s)) s
+        ];
+        if (seats.isEmpty) return;
+        int best = seats.first;
+        double bestScore = -1;
+        for (final s in seats) {
+          final assigned = {
+            for (int t = 0; t < game.tasks.length; t++)
+              if (game.tasks[t].assignedPlayerIndex != null)
+                t: game.tasks[t].assignedPlayerIndex!,
+            i: s,
+          };
+          final score = _bot.score(view, assigned, 120);
+          if (score > bestScore) {
+            bestScore = score;
+            best = s;
+          }
+        }
+        _assignTask(game.tasks[i], best);
+      } else {
+        if (!open.any((i) => view.canTake(i, picker))) return;
+        _assignTask(game.tasks[_bot.choosePick(view, picker)], picker);
+      }
+      return;
+    }
+    if (game.tasks.any((t) => t.assignedPlayerIndex == null)) return;
+    // Numbers for the "exactly X tricks" tasks.
+    for (int i = 0; i < game.tasks.length; i++) {
+      final t = game.tasks[i];
+      if (!needsX(t.description) ||
+          _cards.announced.containsKey(t.description)) {
+        continue;
+      }
+      if (t.assignedPlayerIndex == _you) {
+        _askX(t);
+        return;
+      }
+      setState(() => _cards.announced[t.description] =
+          _bot.chooseX(view, t.assignedPlayerIndex!, i));
+      return;
+    }
+    final turn = _cards.turn;
+    if (turn == _you) return;
+    _playCard(turn, _bot.choosePlay(view, turn));
+  }
+
+  /// Asks how many tricks you'll win for an "exactly X" task.
+  Future<void> _askX(Task task) async {
+    if (_askingX) return;
+    _askingX = true;
+    int x = 1;
+    final chosen = await showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialog) => AlertDialog(
+          backgroundColor: Palette.feltDeep,
+          title: const Text('How many tricks?',
+              style: TextStyle(
+                  fontFamily: displayFont,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SuitText(task.cardText(playerCount),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, color: Colors.white70)),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.outlined(
+                    onPressed: x > 0 ? () => setDialog(() => x--) : null,
+                    icon: const Icon(Icons.remove),
+                  ),
+                  SizedBox(
+                    width: 70,
+                    child: Text('$x',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontFamily: bodyFont,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 40,
+                            color: Palette.gold)),
+                  ),
+                  IconButton.outlined(
+                    onPressed: x < _cards.totalTricks
+                        ? () => setDialog(() => x++)
+                        : null,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              Text('${_cards.totalTricks} tricks in the round.',
+                  style: const TextStyle(color: Colors.white60)),
+            ],
+          ),
+          actions: [
+            FilledButton(
+                onPressed: () => Navigator.pop(context, x),
+                child: const Text('Announce')),
+          ],
+        ),
+      ),
+    );
+    _askingX = false;
+    if (!mounted || !_digital) return;
+    setState(() => _cards.announced[task.description] = chosen ?? x);
+  }
+
+  /// Gives a task to a seat, as dropping it there would.
+  void _assignTask(Task t, int seat) {
+    setState(() {
+      if (game.assign(t, seat)) _play.forward(from: 0);
+      _layoutOwned();
+    });
+  }
+
+  /// Plays a card. When it finishes a trick, the trick stays a moment,
+  /// sweeps to the winner, and then the tasks are judged.
+  void _playCard(int seat, PlayingCard card) {
+    final trick = _cards.playCard(seat, card);
+    if (trick == null) {
+      setState(() {});
+      return;
+    }
+    setState(() {
+      _lastTrick = trick;
+      _collecting = false;
+    });
+    _trickTimers.add(Timer(trickPause * 0.6, () {
+      if (mounted) setState(() => _collecting = true);
+    }));
+    _trickTimers.add(Timer(trickPause, () {
+      if (!mounted || !_digital) return;
+      setState(() {
+        _lastTrick = null;
+        _collecting = false;
+      });
+      _judgeTasks();
+    }));
+  }
+
+  /// Marks each task done or failed from the tricks so far. Sealed tasks
+  /// are judged in seal order, and one done out of order fails.
+  void _judgeTasks() {
+    final c = _cards;
+    final king = game.kingIndex ?? c.king;
+    final v = RoundView(
+        players: c.players,
+        king: king,
+        tricks: c.tricks,
+        totalTricks: c.totalTricks,
+        inPlay: c.inPlay);
+    int order(Task t) => t.seal == null ? 0 : t.seal!;
+    final pending = game.tasks
+        .where((t) => t.status == TaskStatus.pending && t.assignedPlayerIndex != null)
+        .toList()
+      ..sort((a, b) => order(a).compareTo(order(b)));
+    for (final t in pending) {
+      if (game.outcome != RoundOutcome.inProgress) break;
+      final verdict = taskRules[t.description]!(
+          v, t.assignedPlayerIndex!, c.announced[t.description]);
+      if (verdict == Verdict.pending) continue;
+      final status = verdict == Verdict.done && game.sealProblem(t) == null
+          ? TaskStatus.completed
+          : TaskStatus.failed;
+      _setTaskStatus(t, status);
+    }
+    // Traitors' schemes are judged by the cards too.
+    if (game.outcome != RoundOutcome.inProgress && game.isDynasty) {
+      setState(() {
+        for (final seat in game.antagonists) {
+          final scheme = game.schemeOf[seat];
+          if (scheme != null) {
+            game.resolveScheme(seat, schemeSucceeded(scheme, v, seat));
+          }
+        }
+      });
+    }
+    // Nothing to undo when the cards decided.
+    _lastMark = null;
+  }
+
+  /// A task's wording, with the announced number filled in.
+  String _cardText(Task t) {
+    final text = t.cardText(playerCount);
+    final x = _digital ? _cards.announced[t.description] : null;
+    if (x == null) return text;
+    final secret = t.description.contains('secret') && t.assignedPlayerIndex != _you;
+    return text.replaceFirst('X', secret ? '?' : '$x');
+  }
+
+  /// What the table says is happening, under the cards.
+  String get _cardStatus {
+    if (_lastTrick != null) {
+      final w = _lastTrick!.winner;
+      return w == _you
+          ? 'You win the trick'
+          : '${game.players[w].name} wins the trick';
+    }
+    if (_choosingKing) return 'Dealing… whoever holds the K♠ is King';
+    if (game.pickTurn != null) {
+      if (game.pickTurn == _you) {
+        return game.decree == Decree.kingsCommand
+            ? "King's Command: drag each task to a seat"
+            : 'Your pick: drag a task onto your seat';
+      }
+      return '${game.players[game.pickTurn!].name} is choosing a task…';
+    }
+    if (!_tasksSettled) return 'Announcing numbers…';
+    if (game.outcome != RoundOutcome.inProgress) return '';
+    final c = _cards;
+    if (c.turn == _you) {
+      return c.current.isEmpty
+          ? 'Your lead: play any card'
+          : 'Your turn: follow ${c.led!.isCourt ? 'with a Court Card' : c.led!.suit.symbol} if you can';
+    }
+    return '${game.players[c.turn].name} is thinking…';
+  }
+
+  /// Your hand along the bottom, fanned to fit: cards you may play stand
+  /// up, the rest dim. Tap one to play it.
+  Widget _buildHand() {
+    final c = _cards;
+    final yourTurn = _yourPlay;
+    final legal =
+        yourTurn ? c.legalFor(_you).toSet() : const <PlayingCard>{};
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+      decoration: const BoxDecoration(
+        color: Palette.feltDeep,
+        border: Border(top: BorderSide(color: Color(0x66D4A63A))),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+                fontFamily: bodyFont,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: yourTurn || _yourPick ? Palette.gold : Colors.white70),
+            child: Text(_cardStatus,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center),
+          ),
+          const SizedBox(height: 6),
+          LayoutBuilder(builder: (context, box) {
+            final hand = c.dealId == game.dealId ? c.hands[_you] : const <PlayingCard>[];
+            final width = box.maxWidth;
+            final cardW = clampD(width / 6.2, 44, 74);
+            final h = PlayingCardView.heightFor(cardW);
+            if (hand.isEmpty) return SizedBox(height: h + 12);
+            final step = hand.length == 1
+                ? 0.0
+                : math.min(cardW + 6, (width - cardW) / (hand.length - 1));
+            final total = cardW + step * (hand.length - 1);
+            return SizedBox(
+              height: h + 12,
+              width: width,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  for (int i = 0; i < hand.length; i++)
+                    AnimatedPositioned(
+                      key: ValueKey(hand[i].id),
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      left: (width - total) / 2 + i * step,
+                      top: legal.contains(hand[i]) ? 0 : 12,
+                      child: GestureDetector(
+                        onTap: () {
+                          if (!_yourPlay) return;
+                          if (!legal.contains(hand[i])) {
+                            final led = c.led!;
+                            _showSnack(
+                                'You must follow ${led.isCourt ? 'with a Court Card' : led.suit.symbol}',
+                                Palette.feltDeep);
+                            return;
+                          }
+                          _playCard(_you, hand[i]);
+                        },
+                        child: PlayingCardView(
+                          card: hand[i],
+                          width: cardW,
+                          dimmed: yourTurn && !legal.contains(hand[i]),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// The trick on the table: each card glides in from the seat that played
+  /// it, and once won the trick sweeps off to the winner.
+  List<Widget> _trickLayer(_TableGeometry geo) {
+    if (!_digital || _cards.dealId != game.dealId) return [];
+    final c = _cards;
+    final trick = _lastTrick;
+    final seats = trick?.seats ?? c.currentSeats;
+    final cards = trick?.cards ?? c.current;
+    if (cards.isEmpty) return [];
+    final number = trick != null ? c.tricks.length - 1 : c.tricks.length;
+    final n = c.players;
+    final cardW = clampD(geo.cardWidth * 0.6, 44, 66);
+    final cardH = PlayingCardView.heightFor(cardW);
+    final spread = math.min(cardW + 10, (geo.size.width - 2 * geo.seatExtent) / n);
+    return [
+      for (int i = 0; i < cards.length; i++)
+        () {
+          final target =
+              geo.center + Offset((i - (n - 1) / 2) * spread, 0);
+          final seat = seats[i];
+          final view = PlayingCardView(
+            card: cards[i],
+            width: cardW,
+            glow: trick != null && trick.winner == seat,
+          );
+          Offset topLeft(Offset p) => p - Offset(cardW / 2, cardH / 2);
+          if (trick != null && _collecting) {
+            final to = geo.seatCenter(trick.winner);
+            return TweenAnimationBuilder<double>(
+              key: ValueKey('collect-$number-${cards[i].id}'),
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 420),
+              curve: Curves.easeInCubic,
+              builder: (context, t, child) {
+                final p = topLeft(Offset.lerp(target, to, t)!);
+                return Positioned(
+                  left: p.dx,
+                  top: p.dy,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 1 - t * 0.9,
+                      child: Transform.scale(scale: 1 - 0.5 * t, child: child),
+                    ),
+                  ),
+                );
+              },
+              child: view,
+            );
+          }
+          final from = geo.seatCenter(seat);
+          return TweenAnimationBuilder<double>(
+            key: ValueKey('play-$number-${cards[i].id}'),
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 380),
+            curve: Curves.easeOutCubic,
+            builder: (context, t, child) {
+              final p = topLeft(Offset.lerp(from, target, t)!);
+              return Positioned(
+                  left: p.dx, top: p.dy, child: IgnorePointer(child: child!));
+            },
+            child: view,
+          );
+        }(),
+    ];
+  }
+
+  /// Plays your part, for tests: picks, announces or plays the first
+  /// thing allowed. Returns false when there's nothing for you to do.
+  @visibleForTesting
+  bool debugYourMove() {
+    if (_yourPick) {
+      final t = game.tasks.firstWhere(
+          (t) => t.assignedPlayerIndex == null && game.canTake(t, _you),
+          orElse: () => game.tasks.firstWhere((t) => t.assignedPlayerIndex == null));
+      _assignTask(t, game.canTake(t, _you) ? _you : (_you + 1) % game.players.length);
+      return true;
+    }
+    if (_yourPlay) {
+      _playCard(_you, _cards.legalFor(_you).first);
+      return true;
+    }
+    return false;
+  }
+
   // ---------------------------------------------------------------- actions
 
   void _startGame(int count, int target, List<String> names, GameMode mode,
-      {bool surprise = false, bool roles = true, int? chapter}) {
+      {bool surprise = false,
+      bool roles = true,
+      bool digital = false,
+      int? chapter}) {
     if (chapter != null) {
       target = chronicle[chapter].points;
       _progress.startAttempt(chapter);
@@ -581,6 +1129,17 @@ class _HomePageState extends State<HomePage>
         ]
         ..seatCourtiers()
         ..addTasksUntilTarget(count, target);
+      if (digital) {
+        // You sit at the bottom; bots take the other seats.
+        game.cards = MatchState(players: count, target: target);
+        for (int i = 0; i < count; i++) {
+          game.players[i].name = i == _you
+              ? 'You'
+              : game.hasRoles
+                  ? game.courtiers[i].title
+                  : 'Bot ${i + 1}';
+        }
+      }
       _resetTable();
       _saved = null;
     });
@@ -696,6 +1255,41 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onDragEnd(Task t) {
+    if (_digital) {
+      final p = _toPx(_pos[t]!);
+      final seat = _geo.seatAt(p);
+      final kingsCommand = game.decree == Decree.kingsCommand;
+      final allowed = _yourPick &&
+          t.assignedPlayerIndex == null &&
+          seat != null &&
+          (seat == _you || kingsCommand) &&
+          game.canTake(t, seat);
+      if (!allowed) {
+        setState(() {
+          _dragging = null;
+          _hoverSeat = null;
+          _layoutOwned();
+        });
+        if (seat != null) {
+          _showSnack(
+              !_yourPick
+                  ? 'Wait for your turn to pick'
+                  : t.assignedPlayerIndex != null
+                      ? 'Tasks stay with whoever took them'
+                      : !game.canTake(t, seat)
+                          ? "The King can't take this task"
+                          : 'Take tasks onto your own seat',
+              Palette.feltDeep);
+        }
+        return;
+      }
+      setState(() {
+        _dragging = null;
+        _hoverSeat = null;
+      });
+      _assignTask(t, seat);
+      return;
+    }
     final charged = game.chargeSeat;
     if (game.isCharged(t) && charged != null) {
       setState(() {
@@ -1201,7 +1795,19 @@ class _HomePageState extends State<HomePage>
             ],
           ),
         ),
-        actions: [
+        actions: _digital
+            ? [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(foregroundColor: Palette.ink),
+                  child: Text(task.isCompleted
+                      ? 'Done! Close'
+                      : task.isFailed
+                          ? 'Failed. Close'
+                          : 'The cards will decide. Close'),
+                ),
+              ]
+            : [
           OutlinedButton.icon(
             onPressed: () {
               _setTaskStatus(task, TaskStatus.failed);
@@ -1248,7 +1854,10 @@ class _HomePageState extends State<HomePage>
   void _startFromSetup(_SetupResult r) {
     setState(() => _setupArgs = null);
     _startGame(r.count, r.target, r.names, r.mode,
-        surprise: r.surprise, roles: r.roles, chapter: r.chapter);
+        surprise: r.surprise,
+        roles: r.roles,
+        digital: r.digital,
+        chapter: r.chapter);
   }
 
   Widget _buildSetupPanel() {
@@ -1265,11 +1874,7 @@ class _HomePageState extends State<HomePage>
       canCancel: true,
       onCancel: _closeSetup,
       onStart: _startFromSetup,
-      onPlayCards: (players, target) {
-        _closeSetup();
-        Navigator.of(context).push(MaterialPageRoute<void>(
-            builder: (_) => PlayPage(players: players, target: target)));
-      },
+      digital: game.digital,
     );
   }
 
@@ -1346,7 +1951,12 @@ class _HomePageState extends State<HomePage>
           children: [
             Positioned.fill(
               child: _inGame
-                  ? _buildTable()
+                  ? _digital
+                      ? Column(children: [
+                          Expanded(child: _buildTable()),
+                          _buildHand(),
+                        ])
+                      : _buildTable()
                   : Stack(
                       children: [
                         Positioned.fill(
@@ -1650,12 +2260,12 @@ class _HomePageState extends State<HomePage>
                             i < game.loyalty.length
                         ? game.loyalty[i]
                         : null,
-                    spoke: _choosingKing ? null : game.spoke[i],
+                    spoke: _choosingKing || _digital ? null : game.spoke[i],
                     // While choosing the King a tap crowns. During play a
                     // tap opens the courtier's card, or with no roles just
                     // flips the card-reveal token.
                     onTap: _choosingKing
-                        ? () => _crownKing(i)
+                        ? (_digital ? null : () => _crownKing(i))
                         : game.hasRoles
                             ? () => _showCourtier(i)
                             : () => _toggleSpoke(i),
@@ -1695,6 +2305,7 @@ class _HomePageState extends State<HomePage>
             ),
           // "Play!" once every task has an owner.
           Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
+          ..._trickLayer(geo),
           if (game.outcome != RoundOutcome.inProgress)
             Positioned.fill(child: _buildOutcomeOverlay()),
         ],
@@ -2049,7 +2660,9 @@ class _HomePageState extends State<HomePage>
                   color: Colors.white)),
           const SizedBox(height: 6),
           Text(
-            game.isDynasty
+            _digital
+                ? 'The cards are dealt. Whoever holds the K♠ will be crowned.'
+                : game.isDynasty
                 ? 'Tap a seat to crown them. The King takes the K♠ into their hand before every deal, and rules until they fall.'
                 : playerCount == 2
                 ? 'Tap their seat to crown the King and deal the tasks. If the Dummy has it, choose a King together.'
@@ -2147,7 +2760,7 @@ class _HomePageState extends State<HomePage>
                           child: TableCard(
                             task: t,
                             points: _points(t),
-                            text: t.cardText(playerCount),
+                            text: _cardText(t),
                             width: cw,
                             height: ch,
                             owner: owner == null ? null : game.players[owner],
@@ -3290,11 +3903,11 @@ Future<void> showRulesDialog(BuildContext context) {
     (
       'Playing the cards on screen',
       [
-        'Choose Play the cards to play without a deck: you take one seat and bot courtiers take the rest. They play with you, not against you.',
-        'The app deals, finds the King (whoever holds the K♠), and enforces the rules: you can only play cards you are allowed to. Cards you may play stand up in your hand.',
-        'Tap a task in the middle to take it when it\'s your pick. Tasks mark themselves done or failed as the tricks fall.',
-        'With 3, 5 or 6 players, a few cards are set aside unseen so everyone has the same number. Tasks that need a set-aside card are never dealt.',
-        'The bots know where every card is, like a table of friends who talk too much. Card reveals, seals and decrees aren\'t in the on-screen game yet.',
+        'Any way to play works without a deck: turn on On-screen cards when you set up. You take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
+        'The app deals, and whoever holds the K♠ is crowned. In a Dynasty the reigning King takes the K♠ into their hand each round.',
+        'When it\'s your pick, drag a task onto your seat. Then tap a card in your hand to play it: cards you may play stand up.',
+        'Tasks, seals and traitors\' schemes are judged by the cards as the tricks fall. Decrees apply as usual.',
+        'With 3, 5 or 6 players a few cards are set aside unseen so everyone has the same number. Card reveals aren\'t used on screen, and powers are marked by hand.',
       ]
     ),
     (
@@ -3566,6 +4179,7 @@ typedef _SetupResult = ({
   GameMode mode,
   bool surprise,
   bool roles,
+  bool digital,
   int? chapter,
 });
 
@@ -3586,7 +4200,7 @@ class _SetupPanel extends StatefulWidget {
     required this.canCancel,
     required this.onCancel,
     required this.onStart,
-    required this.onPlayCards,
+    required this.digital,
   });
 
   final List<Player> players;
@@ -3601,8 +4215,8 @@ class _SetupPanel extends StatefulWidget {
   final VoidCallback onCancel;
   final ValueChanged<_SetupResult> onStart;
 
-  /// Starts a card game on screen against bots: players, points.
-  final void Function(int players, int target) onPlayCards;
+  /// Start with on-screen cards switched on.
+  final bool digital;
 
   @override
   State<_SetupPanel> createState() => _SetupPanelState();
@@ -3639,7 +4253,7 @@ class _SetupPanelState extends State<_SetupPanel> {
 
   /// Play the cards on screen against bots, instead of using the app at a
   /// real table.
-  bool digital = false;
+  late bool digital = widget.digital;
   late final controllers = [
     for (int i = 0; i < maxPlayers; i++)
       TextEditingController(
@@ -3657,10 +4271,6 @@ class _SetupPanelState extends State<_SetupPanel> {
   }
 
   void _start() {
-    if (digital) {
-      widget.onPlayCards(count, target);
-      return;
-    }
     widget.onStart((
       count: count,
       target: mode == GameMode.dynasty ? dynastyStartingPoints : target,
@@ -3673,6 +4283,7 @@ class _SetupPanelState extends State<_SetupPanel> {
       mode: mode,
       surprise: surprise,
       roles: roles,
+      digital: digital,
       chapter: mode == GameMode.chronicle ? chapter : null,
     ));
   }
@@ -3705,26 +4316,10 @@ class _SetupPanelState extends State<_SetupPanel> {
             child: _ModeTile(
               title: _modeInfo[m]!.$1,
               description: _modeInfo[m]!.$2,
-              selected: !digital && mode == m,
-              onTap: () => setState(() {
-                mode = m;
-                digital = false;
-              }),
+              selected: mode == m,
+              onTap: () => setState(() => mode = m),
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _ModeTile(
-            title: 'Play the cards',
-            description:
-                'No deck needed: play on screen with bot courtiers. The app deals, keeps the rules and checks every task as the tricks fall.',
-            selected: digital,
-            onTap: () => setState(() {
-              digital = true;
-              if (count < 3) count = 3;
-            }),
-          ),
-        ),
       ],
     );
   }
@@ -3747,13 +4342,28 @@ class _SetupPanelState extends State<_SetupPanel> {
                   n: n, selected: count == n, onTap: () => setState(() => count = n)),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
+        // With a real deck, or played on screen with bot courtiers.
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: digital,
+          activeThumbColor: Palette.gold,
+          onChanged: (v) => setState(() {
+            digital = v;
+            if (digital && count < 3) count = 3;
+          }),
+          title: const Text('On-screen cards', style: TextStyle(fontSize: 16)),
+          subtitle: const Text(
+              'No deck needed: you play on screen with bot courtiers. The app deals, keeps the rules and checks every task.',
+              style: TextStyle(color: Colors.white70)),
+        ),
+        const SizedBox(height: 6),
         // Room is kept for the hint so nothing jumps when it appears.
         SizedBox(
           height: 66,
           child: Text(
             digital
-                ? 'You take one seat. Bots play the rest, and play with you, not against you.'
+                ? 'You take the bottom seat. Bots play the rest, with you, not against you.'
                 : count == 2
                 ? 'Two players add a third hand, the Dummy, which the King plays. Tasks use the 3-player difficulty.'
                 : mode == GameMode.dynasty && count == 3
@@ -3814,7 +4424,7 @@ class _SetupPanelState extends State<_SetupPanel> {
       );
 
   Widget _finalStep() {
-    switch (digital ? GameMode.free : mode) {
+    switch (mode) {
       case GameMode.chronicle:
         return Column(
           key: const ValueKey('chapter'),
@@ -3885,8 +4495,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             ),
             const Text('Higher targets mean more or harder tasks.',
                 style: TextStyle(color: Colors.white70)),
-            // On-screen games keep to plain rounds for now.
-            if (!digital) ...[
+            ...[
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -3984,9 +4593,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                   onPressed: _next,
                   child: Text(maxLines: 1, overflow: TextOverflow.ellipsis, !last
                       ? 'Next'
-                      : digital
-                          ? 'Deal the cards'
-                          : mode == GameMode.dynasty
+                      : mode == GameMode.dynasty
                               ? 'Begin the reign'
                               : 'Deal tasks'),
                   ),

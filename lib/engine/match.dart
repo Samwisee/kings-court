@@ -104,6 +104,13 @@ class MatchState {
   Phase phase = Phase.picking;
   bool? won;
 
+  /// When the cards sit under a table game: which deal they belong to,
+  /// any extra rule on who may take what (exile, traitors), and the
+  /// numbers announced for "exactly X" tasks, by task.
+  int dealId = -1;
+  bool Function(int task, int seat)? takeRule;
+  Map<String, int> announced = {};
+
   int get totalTricks => 40 ~/ players;
 
   Set<PlayingCard> get inPlay =>
@@ -119,7 +126,8 @@ class MatchState {
 
   bool canTake(int task, int seat) =>
       tasks[task].owner == null &&
-      !(tasks[task].task.kingCantTake && seat == king);
+      !(tasks[task].task.kingCantTake && seat == king) &&
+      (takeRule?.call(task, seat) ?? true);
 
   int tricksWon(int seat) => tricks.where((t) => t.winner == seat).length;
 
@@ -164,6 +172,65 @@ class MatchState {
       total += points;
     }
     return drawn;
+  }
+
+  /// Deals a round for a table game. [accept] can refuse a deal (say, one
+  /// that makes a task impossible); [king] keeps a reigning King, who takes
+  /// the K♠ into their hand; [mayRule] says who may hold the K♠ otherwise.
+  void dealFor(int dealId, Random rand,
+      {int? king,
+      bool Function(int seat)? mayRule,
+      bool Function(List<List<PlayingCard>> hands, Set<PlayingCard> inPlay)?
+          accept}) {
+    this.dealId = dealId;
+    for (int attempt = 0; attempt < 80; attempt++) {
+      final d = deal(players, rand);
+      hands = d.hands;
+      setAside = d.setAside;
+      if (accept == null || accept(hands, inPlay)) break;
+    }
+    var holder = hands.indexWhere((h) => h.contains(PlayingCard.king));
+    final want = king ??
+        (mayRule == null || mayRule(holder)
+            ? holder
+            : List.generate(players, (i) => i)
+                .where(mayRule)
+                .fold<int?>(null, (a, i) => a ?? i));
+    if (want != null && want != holder) {
+      // The K♠ goes to the King; a card of theirs goes the other way.
+      final swap = hands[want][rand.nextInt(hands[want].length)];
+      hands[want].remove(swap);
+      hands[holder].remove(PlayingCard.king);
+      hands[want].add(PlayingCard.king);
+      hands[holder].add(swap);
+      hands[want].sort();
+      hands[holder].sort();
+      holder = want;
+    }
+    this.king = holder;
+    leader = holder;
+    tricks = [];
+    current = [];
+    currentSeats = [];
+    announced = {};
+    won = null;
+  }
+
+  /// Plays a card with no checks beyond the rules of the trick. Returns the
+  /// trick when this card finished one.
+  Trick? playCard(int seat, PlayingCard card) {
+    if (seat != turn || !legalFor(seat).contains(card)) return null;
+    hands[seat].remove(card);
+    currentSeats.add(seat);
+    current.add(card);
+    if (current.length < players) return null;
+    final w = currentSeats[winningPlay(current)];
+    final trick = Trick(leader, currentSeats, current, w);
+    tricks.add(trick);
+    current = [];
+    currentSeats = [];
+    leader = w;
+    return trick;
   }
 
   // -------------------------------------------------------------- actions
@@ -286,6 +353,8 @@ class MatchState {
         'current': [for (final c in current) c.id],
         'phase': phase.index,
         'won': won,
+        'dealId': dealId,
+        'announced': announced,
       };
 
   static MatchState fromJson(Map<String, dynamic> j) {
@@ -318,6 +387,9 @@ class MatchState {
       ..currentSeats = List<int>.from(j['currentSeats'] as List)
       ..current = cards(j['current'] as List)
       ..phase = Phase.values[j['phase'] as int]
-      ..won = j['won'] as bool?;
+      ..won = j['won'] as bool?
+      ..dealId = (j['dealId'] as int?) ?? -1
+      ..announced =
+          Map<String, int>.from((j['announced'] as Map?) ?? const {});
   }
 }

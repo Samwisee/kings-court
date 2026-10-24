@@ -12,8 +12,6 @@ import 'package:kings_court/story.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/widgets.dart';
 import 'package:kings_court/engine/match.dart';
-import 'package:kings_court/play/controller.dart';
-import 'package:kings_court/play/play_page.dart';
 
 void setPhoneSize(WidgetTester tester) {
   tester.view.physicalSize = const Size(1170, 2532); // iPhone-sized
@@ -822,56 +820,53 @@ void main() {
     expect(chronicle.every((c) => c.seals == 0 || c.seals >= 2), isTrue);
   });
 
-  testWidgets('Play the cards: deal, pick, play a round against bots',
-      (tester) async {
-    setPhoneSize(tester);
-    MatchController.botDelay = const Duration(milliseconds: 1);
-    MatchController.trickPause = const Duration(milliseconds: 1);
-    await tester.pumpWidget(const TheKingsCourtApp());
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Play the cards'));
-    await tester.tap(find.text('Play the cards'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('3').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Deal the cards'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byType(PlayPage), findsOneWidget);
+  for (final mode in ['Free play', 'Dynasty']) {
+    testWidgets('On-screen cards play a whole $mode round', (tester) async {
+      setPhoneSize(tester);
+      HomePageTestHooks.fast();
+      await tester.pumpWidget(const TheKingsCourtApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Play'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(mode));
+      await tester.tap(find.text(mode));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('On-screen cards'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Deal tasks'));
+      await tester.pump();
 
-    final match = (tester.state(find.byType(PlayPage)) as dynamic).match
-        as MatchController;
-    match.bot.budget = 30;
-    for (int i = 0; i < 600 && match.state.phase != Phase.roundOver; i++) {
-      await tester.pump(const Duration(milliseconds: 20));
-      if (find.text('Announce').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Announce'));
-        await tester.pump();
-      } else if (match.yourPick) {
-        final s = match.state;
-        final pick = List.generate(s.tasks.length, (i) => i)
-            .firstWhere((i) => s.canTake(i, MatchController.human));
-        match.send(PickTask(MatchController.human, pick));
-      } else if (match.yourPlay) {
-        match.send(PlayCard(MatchController.human,
-            match.state.legalFor(MatchController.human).first));
+      final state = tester.state(find.byType(HomePage)) as dynamic;
+      final game = state.game as GameState;
+      expect(game.digital, isTrue);
+      expect(game.players.first.name, 'You');
+      for (int i = 0;
+          i < 3000 && game.outcome == RoundOutcome.inProgress;
+          i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+        if (find.text('So it begins').evaluate().isNotEmpty) {
+          await tester.tap(find.text('So it begins'));
+        } else if (find.text('So be it').evaluate().isNotEmpty) {
+          await tester.tap(find.text('So be it'));
+        } else if (find.text('Announce').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Announce'));
+        } else if (find.text('Got it').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Got it').first);
+        } else {
+          state.debugYourMove();
+        }
       }
-    }
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(match.state.phase, Phase.roundOver);
-    expect(find.text('Next round'), findsOneWidget);
-    // Leave without waiting on any timers.
-    await tester.tap(find.text('Leave the table'));
-    await tester.pumpAndSettle();
-    expect(find.byType(PlayPage), findsNothing);
-  });
+      expect(game.outcome, isNot(RoundOutcome.inProgress));
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
 
   test('Roman numerals for reigns', () {
     expect([1, 2, 4, 9, 14].map(roman), ['I', 'II', 'IV', 'IX', 'XIV']);

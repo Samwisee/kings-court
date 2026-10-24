@@ -97,6 +97,9 @@ class Bot {
   /// 1 for each playout where all are done, plus a little for each task
   /// done in the ones that fall short. With [freeX], "exactly X" tasks
   /// count as done whatever X turns out to be (it's announced later).
+  double score(MatchState s, Map<int, int> assigned, int playouts) =>
+      _scoreOf(s, assigned, playouts);
+
   double _scoreOf(MatchState s, Map<int, int> assigned, int playouts,
       {(int, PlayingCard)? first, bool freeX = false}) {
     double total = 0;
