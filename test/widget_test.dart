@@ -214,7 +214,9 @@ void main() {
     // Give cards alternately to the bottom seat and its left neighbour.
     final cards = find.byType(TableCard);
     final total = tester.widgetList(cards).length;
-    final count = total < 6 ? total : 6;
+    // Four is enough to stack up; the test font makes cards larger than
+    // on a phone, so more can leave no room at all.
+    final count = total < 4 ? total : 4;
     for (int n = 0; n < count; n++) {
       final card = freeCard(tester, (_) => true);
       final seat = tester.getCenter(find.byType(SeatToken).at(n.isEven ? 0 : 1));
