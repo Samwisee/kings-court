@@ -731,6 +731,10 @@ class _HomePageState extends State<HomePage>
     if (!_choosingKing && !_decreePending && _dealtFor != game.dealId) {
       _dealtFor = game.dealId;
     }
+    // Solo Dynasty: you are crowned in the throne room, not at the table.
+    if (_choosingKing && game.solo) {
+      game.setKing(_you);
+    }
     if (_choosingKing && _crowning == null && _crownTimer == null) {
       // Long live the King first; the tasks are shuffled out after.
       _crownTimer = Timer(const Duration(milliseconds: 350), () {
@@ -3307,11 +3311,8 @@ class _HomePageState extends State<HomePage>
                     : null) is Widget
                 ? KeyedSubtree(
                     key: const ValueKey('set'),
-                    // Each scene fades into the next on the same set.
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 350),
-                      child: _throneRoom()!,
-                    ),
+                    // The same set, scene after scene: the court stays put.
+                    child: _throneRoom()!,
                   )
                 : const SizedBox.shrink(key: ValueKey('no-set')),
           ),
@@ -4301,9 +4302,10 @@ class _HomePageState extends State<HomePage>
     final court = List.of(game.court);
     final figures = <HallFigure>[];
     final lines = <HallLine>[];
-    HallFigure add(Courtier c, {int enterAt = 0, int? exitAt, Color? color}) {
+    HallFigure add(Courtier c,
+        {int enterAt = 0, int? exitAt, Color? color, bool enters = false}) {
       final f = HallFigure(c.name, c, color ?? game.colorOf(c),
-          enterAt: enterAt, exitAt: exitAt);
+          enterAt: enterAt, exitAt: exitAt, enters: enters);
       figures.add(f);
       return f;
     }
@@ -4327,11 +4329,13 @@ class _HomePageState extends State<HomePage>
         herald(n.text);
       }
       final arrived = {for (final n in game.courtNews) if (n.arrived) n.role};
+      // At a coronation everyone makes their entrance; otherwise only
+      // newcomers do.
       for (final c in court) {
-        if (!arrived.contains(c)) add(c);
+        if (!arrived.contains(c)) add(c, enters: t.arc == 'crown');
       }
       for (final c in court.where(arrived.contains)) {
-        add(c, enterAt: lines.length);
+        add(c, enterAt: lines.length, enters: true);
         say(c, introductions[c]!);
         king(kingReplies[c]!);
       }
@@ -4352,6 +4356,12 @@ class _HomePageState extends State<HomePage>
           say(c, war && rand.nextBool() ? warChatter[c]! : pool[rand.nextInt(pool.length)]);
         }
         herald(t.story);
+        // Someone has an opinion on it, as they always do.
+        final others = court.where((c) => c != t.house).toList();
+        if (others.isNotEmpty) {
+          final c = others[rand.nextInt(others.length)];
+          say(c, newsQuips[c]!);
+        }
       }
       final charged = game.chargeSeat;
       if (charged != null && charged < game.courtiers.length) {
@@ -4440,10 +4450,22 @@ class _HomePageState extends State<HomePage>
         if (!d.audience || c == d.about) add(c);
       }
       final deciding = _step == _DynastyStep.dilemma;
+      // Someone from beyond the court comes in to bring their matter, and
+      // leaves once you've ruled.
+      final visitorId = 'visitor-${d.title}';
+      if (d.speaker != null && d.about == null) {
+        figures.add(HallFigure(visitorId, null, const Color(0xFF7A5A3A),
+            name: d.speaker!.split(',').first,
+            enters: true,
+            exitAt: deciding ? null : 1 << 20));
+      }
       if (deciding) {
         final bringer = d.about != null && court.contains(d.about) ? d.about : null;
         if (bringer != null) {
           say(bringer, d.story);
+        } else if (d.speaker != null && d.about == null) {
+          herald('${d.speaker} is shown in.');
+          lines.add(HallLine(d.story, who: visitorId, name: d.speaker));
         } else if (d.speaker != null) {
           herald('${d.speaker}:\n${d.story}');
         } else {
@@ -4463,6 +4485,23 @@ class _HomePageState extends State<HomePage>
               .replaceAll('{other}', other)
               .replaceAll('{Other}', b.courtier.title);
           say(a.courtier, line, mood: CharacterMood.angry, side: -1);
+          // ...who gives as good as they get.
+          say(b.courtier,
+              counters[b.courtier]!
+                  .replaceAll('{other}', a.courtier.title.replaceFirst('The', 'the')),
+              mood: CharacterMood.angry,
+              side: 1);
+          // And someone on the side lines can't keep quiet.
+          final idle = court
+              .where((c) => !pleas.any((p) => p.courtier == c))
+              .toList();
+          if (idle.isNotEmpty && rand.nextBool()) {
+            final c = idle.contains(Courtier.jester)
+                ? Courtier.jester
+                : idle[rand.nextInt(idle.length)];
+            final pool = asides[c]!;
+            say(c, pool[rand.nextInt(pool.length)]);
+          }
           king('Enough. I have heard you both.');
         }
         HallFigure? figOf(Courtier c) =>
@@ -4488,6 +4527,15 @@ class _HomePageState extends State<HomePage>
         final ruled = _lastChoice;
         if (ruled != null) {
           king(d.audience ? ruled.label : '${ruled.label}. That is my will.');
+          // The visitor takes your answer, and goes.
+          final replies = d.replies;
+          if (replies != null && d.speaker != null && d.about == null) {
+            final first = identical(ruled, d.a);
+            lines.add(HallLine(first ? replies.$1 : replies.$2,
+                who: visitorId,
+                name: d.speaker,
+                mood: first ? CharacterMood.pleased : CharacterMood.angry));
+          }
         }
         herald(_verdictStory);
         // The council takes your ruling, each in their own words.
@@ -4521,8 +4569,8 @@ class _HomePageState extends State<HomePage>
       }
     }
     return ThroneRoom(
-      key: ValueKey(
-          'hall-${game.dealId}-$news-${_step.name}-$_dilemma-$_mattersLeft'),
+      key: const ValueKey('hall'),
+      scene: 'hall-${game.dealId}-$news-${_step.name}-$_dilemma-$_mattersLeft',
       title: title,
       figures: figures,
       lines: lines,

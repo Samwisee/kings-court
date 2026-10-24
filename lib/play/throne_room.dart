@@ -11,10 +11,20 @@ import '../widgets.dart';
 /// Someone in the throne room.
 class HallFigure {
   const HallFigure(this.id, this.role, this.color,
-      {this.enterAt = 0, this.exitAt});
+      {this.enterAt = 0, this.exitAt, this.enters = false, this.name});
   final String id;
-  final Courtier role;
+
+  /// Their courtier role, or null for a visitor to the court.
+  final Courtier? role;
   final Color color;
+
+  /// Make an entrance when first seen (otherwise they're simply there).
+  final bool enters;
+
+  /// What they're called, if not their courtier title.
+  final String? name;
+
+  String get label => name ?? role!.short;
 
   /// The line at which they walk in (0: there from the start, walking in
   /// as the scene opens).
@@ -70,7 +80,12 @@ class ThroneRoom extends StatefulWidget {
     this.wounds = 0,
     this.extra,
     this.fast = false,
+    this.scene = '',
   });
+
+  /// Which scene this is: a new one starts the talk again, but the court
+  /// stays where it is.
+  final String scene;
 
   final String title;
   final List<HallFigure> figures;
@@ -119,6 +134,17 @@ class _ThroneRoomState extends State<ThroneRoom> {
       setState(() => _nudge[f.id] = Offset(
           (_rand.nextDouble() - 0.5) * 0.08, (_rand.nextDouble() - 0.5) * 0.05));
     });
+  }
+
+  @override
+  void didUpdateWidget(ThroneRoom old) {
+    super.didUpdateWidget(old);
+    if (old.scene != widget.scene) {
+      _line = 0;
+      _done = widget.lines.isEmpty;
+      _sides.clear();
+      if (!_done) _schedule();
+    }
   }
 
   @override
@@ -246,7 +272,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
           Widget token = Column(mainAxisSize: MainAxisSize.min, children: [
             _token(f, size),
             const SizedBox(height: 2),
-            Text(f.role.short,
+            Text(f.label,
                 style: const TextStyle(fontSize: 12, color: Colors.white70)),
           ]);
           if (f.id == speaking && line != null) {
@@ -266,12 +292,18 @@ class _ThroneRoomState extends State<ThroneRoom> {
             width: 80,
             child: CharacterToken(
               key: ValueKey('life-${f.id}-${leaving ? 'out' : 'in'}'),
-              entrance: leaving ? null : entranceOf(f.role),
+              // Only newcomers make an entrance; the rest of the court
+              // stays put from scene to scene.
+              entrance: leaving || !f.enters
+                  ? null
+                  : f.role == null
+                      ? Entrance.march
+                      : entranceOf(f.role!),
               exit: leaving ? Exit.walk : null,
               size: size,
               phase: f.id.hashCode % 100 / 100,
               delay: Duration(
-                  milliseconds: f.enterAt == 0 && !leaving
+                  milliseconds: f.enters && f.enterAt == 0 && !leaving
                       ? 200 + 260 * widget.figures.indexOf(f)
                       : 0),
               child: token,
@@ -281,12 +313,24 @@ class _ThroneRoomState extends State<ThroneRoom> {
     ];
   }
 
-  Widget _token(HallFigure f, double size) => ShapedToken(
-        shape: f.role.shape,
+  Widget _token(HallFigure f, double size) => f.role == null
+      // A visitor: no house, no sigil.
+      ? Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: f.color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Palette.gold, width: 2),
+          ),
+          child: Icon(Icons.person_rounded, size: size * 0.62, color: Colors.white),
+        )
+      : ShapedToken(
+        shape: f.role!.shape,
         size: size,
         color: f.color,
         ring: Palette.gold,
-        child: OutlinedLabel(seatLabels([Player(f.role.title, color: f.color)]).first,
+        child: OutlinedLabel(seatLabels([Player(f.role!.title, color: f.color)]).first,
             fontSize: size * 0.36, strokeWidth: size * 0.07),
       );
 
@@ -312,7 +356,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
               : fig == null
                   ? _HeraldScroll(line.text)
                   : SpeechBubble(line.text,
-                      who: line.name ?? fig.role.title, tailBelow: true),
+                      who: line.name ?? fig.name ?? fig.role!.title, tailBelow: true),
         ),
       ),
     );
@@ -441,8 +485,9 @@ class _ChoiceButton extends StatelessWidget {
                 const SizedBox(height: 6),
                 Wrap(spacing: 4, children: [
                   for (final b in c.backers)
+                    if (b.role != null)
                     ShapedToken(
-                        shape: b.role.shape,
+                        shape: b.role!.shape,
                         size: 20,
                         color: b.color,
                         ring: Palette.ink,

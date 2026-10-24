@@ -239,28 +239,28 @@ class Plea {
 /// is the choice, in lower case.
 const pleaLines = <Courtier, List<String>>{
   Courtier.duke: [
-    'Majesty, {choice}. Ashcombe has guarded this realm for nine generations. Heed me.',
-    'Old blood counsels you, Majesty: {choice}.',
+    'Majesty, {choice}. Ashcombe has guarded this realm for nine generations, and we did not do it by being timid.',
+    'Old blood counsels you, Majesty: {choice}. My father would have said the same, and louder.',
   ],
   Courtier.bishop: [
-    'Heaven\u2019s will is plain, Majesty: {choice}.',
-    'I have prayed on it, Majesty. {Choice}.',
+    'Heaven’s will is plain, Majesty: {choice}. I have prayed on it, and I rarely pray for nothing.',
+    'Think of your soul, Majesty, and {choice}. The rest of us will be judged too, but you first.',
   ],
   Courtier.general: [
-    '{Choice}, Majesty. Anything else is weakness.',
-    'A soldier\u2019s advice, Majesty: {choice}, and be done with it.',
+    '{Choice}, Majesty. Anything else is weakness, and weakness gets men killed.',
+    'A soldier’s advice, Majesty: {choice}, and be done with it. Every day we dither, someone sharpens a knife.',
   ],
   Courtier.spymaster: [
-    'I hear things, Majesty. {Choice}, and quietly.',
-    'Trust me in this, Majesty, if in nothing else: {choice}.',
+    'I hear things, Majesty. Things that tell me: {choice}. Quietly, if you can manage it.',
+    'Trust me in this, Majesty, if in nothing else: {choice}. I would tell you why, but then I would have to stop trusting you.',
   ],
   Courtier.merchant: [
-    'Think of the ledgers, Majesty. {Choice}.',
-    'Every coin agrees with me, Majesty: {choice}.',
+    'Think of the ledgers, Majesty. {Choice}. Sentiment is lovely, but it doesn’t pay for anything.',
+    'Every coin I own agrees with me, Majesty: {choice}. And I own a great many coins.',
   ],
   Courtier.jester: [
-    'Oh, {choice}, Majesty! What could possibly go wrong?',
-    'Even a fool can see it, Majesty: {choice}.',
+    'Oh, {choice}, Majesty! What could possibly go wrong? Don’t answer that.',
+    'Even a fool can see it, Majesty: {choice}. And I should know. I am the fool.',
   ],
   Courtier.king: ['{Choice}.'],
 };
@@ -287,7 +287,8 @@ class Dilemma {
       this.requires = const [],
       this.forbids = const [],
       this.pleas = const [],
-      this.audience = false});
+      this.audience = false,
+      this.replies});
   final String title;
   final String story;
   final Choice a;
@@ -300,6 +301,9 @@ class Dilemma {
   /// A private audience: just you and the courtier it's [about], and the
   /// choices are what you say to them.
   final bool audience;
+
+  /// What a visitor ([speaker]) says to the first choice and the second.
+  final (String, String)? replies;
   final Courtier? about;
 
   /// A matter for the whole court: every loyal courtier votes, and the
@@ -544,6 +548,93 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.duke, -2), Loyalty(Courtier.spymaster, 1)]),
     followUp: true,
   ),
+  // --------------------------------------------------------------- visitors
+  // Petitioners who come before the throne with a matter of their own.
+  Dilemma(
+    'The Farmers of the Vale',
+    'Majesty, the Duke’s deer eat our crops, and we may not touch them on pain of hanging. Let us hunt them, or our children starve this winter.',
+    Choice('Let them hunt', 'The Vale eats venison all winter. The Duke counts his deer, and frowns.',
+        [Loyalty(Courtier.duke, -1), AllLoyalty(1)]),
+    Choice('The deer are the Duke’s', 'The farmers trudge home. The Duke sends you a haunch, with thanks.',
+        [Loyalty(Courtier.duke, 1), Wound(1)]),
+    speaker: 'Old Tam, a farmer of the Vale',
+    pleas: [
+      Plea(Courtier.bishop, 'Hungry children are heaven’s business, Majesty, and so they are yours.', forA: true),
+      Plea(Courtier.duke, 'Those deer are older than his farm, Majesty. Ashcombe has kept that forest for three hundred years.', forA: false),
+    ],
+    replies: ('Bless you, Majesty! The Vale won’t forget this.', 'Then we’ll eat grass, Majesty. As we always have.'),
+  ),
+  Dilemma(
+    'A Scholar from the South',
+    'I have built a machine that tells the hour without the sun, Majesty. Fund my workshop, and your kingdom will be the wonder of the age.',
+    Choice('Fund the workshop', 'Within a month, a great clock ticks above the palace gate. Everyone is late for everything anyway.',
+        [Gold(-3), AllLoyalty(1)]),
+    Choice('Send him on his way', 'The scholar packs his gears and heads for Karsk, where Varric is said to pay well.',
+        [Gold(0)]),
+    speaker: 'Master Orrin, a travelling scholar',
+    pleas: [
+      Plea(Courtier.merchant, 'Clocks sell, Majesty. Everyone wants to know exactly how late they are.', forA: true),
+      Plea(Courtier.bishop, 'Only heaven should keep the hours, Majesty. And the bells do it perfectly well.', forA: false),
+    ],
+    replies: ('You won’t regret it, Majesty! Well, not for a while.', 'Karsk, then. I hear their king is more... curious.'),
+  ),
+  Dilemma(
+    'The Masons’ Guild',
+    'My masons have not been paid in three months, Majesty. Pay them, or every chisel in the city goes down tomorrow.',
+    Choice('Pay the masons', 'The hammers ring again across the city.',
+        [Gold(-3), AllLoyalty(1)]),
+    Choice('Arrest the ringleaders', 'The guards march. The masons go back to work, and remember.',
+        [Loyalty(Courtier.general, 1), AllLoyalty(-1)]),
+    speaker: 'Gilda, master of the Masons’ Guild',
+    pleas: [
+      Plea(Courtier.bishop, 'The cathedral is half-built, Majesty. Without masons it stays that way.', forA: true),
+      Plea(Courtier.merchant, 'Pay one guild, Majesty, and every guild in the city will be at your door by Friday.', forA: false),
+    ],
+    replies: ('The guild thanks you, Majesty. The walls will stand.', 'You can lock up masons, Majesty. You can’t make them build.'),
+  ),
+  Dilemma(
+    'A Deserter from Karsk',
+    'I ran from Varric’s army, Majesty. I know where his supply camps are. All I ask in return is a roof and a new name.',
+    Choice('Take him in', 'He draws maps all night. Some of them are even accurate.',
+        [Flag('spies'), Loyalty(Courtier.spymaster, 1)]),
+    Choice('Send him back over the river', 'He is marched to the ford at dawn. Nobody watches him cross.',
+        [Loyalty(Courtier.general, 1)]),
+    speaker: 'Bran, a deserter from Karsk',
+    pleas: [
+      Plea(Courtier.spymaster, 'A gift horse, Majesty. I shall check its teeth myself.', forA: true),
+      Plea(Courtier.general, 'A man who deserts once, Majesty, deserts twice.', forA: false),
+    ],
+    replies: ('Thank you, Majesty. You won’t see me in a Karsk coat again.', 'Then I am a dead man, Majesty. Remember that I came.'),
+  ),
+  Dilemma(
+    'The Widow’s Claim',
+    'My husband died holding your border, Majesty. His lands were given to a cousin I have never met. I ask only for my home.',
+    Choice('Restore her lands', 'She goes home. The cousin goes to court, and loses.',
+        [Loyalty(Courtier.duke, -1), Loyalty(Courtier.general, 1)]),
+    Choice('The law is the law', 'She leaves without a word, and the court is quiet for a while.',
+        [Loyalty(Courtier.duke, 1), Loyalty(Courtier.general, -1)]),
+    speaker: 'Lady Wenna, a widow of the border',
+    pleas: [
+      Plea(Courtier.general, 'Her husband held the line, Majesty. The least we owe him is his roof.', forA: true),
+      Plea(Courtier.duke, 'Inheritance is the bedrock of every house, Majesty. Mine included.', forA: false),
+    ],
+    replies: ('Thank you, Majesty. He would have been proud to serve you.', 'Then the border has cost me twice.'),
+  ),
+  Dilemma(
+    'A Troupe of Players',
+    'We’ve written a play about Your Majesty’s coronation! Some say it’s a little... satirical. May we perform it in the square?',
+    Choice('Let them perform', 'The square roars with laughter. Some of it is even with you.',
+        [Loyalty(Courtier.jester, 2), AllLoyalty(1)]),
+    Choice('Burn the script', 'The script burns. Copies are somehow everywhere by morning.',
+        [Loyalty(Courtier.jester, -1), NextDecree(Decree.silence)]),
+    speaker: 'Fennick, a travelling player',
+    pleas: [
+      Plea(Courtier.jester, 'Let them, Majesty! I wrote the second act.', forA: true),
+      Plea(Courtier.bishop, 'Mockery of the crown is a sin, Majesty. Or it ought to be.', forA: false),
+    ],
+    replies: ('Your Majesty is a patron of the arts! We’ll make you look... taller.', 'Burn the script, Majesty, and they’ll only learn it by heart.'),
+  ),
+
   // ------------------------------------------------------ private audiences
   // One courtier, alone with the King. The choices are your answers.
   Dilemma(
@@ -1269,3 +1360,41 @@ const kingPrompts = [
   'And what would you have me do?',
   'I’m listening.',
 ];
+
+
+/// A courtier answering back when someone turns on them. {other} is who
+/// attacked them ("the Duke").
+const counters = <Courtier, String>{
+  Courtier.duke: 'And you, {other}, have never held anything you didn’t buy or steal.',
+  Courtier.bishop: 'I will pray for you, {other}. Clearly somebody must.',
+  Courtier.general: 'Say that to me on a battlefield, {other}.',
+  Courtier.spymaster: 'Careful, {other}. I keep notes. Very thorough notes.',
+  Courtier.merchant: 'Sticks and stones, {other}. Gold pays for both.',
+  Courtier.jester: 'Oh, {other}, you wound me. Truly. Somewhere.',
+  Courtier.king: '',
+};
+
+/// Asides from whoever isn't arguing.
+const asides = <Courtier, List<String>>{
+  Courtier.duke: ['In my father’s day we settled this with a duel.'],
+  Courtier.bishop: ['Must every council end in shouting?'],
+  Courtier.general: ['Wake me when you’ve decided.'],
+  Courtier.spymaster: ['Fascinating. Do go on, both of you.'],
+  Courtier.merchant: ['Could we settle this before supper? I have a dinner booked.'],
+  Courtier.jester: [
+    'Can we vote on lunch next? I feel strongly about lunch.',
+    'I’m writing all of this down for the play.',
+  ],
+  Courtier.king: [''],
+};
+
+/// What each courtier makes of the news when the herald reads it.
+const newsQuips = <Courtier, String>{
+  Courtier.duke: 'In my father’s day, Majesty, we’d have hanged someone by now.',
+  Courtier.bishop: 'We must pray on it, Majesty. And then, perhaps, do something.',
+  Courtier.general: 'If it needs a sword, Majesty, you know where I am.',
+  Courtier.spymaster: 'I heard about this yesterday, Majesty. I was waiting to see who else would.',
+  Courtier.merchant: 'And how much is this going to cost us, Majesty?',
+  Courtier.jester: 'Wonderful. More meetings.',
+  Courtier.king: '',
+};
