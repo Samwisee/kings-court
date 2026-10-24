@@ -260,7 +260,9 @@ class _ThroneRoomState extends State<ThroneRoom> {
       }
       final i = unsided.indexOf(f), n = unsided.length;
       final x = n == 1 ? 0.5 : 0.14 + 0.72 * i / (n - 1);
-      final arc = 0.2 + 0.06 * math.pow((x - 0.5) * 2, 2);
+      // A big court stands in two staggered rows.
+      final arc = 0.2 + 0.06 * math.pow((x - 0.5) * 2, 2) +
+          (n > 4 && i.isOdd ? 0.1 : 0);
       final nudge = _nudge[f.id] ?? Offset.zero;
       return Offset(w * (x + nudge.dx), h * (arc + nudge.dy));
     }
