@@ -30,6 +30,17 @@ void main() {
     expect(two.setAside, isNot(contains(PlayingCard.king)));
   });
 
+  test('A two-player hand is played to its end', () {
+    final m = MatchState(players: 2, target: 6)..dealFor(1, Random(4), king: 0);
+    expect(m.totalTricks, 12);
+    var guard = 0;
+    while (m.hands.any((h) => h.isNotEmpty) && guard++ < 100) {
+      final seat = m.turn;
+      m.playCard(seat, m.legalFor(seat).first);
+    }
+    expect(m.tricks, hasLength(m.totalTricks));
+  });
+
   test('Hands sort ♥ ♠ ♦ ♣, then the Court Cards', () {
     final hand = [
       PlayingCard.king, c('2♣'), c('9♦'), c('A♠'), c('5♥'), PlayingCard.joker,

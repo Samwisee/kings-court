@@ -286,7 +286,8 @@ class Dilemma {
       this.speaker,
       this.requires = const [],
       this.forbids = const [],
-      this.pleas = const []});
+      this.pleas = const [],
+      this.audience = false});
   final String title;
   final String story;
   final Choice a;
@@ -295,6 +296,10 @@ class Dilemma {
   /// What the council says to the King, for one side or the other. Matters
   /// without their own get pleas made up from who gains what.
   final List<Plea> pleas;
+
+  /// A private audience: just you and the courtier it's [about], and the
+  /// choices are what you say to them.
+  final bool audience;
   final Courtier? about;
 
   /// A matter for the whole court: every loyal courtier votes, and the
@@ -539,6 +544,81 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.duke, -2), Loyalty(Courtier.spymaster, 1)]),
     followUp: true,
   ),
+  // ------------------------------------------------------ private audiences
+  // One courtier, alone with the King. The choices are your answers.
+  Dilemma(
+    'The Duke’s Doubts',
+    'A word, Majesty, alone. The other houses laugh behind my back. Ashcombe is old, they say, and tired. Tell me they are wrong.',
+    Choice('Ashcombe is the rock this realm stands on.',
+        'The Duke stands a little straighter on his way out.',
+        [Loyalty(Courtier.duke, 2)]),
+    Choice('Then prove them wrong yourself.',
+        'The Duke bows stiffly. He will prove it, or die trying.',
+        [Loyalty(Courtier.duke, -1), Charge(Courtier.duke)]),
+    about: Courtier.duke,
+    audience: true,
+  ),
+  Dilemma(
+    'A Confession',
+    'Majesty, I have kept some of the cathedral’s alms for... safekeeping. Rather a lot of them. I thought you should hear it from me.',
+    Choice('Return every coin, and we’ll say no more.',
+        'The coins come back in a heavy chest. The Bishop is quiet for a week.',
+        [Gold(3), Loyalty(Courtier.bishop, -1)]),
+    Choice('Keep them. Heaven knows you’ve earned it.',
+        'The Bishop blesses you twice on the way out.',
+        [Loyalty(Courtier.bishop, 2), Flag('bishop_owes')]),
+    about: Courtier.bishop,
+    audience: true,
+  ),
+  Dilemma(
+    'Old Wounds',
+    'I lost three hundred men at the river ford, Majesty. Some nights I still hear them. Forgive me. I don’t know why I’m telling you this.',
+    Choice('Their names will be carved in the great hall.',
+        'Masons cut three hundred names in stone. The General reads every one.',
+        [Gold(-2), Loyalty(Courtier.general, 2)]),
+    Choice('Grief is for later, General. Drill the living.',
+        'The General salutes, and says nothing more about it. Ever.',
+        [Loyalty(Courtier.general, -1), Charge(Courtier.general)]),
+    about: Courtier.general,
+    audience: true,
+  ),
+  Dilemma(
+    'A Gift of Secrets',
+    'A gift, Majesty: the name of someone at this court who has been writing to Karsk. Shall I tell you?',
+    Choice('Tell me.',
+        'The Spymaster whispers a name. You will never look at that courtier the same way.',
+        [Loyalty(Courtier.spymaster, 1), AllLoyalty(-1), Flag('ledger')]),
+    Choice('Keep it. I would rather trust my court.',
+        'The Spymaster smiles. "As you wish, Majesty." The name stays in the dark.',
+        [Loyalty(Courtier.spymaster, -1), AllLoyalty(1)]),
+    about: Courtier.spymaster,
+    audience: true,
+  ),
+  Dilemma(
+    'A Private Loan',
+    'Between friends, Majesty: the crown is short, and I am long. Ten gold, at a very friendly rate. Barely any interest at all.',
+    Choice('Done. Bring the gold.',
+        'The gold arrives within the hour. So does the paperwork.',
+        [Gold(6), Loyalty(Courtier.merchant, 1), Points(1)]),
+    Choice('The crown is not for sale, Merchant.',
+        'The Merchant laughs, a little too loudly, and leaves.',
+        [Loyalty(Courtier.merchant, -1)]),
+    about: Courtier.merchant,
+    audience: true,
+  ),
+  Dilemma(
+    'The Fool’s Truth',
+    'Majesty, everyone laughs at my jokes but you. Am I losing my touch, or are you losing your sense of humour?',
+    Choice('Tell me another, fool.',
+        'The Jester tells you one about a bishop and a goat. You laugh until you cry.',
+        [Loyalty(Courtier.jester, 2), Wound(-1)]),
+    Choice('I am the King. I laugh when I choose.',
+        'The Jester bows very low, and doesn’t joke for a week.',
+        [Loyalty(Courtier.jester, -2)]),
+    about: Courtier.jester,
+    audience: true,
+  ),
+
   // ------------------------------------------------------------- stories
   // Each story opens with a matter anyone may face; what the King chose
   // is remembered (a Flag), and the next part comes back rounds later.
@@ -1169,3 +1249,23 @@ const taskFailed = <Courtier, String>{
   Courtier.jester: 'Oops.',
   Courtier.king: '',
 };
+
+
+/// What you say back when each courtier first introduces themselves.
+const kingReplies = <Courtier, String>{
+  Courtier.duke: 'Then let us not disappoint your ancestors, Duke.',
+  Courtier.bishop: 'Keep watching, Bishop. I intend to give you something to see.',
+  Courtier.general: 'Fed, paid and loyal. I will hold you to all three.',
+  Courtier.spymaster: 'I will remember you, Spymaster. That is rather the point too.',
+  Courtier.merchant: 'Put the invoice with the others.',
+  Courtier.jester: 'Make it long enough for a good joke or two.',
+  Courtier.king: '',
+};
+
+/// What you say when someone brings a matter before you.
+const kingPrompts = [
+  'Go on.',
+  'Speak plainly.',
+  'And what would you have me do?',
+  'I’m listening.',
+];

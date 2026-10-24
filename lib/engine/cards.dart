@@ -108,6 +108,10 @@ List<PlayingCard> fullDeck() => [
       for (int r = 1; r <= 4; r++) PlayingCard(Suit.court, r),
     ];
 
+/// Cards in each hand: the deck shared out, except two players hold 12
+/// (the rest set aside), so a quiet round stays quick.
+int handSize(int players) => players == 2 ? 12 : 40 ~/ players;
+
 /// Deals every player the same number of cards. Any left over are set
 /// aside unseen (never the King card, so there is always a King).
 ({List<List<PlayingCard>> hands, List<PlayingCard> setAside}) deal(
@@ -116,7 +120,7 @@ List<PlayingCard> fullDeck() => [
     final deck = fullDeck()..shuffle(rand);
     // Two players keep a hand of 12, so a quiet round stays quick; the
     // rest of the deck is set aside unseen.
-    final each = players == 2 ? 12 : deck.length ~/ players;
+    final each = handSize(players);
     final setAside = deck.sublist(each * players);
     if (setAside.contains(PlayingCard.king)) continue;
     final hands = [

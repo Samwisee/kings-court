@@ -129,7 +129,7 @@ class MatchState {
     return null;
   }
 
-  int get totalTricks => 40 ~/ players;
+  int get totalTricks => handSize(players);
 
   Set<PlayingCard> get inPlay =>
       fullDeck().where((c) => !setAside.contains(c)).toSet();

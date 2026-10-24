@@ -4309,6 +4309,8 @@ class _HomePageState extends State<HomePage>
     }
 
     void herald(String text) => lines.add(HallLine(text));
+    // You, from the throne.
+    void king(String text) => lines.add(HallLine(text, who: ThroneRoom.kingId));
     void say(Courtier c, String text,
             {CharacterMood mood = CharacterMood.speaking, int side = 0}) =>
         lines.add(HallLine(text, who: c.name, mood: mood, side: side));
@@ -4331,12 +4333,14 @@ class _HomePageState extends State<HomePage>
       for (final c in court.where(arrived.contains)) {
         add(c, enterAt: lines.length);
         say(c, introductions[c]!);
+        king(kingReplies[c]!);
       }
       if (t.arc == 'crown') {
         herald(t.story);
         // Each house introduces itself to the new King.
         for (final c in court.where((c) => !arrived.contains(c))) {
           say(c, introductions[c]!);
+          king(kingReplies[c]!);
         }
       } else {
         // The council talks of the kingdom before the news comes in.
@@ -4355,6 +4359,7 @@ class _HomePageState extends State<HomePage>
         final task = game.tasks.where(game.isCharged).firstOrNull;
         herald('${_chargeLine ?? ''}${task == null ? '' : '\nTheir charge: ${task.description}'}');
         say(role, acceptances[role]!, mood: CharacterMood.pleased);
+        king('See that you do.');
       }
       if (game.decree != null) {
         herald('Royal Decree: ${game.decree!.title}. ${game.decree!.rule}');
@@ -4410,6 +4415,7 @@ class _HomePageState extends State<HomePage>
           say(c, cheers[c]!, mood: CharacterMood.pleased);
         }
       }
+      king(won ? 'Well done, all of you.' : 'Then we will do better.');
       for (final seat in game.antagonists) {
         final scheme = game.schemeOf[seat];
         if (scheme != null) {
@@ -4428,9 +4434,10 @@ class _HomePageState extends State<HomePage>
           enabled: game.schemesSettled);
     } else {
       final d = dilemmas[_dilemma ?? 0];
-      title = d.title;
+      title = d.audience ? 'A Private Audience' : d.title;
+      // A private audience is just the two of you.
       for (final c in court) {
-        add(c);
+        if (!d.audience || c == d.about) add(c);
       }
       final deciding = _step == _DynastyStep.dilemma;
       if (deciding) {
@@ -4442,7 +4449,8 @@ class _HomePageState extends State<HomePage>
         } else {
           herald(d.story);
         }
-        final pleas = _pleasFor(d);
+        if (!d.audience) king(kingPrompts[rand.nextInt(kingPrompts.length)]);
+        final pleas = d.audience ? const <Plea>[] : _pleasFor(d);
         for (final p in pleas) {
           say(p.courtier, p.line, side: p.forA ? -1 : 1);
         }
@@ -4455,6 +4463,7 @@ class _HomePageState extends State<HomePage>
               .replaceAll('{other}', other)
               .replaceAll('{Other}', b.courtier.title);
           say(a.courtier, line, mood: CharacterMood.angry, side: -1);
+          king('Enough. I have heard you both.');
         }
         HallFigure? figOf(Courtier c) =>
             figures.where((f) => f.role == c).firstOrNull;
@@ -4475,6 +4484,11 @@ class _HomePageState extends State<HomePage>
         left = choice(d.a, true);
         right = choice(d.b, false);
       } else {
+        // Your ruling, in your own words.
+        final ruled = _lastChoice;
+        if (ruled != null) {
+          king(d.audience ? ruled.label : '${ruled.label}. That is my will.');
+        }
         herald(_verdictStory);
         // The council takes your ruling, each in their own words.
         for (final (role, text, mood) in _verdict) {
@@ -5058,10 +5072,14 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Carries out the King's choice and writes up what changed.
+  /// The choice you made last, so you can be heard making it.
+  Choice? _lastChoice;
+
   void _decide(Choice choice,
       {List<int> overruled = const [],
       bool heeded = false,
       List<String> lead = const []}) {
+    _lastChoice = choice;
     final roles = List.of(game.courtRoles);
     final loyaltyBefore = {for (final c in roles) c: game.loyaltyOf(c)};
     final woundsBefore = game.kingWounds;
@@ -6948,16 +6966,15 @@ class _TaskChip extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_rounded,
-                        size: fontSize * 2, color: Palette.won),
-                    const SizedBox(width: 6),
+                    // Done: just what it was worth.
                     Text('$points',
                         style: TextStyle(
                             fontFamily: displayFont,
                             fontWeight: FontWeight.w900,
-                            fontSize: fontSize + 4,
+                            fontSize: fontSize * 2.2,
                             color: Palette.gold)),
-                    CrownIcon(size: fontSize, color: Palette.gold),
+                    const SizedBox(width: 4),
+                    CrownIcon(size: fontSize * 1.5, color: Palette.gold),
                   ],
                 ),
               ),

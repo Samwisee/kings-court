@@ -89,6 +89,9 @@ class ThroneRoom extends StatefulWidget {
   /// Tests: no waiting between lines.
   final bool fast;
 
+  /// The [HallLine.who] for lines you speak yourself.
+  static const kingId = 'king';
+
   @override
   State<ThroneRoom> createState() => _ThroneRoomState();
 }
@@ -291,8 +294,10 @@ class _ThroneRoomState extends State<ThroneRoom> {
     if (_done && widget.lines.isEmpty) return const SizedBox.shrink();
     final line = widget.lines[_done ? widget.lines.length - 1 : _line];
     final fig = widget.figures.where((f) => f.id == line.who).firstOrNull;
+    final king = line.who == ThroneRoom.kingId;
     final floor = _floor(w, h);
-    final bottom = h - floor.dy + (fig == null ? -20 : 34);
+    // You speak from the throne; the court from the floor before it.
+    final bottom = king ? 168.0 : h - floor.dy + (fig == null ? -20 : 34);
     return Positioned(
       left: 20,
       right: 20,
@@ -302,10 +307,12 @@ class _ThroneRoomState extends State<ThroneRoom> {
         child: Align(
           key: ValueKey('line-$_line-$_done'),
           alignment: Alignment.bottomCenter,
-          child: fig == null
-              ? _HeraldScroll(line.text)
-              : SpeechBubble(line.text,
-                  who: line.name ?? fig.role.title, tailBelow: true),
+          child: king
+              ? SpeechBubble(line.text, who: line.name ?? 'You', tailBelow: true)
+              : fig == null
+                  ? _HeraldScroll(line.text)
+                  : SpeechBubble(line.text,
+                      who: line.name ?? fig.role.title, tailBelow: true),
         ),
       ),
     );
@@ -342,7 +349,16 @@ class _ThroneRoomState extends State<ThroneRoom> {
             height: 130,
             child: Stack(alignment: Alignment.bottomCenter, children: [
               Positioned.fill(child: CustomPaint(painter: _ThronePainter())),
-              Positioned(bottom: 30, child: widget.king),
+              Positioned(
+                bottom: 30,
+                child: !_done && widget.lines[_line].who == ThroneRoom.kingId
+                    ? CharacterToken(
+                        key: ValueKey('king-says-$_line'),
+                        mood: CharacterMood.speaking,
+                        size: 44,
+                        child: widget.king)
+                    : widget.king,
+              ),
             ]),
           ),
           slot(widget.right),
