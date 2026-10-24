@@ -402,11 +402,12 @@ void main() {
     expect(find.byType(PulseRing), findsOneWidget);
 
     var seat = 1;
+    expect(seat, 1);
     while (game.pickTurn != null) {
       final card =
           freeCard(tester, (w) => game.canTake(w.task, game.pickTurn!));
-      final target =
-          tester.getCenter(find.byType(SeatToken).at(game.pickTurn!));
+      final picker = game.pickTurn!;
+      final target = tester.getCenter(find.byType(SeatToken).at(picker));
       final task = (tester.widget(card) as TableCard).task;
       final start = tester.getCenter(card);
       final g = await tester.startGesture(start);
@@ -414,7 +415,16 @@ void main() {
       await g.moveTo(target);
       await g.up();
       await tester.pump();
-      seat = (seat + 1) % 3;
+      // Next clockwise who can take one of the tasks left (anyone who
+      // can't is skipped).
+      seat = picker;
+      for (int step = 1; step <= 3; step++) {
+        final s = (picker + step) % 3;
+        if (game.tasks.any((t) => t.assignedPlayerIndex == null && game.canTake(t, s))) {
+          seat = s;
+          break;
+        }
+      }
       final hits = tester.hitTestOnBinding(start).path
           .map((e) => e.target.runtimeType.toString())
           .take(8)
