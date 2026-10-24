@@ -202,11 +202,14 @@ class _ThroneRoomState extends State<ThroneRoom> {
       );
 
   /// Where the speaker stands: on the floor before the throne.
-  Offset _floor(double w, double h) => Offset(w / 2, h * 0.5);
+  Offset _floor(double w, double h) => Offset(w / 2, h * 0.6);
 
   List<Widget> _figures(double w, double h) {
     const size = 46.0;
-    final speaking = _done ? null : widget.lines[_line].who;
+    // The last to speak stays on the floor while you decide.
+    final speaking = widget.lines.isEmpty
+        ? null
+        : widget.lines[_done ? widget.lines.length - 1 : _line].who;
     final present = [
       for (final f in widget.figures)
         if (f.enterAt <= _line || _done) f
@@ -221,7 +224,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
       if (side != null) {
         final group = side < 0 ? left : right;
         final i = group.indexOf(f);
-        return Offset(w * (side < 0 ? 0.13 : 0.87), h * (0.42 + 0.11 * i));
+        return Offset(w * (side < 0 ? 0.12 : 0.88), h * (0.64 + 0.09 * i));
       }
       final i = unsided.indexOf(f), n = unsided.length;
       final x = n == 1 ? 0.5 : 0.14 + 0.72 * i / (n - 1);
@@ -234,7 +237,9 @@ class _ThroneRoomState extends State<ThroneRoom> {
       for (final f in present)
         () {
           final at = f.id == speaking ? _floor(w, h) : home(f);
-          final line = _done ? null : widget.lines[_line];
+          final line = widget.lines.isEmpty
+              ? null
+              : widget.lines[_done ? widget.lines.length - 1 : _line];
           final leaving = f.exitAt != null && (_line >= f.exitAt! || _done);
           Widget token = Column(mainAxisSize: MainAxisSize.min, children: [
             _token(f, size),
@@ -244,7 +249,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
           ]);
           if (f.id == speaking && line != null) {
             token = CharacterToken(
-              key: ValueKey('say-${f.id}-$_line'),
+              key: ValueKey('say-${f.id}-${_done ? widget.lines.length - 1 : _line}'),
               mood: line.mood,
               size: size,
               child: token,
@@ -393,7 +398,8 @@ class _ChoiceButton extends StatelessWidget {
       child: Material(
         color: c.enabled ? Palette.gold : const Color(0xFF6B5A2E),
         borderRadius: BorderRadius.circular(14),
-        elevation: 6,
+        shadowColor: Colors.black54,
+        elevation: 2,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: c.enabled ? c.onTap : null,
@@ -453,7 +459,7 @@ class _Coffers extends StatelessWidget {
             border: Border.all(color: Palette.goldDeep),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.savings_rounded, size: 18, color: Palette.gold),
+            const Icon(Icons.paid_rounded, size: 18, color: Palette.gold),
             const SizedBox(width: 5),
             Text('${v.round()}',
                 style: TextStyle(

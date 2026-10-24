@@ -4370,12 +4370,24 @@ class _HomePageState extends State<HomePage>
         right = choice(d.b, false);
       } else {
         herald(_verdictStory);
+        // The council takes your ruling, each in their own words.
         for (final (role, text, mood) in _verdict) {
-          if (role != null && court.contains(role)) {
-            say(role, text, mood: mood);
-          } else {
+          if (role == null || !court.contains(role) || mood == CharacterMood.leaving) {
             herald(text);
+            continue;
           }
+          final spoken = mood == CharacterMood.speaking
+              ? text.replaceAll('\u201c', '').replaceAll('\u201d', '')
+              : text.contains('turns against')
+                  ? 'Then I serve you no longer, Majesty.'
+                  : text.contains('returns to your side')
+                      ? 'Perhaps I misjudged you, Majesty.'
+                      : text.contains('royal task')
+                          ? acceptances[role]!
+                          : mood == CharacterMood.pleased
+                              ? 'I will remember this kindness, Majesty.'
+                              : 'I will remember this, Majesty.';
+          say(role, spoken, mood: mood);
         }
         right = HallChoice(
             game.kingFallen
