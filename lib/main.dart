@@ -1930,7 +1930,7 @@ class _HomePageState extends State<HomePage>
     final c = _cards;
     return switch (me) {
       // Before the first trick.
-      Courtier.duke => c.tricks.isEmpty &&
+      Courtier.duke || Courtier.king => c.tricks.isEmpty &&
           c.current.isEmpty &&
           game.tasks.any((t) => t.assignedPlayerIndex == _you),
       // Waiting for a failure, which asks when it comes.
