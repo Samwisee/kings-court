@@ -67,7 +67,23 @@ enum Courtier {
     motto: 'Laugh, lest you weep.',
     story:
         'A house of one, with a borrowed name. The Jester says what no one else dares, and somehow keeps their head.',
+  ),
+
+  /// You, in solo Dynasty: the King, above every house.
+  king(
+    'The King',
+    TokenShape.shield,
+    'Royal Favour',
+    'Once per round, before the first trick, give one of your tasks to another player.',
+    house: 'The Crown',
+    motto: 'One realm, one crown.',
+    story:
+        'Every house kneels to the crown, and every house would wear it if it could.',
   );
+
+  /// The six great houses (not the crown).
+  static List<Courtier> get houses =>
+      values.where((c) => c != Courtier.king).toList();
 
   const Courtier(this.title, this.shape, this.power, this.powerRule,
       {required this.house, required this.motto, required this.story});
@@ -832,6 +848,7 @@ enum Exit {
 
 /// Each courtier's signature entrance.
 Entrance entranceOf(Courtier c) => switch (c) {
+      Courtier.king => Entrance.descend,
       Courtier.duke => Entrance.march,
       Courtier.bishop => Entrance.descend,
       Courtier.general => Entrance.stomp,

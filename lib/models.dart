@@ -411,7 +411,7 @@ class GameState {
 
   /// Seats each player as a courtier: a different shape for everyone.
   void seatCourtiers() {
-    courtiers = (List.of(Courtier.values)..shuffle()).take(players.length).toList();
+    courtiers = (Courtier.houses..shuffle()).take(players.length).toList();
     loyalty = List.filled(players.length, startingLoyalty);
     schemeOf = List.filled(players.length, null);
     schemeResult = List.filled(players.length, null);
@@ -464,7 +464,7 @@ class GameState {
     ];
     pendingArrivals.clear();
     List<Courtier> free() => [
-          for (final c in Courtier.values)
+          for (final c in Courtier.houses)
             if (!court.contains(c) && !coming.contains(c) && c != kingRole) c
         ];
     // The ordinary comings and goings of a court.
@@ -1189,6 +1189,11 @@ class GameState {
   /// Crowns the King, who picks the first task.
   void setKing(int? index) {
     kingIndex = index;
+    // Solo Dynasty: you are the crown itself, above every house.
+    if (solo && index != null) {
+      _ensureCourt();
+      courtiers[index] = Courtier.king;
+    }
     if (index != null && isDynasty) {
       _beginReign();
       _openRound();

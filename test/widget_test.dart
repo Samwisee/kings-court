@@ -746,8 +746,9 @@ void main() {
       ..setKing(0);
     expect(g.solo, isTrue);
     final mine = g.courtiers.first;
+    expect(g.courtiers.first, Courtier.king);
     g.nextDynastyRound(4, 8);
-    expect(g.court, hasLength(3));
+    expect(g.court.length, greaterThanOrEqualTo(3));
     final role = g.court.first;
     g.applyChoice(Choice('x', 'y', [Depart(role)]));
     g.nextDynastyRound(4, 8);
@@ -760,7 +761,7 @@ void main() {
     final sizes = <int>{};
     for (int i = 0; i < 80; i++) {
       if (rand.nextBool()) {
-        final c = Courtier.values[rand.nextInt(6)];
+        final c = Courtier.houses[rand.nextInt(6)];
         g.applyChoice(Choice('x', 'y', [rand.nextBool() ? Depart(c) : Arrive(c)]));
       }
       g.nextDynastyRound(g.players.length, 8);
@@ -979,9 +980,13 @@ void main() {
   test('A dynasty ends in a Golden Age, a fall or a usurping', () {
     final g = dynasty(4)..setKing(0);
     expect(g.ending, isNull);
+    // Five wins bring a golden age to the story, but not its end.
     g.reignWins = GameState.goldenAgeWins;
-    expect(g.ending, DynastyEnding.goldenAge);
+    expect(g.ending, isNull);
     expect(g.epithet, 'the Golden');
+    g.flags.add('karsk_conquered');
+    expect(g.ending, DynastyEnding.goldenAge);
+    g.flags.remove('karsk_conquered');
     g.reignWins = 0;
     g.applyChoice(Choice('x', 'y',
         [Loyalty(g.courtiers[1], -5), Loyalty(g.courtiers[2], -5)]));

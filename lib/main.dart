@@ -1977,6 +1977,7 @@ class _HomePageState extends State<HomePage>
 
     switch (me) {
       case Courtier.duke:
+      case Courtier.king:
         final task = await choose('Command: give which task?', [
           for (final t in game.tasks)
             if (t.assignedPlayerIndex == _you) (t, t.cardText(playerCount)),

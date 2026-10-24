@@ -440,6 +440,7 @@ int houseAffinity(Courtier house, String task) {
     Courtier.spymaster => [r"Don't", r'\bno\b', r'fewer', r'secret', r'exactly'],
     Courtier.merchant => [r'totalling', r'at least', r'as many', r'9s', r'even'],
     Courtier.jester => [r'mixed', r'odd', r'only', r'lower than', r'exactly one'],
+    Courtier.king => const <String>[],
   };
   return patterns.where((p) => RegExp(p).hasMatch(task)).length;
 }
