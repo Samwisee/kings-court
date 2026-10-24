@@ -64,7 +64,9 @@ void main() {
         right: HallChoice('Go', () {}),
       ),
     ));
-    await tester.pump(const Duration(milliseconds: 2500));
+    for (int i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
     for (final e in find.byType(AnimatedPositioned).evaluate()) {
       final box = e.renderObject as RenderBox;
       debugPrint('POS ${box.localToGlobal(Offset.zero)} ${box.size}');
@@ -127,7 +129,9 @@ void main() {
         seen.add(key);
         debugPrint('AT $tap shaped=${find.byType(ShapedToken).evaluate().length} '
             'court=${game.court} figures=${find.byType(CharacterToken).evaluate().length}');
-        await tester.pump(const Duration(milliseconds: 400));
+        for (int k = 0; k < 70; k++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
         await snap(tap.replaceAll(' ', '-').toLowerCase());
       }
       if (tap != null) {
@@ -138,7 +142,9 @@ void main() {
         final choices = find.byType(InkWell).hitTestable();
         if (choices.evaluate().length >= 2 && !seen.contains('d$d-${game.dealId}')) {
           seen.add('d$d-${game.dealId}');
-          await tester.pump(const Duration(milliseconds: 400));
+          for (int k = 0; k < 70; k++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
           await snap('matter');
           await tester.tap(choices.first);
           continue;
