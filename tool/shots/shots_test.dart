@@ -118,6 +118,12 @@ void main() {
     final seen = <String>{};
     for (int i = 0; i < 6000 && shot < 14; i++) {
       await tester.pump(const Duration(milliseconds: 30));
+      if (i % 300 == 0) {
+        debugPrint('LOOP $i outcome=${game.outcome} pick=${game.pickTurn} '
+            'tasks=${game.tasks.map((t) => t.assignedPlayerIndex).toList()} '
+            'tricks=${game.cards?.tricks.length} decree=${game.decree} '
+            'texts=${find.byType(Text).hitTestable().evaluate().take(6).map((e) => (e.widget as Text).data).toList()}');
+      }
       String? tap;
       for (final t in ['So it begins', 'Hear the council', 'The next matter', 'To the cards', 'Got it', 'Announce']) {
         if (find.text(t).hitTestable().evaluate().isNotEmpty) tap = t;
