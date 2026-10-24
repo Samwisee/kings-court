@@ -407,13 +407,25 @@ void main() {
           freeCard(tester, (w) => game.canTake(w.task, game.pickTurn!));
       final target =
           tester.getCenter(find.byType(SeatToken).at(game.pickTurn!));
-      final g = await tester.startGesture(tester.getCenter(card));
+      final task = (tester.widget(card) as TableCard).task;
+      final start = tester.getCenter(card);
+      final g = await tester.startGesture(start);
       await g.moveBy(const Offset(10, 10));
       await g.moveTo(target);
       await g.up();
       await tester.pump();
       seat = (seat + 1) % 3;
-      if (game.pickTurn != null) expect(game.pickTurn, seat);
+      final hits = tester.hitTestOnBinding(start).path
+          .map((e) => e.target.runtimeType.toString())
+          .take(8)
+          .join(' < ');
+      if (game.pickTurn != null) {
+        expect(game.pickTurn, seat,
+            reason: 'dragged ${task.description} from $start to $target; '
+                'now held by ${task.assignedPlayerIndex}; '
+                'card now at ${tester.getCenter(find.byWidgetPredicate((w) => w is TableCard && w.task == task))}; '
+                'hit at start: $hits');
+      }
       await tester.pumpAndSettle();
     }
     expect(game.tasks.every((t) => t.assignedPlayerIndex != null), isTrue);
