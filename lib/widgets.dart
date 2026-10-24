@@ -1420,10 +1420,18 @@ class CharacterToken extends StatefulWidget {
     this.phase = 0,
     this.size = 40,
     this.delay = Duration.zero,
+    this.entrance,
+    this.exit,
   });
 
   final Widget child;
   final CharacterMood mood;
+
+  /// Makes an entrance in this style, then breathes like the others.
+  final Entrance? entrance;
+
+  /// Leaves in this style (and stays gone).
+  final Exit? exit;
 
   /// Wait this long before reacting (to take turns down a list).
   final Duration delay;
@@ -1444,12 +1452,17 @@ class CharacterToken extends StatefulWidget {
 class _CharacterTokenState extends State<CharacterToken>
     with TickerProviderStateMixin {
   late final AnimationController _once = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 900));
+      vsync: this,
+      duration: Duration(
+          milliseconds: widget.entrance != null || widget.exit != null ? 1400 : 900));
   late final AnimationController _breath = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 2800));
 
   bool get _idles =>
-      widget.mood == CharacterMood.idle || widget.mood == CharacterMood.arriving;
+      widget.exit == null &&
+      (widget.entrance != null ||
+          widget.mood == CharacterMood.idle ||
+          widget.mood == CharacterMood.arriving);
 
   Timer? _wait;
 
@@ -1499,6 +1512,83 @@ class _CharacterTokenState extends State<CharacterToken>
         var dx = 0.0, dy = 0.0, scale = 1.0, angle = 0.0, opacity = 1.0;
         IconData? mark;
         Color markColor = Palette.gold;
+        // A white wash for ghosts, a gold halo for holy arrivals.
+        var wash = 0.0, halo = 0.0;
+        final e = Curves.easeOutCubic.transform(t);
+        final entrance = widget.entrance, exit = widget.exit;
+        if (exit != null) {
+          switch (exit) {
+            case Exit.dash:
+              dx = t < 0.15 ? -s * 0.15 * (t / 0.15) : s * 3.5 * Curves.easeIn.transform((t - 0.15) / 0.85);
+              dy = -(math.sin(t * math.pi * 8)).abs() * s * 0.08;
+              opacity = 1 - clampD((t - 0.5) * 2, 0, 1);
+            case Exit.ghost:
+              dy = -s * 1.4 * Curves.easeIn.transform(t);
+              dx = math.sin(t * math.pi * 3) * s * 0.12;
+              wash = 0.7 * clampD(t * 2, 0, 1);
+              opacity = 1 - Curves.easeIn.transform(t);
+            case Exit.banished:
+              if (t < 0.4) {
+                dx = math.sin(t * 60) * s * 0.1;
+              } else {
+                final f = Curves.easeIn.transform((t - 0.4) / 0.6);
+                dy = s * 1.8 * f;
+                angle = 0.8 * f;
+                opacity = 1 - f;
+              }
+              if (t < 0.4) {
+                mark = Icons.gavel_rounded;
+                markColor = Palette.lost;
+              }
+            case Exit.walk:
+              if (t < 0.3) {
+                angle = 0.4 * math.sin(t / 0.3 * math.pi);
+              } else {
+                final f = (t - 0.3) / 0.7;
+                dx = s * 2.6 * f;
+                dy = -(math.sin(f * math.pi * 6)).abs() * s * 0.08;
+                opacity = 1 - clampD((f - 0.5) * 2, 0, 1);
+              }
+            case Exit.poof:
+              scale = 1 + 0.7 * t;
+              opacity = 1 - Curves.easeOut.transform(t);
+              mark = Icons.cloud_rounded;
+              markColor = Colors.white;
+          }
+        } else if (entrance != null) {
+          final before = t <= 0;
+          switch (entrance) {
+            case Entrance.march:
+              dx = -s * 2.4 * (1 - e);
+              dy = -(math.sin(t * math.pi * 6)).abs() * s * 0.1 * (1 - t);
+            case Entrance.descend:
+              dy = -s * 2.2 * (1 - e);
+              scale = 0.6 + 0.4 * e;
+              halo = math.sin(t * math.pi);
+            case Entrance.stomp:
+              dy = -s * 2.6 * (1 - Curves.bounceOut.transform(t));
+              if (t > 0.35 && t < 0.9) {
+                mark = Icons.cloud_rounded;
+                markColor = Colors.white70;
+              }
+            case Entrance.shadow:
+              opacity = clampD(e * (0.75 + 0.25 * math.sin(t * 40)), 0, 1);
+              wash = 0;
+              scale = 0.85 + 0.15 * e;
+            case Entrance.roll:
+              dx = s * 2.6 * (1 - e);
+              angle = -math.pi * 4 * (1 - e);
+            case Entrance.cartwheel:
+              dx = -s * 2.8 * (1 - e);
+              dy = -math.sin(e * math.pi) * s * 0.7;
+              angle = math.pi * 4 * (1 - e);
+          }
+          if (before) opacity = 0;
+          if (t >= 1) {
+            dy += b * s * 0.03;
+            scale *= 1 + 0.015 * b;
+          }
+        } else {
         switch (widget.mood) {
           case CharacterMood.idle:
             dy = b * s * 0.03;
@@ -1525,18 +1615,40 @@ class _CharacterTokenState extends State<CharacterToken>
             opacity = 1 - 0.65 * t;
             dy = s * 0.1 * t;
         }
+        }
         final markOpacity = mark == null ? 0.0 : math.sin(clampD(t, 0, 1) * math.pi);
         return Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
+            if (halo > 0.01)
+              Container(
+                width: s * 1.6,
+                height: s * 1.6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(colors: [
+                    Palette.gold.withValues(alpha: 0.6 * halo),
+                    Palette.gold.withValues(alpha: 0),
+                  ]),
+                ),
+              ),
             Opacity(
-              opacity: opacity,
+              opacity: clampD(opacity, 0, 1),
               child: Transform.translate(
                 offset: Offset(dx, dy),
                 child: Transform.rotate(
                   angle: angle,
-                  child: Transform.scale(scale: scale, child: child),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: wash > 0.01
+                        ? ColorFiltered(
+                            colorFilter: ColorFilter.mode(
+                                Colors.white.withValues(alpha: wash),
+                                BlendMode.srcATop),
+                            child: child)
+                        : child,
+                  ),
                 ),
               ),
             ),

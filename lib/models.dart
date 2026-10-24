@@ -7,6 +7,7 @@ import 'engine/match.dart';
 import 'engine/conflicts.dart';
 import 'engine/rules.dart';
 import 'tasks.dart';
+import 'theme.dart';
 
 enum TaskStatus { pending, completed, failed }
 
@@ -228,7 +229,11 @@ class GameState {
 
   /// Who left and who arrived before this round, to read with the tidings:
   /// (seat, what happened, arrived).
-  List<(int, String, bool)> courtNews = [];
+  List<CourtNews> courtNews = [];
+
+  /// Courtiers the story has called to court, who arrive before the next
+  /// round.
+  List<Courtier> pendingArrivals = [];
 
   /// The solo King's name this reign ("Edmund").
   String reignName = '';
@@ -321,44 +326,38 @@ class GameState {
     schemeResult = List.filled(players.length, null);
     powerUsed = List.filled(players.length, false);
     traitorRounds = List.filled(players.length, 0);
-    people = [for (final c in courtiers) _nextName(c)];
+    people = [for (final c in courtiers) c.title];
   }
 
-  /// The next person of [role]'s house who hasn't been at court yet.
-  String _nextName(Courtier role) {
-    final names = characterNames[role]!;
-    return names.firstWhere((n) => !flags.contains('person:$n'),
-        orElse: () => '${names.first} the Younger');
-  }
+  /// Who sits in [seat]: their courtier title ("The Duke").
+  String personAt(int seat) => courtiers[seat].title;
 
-  /// Name of the person in [seat], or their courtier title.
-  String personAt(int seat) =>
-      seat < people.length && people[seat].isNotEmpty
-          ? people[seat]
-          : courtiers[seat].title;
+  /// The smallest and largest court on screen (you included).
+  static const minCourt = 3, maxCourt = 6;
 
-  /// Solo Dynasty, between rounds: traitors who have schemed too long
-  /// flee, courtiers a choice sent away leave, and now and then someone
-  /// simply moves on. Each empty seat is filled by someone new, often
-  /// from a house not yet at court.
+  /// Solo Dynasty, between rounds: the court changes with the story.
+  /// Traitors who scheme too long flee, courtiers a choice sent away
+  /// leave, courtiers the story calls for arrive, and now and then
+  /// someone simply moves on or turns up. The court grows and shrinks
+  /// (between three and six at the table); a seat left empty when the
+  /// court can't shrink is filled by someone new.
   void courtChanges([Random? random]) {
     courtNews = [];
     if (!solo) {
       pendingDepartures.clear();
+      pendingArrivals.clear();
       return;
     }
     final rand = random ?? Random();
     final king = kingIndex;
-    for (final n in people) {
-      flags.add('person:$n');
-    }
-    final leaving = <int, String>{};
+    // Seat -> why they go, how, and whether the story sent them.
+    final leaving = <int, (String, Exit, bool)>{};
     for (int s = 0; s < players.length; s++) {
       if (s == king) continue;
       if (isAntagonist(s)) {
         traitorRounds[s]++;
         if (traitorRounds[s] >= 2) {
-          leaving[s] = '${people[s]} flees the court before the guards arrive.';
+          leaving[s] = ('${courtiers[s].title} flees the court before the guards arrive.', Exit.dash, true);
         }
       } else {
         traitorRounds[s] = 0;
@@ -366,39 +365,117 @@ class GameState {
     }
     for (final c in pendingDepartures) {
       final s = courtiers.indexOf(c);
-      if (s >= 0 && s != king) leaving[s] = '${people[s]} leaves the court in disgrace.';
-    }
-    pendingDepartures.clear();
-    if (leaving.isEmpty && roundNumber >= 3 && rand.nextDouble() < 0.25) {
-      final seats = [
-        for (int s = 0; s < players.length; s++)
-          if (s != king) s
-      ];
-      if (seats.isNotEmpty) {
-        final s = seats[rand.nextInt(seats.length)];
-        final why = departures[courtiers[s]]!;
-        leaving[s] = why[rand.nextInt(why.length)].replaceAll('{name}', people[s]);
+      if (s >= 0 && s != king) {
+        leaving[s] = ('${c.title} leaves the court in disgrace.', Exit.banished, true);
       }
     }
+    pendingDepartures.clear();
+    final coming = [
+      for (final c in pendingArrivals)
+        if (!courtiers.contains(c)) c
+    ];
+    pendingArrivals.clear();
+    List<Courtier> free() => [
+          for (final c in Courtier.values)
+            if (!courtiers.contains(c) && !coming.contains(c)) c
+        ];
+    // The ordinary comings and goings of a court.
+    if (leaving.isEmpty && coming.isEmpty && roundNumber >= 3 && rand.nextDouble() < 0.35) {
+      final grow = players.length <= minCourt
+          ? true
+          : players.length >= maxCourt
+              ? false
+              : rand.nextBool();
+      final options = free();
+      if (grow && options.isNotEmpty) {
+        coming.add(options[rand.nextInt(options.length)]);
+      } else {
+        final seats = [
+          for (int s = 0; s < players.length; s++)
+            if (s != king) s
+        ];
+        if (seats.isNotEmpty) {
+          final s = seats[rand.nextInt(seats.length)];
+          final why = departures[courtiers[s]]!;
+          final (text, exit) = why[rand.nextInt(why.length)];
+          leaving[s] = (text, exit, false);
+        }
+      }
+    }
+    // Those who leave: the seat goes too, unless the court would be too
+    // small, when someone new takes it.
+    final removed = <int>[];
     for (final e in leaving.entries) {
       final s = e.key;
-      courtNews.add((s, e.value, false));
-      final free = Courtier.values.where((c) => !courtiers.contains(c)).toList();
-      final role = free.isNotEmpty && rand.nextDouble() < 0.6
-          ? free[rand.nextInt(free.length)]
-          : courtiers[s];
-      final name = _nextName(role);
-      flags.add('person:$name');
-      courtiers[s] = role;
-      people[s] = name;
-      players[s].name = name;
-      loyalty[s] = startingLoyalty;
-      schemeOf[s] = null;
-      schemeResult[s] = null;
-      powerUsed[s] = false;
-      traitorRounds[s] = 0;
-      courtNews.add((s, '$name arrives to serve as ${role.short}.', true));
+      final (text, exit, story) = e.value;
+      courtNews.add(CourtNews(courtiers[s], players[s].color.toARGB32(), text, exit: exit));
+      final remaining = players.length - removed.length - 1 + coming.length;
+      if (remaining >= minCourt && (story || rand.nextBool())) {
+        removed.add(s);
+      } else {
+        final options = free();
+        final role = options.isNotEmpty && rand.nextDouble() < 0.7
+            ? options[rand.nextInt(options.length)]
+            : courtiers[s];
+        final again = role == courtiers[s];
+        _seatCourtier(s, role);
+        courtNews.add(CourtNews(role, players[s].color.toARGB32(),
+            again ? arrivals[role]!.replaceFirst('The ${role.short}', 'A new ${role.short}') : arrivals[role]!));
+      }
     }
+    removed.sort();
+    for (final s in removed.reversed) {
+      _removeSeat(s);
+    }
+    for (final role in coming) {
+      if (players.length >= maxCourt || courtiers.contains(role)) continue;
+      final used = players.map((p) => p.color.toARGB32()).toSet();
+      final color = Palette.players.firstWhere((c) => !used.contains(c.toARGB32()),
+          orElse: () => Palette.players.last);
+      players.add(Player(role.title, color: color));
+      courtiers.add(role);
+      loyalty.add(startingLoyalty);
+      schemeOf.add(null);
+      schemeResult.add(null);
+      powerUsed.add(false);
+      spoke.add(false);
+      traitorRounds.add(0);
+      people.add(role.title);
+      courtNews.add(CourtNews(role, color.toARGB32(), arrivals[role]!));
+    }
+    final c = cards;
+    if (c != null && c.players != players.length) {
+      cards = MatchState(players: players.length, target: c.target)
+        ..round = c.round
+        ..wins = c.wins
+        ..losses = c.losses
+        ..streak = c.streak;
+    }
+  }
+
+  /// Puts a fresh [role] in [seat].
+  void _seatCourtier(int s, Courtier role) {
+    courtiers[s] = role;
+    people[s] = role.title;
+    players[s].name = role.title;
+    loyalty[s] = startingLoyalty;
+    schemeOf[s] = null;
+    schemeResult[s] = null;
+    powerUsed[s] = false;
+    traitorRounds[s] = 0;
+  }
+
+  /// Takes [s]'s seat away from the table altogether.
+  void _removeSeat(int s) {
+    for (final list in <List>[
+      players, courtiers, loyalty, schemeOf, schemeResult, powerUsed, spoke,
+      traitorRounds, people,
+    ]) {
+      if (s < list.length) list.removeAt(s);
+    }
+    if (kingIndex != null && kingIndex! > s) kingIndex = kingIndex! - 1;
+    roundLoyalty = [];
+    _loyaltyBeforeRound = [];
   }
 
   bool get isDynasty => mode == GameMode.dynasty;
@@ -690,6 +767,8 @@ class GameState {
           break;
         case Depart(:final courtier):
           if (courtiers.contains(courtier)) pendingDepartures.add(courtier);
+        case Arrive(:final courtier):
+          if (!courtiers.contains(courtier)) pendingArrivals.add(courtier);
       }
     }
   }
@@ -725,6 +804,8 @@ class GameState {
   void nextDynastyRound(int playerCount, int targetPoints) {
     final king = kingIndex;
     courtChanges();
+    // The court may have grown or shrunk.
+    if (solo) playerCount = players.length;
     addTasksUntilTarget(playerCount, targetPoints);
     kingIndex = king;
     tiding = null;
@@ -1182,9 +1263,8 @@ class GameState {
         'people': people,
         'traitorRounds': traitorRounds,
         'pendingDepartures': [for (final c in pendingDepartures) c.name],
-        'courtNews': [
-          for (final (s, t, a) in courtNews) {'seat': s, 'text': t, 'arrived': a}
-        ],
+        'courtNews': [for (final n in courtNews) n.toJson()],
+        'pendingArrivals': [for (final c in pendingArrivals) c.name],
         'reignName': reignName,
         'mainBeatRound': mainBeatRound,
         'streak': streak,
@@ -1271,7 +1351,11 @@ class GameState {
         ]
         ..courtNews = [
           for (final m in (j['courtNews'] as List?) ?? const [])
-            (m['seat'] as int, m['text'] as String, m['arrived'] as bool)
+            CourtNews.fromJson(Map<String, dynamic>.from(m as Map))
+        ]
+        ..pendingArrivals = [
+          for (final n in (j['pendingArrivals'] as List?) ?? const [])
+            Courtier.values.byName(n as String)
         ]
         ..reignName = (j['reignName'] as String?) ?? ''
         ..mainBeatRound = (j['mainBeatRound'] as int?) ?? -99
@@ -1286,7 +1370,7 @@ class GameState {
         g.traitorRounds = List.filled(g.players.length, 0);
       }
       if (g.people.length != g.players.length) {
-        g.people = [for (final c in g.courtiers) g._nextName(c)];
+        g.people = [for (final c in g.courtiers) c.title];
       }
       if (g.tiding != null && g.tiding! >= tidings.length) g.tiding = null;
       return g;

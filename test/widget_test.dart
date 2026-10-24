@@ -730,28 +730,41 @@ void main() {
     expect(copy.flags, contains('karsk_defied'));
   });
 
-  test('In solo Dynasty people come and go', () {
+  test('In solo Dynasty the court grows and shrinks with the story', () {
     final g = dynasty(4)
       ..cards = MatchState(players: 4, target: 8)
       ..setKing(0);
     expect(g.solo, isTrue);
-    expect(g.people.toSet(), hasLength(4));
-    final seat = 2;
-    final role = g.courtiers[seat];
-    final before = g.people[seat];
+    final role = g.courtiers[2];
     g.applyChoice(Choice('x', 'y', [Depart(role)]));
     g.nextDynastyRound(4, 8);
-    expect(g.people[seat], isNot(before));
-    expect(g.players[seat].name, g.people[seat]);
-    expect(g.loyalty[seat], GameState.startingLoyalty);
-    expect(g.courtNews.map((n) => n.$3), [false, true]);
-    // Nobody comes back once they've left.
-    for (int i = 0; i < 30; i++) {
-      g.applyChoice(Choice('x', 'y', [Depart(g.courtiers[seat])]));
-      g.nextDynastyRound(4, 8);
+    expect(g.players, hasLength(3));
+    expect(g.courtiers, isNot(contains(role)));
+    expect(g.cards!.players, 3);
+    expect(g.courtNews.single.arrived, isFalse);
+    // The story calls them back.
+    g.applyChoice(Choice('x', 'y', [Arrive(role)]));
+    g.nextDynastyRound(3, 8);
+    expect(g.players, hasLength(4));
+    expect(g.courtiers.last, role);
+    expect(g.loyalty.last, GameState.startingLoyalty);
+    expect(g.courtNews.single.arrived, isTrue);
+    // Whatever happens, the court stays between three and six, you stay
+    // King, and every list keeps up.
+    final rand = Random(5);
+    for (int i = 0; i < 60; i++) {
+      if (rand.nextBool()) {
+        final c = Courtier.values[rand.nextInt(6)];
+        g.applyChoice(Choice('x', 'y', [rand.nextBool() ? Depart(c) : Arrive(c)]));
+      }
+      g.nextDynastyRound(g.players.length, 8);
+      final n = g.players.length;
+      expect(n, inInclusiveRange(GameState.minCourt, GameState.maxCourt));
+      expect([g.courtiers.length, g.loyalty.length, g.powerUsed.length,
+          g.spoke.length, g.traitorRounds.length, g.cards!.players], everyElement(n));
+      expect(g.courtiers.toSet(), hasLength(n));
+      expect(g.kingIndex, 0);
     }
-    expect(g.people[seat], isNot(before));
-    expect(g.kingIndex, 0);
   });
 
   test('Every seat gets a different courtier shape', () {

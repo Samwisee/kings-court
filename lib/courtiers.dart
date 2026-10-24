@@ -340,7 +340,7 @@ const dilemmas = <Dilemma>[
     'A Grand Tournament',
     'The court begs for a tournament to celebrate your reign.',
     Choice('Hold the tournament', 'Glory! The lists are hard fought.',
-        [AllLoyalty(1), Points(2)]),
+        [AllLoyalty(1), Points(2), Arrive(Courtier.general), Arrive(Courtier.jester)]),
     Choice('Save the gold', 'The banners stay furled.',
         [AllLoyalty(-1), Points(-1)]),
     council: true,
@@ -487,9 +487,9 @@ const dilemmas = <Dilemma>[
     'An Envoy from Karsk',
     'Lord Hask kneels, barely. "King Varric of Karsk offers friendship, for a yearly gift of gold. He would hate for your harvests to burn."',
     Choice('Pay the gift', 'Hask smiles and counts the coins twice.',
-        [Points(1), Flag('karsk_paid'), Say(Courtier.general, 'We pay a goatherd king not to visit? Shameful.')]),
+        [Points(1), Flag('karsk_paid'), Arrive(Courtier.merchant), Say(Courtier.general, 'We pay a goatherd king not to visit? Shameful.')]),
     Choice('Send him home', 'Hask leaves with his beard shaved and his purse empty.',
-        [Loyalty(Courtier.general, 1), Flag('karsk_defied'), Say(Courtier.merchant, 'There goes the eastern trade. And perhaps the eastern villages.')]),
+        [Loyalty(Courtier.general, 1), Flag('karsk_defied'), Arrive(Courtier.general), Say(Courtier.merchant, 'There goes the eastern trade. And perhaps the eastern villages.')]),
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
   ),
@@ -529,7 +529,7 @@ const dilemmas = <Dilemma>[
     'The Ashes of Ashford',
     'Ashford has fallen. Thousands are at your gates, and among them Varric’s spies.',
     Choice('Open the city', 'The streets are full of the hungry. And of strangers.',
-        [AllLoyalty(1), Points(1), Flag('refugees')]),
+        [AllLoyalty(1), Points(1), Flag('refugees'), Arrive(Courtier.bishop)]),
     Choice('Close the gates', 'The city is safe. The cries outside go on for days.',
         [AllLoyalty(-1), Loyalty(Courtier.spymaster, 1)]),
     arc: 'karsk',
@@ -768,25 +768,120 @@ const dilemmas = <Dilemma>[
   ),
 ];
 
-/// The people who may hold each seat at court, in the order they come.
-const characterNames = <Courtier, List<String>>{
-  Courtier.duke: ['Aldric Ashcombe', 'Maud Ashcombe', 'Piers Ashcombe', 'Isolde Ashcombe', 'Godwin Ashcombe'],
-  Courtier.bishop: ['Anselm Vell', 'Agathe Vell', 'Osric Vell', 'Hild Vell', 'Benedict Vell'],
-  Courtier.general: ['Bryn Strand', 'Rhosyn Strand', 'Garrick Strand', 'Wenna Strand', 'Owain Strand'],
-  Courtier.spymaster: ['Corvin Morrow', 'Sabine Morrow', 'Lucan Morrow', 'Nell Morrow', 'Silas Morrow'],
-  Courtier.merchant: ['Tobias Coyne', 'Ysolde Coyne', 'Hamon Coyne', 'Bettris Coyne', 'Jory Coyne'],
-  Courtier.jester: ['Pip Motley', 'Tansy Motley', 'Wat Motley', 'Kit Motley', 'Fenn Motley'],
+/// How a courtier makes their entrance at court.
+enum Entrance {
+  /// Marches in from the side, step by step.
+  march,
+
+  /// Descends from above in a glow.
+  descend,
+
+  /// Lands with a stomp from on high.
+  stomp,
+
+  /// Steps out of the shadows.
+  shadow,
+
+  /// Rolls in like a coin.
+  roll,
+
+  /// Cartwheels in.
+  cartwheel,
+}
+
+/// How a courtier leaves.
+enum Exit {
+  /// Runs for it.
+  dash,
+
+  /// Dies: rises away, pale.
+  ghost,
+
+  /// Thrown out: shaken, then dropped.
+  banished,
+
+  /// Bows and walks away.
+  walk,
+
+  /// Vanishes in a puff.
+  poof,
+}
+
+/// Each courtier's signature entrance.
+Entrance entranceOf(Courtier c) => switch (c) {
+      Courtier.duke => Entrance.march,
+      Courtier.bishop => Entrance.descend,
+      Courtier.general => Entrance.stomp,
+      Courtier.spymaster => Entrance.shadow,
+      Courtier.merchant => Entrance.roll,
+      Courtier.jester => Entrance.cartwheel,
+    };
+
+/// How each courtier arrives at court.
+const arrivals = <Courtier, String>{
+  Courtier.duke: 'The Duke rides in from the north with a hundred retainers.',
+  Courtier.bishop: 'The Bishop arrives in a cloud of incense and hymns.',
+  Courtier.general: 'The General marches in, boots still muddy from the border.',
+  Courtier.spymaster: 'The Spymaster is simply there one morning, as if always there.',
+  Courtier.merchant: 'The Merchant arrives with a wagon of gifts and a ledger of debts.',
+  Courtier.jester: 'The Jester cartwheels into the hall, bells jangling.',
 };
 
-/// Why someone leaves court of their own accord ({name} is filled in).
-const departures = <Courtier, List<String>>{
-  Courtier.duke: ['{name} rides north to the family estates, and stays there.', '{name} dies in the hunt. Ashcombe sends another.'],
-  Courtier.bishop: ['{name} goes on pilgrimage to the south.', '{name} is called to the Holy See.'],
-  Courtier.general: ['{name} retires to the coast, nursing old wounds.', '{name} falls in a border skirmish.'],
-  Courtier.spymaster: ['{name} vanishes one night. Nobody is surprised.', '{name} is found at the foot of the tower.'],
-  Courtier.merchant: ['{name} sails south to chase a fortune.', '{name} retires rich, and smug.'],
-  Courtier.jester: ['{name} runs off with a troupe of players.', '{name} tells one joke too many and is sent away.'],
+/// Why each courtier might leave court of their own accord, and how.
+const departures = <Courtier, List<(String, Exit)>>{
+  Courtier.duke: [
+    ('The Duke rides north to the family estates, and stays there.', Exit.walk),
+    ('The Duke falls from his horse in the hunt.', Exit.ghost),
+  ],
+  Courtier.bishop: [
+    ('The Bishop leaves on pilgrimage to the south.', Exit.walk),
+    ('The Bishop is called to the Holy See, and goes gladly.', Exit.poof),
+  ],
+  Courtier.general: [
+    ('The General retires to the coast, nursing old wounds.', Exit.walk),
+    ('The General falls in a border skirmish.', Exit.ghost),
+  ],
+  Courtier.spymaster: [
+    ('The Spymaster vanishes one night. Nobody is surprised.', Exit.poof),
+    ('The Spymaster is found at the foot of the tower.', Exit.ghost),
+  ],
+  Courtier.merchant: [
+    ('The Merchant sails south to chase a fortune.', Exit.dash),
+    ('The Merchant retires rich, and smug.', Exit.walk),
+  ],
+  Courtier.jester: [
+    ('The Jester runs off with a troupe of players.', Exit.dash),
+    ('The Jester tells one joke too many and is thrown out.', Exit.banished),
+  ],
 };
+
+/// A coming or going at court, told with the next round's news.
+class CourtNews {
+  const CourtNews(this.role, this.color, this.text, {this.exit});
+  final Courtier role;
+  final int color;
+  final String text;
+
+  /// How they left; null for an arrival.
+  final Exit? exit;
+  bool get arrived => exit == null;
+
+  Map<String, dynamic> toJson() =>
+      {'role': role.name, 'color': color, 'text': text, 'exit': exit?.name};
+
+  static CourtNews fromJson(Map<String, dynamic> j) => CourtNews(
+        Courtier.values.byName(j['role'] as String),
+        j['color'] as int,
+        j['text'] as String,
+        exit: j['exit'] == null ? null : Exit.values.byName(j['exit'] as String),
+      );
+}
+
+/// A courtier joins the court before the next round, if there's room.
+class Arrive extends Effect {
+  const Arrive(this.courtier);
+  final Courtier courtier;
+}
 
 /// Regnal names for the solo King, one per reign.
 const regnalNames = [

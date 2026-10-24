@@ -1396,6 +1396,11 @@ class _HomePageState extends State<HomePage>
       child: CharacterToken(
         key: ValueKey('person-$seat-${game.hasRoles ? game.personAt(seat) : ''}'),
         mood: CharacterMood.arriving,
+        // Courtiers make their own entrance; you simply appear.
+        entrance: game.isDynasty && seat != _you && seat < game.courtiers.length
+            ? entranceOf(game.courtiers[seat])
+            : null,
+        delay: Duration(milliseconds: 150 * seat),
         phase: seat * 0.37,
         size: size,
         child: SeatToken(
@@ -3670,25 +3675,28 @@ class _HomePageState extends State<HomePage>
               children: [
                 // Comings and goings at court, before the news.
                 if (game.courtNews.isNotEmpty) ...[
-                  for (final (i, (seat, text, arrived)) in game.courtNews.indexed)
+                  for (final (i, n) in game.courtNews.indexed)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: Row(children: [
-                        arrived
-                            ? _character(seat, 34,
-                                mood: CharacterMood.arriving,
-                                delay: Duration(milliseconds: 400 + 300 * i),
-                                key: ValueKey('news-$i'))
-                            : CharacterToken(
-                                key: ValueKey('news-$i'),
-                                mood: CharacterMood.leaving,
-                                size: 34,
-                                delay: Duration(milliseconds: 400 + 300 * i),
-                                child: const Icon(Icons.person_off_rounded,
-                                    size: 30, color: Palette.inkSoft)),
+                        // Each comes or goes in their own way, in turn.
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Center(
+                            child: CharacterToken(
+                              key: ValueKey('news-$i-${n.role.name}'),
+                              size: 34,
+                              entrance: n.arrived ? entranceOf(n.role) : null,
+                              exit: n.exit,
+                              delay: Duration(milliseconds: 600 + 900 * i),
+                              child: _roleToken(n.role, Color(n.color), 34),
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(text,
+                          child: Text(n.text,
                               style: const TextStyle(
                                   fontSize: 16, height: 1.35, color: Palette.ink)),
                         ),
@@ -4510,6 +4518,9 @@ class _HomePageState extends State<HomePage>
               : (i, '$who will remember this.', CharacterMood.angry));
         }
       }
+      for (final c in game.pendingArrivals) {
+        line('${c.title} is summoned to court.');
+      }
       for (final c in game.pendingDepartures) {
         final seat = game.courtiers.indexOf(c);
         if (seat >= 0) {
@@ -4544,6 +4555,17 @@ class _HomePageState extends State<HomePage>
   String _who(int seat) =>
       game.solo ? game.personAt(seat) : game.courtiers[seat].title;
 
+  /// A token for [role] in [color], for someone who may not have a seat
+  /// (yet, or any more).
+  Widget _roleToken(Courtier role, Color color, double size) => ShapedToken(
+        shape: role.shape,
+        size: size,
+        color: color,
+        ring: Palette.goldDeep,
+        child: OutlinedLabel(seatLabels([Player(role.title, color: color)]).first,
+            fontSize: size * 0.36, strokeWidth: size * 0.07),
+      );
+
   /// A courtier's token, alive.
   Widget _character(int seat, double size,
           {CharacterMood mood = CharacterMood.idle,
@@ -4574,6 +4596,8 @@ class _HomePageState extends State<HomePage>
     game.pointsBonus = 0;
     targetPoints = target;
     game.nextDynastyRound(playerCount, target);
+    // The story may have grown or shrunk the court.
+    playerCount = game.players.length;
     _resetTable();
     _lastMark = null;
     _step = _DynastyStep.result;
