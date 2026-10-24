@@ -350,6 +350,16 @@ class GameState {
     }
     final rand = random ?? Random();
     final king = kingIndex;
+    // Seats come and go, so every per-seat list must be able to grow.
+    players = List.of(players);
+    courtiers = List.of(courtiers);
+    loyalty = List.of(loyalty);
+    schemeOf = List.of(schemeOf);
+    schemeResult = List.of(schemeResult);
+    powerUsed = List.of(powerUsed);
+    spoke = List.of(spoke);
+    traitorRounds = List.of(traitorRounds);
+    people = List.of(people);
     // Seat -> why they go, how, and whether the story sent them.
     final leaving = <int, (String, Exit, bool)>{};
     for (int s = 0; s < players.length; s++) {
