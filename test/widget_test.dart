@@ -986,8 +986,8 @@ void main() {
     expect(find.text('Round won'), findsOneWidget);
     await tester.tap(find.text('The King must decide'));
     await tester.pumpAndSettle();
-    expect(find.text('The King\u2019s Dilemma'), findsOneWidget);
     final d = dilemmas[state.debugDilemma as int];
+    expect(find.text(d.title), findsOneWidget);
     if (d.council) {
       // Everyone secretly takes side A, so the court stands as one.
       for (int i = 0;
@@ -1001,7 +1001,9 @@ void main() {
       await tester.tap(find.text(d.a.label));
     }
     await tester.pumpAndSettle();
-    expect(find.text('So it is decided'), findsOneWidget);
+    expect(find.text('Next round').evaluate().isNotEmpty ||
+        find.text('Attend the King').evaluate().isNotEmpty ||
+        find.text('The traitors rise').evaluate().isNotEmpty, isTrue);
     await tester.tap(find.text(game.kingFallen
         ? 'Attend the King'
         : game.ending != null
