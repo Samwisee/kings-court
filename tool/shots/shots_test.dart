@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/sfx.dart';
+import 'package:kings_court/widgets.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -70,6 +71,7 @@ void main() {
     }
 
     // The coronation, part way through, then done.
+    debugPrint('SHAPED ${find.byType(ShapedToken).evaluate().length}');
     for (int i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
@@ -86,6 +88,8 @@ void main() {
       final key = '${game.dealId}-$tap-$d';
       if (tap != null && !seen.contains(key)) {
         seen.add(key);
+        debugPrint('AT $tap shaped=${find.byType(ShapedToken).evaluate().length} '
+            'court=${game.court} figures=${find.byType(CharacterToken).evaluate().length}');
         await tester.pump(const Duration(milliseconds: 400));
         await snap(tap.replaceAll(' ', '-').toLowerCase());
       }
