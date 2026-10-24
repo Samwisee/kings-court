@@ -55,6 +55,15 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter build web --release --base-href /kings-court/
+      # Give each build's files a version so browsers fetch the new ones
+      # instead of a cached copy.
+      - name: Bust caches
+        run: |
+          v=${GITHUB_SHA::8}
+          sed -i "s/main\.dart\.js/main.dart.js?v=$v/g" build/web/flutter_bootstrap.js
+          sed -i "s/flutter_bootstrap\.js/flutter_bootstrap.js?v=$v/" build/web/index.html
+          rm -f build/web/flutter_service_worker.js
+          grep -o 'main.dart.js[^"]*' build/web/flutter_bootstrap.js | head -2
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
