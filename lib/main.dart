@@ -1247,15 +1247,7 @@ class _HomePageState extends State<HomePage>
   /// Re-stacks every player's cards after one is added or removed.
   void _layoutOwned() {
     final geo = _geo;
-    final loose = [
-      for (final t in _order)
-        if (t.assignedPlayerIndex == null && _pos[t] != null && t != _dragging)
-          Rect.fromCenter(
-              center: _toPx(_pos[t]!),
-              width: geo.cardSize(t).width,
-              height: geo.cardSize(t).height),
-    ];
-    geo.layoutOwned(_order, obstacles: loose).forEach((t, p) {
+    geo.layoutOwned(_order).forEach((t, p) {
       _pos[t] = _toFrac(geo.clampToTable(p, geo.cardSize(t)));
     });
   }

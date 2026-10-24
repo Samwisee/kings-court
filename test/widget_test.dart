@@ -19,6 +19,25 @@ void setPhoneSize(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
+
+/// A loose task card whose centre isn't covered by a card someone holds,
+/// so a drag starting there picks up the right card.
+Finder freeCard(WidgetTester tester, bool Function(TableCard w) ok) {
+  final all = find.byType(TableCard).evaluate().toList();
+  final owned = [
+    for (final el in all)
+      if ((el.widget as TableCard).owner != null)
+        tester.getRect(find.byWidget(el.widget))
+  ];
+  for (final el in all) {
+    final w = el.widget as TableCard;
+    if (w.owner != null || !ok(w)) continue;
+    final c = tester.getCenter(find.byWidget(w));
+    if (!owned.any((r) => r.inflate(4).contains(c))) return find.byWidget(w);
+  }
+  return find.byWidgetPredicate((w) => w is TableCard && w.owner == null && ok(w)).first;
+}
+
 Future<void> dealGame(WidgetTester tester, int players) async {
   await tester.pumpWidget(const TheKingsCourtApp());
   await tester.pumpAndSettle();
@@ -197,9 +216,7 @@ void main() {
     final total = tester.widgetList(cards).length;
     final count = total < 6 ? total : 6;
     for (int n = 0; n < count; n++) {
-      final card = find
-          .byWidgetPredicate((w) => w is TableCard && w.owner == null)
-          .first;
+      final card = freeCard(tester, (_) => true);
       final seat = tester.getCenter(find.byType(SeatToken).at(n.isEven ? 0 : 1));
       final g = await tester.startGesture(tester.getCenter(card));
       await g.moveBy(const Offset(10, 10));
@@ -384,12 +401,8 @@ void main() {
 
     var seat = 1;
     while (game.pickTurn != null) {
-      final card = find
-          .byWidgetPredicate((w) =>
-              w is TableCard &&
-              w.owner == null &&
-              game.canTake(w.task, game.pickTurn!))
-          .first;
+      final card =
+          freeCard(tester, (w) => game.canTake(w.task, game.pickTurn!));
       final target =
           tester.getCenter(find.byType(SeatToken).at(game.pickTurn!));
       final g = await tester.startGesture(tester.getCenter(card));
