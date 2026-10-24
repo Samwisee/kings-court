@@ -683,6 +683,51 @@ void main() {
     ..seatCourtiers()
     ..addTasksUntilTarget(players, 8);
 
+  test('Every story flag a matter needs can be earned', () {
+    final earned = <String>{
+      for (final d in dilemmas)
+        for (final e in [...d.a.effects, ...d.b.effects])
+          if (e is Flag) e.name,
+      for (final t in tidings)
+        for (final e in [...t.won.effects, ...t.lost.effects])
+          if (e is Flag) e.name,
+    };
+    for (final d in dilemmas) {
+      for (final f in d.requires) {
+        expect(earned, contains(f), reason: d.title);
+      }
+    }
+    for (final t in tidings) {
+      for (final f in t.requires) {
+        expect(earned, contains(f), reason: t.title);
+      }
+    }
+  });
+
+  test('A story picks up where the King left it', () {
+    final g = dynasty(6)..setKing(0);
+    g.flags.add('karsk_paid');
+    var tribute = 0;
+    for (int i = 0; i < 40; i++) {
+      g.flags.remove('seen:Tribute Doubled');
+      final d = dilemmas[g.pickDilemma(Random(i))];
+      if (d.title == 'Tribute Doubled') tribute++;
+    }
+    expect(tribute, greaterThan(20));
+    // Once faced, a story matter never comes back.
+    g.flags.add('seen:Tribute Doubled');
+    for (int i = 0; i < 40; i++) {
+      expect(dilemmas[g.pickDilemma(Random(i))].title, isNot('Tribute Doubled'));
+    }
+    // Choices are remembered, and saved.
+    g.applyChoice(dilemmas.firstWhere((d) => d.title == 'Tribute Doubled').b);
+    expect(g.flags, contains('karsk_defied'));
+    expect(g.flags, isNot(contains('karsk_paid')));
+    final copy = GameState.fromJson(
+        jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)!;
+    expect(copy.flags, contains('karsk_defied'));
+  });
+
   test('Every seat gets a different courtier shape', () {
     final g = dynasty(6);
     expect(g.courtiers.map((c) => c.shape).toSet(), hasLength(6));
