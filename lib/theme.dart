@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+
+/// The King's Court palette: card table felt, white card stock, card-red
+/// and black suits, and brass gold reserved for the King.
+class Palette {
+  static const felt = Color(0xFF0F4A2E);
+  static const feltDeep = Color(0xFF0A3622);
+  static const feltLine = Color(0xFF2A6B4B);
+  static const card = Color(0xFFFFFDF8);
+  static const ink = Color(0xFF1D1B18);
+  static const inkSoft = Color(0xFF6B655C);
+  static const cardRed = Color(0xFFB3122B);
+  static const gold = Color(0xFFD4A63A);
+  static const goldDeep = Color(0xFFA57C1B);
+  static const won = Color(0xFF3FA66A);
+  static const lost = Color(0xFFD9483B);
+
+  /// Seat colours. Chosen to stay clear of the card red so a player's
+  /// colour is never mistaken for a suit.
+  static const players = <Color>[
+    Color(0xFFE8822A), // orange
+    Color(0xFF3B7BE0), // blue
+    Color(0xFFA05CD6), // violet
+    Color(0xFF1FB5B0), // teal
+    Color(0xFFE0558C), // pink
+    Color(0xFF9DB534), // lime
+  ];
+}
+
+/// Royal display face for titles and every number: Roman capitals with
+/// old-style numerals.
+const displayFont = 'CinzelDecorative';
+const bodyFont = 'AlegreyaSans';
+
+ThemeData buildTheme() {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: Palette.felt,
+    brightness: Brightness.dark,
+  ).copyWith(
+    primary: Palette.gold,
+    onPrimary: Palette.ink,
+    surface: Palette.feltDeep,
+    onSurface: Colors.white,
+  );
+
+  final base = ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    fontFamily: bodyFont,
+    scaffoldBackgroundColor: Palette.felt,
+  );
+
+  return base.copyWith(
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Palette.felt,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: Palette.gold,
+        foregroundColor: Palette.ink,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+        textStyle: const TextStyle(
+            fontFamily: bodyFont, fontSize: 17, fontWeight: FontWeight.w700),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Colors.white54),
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        textStyle: const TextStyle(
+            fontFamily: bodyFont, fontSize: 16, fontWeight: FontWeight.w500),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+    ),
+    snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
+  );
+}

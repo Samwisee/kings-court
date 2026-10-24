@@ -1,0 +1,177 @@
+/// Bots that play as your teammates. They are cooperative and, like a
+/// friendly table, they know where every card is: each decision tries
+/// every option in many quick random playouts of the rest of the round
+/// and keeps the one that most often completes every task.
+library;
+
+import 'dart:math';
+
+import 'cards.dart';
+import 'match.dart';
+import 'rules.dart';
+
+class Bot {
+  Bot([Random? random]) : rand = random ?? Random();
+  final Random rand;
+
+  /// Playouts per decision, shared between the options.
+  int budget = 900;
+
+  /// The task [seat] should pick.
+  int choosePick(MatchState s, int seat) {
+    final options = [
+      for (int i = 0; i < s.tasks.length; i++)
+        if (s.canTake(i, seat)) i
+    ];
+    if (options.length == 1) return options.first;
+    final per = max(20, budget ~/ options.length);
+    var best = options.first;
+    var bestScore = -1.0;
+    for (final i in options) {
+      final assigned = {
+        for (int t = 0; t < s.tasks.length; t++)
+          if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
+        i: seat,
+      };
+      final score = _scoreOf(s, assigned, per, freeX: true) +
+          rand.nextDouble() * 0.01;
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  /// The number of tricks [seat] should announce for task [task].
+  int chooseX(MatchState s, int seat, int task) {
+    final counts = List.filled(s.totalTricks + 1, 0);
+    final assigned = {
+      for (int t = 0; t < s.tasks.length; t++)
+        if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
+    };
+    final inPlay = s.inPlay;
+    for (int n = 0; n < budget; n++) {
+      final sim = _Sim.from(s);
+      sim.playOut(rand);
+      // Count this playout if everything else would succeed.
+      final v = sim.view(s, inPlay);
+      final others = assigned.entries.where((e) =>
+          e.key != task && !needsX(s.tasks[e.key].description));
+      if (others.every((e) =>
+          taskRules[s.tasks[e.key].description]!(v, e.value, s.tasks[e.key].x) ==
+          Verdict.done)) {
+        counts[v.tricksWon(seat)]++;
+      }
+    }
+    var best = 0;
+    for (int x = 1; x < counts.length; x++) {
+      if (counts[x] > counts[best]) best = x;
+    }
+    return best;
+  }
+
+  /// The card [seat] should play.
+  PlayingCard choosePlay(MatchState s, int seat) {
+    final legal = s.legalFor(seat);
+    if (legal.length == 1) return legal.first;
+    final per = max(20, budget ~/ legal.length);
+    final assigned = {
+      for (int t = 0; t < s.tasks.length; t++)
+        if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
+    };
+    var best = legal.first;
+    var bestScore = -1.0;
+    for (final card in legal) {
+      final score =
+          _scoreOf(s, assigned, per, first: (seat, card)) + rand.nextDouble() * 0.01;
+      if (score > bestScore) {
+        bestScore = score;
+        best = card;
+      }
+    }
+    return best;
+  }
+
+  /// How often random playouts from [s] complete the [assigned] tasks:
+  /// 1 for each playout where all are done, plus a little for each task
+  /// done in the ones that fall short. With [freeX], "exactly X" tasks
+  /// count as done whatever X turns out to be (it's announced later).
+  double _scoreOf(MatchState s, Map<int, int> assigned, int playouts,
+      {(int, PlayingCard)? first, bool freeX = false}) {
+    double total = 0;
+    final inPlay = s.inPlay;
+    for (int n = 0; n < playouts; n++) {
+      final sim = _Sim.from(s);
+      if (first != null) sim.play(first.$1, first.$2);
+      sim.playOut(rand);
+      final v = sim.view(s, inPlay);
+      int done = 0;
+      for (final e in assigned.entries) {
+        final t = s.tasks[e.key];
+        if (needsX(t.description) && (freeX || t.x == null)) {
+          done++;
+          continue;
+        }
+        if (taskRules[t.description]!(v, e.value, t.x) == Verdict.done) done++;
+      }
+      total += done == assigned.length ? 1 : 0.2 * done / max(1, assigned.length);
+    }
+    return total / playouts;
+  }
+}
+
+/// A throwaway copy of a round, played out at random.
+class _Sim {
+  _Sim(this.players, this.hands, this.tricks, this.leader, this.seats,
+      this.cards, this.totalTricks);
+
+  factory _Sim.from(MatchState s) => _Sim(
+        s.players,
+        [for (final h in s.hands) List.of(h)],
+        List.of(s.tricks),
+        s.leader,
+        List.of(s.currentSeats),
+        List.of(s.current),
+        s.totalTricks,
+      );
+
+  final int players;
+  final List<List<PlayingCard>> hands;
+  final List<Trick> tricks;
+  int leader;
+  List<int> seats;
+  List<PlayingCard> cards;
+  final int totalTricks;
+
+  int get turn => cards.isEmpty ? leader : (seats.last + 1) % players;
+
+  void play(int seat, PlayingCard card) {
+    hands[seat].remove(card);
+    seats.add(seat);
+    cards.add(card);
+    if (cards.length == players) {
+      final w = seats[winningPlay(cards)];
+      tricks.add(Trick(leader, seats, cards, w));
+      leader = w;
+      seats = [];
+      cards = [];
+    }
+  }
+
+  void playOut(Random rand) {
+    while (tricks.length < totalTricks) {
+      final seat = turn;
+      final legal = legalPlays(hands[seat], cards.isEmpty ? null : cards.first);
+      if (legal.isEmpty) break;
+      play(seat, legal[rand.nextInt(legal.length)]);
+    }
+  }
+
+  RoundView view(MatchState s, Set<PlayingCard> inPlay) => RoundView(
+      players: players,
+      king: s.king,
+      tricks: tricks,
+      totalTricks: totalTricks,
+      inPlay: inPlay);
+}
