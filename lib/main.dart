@@ -1747,7 +1747,7 @@ class _HomePageState extends State<HomePage>
       return;
     }
     final p = _toPx(_pos[t]!);
-    final seat = _geo.seatAt(p);
+    final seat = _dropSeat(p);
     final previous = t.assignedPlayerIndex;
     setState(() {
       _dragging = null;
@@ -3105,6 +3105,23 @@ class _HomePageState extends State<HomePage>
 
   Offset? _lastPointer;
 
+  /// Where the finger was when a card was let go.
+  Offset? _dropAt;
+
+  /// The seat a dragged card was dropped on: under the finger if there's
+  /// one there (a card near the edge is held back from the edge, but the
+  /// finger isn't), otherwise under the card.
+  int? _dropSeat(Offset cardCentre) {
+    final box = _tableKey.currentContext?.findRenderObject() as RenderBox?;
+    final at = _dropAt;
+    _dropAt = null;
+    if (box != null && at != null) {
+      final seat = _geo.seatAt(box.globalToLocal(at));
+      if (seat != null) return seat;
+    }
+    return _geo.seatAt(cardCentre);
+  }
+
   Widget _buildCards(_TableGeometry geo) {
     return AnimatedBuilder(
       animation: _deal,
@@ -3178,6 +3195,7 @@ class _HomePageState extends State<HomePage>
                           _onDragUpdate(t, d.globalPosition - last);
                         },
                         onPanEnd: (_) {
+                          _dropAt = _lastPointer;
                           _lastPointer = null;
                           _onDragEnd(t);
                         },
