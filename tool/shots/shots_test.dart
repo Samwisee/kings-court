@@ -9,6 +9,8 @@ import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/sfx.dart';
 import 'package:kings_court/widgets.dart';
+import 'package:kings_court/courtiers.dart';
+import 'package:kings_court/play/throne_room.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -38,6 +40,41 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     Sfx.muteForTests = true;
     await loadFonts();
+  });
+
+  testWidgets('A throne room on its own', (tester) async {
+    tester.view.physicalSize = const Size(780, 1688);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: ThroneRoom(
+        title: 'A Test',
+        figures: const [
+          HallFigure('duke', Courtier.duke, Colors.blue),
+          HallFigure('bishop', Courtier.bishop, Colors.purple),
+          HallFigure('general', Courtier.general, Colors.teal),
+        ],
+        lines: const [
+          HallLine('Hello there.', who: 'duke'),
+          HallLine('The herald speaks.'),
+        ],
+        king: const SizedBox(width: 40, height: 40),
+        kingName: 'King Test',
+        coffers: 12,
+        right: HallChoice('Go', () {}),
+      ),
+    ));
+    await tester.pump(const Duration(milliseconds: 2500));
+    for (final e in find.byType(AnimatedPositioned).evaluate()) {
+      final box = e.renderObject as RenderBox;
+      debugPrint('POS ${box.localToGlobal(Offset.zero)} ${box.size}');
+    }
+    for (final e in find.byType(Opacity).evaluate()) {
+      debugPrint('OPA ${(e.widget as Opacity).opacity}');
+    }
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/zz-room.png'));
+    await tester.pump(const Duration(seconds: 6));
   });
 
   testWidgets('Throne room scenes', (tester) async {
