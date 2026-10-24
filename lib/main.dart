@@ -747,7 +747,7 @@ class _HomePageState extends State<HomePage>
   /// Whether [t] could still be done by someone allowed to take it, with
   /// these cards in play: no task should be lost before the first trick.
   bool _possible(Task t, List<List<PlayingCard>> hands, Set<PlayingCard> inPlay) {
-    if (needsX(t.description) || hands.isEmpty) return true;
+    if (needsX(t.description) || hands.isEmpty || hands.first.isEmpty) return true;
     final v = RoundView(
         players: hands.length,
         king: game.kingIndex ?? _you,
@@ -758,7 +758,13 @@ class _HomePageState extends State<HomePage>
     return [
       for (int s = 0; s < hands.length; s++)
         if (t.assignedPlayerIndex == s || game.canTake(t, s)) s
-    ].any((s) => rule(v, s, null) != Verdict.failed);
+    ].any((s) {
+      try {
+        return rule(v, s, null) != Verdict.failed;
+      } catch (_) {
+        return true;
+      }
+    });
   }
 
   /// Lets whichever bot is due act, after a short pause.
