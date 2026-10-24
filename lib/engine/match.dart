@@ -112,6 +112,23 @@ class MatchState {
   bool Function(int task, int seat)? takeRule;
   Map<String, int> announced = {};
 
+  /// Cards shown with the speech token this round: seat to card, and what
+  /// was said about it ("highest", "lowest" or "only").
+  Map<int, PlayingCard> revealed = {};
+  Map<int, String> revealHint = {};
+
+  /// What may be said about [card] in [seat]'s hand, or null if it can't
+  /// be shown (Court Cards, or a card in the middle of its suit).
+  String? revealFor(int seat, PlayingCard card) {
+    if (card.isCourt || !hands[seat].contains(card)) return null;
+    final suit = hands[seat].where((c) => c.suit == card.suit).toList();
+    if (suit.length == 1) return 'only';
+    final ranks = suit.map((c) => c.rank);
+    if (card.rank == ranks.reduce((a, b) => a > b ? a : b)) return 'highest';
+    if (card.rank == ranks.reduce((a, b) => a < b ? a : b)) return 'lowest';
+    return null;
+  }
+
   int get totalTricks => 40 ~/ players;
 
   Set<PlayingCard> get inPlay =>
@@ -215,6 +232,8 @@ class MatchState {
     current = [];
     currentSeats = [];
     announced = {};
+    revealed = {};
+    revealHint = {};
     won = null;
   }
 
@@ -357,6 +376,8 @@ class MatchState {
         'won': won,
         'dealId': dealId,
         'announced': announced,
+        'revealed': {for (final e in revealed.entries) '${e.key}': e.value.id},
+        'revealHint': {for (final e in revealHint.entries) '${e.key}': e.value},
       };
 
   static MatchState fromJson(Map<String, dynamic> j) {
@@ -392,6 +413,14 @@ class MatchState {
       ..won = j['won'] as bool?
       ..dealId = (j['dealId'] as int?) ?? -1
       ..announced =
-          Map<String, int>.from((j['announced'] as Map?) ?? const {});
+          Map<String, int>.from((j['announced'] as Map?) ?? const {})
+      ..revealed = {
+        for (final e in ((j['revealed'] as Map?) ?? const {}).entries)
+          int.parse(e.key as String): PlayingCard.fromId(e.value as int)
+      }
+      ..revealHint = {
+        for (final e in ((j['revealHint'] as Map?) ?? const {}).entries)
+          int.parse(e.key as String): e.value as String
+      };
   }
 }

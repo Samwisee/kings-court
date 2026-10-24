@@ -58,12 +58,23 @@ Future<void> setupThrough(WidgetTester tester,
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
+  // These tests use the table with a real deck.
+  await setOnScreen(tester, false);
   await tester.tap(find.text('$players').last);
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
+}
+
+/// Turns on-screen cards on or off on the players step.
+Future<void> setOnScreen(WidgetTester tester, bool on) async {
+  final f = find.widgetWithText(SwitchListTile, 'On-screen cards');
+  if (tester.widget<SwitchListTile>(f).value != on) {
+    await tester.tap(f);
+    await tester.pumpAndSettle();
+  }
 }
 
 void main() {
@@ -873,8 +884,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('On-screen cards'));
-      await tester.pumpAndSettle();
+      await setOnScreen(tester, true);
       await tester.tap(find.text('3').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Next'));
@@ -894,6 +904,8 @@ void main() {
           await tester.tap(find.text('So it begins'));
         } else if (find.text('So be it').evaluate().isNotEmpty) {
           await tester.tap(find.text('So be it'));
+        } else if (find.text('Let it fail').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Let it fail'));
         } else if (find.text('Announce').evaluate().isNotEmpty) {
           await tester.tap(find.text('Announce'));
         } else if (find.text('Got it').evaluate().isNotEmpty) {

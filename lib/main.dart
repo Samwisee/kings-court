@@ -808,6 +808,7 @@ class _HomePageState extends State<HomePage>
     }
     final turn = _cards.turn;
     if (turn == _you) return false;
+    if (_botReveals(turn)) return true;
     final card = await _bot.choosePlayAsync(view, turn);
     if (!mounted || _moment != before) return true;
     _playCard(turn, card);
@@ -914,7 +915,7 @@ class _HomePageState extends State<HomePage>
 
   /// Marks each task done or failed from the tricks so far. Sealed tasks
   /// are judged in seal order, and one done out of order fails.
-  void _judgeTasks() {
+  Future<void> _judgeTasks() async {
     final c = _cards;
     final v = _roundView;
     int order(Task t) => t.seal == null ? 0 : t.seal!;
@@ -930,6 +931,8 @@ class _HomePageState extends State<HomePage>
       final status = verdict == Verdict.done && game.sealProblem(t) == null
           ? TaskStatus.completed
           : TaskStatus.failed;
+      if (status == TaskStatus.failed && await _offerAbsolution(t)) continue;
+      if (!mounted || !game.tasks.contains(t)) continue;
       _setTaskStatus(t, status);
     }
     // Traitors' schemes are judged by the cards too.
@@ -1039,17 +1042,59 @@ class _HomePageState extends State<HomePage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 200),
-            style: TextStyle(
-                fontFamily: bodyFont,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: yourTurn || _yourPick ? Palette.gold : Colors.white70),
-            child: Text(_cardStatus,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center),
+          Row(
+            children: [
+              // Your courtier's power, when it can be used.
+              SizedBox(
+                width: 44,
+                child: _yourCourtier == null
+                    ? null
+                    : IconButton(
+                        tooltip: '${_yourCourtier!.power}: ${_yourCourtier!.powerRule}',
+                        onPressed: _canUsePower ? _usePower : null,
+                        icon: Icon(Icons.bolt_rounded,
+                            color: _canUsePower ? Palette.gold : Colors.white24),
+                      ),
+              ),
+              Expanded(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: TextStyle(
+                      fontFamily: bodyFont,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: yourTurn || _yourPick || _revealing
+                          ? Palette.gold
+                          : Colors.white70),
+                  child: Text(
+                      _revealing
+                          ? 'Tap a card to show it (highest, lowest or only of its suit)'
+                          : _cardStatus,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center),
+                ),
+              ),
+              // The speech token: show one card, once a round.
+              SizedBox(
+                width: 44,
+                child: IconButton(
+                  tooltip: 'Show a card (once a round)',
+                  onPressed: _canReveal || _revealing
+                      ? () => setState(() => _revealing = !_revealing)
+                      : null,
+                  icon: Icon(
+                      _revealing
+                          ? Icons.close_rounded
+                          : game.spoke.length > _you && game.spoke[_you]
+                              ? Icons.voice_over_off
+                              : Icons.record_voice_over,
+                      color: _canReveal || _revealing
+                          ? Palette.gold
+                          : Colors.white24),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           LayoutBuilder(builder: (context, box) {
@@ -1076,6 +1121,16 @@ class _HomePageState extends State<HomePage>
                       final left = (width - total) / 2 + i * step;
                       final top = legal.contains(card) ? 0.0 : 12.0;
                       void play() {
+                        if (_revealing) {
+                          if (_cards.revealFor(_you, card) == null) {
+                            _showSnack(
+                                'Only your highest, lowest or only card of a suit can be shown, never a Court Card',
+                                Palette.feltDeep);
+                            return;
+                          }
+                          _reveal(_you, card);
+                          return;
+                        }
                         if (!_yourPlay) return;
                         if (!legal.contains(card)) {
                           final led = c.led!;
@@ -1191,12 +1246,7 @@ class _HomePageState extends State<HomePage>
     for (final t in game.tasks) {
       final owner = owners[t];
       final from = _openTaskRects[t];
-      if (!_owners.containsKey(t) ||
-          _owners[t] != null ||
-          owner == null ||
-          from == null) {
-        continue;
-      }
+      if (_owners[t] != null || owner == null || from == null) continue;
       final area = owner == _you ? _rectOn(_yourRowKey) : _rectOn(_seatKey(owner));
       if (area == null) continue;
       final to = owner == _you
@@ -1244,10 +1294,7 @@ class _HomePageState extends State<HomePage>
             for (final f in _flights) f.build(),
             if (_crowning != null)
               Positioned.fill(child: IgnorePointer(child: _digiCrowning())),
-            if (_decreePending) Positioned.fill(child: _buildDecreeOverlay()),
             Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
-            if (game.outcome != RoundOutcome.inProgress && _lastTrick == null)
-              Positioned.fill(child: _buildOutcomeOverlay()),
           ],
         );
       }),
@@ -1383,6 +1430,7 @@ class _HomePageState extends State<HomePage>
                             softWrap: false,
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white54)),
+                      if (_revealedView(seat) case final r?) r,
                       for (final t in game.tasks)
                         if (t.assignedPlayerIndex == seat &&
                             !_flights.any((f) => f.task == t))
@@ -1393,6 +1441,28 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// A card shown with the speech token, while it's still in hand.
+  Widget? _revealedView(int seat) {
+    final c = _cards;
+    final card = c.revealed[seat];
+    if (card == null || c.dealId != game.dealId || !c.hands[seat].contains(card)) {
+      return null;
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PlayingCardView(card: card, width: 22),
+          const SizedBox(width: 4),
+          Text(c.revealHint[seat] ?? '',
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: Palette.gold)),
         ],
       ),
     );
@@ -1510,6 +1580,7 @@ class _HomePageState extends State<HomePage>
           mainAxisSize: MainAxisSize.min,
           children: [
             _digiToken(_you, 46),
+            if (_revealedView(_you) case final r?) r,
             if (c.dealId == game.dealId)
               Text('${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}',
                   style: const TextStyle(fontSize: 11, color: Colors.white54)),
@@ -1622,6 +1693,241 @@ class _HomePageState extends State<HomePage>
           );
         }(),
     ];
+  }
+
+  // ------------------------------------------- powers and reveals on screen
+
+  /// Tap a card in your hand to show it with the speech token.
+  bool _revealing = false;
+
+  bool get _canReveal =>
+      _playing &&
+      game.spoke.length > _you &&
+      !game.spoke[_you] &&
+      game.canSpeak(_you) &&
+      _cards.hands[_you].any((c) => _cards.revealFor(_you, c) != null);
+
+  /// Shows [card] for [seat]: it stays in their hand, face up for all.
+  void _reveal(int seat, PlayingCard card) {
+    final hint = _cards.revealFor(seat, card);
+    if (hint == null) return;
+    setState(() {
+      _cards.revealed[seat] = card;
+      _cards.revealHint[seat] = hint;
+      if (!game.spoke[seat]) game.toggleSpoke(seat);
+      if (seat == _you) _revealing = false;
+    });
+  }
+
+  /// A bot shows a card someone's task needs, if it may, once a round.
+  bool _botReveals(int seat) {
+    if (game.spoke[seat] || !game.canSpeak(seat)) return false;
+    for (final card in _cards.hands[seat]) {
+      if (_cards.revealFor(seat, card) == null) continue;
+      final needed = game.tasks.any((t) =>
+          t.status == TaskStatus.pending &&
+          t.assignedPlayerIndex != null &&
+          t.assignedPlayerIndex != seat &&
+          neededCards(t.description).contains(card));
+      if (needed) {
+        _reveal(seat, card);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Courtier? get _yourCourtier =>
+      game.hasRoles && _you < game.courtiers.length ? game.courtiers[_you] : null;
+
+  /// Whether your courtier's power can be used right now, on screen.
+  bool get _canUsePower {
+    final me = _yourCourtier;
+    if (me == null || !_playing || game.powerUsed[_you]) return false;
+    final c = _cards;
+    return switch (me) {
+      // Before the first trick.
+      Courtier.duke => c.tricks.isEmpty &&
+          c.current.isEmpty &&
+          game.tasks.any((t) => t.assignedPlayerIndex == _you),
+      // Waiting for a failure, which asks when it comes.
+      Courtier.bishop => false,
+      // At the start of a trick someone else would lead.
+      Courtier.general =>
+        _lastTrick == null && c.current.isEmpty && c.leader != _you,
+      Courtier.spymaster => true,
+      Courtier.merchant => c.hands[_you].any((x) => !x.isCourt),
+      Courtier.jester => game.tasks
+              .where((t) => t.status == TaskStatus.pending)
+              .map((t) => t.assignedPlayerIndex)
+              .toSet()
+              .length >=
+          2,
+    };
+  }
+
+  /// Uses your courtier's power, asking whatever it needs to know.
+  Future<void> _usePower() async {
+    final me = _yourCourtier;
+    if (me == null || !_canUsePower) return;
+    final names = [for (final p in game.players) p.name];
+    Future<T?> choose<T>(String title, List<(T, String)> options) =>
+        showDialog<T>(
+          context: context,
+          builder: (context) => SimpleDialog(
+            backgroundColor: Palette.feltDeep,
+            title: Text(title),
+            children: [
+              for (final (value, label) in options)
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, value),
+                  child: SuitText(label,
+                      style: const TextStyle(fontSize: 16, color: Colors.white)),
+                ),
+            ],
+          ),
+        );
+    void used() {
+      _haptic(HapticFeedback.mediumImpact);
+      setState(() => game.powerUsed[_you] = true);
+    }
+
+    switch (me) {
+      case Courtier.duke:
+        final task = await choose('Command: give which task?', [
+          for (final t in game.tasks)
+            if (t.assignedPlayerIndex == _you) (t, t.cardText(playerCount)),
+        ]);
+        if (task == null || !mounted) return;
+        final seat = await choose('Give it to whom?', [
+          for (int s = 0; s < game.players.length; s++)
+            if (s != _you && game.canTake(task, s)) (s, names[s]),
+        ]);
+        if (seat == null || !mounted) return;
+        setState(() => task.assignedPlayerIndex = seat);
+        used();
+      case Courtier.bishop:
+        return;
+      case Courtier.general:
+        setState(() => _cards.leader = _you);
+        used();
+        _showSnack('Vanguard: you lead this trick', Palette.feltDeep);
+      case Courtier.spymaster:
+        final seat = await choose('Whisper: ask whom?', [
+          for (int s = 0; s < game.players.length; s++)
+            if (s != _you) (s, names[s]),
+        ]);
+        if (seat == null || !mounted) return;
+        final suit = await choose('About which suit?', [
+          for (final s in [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs])
+            (s, s.symbol),
+        ]);
+        if (suit == null || !mounted) return;
+        used();
+        final has = _cards.hands[seat].any((c) => c.suit == suit);
+        await showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Palette.feltDeep,
+            title: const Text('Whisper'),
+            content: SuitText(
+                '${names[seat]} ${has ? 'holds' : 'holds no'} ${suit.symbol} cards.',
+                style: const TextStyle(fontSize: 18, color: Colors.white)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close')),
+            ],
+          ),
+        );
+      case Courtier.merchant:
+        final n = game.players.length;
+        final neighbours = {(_you + 1) % n, (_you - 1 + n) % n}
+            .where((s) => _cards.hands[s].any((c) => !c.isCourt))
+            .toList();
+        if (neighbours.isEmpty) return;
+        final mine = await choose('Trade: which card do you give?', [
+          for (final c in _cards.hands[_you])
+            if (!c.isCourt) (c, c.label),
+        ]);
+        if (mine == null || !mounted) return;
+        final seat = neighbours.length == 1
+            ? neighbours.first
+            : await choose('Trade with whom?', [
+                for (final s in neighbours) (s, names[s]),
+              ]);
+        if (seat == null || !mounted) return;
+        // They hand back a card of their choosing: one they won't miss.
+        final theirs = (List.of(_cards.hands[seat])..shuffle(_rand))
+            .firstWhere((c) => !c.isCourt && !_marksFor(c).isNotEmpty,
+                orElse: () => _cards.hands[seat].firstWhere((c) => !c.isCourt));
+        setState(() {
+          _cards.hands[_you]
+            ..remove(mine)
+            ..add(theirs)
+            ..sort();
+          _cards.hands[seat]
+            ..remove(theirs)
+            ..add(mine)
+            ..sort();
+        });
+        used();
+        _showSnack('Trade: you gave the ${mine.label} and got the ${theirs.label}',
+            Palette.feltDeep);
+      case Courtier.jester:
+        final open = [
+          for (final t in game.tasks)
+            if (t.status == TaskStatus.pending && t.assignedPlayerIndex != null) t
+        ];
+        final a = await choose('Jest: swap which task?', [
+          for (final t in open)
+            (t, '${names[t.assignedPlayerIndex!]}: ${t.cardText(playerCount)}'),
+        ]);
+        if (a == null || !mounted) return;
+        final b = await choose('With which?', [
+          for (final t in open)
+            if (t.assignedPlayerIndex != a.assignedPlayerIndex)
+              (t, '${names[t.assignedPlayerIndex!]}: ${t.cardText(playerCount)}'),
+        ]);
+        if (b == null || !mounted) return;
+        setState(() {
+          final x = a.assignedPlayerIndex;
+          a.assignedPlayerIndex = b.assignedPlayerIndex;
+          b.assignedPlayerIndex = x;
+        });
+        used();
+    }
+  }
+
+  /// Absolution: before a task fails, the Bishop (you) may set it aside.
+  Future<bool> _offerAbsolution(Task t) async {
+    if (_yourCourtier != Courtier.bishop || game.powerUsed[_you]) return false;
+    final yes = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Palette.feltDeep,
+        title: const Text('Absolution?'),
+        content: SuitText(
+            '${game.players[t.assignedPlayerIndex!].name}’s task is about to fail: '
+            '${t.cardText(playerCount)}\n\nUse your power to set it aside? It no longer counts this round.',
+            style: const TextStyle(fontSize: 16, height: 1.35, color: Colors.white)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Let it fail')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Absolve it')),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return false;
+    setState(() {
+      game.tasks.remove(t);
+      game.powerUsed[_you] = true;
+    });
+    return true;
   }
 
   /// Marks a task done, for tests.
@@ -2036,7 +2342,49 @@ class _HomePageState extends State<HomePage>
                                     fontSize: 16,
                                     height: 1.4,
                                     color: Palette.ink)),
-                            if (!_choosingKing) ...[
+                            if (_digital && !_choosingKing) ...[
+                              const SizedBox(height: 8),
+                              if (seat == _you)
+                                Wrap(spacing: 8, runSpacing: 8, children: [
+                                  FilledButton.icon(
+                                    onPressed: _canUsePower
+                                        ? () {
+                                            Navigator.pop(context);
+                                            _usePower();
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.bolt_rounded),
+                                    label: Text(used
+                                        ? 'Power used'
+                                        : courtier == Courtier.bishop
+                                            ? 'Offered if a task fails'
+                                            : 'Use power'),
+                                    style: FilledButton.styleFrom(
+                                        backgroundColor: Palette.ink,
+                                        foregroundColor: Palette.gold),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: _canReveal
+                                        ? () {
+                                            Navigator.pop(context);
+                                            setState(() => _revealing = true);
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.record_voice_over),
+                                    label: Text(spoke ? 'Card shown' : 'Show a card'),
+                                    style: OutlinedButton.styleFrom(
+                                        foregroundColor: Palette.ink,
+                                        side: const BorderSide(color: Palette.ink)),
+                                  ),
+                                ])
+                              else
+                                Text(
+                                    '${used ? 'Power used' : 'Power not used yet'} this round. '
+                                    '${spoke ? 'Has shown a card.' : 'Hasn\u2019t shown a card.'}',
+                                    style: const TextStyle(
+                                        fontSize: 15, color: Palette.inkSoft)),
+                            ],
+                            if (!_choosingKing && !_digital) ...[
                               const SizedBox(height: 8),
                               Align(
                                 alignment: Alignment.centerLeft,
@@ -2418,7 +2766,8 @@ class _HomePageState extends State<HomePage>
       canCancel: true,
       onCancel: _closeSetup,
       onStart: _startFromSetup,
-      digital: game.digital,
+      // On-screen cards unless the game being replaced used a real deck.
+      digital: _inGame ? game.digital : true,
     );
   }
 
@@ -2530,6 +2879,20 @@ class _HomePageState extends State<HomePage>
         ),
       ),
     ),
+      // Tidings, decrees and the end of a round cover the whole screen.
+      if (_inGame && _setupArgs == null && _decreePending)
+        Positioned.fill(
+            child: Material(
+                type: MaterialType.transparency,
+                child: SafeArea(child: _buildDecreeOverlay()))),
+      if (_inGame &&
+          _setupArgs == null &&
+          game.outcome != RoundOutcome.inProgress &&
+          _lastTrick == null)
+        Positioned.fill(
+            child: Material(
+                type: MaterialType.transparency,
+                child: _buildOutcomeOverlay())),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       const Positioned.fill(
@@ -2829,11 +3192,10 @@ class _HomePageState extends State<HomePage>
           if (_crowning != null)
             Positioned.fill(
                 child: IgnorePointer(child: _buildCrowning(geo, _crowning!))),
-          if (_decreePending) Positioned.fill(child: _buildDecreeOverlay()),
+
           // "Play!" once every task has an owner.
           Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
-          if (game.outcome != RoundOutcome.inProgress)
-            Positioned.fill(child: _buildOutcomeOverlay()),
+
         ],
       );
     });
@@ -4781,7 +5143,8 @@ const _modeInfo = {
 };
 
 class _SetupPanelState extends State<_SetupPanel> {
-  late int count = widget.playerCount;
+  late int count =
+      widget.digital && widget.playerCount < 3 ? 3 : widget.playerCount;
   late int target = widget.targetPoints;
   late GameMode mode = widget.mode;
   late bool surprise = widget.surprise;
