@@ -225,6 +225,46 @@ class Depart extends Effect {
   final Courtier courtier;
 }
 
+/// A courtier urging the King towards one choice of a matter.
+class Plea {
+  const Plea(this.courtier, this.line, {required this.forA});
+  final Courtier courtier;
+  final String line;
+
+  /// For the first choice (true) or the second.
+  final bool forA;
+}
+
+/// How each courtier argues for a choice, addressing the King. {choice}
+/// is the choice, in lower case.
+const pleaLines = <Courtier, List<String>>{
+  Courtier.duke: [
+    'Majesty, {choice}. Ashcombe has guarded this realm for nine generations. Heed me.',
+    'Old blood counsels you, Majesty: {choice}.',
+  ],
+  Courtier.bishop: [
+    'Heaven\u2019s will is plain, Majesty: {choice}.',
+    'I have prayed on it, Majesty. {Choice}.',
+  ],
+  Courtier.general: [
+    '{Choice}, Majesty. Anything else is weakness.',
+    'A soldier\u2019s advice, Majesty: {choice}, and be done with it.',
+  ],
+  Courtier.spymaster: [
+    'I hear things, Majesty. {Choice}, and quietly.',
+    'Trust me in this, Majesty, if in nothing else: {choice}.',
+  ],
+  Courtier.merchant: [
+    'Think of the ledgers, Majesty. {Choice}.',
+    'Every coin agrees with me, Majesty: {choice}.',
+  ],
+  Courtier.jester: [
+    'Oh, {choice}, Majesty! What could possibly go wrong?',
+    'Even a fool can see it, Majesty: {choice}.',
+  ],
+  Courtier.king: ['{Choice}.'],
+};
+
 class Choice {
   const Choice(this.label, this.outcome, this.effects);
   final String label;
@@ -245,11 +285,16 @@ class Dilemma {
       this.arc,
       this.speaker,
       this.requires = const [],
-      this.forbids = const []});
+      this.forbids = const [],
+      this.pleas = const []});
   final String title;
   final String story;
   final Choice a;
   final Choice b;
+
+  /// What the council says to the King, for one side or the other. Matters
+  /// without their own get pleas made up from who gains what.
+  final List<Plea> pleas;
   final Courtier? about;
 
   /// A matter for the whole court: every loyal courtier votes, and the
@@ -509,6 +554,11 @@ const dilemmas = <Dilemma>[
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
     followUp: true,
+    pleas: [
+      Plea(Courtier.merchant, 'Gold is cheaper than war, Majesty. Pay, and the river stays quiet.', forA: true),
+      Plea(Courtier.general, 'Send Hask back to his goatherd king, Majesty, and let Varric come if he dares.', forA: false),
+      Plea(Courtier.spymaster, 'A king who pays once pays forever, Majesty.', forA: false),
+    ],
   ),
   Dilemma(
     'Tribute Doubled',
@@ -520,6 +570,10 @@ const dilemmas = <Dilemma>[
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
     followUp: true,
+    pleas: [
+      Plea(Courtier.merchant, 'Twice the gold is still cheaper than one war, Majesty.', forA: true),
+      Plea(Courtier.duke, 'Enough, Majesty! Ashcombe will not pay twice.', forA: false),
+    ],
   ),
   Dilemma(
     'Scouts on the River',
@@ -530,6 +584,10 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.spymaster, 2), Flag('spies'), Say(Courtier.spymaster, 'Varric will not sneeze without my hearing it.')]),
     arc: 'karsk',
     followUp: true,
+    pleas: [
+      Plea(Courtier.general, 'Walls, Majesty. Stone does not change sides.', forA: true),
+      Plea(Courtier.spymaster, 'Walls only tell Varric where to dig, Majesty. Let me send my people.', forA: false),
+    ],
   ),
   Dilemma(
     'Varric Sues for Peace',
@@ -541,6 +599,11 @@ const dilemmas = <Dilemma>[
     arc: 'karsk',
     speaker: 'Prince Edric of Karsk',
     followUp: true,
+    pleas: [
+      Plea(Courtier.bishop, 'Take the peace, Majesty. There are widows enough.', forA: true),
+      Plea(Courtier.merchant, 'Peace opens the river to trade again, Majesty.', forA: true),
+      Plea(Courtier.general, 'He is on his knees, Majesty. Finish it.', forA: false),
+    ],
   ),
   Dilemma(
     'The Ashes of Ashford',
@@ -551,6 +614,10 @@ const dilemmas = <Dilemma>[
         [AllLoyalty(-1), Loyalty(Courtier.spymaster, 1)]),
     arc: 'karsk',
     followUp: true,
+    pleas: [
+      Plea(Courtier.bishop, 'They are your people, Majesty. Open the gates.', forA: true),
+      Plea(Courtier.spymaster, 'Half of Varric\u2019s spies are in that crowd, Majesty.', forA: false),
+    ],
   ),
   Dilemma(
     'The Price of Peace',
@@ -563,6 +630,11 @@ const dilemmas = <Dilemma>[
     speaker: 'Lord Hask, envoy of King Varric',
     requires: ['ashford_burned'],
     forbids: ['karsk_peace', 'karsk_war'],
+    pleas: [
+      Plea(Courtier.bishop, 'A wedding is better than a funeral, Majesty.', forA: true),
+      Plea(Courtier.duke, 'Never wed our blood to Karsk, Majesty!', forA: false),
+      Plea(Courtier.general, 'Give me the order and Ashford is ours by spring.', forA: false),
+    ],
   ),
 
   Dilemma(
@@ -575,6 +647,10 @@ const dilemmas = <Dilemma>[
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
     requires: ['karsk_vassal'],
+    pleas: [
+      Plea(Courtier.merchant, 'Kneel, Majesty. Knees heal. Burned cities do not.', forA: true),
+      Plea(Courtier.duke, 'If you kneel to Varric, Majesty, do not expect the houses to kneel to you.', forA: false),
+    ],
   ),
   Dilemma(
     'A Feast for Two Kingdoms',
@@ -585,6 +661,10 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.general, 1), Flag('karsk_peace_sealed')]),
     arc: 'karsk',
     followUp: true,
+    pleas: [
+      Plea(Courtier.jester, 'A feast with Varric! I\u2019ll bring the poison tasters.', forA: true),
+      Plea(Courtier.spymaster, 'Invite Varric to dinner? I would sooner invite a snake.', forA: false),
+    ],
   ),
   Dilemma(
     'Surplus Grain',
@@ -596,6 +676,11 @@ const dilemmas = <Dilemma>[
     arc: 'karsk',
     about: Courtier.merchant,
     followUp: true,
+    pleas: [
+      Plea(Courtier.merchant, 'Varric pays in gold, Majesty, and gold does not ask where bread goes.', forA: true),
+      Plea(Courtier.general, 'Feed Karsk and you feed its army, Majesty.', forA: false),
+      Plea(Courtier.bishop, 'Our own people will be hungry by midwinter.', forA: false),
+    ],
   ),
   Dilemma(
     'A Long War',
@@ -607,6 +692,10 @@ const dilemmas = <Dilemma>[
     arc: 'karsk',
     followUp: true,
     council: true,
+    pleas: [
+      Plea(Courtier.general, 'One more push, Majesty. The walls are cracking.', forA: true),
+      Plea(Courtier.bishop, 'Bring them home, Majesty, while there is still someone to bring.', forA: false),
+    ],
   ),
 
   // Lady Elara, the Duke's daughter.
@@ -619,6 +708,10 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.duke, -2), Flag('elara_karsk'), Flag('karsk_peace'), Unflag('karsk_defied')]),
     arc: 'elara',
     about: Courtier.duke,
+    pleas: [
+      Plea(Courtier.duke, 'Keep her close, Majesty. Ashcombe blood stays in this realm.', forA: true),
+      Plea(Courtier.merchant, 'A Karsk prince, Majesty, and peace on the river for a generation.', forA: false),
+    ],
   ),
   Dilemma(
     'A Letter from Elara',
@@ -651,6 +744,10 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.merchant, -1)]),
     arc: 'fleet',
     about: Courtier.merchant,
+    pleas: [
+      Plea(Courtier.merchant, 'Twelve ships, Majesty, and a fortune in every hold.', forA: true),
+      Plea(Courtier.duke, 'Gambling the treasury on the weather, Majesty?', forA: false),
+    ],
   ),
   Dilemma(
     'Spice and Envy',
@@ -683,6 +780,10 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.bishop, -1)]),
     arc: 'cathedral',
     about: Courtier.bishop,
+    pleas: [
+      Plea(Courtier.bishop, 'Build it, Majesty, and heaven will remember your name.', forA: true),
+      Plea(Courtier.merchant, 'Stone is expensive, Majesty, and heaven does not pay taxes.', forA: false),
+    ],
   ),
   Dilemma(
     'The Second Anointing',
@@ -760,6 +861,10 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.duke, 1), Flag('mira_wronged')]),
     arc: 'mira',
     speaker: 'Mira, a miller’s daughter',
+    pleas: [
+      Plea(Courtier.bishop, 'Mercy to the poor is never wasted, Majesty.', forA: true),
+      Plea(Courtier.duke, 'The mill sits on Ashcombe land, Majesty. The law is the law.', forA: false),
+    ],
   ),
   Dilemma(
     'Grain from Ashford',

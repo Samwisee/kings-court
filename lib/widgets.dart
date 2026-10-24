@@ -1672,24 +1672,58 @@ class _CharacterTokenState extends State<CharacterToken>
 
 /// Words spoken at the table, in a bubble pointing back at the speaker
 /// (on its left).
-class SpeechBubble extends StatelessWidget {
-  const SpeechBubble(this.text, {super.key, this.who});
+class SpeechBubble extends StatefulWidget {
+  const SpeechBubble(this.text,
+      {super.key, this.who, this.delay = Duration.zero});
   final String text;
 
   /// Who is speaking, shown small above the words.
   final String? who;
 
+  /// Wait this long before speaking (to take turns).
+  final Duration delay;
+
+  @override
+  State<SpeechBubble> createState() => _SpeechBubbleState();
+}
+
+class _SpeechBubbleState extends State<SpeechBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 420));
+  Timer? _wait;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.delay == Duration.zero) {
+      _c.forward();
+    } else {
+      _wait = Timer(widget.delay, () {
+        if (mounted) _c.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _wait?.cancel();
+    _c.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 380),
-      curve: Curves.easeOutBack,
-      builder: (context, t, child) => Transform.scale(
-        scale: 0.6 + 0.4 * t,
-        alignment: Alignment.centerLeft,
-        child: Opacity(opacity: clampD(t, 0, 1), child: child),
-      ),
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        final t = Curves.easeOutBack.transform(_c.value);
+        return Transform.scale(
+          scale: 0.6 + 0.4 * t,
+          alignment: Alignment.centerLeft,
+          child: Opacity(opacity: clampD(_c.value * 1.4, 0, 1), child: child),
+        );
+      },
       child: CustomPaint(
         painter: _BubbleTail(),
         child: Container(
@@ -1706,14 +1740,14 @@ class SpeechBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (who != null)
-                Text(who!,
+              if (widget.who != null)
+                Text(widget.who!,
                     style: const TextStyle(
                         fontFamily: displayFont,
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                         color: Palette.goldDeep)),
-              Text(text,
+              Text(widget.text,
                   style: const TextStyle(
                       fontSize: 16, height: 1.4, color: Palette.ink)),
             ],
@@ -1738,4 +1772,62 @@ class _BubbleTail extends CustomPainter {
 
   @override
   bool shouldRepaint(_BubbleTail old) => false;
+}
+
+/// Glides [child] from wherever it was last laid out to where it is now,
+/// so a courtier changing places walks there instead of jumping. Give it
+/// a key that follows the courtier.
+class SlideToPlace extends StatefulWidget {
+  const SlideToPlace({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<SlideToPlace> createState() => _SlideToPlaceState();
+}
+
+class _SlideToPlaceState extends State<SlideToPlace>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 650));
+  Offset? _last;
+  Offset _from = Offset.zero;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _measure(_) {
+    if (!mounted) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !box.attached) return;
+    final now = box.localToGlobal(Offset.zero);
+    final last = _last;
+    _last = now;
+    if (last == null) return;
+    final moved = last - now;
+    if (moved.distance > 2) {
+      // Start from where it appeared to be, mid-glide or not.
+      final showing = _from * (1 - Curves.easeInOutCubic.transform(_c.value));
+      _from = moved + showing;
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback(_measure);
+    return AnimatedBuilder(
+      animation: _c,
+      child: widget.child,
+      builder: (context, child) {
+        final t = Curves.easeInOutCubic.transform(_c.value);
+        final off = _c.isAnimating || _c.value < 1 ? _from * (1 - t) : Offset.zero;
+        // A little hop in each step as they walk.
+        final hop = _c.isAnimating ? -(math.sin(t * math.pi * 4)).abs() * 4 : 0.0;
+        return Transform.translate(offset: off + Offset(0, hop), child: child);
+      },
+    );
+  }
 }

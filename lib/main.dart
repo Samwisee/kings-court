@@ -379,6 +379,9 @@ class _HomePageState extends State<HomePage>
   /// choice), settled by a Trial of Hearts.
   Map<int, bool> _votes = {};
 
+  /// Further matters before the throne before the next hand is dealt.
+  int _mattersLeft = 0;
+
   /// The sides are secret: shown only once the trial is played (at the
   /// table), or at the end of the trial (on screen).
   bool _sidesShown = false;
@@ -696,9 +699,27 @@ class _HomePageState extends State<HomePage>
         // Solo Dynasty: you are always the King.
         king: game.kingIndex ?? (game.isDynasty ? _you : null),
         mayRule: (seat) => !game.isAntagonist(seat),
-        accept: (hands, inPlay) => game.tasks
-            .every((t) => playableWith(t.description, hands, inPlay)),
+        accept: (hands, inPlay) => game.tasks.every((t) =>
+            playableWith(t.description, hands, inPlay) &&
+            _possible(t, hands, inPlay)),
       );
+      // Any task the deal still makes impossible is swapped for one that
+      // can be done.
+      for (int i = 0; i < game.tasks.length; i++) {
+        final t = game.tasks[i];
+        if (t.assignedPlayerIndex != null || _possible(t, c.hands, c.inPlay)) {
+          continue;
+        }
+        final names = game.tasks.map((x) => x.description).toSet();
+        final swap = (List.of(GameState.taskPool)..shuffle(_rand)).where((p) =>
+            !names.contains(p.description) &&
+            !needsX(p.description) &&
+            _points(p) <= _points(t) + 1 &&
+            !game.tasks.any((o) => o != t && clash(o.description, p.description)) &&
+            playableWith(p.description, c.hands, c.inPlay) &&
+            _possible(p, c.hands, c.inPlay)).firstOrNull;
+        if (swap != null) game.tasks[i] = swap.freshCopy()..seal = t.seal;
+      }
       _lastTrick = null;
       _collecting = false;
       _revealing = false;
@@ -716,6 +737,23 @@ class _HomePageState extends State<HomePage>
         if (mounted && _choosingKing) _crownKing(_cards.king);
       });
     }
+  }
+
+  /// Whether [t] could still be done by someone allowed to take it, with
+  /// these cards in play: no task should be lost before the first trick.
+  bool _possible(Task t, List<List<PlayingCard>> hands, Set<PlayingCard> inPlay) {
+    if (needsX(t.description) || hands.isEmpty) return true;
+    final v = RoundView(
+        players: hands.length,
+        king: game.kingIndex ?? _you,
+        tricks: const [],
+        totalTricks: hands.first.length,
+        inPlay: inPlay);
+    final rule = taskRules[t.description]!;
+    return [
+      for (int s = 0; s < hands.length; s++)
+        if (t.assignedPlayerIndex == s || game.canTake(t, s)) s
+    ].any((s) => rule(v, s, null) != Verdict.failed);
   }
 
   /// Lets whichever bot is due act, after a short pause.
@@ -1389,12 +1427,10 @@ class _HomePageState extends State<HomePage>
 
   Widget _digiToken(int seat, double size, {bool tight = false}) {
     final labels = seatLabels(game.players);
-    return KeyedSubtree(
-      key: _seatKey(seat),
-      // Each person at court breathes, and someone new springs into
-      // their seat.
-      child: CharacterToken(
-        key: ValueKey('person-$seat-${game.hasRoles ? game.personAt(seat) : ''}'),
+    // Each courtier breathes, and springs in when they first come to the
+    // table; the same courtier keeps the same token as they move seats.
+    return CharacterToken(
+        key: ValueKey('person-${game.hasRoles && seat < game.courtiers.length ? game.courtiers[seat].name : seat}'),
         mood: CharacterMood.arriving,
         // Courtiers make their own entrance; you simply appear.
         entrance: game.isDynasty && seat != _you && seat < game.courtiers.length
@@ -1403,6 +1439,8 @@ class _HomePageState extends State<HomePage>
         delay: Duration(milliseconds: 150 * seat),
         phase: seat * 0.37,
         size: size,
+        child: KeyedSubtree(
+        key: _seatKey(seat),
         child: SeatToken(
         player: game.players[seat],
         label: labels[seat],
@@ -1420,6 +1458,182 @@ class _HomePageState extends State<HomePage>
         onTap: game.hasRoles && !_choosingKing ? () => _showCourtier(seat) : null,
         tight: tight,
       ),
+      ),
+    );
+  }
+
+  Widget _miniTask(Task t, double width, {double fontSize = 12}) =>
+      TweenAnimationBuilder<double>(
+        // Fades in as the flying copy lands.
+        key: ValueKey('mini-${t.description}'),
+        tween: Tween(begin: 0, end: 1),
+        duration: _Flight.duration + const Duration(milliseconds: 120),
+        curve: const Interval(0.75, 1),
+        builder: (context, o, child) => Opacity(opacity: o, child: child),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: _TaskChip(
+            task: t,
+            points: _points(t),
+            text: _cardText(t),
+            color: t.assignedPlayerIndex == null
+                ? Palette.inkSoft
+                : game.players[t.assignedPlayerIndex!].color,
+            width: width,
+            fontSize: fontSize,
+            progress: _progressOf(t),
+            charged: game.isCharged(t),
+            onTap: () => _showTaskDetail(t, Offset.zero),
+          ),
+        ),
+      );
+
+  /// The crowning on the on-screen table: from the middle of the table to
+  /// the new King's token, with a trumpet from everyone else.
+  Widget _digiCrowning() {
+    final king = _crowning!;
+    final middle = _rectOn(_middleKey);
+    final seat = _rectOn(_seatKey(king));
+    if (middle == null || seat == null) return const SizedBox.shrink();
+    return _crowningScene(
+      from: middle.center,
+      // The crown sits in the slot above the token.
+      to: seat.topCenter + const Offset(0, 8),
+      spinTo: 0,
+      seatSize: 44,
+      king: king,
+      seats: {
+        for (int j = 0; j < game.players.length; j++)
+          if (_rectOn(_seatKey(j)) case final r?) j: r.center
+      },
+    );
+  }
+
+  /// The bots across the top, each with their tasks under them.
+  /// Who sits across the table: the cast at play, or the whole council
+  /// while the story is told. (Role, and their seat if they have one.)
+  List<(Courtier?, int?)> _tableEntries() {
+    final others = [for (int i = 0; i < game.players.length; i++) if (i != _you) i];
+    Courtier? roleAt(int i) =>
+        game.hasRoles && i < game.courtiers.length ? game.courtiers[i] : null;
+    if (game.solo && _storyActive) {
+      return [
+        for (final c in game.court)
+          (c, game.courtiers.contains(c) ? game.courtiers.indexOf(c) : null)
+      ];
+    }
+    return [for (final i in others) (roleAt(i), i)];
+  }
+
+  /// Courtiers who just left the table, walking off before they vanish.
+  final Map<Courtier, Color> _walkingOff = {};
+  List<Courtier> _lastRoles = [];
+
+  Widget _digiOpponents(double width, double maxHeight) {
+    final entries = _tableEntries();
+    // Anyone no longer at the table walks away.
+    final roles = [for (final (r, _) in entries) if (r != null) r];
+    for (final r in _lastRoles) {
+      if (!roles.contains(r) && !_walkingOff.containsKey(r)) {
+        _walkingOff[r] = game.colorOf(r);
+        Timer(const Duration(milliseconds: 1500), () {
+          if (mounted) setState(() => _walkingOff.remove(r));
+        });
+      }
+    }
+    _walkingOff.removeWhere((r, _) => roles.contains(r));
+    _lastRoles = roles;
+    final count = entries.length + _walkingOff.length;
+    final colWidth = width / math.max(1, count);
+    final taskWidth = math.min(colWidth - 6, 130.0);
+    final c = _cards;
+    Widget column(Courtier? role, int? seat) => SizedBox(
+          key: ValueKey('col-${role?.name ?? seat}'),
+          width: colWidth,
+          child: SlideToPlace(
+            key: ValueKey('slide-${role?.name ?? seat}'),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (seat != null)
+                      _withReveal(seat, _digiToken(seat, 38, tight: true))
+                    else
+                      // At court but not at the table this round.
+                      CharacterToken(
+                        key: ValueKey('person-${role!.name}'),
+                        entrance: entranceOf(role),
+                        size: 38,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: _roleToken(role, game.colorOf(role), 38),
+                        ),
+                      ),
+                    Text(
+                        role != null ? role.short : game.players[seat!].name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, color: Colors.white70)),
+                    // Trick counts only once the tricks begin (and not in
+                    // the story, where the tasks keep count).
+                    if (seat != null &&
+                        !game.solo &&
+                        c.dealId == game.dealId &&
+                        (_playing || c.tricks.isNotEmpty))
+                      Text(
+                          '${c.tricksWon(seat)} won · ${c.hands[seat].length} left',
+                          maxLines: 1,
+                          overflow: TextOverflow.fade,
+                          softWrap: false,
+                          style: const TextStyle(
+                              fontSize: 11, color: Colors.white54)),
+                    if (seat != null)
+                      for (final t in game.tasks)
+                        if (!_storyActive &&
+                            t.assignedPlayerIndex == seat &&
+                            !_flights.any((f) => f.task == t))
+                          _miniTask(t, taskWidth,
+                              fontSize: colWidth < 80 ? 11 : 12),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+    // Only as tall as the bots' tasks need (so there's room for the tasks
+    // being picked), growing smoothly as tasks arrive.
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.topCenter,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (final (role, seat) in entries) column(role, seat),
+            for (final e in _walkingOff.entries)
+              SizedBox(
+                key: ValueKey('col-${e.key.name}'),
+                width: colWidth,
+                child: Column(children: [
+                  CharacterToken(
+                    key: ValueKey('leaving-${e.key.name}'),
+                    exit: Exit.walk,
+                    size: 38,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: _roleToken(e.key, e.value, 38),
+                    ),
+                  ),
+                ]),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -4169,6 +4383,11 @@ class _HomePageState extends State<HomePage>
                       }
                     } else {
                       _dilemma = game.pickDilemmaAfter(won);
+                      // Solo, the court often has more business before
+                      // the next hand is dealt.
+                      _mattersLeft = game.solo
+                          ? const [0, 1, 1, 2][_rand.nextInt(4)]
+                          : 0;
                       _votes = {};
                       _sidesShown = false;
                       _contest = null;
@@ -4208,6 +4427,7 @@ class _HomePageState extends State<HomePage>
         ? d.about
         : null;
     final body = TextStyle(fontSize: 17, height: 1.4, color: _ink);
+    final pleas = deciding ? _pleasFor(d) : const <Plea>[];
     return _parchmentCard(
       color: const Color(0xFFF6EBD2),
       border: Palette.goldDeep,
@@ -4255,12 +4475,33 @@ class _HomePageState extends State<HomePage>
         else
           Text(deciding ? d.story : _verdictStory,
               textAlign: TextAlign.center, style: body),
+        // The council has its say, one after another, taking sides.
+        if (deciding && _onFelt)
+          for (final (i, p) in pleas.indexed)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                CharacterToken(
+                  key: ValueKey('plea-${d.title}-$i'),
+                  mood: CharacterMood.speaking,
+                  size: 36,
+                  delay: Duration(milliseconds: 900 + 1100 * i),
+                  child: _roleToken(p.courtier, game.colorOf(p.courtier), 36),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SpeechBubble(p.line,
+                      who: p.courtier.title,
+                      delay: Duration(milliseconds: 900 + 1100 * i)),
+                ),
+              ]),
+            ),
         const SizedBox(height: 14),
         if (deciding) ...[
           if (d.council)
             ..._trial(d)
           else
-            for (final choice in [d.a, d.b])
+            for (final (ci, choice) in [d.a, d.b].indexed)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: SizedBox(
@@ -4269,8 +4510,18 @@ class _HomePageState extends State<HomePage>
                     onPressed: () => _decide(choice),
                     style: FilledButton.styleFrom(
                         backgroundColor: _btnBg,
-                        foregroundColor: _btnFg),
-                    child: Text(choice.label),
+                        foregroundColor: _btnFg,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Flexible(child: Text(choice.label, textAlign: TextAlign.center)),
+                      // Who stands behind this choice.
+                      for (final p in pleas.where((p) => p.forA == (ci == 0)))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: _roleToken(p.courtier, game.colorOf(p.courtier), 22),
+                        ),
+                    ]),
                   ),
                 ),
               ),
@@ -4304,6 +4555,15 @@ class _HomePageState extends State<HomePage>
               } else if (game.ending != null) {
                 _step = _DynastyStep.ending;
                 Sfx.lose();
+              } else if (_mattersLeft > 0) {
+                // The next matter before the throne.
+                _mattersLeft--;
+                _dilemma = game.pickDilemma();
+                _votes = {};
+                _sidesShown = false;
+                _contest = null;
+                _step = _DynastyStep.dilemma;
+                _botsTakeSides();
               } else {
                 _nextDynastyRound(won);
               }
@@ -4314,11 +4574,72 @@ class _HomePageState extends State<HomePage>
                 ? 'Attend the King'
                 : game.ending != null
                     ? 'The traitors rise'
-                    : 'Next round'),
+                    : _mattersLeft > 0
+                        ? 'The next matter'
+                        : 'Next round'),
           ),
         ],
       ],
     );
+  }
+
+  /// How much [r] stands to gain from [c].
+  int _leanOf(Choice c, Courtier r) {
+    var score = 0;
+    for (final e in c.effects) {
+      switch (e) {
+        case Loyalty(:final courtier, :final delta) when courtier == r:
+          score += delta * 2;
+        case AllLoyalty(:final delta):
+          score += delta;
+        case Charge(:final courtier) when courtier == r:
+          score += 1;
+        case Say(:final courtier) when courtier == r:
+          score -= 1; // they complain about it afterwards
+        default:
+      }
+    }
+    return score;
+  }
+
+  /// What the council says about [d]: its own pleas from whoever is at
+  /// court, or pleas made up from who gains what, so both sides are heard
+  /// when there are people to argue them.
+  List<Plea> _pleasFor(Dilemma d) {
+    final court = game.courtRoles.where((c) => c != Courtier.king).toList();
+    final rand = math.Random(d.title.hashCode ^ game.roundNumber);
+    String line(Courtier c, Choice ch) {
+      final lines = pleaLines[c]!;
+      final label = ch.label;
+      final lower = label[0].toLowerCase() + label.substring(1);
+      return lines[rand.nextInt(lines.length)]
+          .replaceAll('{choice}', lower)
+          .replaceAll('{Choice}', label);
+    }
+
+    final out = [for (final p in d.pleas) if (court.contains(p.courtier)) p];
+    if (out.isEmpty) {
+      for (final c in court) {
+        final la = _leanOf(d.a, c), lb = _leanOf(d.b, c);
+        if (la != lb) out.add(Plea(c, line(c, la > lb ? d.a : d.b), forA: la > lb));
+      }
+    }
+    // Make sure each side has a voice.
+    for (final forA in [true, false]) {
+      if (out.any((p) => p.forA == forA)) continue;
+      final quiet = court.where((c) => !out.any((p) => p.courtier == c)).toList();
+      if (quiet.isEmpty) continue;
+      final c = quiet[rand.nextInt(quiet.length)];
+      out.add(Plea(c, line(c, forA ? d.a : d.b), forA: forA));
+    }
+    // At most one each from three voices, the two sides taking turns.
+    final a = out.where((p) => p.forA).toList(), b = out.where((p) => !p.forA).toList();
+    return [
+      for (int i = 0; i < 2; i++) ...[
+        if (i < a.length) a[i],
+        if (i < b.length) b[i],
+      ]
+    ].take(3).toList();
   }
 
   /// How much a courtier at [seat] stands to gain from [c].

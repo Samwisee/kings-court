@@ -1200,6 +1200,7 @@ class GameState {
     }
     _chooseExile();
     if (index != null && isDynasty) _assignCharge();
+    assignForced();
     // The King picks first, unless there's nothing they're allowed to take.
     final loose = tasks.where((t) => t.assignedPlayerIndex == null);
     pickTurn = loose.isEmpty || index == null
@@ -1220,6 +1221,7 @@ class GameState {
   bool assign(Task task, int? seat) {
     final wasLoose = task.assignedPlayerIndex == null;
     task.assignedPlayerIndex = seat;
+    if (seat != null) assignForced();
     final allTaken = tasks.every((t) => t.assignedPlayerIndex != null);
     if (allTaken) {
       final justFinished = pickTurn != null;
@@ -1235,6 +1237,27 @@ class GameState {
       pickTurn = seat == null ? kingIndex : pickTurn;
     }
     return false;
+  }
+
+  /// A task only one player can take goes straight to them.
+  void assignForced() {
+    if (kingIndex == null) return;
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (final t in tasks) {
+        if (t.assignedPlayerIndex != null) continue;
+        final able = [
+          for (int s = 0; s < players.length; s++)
+            if (canTake(t, s)) s
+        ];
+        if (able.length == 1) {
+          t.assignedPlayerIndex = able.single;
+          changed = true;
+        }
+      }
+    }
+    if (tasks.every((t) => t.assignedPlayerIndex != null)) pickTurn = null;
   }
 
   void toggleSpoke(int seat) => spoke[seat] = !spoke[seat];
