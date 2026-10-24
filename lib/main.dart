@@ -1373,6 +1373,9 @@ class _HomePageState extends State<HomePage>
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
               child: Column(
                 children: [
+                  // Solo Dynasty: what this hand is for, in the story.
+                  if (game.solo && game.currentTiding != null && !_storyActive)
+                    _stakes(game.currentTiding!),
                   // As much room as the bots' tasks need, leaving enough for
                   // the trick and your own row.
                   // (The middle always keeps room for a full-size trick.)
@@ -1511,6 +1514,27 @@ class _HomePageState extends State<HomePage>
   }
 
   /// The bots across the top, each with their tasks under them.
+  /// The scene at stake in this hand: its name, and what hangs on it.
+  Widget _stakes(Tiding t) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Column(children: [
+          Text(t.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontFamily: displayFont,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: Palette.gold)),
+          Text(
+              _chargeLine ??
+                  'Every task done, and ${t.won.text[0].toLowerCase()}${t.won.text.substring(1)}',
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, color: Colors.white70)),
+        ]),
+      );
+
   /// Who sits across the table: the cast at play, or the whole council
   /// while the story is told. (Role, and their seat if they have one.)
   List<(Courtier?, int?)> _tableEntries() {
@@ -1578,6 +1602,13 @@ class _HomePageState extends State<HomePage>
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 13, color: Colors.white70)),
+                    if (seat != null && _quips[seat] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: SpeechBubble(_quips[seat]!,
+                            key: ValueKey('quip-$seat-${_quips[seat]}'),
+                            tailBelow: false),
+                      ),
                     // Trick counts only once the tricks begin (and not in
                     // the story, where the tasks keep count).
                     if (seat != null &&
@@ -2513,11 +2544,29 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  /// Solo Dynasty: what each courtier is calling out mid-hand.
+  final Map<int, String> _quips = {};
+
+  /// A courtier at [seat] calls out, for a moment.
+  void _quip(int seat, String text) {
+    if (text.isEmpty) return;
+    _quips[seat] = text;
+    Timer(const Duration(milliseconds: 2800), () {
+      if (mounted && _quips[seat] == text) setState(() => _quips.remove(seat));
+    });
+  }
+
   void _setTaskStatus(Task task, TaskStatus status) {
     setState(() {
       final previous = task.status;
       // Choosing the active status again resets the task.
       task.status = task.status == status ? TaskStatus.pending : status;
+      final owner = task.assignedPlayerIndex;
+      if (game.solo && owner != null && owner != _you && owner < game.courtiers.length) {
+        final role = game.courtiers[owner];
+        if (task.isCompleted) _quip(owner, taskDone[role]!);
+        if (task.isFailed) _quip(owner, taskFailed[role]!);
+      }
       if (task.isFailed) {
         _haptic(HapticFeedback.vibrate);
       } else if (task.isCompleted) {
@@ -3238,8 +3287,36 @@ class _HomePageState extends State<HomePage>
                 type: MaterialType.transparency,
                 child: _buildOutcomeOverlay())),
       // Solo Dynasty's story takes the whole screen: the throne room.
-      if (_inGame && _setupArgs == null && _contest == null)
-        if (_throneRoom() case final room?) Positioned.fill(child: room),
+      // It lowers in like a stage set, and lifts away for the cards.
+      Positioned.fill(
+        child: IgnorePointer(
+          ignoring: !(_inGame && _setupArgs == null && _contest == null && _storyActive && game.solo),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 700),
+            switchInCurve: Curves.easeOutBack,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, a) => SlideTransition(
+              position: Tween(begin: const Offset(0, -1.05), end: Offset.zero)
+                  .animate(a),
+              child: child,
+            ),
+            layoutBuilder: (current, previous) =>
+                Stack(fit: StackFit.expand, children: [...previous, ?current]),
+            child: (_inGame && _setupArgs == null && _contest == null
+                    ? _throneRoom()
+                    : null) is Widget
+                ? KeyedSubtree(
+                    key: const ValueKey('set'),
+                    // Each scene fades into the next on the same set.
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 350),
+                      child: _throneRoom()!,
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey('no-set')),
+          ),
+        ),
+      ),
       // A divided court plays its Trial of Hearts over everything.
       if (_contest case final contest? when _inGame)
         Positioned.fill(
@@ -4288,21 +4365,50 @@ class _HomePageState extends State<HomePage>
       for (final c in court) {
         add(c);
       }
-      title = won ? 'Victory' : 'Defeat';
       final t = game.currentTiding;
-      herald(t == null
-          ? (won ? 'Every task is done.' : 'A task failed.')
-          : (won ? t.won.text : t.lost.text));
-      // Someone has something to say about it.
-      final charged = game.chargeSeat;
-      final who = charged != null && charged < game.courtiers.length
-          ? game.courtiers[charged]
-          : court.isEmpty
-              ? null
-              : court[rand.nextInt(court.length)];
-      if (who != null && court.contains(who)) {
-        say(who, won ? cheers[who]! : groans[who]!,
-            mood: won ? CharacterMood.pleased : CharacterMood.angry);
+      title = t?.title ?? (won ? 'Victory' : 'Defeat');
+      // What the hand meant: who delivered, who let the court down.
+      final failed = [
+        for (final task in game.tasks)
+          if (task.isFailed && task.assignedPlayerIndex != null) task
+      ];
+      final doneBy = <Courtier, int>{};
+      for (final task in game.tasks) {
+        final seat = task.assignedPlayerIndex;
+        if (task.isCompleted && seat != null && seat != _you && seat < game.courtiers.length) {
+          doneBy[game.courtiers[seat]] = (doneBy[game.courtiers[seat]] ?? 0) + 1;
+        }
+      }
+      herald(won
+          ? 'Every task is done. ${t?.won.text ?? ''}'
+          : 'The court has failed. ${t?.lost.text ?? ''}');
+      if (!won && failed.isNotEmpty) {
+        final seat = failed.first.assignedPlayerIndex!;
+        if (seat == _you) {
+          herald('It was your own task that failed, Majesty.');
+          final c = court.isEmpty ? null : court[rand.nextInt(court.length)];
+          if (c != null) say(c, groans[c]!, mood: CharacterMood.angry);
+        } else if (seat < game.courtiers.length && court.contains(game.courtiers[seat])) {
+          final c = game.courtiers[seat];
+          say(c, taskFailed[c]!, mood: CharacterMood.angry);
+          // Someone else blames them.
+          final others = court.where((o) => o != c).toList();
+          if (others.isNotEmpty) {
+            final o = others[rand.nextInt(others.length)];
+            say(o, retorts[o]!
+                .replaceAll('{other}', c.title.replaceFirst('The', 'the'))
+                .replaceAll('{Other}', c.title),
+                mood: CharacterMood.angry);
+          }
+        }
+      } else if (won) {
+        final best = doneBy.entries.fold<MapEntry<Courtier, int>?>(
+            null, (a, e) => a == null || e.value > a.value ? e : a);
+        final c = best?.key ??
+            (court.isEmpty ? null : court[rand.nextInt(court.length)]);
+        if (c != null && court.contains(c)) {
+          say(c, cheers[c]!, mood: CharacterMood.pleased);
+        }
       }
       for (final seat in game.antagonists) {
         final scheme = game.schemeOf[seat];

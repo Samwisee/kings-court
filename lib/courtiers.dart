@@ -1147,3 +1147,25 @@ String roman(int n) {
   }
   return out.toString();
 }
+
+/// What a courtier calls out mid-hand when their task is done.
+const taskDone = <Courtier, String>{
+  Courtier.duke: 'Ashcombe delivers, Majesty!',
+  Courtier.bishop: 'A small miracle!',
+  Courtier.general: 'Objective taken!',
+  Courtier.spymaster: 'All according to plan.',
+  Courtier.merchant: 'Paid in full!',
+  Courtier.jester: 'Ta-da!',
+  Courtier.king: '',
+};
+
+/// ...and when it fails.
+const taskFailed = <Courtier, String>{
+  Courtier.duke: 'Curse it!',
+  Courtier.bishop: 'Forgive me, Majesty.',
+  Courtier.general: 'Fall back! Regroup!',
+  Courtier.spymaster: 'That was not the plan.',
+  Courtier.merchant: 'A total loss!',
+  Courtier.jester: 'Oops.',
+  Courtier.king: '',
+};

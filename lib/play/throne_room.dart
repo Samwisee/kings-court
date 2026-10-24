@@ -125,11 +125,10 @@ class _ThroneRoomState extends State<ThroneRoom> {
     super.dispose();
   }
 
+  /// Each line stays until you tap; tests run through on their own.
   void _schedule() {
     _timer?.cancel();
-    final l = widget.lines[_line];
-    final ms = widget.fast ? 10 : 1700 + 38 * l.text.length;
-    _timer = Timer(Duration(milliseconds: ms), _next);
+    if (widget.fast) _timer = Timer(const Duration(milliseconds: 10), _next);
   }
 
   void _next() {
@@ -147,7 +146,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF14231B),
+      color: Palette.feltDeep,
       child: SafeArea(
         child: LayoutBuilder(builder: (context, box) {
           final w = box.maxWidth, h = box.maxHeight;
@@ -333,7 +332,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
         if (!_done)
           const Padding(
             padding: EdgeInsets.only(bottom: 6),
-            child: Text('Tap to hurry the court along',
+            child: Text('Tap to hear more',
                 style: TextStyle(fontSize: 12, color: Colors.white38)),
           ),
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -472,7 +471,8 @@ class _Coffers extends StatelessWidget {
       );
 }
 
-/// Stone floor, a long red carpet to the throne, and banners.
+/// The felt of the table, become a hall: a red carpet to the throne,
+/// banners, and candlelight.
 class _HallPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -480,18 +480,19 @@ class _HallPainter extends CustomPainter {
     canvas.drawRect(
         Offset.zero & size,
         Paint()
-          ..shader = const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1B140F), Color(0xFF2A2018), Color(0xFF14231B)],
+          ..shader = const RadialGradient(
+            center: Alignment(0, 0.2),
+            radius: 1.1,
+            colors: [Palette.felt, Palette.feltDeep],
           ).createShader(Offset.zero & size));
-    // Flagstones.
-    final line = Paint()
-      ..color = const Color(0x14FFFFFF)
-      ..strokeWidth = 1;
-    for (double y = h * 0.3; y < h; y += h * 0.07) {
-      canvas.drawLine(Offset(0, y), Offset(w, y), line);
-    }
+    // The brass lines of the table, as the edge of the stage.
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            (Offset.zero & size).deflate(6), const Radius.circular(18)),
+        Paint()
+          ..color = const Color(0x55D4A63A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5);
     // The carpet, narrowing into the distance.
     final carpet = Path()
       ..moveTo(w * 0.44, h * 0.16)
@@ -499,7 +500,7 @@ class _HallPainter extends CustomPainter {
       ..lineTo(w * 0.66, h)
       ..lineTo(w * 0.34, h)
       ..close();
-    canvas.drawPath(carpet, Paint()..color = const Color(0xFF6E1420));
+    canvas.drawPath(carpet, Paint()..color = const Color(0xFF7A1A28));
     final trim = Paint()
       ..color = const Color(0xFFB8892B)
       ..style = PaintingStyle.stroke
