@@ -694,7 +694,8 @@ class _HomePageState extends State<HomePage>
       _dealtFor = game.dealId;
     }
     if (_choosingKing && _crowning == null && _crownTimer == null) {
-      _crownTimer = Timer(const Duration(milliseconds: 900), () {
+      // After the shuffle.
+      _crownTimer = Timer(const Duration(milliseconds: 1500), () {
         _crownTimer = null;
         if (mounted && _choosingKing) _crownKing(_cards.king);
       });
@@ -806,9 +807,14 @@ class _HomePageState extends State<HomePage>
       setState(() => _cards.announced[t.description] = x);
       return true;
     }
+    // Between tricks, any bot may show a card someone needs.
+    if (_cards.current.isEmpty) {
+      for (int s = 0; s < game.players.length; s++) {
+        if (s != _you && _botReveals(s)) return true;
+      }
+    }
     final turn = _cards.turn;
     if (turn == _you) return false;
-    if (_botReveals(turn)) return true;
     final card = await _bot.choosePlayAsync(view, turn);
     if (!mounted || _moment != before) return true;
     _playCard(turn, card);
@@ -999,7 +1005,7 @@ class _HomePageState extends State<HomePage>
           ? 'You win the trick'
           : '${game.players[w].name} wins the trick';
     }
-    if (_choosingKing) return 'Dealing… whoever holds the K♠ is King';
+    if (_choosingKing) return '';
     if (game.pickTurn != null) {
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
@@ -1182,11 +1188,23 @@ class _HomePageState extends State<HomePage>
                           child: AnimatedScale(
                             scale: dragging ? 1.1 : 1,
                             duration: const Duration(milliseconds: 120),
-                            child: PlayingCardView(
-                              card: card,
-                              width: cardW,
-                              dimmed: yourTurn && !legal.contains(card),
-                              marks: _marksFor(card),
+                            // Dealt face down, then turned up one by one.
+                            child: TweenAnimationBuilder<double>(
+                              key: ValueKey('hand-${game.dealId}-${card.id}'),
+                              tween: Tween(begin: 0, end: 1),
+                              duration: Duration(milliseconds: 420 + i * 70),
+                              curve: Interval((i * 70) / (420 + i * 70), 1,
+                                  curve: Curves.easeOut),
+                              builder: (context, f, child) => FlipIn(
+                                  t: f,
+                                  front: child!,
+                                  back: CardBack(width: cardW)),
+                              child: PlayingCardView(
+                                card: card,
+                                width: cardW,
+                                dimmed: yourTurn && !legal.contains(card),
+                                marks: _marksFor(card),
+                              ),
                             ),
                           ),
                         ),
@@ -1404,8 +1422,9 @@ class _HomePageState extends State<HomePage>
     final colWidth = width / others.length;
     final taskWidth = math.min(colWidth - 6, 130.0);
     final c = _cards;
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
+    // A fixed height, so the table doesn't shift as tasks arrive.
+    return SizedBox(
+      height: maxHeight,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1477,14 +1496,14 @@ class _HomePageState extends State<HomePage>
   /// then the trick.
   Widget _digiMiddle(double width) {
     if (_choosingKing) {
-      return const Center(
-        child: Text('Dealing…\nWhoever holds the K♠ will be crowned.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 17, height: 1.4, color: Colors.white70)),
+      // The deck is shuffled while the K♠ finds its King.
+      return Center(
+        child: ShufflingDeck(
+            key: ValueKey('shuffle-${game.dealId}'), width: 52),
       );
     }
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
-    if (open.isEmpty) {
+    if (open.isEmpty && (game.pickTurn == null || _flights.isEmpty)) {
       // The trick, laid out right here so it always shows.
       return LayoutBuilder(
         builder: (context, box) => Stack(
@@ -1501,7 +1520,10 @@ class _HomePageState extends State<HomePage>
             if (_rectOn(e.value) case final r?) e.key: r,
       };
     });
-    final w = math.min(118.0, (width - 16) / 3);
+    final w = math.min(130.0, (width - 16) / 3);
+    // Every task keeps its place until picking is over, so nothing jumps
+    // when one is taken. (Royal charges go straight to their house.)
+    final slots = [for (final t in game.tasks) if (!game.isCharged(t)) t];
     return Center(
       child: SingleChildScrollView(
         child: Wrap(
@@ -1509,25 +1531,70 @@ class _HomePageState extends State<HomePage>
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final t in open)
-              Opacity(
-                key: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
-                opacity: _yourPick && !_mayTake(t) ? 0.5 : 1,
-                child: GestureDetector(
-                  onTap: () => _yourPick ? _takeTask(t) : _showTaskDetail(t, Offset.zero),
-                  onLongPress: () => _showTaskDetail(t, Offset.zero),
-                  child: TableCard(
-                    task: t,
-                    points: _points(t),
-                    text: _cardText(t),
-                    width: w,
-                    height: TableCard.sizeFor(_cardText(t), w,
-                            sealed: t.seal != null)
-                        .height,
-                    charged: game.isCharged(t),
+            for (int i = 0; i < slots.length; i++)
+              () {
+                final t = slots[i];
+                final taken = t.assignedPlayerIndex != null;
+                // Dealt from the deck one after another, turning face up.
+                final delay = i * 110;
+                final total = 520 + delay;
+                return TweenAnimationBuilder<double>(
+                  key: ValueKey('deal-${game.dealId}-${t.description}'),
+                  tween: Tween(begin: 0, end: 1),
+                  duration: Duration(milliseconds: total),
+                  curve: Interval(delay / total, 1, curve: Curves.easeOutCubic),
+                  builder: (context, d, child) => Transform.translate(
+                    offset: Offset(0, -40 * (1 - d)),
+                    child: Opacity(
+                      opacity: clampD(d * 3, 0, 1),
+                      child: FlipIn(
+                        t: clampD(d * 1.4 - 0.2, 0, 1),
+                        front: child!,
+                        // The back is exactly the size of the front.
+                        back: Stack(children: [
+                          Opacity(opacity: 0, child: child),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF5A1620),
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                    Border.all(color: Palette.gold, width: 1.5),
+                              ),
+                              alignment: Alignment.center,
+                              child: const CrownIcon(
+                                  size: 26, color: Palette.gold),
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                  child: IgnorePointer(
+                    ignoring: taken,
+                    child: AnimatedOpacity(
+                      key: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
+                      duration: Duration.zero,
+                      opacity: taken
+                          ? 0
+                          : _yourPick && !_mayTake(t)
+                              ? 0.5
+                              : 1,
+                      child: _TaskChip(
+                        task: t,
+                        points: _points(t),
+                        text: _cardText(t),
+                        color: Palette.inkSoft,
+                        width: w,
+                        fontSize: 13,
+                        onTap: () => _yourPick
+                            ? _takeTask(t)
+                            : _showTaskDetail(t, Offset.zero),
+                      ),
+                    ),
+                  ),
+                );
+              }(),
           ],
         ),
       ),
@@ -1708,6 +1775,9 @@ class _HomePageState extends State<HomePage>
 
   bool get _canReveal =>
       _playing &&
+      // Only between tricks.
+      _cards.current.isEmpty &&
+      _lastTrick == null &&
       game.spoke.length > _you &&
       !game.spoke[_you] &&
       game.canSpeak(_you) &&
@@ -1727,7 +1797,9 @@ class _HomePageState extends State<HomePage>
 
   /// A bot shows a card someone's task needs, if it may, once a round.
   bool _botReveals(int seat) {
-    if (game.spoke[seat] || !game.canSpeak(seat)) return false;
+    if (game.spoke[seat] || !game.canSpeak(seat) || _cards.current.isNotEmpty) {
+      return false;
+    }
     for (final card in _cards.hands[seat]) {
       if (_cards.revealFor(seat, card) == null) continue;
       final needed = game.tasks.any((t) =>
@@ -5755,12 +5827,13 @@ class _Flight {
           child: SizedBox(
             width: from.width,
             height: from.height,
-            child: TableCard(
+            child: _TaskChip(
               task: task,
               points: points,
               text: text,
+              color: Palette.inkSoft,
               width: from.width,
-              height: from.height,
+              fontSize: 13,
             ),
           ),
         ),
@@ -5795,88 +5868,124 @@ class _TaskChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = task.isCompleted, failed = task.isFailed;
-    // Points on the left, the wording beside them, and the tracker and
-    // any marks in the top-right corner: two lines of text fit most tasks.
-    final trailing = <Widget>[
-      if (progress != null && !done)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          decoration: BoxDecoration(
-            color: Palette.ink,
-            borderRadius: BorderRadius.circular(8),
+    // Along the top: points, conditions, and the tracker on the right.
+    final top = Row(
+      children: [
+        Text('$points',
+            style: TextStyle(
+                fontFamily: displayFont,
+                fontWeight: FontWeight.w900,
+                fontSize: fontSize + 3,
+                height: 1,
+                color: Palette.ink)),
+        const SizedBox(width: 2),
+        CrownIcon(size: fontSize * 0.85, color: Palette.goldDeep),
+        if (task.kingCantTake) ...[
+          const SizedBox(width: 4),
+          Tooltip(
+              message: "The King can't take this task",
+              child: Icon(Icons.block, size: fontSize + 1, color: Palette.inkSoft)),
+        ],
+        if (task.hasNotes) ...[
+          const SizedBox(width: 3),
+          Tooltip(
+              message: task.notes.join(' '),
+              child: Icon(Icons.info_outline,
+                  size: fontSize + 1, color: Palette.inkSoft)),
+        ],
+        if (task.seal != null) ...[
+          const SizedBox(width: 3),
+          WaxSeal(seal: task.seal!, size: fontSize + 4),
+        ],
+        if (charged) ...[
+          const SizedBox(width: 2),
+          Icon(Icons.workspace_premium, size: fontSize + 2, color: Palette.goldDeep),
+        ],
+        const Spacer(),
+        if (failed)
+          Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost)
+        else if (progress != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: Palette.ink,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(progress!,
+                style: TextStyle(
+                    fontFamily: bodyFont,
+                    fontSize: fontSize - 1,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                    color: Palette.gold)),
           ),
-          child: Text(progress!,
+      ],
+    );
+    final front = AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: width,
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+      decoration: BoxDecoration(
+        color: failed ? const Color(0xFFFBE4E1) : Palette.card,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: failed ? Palette.lost : color, width: 2.5),
+        boxShadow: const [
+          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          top,
+          const SizedBox(height: 3),
+          SuitText(text,
               style: TextStyle(
-                  fontFamily: bodyFont,
-                  fontSize: fontSize - 1,
-                  fontWeight: FontWeight.w800,
-                  height: 1.1,
-                  color: Palette.gold)),
-        ),
-      if (task.seal != null) WaxSeal(seal: task.seal!, size: fontSize + 3),
-      if (charged)
-        Icon(Icons.workspace_premium, size: fontSize + 2, color: Palette.goldDeep),
-      if (done) Icon(Icons.check_circle, size: fontSize + 3, color: Palette.won),
-      if (failed) Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost),
-    ];
+                  fontSize: fontSize,
+                  height: 1.15,
+                  fontWeight: FontWeight.w600,
+                  color: Palette.ink)),
+        ],
+      ),
+    );
+    // Done: the chip turns over to show a seal of completion.
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: width,
-        padding: const EdgeInsets.fromLTRB(5, 4, 5, 5),
-        decoration: BoxDecoration(
-          color: done
-              ? const Color(0xFFE2F0E4)
-              : failed
-                  ? const Color(0xFFFBE4E1)
-                  : Palette.card,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: failed ? Palette.lost : color, width: 2.5),
-          boxShadow: const [
-            BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$points',
-                    style: TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w900,
-                        fontSize: fontSize + 3,
-                        height: 1,
-                        color: Palette.ink)),
-                CrownIcon(size: fontSize * 0.8, color: Palette.goldDeep),
-              ],
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Opacity(
-                opacity: done ? 0.6 : 1,
-                child: SuitText(text,
-                    style: TextStyle(
-                        fontSize: fontSize,
-                        height: 1.15,
-                        fontWeight: FontWeight.w600,
-                        color: Palette.ink)),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: done ? 1 : 0),
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOutCubic,
+        builder: (context, d, _) => FlipIn(
+          t: 1 - d,
+          front: front,
+          back: Stack(children: [
+            Opacity(opacity: 0, child: front),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Palette.feltDeep,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: color, width: 2.5),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        size: fontSize * 2, color: Palette.won),
+                    const SizedBox(width: 6),
+                    Text('$points',
+                        style: TextStyle(
+                            fontFamily: displayFont,
+                            fontWeight: FontWeight.w900,
+                            fontSize: fontSize + 4,
+                            color: Palette.gold)),
+                    CrownIcon(size: fontSize, color: Palette.gold),
+                  ],
+                ),
               ),
             ),
-            if (trailing.isNotEmpty) ...[
-              const SizedBox(width: 3),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (final w in trailing)
-                    Padding(padding: const EdgeInsets.only(bottom: 2), child: w),
-                ],
-              ),
-            ],
-          ],
+          ]),
         ),
       ),
     );
