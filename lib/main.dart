@@ -687,6 +687,8 @@ class _HomePageState extends State<HomePage>
       );
       _lastTrick = null;
       _collecting = false;
+      _revealing = false;
+      _wantsToSpeak = false;
     }
     // No task cards to deal onto a circle: the round is ready once the King
     // is crowned and any tidings or decree are read.
@@ -694,8 +696,8 @@ class _HomePageState extends State<HomePage>
       _dealtFor = game.dealId;
     }
     if (_choosingKing && _crowning == null && _crownTimer == null) {
-      // After the shuffle.
-      _crownTimer = Timer(const Duration(milliseconds: 1500), () {
+      // Long live the King first; the tasks are shuffled out after.
+      _crownTimer = Timer(const Duration(milliseconds: 350), () {
         _crownTimer = null;
         if (mounted && _choosingKing) _crownKing(_cards.king);
       });
@@ -735,6 +737,7 @@ class _HomePageState extends State<HomePage>
 
   /// Returns true when a bot acted, so the next one can be scheduled.
   Future<bool> _botThink() async {
+    if (_revealing || (_wantsToSpeak && _cards.current.isEmpty)) return false;
     if (!_digital ||
         _choosingKing ||
         _crowning != null ||
@@ -916,6 +919,10 @@ class _HomePageState extends State<HomePage>
         _collecting = false;
       });
       _judgeTasks();
+      if (_wantsToSpeak && game.outcome == RoundOutcome.inProgress) {
+        _wantsToSpeak = false;
+        _speak();
+      }
     }));
   }
 
@@ -1075,7 +1082,9 @@ class _HomePageState extends State<HomePage>
                   child: Text(
                       _revealing
                           ? 'Tap a card to show it (highest, lowest or only of its suit)'
-                          : _cardStatus,
+                          : _wantsToSpeak
+                              ? 'You\u2019ll show a card after this trick'
+                              : _cardStatus,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center),
@@ -1086,18 +1095,18 @@ class _HomePageState extends State<HomePage>
                 width: 44,
                 child: IconButton(
                   tooltip: 'Show a card (once a round)',
-                  onPressed: _canReveal || _revealing
-                      ? () => setState(() => _revealing = !_revealing)
-                      : null,
+                  onPressed: _mayAskToSpeak || _revealing ? _speak : null,
                   icon: Icon(
                       _revealing
                           ? Icons.close_rounded
                           : game.spoke.length > _you && game.spoke[_you]
                               ? Icons.voice_over_off
                               : Icons.record_voice_over,
-                      color: _canReveal || _revealing
-                          ? Palette.gold
-                          : Colors.white24),
+                      color: _wantsToSpeak
+                          ? Colors.white
+                          : _mayAskToSpeak || _revealing
+                              ? Palette.gold
+                              : Colors.white24),
                 ),
               ),
             ],
@@ -1344,7 +1353,7 @@ class _HomePageState extends State<HomePage>
           ? game.pickTurn == seat
           : _playing && _lastTrick == null && _cards.turn == seat);
 
-  Widget _digiToken(int seat, double size) {
+  Widget _digiToken(int seat, double size, {bool tight = false}) {
     final labels = seatLabels(game.players);
     return KeyedSubtree(
       key: _seatKey(seat),
@@ -1365,6 +1374,7 @@ class _HomePageState extends State<HomePage>
             ? game.loyalty[seat]
             : null,
         onTap: game.hasRoles && !_choosingKing ? () => _showCourtier(seat) : null,
+        tight: tight,
       ),
     );
   }
@@ -1442,7 +1452,7 @@ class _HomePageState extends State<HomePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _digiToken(seat, 38),
+                      _digiToken(seat, 38, tight: true),
                       Text(
                           game.hasRoles
                               ? game.courtiers[seat].short
@@ -1501,13 +1511,7 @@ class _HomePageState extends State<HomePage>
   /// The middle of the table: the tasks to take while picking (tap one),
   /// then the trick.
   Widget _digiMiddle(double width) {
-    if (_choosingKing) {
-      // The deck is shuffled while the K♠ finds its King.
-      return Center(
-        child: ShufflingDeck(
-            key: ValueKey('shuffle-${game.dealId}'), width: 52),
-      );
-    }
+    if (_choosingKing) return const SizedBox.expand();
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
     if (open.isEmpty && (game.pickTurn == null || _flights.isEmpty)) {
       // The trick, laid out right here so it always shows.
@@ -1542,15 +1546,16 @@ class _HomePageState extends State<HomePage>
                 final t = slots[i];
                 final taken = t.assignedPlayerIndex != null;
                 // Dealt from the deck one after another, turning face up.
-                final delay = i * 110;
-                final total = 520 + delay;
+                final delay = 250 + i * 120;
+                final total = 560 + delay;
                 return TweenAnimationBuilder<double>(
                   key: ValueKey('deal-${game.dealId}-${t.description}'),
                   tween: Tween(begin: 0, end: 1),
                   duration: Duration(milliseconds: total),
                   curve: Interval(delay / total, 1, curve: Curves.easeOutCubic),
+                  // Shuffled out sideways from the left, one after another.
                   builder: (context, d, child) => Transform.translate(
-                    offset: Offset(0, -40 * (1 - d)),
+                    offset: Offset(-width * 0.8 * (1 - d), 0),
                     child: Opacity(
                       opacity: clampD(d * 3, 0, 1),
                       child: FlipIn(
@@ -1779,15 +1784,37 @@ class _HomePageState extends State<HomePage>
   /// Tap a card in your hand to show it with the speech token.
   bool _revealing = false;
 
-  bool get _canReveal =>
+  /// You asked to speak mid-trick: the game stops for you after it.
+  bool _wantsToSpeak = false;
+
+  /// The speech token can be asked for at any time during play.
+  bool get _mayAskToSpeak =>
       _playing &&
-      // Only between tricks.
-      _cards.current.isEmpty &&
-      _lastTrick == null &&
       game.spoke.length > _you &&
       !game.spoke[_you] &&
-      game.canSpeak(_you) &&
-      _cards.hands[_you].any((c) => _cards.revealFor(_you, c) != null);
+      game.canSpeak(_you);
+
+  /// Speak now if it's between tricks, otherwise as soon as this trick is
+  /// over. The table waits while you choose.
+  void _speak() {
+    if (_revealing) {
+      setState(() => _revealing = false);
+      return;
+    }
+    if (!_mayAskToSpeak) return;
+    if (_cards.current.isNotEmpty || _lastTrick != null) {
+      setState(() => _wantsToSpeak = !_wantsToSpeak);
+      return;
+    }
+    if (!_cards.hands[_you].any((c) => _cards.revealFor(_you, c) != null)) {
+      _showSnack(
+          'Nothing you may show: only your highest, lowest or only card of a suit',
+          Palette.feltDeep);
+      return;
+    }
+    setState(() => _revealing = true);
+  }
+
 
   /// Shows [card] for [seat]: it stays in their hand, face up for all.
   void _reveal(int seat, PlayingCard card) {
@@ -2448,16 +2475,17 @@ class _HomePageState extends State<HomePage>
                                         foregroundColor: Palette.gold),
                                   ),
                                   OutlinedButton.icon(
-                                    onPressed: _canReveal
+                                    onPressed: _mayAskToSpeak
                                         ? () {
                                             Navigator.pop(context);
-                                            setState(() => _revealing = true);
+                                            _speak();
                                           }
                                         : null,
                                     icon: const Icon(Icons.record_voice_over),
                                     label: Text(spoke ? 'Card shown' : 'Show a card'),
                                     style: OutlinedButton.styleFrom(
                                         foregroundColor: Palette.ink,
+                                        disabledForegroundColor: Palette.inkSoft,
                                         side: const BorderSide(color: Palette.ink)),
                                   ),
                                 ])
@@ -2985,11 +3013,37 @@ class _HomePageState extends State<HomePage>
   }
 
   /// The menu on the right: the rules, the Chronicle and sound.
+  /// One line of the menu: a gold icon and a regal title.
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String title) =>
+      PopupMenuItem(
+        value: value,
+        height: 52,
+        child: Row(
+          children: [
+            Icon(icon, color: Palette.gold, size: 22),
+            const SizedBox(width: 14),
+            Text(title,
+                style: const TextStyle(
+                    fontFamily: displayFont,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    letterSpacing: 0.3,
+                    color: Color(0xFFF3E7C6))),
+          ],
+        ),
+      );
+
   Widget _buildMenu() {
     return PopupMenuButton<String>(
       tooltip: 'Menu',
-      icon: const Icon(Icons.menu_rounded),
+      icon: const Icon(Icons.menu_rounded, color: Palette.gold, size: 30),
       color: Palette.feltDeep,
+      elevation: 12,
+      offset: const Offset(0, 48),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: Palette.gold, width: 1.5),
+      ),
       onSelected: (choice) async {
         switch (choice) {
           case 'new':
@@ -3012,57 +3066,29 @@ class _HomePageState extends State<HomePage>
         }
       },
       itemBuilder: (context) => [
+        // A crest at the top of the menu.
+        const PopupMenuItem<String>(
+          enabled: false,
+          height: 40,
+          child: Center(child: CrownIcon(size: 26, color: Palette.gold)),
+        ),
         if ((_inGame || _saved != null) && _setupArgs == null)
-          const PopupMenuItem(
-            value: 'new',
-            child: ListTile(
-              leading: Icon(Icons.group_add_outlined),
-              title: Text('New game'),
-            ),
-          ),
+          _menuItem('new', Icons.group_add_outlined, 'New game'),
         if (_inGame &&
             _setupArgs == null &&
             !(game.isDynasty && game.outcome != RoundOutcome.inProgress))
-          const PopupMenuItem(
-            value: 'shuffle',
-            child: ListTile(
-              leading: Icon(Icons.style_outlined),
-              title: Text('Shuffle tasks'),
-            ),
-          ),
-        const PopupMenuItem(
-          value: 'rules',
-          child: ListTile(
-            leading: Icon(Icons.menu_book_outlined),
-            title: Text('How to Play'),
-          ),
-        ),
+          _menuItem('shuffle', Icons.style_outlined, 'Shuffle tasks'),
+        _menuItem('rules', Icons.menu_book_outlined, 'How to Play'),
         if (_inGame && game.currentTiding != null)
-          const PopupMenuItem(
-            value: 'tidings',
-            child: ListTile(
-              leading: Icon(Icons.history_edu_outlined),
-              title: Text('This round\u2019s tidings'),
-            ),
-          ),
-        PopupMenuItem(
-          value: 'upright',
-          child: ListTile(
-            leading: Icon(_upright
-                ? Icons.laptop_rounded
-                : Icons.table_restaurant_outlined),
-            title: Text(_upright ? 'Laptop view: upright' : 'Table view: facing seats'),
-          ),
-        ),
-        PopupMenuItem(
-          value: 'sound',
-          child: ListTile(
-            leading: Icon(Sfx.enabled
-                ? Icons.volume_up_rounded
-                : Icons.volume_off_rounded),
-            title: Text(Sfx.enabled ? 'Fanfares on' : 'Fanfares off'),
-          ),
-        ),
+          _menuItem('tidings', Icons.history_edu_outlined, 'This round\u2019s tidings'),
+        _menuItem(
+            'upright',
+            _upright ? Icons.laptop_rounded : Icons.table_restaurant_outlined,
+            _upright ? 'Laptop view' : 'Table view'),
+        _menuItem(
+            'sound',
+            Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+            Sfx.enabled ? 'Fanfares on' : 'Fanfares off'),
       ],
     );
   }
@@ -5438,10 +5464,10 @@ class _SetupPanelState extends State<_SetupPanel> {
           children: [
             CrownIcon(size: 48),
             SizedBox(height: 10),
-            Text('The story begins', style: _heading),
+            Text('A crown awaits', style: _heading),
             SizedBox(height: 10),
             Text(
-              'Each of you is a courtier of a great house, with a token of your own shape and a power to use once a round. One of you will be crowned. The tasks will grow with the story, so there are no points to choose.',
+              'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nThe K♠ will choose who wears the crown. How long they keep it is up to all of you. Win glory together, keep the houses loyal, and watch for the knife in the dark.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70),
             ),
@@ -5564,8 +5590,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                     child: Text(step == 0 ? 'Cancel' : 'Back'),
                   ),
                 const Spacer(),
-                Flexible(
-                  child: FilledButton(
+                FilledButton(
                     onPressed: _next,
                     child: Text(
                         maxLines: 1,
@@ -5575,7 +5600,6 @@ class _SetupPanelState extends State<_SetupPanel> {
                             : mode == GameMode.dynasty
                                 ? 'Begin the reign'
                                 : 'Deal tasks'),
-                  ),
                 ),
               ],
             ),

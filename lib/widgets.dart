@@ -108,7 +108,11 @@ class SeatToken extends StatelessWidget {
     this.loyalty,
     this.spoke,
     this.onTap,
+    this.tight = false,
   });
+
+  /// Drop the space under the token (for a label right beneath it).
+  final bool tight;
 
   final Player player;
 
@@ -291,7 +295,7 @@ class SeatToken extends StatelessWidget {
             ),
             // Matches the crown's slot so the token sits on the seat's
             // centre.
-            SizedBox(height: 16 - badge * 0.4),
+            if (!tight) SizedBox(height: 16 - badge * 0.4),
           ],
         ),
       ),

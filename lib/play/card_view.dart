@@ -107,12 +107,18 @@ class PlayingCardView extends StatelessWidget {
             : null,
         child: Stack(
           children: [
-            // The Joker's harlequin diamonds.
-            if (card == PlayingCard.joker)
+            // Each Court Card's cloth has its own pattern.
+            if (card.isCourt)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: r,
-                  child: CustomPaint(painter: _Harlequin()),
+                  child: CustomPaint(
+                      painter: switch (card.rank) {
+                    1 => _Harlequin(),
+                    2 => _Stripes(),
+                    3 => _Lattice(),
+                    _ => _Sunburst(),
+                  }),
                 ),
               ),
             // Every Court Card has an inner gold frame.
@@ -191,14 +197,9 @@ class PlayingCardView extends StatelessWidget {
       1 => CustomPaint(painter: _JesterCap(), child: art),
       2 => CustomPaint(painter: _SwordAndShield(), child: art),
       3 => CustomPaint(painter: _Tiara(), child: art),
-      _ => SizedBox(
-          width: width * 0.8,
-          height: width * 0.7,
-          child: CustomPaint(
-            painter: _Sunburst(),
-            child: Center(child: CrownIcon(size: width * 0.52, color: Palette.gold)),
-          ),
-        ),
+      _ => CustomPaint(
+          painter: _RoyalCrown(),
+          child: SizedBox(width: width * 0.72, height: width * 0.66)),
     };
   }
 }
@@ -293,37 +294,37 @@ class _SwordAndShield extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final gilt = _gilt(Offset.zero & size);
-    // Sword: blade, crossguard, grip and pommel.
+    // Sword, point down: pommel, grip and crossguard above the shield.
+    canvas.drawCircle(Offset(w * 0.5, h * 0.03), w * 0.04, gilt);
+    canvas.drawRect(Rect.fromLTRB(w * 0.46, h * 0.05, w * 0.54, h * 0.18), gilt);
+    canvas.drawRRect(
+        RRect.fromLTRBR(w * 0.28, h * 0.15, w * 0.72, h * 0.21, Radius.circular(w * 0.03)),
+        gilt);
     final blade = Path()
-      ..moveTo(w * 0.5, h * 0.0)
-      ..lineTo(w * 0.55, h * 0.1)
-      ..lineTo(w * 0.55, h * 0.78)
-      ..lineTo(w * 0.45, h * 0.78)
-      ..lineTo(w * 0.45, h * 0.1)
+      ..moveTo(w * 0.45, h * 0.21)
+      ..lineTo(w * 0.55, h * 0.21)
+      ..lineTo(w * 0.55, h * 0.9)
+      ..lineTo(w * 0.5, h * 1.0)
+      ..lineTo(w * 0.45, h * 0.9)
       ..close();
     canvas.drawPath(blade, Paint()..color = const Color(0xFFE8E4DA));
-    canvas.drawRRect(
-        RRect.fromLTRBR(w * 0.3, h * 0.76, w * 0.7, h * 0.82, Radius.circular(w * 0.03)),
-        gilt);
-    canvas.drawRect(Rect.fromLTRB(w * 0.46, h * 0.82, w * 0.54, h * 0.95), gilt);
-    canvas.drawCircle(Offset(w * 0.5, h * 0.97), w * 0.04, gilt);
     // Shield in front of the blade.
     final shield = Path()
-      ..moveTo(w * 0.24, h * 0.18)
-      ..lineTo(w * 0.76, h * 0.18)
-      ..lineTo(w * 0.76, h * 0.42)
-      ..quadraticBezierTo(w * 0.74, h * 0.66, w * 0.5, h * 0.76)
-      ..quadraticBezierTo(w * 0.26, h * 0.66, w * 0.24, h * 0.42)
+      ..moveTo(w * 0.24, h * 0.26)
+      ..lineTo(w * 0.76, h * 0.26)
+      ..lineTo(w * 0.76, h * 0.48)
+      ..quadraticBezierTo(w * 0.74, h * 0.7, w * 0.5, h * 0.8)
+      ..quadraticBezierTo(w * 0.26, h * 0.7, w * 0.24, h * 0.48)
       ..close();
     canvas.drawPath(shield, gilt);
     // An emerald chevron on the shield.
     final chevron = Path()
-      ..moveTo(w * 0.32, h * 0.36)
-      ..lineTo(w * 0.5, h * 0.5)
-      ..lineTo(w * 0.68, h * 0.36)
-      ..lineTo(w * 0.68, h * 0.46)
-      ..lineTo(w * 0.5, h * 0.6)
-      ..lineTo(w * 0.32, h * 0.46)
+      ..moveTo(w * 0.32, h * 0.42)
+      ..lineTo(w * 0.5, h * 0.56)
+      ..lineTo(w * 0.68, h * 0.42)
+      ..lineTo(w * 0.68, h * 0.52)
+      ..lineTo(w * 0.5, h * 0.66)
+      ..lineTo(w * 0.32, h * 0.52)
       ..close();
     canvas.drawPath(chevron, Paint()..color = const Color(0xFF0F5B3A));
   }
@@ -380,26 +381,154 @@ class _Tiara extends CustomPainter {
   bool shouldRepaint(_Tiara old) => false;
 }
 
-/// Gold rays behind the King's crown.
+/// Gold rays from the King's crown out to the edges of the card.
 class _Sunburst extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-    final r = size.shortestSide * 0.62;
-    final paint = Paint()..color = const Color(0x55F9E08C);
-    for (int i = 0; i < 12; i++) {
-      final a = i * math.pi / 6;
+    final c = Offset(size.width / 2, size.height * 0.56);
+    final r = size.longestSide;
+    for (int i = 0; i < 24; i++) {
+      final a = i * math.pi / 12;
       final path = Path()
         ..moveTo(c.dx, c.dy)
-        ..lineTo(c.dx + r * math.cos(a - 0.12), c.dy + r * math.sin(a - 0.12))
-        ..lineTo(c.dx + r * math.cos(a + 0.12), c.dy + r * math.sin(a + 0.12))
+        ..lineTo(c.dx + r * math.cos(a - 0.06), c.dy + r * math.sin(a - 0.06))
+        ..lineTo(c.dx + r * math.cos(a + 0.06), c.dy + r * math.sin(a + 0.06))
         ..close();
-      canvas.drawPath(path, paint);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..shader = RadialGradient(
+              colors: [
+                i.isEven ? const Color(0x88F9E08C) : const Color(0x55F9E08C),
+                const Color(0x10F9E08C),
+              ],
+            ).createShader(Rect.fromCircle(center: c, radius: r)));
     }
+    // A warm glow where the crown sits.
+    canvas.drawCircle(
+        c,
+        size.width * 0.42,
+        Paint()
+          ..shader = const RadialGradient(
+                  colors: [Color(0x66F9E08C), Color(0x00F9E08C)])
+              .createShader(Rect.fromCircle(center: c, radius: size.width * 0.42)));
   }
 
   @override
   bool shouldRepaint(_Sunburst old) => false;
+}
+
+/// The Jack's cloth: fine diagonal stripes.
+class _Stripes extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0x2238D98B)
+      ..strokeWidth = size.width * 0.05;
+    for (double x = -size.height; x < size.width; x += size.width * 0.16) {
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Stripes old) => false;
+}
+
+/// The Queen's cloth: a lattice of fine gold lines with pearls where they
+/// cross.
+class _Lattice extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = const Color(0x33F9E08C)
+      ..strokeWidth = 1;
+    final step = size.width / 4;
+    for (double x = -size.height; x < size.width + size.height; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
+    }
+    final pearl = Paint()..color = const Color(0x44FFF8E8);
+    for (double y = 0; y <= size.height; y += step / 2) {
+      for (double x = (y / (step / 2)).round().isOdd ? step / 2 : 0;
+          x <= size.width;
+          x += step) {
+        canvas.drawCircle(Offset(x, y), 1.4, pearl);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Lattice old) => false;
+}
+
+/// The King's crown: gilt points topped with pearls and a cross, crimson
+/// cap within, and a jewelled band.
+class _RoyalCrown extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    // Velvet cap showing between the points.
+    canvas.drawOval(Rect.fromLTRB(w * 0.18, h * 0.2, w * 0.82, h * 0.8),
+        Paint()..color = const Color(0xFF5E0B18));
+    final body = Path()
+      ..moveTo(w * 0.08, h * 0.32)
+      ..lineTo(w * 0.28, h * 0.58)
+      ..lineTo(w * 0.36, h * 0.22)
+      ..lineTo(w * 0.5, h * 0.5)
+      ..lineTo(w * 0.64, h * 0.22)
+      ..lineTo(w * 0.72, h * 0.58)
+      ..lineTo(w * 0.92, h * 0.32)
+      ..lineTo(w * 0.84, h * 0.78)
+      ..lineTo(w * 0.16, h * 0.78)
+      ..close();
+    canvas.drawPath(body, _gilt(Offset.zero & size));
+    canvas.drawPath(
+        body,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * 0.012
+          ..color = _goldDark);
+    // The centre point, rising highest, with a cross on top.
+    final centre = Path()
+      ..moveTo(w * 0.42, h * 0.5)
+      ..lineTo(w * 0.5, h * 0.16)
+      ..lineTo(w * 0.58, h * 0.5)
+      ..close();
+    canvas.drawPath(centre, _gilt(Offset.zero & size));
+    final cross = Paint()..color = _goldLight;
+    canvas.drawRect(Rect.fromLTRB(w * 0.485, h * 0.0, w * 0.515, h * 0.13), cross);
+    canvas.drawRect(Rect.fromLTRB(w * 0.45, h * 0.035, w * 0.55, h * 0.065), cross);
+    // Pearls on every point.
+    final pearl = Paint()..color = const Color(0xFFFFF8E8);
+    for (final p in [
+      Offset(w * 0.08, h * 0.31),
+      Offset(w * 0.36, h * 0.21),
+      Offset(w * 0.64, h * 0.21),
+      Offset(w * 0.92, h * 0.31),
+    ]) {
+      canvas.drawCircle(p, w * 0.04, pearl);
+    }
+    // The band, with a ruby between two sapphires.
+    final band = RRect.fromLTRBR(
+        w * 0.14, h * 0.74, w * 0.86, h * 0.92, Radius.circular(w * 0.03));
+    canvas.drawRRect(band, _gilt(band.outerRect));
+    final ruby = Path()
+      ..moveTo(w * 0.5, h * 0.75)
+      ..lineTo(w * 0.56, h * 0.83)
+      ..lineTo(w * 0.5, h * 0.91)
+      ..lineTo(w * 0.44, h * 0.83)
+      ..close();
+    canvas.drawPath(ruby, Paint()..color = const Color(0xFFD01E3A));
+    final sapphire = Paint()..color = const Color(0xFF2E5FD0);
+    canvas.drawCircle(Offset(w * 0.29, h * 0.83), w * 0.04, sapphire);
+    canvas.drawCircle(Offset(w * 0.71, h * 0.83), w * 0.04, sapphire);
+    // A glint.
+    canvas.drawCircle(Offset(w * 0.48, h * 0.8), w * 0.012,
+        Paint()..color = Colors.white70);
+  }
+
+  @override
+  bool shouldRepaint(_RoyalCrown old) => false;
 }
 
 /// The back of a card, for hands you can't see and cards being dealt.
