@@ -19,6 +19,9 @@ while i < len(lines) and len(out) < 25:
                 block.insert(0, "TEST " + lines[j].split(": ", 1)[-1])
                 break
         out.append(block)
+    elif line.endswith("[E]") and i + 1 < len(lines) and not lines[i + 1].startswith("══"):
+        # A plain test failure: the error and stack follow the test name.
+        out.append(lines[i: i + 25])
     elif "Compilation failed" in line or line.strip().startswith("Expected:"):
         out.append(lines[max(0, i - 3): i + 12])
     i += 1
