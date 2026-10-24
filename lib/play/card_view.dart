@@ -220,8 +220,8 @@ class _Harlequin extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final dw = size.width / 4, dh = size.height / 5;
-    final paint = Paint()..color = const Color(0x334A1E6E);
-    final light = Paint()..color = const Color(0x22F9E08C);
+    final paint = Paint()..color = const Color(0x1C4A1E6E);
+    final light = Paint()..color = const Color(0x12F9E08C);
     for (int row = -1; row <= 5; row++) {
       for (int col = -1; col <= 4; col++) {
         final cx = col * dw + (row.isOdd ? dw / 2 : 0);
@@ -333,48 +333,36 @@ class _SwordAndShield extends CustomPainter {
   bool shouldRepaint(_SwordAndShield old) => false;
 }
 
-/// The Queen's tiara: arched points topped with pearls, and a ruby.
+/// The Queen's crown, drawn like the crown used across the app (see
+/// CrownIcon) but lighter: five low points with round tips.
 class _Tiara extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
-    final peaks = [
-      Offset(w * 0.06, h * 0.55),
-      Offset(w * 0.28, h * 0.32),
-      Offset(w * 0.5, h * 0.1),
-      Offset(w * 0.72, h * 0.32),
-      Offset(w * 0.94, h * 0.55),
+    final tips = [
+      Offset(w * 0.1, h * 0.42),
+      Offset(w * 0.3, h * 0.3),
+      Offset(w * 0.5, h * 0.16),
+      Offset(w * 0.7, h * 0.3),
+      Offset(w * 0.9, h * 0.42),
     ];
-    final tiara = Path()..moveTo(w * 0.06, h * 0.82);
-    tiara.lineTo(peaks.first.dx, peaks.first.dy);
-    for (int i = 1; i < peaks.length; i++) {
-      final a = peaks[i - 1], b = peaks[i];
-      tiara.quadraticBezierTo(
-          (a.dx + b.dx) / 2, math.max(a.dy, b.dy) + h * 0.22, b.dx, b.dy);
+    final body = Path()..moveTo(tips.first.dx, tips.first.dy);
+    for (int i = 1; i < tips.length; i++) {
+      final a = tips[i - 1], b = tips[i];
+      body
+        ..lineTo((a.dx + b.dx) / 2, h * 0.62)
+        ..lineTo(b.dx, b.dy);
     }
-    tiara
-      ..lineTo(w * 0.94, h * 0.82)
-      ..quadraticBezierTo(w * 0.5, h * 0.94, w * 0.06, h * 0.82)
-      ..close();
-    canvas.drawPath(tiara, _gilt(Offset.zero & size));
-    final pearl = Paint()..color = const Color(0xFFFFF8E8);
-    for (final p in peaks) {
-      canvas.drawCircle(p.translate(0, -h * 0.04), w * 0.045, pearl);
+    body
+      ..lineTo(w * 0.84, h * 0.8)
+      ..lineTo(w * 0.16, h * 0.8)
+      ..close()
+      ..addRect(Rect.fromLTWH(w * 0.16, h * 0.85, w * 0.68, h * 0.1));
+    canvas.drawPath(body, _gilt(Offset.zero & size));
+    final tip = _gilt(Offset.zero & size);
+    for (final t in tips) {
+      canvas.drawCircle(t, w * 0.045, tip);
     }
-    // A ruby in the middle.
-    final ruby = Path()
-      ..moveTo(w * 0.5, h * 0.48)
-      ..lineTo(w * 0.57, h * 0.62)
-      ..lineTo(w * 0.5, h * 0.76)
-      ..lineTo(w * 0.43, h * 0.62)
-      ..close();
-    canvas.drawPath(ruby, Paint()..color = const Color(0xFFC21A35));
-    canvas.drawPath(
-        ruby,
-        Paint()
-          ..color = _goldLight
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 0.015);
   }
 
   @override
@@ -399,8 +387,8 @@ class _Sunburst extends CustomPainter {
           Paint()
             ..shader = RadialGradient(
               colors: [
-                i.isEven ? const Color(0x88F9E08C) : const Color(0x55F9E08C),
-                const Color(0x10F9E08C),
+                i.isEven ? const Color(0x40F9E08C) : const Color(0x26F9E08C),
+                const Color(0x06F9E08C),
               ],
             ).createShader(Rect.fromCircle(center: c, radius: r)));
     }
@@ -410,7 +398,7 @@ class _Sunburst extends CustomPainter {
         size.width * 0.42,
         Paint()
           ..shader = const RadialGradient(
-                  colors: [Color(0x66F9E08C), Color(0x00F9E08C)])
+                  colors: [Color(0x33F9E08C), Color(0x00F9E08C)])
               .createShader(Rect.fromCircle(center: c, radius: size.width * 0.42)));
   }
 
@@ -423,7 +411,7 @@ class _Stripes extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0x2238D98B)
+      ..color = const Color(0x1438D98B)
       ..strokeWidth = size.width * 0.05;
     for (double x = -size.height; x < size.width; x += size.width * 0.16) {
       canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
@@ -440,14 +428,14 @@ class _Lattice extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final line = Paint()
-      ..color = const Color(0x33F9E08C)
+      ..color = const Color(0x1CF9E08C)
       ..strokeWidth = 1;
     final step = size.width / 4;
     for (double x = -size.height; x < size.width + size.height; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
       canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
     }
-    final pearl = Paint()..color = const Color(0x44FFF8E8);
+    final pearl = Paint()..color = const Color(0x26FFF8E8);
     for (double y = 0; y <= size.height; y += step / 2) {
       for (double x = (y / (step / 2)).round().isOdd ? step / 2 : 0;
           x <= size.width;
@@ -461,70 +449,25 @@ class _Lattice extends CustomPainter {
   bool shouldRepaint(_Lattice old) => false;
 }
 
-/// The King's crown: gilt points topped with pearls and a cross, crimson
-/// cap within, and a jewelled band.
+/// The King's crown: the same crown used across the app (see CrownIcon),
+/// in gilt.
 class _RoyalCrown extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    // Velvet cap showing between the points.
-    canvas.drawOval(Rect.fromLTRB(w * 0.18, h * 0.2, w * 0.82, h * 0.8),
-        Paint()..color = const Color(0xFF5E0B18));
-    final body = Path()
-      ..moveTo(w * 0.08, h * 0.32)
-      ..lineTo(w * 0.28, h * 0.58)
-      ..lineTo(w * 0.36, h * 0.22)
-      ..lineTo(w * 0.5, h * 0.5)
-      ..lineTo(w * 0.64, h * 0.22)
-      ..lineTo(w * 0.72, h * 0.58)
-      ..lineTo(w * 0.92, h * 0.32)
-      ..lineTo(w * 0.84, h * 0.78)
-      ..lineTo(w * 0.16, h * 0.78)
-      ..close();
-    canvas.drawPath(body, _gilt(Offset.zero & size));
-    canvas.drawPath(
-        body,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 0.012
-          ..color = _goldDark);
-    // The centre point, rising highest, with a cross on top.
-    final centre = Path()
-      ..moveTo(w * 0.42, h * 0.5)
-      ..lineTo(w * 0.5, h * 0.16)
-      ..lineTo(w * 0.58, h * 0.5)
-      ..close();
-    canvas.drawPath(centre, _gilt(Offset.zero & size));
-    final cross = Paint()..color = _goldLight;
-    canvas.drawRect(Rect.fromLTRB(w * 0.485, h * 0.0, w * 0.515, h * 0.13), cross);
-    canvas.drawRect(Rect.fromLTRB(w * 0.45, h * 0.035, w * 0.55, h * 0.065), cross);
-    // Pearls on every point.
-    final pearl = Paint()..color = const Color(0xFFFFF8E8);
-    for (final p in [
-      Offset(w * 0.08, h * 0.31),
-      Offset(w * 0.36, h * 0.21),
-      Offset(w * 0.64, h * 0.21),
-      Offset(w * 0.92, h * 0.31),
-    ]) {
-      canvas.drawCircle(p, w * 0.04, pearl);
-    }
-    // The band, with a ruby between two sapphires.
-    final band = RRect.fromLTRBR(
-        w * 0.14, h * 0.74, w * 0.86, h * 0.92, Radius.circular(w * 0.03));
-    canvas.drawRRect(band, _gilt(band.outerRect));
-    final ruby = Path()
-      ..moveTo(w * 0.5, h * 0.75)
-      ..lineTo(w * 0.56, h * 0.83)
-      ..lineTo(w * 0.5, h * 0.91)
-      ..lineTo(w * 0.44, h * 0.83)
-      ..close();
-    canvas.drawPath(ruby, Paint()..color = const Color(0xFFD01E3A));
-    final sapphire = Paint()..color = const Color(0xFF2E5FD0);
-    canvas.drawCircle(Offset(w * 0.29, h * 0.83), w * 0.04, sapphire);
-    canvas.drawCircle(Offset(w * 0.71, h * 0.83), w * 0.04, sapphire);
-    // A glint.
-    canvas.drawCircle(Offset(w * 0.48, h * 0.8), w * 0.012,
-        Paint()..color = Colors.white70);
+    final w = size.width, h = size.height * 0.75;
+    final top = (size.height - h) / 2;
+    final path = Path()
+      ..moveTo(0, h * 0.25)
+      ..lineTo(w * 0.27, h * 0.55)
+      ..lineTo(w * 0.5, 0)
+      ..lineTo(w * 0.73, h * 0.55)
+      ..lineTo(w, h * 0.25)
+      ..lineTo(w * 0.88, h * 0.82)
+      ..lineTo(w * 0.12, h * 0.82)
+      ..close()
+      ..addRect(Rect.fromLTWH(w * 0.12, h * 0.88, w * 0.76, h * 0.12));
+    canvas.translate(0, top);
+    canvas.drawPath(path, _gilt(Offset.zero & Size(w, h)));
   }
 
   @override

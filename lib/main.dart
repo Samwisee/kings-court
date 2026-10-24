@@ -15,9 +15,11 @@ import 'models.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
 import 'engine/conflicts.dart';
+import 'engine/contest.dart';
 import 'engine/match.dart';
 import 'engine/rules.dart';
 import 'play/card_view.dart';
+import 'play/contest_table.dart';
 import 'sfx.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -372,8 +374,13 @@ class _HomePageState extends State<HomePage>
   _DynastyStep _step = _DynastyStep.result;
   int? _dilemma;
 
-  /// Council votes on the current dilemma: seat to "chose A".
+  /// A divided court: which side each seat takes (true for the first
+  /// choice), settled by a Trial of Cards.
   Map<int, bool> _votes = {};
+
+  /// The Trial of Cards being played on screen, if any.
+  ContestState? _contest;
+  final _contestKey = GlobalKey<ContestTableState>();
   List<String> _verdict = const [];
   String _verdictStory = '';
 
@@ -706,6 +713,18 @@ class _HomePageState extends State<HomePage>
 
   /// Lets whichever bot is due act, after a short pause.
   void _scheduleBot() {
+    // You asked to speak: once play is between tricks, stop for you.
+    if (_wantsToSpeak &&
+        !_revealing &&
+        _playing &&
+        _cards.current.isEmpty &&
+        _lastTrick == null) {
+      _wantsToSpeak = false;
+      scheduleMicrotask(() {
+        if (mounted) _speak();
+      });
+      return;
+    }
     if (!_digital || _botTimer != null || _botBusy) return;
     _botTimer = Timer(botDelay, () {
       _botTimer = null;
@@ -737,7 +756,9 @@ class _HomePageState extends State<HomePage>
 
   /// Returns true when a bot acted, so the next one can be scheduled.
   Future<bool> _botThink() async {
-    if (_revealing || (_wantsToSpeak && _cards.current.isEmpty)) return false;
+    if (_revealing || (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
+      return false;
+    }
     if (!_digital ||
         _choosingKing ||
         _crowning != null ||
@@ -1082,7 +1103,7 @@ class _HomePageState extends State<HomePage>
                   child: Text(
                       _revealing
                           ? 'Tap a card to show it (highest, lowest or only of its suit)'
-                          : _wantsToSpeak
+                          : _wantsToSpeak && _playing
                               ? 'You\u2019ll show a card after this trick'
                               : _cardStatus,
                       maxLines: 2,
@@ -1369,10 +1390,8 @@ class _HomePageState extends State<HomePage>
             : null,
         antagonist: game.isAntagonist(seat),
         wounds: game.isDynasty && game.kingIndex == seat ? game.kingWounds : null,
-        powerUsed: game.hasRoles && !_choosingKing ? game.powerUsed[seat] : null,
-        loyalty: game.isDynasty && game.kingIndex != seat && seat < game.loyalty.length
-            ? game.loyalty[seat]
-            : null,
+        // Loyalty and powers are in each courtier's card (tap the token),
+        // keeping the table clear.
         onTap: game.hasRoles && !_choosingKing ? () => _showCourtier(seat) : null,
         tight: tight,
       ),
@@ -1461,7 +1480,9 @@ class _HomePageState extends State<HomePage>
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 13, color: Colors.white70)),
-                      if (c.dealId == game.dealId)
+                      // Trick counts only once the tricks begin.
+                      if (c.dealId == game.dealId &&
+                          (_playing || c.tricks.isNotEmpty))
                         Text(
                             '${c.tricksWon(seat)} won · ${c.hands[seat].length} left',
                             maxLines: 1,
@@ -1664,7 +1685,7 @@ class _HomePageState extends State<HomePage>
           children: [
             _digiToken(_you, 46),
             if (_revealedView(_you) case final r?) r,
-            if (c.dealId == game.dealId)
+            if (c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty))
               Text('${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}',
                   style: const TextStyle(fontSize: 11, color: Colors.white54)),
           ],
@@ -1787,9 +1808,16 @@ class _HomePageState extends State<HomePage>
   /// You asked to speak mid-trick: the game stops for you after it.
   bool _wantsToSpeak = false;
 
-  /// The speech token can be asked for at any time during play.
+  /// The speech token can be asked for at any time in the round, even
+  /// while tasks are picked: it's used at the next gap between tricks.
   bool get _mayAskToSpeak =>
-      _playing &&
+      _digital &&
+      _inGame &&
+      !_choosingKing &&
+      game.outcome == RoundOutcome.inProgress &&
+      _cards.dealId == game.dealId &&
+      _cards.hands.length > _you &&
+      _cards.hands[_you].isNotEmpty &&
       game.spoke.length > _you &&
       !game.spoke[_you] &&
       game.canSpeak(_you);
@@ -1802,8 +1830,12 @@ class _HomePageState extends State<HomePage>
       return;
     }
     if (!_mayAskToSpeak) return;
-    if (_cards.current.isNotEmpty || _lastTrick != null) {
+    if (!_playing || _cards.current.isNotEmpty || _lastTrick != null) {
       setState(() => _wantsToSpeak = !_wantsToSpeak);
+      if (_wantsToSpeak && !_playing) {
+        _showSnack('You\u2019ll show a card before the first trick',
+            Palette.feltDeep);
+      }
       return;
     }
     if (!_cards.hands[_you].any((c) => _cards.revealFor(_you, c) != null)) {
@@ -2049,6 +2081,10 @@ class _HomePageState extends State<HomePage>
   /// thing allowed. Returns false when there's nothing for you to do.
   @visibleForTesting
   bool debugYourMove() {
+    if (_contest != null) {
+      _contestKey.currentState?.debugYourMove();
+      return true;
+    }
     if (_yourPick) {
       final t = game.tasks.firstWhere(
           (t) => t.assignedPlayerIndex == null && game.canTake(t, _you),
@@ -3005,6 +3041,40 @@ class _HomePageState extends State<HomePage>
             child: Material(
                 type: MaterialType.transparency,
                 child: _buildOutcomeOverlay())),
+      // A divided court plays its Trial of Cards over everything.
+      if (_contest case final contest? when _inGame)
+        Positioned.fill(
+          child: Material(
+            type: MaterialType.transparency,
+            child: ContestTable(
+              key: _contestKey,
+              contest: contest,
+              you: _you,
+              names: [
+                for (int i = 0; i < game.players.length; i++)
+                  i == _you
+                      ? 'You'
+                      : game.hasRoles
+                          ? game.courtiers[i].short
+                          : game.players[i].name
+              ],
+              colors: [for (final p in game.players) p.color],
+              token: (seat, size) => SeatToken(
+                player: game.players[seat],
+                label: seatLabels(game.players)[seat],
+                isKing: game.kingIndex == seat,
+                size: size,
+                shape: game.hasRoles ? game.courtiers[seat].shape : null,
+                tight: true,
+              ),
+              labelA: dilemmas[_dilemma ?? 0].a.label,
+              labelB: dilemmas[_dilemma ?? 0].b.label,
+              botDelay: botDelay,
+              trickPause: trickPause,
+              onDone: () => _settleTrial(dilemmas[_dilemma ?? 0], contest.aWins),
+            ),
+          ),
+        ),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       const Positioned.fill(
@@ -4017,7 +4087,9 @@ class _HomePageState extends State<HomePage>
                     } else {
                       _dilemma = game.pickDilemmaAfter(won);
                       _votes = {};
+                      _contest = null;
                       _step = _DynastyStep.dilemma;
+                      _botsTakeSides();
                     }
                   }),
           style: won
@@ -4080,8 +4152,8 @@ class _HomePageState extends State<HomePage>
                     fontStyle: FontStyle.italic,
                     color: Palette.inkSoft)),
           const SizedBox(height: 10),
-          if (d.council && _voters.isNotEmpty)
-            ..._council(d)
+          if (d.council)
+            ..._trial(d)
           else
             for (final choice in [d.a, d.b])
               Padding(
@@ -4134,19 +4206,58 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// Courtiers with a vote in council: everyone loyal except the King.
-  List<int> get _voters => [
-        for (int i = 0; i < game.players.length; i++)
-          if (i != game.kingIndex && !game.isAntagonist(i)) i
-      ];
+  /// How much a courtier at [seat] stands to gain from [c].
+  int _lean(Choice c, int seat) {
+    var score = 0;
+    for (final e in c.effects) {
+      switch (e) {
+        case Loyalty(:final courtier, :final delta)
+            when seat < game.courtiers.length && game.courtiers[seat] == courtier:
+          score += delta * 2;
+        case AllLoyalty(:final delta):
+          score += delta;
+        default:
+      }
+    }
+    return score;
+  }
 
-  /// A council matter: each courtier votes, then the King heeds the court
-  /// or overrules it (and those who were overruled remember).
-  List<Widget> _council(Dilemma d) {
-    final voters = _voters;
-    final forA = voters.where((s) => _votes[s] == true).toList();
-    final forB = voters.where((s) => _votes[s] == false).toList();
-    final allVoted = forA.length + forB.length == voters.length;
+  /// On screen, the bots pick their sides: the King first, then the
+  /// courtiers, by what they stand to gain and how loyal they are.
+  void _botsTakeSides() {
+    if (!_digital || _dilemma == null) return;
+    final d = dilemmas[_dilemma!];
+    final king = game.kingIndex;
+    if (!d.council || king == null) return;
+    final rand = math.Random();
+    if (king != _you) _votes[king] ??= rand.nextBool();
+    final kingA = _votes[king];
+    if (kingA == null) return; // you're King: the court waits for you
+    for (int s = 0; s < game.players.length; s++) {
+      if (s == _you || s == king || _votes.containsKey(s)) continue;
+      final la = _lean(d.a, s), lb = _lean(d.b, s);
+      if (game.isAntagonist(s)) {
+        _votes[s] = !kingA;
+      } else if (la != lb && rand.nextDouble() < 0.7) {
+        _votes[s] = la > lb;
+      } else {
+        final loyalty = s < game.loyalty.length ? game.loyalty[s] : 3;
+        _votes[s] = rand.nextDouble() < 0.3 + 0.12 * loyalty ? kingA : !kingA;
+      }
+    }
+  }
+
+  /// A matter that divides the court: everyone takes a side, then the
+  /// sides play a Trial of Cards and the winners have their way.
+  List<Widget> _trial(Dilemma d) {
+    final king = game.kingIndex;
+    final seats = [
+      if (king != null) king,
+      for (int i = 0; i < game.players.length; i++)
+        if (i != king) i
+    ];
+    final chosen = seats.every(_votes.containsKey);
+    final sides = _votes.values.toSet();
     Widget button(String text, VoidCallback? onPressed, {bool outlined = false}) =>
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -4167,18 +4278,22 @@ class _HomePageState extends State<HomePage>
                     child: Text(text, textAlign: TextAlign.center)),
           ),
         );
-    final majorityA = forA.length > forB.length;
-    final tie = forA.length == forB.length;
-    final major = majorityA ? d.a : d.b;
-    final minor = majorityA ? d.b : d.a;
-    final majorVoters = majorityA ? forA : forB;
+    String name(int seat) => _digital && seat == _you
+        ? 'You'
+        : game.hasRoles
+            ? game.courtiers[seat].short
+            : game.players[seat].name;
     return [
-      const Text('The court is called to vote',
+      const Text('The court is divided',
           style: TextStyle(
               fontFamily: displayFont,
               fontWeight: FontWeight.w700,
               fontSize: 15,
               color: Palette.cardRed)),
+      const Text('Each takes a side, and the cards will decide.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              fontSize: 14, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
       const SizedBox(height: 6),
       for (final (letter, c) in [('A', d.a), ('B', d.b)])
         Text('$letter.  ${c.label}',
@@ -4186,19 +4301,25 @@ class _HomePageState extends State<HomePage>
             style: const TextStyle(
                 fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
       const SizedBox(height: 8),
-      for (final seat in voters)
+      for (final seat in seats)
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(
             children: [
               ShapedToken(
-                  shape: game.courtiers[seat].shape,
+                  shape: game.hasRoles
+                      ? game.courtiers[seat].shape
+                      : TokenShape.shield,
                   size: 24,
                   color: game.players[seat].color,
                   ring: Palette.inkSoft),
               const SizedBox(width: 8),
+              if (seat == king) ...[
+                const CrownIcon(size: 16, color: Palette.goldDeep),
+                const SizedBox(width: 4),
+              ],
               Expanded(
-                child: Text(game.courtiers[seat].short,
+                child: Text(name(seat),
                     style: const TextStyle(fontSize: 15, color: Palette.ink)),
               ),
               for (final a in [true, false])
@@ -4207,35 +4328,74 @@ class _HomePageState extends State<HomePage>
                   child: _VoteChip(
                     label: a ? 'A' : 'B',
                     selected: _votes[seat] == a,
-                    onTap: () => setState(() => _votes[seat] = a),
+                    onTap: !_digital || seat == _you
+                        ? () => setState(() {
+                              _votes[seat] = a;
+                              if (seat == king) _botsTakeSides();
+                            })
+                        : null,
                   ),
                 ),
             ],
           ),
         ),
       const SizedBox(height: 8),
-      if (!allVoted)
-        button('Every courtier must vote', null)
-      else if (tie) ...[
-        const Text('The court is split. The King decides.',
-            style: TextStyle(
-                fontSize: 14, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
-        const SizedBox(height: 6),
-        button(d.a.label, () => _decide(d.a)),
-        button(d.b.label, () => _decide(d.b)),
-      ] else ...[
-        button('Heed the court: ${major.label}',
-            () => _decide(major, heeded: true)),
-        button('Overrule: ${minor.label}',
-            () => _decide(minor, overruled: majorVoters),
-            outlined: true),
+      if (!chosen)
+        button(
+            _digital && king != null && !_votes.containsKey(king)
+                ? 'The King chooses first'
+                : 'Everyone must take a side',
+            null)
+      else if (sides.length == 1)
+        button('The court stands as one: ${(sides.first ? d.a : d.b).label}',
+            () => _decide(sides.first ? d.a : d.b,
+                heeded: true, lead: const ['The court stands as one.']))
+      else if (_digital)
+        button('To the cards', () {
+          setState(() => _contest = ContestState.deal(
+              players: game.players.length,
+              king: king ?? 0,
+              sideA: [for (int i = 0; i < game.players.length; i++) _votes[i]!],
+              rand: math.Random()));
+        })
+      else ...[
+        Text(
+            'Deal ${ContestState.contestHand} cards each. The King leads; Court Cards are trumps. Every trick counts for its winner’s side, and a tie goes to the King.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
+        const SizedBox(height: 8),
+        button('A took more tricks', () => _settleTrial(d, true)),
+        button('B took more tricks', () => _settleTrial(d, false)),
       ],
     ];
   }
 
+  /// The Trial of Cards is over: its winners have their way. Losing to
+  /// the King's side is remembered; beating it, the King bows to the court.
+  void _settleTrial(Dilemma d, bool aWins) {
+    final king = game.kingIndex;
+    final kingA = king == null ? aWins : _votes[king]!;
+    final losers = [
+      for (final e in _votes.entries)
+        if (e.value != aWins && e.key != king) e.key
+    ];
+    _contest = null;
+    if (aWins == kingA) {
+      _decide(aWins ? d.a : d.b,
+          overruled: losers,
+          lead: const ['The King’s side wins the trial.']);
+    } else {
+      _decide(aWins ? d.a : d.b,
+          heeded: true,
+          lead: const ['The court wins the trial. The King bows to its will.']);
+    }
+  }
+
   /// Carries out the King's choice and writes up what changed.
   void _decide(Choice choice,
-      {List<int> overruled = const [], bool heeded = false}) {
+      {List<int> overruled = const [],
+      bool heeded = false,
+      List<String> lead = const []}) {
     final loyaltyBefore = List.of(game.loyalty);
     final antagonistsBefore = game.antagonists.toSet();
     final woundsBefore = game.kingWounds;
@@ -4244,10 +4404,7 @@ class _HomePageState extends State<HomePage>
       game.applyChoice(choice);
       if (overruled.isNotEmpty) game.overruled(overruled);
       if (heeded) game.heededCouncil();
-      final lines = <String>[
-        if (overruled.isNotEmpty) 'The King overrules the court.',
-        if (heeded) 'The King heeds the court.',
-      ];
+      final lines = <String>[...lead];
       for (int i = 0; i < game.players.length; i++) {
         final delta = game.loyalty[i] - loyaltyBefore[i];
         if (delta == 0) continue;
@@ -4905,7 +5062,7 @@ Future<void> showRulesDialog(BuildContext context) {
         'Loyalty is a candle by each courtier\'s seat: the taller the flame, the more loyal. It flickers when loyalty changes. Deeds count too: after a won round, whoever did the most tasks gains favour, and a failed task shakes its owner\'s faith.',
         'The King earns a name from their choices: the Kind, the Stern, the Bold and more.',
         'Each round opens with tidings: news from the kingdom that may bring a decree and charge one house with a task. A royal charge (the gold ribbon) is dealt straight to that house and stays with them. Do it and they gain favour; fail and they lose it. Some dilemmas then follow from how the round went.',
-        'Some matters go to council: every loyal courtier votes, then the King heeds the court or overrules it. Overruled courtiers remember.',
+        'Some matters divide the court: everyone takes a side, then the sides play a Trial of Cards, a short hand where every trick counts for its winner\u2019s side. If the King\u2019s side loses, the King bows to the court; those who lose to the King remember.',
         'How it ends: if one King wins five rounds in their reign, the court enters a Golden Age and you win. If three Kings fall, the dynasty falls. If traitors ever outnumber the loyal, they seize the throne.',
         'A courtier whose loyalty falls to nothing openly turns against the King. Their token turns blood-red and they gain a scheme, shown at the top. They take no tasks and don\'t pick. If their scheme succeeds, the King is wounded. A later dilemma can win them back.',
       ]
@@ -5713,14 +5870,14 @@ class _VoteChip extends StatelessWidget {
       {required this.label, required this.selected, required this.onTap});
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Vote $label',
+      label: 'Side $label',
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(

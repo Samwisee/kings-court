@@ -13,6 +13,8 @@ import 'package:kings_court/models.dart';
 import 'package:kings_court/widgets.dart';
 import 'dart:math';
 import 'package:kings_court/engine/cards.dart';
+import 'package:kings_court/engine/contest.dart';
+import 'package:kings_court/play/contest_table.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
 
@@ -771,6 +773,68 @@ void main() {
     }
   });
 
+  test('A Trial of Cards plays out fairly', () {
+    final rand = Random(3);
+    var kingTies = 0;
+    for (int i = 0; i < 300; i++) {
+      final players = 3 + i % 4;
+      final sideA = [for (int s = 0; s < players; s++) rand.nextBool()];
+      final c = ContestState.deal(
+          players: players, king: i % players, sideA: sideA, rand: rand);
+      var guard = 0;
+      while (!c.over && guard++ < 100) {
+        final seat = c.turn;
+        final card = c.botPlay(seat);
+        expect(c.legalFor(seat), contains(card));
+        c.play(seat, card);
+      }
+      expect(c.tricks.length, ContestState.contestHand);
+      final a = c.tricksFor(true), b = c.tricksFor(false);
+      expect(a + b, ContestState.contestHand);
+      if (a == b) {
+        kingTies++;
+        expect(c.aWins, sideA[c.king]);
+      } else {
+        expect(c.aWins, a > b);
+      }
+      expect(c.decided, isTrue);
+    }
+    expect(kingTies, greaterThanOrEqualTo(0));
+  });
+
+  testWidgets('The Trial of Cards table plays to the end', (tester) async {
+    setPhoneSize(tester);
+    final contest = ContestState.deal(
+        players: 4, king: 1, sideA: [true, false, true, false], rand: Random(1));
+    var done = false;
+    final key = GlobalKey<ContestTableState>();
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ContestTable(
+          key: key,
+          contest: contest,
+          you: 0,
+          names: const ['You', 'Duke', 'Bishop', 'Jester'],
+          colors: const [Colors.red, Colors.blue, Colors.green, Colors.purple],
+          token: (seat, size) => SizedBox(width: size, height: size),
+          labelA: 'Open the gates',
+          labelB: 'Close the gates',
+          botDelay: const Duration(milliseconds: 5),
+          trickPause: const Duration(milliseconds: 10),
+          onDone: () => done = true,
+        ),
+      ),
+    ));
+    for (int i = 0; i < 400 && !contest.over; i++) {
+      key.currentState!.debugYourMove();
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(contest.over, isTrue);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Let it be done'));
+    expect(done, isTrue);
+  });
+
   test('Overruling the council costs loyalty', () {
     final g = dynasty(4)..setKing(0);
     final before = g.loyalty[1];
@@ -859,7 +923,7 @@ void main() {
         await tester.tap(votes.at(i));
         await tester.pumpAndSettle();
       }
-      await tester.tap(find.textContaining('Heed the court'));
+      await tester.tap(find.textContaining('The court stands as one'));
     } else {
       await tester.tap(find.text(d.a.label));
     }
