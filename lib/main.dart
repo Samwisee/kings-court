@@ -377,6 +377,10 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    // Create the animation controllers now, so dispose never makes one.
+    for (final c in [_deal, _crown, _play, _outcome]) {
+      c.value;
+    }
     _loadSaved();
   }
 
@@ -672,6 +676,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onDragStart(Task t) {
+    debugPrint('DRAGSTART ${t.description}');
     setState(() {
       _dragging = t;
       _order
@@ -706,6 +711,8 @@ class _HomePageState extends State<HomePage>
     final p = _toPx(_pos[t]!);
     final seat = _geo.seatAt(p);
     final previous = t.assignedPlayerIndex;
+    debugPrint('DRAGEND p=$p seat=$seat table=$_tableSize '
+        'seats=${[for (int i = 0; i < game.players.length; i++) _geo.seatCenter(i)]}');
     setState(() {
       _dragging = null;
       _hoverSeat = null;
@@ -3971,15 +3978,17 @@ class _SetupPanelState extends State<_SetupPanel> {
                     child: Text(step == 0 ? 'Cancel' : 'Back'),
                   ),
                 const Spacer(),
-                FilledButton(
+                Flexible(
+                  child: FilledButton(
                   onPressed: _next,
-                  child: Text(!last
+                  child: Text(maxLines: 1, overflow: TextOverflow.ellipsis, !last
                       ? 'Next'
                       : digital
                           ? 'Deal the cards'
                           : mode == GameMode.dynasty
                               ? 'Begin the reign'
                               : 'Deal tasks'),
+                  ),
                 ),
               ],
             ),
@@ -4133,7 +4142,7 @@ class _HouseBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final deep = Color.lerp(color, const Color(0xFF0A0A0A), 0.55)!;
     return Container(
-      height: 128,
+      constraints: const BoxConstraints(minHeight: 128),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
