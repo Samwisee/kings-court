@@ -131,12 +131,12 @@ void main() {
   testWidgets('A new round asks for the King before dealing', (tester) async {
     setPhoneSize(tester);
     await dealGame(tester, 4);
-    expect(find.text('Who holds the K♠?'), findsOneWidget);
+    expect(find.text('Who holds the King card?'), findsOneWidget);
     expect(find.byType(TableCard), findsNothing);
 
     await tester.tap(find.byType(SeatToken).at(2));
     await tester.pumpAndSettle();
-    expect(find.text('Who holds the K♠?'), findsNothing);
+    expect(find.text('Who holds the King card?'), findsNothing);
     expect(find.byType(TableCard), findsWidgets);
   });
 
@@ -183,7 +183,7 @@ void main() {
     await tester.tap(find.text('Shuffle tasks'));
     await tester.pumpAndSettle();
     expect(find.text('Round 1'), findsOneWidget);
-    expect(find.text('Who holds the K♠?'), findsNothing);
+    expect(find.text('Who holds the King card?'), findsNothing);
     expect(find.byType(TableCard), findsWidgets);
   });
 
@@ -397,7 +397,7 @@ void main() {
     final state = tester.state(find.byType(HomePage)) as dynamic;
     expect(state.targetPoints, isNot(10));
     expect(find.text('Round 2'), findsOneWidget);
-    expect(find.text('Who holds the K♠?'), findsOneWidget);
+    expect(find.text('Who holds the King card?'), findsOneWidget);
   });
 
   testWidgets('Undo last mark reopens a round ended by mistake',
@@ -551,7 +551,7 @@ void main() {
     expect(game.kingIndex, 0);
     expect(game.spoke[1], isTrue);
     expect(find.byType(TableCard), findsWidgets);
-    expect(find.text('Who holds the K♠?'), findsNothing);
+    expect(find.text('Who holds the King card?'), findsNothing);
   });
 
   test('Campaign streaks rise with wins and reset on a loss', () {
@@ -692,36 +692,46 @@ void main() {
         for (final e in [...t.won.effects, ...t.lost.effects])
           if (e is Flag) e.name,
     };
+    bool given(String f) =>
+        f.startsWith('seen:') || f == 'crowned' || f == 'golden_age';
     for (final d in dilemmas) {
       for (final f in d.requires) {
-        expect(earned, contains(f), reason: d.title);
+        if (!given(f)) expect(earned, contains(f), reason: d.title);
       }
     }
     for (final t in tidings) {
       for (final f in t.requires) {
-        expect(earned, contains(f), reason: t.title);
+        if (!given(f)) expect(earned, contains(f), reason: t.title);
+      }
+    }
+    // Every follow-up the story names exists.
+    for (final t in tidings) {
+      for (final f in [t.followWon, t.followLost]) {
+        if (f != null) {
+          expect(dilemmas.any((d) => d.title == f), isTrue, reason: f);
+        }
       }
     }
   });
 
   test('A story picks up where the King left it', () {
     final g = dynasty(6)..setKing(0);
-    g.flags.add('karsk_paid');
-    var tribute = 0;
-    g.flags.add('seen:An Envoy from Karsk');
+    g.flags.add('mira_helped');
+    g.flags.add('seen:Mira of Ashford');
+    var grain = 0;
     for (int i = 0; i < 40; i++) {
-      g.flags.remove('seen:Tribute Doubled');
-      g.mainBeatRound = -99; // the main story is due
+      g.flags.remove('seen:Grain from Ashford');
       final d = dilemmas[g.pickDilemma(Random(i))];
-      if (d.title == 'Tribute Doubled') tribute++;
+      if (d.title == 'Grain from Ashford') grain++;
     }
-    expect(tribute, greaterThan(20));
+    expect(grain, greaterThan(20));
     // Once faced, a story matter never comes back.
-    g.flags.add('seen:Tribute Doubled');
+    g.flags.add('seen:Grain from Ashford');
     for (int i = 0; i < 40; i++) {
-      expect(dilemmas[g.pickDilemma(Random(i))].title, isNot('Tribute Doubled'));
+      expect(dilemmas[g.pickDilemma(Random(i))].title, isNot('Grain from Ashford'));
     }
     // Choices are remembered, and saved.
+    g.flags.add('karsk_paid');
     g.applyChoice(dilemmas.firstWhere((d) => d.title == 'Tribute Doubled').b);
     expect(g.flags, contains('karsk_defied'));
     expect(g.flags, isNot(contains('karsk_paid')));
@@ -730,41 +740,62 @@ void main() {
     expect(copy.flags, contains('karsk_defied'));
   });
 
-  test('In solo Dynasty the court grows and shrinks with the story', () {
+  test('In solo Dynasty each scene seats its own cast from the court', () {
     final g = dynasty(4)
       ..cards = MatchState(players: 4, target: 8)
       ..setKing(0);
     expect(g.solo, isTrue);
-    final role = g.courtiers[2];
+    final mine = g.courtiers.first;
+    g.nextDynastyRound(4, 8);
+    expect(g.court, hasLength(3));
+    final role = g.court.first;
     g.applyChoice(Choice('x', 'y', [Depart(role)]));
     g.nextDynastyRound(4, 8);
-    expect(g.players, hasLength(3));
-    expect(g.courtiers, isNot(contains(role)));
-    expect(g.cards!.players, 3);
-    expect(g.courtNews.single.arrived, isFalse);
-    // The story calls them back.
+    expect(g.court, isNot(contains(role)));
+    expect(g.courtNews.first.arrived, isFalse);
     g.applyChoice(Choice('x', 'y', [Arrive(role)]));
-    g.nextDynastyRound(3, 8);
-    expect(g.players, hasLength(4));
-    expect(g.courtiers.last, role);
-    expect(g.loyalty.last, GameState.startingLoyalty);
-    expect(g.courtNews.single.arrived, isTrue);
-    // Whatever happens, the court stays between three and six, you stay
-    // King, and every list keeps up.
+    g.nextDynastyRound(4, 8);
+    expect(g.court, contains(role));
     final rand = Random(5);
-    for (int i = 0; i < 60; i++) {
+    final sizes = <int>{};
+    for (int i = 0; i < 80; i++) {
       if (rand.nextBool()) {
         final c = Courtier.values[rand.nextInt(6)];
         g.applyChoice(Choice('x', 'y', [rand.nextBool() ? Depart(c) : Arrive(c)]));
       }
       g.nextDynastyRound(g.players.length, 8);
       final n = g.players.length;
-      expect(n, inInclusiveRange(GameState.minCourt, GameState.maxCourt));
+      sizes.add(n);
+      expect(g.court.length, inInclusiveRange(GameState.minCourt, GameState.maxCourt));
+      expect(n, inInclusiveRange(2, g.court.length + 1));
       expect([g.courtiers.length, g.loyalty.length, g.powerUsed.length,
-          g.spoke.length, g.traitorRounds.length, g.cards!.players], everyElement(n));
+          g.spoke.length, g.schemeOf.length, g.cards!.players], everyElement(n));
       expect(g.courtiers.toSet(), hasLength(n));
+      expect(g.courtiers.first, mine);
+      expect(g.court, isNot(contains(mine)));
+      expect(g.courtiers.skip(1).every(g.court.contains), isTrue);
       expect(g.kingIndex, 0);
+      expect(g.tasks, isNotEmpty);
     }
+    // Scenes call for different numbers at the table.
+    expect(sizes.length, greaterThan(1));
+  });
+
+  test('The main story runs from the harvest towards war', () {
+    final g = dynasty(4)
+      ..cards = MatchState(players: 4, target: 8)
+      ..setKing(0);
+    final seen = <String>[];
+    for (int i = 0; i < 12; i++) {
+      g.nextDynastyRound(g.players.length, 8);
+      final t = g.currentTiding;
+      if (t?.arc == GameState.mainArc) seen.add(t!.title);
+      // Pick the first choice whenever the story asks.
+      g.resolveTiding(true);
+      g.applyChoice(dilemmas[g.pickDilemmaAfter(true)].a);
+    }
+    expect(seen.take(3), ['The Harvest Count', 'Roads to Market', 'Riders from Karsk']);
+    expect(seen, contains('The Tribute Wagons'));
   });
 
   test('Every seat gets a different courtier shape', () {
@@ -1138,8 +1169,11 @@ void main() {
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       await setOnScreen(tester, true);
-      await tester.tap(find.text('3').last);
-      await tester.pumpAndSettle();
+      // Solo Dynasty: the story decides who sits at the table.
+      if (mode != 'Dynasty') {
+        await tester.tap(find.text('3').last);
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Deal tasks'));

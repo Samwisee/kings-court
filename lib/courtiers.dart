@@ -96,8 +96,8 @@ String loyaltyWord(int loyalty) => switch (loyalty) {
 /// How a Dynasty can end.
 enum DynastyEnding {
   goldenAge(
-    'A Golden Age',
-    'One King has ruled long and well. Songs will be sung of this court for a hundred years.',
+    'The Realm Secured',
+    'The war with Karsk is over. Your houses prosper, your borders hold, and songs will be sung of this court for a hundred years.',
   ),
   fallen(
     'The Dynasty Falls',
@@ -130,7 +130,7 @@ class Annal {
 /// A scheme an antagonist works towards, openly, against the court. If it
 /// succeeds the King takes a wound, even if every task is done.
 const schemes = <String>[
-  'Win the trick that the K♠ is played in.',
+  'Win the trick that the King card is played in.',
   'The King must win no tricks at all.',
   'Win the last trick of the round.',
   'Win more tricks than the King.',
@@ -492,6 +492,7 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.general, 1), Flag('karsk_defied'), Arrive(Courtier.general), Say(Courtier.merchant, 'There goes the eastern trade. And perhaps the eastern villages.')]),
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
+    followUp: true,
   ),
   Dilemma(
     'Tribute Doubled',
@@ -502,7 +503,7 @@ const dilemmas = <Dilemma>[
         [AllLoyalty(1), Unflag('karsk_paid'), Flag('karsk_defied')]),
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
-    requires: ['karsk_paid'],
+    followUp: true,
   ),
   Dilemma(
     'Scouts on the River',
@@ -512,7 +513,7 @@ const dilemmas = <Dilemma>[
     Choice('Send the agents', 'Three of your best cross the river at night.',
         [Loyalty(Courtier.spymaster, 2), Flag('spies'), Say(Courtier.spymaster, 'Varric will not sneeze without my hearing it.')]),
     arc: 'karsk',
-    requires: ['karsk_defied'],
+    followUp: true,
   ),
   Dilemma(
     'Varric Sues for Peace',
@@ -523,7 +524,7 @@ const dilemmas = <Dilemma>[
         [Loyalty(Courtier.general, 2), Points(2), Charge(Courtier.general), Flag('karsk_war'), Say(Courtier.bishop, 'Pride is a poor general.')]),
     arc: 'karsk',
     speaker: 'Prince Edric of Karsk',
-    requires: ['ashford_held'],
+    followUp: true,
   ),
   Dilemma(
     'The Ashes of Ashford',
@@ -533,7 +534,7 @@ const dilemmas = <Dilemma>[
     Choice('Close the gates', 'The city is safe. The cries outside go on for days.',
         [AllLoyalty(-1), Loyalty(Courtier.spymaster, 1)]),
     arc: 'karsk',
-    requires: ['ashford_burned'],
+    followUp: true,
   ),
   Dilemma(
     'The Price of Peace',
@@ -541,11 +542,11 @@ const dilemmas = <Dilemma>[
     Choice('Agree', 'A wedding to end a war. Nobody dances.',
         [Flag('karsk_peace'), Unflag('karsk_defied'), Loyalty(Courtier.duke, -1)]),
     Choice('Take Ashford back by force', 'The General is ready. The court is not.',
-        [Charge(Courtier.general), Wound(1), Flag('ashford_retaken')]),
+        [Charge(Courtier.general), Wound(1), Flag('karsk_war')]),
     arc: 'karsk',
     speaker: 'Lord Hask, envoy of King Varric',
     requires: ['ashford_burned'],
-    forbids: ['karsk_peace'],
+    forbids: ['karsk_peace', 'karsk_war'],
   ),
 
   Dilemma(
@@ -563,11 +564,33 @@ const dilemmas = <Dilemma>[
     'A Feast for Two Kingdoms',
     'Peace with Karsk holds. The court wants a great feast to seal it, with King Varric himself at your table.',
     Choice('Invite Varric', 'Two kings drink from one cup. Nobody is poisoned.',
-        [AllLoyalty(1), Wound(-1), Say(Courtier.spymaster, 'I counted his guards. Twice.')]),
-    Choice('Feast without him', 'The court celebrates. Karsk hears of it.',
-        [Loyalty(Courtier.general, 1), Points(1)]),
+        [AllLoyalty(1), Wound(-1), Flag('karsk_peace_sealed'), Say(Courtier.spymaster, 'I counted his guards. Twice.')]),
+    Choice('Feast without him', 'The court celebrates. Karsk hears of it, and sulks.',
+        [Loyalty(Courtier.general, 1), Flag('karsk_peace_sealed')]),
     arc: 'karsk',
-    requires: ['karsk_peace'],
+    followUp: true,
+  ),
+  Dilemma(
+    'Surplus Grain',
+    'The Merchant has a buyer for the spare grain: King Varric of Karsk, across the river, who pays in gold and asks no questions.',
+    Choice('Sell to Karsk', 'Karsk wagons roll west, heavy with your bread.',
+        [Points(-1), Loyalty(Courtier.merchant, 2), Say(Courtier.general, 'Feeding the wolf, Majesty?')]),
+    Choice('Keep it for winter', 'The granaries stay full. The Merchant sulks.',
+        [AllLoyalty(1), Loyalty(Courtier.merchant, -1)]),
+    arc: 'karsk',
+    about: Courtier.merchant,
+    followUp: true,
+  ),
+  Dilemma(
+    'A Long War',
+    'Your army is stuck before Varric\u2019s walls, and winter is coming. The General wants one more assault; the court wants to go home.',
+    Choice('One more assault', 'The army digs in for another try.',
+        [Loyalty(Courtier.general, 1), Unflag('seen:The Crown of Karsk')]),
+    Choice('Make peace', 'Varric accepts, and smiles too widely.',
+        [Unflag('karsk_war'), Flag('karsk_peace'), AllLoyalty(1)]),
+    arc: 'karsk',
+    followUp: true,
+    council: true,
   ),
 
   // Lady Elara, the Duke's daughter.

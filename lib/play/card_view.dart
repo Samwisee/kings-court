@@ -8,8 +8,8 @@ import '../widgets.dart';
 
 /// A playing card drawn on screen. Plain suits show their pip. Each Court
 /// Card has a face of its own, all framed in gold: the Joker's jester cap
-/// on harlequin purple, the J♠'s sword and shield on emerald, the Q♠'s
-/// tiara on sapphire, and the K♠'s radiant crown on crimson velvet.
+/// on harlequin purple, the Jack's sword and shield on emerald, the Queen's
+/// tiara on sapphire, and the King card's radiant crown on crimson velvet.
 class PlayingCardView extends StatelessWidget {
   const PlayingCardView({
     super.key,
@@ -38,7 +38,7 @@ class PlayingCardView extends StatelessWidget {
 
   static double heightFor(double width) => width * 1.42;
 
-  /// Each Court Card's cloth: Joker, J♠, Q♠, K♠.
+  /// Each Court Card's cloth: Joker, Jack, Queen, King.
   static const _cloth = [
     [Color(0xFF5A2F87), Color(0xFF241238)],
     [Color(0xFF13734A), Color(0xFF062A1B)],

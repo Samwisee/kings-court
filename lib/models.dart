@@ -115,7 +115,7 @@ class GameState {
   List<Player> players = [];
   List<Task> tasks = [];
 
-  /// Index of the player holding the K♠, or null if not chosen yet.
+  /// Index of the player holding the King card, or null if not chosen yet.
   int? kingIndex;
 
   int roundNumber = 0;
@@ -245,6 +245,93 @@ class GameState {
   /// The round the main story (Karsk) last moved on.
   int mainBeatRound = -99;
 
+  /// Solo Dynasty: everyone at court (not you), whether or not they sit at
+  /// the table this round. Each scene seats only the people it needs.
+  List<Courtier> court = [];
+
+  /// Solo Dynasty: what each courtier at court thinks of you, their
+  /// scheme, how long they've schemed, and their colour, by courtier name.
+  Map<String, int> standing = {};
+  Map<String, int> schemeBy = {};
+  Map<String, int> traitorFor = {};
+  Map<String, int> courtColor = {};
+
+  /// The round whose scene has already been chosen (and its cast seated).
+  int scenePicked = -1;
+
+  /// Your own house, in solo Dynasty: the courtier in your seat.
+  Courtier? get kingRole =>
+      courtiers.isEmpty ? null : courtiers[kingIndex ?? 0];
+
+  /// The colour of [c], seated or not.
+  Color colorOf(Courtier c) {
+    final seat = courtiers.indexOf(c);
+    if (seat >= 0 && seat != kingIndex) return players[seat].color;
+    return Color(courtColor[c.name] ?? Palette.players[1].toARGB32());
+  }
+
+  /// What [c] thinks of you, seated or not.
+  int loyaltyOf(Courtier c) {
+    final seat = courtiers.indexOf(c);
+    if (seat >= 0 && seat < loyalty.length) return loyalty[seat];
+    return standing[c.name] ?? startingLoyalty;
+  }
+
+  /// Everyone at court besides the King: the roster in solo Dynasty, the
+  /// seats otherwise.
+  List<Courtier> get courtRoles => solo
+      ? court
+      : [
+          for (int i = 0; i < courtiers.length; i++)
+            if (i != kingIndex) courtiers[i]
+        ];
+
+  /// Starts the solo court from whoever sits at the table.
+  void _ensureCourt() {
+    if (!solo || court.isNotEmpty) return;
+    final king = kingIndex ?? 0;
+    for (int s = 0; s < courtiers.length; s++) {
+      if (s == king) continue;
+      court.add(courtiers[s]);
+      standing[courtiers[s].name] = loyalty[s];
+      courtColor[courtiers[s].name] = players[s].color.toARGB32();
+    }
+  }
+
+  /// Writes what the seated courtiers think back to the court.
+  void _syncStanding() {
+    if (!solo) return;
+    for (int s = 0; s < courtiers.length && s < loyalty.length; s++) {
+      if (s == kingIndex) continue;
+      final c = courtiers[s];
+      standing[c.name] = loyalty[s];
+      final scheme = s < schemeOf.length ? schemeOf[s] : null;
+      if (scheme == null) {
+        schemeBy.remove(c.name);
+      } else {
+        schemeBy[c.name] = scheme;
+      }
+    }
+  }
+
+  /// Changes [c]'s loyalty, whether or not they're at the table.
+  void _changeLoyaltyOf(Courtier c, int delta) {
+    final seat = courtiers.indexOf(c);
+    if (seat >= 0) {
+      _changeLoyalty(seat, delta);
+    } else if (solo && court.contains(c)) {
+      final v = ((standing[c.name] ?? startingLoyalty) + delta)
+          .clamp(0, maxLoyalty)
+          .toInt();
+      standing[c.name] = v;
+      if (v <= 0) {
+        schemeBy[c.name] ??= Random().nextInt(schemes.length);
+      } else {
+        schemeBy.remove(c.name);
+      }
+    }
+  }
+
   /// This round's tidings (index into [tidings]), and whether its
   /// outcome has been carried out yet.
   int? tiding;
@@ -302,14 +389,18 @@ class GameState {
   /// How the story ends, once it does.
   DynastyEnding? get ending {
     if (!isDynasty) return null;
-    if (reignWins >= goldenAgeWins) return DynastyEnding.goldenAge;
-    // The war with Karsk is over, and the realm has prospered since.
-    if ((flags.contains('karsk_peace') || flags.contains('karsk_conquered')) &&
-        reignWins >= 3) {
+    // The story's end: Karsk conquered, or a peace sealed.
+    if (flags.contains('karsk_conquered') ||
+        flags.contains('karsk_peace_sealed')) {
       return DynastyEnding.goldenAge;
     }
     if (fallenKings >= maxFallenKings) return DynastyEnding.fallen;
-    if (players.length >= 3 && antagonists.length > loyalCount) {
+    if (solo) {
+      final traitors = court.where((c) => loyaltyOf(c) <= 0).length;
+      if (court.length >= 2 && traitors > court.length - traitors) {
+        return DynastyEnding.usurped;
+      }
+    } else if (players.length >= 3 && antagonists.length > loyalCount) {
       return DynastyEnding.usurped;
     }
     return null;
@@ -332,15 +423,14 @@ class GameState {
   /// Who sits in [seat]: their courtier title ("The Duke").
   String personAt(int seat) => courtiers[seat].title;
 
-  /// The smallest and largest court on screen (you included).
-  static const minCourt = 3, maxCourt = 6;
+  /// The smallest and largest court in solo Dynasty (not counting you).
+  static const minCourt = 1, maxCourt = 5;
 
   /// Solo Dynasty, between rounds: the court changes with the story.
   /// Traitors who scheme too long flee, courtiers a choice sent away
   /// leave, courtiers the story calls for arrive, and now and then
-  /// someone simply moves on or turns up. The court grows and shrinks
-  /// (between three and six at the table); a seat left empty when the
-  /// court can't shrink is filled by someone new.
+  /// someone simply moves on or turns up. When the last courtier leaves,
+  /// someone new comes.
   void courtChanges([Random? random]) {
     courtNews = [];
     if (!solo) {
@@ -349,144 +439,159 @@ class GameState {
       return;
     }
     final rand = random ?? Random();
-    final king = kingIndex;
-    // Seats come and go, so every per-seat list must be able to grow.
-    players = List.of(players);
-    courtiers = List.of(courtiers);
-    loyalty = List.of(loyalty);
-    schemeOf = List.of(schemeOf);
-    schemeResult = List.of(schemeResult);
-    powerUsed = List.of(powerUsed);
-    spoke = List.of(spoke);
-    traitorRounds = List.of(traitorRounds);
-    people = List.of(people);
-    // Seat -> why they go, how, and whether the story sent them.
-    final leaving = <int, (String, Exit, bool)>{};
-    for (int s = 0; s < players.length; s++) {
-      if (s == king) continue;
-      if (isAntagonist(s)) {
-        traitorRounds[s]++;
-        if (traitorRounds[s] >= 2) {
-          leaving[s] = ('${courtiers[s].title} flees the court before the guards arrive.', Exit.dash, true);
+    _ensureCourt();
+    _syncStanding();
+    final leaving = <Courtier, (String, Exit, bool)>{};
+    for (final c in court) {
+      if (loyaltyOf(c) <= 0) {
+        traitorFor[c.name] = (traitorFor[c.name] ?? 0) + 1;
+        if (traitorFor[c.name]! >= 2) {
+          leaving[c] = ('${c.title} flees the court before the guards arrive.', Exit.dash, true);
         }
       } else {
-        traitorRounds[s] = 0;
+        traitorFor.remove(c.name);
       }
     }
     for (final c in pendingDepartures) {
-      final s = courtiers.indexOf(c);
-      if (s >= 0 && s != king) {
-        leaving[s] = ('${c.title} leaves the court in disgrace.', Exit.banished, true);
+      if (court.contains(c)) {
+        leaving[c] = ('${c.title} leaves the court in disgrace.', Exit.banished, true);
       }
     }
     pendingDepartures.clear();
     final coming = [
       for (final c in pendingArrivals)
-        if (!courtiers.contains(c)) c
+        if (!court.contains(c) && c != kingRole) c
     ];
     pendingArrivals.clear();
     List<Courtier> free() => [
           for (final c in Courtier.values)
-            if (!courtiers.contains(c) && !coming.contains(c)) c
+            if (!court.contains(c) && !coming.contains(c) && c != kingRole) c
         ];
     // The ordinary comings and goings of a court.
-    if (leaving.isEmpty && coming.isEmpty && roundNumber >= 3 && rand.nextDouble() < 0.35) {
-      final grow = players.length <= minCourt
-          ? true
-          : players.length >= maxCourt
-              ? false
-              : rand.nextBool();
+    if (leaving.isEmpty && coming.isEmpty && roundNumber >= 3 && rand.nextDouble() < 0.3) {
       final options = free();
+      final grow = court.length <= 2 || (court.length < maxCourt && rand.nextBool());
       if (grow && options.isNotEmpty) {
         coming.add(options[rand.nextInt(options.length)]);
-      } else {
-        final seats = [
-          for (int s = 0; s < players.length; s++)
-            if (s != king) s
-        ];
-        if (seats.isNotEmpty) {
-          final s = seats[rand.nextInt(seats.length)];
-          final why = departures[courtiers[s]]!;
-          final (text, exit) = why[rand.nextInt(why.length)];
-          leaving[s] = (text, exit, false);
-        }
+      } else if (court.isNotEmpty) {
+        final c = court[rand.nextInt(court.length)];
+        final why = departures[c]!;
+        final (text, exit) = why[rand.nextInt(why.length)];
+        leaving[c] = (text, exit, false);
       }
     }
-    // Those who leave: the seat goes too, unless the court would be too
-    // small, when someone new takes it.
-    final removed = <int>[];
     for (final e in leaving.entries) {
-      final s = e.key;
-      final (text, exit, story) = e.value;
-      courtNews.add(CourtNews(courtiers[s], players[s].color.toARGB32(), text, exit: exit));
-      final remaining = players.length - removed.length - 1 + coming.length;
-      if (remaining >= minCourt && (story || rand.nextBool())) {
-        removed.add(s);
-      } else {
-        final options = free();
-        final role = options.isNotEmpty && rand.nextDouble() < 0.7
-            ? options[rand.nextInt(options.length)]
-            : courtiers[s];
-        final again = role == courtiers[s];
-        _seatCourtier(s, role);
-        courtNews.add(CourtNews(role, players[s].color.toARGB32(),
-            again ? arrivals[role]!.replaceFirst('The ${role.short}', 'A new ${role.short}') : arrivals[role]!));
-      }
+      final c = e.key;
+      final (text, exit, _) = e.value;
+      courtNews.add(CourtNews(c, colorOf(c).toARGB32(), text, exit: exit));
+      court.remove(c);
+      standing.remove(c.name);
+      schemeBy.remove(c.name);
+      traitorFor.remove(c.name);
     }
-    removed.sort();
-    for (final s in removed.reversed) {
-      _removeSeat(s);
+    // Nobody left at all: someone new arrives.
+    if (court.isEmpty && coming.isEmpty) {
+      final options = free();
+      if (options.isNotEmpty) coming.add(options[rand.nextInt(options.length)]);
     }
-    for (final role in coming) {
-      if (players.length >= maxCourt || courtiers.contains(role)) continue;
-      final used = players.map((p) => p.color.toARGB32()).toSet();
-      final color = Palette.players.firstWhere((c) => !used.contains(c.toARGB32()),
-          orElse: () => Palette.players.last);
-      players.add(Player(role.title, color: color));
-      courtiers.add(role);
-      loyalty.add(startingLoyalty);
-      schemeOf.add(null);
-      schemeResult.add(null);
-      powerUsed.add(false);
-      spoke.add(false);
-      traitorRounds.add(0);
-      people.add(role.title);
-      courtNews.add(CourtNews(role, color.toARGB32(), arrivals[role]!));
-    }
-    final c = cards;
-    if (c != null && c.players != players.length) {
-      cards = MatchState(players: players.length, target: c.target)
-        ..round = c.round
-        ..wins = c.wins
-        ..losses = c.losses
-        ..streak = c.streak;
+    for (final c in coming) {
+      _join(c, arrivals[c]!);
     }
   }
 
-  /// Puts a fresh [role] in [seat].
-  void _seatCourtier(int s, Courtier role) {
-    courtiers[s] = role;
-    people[s] = role.title;
-    players[s].name = role.title;
-    loyalty[s] = startingLoyalty;
-    schemeOf[s] = null;
-    schemeResult[s] = null;
-    powerUsed[s] = false;
-    traitorRounds[s] = 0;
+  /// [c] joins the court, with [news] to tell of it.
+  void _join(Courtier c, String news) {
+    if (court.contains(c) || c == kingRole || court.length >= maxCourt) return;
+    court.add(c);
+    standing[c.name] = startingLoyalty;
+    schemeBy.remove(c.name);
+    traitorFor.remove(c.name);
+    final used = {
+      players.isEmpty ? 0 : players.first.color.toARGB32(),
+      for (final o in court)
+        if (o != c && courtColor[o.name] != null) courtColor[o.name]!,
+    };
+    courtColor[c.name] = Palette.players
+        .firstWhere((p) => !used.contains(p.toARGB32()),
+            orElse: () => Palette.players.last)
+        .toARGB32();
+    courtNews.add(CourtNews(c, courtColor[c.name]!, news));
   }
 
-  /// Takes [s]'s seat away from the table altogether.
-  void _removeSeat(int s) {
-    for (final list in <List>[
-      players, courtiers, loyalty, schemeOf, schemeResult, powerUsed, spoke,
-      traitorRounds, people,
-    ]) {
-      if (s < list.length) list.removeAt(s);
+  /// Who a scene puts at your table: whoever it names (summoned to court
+  /// if they're away), the house it charges, or for everyday business a
+  /// few of the court. A coronation seats everyone.
+  List<Courtier> _castFor(Tiding? t, Random rand) {
+    _ensureCourt();
+    if (t == null || t.arc == 'crown') return List.of(court);
+    final cast = <Courtier>[
+      if (t.house != null) t.house!,
+      for (final c in t.cast)
+        if (c != t.house) c,
+    ]..remove(kingRole);
+    for (final c in cast) {
+      if (!court.contains(c)) _join(c, '${c.title} is summoned to court.');
     }
-    if (kingIndex != null && kingIndex! > s) kingIndex = kingIndex! - 1;
-    roundLoyalty = [];
-    _loyaltyBeforeRound = [];
+    cast.removeWhere((c) => !court.contains(c));
+    if (cast.isEmpty) {
+      final pool = List.of(court)..shuffle(rand);
+      cast.addAll(pool.take(1 + rand.nextInt(min(3, max(1, pool.length)))));
+    }
+    return cast;
   }
+
+  /// Seats you and [cast] at the table for this round.
+  void _seatCast(List<Courtier> cast) {
+    _syncStanding();
+    final you = players.first;
+    final mine = courtiers.first;
+    final kingLoyalty = loyalty.isEmpty ? startingLoyalty : loyalty.first;
+    players = [
+      you,
+      for (final c in cast) Player(c.title, color: colorOf(c)),
+    ];
+    courtiers = [mine, ...cast];
+    loyalty = [kingLoyalty, for (final c in cast) loyaltyOf(c)];
+    schemeOf = [null, for (final c in cast) schemeBy[c.name]];
+    final n = players.length;
+    schemeResult = List.filled(n, null, growable: true);
+    powerUsed = List.filled(n, false, growable: true);
+    spoke = List.filled(n, false, growable: true);
+    traitorRounds = List.filled(n, 0, growable: true);
+    people = [for (final c in courtiers) c.title];
+    final m = cards;
+    if (m != null && m.players != n) {
+      cards = MatchState(players: n, target: m.target)
+        ..round = m.round
+        ..wins = m.wins
+        ..losses = m.losses
+        ..streak = m.streak;
+    }
+  }
+
+  /// The next round of solo Dynasty: the court changes, a scene is set,
+  /// and the people it needs sit down at your table.
+  void _nextSoloRound(int targetPoints) {
+    final king = kingIndex;
+    final rand = Random();
+    courtChanges(rand);
+    roundNumber++;
+    tiding = null;
+    chargeSeat = null;
+    chargeTask = null;
+    if (king != null) _pickTiding(rand);
+    _seatCast(_castFor(king == null ? null : currentTiding, rand));
+    addTasksUntilTarget(players.length, targetPoints, countRound: false);
+    kingIndex = king;
+    scenePicked = roundNumber;
+    if (king != null) {
+      _openRoundRest();
+      _chooseExile();
+      _assignCharge();
+      pickTurn = _nextPicker(king - 1);
+    }
+  }
+
 
   bool get isDynasty => mode == GameMode.dynasty;
 
@@ -528,7 +633,11 @@ class GameState {
     }
   }
 
-  bool _fits(Dilemma d) => [...d.a.effects, ...d.b.effects]
+  bool _fits(Dilemma d) => solo
+      ? [...d.a.effects, ...d.b.effects]
+          .whereType<Loyalty>()
+          .every((e) => court.contains(e.courtier))
+      : [...d.a.effects, ...d.b.effects]
       .whereType<Loyalty>()
       .every((e) => courtiers.contains(e.courtier));
 
@@ -539,7 +648,10 @@ class GameState {
     final follow = t == null ? null : (won ? t.followWon : t.followLost);
     if (follow != null) {
       final i = dilemmas.indexWhere((d) => d.title == follow);
-      if (i >= 0 && _fits(dilemmas[i])) return _face(i);
+      // The main story always goes on, whoever is at court.
+      if (i >= 0 && (dilemmas[i].arc == mainArc || _fits(dilemmas[i]))) {
+        return _face(i);
+      }
     }
     return pickDilemma(random);
   }
@@ -577,15 +689,26 @@ class GameState {
   /// Opens a Dynasty round: draws its tidings (which may bring a decree)
   /// and settles who carries the royal charge.
   void _openRound([Random? random]) {
-    final rand = random ?? Random();
-    chargeSeat = null;
-    chargeTask = null;
-    chargeByKing = false;
-    tidingResolved = false;
+    // Solo Dynasty chooses its scene before anyone sits down.
+    if (!(solo && scenePicked == roundNumber && tiding != null)) {
+      _pickTiding(random ?? Random());
+    }
+    _openRoundRest();
+  }
+
+  /// Chooses the round's tidings: the coronation, the next part of the
+  /// main story, a story under way, or the everyday news of the realm.
+  void _pickTiding(Random rand) {
     bool fits(Tiding t) =>
         t.arc != 'crown' &&
-        (t.house == null || _canBeCharged(courtiers.indexOf(t.house!))) &&
-        storyReady(t.title, t.arc, t.requires, t.forbids);
+        storyReady(t.title, t.arc, t.requires, t.forbids) &&
+        (solo
+            // A house the scene needs is summoned, unless it's yours, or
+            // it has turned against you. Side news needs them at court.
+            ? t.house == null ||
+                (t.house != kingRole &&
+                    (court.contains(t.house) ? loyaltyOf(t.house!) > 0 : t.arc == mainArc))
+            : t.house == null || _canBeCharged(courtiers.indexOf(t.house!)));
     // A story that has moved on comes back to the court first, most of
     // the time.
     final beats = [
@@ -603,7 +726,10 @@ class GameState {
           if (fits(tidings[i])) i
       ];
     }
-    final mainDue = roundNumber - mainBeatRound >= 2;
+    // Solo, the main story moves on most rounds; otherwise every other.
+    final mainDue = solo
+        ? !(roundNumber >= 3 && rand.nextDouble() < 0.3)
+        : roundNumber - mainBeatRound >= 2;
     final mainBeats = beats.where((i) => tidings[i].arc == mainArc);
     final sideBeats = beats.where((i) => tidings[i].arc != mainArc);
     final coronation = tidings.indexWhere((t) => t.arc == 'crown');
@@ -622,6 +748,14 @@ class GameState {
       facedTidings.add(tiding!);
       flags.add('seen:${tidings[tiding!].title}');
     }
+  }
+
+  /// The rest of opening a round: its decree and royal charge.
+  void _openRoundRest() {
+    chargeSeat = null;
+    chargeTask = null;
+    chargeByKing = false;
+    tidingResolved = false;
     final t = currentTiding;
     if (t?.decree != null) {
       decree = t!.decree;
@@ -752,12 +886,16 @@ class GameState {
           if (courtiers.contains(courtier)) pendingCharge = courtier;
           _trait('iron', 1);
         case Loyalty(:final courtier, :final delta):
-          final seat = courtiers.indexOf(courtier);
-          if (seat >= 0) _changeLoyalty(seat, delta);
+          _changeLoyaltyOf(courtier, delta);
           _trait(delta > 0 ? 'kind' : 'stern', delta.abs());
         case AllLoyalty(:final delta):
           for (int i = 0; i < players.length; i++) {
             _changeLoyalty(i, delta);
+          }
+          if (solo) {
+            for (final c in court) {
+              if (!courtiers.contains(c)) _changeLoyaltyOf(c, delta);
+            }
           }
           _trait(delta > 0 ? 'kind' : 'stern', 2 * delta.abs());
         case Wound(:final delta):
@@ -776,9 +914,11 @@ class GameState {
         case Say():
           break;
         case Depart(:final courtier):
-          if (courtiers.contains(courtier)) pendingDepartures.add(courtier);
+          if (courtRoles.contains(courtier)) pendingDepartures.add(courtier);
         case Arrive(:final courtier):
-          if (!courtiers.contains(courtier)) pendingArrivals.add(courtier);
+          if (!courtRoles.contains(courtier) && courtier != kingRole) {
+            pendingArrivals.add(courtier);
+          }
       }
     }
   }
@@ -786,6 +926,7 @@ class GameState {
   /// Crowns a new King for a new reign, with a secret toughness of 1 to 3.
   void _beginReign() {
     reign++;
+    flags.add('crowned');
     reignName = regnalNames[(reign - 1) % regnalNames.length];
     reignStartRound = roundNumber;
     reignWins = 0;
@@ -812,10 +953,12 @@ class GameState {
 
   /// The next round of a reign: the same King, new tasks.
   void nextDynastyRound(int playerCount, int targetPoints) {
+    if (solo) {
+      _nextSoloRound(targetPoints);
+      return;
+    }
     final king = kingIndex;
     courtChanges();
-    // The court may have grown or shrunk.
-    if (solo) playerCount = players.length;
     addTasksUntilTarget(playerCount, targetPoints);
     kingIndex = king;
     tiding = null;
@@ -873,13 +1016,13 @@ class GameState {
 
   static final List<Task> taskPool = _buildTaskPool();
 
-  /// The King holds the K♠, the highest card, so whenever they play it they
+  /// The King holds the King card, the highest card, so whenever they play it they
   /// win that trick and a Court Card with it. These can never be theirs.
   static const _impossibleForTheKing = [
     'Win no Court Cards',
     "Don't win any tricks",
     'Win the Joker and no other Court Card',
-    'Win the J♠ and no other Court Card',
+    'Win the Jack and no other Court Card',
   ];
 
   static List<Task> _buildTaskPool() {
@@ -917,7 +1060,11 @@ class GameState {
       wins++;
       streak++;
       bestStreak = max(bestStreak, streak);
-      if (isDynasty) reignWins++;
+      if (isDynasty) {
+        reignWins++;
+        // Five victories in one reign: a golden age, told in the story.
+        if (reignWins == goldenAgeWins) flags.add('golden_age');
+      }
     } else {
       losses++;
       streak = 0;
@@ -1130,11 +1277,11 @@ class GameState {
   /// A new round also settles its seals and decree: a Chronicle chapter
   /// fixes them; with [surprise] on they're rolled at random.
   void addTasksUntilTarget(int playerCount, int targetPoints,
-      {bool newRound = true}) {
+      {bool newRound = true, bool countRound = true}) {
     tasks.clear();
     kingIndex = null;
     exiledSeat = null;
-    roundNumber++;
+    if (countRound) roundNumber++;
     dealId++;
     _resultRecorded = false;
     _resetRoundCounters();
@@ -1276,6 +1423,12 @@ class GameState {
         'courtNews': [for (final n in courtNews) n.toJson()],
         'pendingArrivals': [for (final c in pendingArrivals) c.name],
         'reignName': reignName,
+        'court': [for (final c in court) c.name],
+        'standing': standing,
+        'schemeBy': schemeBy,
+        'traitorFor': traitorFor,
+        'courtColor': courtColor,
+        'scenePicked': scenePicked,
         'mainBeatRound': mainBeatRound,
         'streak': streak,
         'bestStreak': bestStreak,
@@ -1368,6 +1521,15 @@ class GameState {
             Courtier.values.byName(n as String)
         ]
         ..reignName = (j['reignName'] as String?) ?? ''
+        ..court = [
+          for (final n in (j['court'] as List?) ?? const [])
+            Courtier.values.byName(n as String)
+        ]
+        ..standing = Map<String, int>.from((j['standing'] as Map?) ?? const {})
+        ..schemeBy = Map<String, int>.from((j['schemeBy'] as Map?) ?? const {})
+        ..traitorFor = Map<String, int>.from((j['traitorFor'] as Map?) ?? const {})
+        ..courtColor = Map<String, int>.from((j['courtColor'] as Map?) ?? const {})
+        ..scenePicked = (j['scenePicked'] as int?) ?? -1
         ..mainBeatRound = (j['mainBeatRound'] as int?) ?? -99
         ..streak = j['streak'] as int
         ..bestStreak = j['bestStreak'] as int

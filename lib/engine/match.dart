@@ -195,7 +195,7 @@ class MatchState {
 
   /// Deals a round for a table game. [accept] can refuse a deal (say, one
   /// that makes a task impossible); [king] keeps a reigning King, who takes
-  /// the K♠ into their hand; [mayRule] says who may hold the K♠ otherwise.
+  /// the King card into their hand; [mayRule] says who may hold the King card otherwise.
   void dealFor(int dealId, Random rand,
       {int? king,
       bool Function(int seat)? mayRule,
@@ -216,7 +216,7 @@ class MatchState {
                 .where(mayRule)
                 .fold<int?>(null, (a, i) => a ?? i));
     if (want != null && want != holder) {
-      // The K♠ goes to the King; a card of theirs goes the other way.
+      // The King card goes to the King; a card of theirs goes the other way.
       final swap = hands[want][rand.nextInt(hands[want].length)];
       hands[want].remove(swap);
       hands[holder].remove(PlayingCard.king);

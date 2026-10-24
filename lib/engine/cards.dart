@@ -4,7 +4,7 @@ library;
 
 import 'dart:math';
 
-/// The four plain suits, plus the Court Cards (the trumps).
+/// The four plain suits, plus the Court Cards, which beat every suit.
 enum Suit {
   hearts('♥'),
   diamonds('♦'),
@@ -19,7 +19,7 @@ enum Suit {
 }
 
 /// One card. Plain cards run Ace (1) to 9. Court Cards rank 1 to 4:
-/// Joker, J♠, Q♠, K♠.
+/// Joker, Jack, Queen, King.
 class PlayingCard implements Comparable<PlayingCard> {
   const PlayingCard(this.suit, this.rank);
   final Suit suit;
@@ -32,9 +32,9 @@ class PlayingCard implements Comparable<PlayingCard> {
 
   bool get isCourt => suit == Suit.court;
 
-  /// "3♥", "A♦", "Joker", "K♠".
+  /// "3♥", "A♦", "Joker", "King".
   String get label {
-    if (isCourt) return const ['Joker', 'J♠', 'Q♠', 'K♠'][rank - 1];
+    if (isCourt) return const ['Joker', 'Jack', 'Queen', 'King'][rank - 1];
     return '${rank == 1 ? 'A' : rank}${suit.symbol}';
   }
 
@@ -49,16 +49,19 @@ class PlayingCard implements Comparable<PlayingCard> {
   static PlayingCard fromId(int id) =>
       id >= 36 ? PlayingCard(Suit.court, id - 35) : PlayingCard(Suit.values[id ~/ 9], id % 9 + 1);
 
-  /// Parses a label such as "3♥", "A♦", "J♠" or "Joker".
+  /// Parses a label such as "3♥", "A♦", "Jack" or "Joker".
   static PlayingCard? parse(String label) {
     switch (label) {
       case 'Joker':
         return joker;
       case 'J♠':
+      case 'Jack':
         return jack;
       case 'Q♠':
+      case 'Queen':
         return queen;
       case 'K♠':
+      case 'King':
         return king;
     }
     if (label.length != 2) return null;
@@ -106,7 +109,7 @@ List<PlayingCard> fullDeck() => [
     ];
 
 /// Deals every player the same number of cards. Any left over are set
-/// aside unseen (never the K♠, so there is always a King).
+/// aside unseen (never the King card, so there is always a King).
 ({List<List<PlayingCard>> hands, List<PlayingCard> setAside}) deal(
     int players, Random rand) {
   while (true) {

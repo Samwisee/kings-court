@@ -387,7 +387,7 @@ class _HomePageState extends State<HomePage>
   ContestState? _contest;
   final _contestKey = GlobalKey<ContestTableState>();
   /// What came of the King's choice: who (if anyone) and how they took it.
-  List<(int?, String, CharacterMood)> _verdict = const [];
+  List<(Courtier?, String, CharacterMood)> _verdict = const [];
   String _verdictStory = '';
 
   /// The last done/failed mark, so it can be undone from the round result.
@@ -618,7 +618,7 @@ class _HomePageState extends State<HomePage>
   // --------------------------------------------------------- on-screen cards
   //
   // With on-screen cards the table runs the round itself: it deals hands,
-  // the K♠ crowns the King, bots pick tasks and play for every seat but
+  // the King card crowns the King, bots pick tasks and play for every seat but
   // yours (seat 0), and each task marks itself as the tricks fall. Every
   // mode works the same way on top of this.
 
@@ -685,7 +685,7 @@ class _HomePageState extends State<HomePage>
       game.pickTurn == _you;
 
   /// Deals hands for a new round (or after a reload with an old deal), and
-  /// lets the K♠ choose the King.
+  /// lets the King card choose the King.
   void _syncCards() {
     if (!_digital || !_inGame) return;
     final c = _cards;
@@ -2838,7 +2838,11 @@ class _HomePageState extends State<HomePage>
               Text(
                 owner == null
                     ? 'Not taken yet. Drag the card onto a seat to give it to a player.'
-                    : '${owner.name} has this task.',
+                    : _digital && task.assignedPlayerIndex == _you
+                        ? 'Your task.'
+                        : game.hasRoles
+                            ? '${game.courtiers[task.assignedPlayerIndex!].title}\u2019s task.'
+                            : '${owner.name} has this task.',
                 style: const TextStyle(fontSize: 15, color: Palette.inkSoft),
               ),
               if (RegExp(r'court card', caseSensitive: false)
@@ -2854,7 +2858,7 @@ class _HomePageState extends State<HomePage>
                       ),
                       Expanded(
                         child: SuitText(
-                            'Court Cards are the four trumps: the Joker, J♠, Q♠ and K♠, from lowest to highest.',
+                            'Court Cards beat every other card. From lowest to highest: the Joker, Jack, Queen and King.',
                             style: TextStyle(
                                 fontSize: 15,
                                 height: 1.35,
@@ -2918,11 +2922,7 @@ class _HomePageState extends State<HomePage>
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   style: TextButton.styleFrom(foregroundColor: Palette.ink),
-                  child: Text(task.isCompleted
-                      ? 'Done! Close'
-                      : task.isFailed
-                          ? 'Failed. Close'
-                          : 'The cards will decide. Close'),
+                  child: const Text('Close'),
                 ),
               ]
             : [
@@ -3838,7 +3838,7 @@ class _HomePageState extends State<HomePage>
           const SizedBox(height: 18),
           Text(
               !game.isDynasty
-                  ? 'Who holds the K♠?'
+                  ? 'Who holds the King card?'
                   : game.fallenKings > 0
                       ? 'Who takes the crown?'
                       : 'Who will be King?',
@@ -3851,9 +3851,9 @@ class _HomePageState extends State<HomePage>
           const SizedBox(height: 6),
           Text(
             _digital
-                ? 'The cards are dealt. Whoever holds the K♠ will be crowned.'
+                ? 'The cards are dealt. Whoever holds the King card will be crowned.'
                 : game.isDynasty
-                ? 'Tap a seat to crown them. The King takes the K♠ into their hand before every deal, and rules until they fall.'
+                ? 'Tap a seat to crown them. The King takes the King card into their hand before every deal, and rules until they fall.'
                 : playerCount == 2
                 ? 'Tap their seat to crown the King and deal the tasks. If the Dummy has it, choose a King together.'
                 : 'Tap their seat to crown the King and deal the tasks.',
@@ -4070,15 +4070,6 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  /// Quiet hints at how the round moved each courtier's loyalty.
-  List<String> _loyaltyHints() => [
-        for (int i = 0; i < game.roundLoyalty.length; i++)
-          if (game.roundLoyalty[i] > 0)
-            '${game.courtiers[i].title}\u2019s candle burns brighter.'
-          else if (game.roundLoyalty[i] < 0)
-            '${game.courtiers[i].title}\u2019s faith is shaken.',
-      ];
-
   Widget _dynastyResult(bool won) {
     final fg = won ? Palette.ink : Colors.white;
     final settled = game.schemesSettled;
@@ -4094,55 +4085,16 @@ class _HomePageState extends State<HomePage>
                 fontWeight: FontWeight.w900,
                 fontSize: 30,
                 color: fg)),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
+        // What came of the round's news, and nothing more.
         Text(
-            won
-                ? 'Every task is done. The court rejoices.'
-                : 'A task failed. The King is wounded.',
+            game.currentTiding != null
+                ? (won ? game.currentTiding!.won.text : game.currentTiding!.lost.text)
+                : won
+                    ? 'Every task is done.'
+                    : 'A task failed.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: fg)),
-        if (game.currentTiding != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-                won
-                    ? game.currentTiding!.won.text
-                    : game.currentTiding!.lost.text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 16,
-                    height: 1.35,
-                    fontWeight: FontWeight.w700,
-                    color: fg)),
-          ),
-        for (final hint in _loyaltyHints())
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(hint,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 15, fontStyle: FontStyle.italic, color: fg)),
-          ),
-        if (won && game.ending == null) ...[
-          const SizedBox(height: 10),
-          // How close this reign is to a Golden Age.
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (int i = 0; i < GameState.goldenAgeWins; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: CrownIcon(
-                      size: 16,
-                      color: i < game.reignWins
-                          ? Palette.ink
-                          : const Color(0x33000000)),
-                ),
-            ],
-          ),
-          Text('Victories this reign. Five bring a Golden Age.',
-              style: TextStyle(fontSize: 13, color: fg)),
-        ],
+            style: TextStyle(fontSize: 17, height: 1.4, color: fg)),
         for (final seat in game.antagonists) ...[
           const SizedBox(height: 12),
           SuitText(
@@ -4150,6 +4102,8 @@ class _HomePageState extends State<HomePage>
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, height: 1.3, color: fg)),
           const SizedBox(height: 6),
+          // On screen the cards settle it.
+          if (!_digital)
           SegmentedButton<bool>(
             showSelectedIcon: false,
             emptySelectionAllowed: true,
@@ -4201,7 +4155,7 @@ class _HomePageState extends State<HomePage>
               : game.kingFallen
                   ? 'Attend the King'
                   : game.ending == DynastyEnding.goldenAge
-                      ? 'Enter the Golden Age'
+                      ? 'The realm is secured'
                       : game.ending != null
                           ? 'The traitors rise'
                           : 'The King must decide'),
@@ -4220,16 +4174,21 @@ class _HomePageState extends State<HomePage>
   Widget _dilemmaCard(bool won) {
     final d = dilemmas[_dilemma ?? 0];
     final deciding = _step == _DynastyStep.dilemma;
-    final bringer = d.about == null ? -1 : game.courtiers.indexOf(d.about!);
+    final bringer = d.about != null && game.courtRoles.contains(d.about)
+        ? d.about
+        : null;
     const body = TextStyle(fontSize: 17, height: 1.4, color: Palette.ink);
     return _parchmentCard(
       color: const Color(0xFFF6EBD2),
       border: Palette.goldDeep,
       children: [
         // Whoever brings the matter, or the crown.
-        if (bringer >= 0)
-          _character(bringer, 44,
-              mood: CharacterMood.speaking, key: ValueKey('bringer-${d.title}'))
+        if (bringer != null)
+          CharacterToken(
+              key: ValueKey('bringer-${d.title}'),
+              mood: CharacterMood.speaking,
+              size: 44,
+              child: _roleToken(bringer, game.colorOf(bringer), 44))
         else
           const CrownIcon(size: 30, color: Palette.goldDeep),
         const SizedBox(height: 6),
@@ -4263,17 +4222,19 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
         ] else ...[
-          for (final (i, (seat, text, mood)) in _verdict.indexed)
+          for (final (i, (role, text, mood)) in _verdict.indexed)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: seat == null
+              child: role == null
                   ? Text(text, textAlign: TextAlign.center, style: body)
                   : Row(children: [
                       // Each reaction plays in turn, down the list.
-                      _character(seat, 34,
+                      CharacterToken(
+                          key: ValueKey('verdict-$i-${role.name}'),
                           mood: mood,
+                          size: 34,
                           delay: Duration(milliseconds: 300 * i),
-                          key: ValueKey('verdict-$i-$seat')),
+                          child: _roleToken(role, game.colorOf(role), 34)),
                       const SizedBox(width: 12),
                       Expanded(child: Text(text, style: body)),
                     ]),
@@ -4442,7 +4403,7 @@ class _HomePageState extends State<HomePage>
         })
       else if (!_sidesShown) ...[
         const Text(
-            'The Trial of Hearts: deal out the whole deck (set any spare cards aside); the 2\u2663 leads. No trumps: the Court Cards are a suit of their own, and only the suit led can win. No \u2665 or Q\u2660 on the first trick, and \u2665 can\u2019t be led until one has fallen. Every \u2665 you win is a mark of shame, and the Q\u2660 is five. Count your marks, then show the sides.',
+            'The Trial of Hearts: deal out the whole deck (set any spare cards aside); the 2\u2663 leads. Here the Court Cards are just a suit of their own: only the suit led can win. No \u2665 or Q\u2660 on the first trick, and \u2665 can\u2019t be led until one has fallen. Every \u2665 you win is a mark of shame, and the Q\u2660 is five. Count your marks, then show the sides.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
         const SizedBox(height: 8),
@@ -4485,47 +4446,42 @@ class _HomePageState extends State<HomePage>
       {List<int> overruled = const [],
       bool heeded = false,
       List<String> lead = const []}) {
-    final loyaltyBefore = List.of(game.loyalty);
-    final antagonistsBefore = game.antagonists.toSet();
+    final roles = List.of(game.courtRoles);
+    final loyaltyBefore = {for (final c in roles) c: game.loyaltyOf(c)};
     final woundsBefore = game.kingWounds;
     final pointsBefore = game.pointsBonus;
     setState(() {
       game.applyChoice(choice);
       if (overruled.isNotEmpty) game.overruled(overruled);
       if (heeded) game.heededCouncil();
-      final lines = <(int?, String, CharacterMood)>[
+      final lines = <(Courtier?, String, CharacterMood)>[
         for (final l in lead) (null, l, CharacterMood.idle)
       ];
       void line(String text) => lines.add((null, text, CharacterMood.idle));
       // Courtiers speak their minds, then show how they took it.
       for (final e in choice.effects.whereType<Say>()) {
-        final seat = game.courtiers.indexOf(e.courtier);
-        if (seat >= 0) {
-          lines.add((seat, '“${e.line}”', CharacterMood.speaking));
+        if (game.courtRoles.contains(e.courtier)) {
+          lines.add((e.courtier, '“${e.line}”', CharacterMood.speaking));
         }
       }
-      for (int i = 0; i < game.players.length; i++) {
-        final delta = game.loyalty[i] - loyaltyBefore[i];
-        if (delta == 0) continue;
-        final who = _who(i);
-        if (game.isAntagonist(i) && !antagonistsBefore.contains(i)) {
-          lines.add((i, '$who turns against you!', CharacterMood.angry));
-        } else if (!game.isAntagonist(i) && antagonistsBefore.contains(i)) {
-          lines.add((i, '$who returns to your side.', CharacterMood.pleased));
+      for (final c in roles) {
+        final before = loyaltyBefore[c]!, after = game.loyaltyOf(c);
+        if (before == after) continue;
+        if (after <= 0 && before > 0) {
+          lines.add((c, '${c.title} turns against you!', CharacterMood.angry));
+        } else if (after > 0 && before <= 0) {
+          lines.add((c, '${c.title} returns to your side.', CharacterMood.pleased));
         } else {
-          lines.add(delta > 0
-              ? (i, '$who will remember this kindness.', CharacterMood.pleased)
-              : (i, '$who will remember this.', CharacterMood.angry));
+          lines.add(after > before
+              ? (c, '${c.title} will remember this kindness.', CharacterMood.pleased)
+              : (c, '${c.title} will remember this.', CharacterMood.angry));
         }
       }
       for (final c in game.pendingArrivals) {
-        line('${c.title} is summoned to court.');
+        lines.add((c, '${c.title} is summoned to court.', CharacterMood.speaking));
       }
       for (final c in game.pendingDepartures) {
-        final seat = game.courtiers.indexOf(c);
-        if (seat >= 0) {
-          lines.add((seat, '${_who(seat)} will leave the court.', CharacterMood.leaving));
-        }
+        lines.add((c, '${c.title} will leave the court.', CharacterMood.leaving));
       }
       final wounds = game.kingWounds - woundsBefore;
       if (wounds > 0) line('You take a wound.');
@@ -4537,10 +4493,9 @@ class _HomePageState extends State<HomePage>
         line('Next round brings a decree: ${game.pendingDecree!.title}');
       }
       if (game.pendingCharge != null) {
-        final seat = game.courtiers.indexOf(game.pendingCharge!);
         lines.add((
-          seat >= 0 ? seat : null,
-          'Next round, ${seat >= 0 ? _who(seat) : game.pendingCharge!.title} is charged with a royal task.',
+          game.pendingCharge!,
+          'Next round, ${game.pendingCharge!.title} is charged with a royal task.',
           CharacterMood.idle
         ));
       }
@@ -5146,14 +5101,14 @@ Future<void> showRulesDialog(BuildContext context) {
       'The deck',
       [
         'Use 40 cards: Ace to 9 in all four suits, with the Ace counting as 1. Remove the 10s and the face cards.',
-        'Add the four Court Cards: the Joker, J♠, Q♠ and K♠. Court Cards are trumps. From lowest to highest: Joker, J♠, Q♠, K♠.',
+        'Add the four Court Cards: the Joker, Jack, Queen and King. Court Cards beat every suit. From lowest to highest: Joker, Jack, Queen, King.',
         'Shuffle and deal out every card. With 3 or 6 players, some players get one extra card.',
       ]
     ),
     (
       'Choosing tasks',
       [
-        'Whoever holds the K♠ shows it and becomes the King. Tap their seat in the app and the tasks are dealt onto the table.',
+        'Whoever holds the King card shows it and becomes the King. Tap their seat in the app and the tasks are dealt onto the table.',
         'Look at your hand. Then, starting with the King and going clockwise, each player takes one task until all are taken. Drag a task onto your seat to take it. A glowing gold ring shows whose turn it is to pick.',
         'A task is yours alone: only the tricks you win count towards it.',
       ]
@@ -5215,7 +5170,7 @@ Future<void> showRulesDialog(BuildContext context) {
     (
       'Dynasty',
       [
-        'Choose the first King. Before every deal the King takes the K♠ into their hand, and keeps the crown round after round.',
+        'Choose the first King. Before every deal the King takes the King card into their hand, and keeps the crown round after round.',
         'Every lost round wounds the King (the drops by the crown). How many wounds they can bear is secret: one, two or three. When the King falls, crown an heir and the dynasty goes on.',
         'Every seat is a courtier of a great house, with a token shape and a power used once per round. Tap your seat to read your house and power.',
         'After each round the King faces a dilemma and chooses. Choices win or lose courtiers\' loyalty, heal or wound the King, and can bring decrees.',
@@ -5223,7 +5178,7 @@ Future<void> showRulesDialog(BuildContext context) {
         'The King earns a name from their choices: the Kind, the Stern, the Bold and more.',
         'Each round opens with tidings: news from the kingdom that may bring a decree and charge one house with a task. A royal charge (the gold ribbon) is dealt straight to that house and stays with them. Do it and they gain favour; fail and they lose it. Some dilemmas then follow from how the round went.',
         'Some matters divide the court: everyone takes a side in secret, then all play the Trial of Hearts, a round where every \u2665 won is a mark of shame and the Q\u2660 is five. The side with the fewest marks per courtier has its way (a tie goes to the King). If the King\u2019s side loses, the King bows to the court; those who lose to the King remember.',
-        'How it ends: if one King wins five rounds in their reign, the court enters a Golden Age and you win. If three Kings fall, the dynasty falls. If traitors ever outnumber the loyal, they seize the throne.',
+        'How it ends: the story runs from the harvest to war with Karsk. Conquer Karsk or seal a lasting peace, and the realm is secured. If three Kings fall, the dynasty falls. If traitors ever outnumber the loyal, they seize the throne. Five victories in one reign bring a golden age to the story, but not its end.',
         'A courtier whose loyalty falls to nothing openly turns against the King. Their token turns blood-red and they gain a scheme, shown at the top. They take no tasks and don\'t pick. If their scheme succeeds, the King is wounded. A later dilemma can win them back.',
       ]
     ),
@@ -5231,7 +5186,7 @@ Future<void> showRulesDialog(BuildContext context) {
       'Playing the cards on screen',
       [
         'Any way to play works without a deck: turn on On-screen cards when you set up. You take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
-        'The app deals, and whoever holds the K♠ is crowned. In a Dynasty the reigning King takes the K♠ into their hand each round.',
+        'The app deals, and whoever holds the King card is crowned. In a Dynasty the reigning King takes the King card into their hand each round.',
         'When it\'s your pick, drag a task onto your seat. Then tap a card in your hand to play it: cards you may play stand up.',
         'Tasks, seals and traitors\' schemes are judged by the cards as the tricks fall. Decrees apply as usual.',
         'With 3, 5 or 6 players a few cards are set aside unseen so everyone has the same number. Card reveals aren\'t used on screen, and powers are marked by hand.',
@@ -5242,7 +5197,7 @@ Future<void> showRulesDialog(BuildContext context) {
       [
         'Deal 13 cards to each player. The other 14 go to a third hand, the Dummy: 7 face down, with 7 face up on top.',
         'When a face-up Dummy card is played, flip the card underneath it.',
-        'The King plays the Dummy\'s cards as well as their own. If the K♠ is in the Dummy, choose a King together.',
+        'The King plays the Dummy\'s cards as well as their own. If the King card is in the Dummy, choose a King together.',
         'Only the two players take tasks. Tasks use the 3-player difficulty.',
       ]
     ),
@@ -5600,7 +5555,9 @@ class _SetupPanelState extends State<_SetupPanel> {
 
   void _start() {
     widget.onStart((
-      count: count,
+      // Solo Dynasty: the story decides who sits at the table; it opens
+      // with three courtiers at the coronation.
+      count: mode == GameMode.dynasty && digital ? 4 : count,
       target: mode == GameMode.dynasty ? dynastyStartingPoints : target,
       names: [
         for (int i = 0; i < count; i++)
@@ -5657,19 +5614,29 @@ class _SetupPanelState extends State<_SetupPanel> {
       key: const ValueKey('count'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('How many at the table?',
-            textAlign: TextAlign.center, style: _heading),
+        Text(
+            mode == GameMode.dynasty && digital
+                ? 'You will be King'
+                : 'How many at the table?',
+            textAlign: TextAlign.center,
+            style: _heading),
         const SizedBox(height: 18),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (int n = digital ? 3 : minPlayers; n <= maxPlayers; n++)
-              _CountChip(
-                  n: n, selected: count == n, onTap: () => setState(() => count = n)),
-          ],
-        ),
+        if (mode == GameMode.dynasty && digital)
+          const Text(
+              'The story decides who sits at your table: one courtier for a quiet matter, the whole court for a crisis.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white))
+        else
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (int n = digital ? 3 : minPlayers; n <= maxPlayers; n++)
+                _CountChip(
+                    n: n, selected: count == n, onTap: () => setState(() => count = n)),
+            ],
+          ),
         const SizedBox(height: 8),
         // With a real deck, or played on screen with bot courtiers.
         SwitchListTile(
@@ -5690,7 +5657,9 @@ class _SetupPanelState extends State<_SetupPanel> {
         SizedBox(
           height: 66,
           child: Text(
-            digital
+            digital && mode == GameMode.dynasty
+                ? ''
+                : digital
                 ? 'You take the bottom seat. Bots play the rest, with you, not against you.'
                 : count == 2
                 ? 'Two players add a third hand, the Dummy, which the King plays. Tasks use the 3-player difficulty.'
@@ -5784,7 +5753,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             Text('A crown awaits', style: _heading),
             SizedBox(height: 10),
             Text(
-              'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nThe K♠ will choose who wears the crown. How long they keep it is up to all of you. Win glory together, keep the houses loyal, and watch for the knife in the dark.',
+              'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nThe King card will choose who wears the crown. How long they keep it is up to all of you. Win glory together, keep the houses loyal, and watch for the knife in the dark.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70),
             ),

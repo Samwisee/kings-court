@@ -1,6 +1,6 @@
 // Task data for The King's Court, adapted from The Crew: Mission Deep Sea.
 // Suit mapping: pink = ♥, yellow = ♦, blue = ♠, green = ♣.
-// Submarines 1–4 = the Court Cards: Joker, J♠, Q♠, K♠. Captain = the King.
+// Submarines 1–4 = the Court Cards: Joker, Jack, Queen, King. Captain = the King.
 // 2 players use the 3-player difficulty. 'six' is not in the original
 // game: it is one point above the hardest of the 3/4/5-player values.
 
@@ -366,28 +366,28 @@ const List<Map<String, dynamic>> tasksData = [
     'six': 4,
   },
   {
-    'description': "Win the Joker and no other Court Card (redeal if one player holds the Joker and K♠, or the Joker, J♠ and Q♠)",
+    'description': "Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)",
     'three': 3,
     'four': 3,
     'five': 3,
     'six': 4,
   },
   {
-    'description': "Win the J♠ and no other Court Card (redeal if one player holds the J♠ and K♠, or the Joker, J♠ and Q♠)",
+    'description': "Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)",
     'three': 3,
     'four': 3,
     'five': 3,
     'six': 4,
   },
   {
-    'description': "Win the Q♠",
+    'description': "Win the Queen",
     'three': 1,
     'four': 1,
     'five': 1,
     'six': 2,
   },
   {
-    'description': "Win exactly two Court Cards (redeal if one player holds the J♠, Q♠ and K♠)",
+    'description': "Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)",
     'three': 3,
     'four': 3,
     'five': 4,
@@ -681,7 +681,7 @@ const List<Map<String, dynamic>> tasksData = [
     'six': 2,
   },
   {
-    'description': "Win a mixed-suit trick without trumps",
+    'description': "Win a mixed-suit trick with no Court Cards",
     'three': 2,
     'four': 2,
     'five': 3,

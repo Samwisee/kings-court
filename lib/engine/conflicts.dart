@@ -93,18 +93,18 @@ final Map<String, TaskProfile> _profiles = {
       TaskProfile(forbidCard: (c) => c.suit == Suit.hearts),
   'Win exactly one Court Card (redeal if one player holds all four)':
       const TaskProfile(courts: 1),
-  'Win the Joker and no other Court Card (redeal if one player holds the Joker and K♠, or the Joker, J♠ and Q♠)':
+  'Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)':
       TaskProfile(
           cards: {PlayingCard.joker},
           courts: 1,
           forbidCard: (c) => c.isCourt && c != PlayingCard.joker),
-  'Win the J♠ and no other Court Card (redeal if one player holds the J♠ and K♠, or the Joker, J♠ and Q♠)':
+  'Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)':
       TaskProfile(
           cards: {PlayingCard.jack},
           courts: 1,
           forbidCard: (c) => c.isCourt && c != PlayingCard.jack),
-  'Win the Q♠': TaskProfile(cards: {PlayingCard.queen}, courts: 1),
-  'Win exactly two Court Cards (redeal if one player holds the J♠, Q♠ and K♠)':
+  'Win the Queen': TaskProfile(cards: {PlayingCard.queen}, courts: 1),
+  'Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)':
       const TaskProfile(courts: 2),
   'Win exactly three Court Cards (redeal if one player holds all four)':
       const TaskProfile(courts: 3),

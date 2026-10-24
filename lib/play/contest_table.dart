@@ -117,7 +117,7 @@ class ContestTableState extends State<ContestTable> {
                         fontSize: 26,
                         color: Palette.gold)),
                 const Text(
-                    'No trumps: only the suit led can win. Every ♥ you win is a mark of shame, and the Q♠ is five. Hearts can\u2019t be led until one falls. Sides stay secret: fewest marks per courtier wins, and a tie goes to the King.',
+                    'Court Cards are just a suit here: only the suit led can win. Every ♥ you win is a mark of shame, and the Queen is five. Hearts can\u2019t be led until one falls. Sides stay secret: fewest marks per courtier wins, and a tie goes to the King.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: Colors.white70)),
                 const SizedBox(height: 10),

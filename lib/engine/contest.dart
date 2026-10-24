@@ -1,8 +1,8 @@
 /// The Trial of Hearts: when the court is divided, everyone secretly takes
 /// a side, then plays a round of hearts. Each ♥ won is a mark of shame,
-/// and the Q♠ is five. There are no trumps: the Court Cards are just a
+/// and the Queen is five. Court Cards don't beat other suits: they are just a
 /// suit of their own, so a card off the suit led never wins. As in hearts,
-/// the 2♣ leads, no ♥ or Q♠ may fall on the first trick, and ♥ can't be
+/// the 2♣ leads, no ♥ or Queen may fall on the first trick, and ♥ can't be
 /// led until one has been played. Nobody knows who is with them, so everyone plays
 /// for themselves; at the end the side with the fewest marks per courtier
 /// has its way, and a tie goes to the King's side.
@@ -120,11 +120,11 @@ class ContestState {
     return a == b ? sideA[king] : a < b;
   }
 
-  /// A bot's card: keep out of tricks with hearts or the Q♠ in them, and
+  /// A bot's card: keep out of tricks with hearts or the Queen in them, and
   /// pass them to someone else when it can.
   PlayingCard botPlay(int seat) {
     final legal = legalFor(seat);
-    // The Q♠ is the card to be rid of; otherwise high cards are risky.
+    // The Queen is the card to be rid of; otherwise high cards are risky.
     int strength(PlayingCard c) =>
         c == PlayingCard.queen ? 30 : c.isCourt ? 10 + c.rank : c.rank;
     PlayingCard lowest(Iterable<PlayingCard> cs) =>

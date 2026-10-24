@@ -284,7 +284,7 @@ final Map<String, TaskRule> taskRules = {
   }),
   'Win exactly one Court Card (redeal if one player holds all four)':
       exactly(1, _court),
-  'Win the Joker and no other Court Card (redeal if one player holds the Joker and K♠, or the Joker, J♠ and Q♠)':
+  'Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)':
       (v, o, _) {
     final others = v.wonByOthers(o);
     final mine = v.won(o);
@@ -296,7 +296,7 @@ final Map<String, TaskRule> taskRules = {
     if (mine.contains(PlayingCard.joker) && rest == 0) return Verdict.done;
     return _end(v, mine.contains(PlayingCard.joker));
   },
-  'Win the J♠ and no other Court Card (redeal if one player holds the J♠ and K♠, or the Joker, J♠ and Q♠)':
+  'Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)':
       (v, o, _) {
     final others = v.wonByOthers(o);
     final mine = v.won(o);
@@ -308,8 +308,8 @@ final Map<String, TaskRule> taskRules = {
     if (mine.contains(PlayingCard.jack) && rest == 0) return Verdict.done;
     return _end(v, mine.contains(PlayingCard.jack));
   },
-  'Win the Q♠': winAll(const [PlayingCard.queen]),
-  'Win exactly two Court Cards (redeal if one player holds the J♠, Q♠ and K♠)':
+  'Win the Queen': winAll(const [PlayingCard.queen]),
+  'Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)':
       exactly(2, _court),
   'Win exactly three Court Cards (redeal if one player holds all four)':
       exactly(3, _court),
@@ -405,7 +405,7 @@ final Map<String, TaskRule> taskRules = {
       v.countWon(o, _suit(Suit.diamonds)) > v.countWon(o, _suit(Suit.spades))),
   'Win more ♥ cards than ♣ cards (winning no ♣ cards is fine)': atEnd((v, o) =>
       v.countWon(o, _suit(Suit.hearts)) > v.countWon(o, _suit(Suit.clubs))),
-  'Win a mixed-suit trick without trumps': anyTrick((t) =>
+  'Win a mixed-suit trick with no Court Cards': anyTrick((t) =>
       !t.cards.any(_court) && t.cards.map((c) => c.suit).toSet().length > 1),
 };
 
@@ -461,14 +461,14 @@ const _anyTrickTasks = {
   'Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards',
   'Win a trick totalling less than 8 / 12 / 16 / 20 (2–3 / 4 / 5 / 6 players), with no Court Cards',
   'Win a trick totalling exactly 22 or 23',
-  'Win the Q♠',
+  'Win the Queen',
   'Win the 7♥ with a Court Card',
   'Win the 9♣ with a Court Card',
   'Win two tricks in a row',
   'Win three tricks in a row',
   'Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)',
   'Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)',
-  'Win a mixed-suit trick without trumps',
+  'Win a mixed-suit trick with no Court Cards',
 };
 
 const _earlyTasks = {
@@ -510,10 +510,10 @@ bool playableWith(String description, List<List<PlayingCard>> hands,
   if (description.startsWith('Win the Joker and no other')) {
     return !someoneHolds([j, k]) && !someoneHolds([j, jack, q]);
   }
-  if (description.startsWith('Win the J♠ and no other')) {
+  if (description.startsWith('Win the Jack and no other')) {
     return !someoneHolds([jack, k]) && !someoneHolds([j, jack, q]);
   }
-  if (description.contains('redeal if one player holds the J♠, Q♠ and K♠')) {
+  if (description.contains('redeal if one player holds the Jack, Queen and King')) {
     return !someoneHolds([jack, q, k]);
   }
   return true;
@@ -524,7 +524,7 @@ bool playableWith(String description, List<List<PlayingCard>> hands,
 bool schemeSucceeded(int scheme, RoundView v, int seat) {
   final king = v.king;
   switch (scheme) {
-    case 0: // Win the trick that the K♠ is played in.
+    case 0: // Win the trick that the King card is played in.
       return v.tricks.any(
           (t) => t.cards.contains(PlayingCard.king) && t.winner == seat);
     case 1: // The King must win no tricks at all.

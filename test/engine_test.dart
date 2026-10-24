@@ -12,7 +12,7 @@ import 'package:kings_court/models.dart';
 PlayingCard c(String label) => PlayingCard.parse(label)!;
 
 void main() {
-  test('The deck has 40 cards and deals evenly, never setting aside the K♠',
+  test('The deck has 40 cards and deals evenly, never setting aside the King card',
       () {
     expect(fullDeck().toSet(), hasLength(40));
     for (final players in [3, 4, 5, 6]) {
@@ -31,7 +31,7 @@ void main() {
       c('3♥'),
     ]..sort();
     expect(hand.map((x) => x.label),
-        ['3♥', '5♥', 'A♠', '9♦', '2♣', 'Joker', 'K♠']);
+        ['3♥', '5♥', 'A♠', '9♦', '2♣', 'Joker', 'King']);
   });
 
     test('Card ids and labels round-trip', () {
@@ -180,7 +180,7 @@ void main() {
     expect(clash('Win more tricks than everyone else',
         'Win more tricks than everyone else together'), isTrue);
     expect(clash('Win exactly three Court Cards (redeal if one player holds all four)',
-        'Win exactly two Court Cards (redeal if one player holds the J♠, Q♠ and K♠)'), isTrue);
+        'Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)'), isTrue);
     expect(clash('Win the 3♥', 'Win the 4♠'), isFalse);
     expect(selfClash('Win no ♥ cards', 'Win the 3♥'), isTrue);
     expect(selfClash("Don't win any tricks", 'Win the last trick'), isTrue);
@@ -231,7 +231,7 @@ void main() {
     expect(taskProgress('Win the 3♥', v, 2, null), isNull);
   });
 
-  test('The King can never take a task the K♠ makes impossible', () {
+  test('The King can never take a task the King card makes impossible', () {
     for (final d in ['Win no Court Cards', "Don't win any tricks"]) {
       expect(
           GameState.taskPool.firstWhere((t) => t.description == d).kingCantTake,
