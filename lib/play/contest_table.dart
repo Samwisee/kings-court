@@ -192,29 +192,39 @@ class ContestTableState extends State<ContestTable> {
                     child: const Text('Let it be done'),
                   )
                 else
-                  SizedBox(
-                    height: PlayingCardView.heightFor(cardW) + 8,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (final card in c.hands[widget.you])
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                  () {
+                    // Your hand fans out across the width, overlapping when
+                    // it's long.
+                    final hand = c.hands[widget.you];
+                    final handW = math.min(64.0, (w - 32) / 4.5);
+                    final avail = w - 32;
+                    final step = hand.length < 2
+                        ? 0.0
+                        : math.min(handW + 4, (avail - handW) / (hand.length - 1));
+                    final span = hand.isEmpty ? 0.0 : handW + step * (hand.length - 1);
+                    final legal = yourTurn ? c.legalFor(widget.you) : const <PlayingCard>[];
+                    return SizedBox(
+                      height: PlayingCardView.heightFor(handW) + 8,
+                      width: avail,
+                      child: Stack(children: [
+                        for (int i = 0; i < hand.length; i++)
+                          Positioned(
+                            left: (avail - span) / 2 + i * step,
+                            top: legal.contains(hand[i]) ? 0 : 8,
                             child: GestureDetector(
-                              onTap: yourTurn && c.legalFor(widget.you).contains(card)
-                                  ? () => _play(widget.you, card)
+                              onTap: legal.contains(hand[i])
+                                  ? () => _play(widget.you, hand[i])
                                   : null,
                               child: PlayingCardView(
-                                card: card,
-                                width: cardW,
-                                dimmed: yourTurn &&
-                                    !c.legalFor(widget.you).contains(card),
+                                card: hand[i],
+                                width: handW,
+                                dimmed: yourTurn && !legal.contains(hand[i]),
                               ),
                             ),
                           ),
-                      ],
-                    ),
-                  ),
+                      ]),
+                    );
+                  }(),
               ],
             ),
           );
