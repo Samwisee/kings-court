@@ -5589,8 +5589,14 @@ class _SetupPanelState extends State<_SetupPanel> {
                     onPressed: _back,
                     child: Text(step == 0 ? 'Cancel' : 'Back'),
                   ),
-                const Spacer(),
-                FilledButton(
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    // Shrinks rather than cutting the words off.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: FilledButton(
                     onPressed: _next,
                     child: Text(
                         maxLines: 1,
@@ -5600,6 +5606,9 @@ class _SetupPanelState extends State<_SetupPanel> {
                             : mode == GameMode.dynasty
                                 ? 'Begin the reign'
                                 : 'Deal tasks'),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

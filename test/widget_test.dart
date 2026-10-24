@@ -38,6 +38,17 @@ Finder freeCard(WidgetTester tester, bool Function(TableCard w) ok) {
   return find.byWidgetPredicate((w) => w is TableCard && w.owner == null && ok(w)).first;
 }
 
+
+/// Drags from [from] to [to] in small steps, as a finger would.
+Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
+  final g = await tester.startGesture(from);
+  for (int i = 1; i <= 10; i++) {
+    await g.moveTo(Offset.lerp(from, to, i / 10)!);
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+  await g.up();
+}
+
 Future<void> dealGame(WidgetTester tester, int players) async {
   await tester.pumpWidget(const TheKingsCourtApp());
   await tester.pumpAndSettle();
@@ -147,10 +158,7 @@ void main() {
     final state = tester.state(find.byType(HomePage)) as dynamic;
     final card = find.byType(TableCard).first;
     final seat = tester.getCenter(find.byType(SeatToken).at(1));
-    final gesture = await tester.startGesture(tester.getCenter(card));
-    await gesture.moveBy(const Offset(10, 10));
-    await gesture.moveTo(seat);
-    await gesture.up();
+    await dragFromTo(tester, tester.getCenter(card), seat);
     await tester.pumpAndSettle();
 
     final tasks = (state.game as GameState).tasks;
@@ -233,10 +241,7 @@ void main() {
     for (int n = 0; n < count; n++) {
       final card = freeCard(tester, (_) => true);
       final seat = tester.getCenter(find.byType(SeatToken).at(n.isEven ? 0 : 1));
-      final g = await tester.startGesture(tester.getCenter(card));
-      await g.moveBy(const Offset(10, 10));
-      await g.moveTo(seat);
-      await g.up();
+      await dragFromTo(tester, tester.getCenter(card), seat);
       await tester.pumpAndSettle();
     }
 
@@ -431,10 +436,7 @@ void main() {
       final target = tester.getCenter(find.byType(SeatToken).at(picker));
       final task = (tester.widget(card) as TableCard).task;
       final start = tester.getCenter(card);
-      final g = await tester.startGesture(start);
-      await g.moveBy(const Offset(10, 10));
-      await g.moveTo(target);
-      await g.up();
+      await dragFromTo(tester, start, target);
       await tester.pump();
       // Next clockwise who can take one of the tasks left (anyone who
       // can't is skipped).
