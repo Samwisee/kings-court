@@ -22,7 +22,7 @@ enum Courtier {
     'The Bishop',
     TokenShape.arch,
     'Absolution',
-    'Once per round, turn one failed task back to open, as long as the round is not yet over.',
+    'Once per round, when a task fails, set it aside, but take a penance: draw a task worth at least as many points that you can still do, and do it this round.',
     house: 'House Vell',
     motto: 'Light before the throne.',
     story:
@@ -183,6 +183,25 @@ class Charge extends Effect {
   final Courtier courtier;
 }
 
+/// Remembers something for the story to come back to ("walls_built").
+class Flag extends Effect {
+  const Flag(this.name);
+  final String name;
+}
+
+/// Forgets a story flag.
+class Unflag extends Effect {
+  const Unflag(this.name);
+  final String name;
+}
+
+/// A courtier speaks up about the King's choice (if they're at the table).
+class Say extends Effect {
+  const Say(this.courtier, this.line);
+  final Courtier courtier;
+  final String line;
+}
+
 class Choice {
   const Choice(this.label, this.outcome, this.effects);
   final String label;
@@ -197,7 +216,13 @@ class Choice {
 /// skipped.
 class Dilemma {
   const Dilemma(this.title, this.story, this.a, this.b,
-      {this.about, this.council = false, this.followUp = false});
+      {this.about,
+      this.council = false,
+      this.followUp = false,
+      this.arc,
+      this.speaker,
+      this.requires = const [],
+      this.forbids = const []});
   final String title;
   final String story;
   final Choice a;
@@ -210,6 +235,17 @@ class Dilemma {
 
   /// Only comes up after the tidings that lead to it, never at random.
   final bool followUp;
+
+  /// The story this belongs to, if any. A story's matters come up once
+  /// each, in order, as its [requires] flags are earned.
+  final String? arc;
+
+  /// Who brings the matter before the throne, if not a courtier.
+  final String? speaker;
+
+  /// Story flags that must all be set, and any that rule it out.
+  final List<String> requires;
+  final List<String> forbids;
 }
 
 const dilemmas = <Dilemma>[
@@ -434,6 +470,272 @@ const dilemmas = <Dilemma>[
     Choice('Punish the forger', 'Justice is done. The Duke wears black.',
         [Loyalty(Courtier.duke, -2), Loyalty(Courtier.spymaster, 1)]),
     followUp: true,
+  ),
+  // ------------------------------------------------------------- stories
+  // Each story opens with a matter anyone may face; what the King chose
+  // is remembered (a Flag), and the next part comes back rounds later.
+
+  // The Shadow of Karsk: King Varric across the river.
+  Dilemma(
+    'An Envoy from Karsk',
+    'Lord Hask kneels, barely. "King Varric of Karsk offers friendship, for a yearly gift of gold. He would hate for your harvests to burn."',
+    Choice('Pay the gift', 'Hask smiles and counts the coins twice.',
+        [Points(1), Flag('karsk_paid'), Say(Courtier.general, 'We pay a goatherd king not to visit? Shameful.')]),
+    Choice('Send him home', 'Hask leaves with his beard shaved and his purse empty.',
+        [Loyalty(Courtier.general, 1), Flag('karsk_defied'), Say(Courtier.merchant, 'There goes the eastern trade. And perhaps the eastern villages.')]),
+    arc: 'karsk',
+    speaker: 'Lord Hask, envoy of King Varric',
+  ),
+  Dilemma(
+    'Tribute Doubled',
+    'Lord Hask is back, and fatter. "King Varric finds last year’s gift... modest. He asks for twice as much."',
+    Choice('Pay again', 'The treasury empties into Karsk wagons.',
+        [Points(2), Loyalty(Courtier.merchant, -1), Flag('karsk_vassal'), Say(Courtier.duke, 'My grandfather would have died first.')]),
+    Choice('Enough', 'You throw the purse back at him. The court roars.',
+        [AllLoyalty(1), Unflag('karsk_paid'), Flag('karsk_defied')]),
+    arc: 'karsk',
+    speaker: 'Lord Hask, envoy of King Varric',
+    requires: ['karsk_paid'],
+  ),
+  Dilemma(
+    'Scouts on the River',
+    'Karsk scouts have been seen at the fords. The General wants walls around Ashford; the Spymaster wants agents in Varric’s camp.',
+    Choice('Build the walls', 'Stone by stone, Ashford becomes a fortress.',
+        [Points(1), Charge(Courtier.general), Flag('walls'), Say(Courtier.general, 'Let them come.')]),
+    Choice('Send the agents', 'Three of your best cross the river at night.',
+        [Loyalty(Courtier.spymaster, 2), Flag('spies'), Say(Courtier.spymaster, 'Varric will not sneeze without my hearing it.')]),
+    arc: 'karsk',
+    requires: ['karsk_defied'],
+  ),
+  Dilemma(
+    'Varric Sues for Peace',
+    'Broken at Ashford, King Varric sends his own son to beg for peace, and offers the river lands.',
+    Choice('Accept the peace', 'The war is over. The bells ring in both kingdoms.',
+        [AllLoyalty(1), Wound(-1), Flag('karsk_peace'), Unflag('karsk_defied')]),
+    Choice('March on Karsk', 'You will finish this. The army turns east.',
+        [Loyalty(Courtier.general, 2), Points(2), Charge(Courtier.general), Flag('karsk_war'), Say(Courtier.bishop, 'Pride is a poor general.')]),
+    arc: 'karsk',
+    speaker: 'Prince Edric of Karsk',
+    requires: ['ashford_held'],
+  ),
+  Dilemma(
+    'The Ashes of Ashford',
+    'Ashford has fallen. Thousands are at your gates, and among them Varric’s spies.',
+    Choice('Open the city', 'The streets are full of the hungry. And of strangers.',
+        [AllLoyalty(1), Points(1), Flag('refugees')]),
+    Choice('Close the gates', 'The city is safe. The cries outside go on for days.',
+        [AllLoyalty(-1), Loyalty(Courtier.spymaster, 1)]),
+    arc: 'karsk',
+    requires: ['ashford_burned'],
+  ),
+  Dilemma(
+    'The Price of Peace',
+    'Karsk soldiers still hold Ashford. Varric will leave, he says, for your heir’s hand in marriage to his son.',
+    Choice('Agree', 'A wedding to end a war. Nobody dances.',
+        [Flag('karsk_peace'), Unflag('karsk_defied'), Loyalty(Courtier.duke, -1)]),
+    Choice('Take Ashford back by force', 'The General is ready. The court is not.',
+        [Charge(Courtier.general), Wound(1), Flag('ashford_retaken')]),
+    arc: 'karsk',
+    speaker: 'Lord Hask, envoy of King Varric',
+    requires: ['ashford_burned'],
+    forbids: ['karsk_peace'],
+  ),
+
+  // Lady Elara, the Duke's daughter.
+  Dilemma(
+    'A Match for Elara',
+    'The Duke brings his daughter Elara before you. "She is of age, Majesty. Choose her husband, and House Ashcombe will honour it."',
+    Choice('A lord of your own court', 'Elara curtsies. The Duke beams.',
+        [Loyalty(Courtier.duke, 2), Flag('elara_home')]),
+    Choice('Prince Edric of Karsk', 'Peace bought with a daughter. The Duke goes white.',
+        [Loyalty(Courtier.duke, -2), Flag('elara_karsk'), Flag('karsk_peace'), Unflag('karsk_defied')]),
+    arc: 'elara',
+    about: Courtier.duke,
+  ),
+  Dilemma(
+    'A Letter from Elara',
+    'A letter, smuggled out of Karsk. Elara writes that Varric is gathering an army, and that her husband frightens her.',
+    Choice('Bring her home', 'Your riders steal her away. The treaty burns with the bridge.',
+        [Loyalty(Courtier.duke, 3), Unflag('karsk_peace'), Flag('karsk_defied')]),
+    Choice('She must endure', 'The Duke reads the letter, and says nothing at all.',
+        [Loyalty(Courtier.duke, -2), Say(Courtier.duke, 'I will remember who left her there.')]),
+    arc: 'elara',
+    requires: ['elara_karsk'],
+  ),
+  Dilemma(
+    'Elara’s Wedding Feast',
+    'Elara marries Sir Tomas of the household guard. The Duke asks you to pay for a feast fit for a princess.',
+    Choice('Spare nothing', 'Six hundred guests. Elara dances with you.',
+        [Points(1), Loyalty(Courtier.duke, 2), AllLoyalty(1)]),
+    Choice('A modest feast', 'The wine is thin. So is the Duke’s smile.',
+        [Loyalty(Courtier.duke, -1)]),
+    arc: 'elara',
+    requires: ['elara_home'],
+  ),
+
+  // House Coyne's fleet.
+  Dilemma(
+    'The Merchant’s Fleet',
+    'The Merchant unrolls a map of the southern seas. "Twelve ships, Majesty. Silk, spice and a fortune. All I need is the crown’s backing."',
+    Choice('Back the fleet', 'Twelve ships sail on the morning tide.',
+        [Points(1), Loyalty(Courtier.merchant, 2), Flag('fleet')]),
+    Choice('Too great a risk', 'The Merchant rolls up the map very slowly.',
+        [Loyalty(Courtier.merchant, -1)]),
+    arc: 'fleet',
+    about: Courtier.merchant,
+  ),
+  Dilemma(
+    'Spice and Envy',
+    'The fleet’s return has made House Coyne richer than Ashcombe. The Duke wants the Merchant taxed; the Merchant wants a title.',
+    Choice('Tax the Merchant', '"A shopkeeper should pay like one," says the Duke.',
+        [Loyalty(Courtier.merchant, -2), Loyalty(Courtier.duke, 1), Points(-1)]),
+    Choice('Grant him a title', 'Lord Coyne. The Duke leaves before the ceremony.',
+        [Loyalty(Courtier.merchant, 2), Loyalty(Courtier.duke, -2), Say(Courtier.duke, 'A crest on a shop sign.')]),
+    arc: 'fleet',
+    requires: ['fleet_home'],
+  ),
+  Dilemma(
+    'The Lost Fleet',
+    'Coyne is ruined, and the Merchant’s creditors are at the palace gate. He asks you to stand surety.',
+    Choice('Stand surety', 'You save House Coyne, and inherit its debts.',
+        [Points(2), Loyalty(Courtier.merchant, 3)]),
+    Choice('Let Coyne fall', 'The Merchant sells his house, then his name.',
+        [Loyalty(Courtier.merchant, -3), Say(Courtier.merchant, 'I will not forget who watched me drown.')]),
+    arc: 'fleet',
+    requires: ['fleet_lost'],
+  ),
+
+  // The Bishop's cathedral.
+  Dilemma(
+    'The Cathedral of Vell',
+    'The Bishop dreams of a cathedral taller than any in the world. "Heaven will look kindly on the King who builds it."',
+    Choice('Build it', 'Masons arrive from six kingdoms.',
+        [Points(1), Loyalty(Courtier.bishop, 2), Flag('cathedral')]),
+    Choice('Heaven can wait', 'The Bishop prays for you, loudly.',
+        [Loyalty(Courtier.bishop, -1)]),
+    arc: 'cathedral',
+    about: Courtier.bishop,
+  ),
+  Dilemma(
+    'The Second Anointing',
+    'The cathedral stands. The Bishop wishes to anoint you again beneath its spire, so all will know the crown is held by heaven’s grace.',
+    Choice('Kneel before the Bishop', 'The oil is cold. The crowd is vast.',
+        [Loyalty(Courtier.bishop, 2), Wound(-1), Loyalty(Courtier.general, -1), Say(Courtier.general, 'Kings kneel to no one.')]),
+    Choice('Crown yourself', 'You take the oil and do it yourself. Gasps.',
+        [Loyalty(Courtier.bishop, -3), Loyalty(Courtier.general, 1), Say(Courtier.bishop, 'Heaven saw that, Majesty.')]),
+    arc: 'cathedral',
+    requires: ['cathedral_done'],
+  ),
+
+  // The Spymaster's ledger.
+  Dilemma(
+    'The Spymaster’s Ledger',
+    'The Spymaster places a black ledger before you. "Every secret of this court, Majesty. Read it, and you will never trust anyone again."',
+    Choice('Read it', 'You read until dawn.',
+        [Loyalty(Courtier.spymaster, 1), AllLoyalty(-1), Flag('ledger')]),
+    Choice('Burn it unread', 'The court breathes easier. The Spymaster does not.',
+        [Loyalty(Courtier.spymaster, -2), AllLoyalty(1)]),
+    arc: 'ledger',
+    about: Courtier.spymaster,
+  ),
+  Dilemma(
+    'A Name in the Ledger',
+    'One page in the ledger is about the Jester: he meets a Karsk agent every new moon.',
+    Choice('Arrest the Jester', 'The bells on his cap are silent in the cell.',
+        [Loyalty(Courtier.jester, -3), Loyalty(Courtier.spymaster, 1)]),
+    Choice('Use him to feed Varric lies', 'The Jester grins. "I always wanted to be a spy."',
+        [Loyalty(Courtier.jester, 1), Flag('spies'), Charge(Courtier.spymaster)]),
+    arc: 'ledger',
+    requires: ['ledger'],
+  ),
+
+  // The Jester's secret.
+  Dilemma(
+    'The Jester’s Confession',
+    'Late at night the Jester takes off his cap. "Your father was my father too, Majesty. I thought you should hear it from me."',
+    Choice('Keep his secret', 'He puts the cap back on. Nobody else will know.',
+        [Loyalty(Courtier.jester, 2), Flag('jester_secret')]),
+    Choice('Proclaim him your brother', 'The court is astonished. Some are counting heirs.',
+        [Loyalty(Courtier.jester, 1), AllLoyalty(-1), Flag('jester_known')]),
+    arc: 'jester',
+    about: Courtier.jester,
+  ),
+  Dilemma(
+    'Blackmail',
+    'A note under your door: the writer knows what the Jester is, and wants gold to keep quiet.',
+    Choice('Pay', 'The note writer stays silent, for now.',
+        [Points(1), Say(Courtier.spymaster, 'Paying only teaches them the price.')]),
+    Choice('Let the truth out', 'The secret is out. The Jester laughs it off, badly.',
+        [Loyalty(Courtier.jester, -1), Flag('jester_known')]),
+    arc: 'jester',
+    requires: ['jester_secret'],
+  ),
+  Dilemma(
+    'The Bastard’s Faction',
+    'Lords who dislike you now toast the Jester as the rightful heir. He swears he wants none of it.',
+    Choice('Name him your heir', 'The faction falls silent. The Duke does not.',
+        [Loyalty(Courtier.jester, 2), Loyalty(Courtier.duke, -2), Say(Courtier.duke, 'A fool on the throne. How fitting.')]),
+    Choice('Banish him for a season', 'The Jester leaves the hall in silence.',
+        [Loyalty(Courtier.jester, -3), NextDecree(Decree.exile)]),
+    arc: 'jester',
+    requires: ['jester_known'],
+    council: true,
+  ),
+
+  // Mira of Ashford, a miller's daughter.
+  Dilemma(
+    'Mira of Ashford',
+    'A young miller kneels in the dust of the road. "Majesty, the Duke’s men are taking my father’s mill. We have nothing else."',
+    Choice('Protect her mill', 'Mira kisses your ring. The Duke’s steward glares.',
+        [Loyalty(Courtier.duke, -1), Flag('mira_helped')]),
+    Choice('The Duke has the right', 'Mira walks away without a word.',
+        [Loyalty(Courtier.duke, 1), Flag('mira_wronged')]),
+    arc: 'mira',
+    speaker: 'Mira, a miller’s daughter',
+  ),
+  Dilemma(
+    'Grain from Ashford',
+    'In the lean months, wagons of flour arrive from Ashford. A note: "For the King who saved my mill. Mira."',
+    Choice('Feed the court', 'The court feasts on Mira’s bread.',
+        [AllLoyalty(1)]),
+    Choice('Feed the poor', 'The city blesses your name, and you sleep well.',
+        [Wound(-1), Loyalty(Courtier.merchant, -1)]),
+    arc: 'mira',
+    requires: ['mira_helped'],
+  ),
+  Dilemma(
+    'The Miller’s Rising',
+    'Mira has raised the villages of the north road against the Duke’s stewards. She says she will only lay down arms for you.',
+    Choice('Crush the rising', 'The General rides north. It is not quick.',
+        [Charge(Courtier.general), AllLoyalty(-1), Loyalty(Courtier.duke, 1)]),
+    Choice('Hear her out', 'You ride north alone and give back the mills.',
+        [Loyalty(Courtier.duke, -2), AllLoyalty(1), Flag('mira_helped')]),
+    arc: 'mira',
+    requires: ['mira_wronged'],
+    speaker: 'Mira, rebel of the north road',
+  ),
+  Dilemma(
+    'Mira at the Gates',
+    'Among the refugees from Ashford is Mira. She asks to serve in the palace kitchens, and says she has seen Karsk captains in the crowd.',
+    Choice('Take her in', 'Mira points out three spies before supper.',
+        [Loyalty(Courtier.spymaster, 1), Wound(-1)]),
+    Choice('Send her away', 'She is lost in the crowd.',
+        [AllLoyalty(-1)]),
+    arc: 'mira',
+    requires: ['refugees', 'mira_helped'],
+  ),
+
+  // The sickness.
+  Dilemma(
+    'The Plague Spreads',
+    'The sickness from the lower town has reached the palace kitchens. The Bishop wants prayer; the General wants the lower town burned.',
+    Choice('Burn the lower town', 'It works. Nobody will ever forgive you.',
+        [AllLoyalty(-2), Unflag('plague'), Say(Courtier.general, 'Hard choices are still choices.')]),
+    Choice('Pray', 'The cathedral fills with the faithful, and the coughing.',
+        [Loyalty(Courtier.bishop, 2), Wound(1), Unflag('plague')]),
+    arc: 'plague',
+    requires: ['plague'],
+    council: true,
   ),
 ];
 

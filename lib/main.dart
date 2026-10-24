@@ -2067,8 +2067,40 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Absolution: before a task fails, the Bishop (you) may set it aside.
+  /// A penance for Absolution: a task from the deck, worth at least as
+  /// much as [failed], that you can still do with the cards left.
+  Task? _penanceFor(Task failed) {
+    final v = _roundView;
+    final c = _cards;
+    // At least two tricks to go, or there's no penance worth the name.
+    if (c.totalTricks - c.tricks.length < 2) return null;
+    final need = _points(failed);
+    final inUse = game.tasks.map((t) => t.description).toSet();
+    final options = [
+      for (final t in GameState.taskPool)
+        if (!inUse.contains(t.description) &&
+            !needsX(t.description) &&
+            _points(t) >= need &&
+            !game.tasks.any((o) =>
+                o != failed && clash(o.description, t.description)) &&
+            game.whyCantTake(t, _you) == null &&
+            playableWith(t.description, c.hands, c.inPlay) &&
+            taskRules[t.description]!(v, _you, null) == Verdict.pending)
+          t
+    ];
+    if (options.isEmpty) return null;
+    // The cheapest fitting penance, picked at random among equals.
+    final least = options.map(_points).reduce(math.min);
+    final cheapest = options.where((t) => _points(t) == least).toList();
+    return cheapest[_rand.nextInt(cheapest.length)].freshCopy();
+  }
+
+  /// The Bishop's Absolution: a failed task is set aside, but the Bishop
+  /// must take a penance in its place.
   Future<bool> _offerAbsolution(Task t) async {
     if (_yourCourtier != Courtier.bishop || game.powerUsed[_you]) return false;
+    final penance = _penanceFor(t);
+    if (penance == null) return false;
     final yes = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -2077,7 +2109,8 @@ class _HomePageState extends State<HomePage>
         title: const Text('Absolution?'),
         content: SuitText(
             '${game.players[t.assignedPlayerIndex!].name}’s task is about to fail: '
-            '${t.cardText(playerCount)}\n\nUse your power to set it aside? It no longer counts this round.',
+            '${t.cardText(playerCount)}\n\nAbsolve it, and you must take a penance in its place: '
+            '${penance.cardText(playerCount)}',
             style: const TextStyle(fontSize: 16, height: 1.35, color: Colors.white)),
         actions: [
           TextButton(
@@ -2085,13 +2118,14 @@ class _HomePageState extends State<HomePage>
               child: const Text('Let it fail')),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Absolve it')),
+              child: const Text('Take the penance')),
         ],
       ),
     );
     if (yes != true || !mounted) return false;
     setState(() {
-      game.tasks.remove(t);
+      final i = game.tasks.indexOf(t);
+      game.tasks[i] = penance..assignedPlayerIndex = _you;
       game.powerUsed[_you] = true;
     });
     return true;
@@ -4164,6 +4198,22 @@ class _HomePageState extends State<HomePage>
                 fontWeight: FontWeight.w900,
                 fontSize: 26,
                 color: Palette.cardRed)),
+        if (deciding && (d.speaker ?? d.about?.title) != null)
+          Text(
+              d.requires.isNotEmpty
+                  ? '${d.speaker ?? d.about!.title} returns'
+                  : 'Brought before the throne by ${d.speaker ?? d.about!.title.replaceFirst('The', 'the')}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: Palette.inkSoft))
+        else if (deciding && d.requires.isNotEmpty)
+          const Text('The story continues',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: Palette.inkSoft)),
         const SizedBox(height: 8),
         Text(deciding ? d.story : _verdictStory,
             textAlign: TextAlign.center,
@@ -4282,6 +4332,14 @@ class _HomePageState extends State<HomePage>
         if (i != king) i
     ];
     final chosen = seats.every(_votes.containsKey);
+    // Who chooses next: on screen only you; at the table, each in turn,
+    // the King first.
+    final int? chooser = _digital
+        ? (_votes.containsKey(_you) ||
+                (king != null && king != _you && !_votes.containsKey(king))
+            ? null
+            : _you)
+        : seats.where((s) => !_votes.containsKey(s)).firstOrNull;
     final sides = _votes.values.toSet();
     Widget button(String text, VoidCallback? onPressed, {bool outlined = false}) =>
         Padding(
@@ -4323,78 +4381,43 @@ class _HomePageState extends State<HomePage>
           style: TextStyle(
               fontSize: 14, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
       const SizedBox(height: 6),
+      if (chooser == null)
       for (final (letter, c) in [('A', d.a), ('B', d.b)])
         Text('$letter.  ${c.label}',
             textAlign: TextAlign.center,
             style: const TextStyle(
                 fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
       const SizedBox(height: 8),
-      for (final seat in seats)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            children: [
-              ShapedToken(
-                  shape: game.hasRoles
-                      ? game.courtiers[seat].shape
-                      : TokenShape.shield,
-                  size: 24,
-                  color: game.players[seat].color,
-                  ring: Palette.inkSoft),
-              const SizedBox(width: 8),
-              if (seat == king) ...[
-                const CrownIcon(size: 16, color: Palette.goldDeep),
-                const SizedBox(width: 4),
-              ],
-              Expanded(
-                child: Text(name(seat),
-                    style: const TextStyle(fontSize: 15, color: Palette.ink)),
-              ),
-              // A choice made is sealed: nobody sees it but the chooser,
-              // until the sides are shown.
-              if (_votes.containsKey(seat) &&
-                  !_sidesShown &&
-                  !(_digital && seat == _you))
-                const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.lock_rounded, size: 16, color: Palette.goldDeep),
-                  SizedBox(width: 4),
-                  Text('Sealed',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Palette.goldDeep)),
-                ])
-              else if (_digital && seat != _you && !_sidesShown)
-                const Text('Waiting\u2026',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                        color: Palette.inkSoft))
-              else
-                for (final a in [true, false])
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6),
-                    child: _VoteChip(
-                      label: a ? 'A' : 'B',
-                      selected: _votes[seat] == a,
-                      onTap: _sidesShown || (_digital && seat != _you)
-                          ? null
-                          : () => setState(() {
-                                _votes[seat] = a;
-                                if (seat == king) _botsTakeSides();
-                              }),
-                    ),
-                  ),
-            ],
-          ),
-        ),
+      // Sides are chosen in secret: you only ever see your own (on screen),
+      // or the one being chosen now (passing the phone round).
+      if (_sidesShown)
+        for (final seat in seats)
+          Text(
+              '${seat == king ? '♛ ' : ''}${name(seat)}: ${_votes[seat] == true ? 'A' : 'B'}',
+              style: const TextStyle(fontSize: 15, color: Palette.ink))
+      else if (chooser != null) ...[
+        Text(
+            _digital
+                ? 'Choose your side in secret'
+                : 'Pass the phone to ${name(chooser)}${chooser == king ? ' (the King chooses first)' : ''}, who chooses in secret',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
+        const SizedBox(height: 6),
+        for (final a in [true, false])
+          button('${a ? 'A' : 'B'}.  ${(a ? d.a : d.b).label}', () => setState(() {
+                _votes[chooser] = a;
+                if (chooser == king) _botsTakeSides();
+              })),
+      ] else if (_digital && _votes.containsKey(_you))
+        Text(
+            'You stand with ${_votes[_you]! ? 'A' : 'B'}. The rest of the court chooses in secret.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 15, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
       const SizedBox(height: 8),
       if (!chosen)
-        button(
-            _digital && king != null && !_votes.containsKey(king)
-                ? 'The King chooses first'
-                : 'Everyone must take a side',
-            null)
+        const SizedBox.shrink()
       else if (sides.length == 1)
         button('The court stands as one: ${(sides.first ? d.a : d.b).label}',
             () => _decide(sides.first ? d.a : d.b,
@@ -4409,7 +4432,7 @@ class _HomePageState extends State<HomePage>
         })
       else if (!_sidesShown) ...[
         const Text(
-            'The Trial of Hearts: deal out the whole deck (set any spare cards aside) and the King leads. Every \u2665 you win is a mark of shame, and the Q\u2660 is five. Count your marks, then show the sides.',
+            'The Trial of Hearts: deal out the whole deck (set any spare cards aside); the 2\u2663 leads. No trumps: the Court Cards are a suit of their own, and only the suit led can win. No \u2665 or Q\u2660 on the first trick, and \u2665 can\u2019t be led until one has fallen. Every \u2665 you win is a mark of shame, and the Q\u2660 is five. Count your marks, then show the sides.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
         const SizedBox(height: 8),
@@ -4474,6 +4497,12 @@ class _HomePageState extends State<HomePage>
           lines.add(delta > 0
               ? '$who will remember this kindness.'
               : '$who will remember this.');
+        }
+      }
+      // Courtiers speak their minds.
+      for (final e in choice.effects.whereType<Say>()) {
+        if (game.courtiers.contains(e.courtier)) {
+          lines.add('${e.courtier.title}: \u201c${e.line}\u201d');
         }
       }
       final wounds = game.kingWounds - woundsBefore;
@@ -5920,43 +5949,6 @@ class _CountChip extends StatelessWidget {
   }
 }
 
-/// One vote in council.
-class _VoteChip extends StatelessWidget {
-  const _VoteChip(
-      {required this.label, required this.selected, required this.onTap});
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: 'Side $label',
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 38,
-          height: 30,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? Palette.ink : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Palette.ink, width: 1.5),
-          ),
-          child: Text(label,
-              style: TextStyle(
-                  fontFamily: bodyFont,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: selected ? Palette.gold : Palette.ink)),
-        ),
-      ),
-    );
-  }
-}
 
 /// The top of a courtier's card: a wash of their colour with their sigil
 /// large behind the house name and motto.

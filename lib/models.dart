@@ -194,6 +194,18 @@ class GameState {
   /// Dilemmas already faced, so they don't repeat too soon.
   List<int> facedDilemmas = [];
 
+  /// What the story remembers: choices made and how matters turned out
+  /// ("varric_defied"), and which story matters have been faced
+  /// ("seen:<title>"). Lasts the whole dynasty, across reigns.
+  Set<String> flags = {};
+
+  /// Whether a story matter can come up now.
+  bool storyReady(String title, String? arc, List<String> requires,
+          List<String> forbids) =>
+      requires.every(flags.contains) &&
+      !forbids.any(flags.contains) &&
+      (arc == null || !flags.contains('seen:$title'));
+
   /// Rounds won in this reign; enough of them brings a Golden Age.
   int reignWins = 0;
 
@@ -332,10 +344,7 @@ class GameState {
     final follow = t == null ? null : (won ? t.followWon : t.followLost);
     if (follow != null) {
       final i = dilemmas.indexWhere((d) => d.title == follow);
-      if (i >= 0 && _fits(dilemmas[i])) {
-        facedDilemmas.add(i);
-        return i;
-      }
+      if (i >= 0 && _fits(dilemmas[i])) return _face(i);
     }
     return pickDilemma(random);
   }
@@ -379,7 +388,14 @@ class GameState {
     chargeByKing = false;
     tidingResolved = false;
     bool fits(Tiding t) =>
-        t.house == null || _canBeCharged(courtiers.indexOf(t.house!));
+        (t.house == null || _canBeCharged(courtiers.indexOf(t.house!))) &&
+        storyReady(t.title, t.arc, t.requires, t.forbids);
+    // A story that has moved on comes back to the court first, most of
+    // the time.
+    final beats = [
+      for (int i = 0; i < tidings.length; i++)
+        if (tidings[i].requires.isNotEmpty && fits(tidings[i])) i
+    ];
     var options = [
       for (int i = 0; i < tidings.length; i++)
         if (fits(tidings[i]) && !facedTidings.contains(i)) i
@@ -391,8 +407,15 @@ class GameState {
           if (fits(tidings[i])) i
       ];
     }
-    tiding = options.isEmpty ? null : options[rand.nextInt(options.length)];
-    if (tiding != null) facedTidings.add(tiding!);
+    tiding = beats.isNotEmpty && rand.nextDouble() < 0.7
+        ? beats.first
+        : options.isEmpty
+            ? null
+            : options[rand.nextInt(options.length)];
+    if (tiding != null) {
+      facedTidings.add(tiding!);
+      flags.add('seen:${tidings[tiding!].title}');
+    }
     final t = currentTiding;
     if (t?.decree != null) {
       decree = t!.decree;
@@ -435,7 +458,19 @@ class GameState {
   /// A dilemma whose courtiers are all at the table, not faced recently.
   int pickDilemma([Random? random]) {
     final rand = random ?? Random();
-    bool fits(Dilemma d) => !d.followUp && _fits(d);
+    bool fits(Dilemma d) =>
+        !d.followUp &&
+        _fits(d) &&
+        storyReady(d.title, d.arc, d.requires, d.forbids);
+    // Stories under way come first, most of the time, in the order
+    // they're told.
+    final beats = [
+      for (int i = 0; i < dilemmas.length; i++)
+        if (dilemmas[i].requires.isNotEmpty && fits(dilemmas[i])) i
+    ];
+    if (beats.isNotEmpty && rand.nextDouble() < 0.75) {
+      return _face(beats.first);
+    }
     var options = [
       for (int i = 0; i < dilemmas.length; i++)
         if (fits(dilemmas[i]) && !facedDilemmas.contains(i)) i
@@ -447,9 +482,13 @@ class GameState {
           if (fits(dilemmas[i])) i
       ];
     }
-    final pick = options[rand.nextInt(options.length)];
-    facedDilemmas.add(pick);
-    return pick;
+    return _face(options[rand.nextInt(options.length)]);
+  }
+
+  int _face(int i) {
+    facedDilemmas.add(i);
+    flags.add('seen:${dilemmas[i].title}');
+    return i;
   }
 
   /// Carries out the King's choice.
@@ -479,6 +518,12 @@ class GameState {
         case Points(:final delta):
           pointsBonus += delta;
           _trait(delta > 0 ? 'ambitious' : 'wise', delta > 0 ? 2 : 1);
+        case Flag(:final name):
+          flags.add(name);
+        case Unflag(:final name):
+          flags.remove(name);
+        case Say():
+          break;
       }
     }
   }
@@ -964,6 +1009,7 @@ class GameState {
         'pendingDecree': pendingDecree?.index,
         'pointsBonus': pointsBonus,
         'facedDilemmas': facedDilemmas,
+        'flags': flags.toList(),
         'streak': streak,
         'bestStreak': bestStreak,
         'dealId': dealId,
@@ -1039,6 +1085,7 @@ class GameState {
         ..pointsBonus = (j['pointsBonus'] as int?) ?? 0
         ..facedDilemmas =
             List<int>.from((j['facedDilemmas'] as List?) ?? const [])
+        ..flags = Set<String>.from((j['flags'] as List?) ?? const [])
         ..streak = j['streak'] as int
         ..bestStreak = j['bestStreak'] as int
         ..dealId = j['dealId'] as int;

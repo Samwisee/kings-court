@@ -23,6 +23,9 @@ class Tiding {
     required this.lost,
     this.followWon,
     this.followLost,
+    this.arc,
+    this.requires = const [],
+    this.forbids = const [],
   });
   final String title;
   final String story;
@@ -39,6 +42,12 @@ class Tiding {
   /// Titles of the dilemmas that follow a won or lost round.
   final String? followWon;
   final String? followLost;
+
+  /// The story this belongs to; it comes up once, when its [requires]
+  /// flags are set (see Dilemma.arc).
+  final String? arc;
+  final List<String> requires;
+  final List<String> forbids;
 }
 
 const tidings = <Tiding>[
@@ -191,6 +200,78 @@ const tidings = <Tiding>[
     lost: Outcome('He takes his old seat, and the court takes sides.',
         [AllLoyalty(-1)]),
     followLost: 'Council of Advisors',
+  ),
+  // ------------------------------------------------------------- stories
+  Tiding(
+    'The Siege of Ashford',
+    'Varric of Karsk has crossed the river. His army is camped beneath Ashford’s walls.',
+    house: Courtier.general,
+    charge: 'The General must break the siege.',
+    won: Outcome('Karsk banners burn in the river. Ashford holds.',
+        [Flag('ashford_held'), Loyalty(Courtier.general, 1)]),
+    lost: Outcome('Ashford falls. The road to the capital lies open.',
+        [Flag('ashford_burned'), Wound(1)]),
+    arc: 'karsk',
+    requires: ['karsk_defied', 'walls'],
+    forbids: ['karsk_peace'],
+  ),
+  Tiding(
+    'The Crown of Karsk',
+    'Your army stands before Varric’s own castle. One last push.',
+    house: Courtier.general,
+    charge: 'The General must lead the final assault.',
+    won: Outcome('Varric kneels. Karsk is yours.',
+        [AllLoyalty(1), Wound(-1), Flag('karsk_conquered')]),
+    lost: Outcome('The assault breaks. You are carried from the field.',
+        [Wound(1), Loyalty(Courtier.general, -1)]),
+    arc: 'karsk',
+    requires: ['karsk_war'],
+  ),
+  Tiding(
+    'Storm off the Cape',
+    'Word comes that the Coyne fleet is caught in a storm off the southern cape.',
+    house: Courtier.merchant,
+    charge: 'The Merchant must bring the fleet home.',
+    won: Outcome('The fleet limps home, holds full of silk and spice.',
+        [Wound(-1), Loyalty(Courtier.merchant, 1), Flag('fleet_home')]),
+    lost: Outcome('Wreckage washes ashore for a week.',
+        [Flag('fleet_lost')]),
+    arc: 'fleet',
+    requires: ['fleet'],
+  ),
+  Tiding(
+    'The Spire Rises',
+    'The cathedral’s great spire is to be raised. Every mason in the realm is on the ropes.',
+    house: Courtier.bishop,
+    charge: 'The Bishop must see the spire raised.',
+    won: Outcome('The bells of Vell ring over the city.',
+        [Loyalty(Courtier.bishop, 1), Flag('cathedral_done')]),
+    lost: Outcome('The scaffolding falls. Masons are buried in the rubble.',
+        [AllLoyalty(-1)]),
+    arc: 'cathedral',
+    requires: ['cathedral'],
+  ),
+  Tiding(
+    'Varric’s Spies',
+    'Your agents in Karsk send word: Varric plans to strike at the fords on the new moon.',
+    house: Courtier.spymaster,
+    charge: 'The Spymaster must get the warning to the fords in time.',
+    won: Outcome('The ambush is ambushed. Varric loses a thousand men.',
+        [Flag('ashford_held'), Loyalty(Courtier.spymaster, 1)]),
+    lost: Outcome('Your agents are caught and hanged on the bridge.',
+        [Loyalty(Courtier.spymaster, -1)]),
+    arc: 'karsk',
+    requires: ['spies', 'karsk_defied'],
+  ),
+  Tiding(
+    'Sickness in the Lower Town',
+    'People in the lower town are falling sick. The Bishop’s monks are nursing them.',
+    house: Courtier.bishop,
+    charge: 'The Bishop must keep the sickness from spreading.',
+    won: Outcome('The fevers break. The lower town lives.'),
+    lost: Outcome('The sickness climbs the hill towards the palace.',
+        [Flag('plague')]),
+    arc: 'plague',
   ),
 ];
 

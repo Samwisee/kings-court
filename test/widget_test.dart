@@ -919,8 +919,10 @@ void main() {
     final d = dilemmas[state.debugDilemma as int];
     if (d.council) {
       // Everyone secretly takes side A, so the court stands as one.
-      for (int i = 0; i < 12 && find.text('A').evaluate().isNotEmpty; i++) {
-        await tester.tap(find.text('A').first);
+      for (int i = 0;
+          i < 12 && find.textContaining('Pass the phone').evaluate().isNotEmpty;
+          i++) {
+        await tester.tap(find.textContaining('A.  ').first);
         await tester.pumpAndSettle();
       }
       await tester.tap(find.textContaining('The court stands as one'));
