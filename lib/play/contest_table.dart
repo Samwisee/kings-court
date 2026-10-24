@@ -8,8 +8,8 @@ import '../engine/contest.dart';
 import '../theme.dart';
 import 'card_view.dart';
 
-/// The Trial of Cards: a short competitive hand that settles a divided
-/// court. Each trick counts for the side of whoever wins it.
+/// The Trial of Hearts: a round of hearts that settles a divided court.
+/// Sides stay secret until the end, so everyone plays for themselves.
 class ContestTable extends StatefulWidget {
   const ContestTable({
     super.key,
@@ -96,7 +96,7 @@ class ContestTableState extends State<ContestTable> {
     final status = c.over
         ? '${c.aWins ? widget.labelA : widget.labelB}: the cards have spoken'
         : _shown != null
-            ? '${_shown!.winner == widget.you ? 'You take' : '${widget.names[_shown!.winner]} takes'} the trick for ${c.sideA[_shown!.winner] ? 'A' : 'B'}'
+            ? '${_shown!.winner == widget.you ? 'You take' : '${widget.names[_shown!.winner]} takes'} the trick'
             : yourTurn
                 ? (c.current.isEmpty ? 'Your lead' : 'Your turn: follow ${c.current.first.isCourt ? 'Court Cards' : c.current.first.suit.name} if you can')
                 : '${widget.names[c.turn]} is thinking';
@@ -110,14 +110,14 @@ class ContestTableState extends State<ContestTable> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Column(
               children: [
-                const Text('Trial of Cards',
+                const Text('Trial of Hearts',
                     style: TextStyle(
                         fontFamily: displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 26,
                         color: Palette.gold)),
                 const Text(
-                    'Court Cards are trumps. Every trick counts for its winner’s side; a tie goes to the King.',
+                    'Every ♥ you win is a mark of shame, and the Q♠ is five. Sides stay secret until the end: the side with the fewest marks per courtier wins, and a tie goes to the King.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: Colors.white70)),
                 const SizedBox(height: 10),
@@ -177,7 +177,9 @@ class ContestTableState extends State<ContestTable> {
                   children: [
                     widget.token(widget.you, 34),
                     const SizedBox(width: 8),
-                    _sideChip(widget.you),
+                    _sideChip(widget.you, always: true),
+                    const SizedBox(width: 8),
+                    _shameChip(widget.you),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -222,7 +224,7 @@ class ContestTableState extends State<ContestTable> {
   }
 
   Widget _score(bool a) {
-    final n = c.tricksFor(a);
+    final avg = c.sideShame(a);
     final winning = c.over && c.aWins == a;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -240,7 +242,12 @@ class ContestTableState extends State<ContestTable> {
             style: const TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
         const SizedBox(height: 4),
-        Text('$n',
+        Text(
+            c.over
+                ? (avg == avg.roundToDouble()
+                    ? avg.toInt().toString()
+                    : avg.toStringAsFixed(1))
+                : '?',
             style: const TextStyle(
                 fontFamily: displayFont,
                 fontWeight: FontWeight.w900,
@@ -250,14 +257,20 @@ class ContestTableState extends State<ContestTable> {
     );
   }
 
-  Widget _sideChip(int seat) => Container(
+  /// Marks of shame taken so far.
+  Widget _shameChip(int seat) => Text('♥ ${c.shame(seat)}',
+      style: const TextStyle(
+          fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFFFF8A8A)));
+
+  /// Which side [seat] took: hidden until the end, except your own.
+  Widget _sideChip(int seat, {bool always = false}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
           color: Palette.ink,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Palette.gold),
         ),
-        child: Text(c.sideA[seat] ? 'A' : 'B',
+        child: Text(always || c.over ? (c.sideA[seat] ? 'A' : 'B') : '?',
             style: const TextStyle(
                 fontWeight: FontWeight.w900, fontSize: 12, color: Palette.gold)),
       );
@@ -275,7 +288,11 @@ class ContestTableState extends State<ContestTable> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 12, color: Colors.white70)),
           const SizedBox(height: 2),
-          _sideChip(s),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            _sideChip(s),
+            const SizedBox(width: 6),
+            _shameChip(s),
+          ]),
         ],
       );
 }

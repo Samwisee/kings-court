@@ -294,37 +294,42 @@ class _SwordAndShield extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final gilt = _gilt(Offset.zero & size);
-    // Sword, point down: pommel, grip and crossguard above the shield.
-    canvas.drawCircle(Offset(w * 0.5, h * 0.03), w * 0.04, gilt);
-    canvas.drawRect(Rect.fromLTRB(w * 0.46, h * 0.05, w * 0.54, h * 0.18), gilt);
+    // A gold sword, point down: pommel, a long grip and the crossguard
+    // above the shield.
+    canvas.drawCircle(Offset(w * 0.5, h * 0.0), w * 0.045, gilt);
+    canvas.drawRect(Rect.fromLTRB(w * 0.465, h * 0.02, w * 0.535, h * 0.25), gilt);
     canvas.drawRRect(
-        RRect.fromLTRBR(w * 0.28, h * 0.15, w * 0.72, h * 0.21, Radius.circular(w * 0.03)),
+        RRect.fromLTRBR(w * 0.26, h * 0.23, w * 0.74, h * 0.29, Radius.circular(w * 0.03)),
         gilt);
     final blade = Path()
-      ..moveTo(w * 0.45, h * 0.21)
-      ..lineTo(w * 0.55, h * 0.21)
-      ..lineTo(w * 0.55, h * 0.9)
-      ..lineTo(w * 0.5, h * 1.0)
-      ..lineTo(w * 0.45, h * 0.9)
+      ..moveTo(w * 0.45, h * 0.29)
+      ..lineTo(w * 0.55, h * 0.29)
+      ..lineTo(w * 0.55, h * 0.92)
+      ..lineTo(w * 0.5, h * 1.02)
+      ..lineTo(w * 0.45, h * 0.92)
       ..close();
-    canvas.drawPath(blade, Paint()..color = const Color(0xFFE8E4DA));
+    canvas.drawPath(blade, gilt);
+    canvas.drawLine(Offset(w * 0.5, h * 0.3), Offset(w * 0.5, h * 0.95),
+        Paint()
+          ..color = _goldDark
+          ..strokeWidth = w * 0.012);
     // Shield in front of the blade.
     final shield = Path()
-      ..moveTo(w * 0.24, h * 0.26)
-      ..lineTo(w * 0.76, h * 0.26)
-      ..lineTo(w * 0.76, h * 0.48)
-      ..quadraticBezierTo(w * 0.74, h * 0.7, w * 0.5, h * 0.8)
-      ..quadraticBezierTo(w * 0.26, h * 0.7, w * 0.24, h * 0.48)
+      ..moveTo(w * 0.24, h * 0.34)
+      ..lineTo(w * 0.76, h * 0.34)
+      ..lineTo(w * 0.76, h * 0.54)
+      ..quadraticBezierTo(w * 0.74, h * 0.74, w * 0.5, h * 0.84)
+      ..quadraticBezierTo(w * 0.26, h * 0.74, w * 0.24, h * 0.54)
       ..close();
     canvas.drawPath(shield, gilt);
     // An emerald chevron on the shield.
     final chevron = Path()
-      ..moveTo(w * 0.32, h * 0.42)
-      ..lineTo(w * 0.5, h * 0.56)
-      ..lineTo(w * 0.68, h * 0.42)
-      ..lineTo(w * 0.68, h * 0.52)
-      ..lineTo(w * 0.5, h * 0.66)
-      ..lineTo(w * 0.32, h * 0.52)
+      ..moveTo(w * 0.32, h * 0.48)
+      ..lineTo(w * 0.5, h * 0.61)
+      ..lineTo(w * 0.68, h * 0.48)
+      ..lineTo(w * 0.68, h * 0.58)
+      ..lineTo(w * 0.5, h * 0.71)
+      ..lineTo(w * 0.32, h * 0.58)
       ..close();
     canvas.drawPath(chevron, Paint()..color = const Color(0xFF0F5B3A));
   }
@@ -334,17 +339,15 @@ class _SwordAndShield extends CustomPainter {
 }
 
 /// The Queen's crown, drawn like the crown used across the app (see
-/// CrownIcon) but lighter: five low points with round tips.
+/// CrownIcon) but lighter: three low points with round tips.
 class _Tiara extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final tips = [
-      Offset(w * 0.1, h * 0.42),
-      Offset(w * 0.3, h * 0.3),
-      Offset(w * 0.5, h * 0.16),
-      Offset(w * 0.7, h * 0.3),
-      Offset(w * 0.9, h * 0.42),
+      Offset(w * 0.12, h * 0.36),
+      Offset(w * 0.5, h * 0.18),
+      Offset(w * 0.88, h * 0.36),
     ];
     final body = Path()..moveTo(tips.first.dx, tips.first.dy);
     for (int i = 1; i < tips.length; i++) {

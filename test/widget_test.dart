@@ -773,14 +773,14 @@ void main() {
     }
   });
 
-  test('A Trial of Cards plays out fairly', () {
+  test('The Trial of Hearts plays out fairly', () {
     final rand = Random(3);
-    var kingTies = 0;
     for (int i = 0; i < 300; i++) {
       final players = 3 + i % 4;
       final sideA = [for (int s = 0; s < players; s++) rand.nextBool()];
       final c = ContestState.deal(
           players: players, king: i % players, sideA: sideA, rand: rand);
+      final cards = c.hands.fold<int>(0, (n, h) => n + h.length);
       var guard = 0;
       while (!c.over && guard++ < 100) {
         final seat = c.turn;
@@ -788,21 +788,22 @@ void main() {
         expect(c.legalFor(seat), contains(card));
         c.play(seat, card);
       }
-      expect(c.tricks.length, ContestState.contestHand);
-      final a = c.tricksFor(true), b = c.tricksFor(false);
-      expect(a + b, ContestState.contestHand);
-      if (a == b) {
-        kingTies++;
-        expect(c.aWins, sideA[c.king]);
-      } else {
-        expect(c.aWins, a > b);
+      expect(c.over, isTrue);
+      // Every mark dealt ends up with someone.
+      final dealt = c.tricks
+          .expand((t) => t.cards)
+          .fold<int>(0, (n, card) => n + ContestState.shameOf(card));
+      expect([for (int s = 0; s < players; s++) c.shame(s)].reduce((a, b) => a + b),
+          dealt);
+      expect(c.tricks.length * players, cards);
+      final a = c.sideShame(true), b = c.sideShame(false);
+      if (sideA.toSet().length == 2) {
+        expect(c.aWins, a == b ? sideA[c.king] : a < b);
       }
-      expect(c.decided, isTrue);
     }
-    expect(kingTies, greaterThanOrEqualTo(0));
   });
 
-  testWidgets('The Trial of Cards table plays to the end', (tester) async {
+  testWidgets('The Trial of Hearts table plays to the end', (tester) async {
     setPhoneSize(tester);
     final contest = ContestState.deal(
         players: 4, king: 1, sideA: [true, false, true, false], rand: Random(1));
@@ -917,10 +918,9 @@ void main() {
     expect(find.text('The King\u2019s Dilemma'), findsOneWidget);
     final d = dilemmas[state.debugDilemma as int];
     if (d.council) {
-      // Everyone votes A, and the King heeds the court.
-      final votes = find.text('A');
-      for (int i = 0; i < votes.evaluate().length; i++) {
-        await tester.tap(votes.at(i));
+      // Everyone secretly takes side A, so the court stands as one.
+      for (int i = 0; i < 12 && find.text('A').evaluate().isNotEmpty; i++) {
+        await tester.tap(find.text('A').first);
         await tester.pumpAndSettle();
       }
       await tester.tap(find.textContaining('The court stands as one'));

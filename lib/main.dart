@@ -375,10 +375,14 @@ class _HomePageState extends State<HomePage>
   int? _dilemma;
 
   /// A divided court: which side each seat takes (true for the first
-  /// choice), settled by a Trial of Cards.
+  /// choice), settled by a Trial of Hearts.
   Map<int, bool> _votes = {};
 
-  /// The Trial of Cards being played on screen, if any.
+  /// The sides are secret: shown only once the trial is played (at the
+  /// table), or at the end of the trial (on screen).
+  bool _sidesShown = false;
+
+  /// The Trial of Hearts being played on screen, if any.
   ContestState? _contest;
   final _contestKey = GlobalKey<ContestTableState>();
   List<String> _verdict = const [];
@@ -1329,10 +1333,16 @@ class _HomePageState extends State<HomePage>
                 children: [
                   // As much room as the bots' tasks need, leaving enough for
                   // the trick and your own row.
+                  // (The middle always keeps room for a full-size trick.)
                   _digiOpponents(
                       width,
-                      clampD(c.maxHeight - 175, 130,
-                          math.max(130.0, c.maxHeight * 0.6))),
+                      clampD(
+                          c.maxHeight -
+                              120 -
+                              PlayingCardView.heightFor(_trickCardWidth(
+                                  width, game.players.length)),
+                          110,
+                          math.max(110.0, c.maxHeight * 0.6))),
                   Expanded(
                     child: SizedBox(
                       key: _middleKey,
@@ -1471,7 +1481,7 @@ class _HomePageState extends State<HomePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _digiToken(seat, 38, tight: true),
+                      _withReveal(seat, _digiToken(seat, 38, tight: true)),
                       Text(
                           game.hasRoles
                               ? game.courtiers[seat].short
@@ -1490,7 +1500,6 @@ class _HomePageState extends State<HomePage>
                             softWrap: false,
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white54)),
-                      if (_revealedView(seat) case final r?) r,
                       for (final t in game.tasks)
                         if (t.assignedPlayerIndex == seat &&
                             !_flights.any((f) => f.task == t))
@@ -1507,6 +1516,20 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  /// [token] with the card [seat] has shown tucked beside it, so showing a
+  /// card never takes room from the trick.
+  Widget _withReveal(int seat, Widget token) {
+    final r = _revealedView(seat);
+    if (r == null) return token;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        token,
+        Positioned(right: -34, top: 0, child: r),
+      ],
+    );
+  }
+
   /// A card shown with the speech token, while it's still in hand.
   Widget? _revealedView(int seat) {
     final c = _cards;
@@ -1514,18 +1537,14 @@ class _HomePageState extends State<HomePage>
     if (card == null || c.dealId != game.dealId || !c.hands[seat].contains(card)) {
       return null;
     }
-    return Padding(
-      padding: const EdgeInsets.only(top: 3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PlayingCardView(card: card, width: 22),
-          const SizedBox(width: 4),
-          Text(c.revealHint[seat] ?? '',
-              style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: Palette.gold)),
-        ],
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PlayingCardView(card: card, width: 24),
+        Text(c.revealHint[seat] ?? '',
+            style: const TextStyle(
+                fontSize: 10, fontWeight: FontWeight.w700, color: Palette.gold)),
+      ],
     );
   }
 
@@ -1683,8 +1702,7 @@ class _HomePageState extends State<HomePage>
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _digiToken(_you, 46),
-            if (_revealedView(_you) case final r?) r,
+            _withReveal(_you, _digiToken(_you, 46)),
             if (c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty))
               Text('${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}',
                   style: const TextStyle(fontSize: 11, color: Colors.white54)),
@@ -1712,6 +1730,10 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  /// How wide trick cards are for a table [width] across with [n] players.
+  static double _trickCardWidth(double width, int n) =>
+      clampD((width - 8 * n) / n, 34, 64);
+
   /// The trick in the middle of the table: each card glides in from
   /// whoever played it, and once won the trick sweeps off to the winner.
   List<Widget> _trickCards(Size area) {
@@ -1723,8 +1745,10 @@ class _HomePageState extends State<HomePage>
     if (cards.isEmpty) return [];
     final number = trick != null ? c.tricks.length - 1 : c.tricks.length;
     final n = c.players;
-    final cardW = clampD(
-        math.min((area.width - 8 * n) / n, (area.height - 8) / 1.42), 34, 72);
+    // The same size every trick: set by the table's width, shrinking only
+    // if the middle is truly short of room.
+    final cardW = clampD(math.min(_trickCardWidth(area.width, n),
+        (area.height - 4) / 1.42), 34, 72);
     final cardH = PlayingCardView.heightFor(cardW);
     // Where the middle sits on the table, to work out where cards come
     // from; if it isn't known yet the cards simply fade in.
@@ -3041,7 +3065,7 @@ class _HomePageState extends State<HomePage>
             child: Material(
                 type: MaterialType.transparency,
                 child: _buildOutcomeOverlay())),
-      // A divided court plays its Trial of Cards over everything.
+      // A divided court plays its Trial of Hearts over everything.
       if (_contest case final contest? when _inGame)
         Positioned.fill(
           child: Material(
@@ -4087,6 +4111,7 @@ class _HomePageState extends State<HomePage>
                     } else {
                       _dilemma = game.pickDilemmaAfter(won);
                       _votes = {};
+                      _sidesShown = false;
                       _contest = null;
                       _step = _DynastyStep.dilemma;
                       _botsTakeSides();
@@ -4248,7 +4273,7 @@ class _HomePageState extends State<HomePage>
   }
 
   /// A matter that divides the court: everyone takes a side, then the
-  /// sides play a Trial of Cards and the winners have their way.
+  /// sides play a Trial of Hearts and the winners have their way.
   List<Widget> _trial(Dilemma d) {
     final king = game.kingIndex;
     final seats = [
@@ -4290,7 +4315,10 @@ class _HomePageState extends State<HomePage>
               fontWeight: FontWeight.w700,
               fontSize: 15,
               color: Palette.cardRed)),
-      const Text('Each takes a side, and the cards will decide.',
+      Text(
+          _digital
+              ? 'Each takes a side in secret, and the cards will decide.'
+              : 'Pass the phone round: each takes a side in secret, and the cards will decide.',
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 14, fontStyle: FontStyle.italic, color: Palette.inkSoft)),
@@ -4322,20 +4350,41 @@ class _HomePageState extends State<HomePage>
                 child: Text(name(seat),
                     style: const TextStyle(fontSize: 15, color: Palette.ink)),
               ),
-              for (final a in [true, false])
-                Padding(
-                  padding: const EdgeInsets.only(left: 6),
-                  child: _VoteChip(
-                    label: a ? 'A' : 'B',
-                    selected: _votes[seat] == a,
-                    onTap: !_digital || seat == _you
-                        ? () => setState(() {
-                              _votes[seat] = a;
-                              if (seat == king) _botsTakeSides();
-                            })
-                        : null,
+              // A choice made is sealed: nobody sees it but the chooser,
+              // until the sides are shown.
+              if (_votes.containsKey(seat) &&
+                  !_sidesShown &&
+                  !(_digital && seat == _you))
+                const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.lock_rounded, size: 16, color: Palette.goldDeep),
+                  SizedBox(width: 4),
+                  Text('Sealed',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Palette.goldDeep)),
+                ])
+              else if (_digital && seat != _you && !_sidesShown)
+                const Text('Waiting\u2026',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Palette.inkSoft))
+              else
+                for (final a in [true, false])
+                  Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: _VoteChip(
+                      label: a ? 'A' : 'B',
+                      selected: _votes[seat] == a,
+                      onTap: _sidesShown || (_digital && seat != _you)
+                          ? null
+                          : () => setState(() {
+                                _votes[seat] = a;
+                                if (seat == king) _botsTakeSides();
+                              }),
+                    ),
                   ),
-                ),
             ],
           ),
         ),
@@ -4358,19 +4407,26 @@ class _HomePageState extends State<HomePage>
               sideA: [for (int i = 0; i < game.players.length; i++) _votes[i]!],
               rand: math.Random()));
         })
-      else ...[
-        Text(
-            'Deal ${ContestState.contestHand} cards each. The King leads; Court Cards are trumps. Every trick counts for its winner’s side, and a tie goes to the King.',
+      else if (!_sidesShown) ...[
+        const Text(
+            'The Trial of Hearts: deal out the whole deck (set any spare cards aside) and the King leads. Every \u2665 you win is a mark of shame, and the Q\u2660 is five. Count your marks, then show the sides.',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
+            style: TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
         const SizedBox(height: 8),
-        button('A took more tricks', () => _settleTrial(d, true)),
-        button('B took more tricks', () => _settleTrial(d, false)),
+        button('Show the sides', () => setState(() => _sidesShown = true)),
+      ] else ...[
+        const Text(
+            'Add up each side\u2019s marks and divide by its courtiers. Fewest wins; a tie goes to the King\u2019s side.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, height: 1.35, color: Palette.inkSoft)),
+        const SizedBox(height: 8),
+        button('A has fewer marks', () => _settleTrial(d, true)),
+        button('B has fewer marks', () => _settleTrial(d, false)),
       ],
     ];
   }
 
-  /// The Trial of Cards is over: its winners have their way. Losing to
+  /// The Trial of Hearts is over: its winners have their way. Losing to
   /// the King's side is remembered; beating it, the King bows to the court.
   void _settleTrial(Dilemma d, bool aWins) {
     final king = game.kingIndex;
@@ -5062,7 +5118,7 @@ Future<void> showRulesDialog(BuildContext context) {
         'Loyalty is a candle by each courtier\'s seat: the taller the flame, the more loyal. It flickers when loyalty changes. Deeds count too: after a won round, whoever did the most tasks gains favour, and a failed task shakes its owner\'s faith.',
         'The King earns a name from their choices: the Kind, the Stern, the Bold and more.',
         'Each round opens with tidings: news from the kingdom that may bring a decree and charge one house with a task. A royal charge (the gold ribbon) is dealt straight to that house and stays with them. Do it and they gain favour; fail and they lose it. Some dilemmas then follow from how the round went.',
-        'Some matters divide the court: everyone takes a side, then the sides play a Trial of Cards, a short hand where every trick counts for its winner\u2019s side. If the King\u2019s side loses, the King bows to the court; those who lose to the King remember.',
+        'Some matters divide the court: everyone takes a side in secret, then all play the Trial of Hearts, a round where every \u2665 won is a mark of shame and the Q\u2660 is five. The side with the fewest marks per courtier has its way (a tie goes to the King). If the King\u2019s side loses, the King bows to the court; those who lose to the King remember.',
         'How it ends: if one King wins five rounds in their reign, the court enters a Golden Age and you win. If three Kings fall, the dynasty falls. If traitors ever outnumber the loyal, they seize the throne.',
         'A courtier whose loyalty falls to nothing openly turns against the King. Their token turns blood-red and they gain a scheme, shown at the top. They take no tasks and don\'t pick. If their scheme succeeds, the King is wounded. A later dilemma can win them back.',
       ]

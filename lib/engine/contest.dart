@@ -1,7 +1,8 @@
-/// A contest of cards: when the court is divided, the two sides play a
-/// short hand against each other and the side that takes more tricks has
-/// its way. Unlike a normal round it is competitive: no tasks, just
-/// tricks, and each one counts for the side of whoever wins it.
+/// The Trial of Hearts: when the court is divided, everyone secretly takes
+/// a side, then plays a round of hearts. Each ♥ won is a mark of shame,
+/// and the Q♠ is five. Nobody knows who is with them, so everyone plays
+/// for themselves; at the end the side with the fewest marks per courtier
+/// has its way, and a tie goes to the King's side.
 library;
 
 import 'dart:math';
@@ -12,25 +13,23 @@ class ContestState {
   ContestState._(this.players, this.king, this.sideA, this.hands)
       : leader = king;
 
-  /// Deals [perHand] cards each from a fresh deck. [sideA] says which
-  /// side each seat is on (true for the first choice). The King leads.
+  /// Deals the whole deck out evenly (any spare cards are set aside).
+  /// [sideA] says which side each seat is on (true for the first choice).
+  /// The King leads.
   factory ContestState.deal({
     required int players,
     required int king,
     required List<bool> sideA,
     required Random rand,
-    int perHand = contestHand,
-  }) {
-    final deck = fullDeck()..shuffle(rand);
-    final hands = [
-      for (int p = 0; p < players; p++)
-        deck.sublist(p * perHand, (p + 1) * perHand)..sort(),
-    ];
-    return ContestState._(players, king, sideA, hands);
-  }
+  }) =>
+      ContestState._(players, king, sideA, deal(players, rand).hands);
 
-  /// Cards each in a contest: quick, but long enough for a comeback.
-  static const contestHand = 5;
+  /// Marks of shame for winning [card].
+  static int shameOf(PlayingCard card) => card == PlayingCard.queen
+      ? 5
+      : card.suit == Suit.hearts
+          ? 1
+          : 0;
 
   final int players;
   final int king;
@@ -64,46 +63,59 @@ class ContestState {
     return trick;
   }
 
-  /// Tricks taken by the first side (true) or the second (false).
-  int tricksFor(bool a) => tricks.where((t) => sideA[t.winner] == a).length;
+  /// Marks of shame [seat] has taken so far.
+  int shame(int seat) => tricks
+      .where((t) => t.winner == seat)
+      .expand((t) => t.cards)
+      .fold(0, (a, c) => a + shameOf(c));
 
-  /// Whether the first side won. A tie goes to the King's side.
+  /// Marks per courtier on the first side (true) or the second (false).
+  double sideShame(bool a) {
+    final members = [for (int s = 0; s < players; s++) if (sideA[s] == a) s];
+    if (members.isEmpty) return 0;
+    return members.fold<int>(0, (n, s) => n + shame(s)) / members.length;
+  }
+
+  /// Whether the first side won: fewer marks per courtier. A tie goes to
+  /// the King's side.
   bool get aWins {
-    final a = tricksFor(true), b = tricksFor(false);
-    return a == b ? sideA[king] : a > b;
+    final a = sideShame(true), b = sideShame(false);
+    return a == b ? sideA[king] : a < b;
   }
 
-  /// Whether one side has already won, whatever happens in the tricks left.
-  bool get decided {
-    final left = hands.first.length + (current.isEmpty ? 0 : 1);
-    final a = tricksFor(true), b = tricksFor(false);
-    final kingA = sideA[king];
-    // The leading side can't be caught (ties go to the King's side).
-    bool safe(int lead, int trail, bool leadIsKing) =>
-        leadIsKing ? lead >= trail + left : lead > trail + left;
-    return safe(a, b, kingA) || safe(b, a, !kingA);
-  }
-
-  /// A bot's card: win the trick for its side when it can, as cheaply as
-  /// it can; otherwise throw away its weakest card.
+  /// A bot's card: keep out of tricks with hearts or the Q♠ in them, and
+  /// pass them to someone else when it can.
   PlayingCard botPlay(int seat) {
     final legal = legalFor(seat);
     int strength(PlayingCard c) => c.isCourt ? 20 + c.rank : c.rank;
-    final cheapest = legal.reduce((a, b) => strength(a) <= strength(b) ? a : b);
+    PlayingCard lowest(Iterable<PlayingCard> cs) =>
+        cs.reduce((a, b) => strength(a) <= strength(b) ? a : b);
+    PlayingCard highest(Iterable<PlayingCard> cs) =>
+        cs.reduce((a, b) => strength(a) >= strength(b) ? a : b);
     if (current.isEmpty) {
-      // Lead the strongest plain card; keep the Court Cards for later
-      // unless that's all there is.
-      final plain = legal.where((c) => !c.isCourt).toList();
-      if (plain.isEmpty) return cheapest;
-      return plain.reduce((a, b) => strength(a) >= strength(b) ? a : b);
+      // Lead low, and not a heart if it can help it.
+      final safe = legal.where((c) => !c.isCourt && c.suit != Suit.hearts);
+      if (safe.isNotEmpty) return lowest(safe);
+      final plain = legal.where((c) => !c.isCourt);
+      return lowest(plain.isNotEmpty ? plain : legal);
     }
-    final winning = seats[winningPlay(current)];
-    if (sideA[winning] == sideA[seat]) return cheapest; // a friend has it
-    final winners = [
-      for (final c in legal)
-        if (winningPlay([...current, c]) == current.length) c
-    ];
-    if (winners.isEmpty) return cheapest;
-    return winners.reduce((a, b) => strength(a) <= strength(b) ? a : b);
+    bool wins(PlayingCard c) => winningPlay([...current, c]) == current.length;
+    final losers = legal.where((c) => !wins(c)).toList();
+    final followed = legal.first.suit == current.first.suit;
+    if (!followed) {
+      // Off suit: throw the most dangerous card that won't take the trick.
+      final queen = losers.where((c) => c == PlayingCard.queen);
+      if (queen.isNotEmpty) return queen.first;
+      final hearts = losers.where((c) => c.suit == Suit.hearts);
+      if (hearts.isNotEmpty) return highest(hearts);
+      if (losers.isNotEmpty) return highest(losers);
+      return lowest(legal);
+    }
+    // Following: duck under the winner with the highest card that still
+    // loses; if it must win, win high (last to play) or as low as it can.
+    if (losers.isNotEmpty) return highest(losers);
+    final last = current.length == players - 1;
+    final pricey = current.any((c) => shameOf(c) > 0);
+    return last && !pricey ? highest(legal) : lowest(legal);
   }
 }
