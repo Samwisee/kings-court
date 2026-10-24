@@ -25,8 +25,15 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
-      - run: flutter test
+      # Problems become annotations on the run, so they can be read without
+      # downloading the logs.
+      - name: Analyze
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine 2>&1 | tee analyze.txt || true
+          awk -F'|' 'NF>=8 && ($1=="ERROR" || $1=="WARNING") {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' analyze.txt
+          ! grep -q '^ERROR|' analyze.txt
+      - name: Test
+        run: flutter test --reporter github
 
   # Builds and publishes even if a test fails, so there's always something
   # to play; the test job shows what broke.
