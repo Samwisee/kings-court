@@ -450,6 +450,7 @@ class _HomePageState extends State<HomePage>
     if (_dragging == null && _inGame) _save();
     if (_digital && _inGame) {
       _syncCards();
+      _launchTaskFlights();
       _scheduleBot();
     }
   }
@@ -559,7 +560,7 @@ class _HomePageState extends State<HomePage>
     _keepAwake(false);
     _botTimer?.cancel();
     _crownTimer?.cancel();
-    for (final t in _trickTimers) {
+    for (final t in [..._trickTimers, ..._flightTimers]) {
       t.cancel();
     }
     super.dispose();
@@ -685,6 +686,11 @@ class _HomePageState extends State<HomePage>
       );
       _lastTrick = null;
       _collecting = false;
+    }
+    // No task cards to deal onto a circle: the round is ready once the King
+    // is crowned and any tidings or decree are read.
+    if (!_choosingKing && !_decreePending && _dealtFor != game.dealId) {
+      _dealtFor = game.dealId;
     }
     if (_choosingKing && _crowning == null && _crownTimer == null) {
       _crownTimer = Timer(const Duration(milliseconds: 900), () {
@@ -935,8 +941,8 @@ class _HomePageState extends State<HomePage>
     if (game.pickTurn != null) {
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
-            ? "King's Command: drag each task to a seat"
-            : 'Your pick: drag a task onto your seat';
+            ? "King's Command: tap a task to hand it out"
+            : 'Your pick: tap a task to take it';
       }
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
@@ -944,9 +950,15 @@ class _HomePageState extends State<HomePage>
     if (game.outcome != RoundOutcome.inProgress) return '';
     final c = _cards;
     if (c.turn == _you) {
-      return c.current.isEmpty
-          ? 'Your lead: play any card'
-          : 'Your turn: follow ${c.led!.isCourt ? 'with a Court Card' : c.led!.suit.symbol} if you can';
+      if (c.current.isEmpty) return 'Your lead';
+      final led = c.led!;
+      return 'Your turn: follow ${switch (led.suit) {
+        Suit.hearts => 'hearts',
+        Suit.diamonds => 'diamonds',
+        Suit.spades => 'spades',
+        Suit.clubs => 'clubs',
+        Suit.court => 'with a Court Card',
+      }}';
     }
     return '${game.players[c.turn].name} is thinking…';
   }
@@ -991,37 +1003,79 @@ class _HomePageState extends State<HomePage>
                 : math.min(cardW + 6, (width - cardW) / (hand.length - 1));
             final total = cardW + step * (hand.length - 1);
             return SizedBox(
+              key: _handKey,
               height: h + 12,
               width: width,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   for (int i = 0; i < hand.length; i++)
-                    AnimatedPositioned(
-                      key: ValueKey(hand[i].id),
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      left: (width - total) / 2 + i * step,
-                      top: legal.contains(hand[i]) ? 0 : 12,
-                      child: GestureDetector(
-                        onTap: () {
-                          if (!_yourPlay) return;
-                          if (!legal.contains(hand[i])) {
-                            final led = c.led!;
-                            _showSnack(
-                                'You must follow ${led.isCourt ? 'with a Court Card' : led.suit.symbol}',
-                                Palette.feltDeep);
-                            return;
-                          }
-                          _playCard(_you, hand[i]);
-                        },
-                        child: PlayingCardView(
-                          card: hand[i],
-                          width: cardW,
-                          dimmed: yourTurn && !legal.contains(hand[i]),
+                    () {
+                      final card = hand[i];
+                      final dragging = _handDragCard == card.id;
+                      final left = (width - total) / 2 + i * step;
+                      final top = legal.contains(card) ? 0.0 : 12.0;
+                      void play() {
+                        if (!_yourPlay) return;
+                        if (!legal.contains(card)) {
+                          final led = c.led!;
+                          _showSnack(
+                              led.isCourt
+                                  ? 'You must follow with a Court Card'
+                                  : 'You must follow ${led.suit.name}',
+                              Palette.feltDeep);
+                          return;
+                        }
+                        final area = _rectOn(_handKey);
+                        if (area != null) {
+                          _launchFrom[card.id] = area.topLeft +
+                              Offset(left + cardW / 2, top + h / 2) +
+                              (dragging ? _handDrag : Offset.zero);
+                        }
+                        _playCard(_you, card);
+                      }
+
+                      return AnimatedPositioned(
+                        key: ValueKey(card.id),
+                        duration: dragging
+                            ? Duration.zero
+                            : const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        left: left + (dragging ? _handDrag.dx : 0),
+                        top: top + (dragging ? _handDrag.dy : 0),
+                        child: GestureDetector(
+                          onTap: play,
+                          // Or drag it up onto the table.
+                          onPanStart: (_) => setState(() {
+                            _handDragCard = card.id;
+                            _handDrag = Offset.zero;
+                          }),
+                          onPanUpdate: (d) =>
+                              setState(() => _handDrag += d.delta),
+                          onPanEnd: (_) {
+                            final far = _handDrag.dy < -h * 0.6;
+                            if (far) play();
+                            setState(() {
+                              _handDragCard = null;
+                              _handDrag = Offset.zero;
+                            });
+                          },
+                          onPanCancel: () => setState(() {
+                            _handDragCard = null;
+                            _handDrag = Offset.zero;
+                          }),
+                          child: AnimatedScale(
+                            scale: dragging ? 1.1 : 1,
+                            duration: const Duration(milliseconds: 120),
+                            child: PlayingCardView(
+                              card: card,
+                              width: cardW,
+                              dimmed: yourTurn && !legal.contains(card),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }(),
                 ],
               ),
             );
@@ -1031,10 +1085,376 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// The trick on the table: each card glides in from the seat that played
-  /// it, and once won the trick sweeps off to the winner.
-  List<Widget> _trickLayer(_TableGeometry geo) {
-    if (!_digital || _cards.dealId != game.dealId) return [];
+  // ---------------------------------------------- the on-screen card table
+  //
+  // With on-screen cards the table isn't a circle: the bots sit across
+  // the top with their tasks under them, the trick is played in the
+  // middle, and your tasks and hand are at the bottom.
+
+  final _digiKey = GlobalKey();
+  final _middleKey = GlobalKey();
+  final _handKey = GlobalKey();
+  final _yourRowKey = GlobalKey();
+  final _seatKeys = <int, GlobalKey>{};
+  final _openTaskKeys = <Task, GlobalKey>{};
+  Map<Task, Rect> _openTaskRects = {};
+  final _flights = <_Flight>[];
+  final _flightTimers = <Timer>[];
+  Map<Task, int?> _owners = {};
+
+  /// Where your played card left your hand, by card id.
+  final _launchFrom = <int, Offset>{};
+
+  /// A hand card being dragged towards the table, and how far.
+  int? _handDragCard;
+  Offset _handDrag = Offset.zero;
+
+  GlobalKey _seatKey(int seat) => _seatKeys.putIfAbsent(seat, GlobalKey.new);
+
+  /// Where a widget sits on the on-screen table (from the last frame).
+  Rect? _rectOn(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    final table = _digiKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || table == null || !box.attached || !box.hasSize) {
+      return null;
+    }
+    // Global positions, since your hand sits below the table itself.
+    return (box.localToGlobal(Offset.zero) - table.localToGlobal(Offset.zero)) &
+        box.size;
+  }
+
+  /// Sends each newly taken task flying from the middle to its owner.
+  void _launchTaskFlights() {
+    if (!_digital) return;
+    final owners = {for (final t in game.tasks) t: t.assignedPlayerIndex};
+    for (final t in game.tasks) {
+      final owner = owners[t];
+      final from = _openTaskRects[t];
+      if (!_owners.containsKey(t) ||
+          _owners[t] != null ||
+          owner == null ||
+          from == null) {
+        continue;
+      }
+      final area = owner == _you ? _rectOn(_yourRowKey) : _rectOn(_seatKey(owner));
+      if (area == null) continue;
+      final to = owner == _you
+          ? Rect.fromLTWH(area.left + 64, area.top, from.width * 0.85,
+              from.height * 0.85)
+          : Rect.fromCenter(
+              center: area.bottomCenter + Offset(0, from.height * 0.45),
+              width: from.width * 0.7,
+              height: from.height * 0.7);
+      final flight = _Flight(t, from, to, _points(t), _cardText(t));
+      _flights.add(flight);
+      _flightTimers.add(Timer(_Flight.duration, () {
+        if (mounted) setState(() => _flights.remove(flight));
+      }));
+    }
+    _owners = owners;
+  }
+
+  Widget _buildDigitalTable() {
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.0,
+      child: LayoutBuilder(builder: (context, c) {
+        _tableSize = Size(c.maxWidth, c.maxHeight);
+        final width = c.maxWidth - 32;
+        return Stack(
+          key: _digiKey,
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+              child: Column(
+                children: [
+                  _digiOpponents(width, c.maxHeight * 0.4),
+                  Expanded(
+                    child: SizedBox(
+                      key: _middleKey,
+                      width: double.infinity,
+                      child: _digiMiddle(width),
+                    ),
+                  ),
+                  KeyedSubtree(key: _yourRowKey, child: _digiYou(width)),
+                ],
+              ),
+            ),
+            ..._digiTrickLayer(),
+            for (final f in _flights) f.build(),
+            if (_decreePending) Positioned.fill(child: _buildDecreeOverlay()),
+            Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
+            if (game.outcome != RoundOutcome.inProgress && _lastTrick == null)
+              Positioned.fill(child: _buildOutcomeOverlay()),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildDecreeOverlay() => ColoredBox(
+        color: Colors.black38,
+        child: Center(
+          child: game.currentTiding != null
+              ? _tidingsScroll(
+                  () => setState(() => _decreeReadFor = game.dealId))
+              : DecreeScroll(
+                  decree: game.decree!,
+                  detail: _decreeDetail,
+                  onAccept: () => setState(() => _decreeReadFor = game.dealId),
+                ),
+        ),
+      );
+
+  bool _seatActive(int seat) =>
+      !_choosingKing &&
+      (game.pickTurn != null
+          ? game.pickTurn == seat
+          : _playing && _lastTrick == null && _cards.turn == seat);
+
+  Widget _digiToken(int seat, double size) {
+    final labels = seatLabels(game.players);
+    return KeyedSubtree(
+      key: _seatKey(seat),
+      child: SeatToken(
+        player: game.players[seat],
+        label: labels[seat],
+        isKing: game.kingIndex == seat,
+        size: size,
+        highlighted: _seatActive(seat),
+        exiled: game.exiledSeat == seat,
+        shape: game.hasRoles && seat < game.courtiers.length
+            ? game.courtiers[seat].shape
+            : null,
+        antagonist: game.isAntagonist(seat),
+        wounds: game.isDynasty && game.kingIndex == seat ? game.kingWounds : null,
+        powerUsed: game.hasRoles && !_choosingKing ? game.powerUsed[seat] : null,
+        loyalty: game.isDynasty && game.kingIndex != seat && seat < game.loyalty.length
+            ? game.loyalty[seat]
+            : null,
+        onTap: game.hasRoles && !_choosingKing ? () => _showCourtier(seat) : null,
+      ),
+    );
+  }
+
+  Widget _miniTask(Task t, double width) => TweenAnimationBuilder<double>(
+        // Fades in as the flying copy lands.
+        key: ValueKey('mini-${t.description}'),
+        tween: Tween(begin: 0, end: 1),
+        duration: _Flight.duration + const Duration(milliseconds: 120),
+        curve: const Interval(0.75, 1),
+        builder: (context, o, child) => Opacity(opacity: o, child: child),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: GestureDetector(
+            onTapUp: (d) => _showTaskDetail(t, d.globalPosition),
+            child: TableCard(
+              task: t,
+              points: _points(t),
+              text: _cardText(t),
+              width: width,
+              height: TableCard.sizeFor(_cardText(t), width,
+                      sealed: t.seal != null)
+                  .height,
+              owner: t.assignedPlayerIndex == null
+                  ? null
+                  : game.players[t.assignedPlayerIndex!],
+              ownerLabel: t.assignedPlayerIndex == null
+                  ? null
+                  : seatLabels(game.players)[t.assignedPlayerIndex!],
+              charged: game.isCharged(t),
+            ),
+          ),
+        ),
+      );
+
+  /// The bots across the top, each with their tasks under them.
+  Widget _digiOpponents(double width, double maxHeight) {
+    final others = [for (int i = 0; i < game.players.length; i++) if (i != _you) i];
+    final colWidth = width / others.length;
+    final taskWidth = math.min(colWidth - 8, 116.0);
+    final c = _cards;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final seat in others)
+            SizedBox(
+              width: colWidth,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: colWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _digiToken(seat, 42),
+                      Text(
+                          game.hasRoles
+                              ? game.courtiers[seat].short
+                              : game.players[seat].name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 13, color: Colors.white70)),
+                      if (c.dealId == game.dealId)
+                        Text(
+                            '${c.tricksWon(seat)} trick${c.tricksWon(seat) == 1 ? '' : 's'}'
+                            ' · ${c.hands[seat].length} cards',
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.white54)),
+                      for (final t in game.tasks)
+                        if (t.assignedPlayerIndex == seat &&
+                            !_flights.any((f) => f.task == t))
+                          _miniTask(t, taskWidth),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// The middle of the table: the tasks to take while picking (tap one),
+  /// then the trick.
+  Widget _digiMiddle(double width) {
+    if (_choosingKing) {
+      return const Center(
+        child: Text('Dealing…\nWhoever holds the K♠ will be crowned.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 17, height: 1.4, color: Colors.white70)),
+      );
+    }
+    final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
+    if (open.isEmpty) return const SizedBox.expand();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _openTaskRects = {
+        for (final e in _openTaskKeys.entries)
+          if (e.key.assignedPlayerIndex == null)
+            if (_rectOn(e.value) case final r?) e.key: r,
+      };
+    });
+    final w = math.min(118.0, (width - 16) / 3);
+    return Center(
+      child: SingleChildScrollView(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final t in open)
+              Opacity(
+                key: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
+                opacity: _yourPick && !_mayTake(t) ? 0.5 : 1,
+                child: GestureDetector(
+                  onTap: () => _yourPick ? _takeTask(t) : _showTaskDetail(t, Offset.zero),
+                  onLongPress: () => _showTaskDetail(t, Offset.zero),
+                  child: TableCard(
+                    task: t,
+                    points: _points(t),
+                    text: _cardText(t),
+                    width: w,
+                    height: TableCard.sizeFor(_cardText(t), w,
+                            sealed: t.seal != null)
+                        .height,
+                    charged: game.isCharged(t),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _mayTake(Task t) => game.decree == Decree.kingsCommand
+      ? true
+      : game.canTake(t, _you);
+
+  /// Your pick: take a task. Under King's Command you're the King handing
+  /// tasks out, so choose who gets it.
+  Future<void> _takeTask(Task t) async {
+    if (game.decree != Decree.kingsCommand) {
+      if (!game.canTake(t, _you)) {
+        _showSnack("The King can't take this task", Palette.feltDeep);
+        return;
+      }
+      _assignTask(t, _you);
+      return;
+    }
+    final seats = [
+      for (int s = 0; s < game.players.length; s++)
+        if (game.canTake(t, s)) s
+    ];
+    final seat = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        backgroundColor: Palette.feltDeep,
+        title: const Text("King's Command: who takes it?"),
+        children: [
+          for (final s in seats)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, s),
+              child: Text(game.players[s].name, style: const TextStyle(fontSize: 17)),
+            ),
+        ],
+      ),
+    );
+    if (seat != null && mounted && t.assignedPlayerIndex == null) {
+      _assignTask(t, seat);
+    }
+  }
+
+  /// You, with your tasks beside you.
+  Widget _digiYou(double width) {
+    final mine = [
+      for (final t in game.tasks)
+        if (t.assignedPlayerIndex == _you && !_flights.any((f) => f.task == t)) t
+    ];
+    final c = _cards;
+    return Row(
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _digiToken(_you, 46),
+            if (c.dealId == game.dealId)
+              Text('${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}',
+                  style: const TextStyle(fontSize: 11, color: Colors.white54)),
+          ],
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: mine.isEmpty
+              ? Text(
+                  game.pickTurn != null ? 'Your tasks will appear here' : 'No tasks for you this round',
+                  style: const TextStyle(color: Colors.white54))
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: [
+                    for (final t in mine)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: _miniTask(t, math.min(116.0, width / 3.4)),
+                      ),
+                  ]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  /// The trick: each card glides in from whoever played it, and once won
+  /// the trick sweeps off to the winner.
+  List<Widget> _digiTrickLayer() {
+    if (_cards.dealId != game.dealId) return [];
+    final middle = _rectOn(_middleKey);
+    if (middle == null) return [];
     final c = _cards;
     final trick = _lastTrick;
     final seats = trick?.seats ?? c.currentSeats;
@@ -1042,23 +1462,30 @@ class _HomePageState extends State<HomePage>
     if (cards.isEmpty) return [];
     final number = trick != null ? c.tricks.length - 1 : c.tricks.length;
     final n = c.players;
-    final cardW = clampD(geo.cardWidth * 0.6, 44, 66);
+    final cardW = math.min(64.0, (middle.width - 10 * n) / n);
     final cardH = PlayingCardView.heightFor(cardW);
-    final spread = math.min(cardW + 10, (geo.size.width - 2 * geo.seatExtent) / n);
+    final hand = _rectOn(_handKey);
+
+    Offset origin(int seat, PlayingCard card) {
+      if (seat == _you) {
+        return _launchFrom[card.id] ?? hand?.topCenter ?? middle.bottomCenter;
+      }
+      return _rectOn(_seatKey(seat))?.center ?? middle.topCenter;
+    }
+
+    Offset topLeft(Offset centre) => centre - Offset(cardW / 2, cardH / 2);
     return [
       for (int i = 0; i < cards.length; i++)
         () {
-          final target =
-              geo.center + Offset((i - (n - 1) / 2) * spread, 0);
+          final target = middle.center + Offset((i - (n - 1) / 2) * (cardW + 10), 0);
           final seat = seats[i];
           final view = PlayingCardView(
             card: cards[i],
             width: cardW,
             glow: trick != null && trick.winner == seat,
           );
-          Offset topLeft(Offset p) => p - Offset(cardW / 2, cardH / 2);
           if (trick != null && _collecting) {
-            final to = geo.seatCenter(trick.winner);
+            final to = origin(trick.winner, cards[i]);
             return TweenAnimationBuilder<double>(
               key: ValueKey('collect-$number-${cards[i].id}'),
               tween: Tween(begin: 0, end: 1),
@@ -1080,7 +1507,7 @@ class _HomePageState extends State<HomePage>
               child: view,
             );
           }
-          final from = geo.seatCenter(seat);
+          final from = origin(seat, cards[i]);
           return TweenAnimationBuilder<double>(
             key: ValueKey('play-$number-${cards[i].id}'),
             tween: Tween(begin: 0, end: 1),
@@ -1970,7 +2397,7 @@ class _HomePageState extends State<HomePage>
               child: _inGame
                   ? _digital
                       ? Column(children: [
-                          Expanded(child: _buildTable()),
+                          Expanded(child: _buildDigitalTable()),
                           _buildHand(),
                         ])
                       : _buildTable()
@@ -2303,26 +2730,9 @@ class _HomePageState extends State<HomePage>
           if (_crowning != null)
             Positioned.fill(
                 child: IgnorePointer(child: _buildCrowning(geo, _crowning!))),
-          if (_decreePending)
-            Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black38,
-                child: Center(
-                  child: game.currentTiding != null
-                      ? _tidingsScroll(
-                          () => setState(() => _decreeReadFor = game.dealId))
-                      : DecreeScroll(
-                          decree: game.decree!,
-                          detail: _decreeDetail,
-                          onAccept: () =>
-                              setState(() => _decreeReadFor = game.dealId),
-                        ),
-                ),
-              ),
-            ),
+          if (_decreePending) Positioned.fill(child: _buildDecreeOverlay()),
           // "Play!" once every task has an owner.
           Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
-          ..._trickLayer(geo),
           if (game.outcome != RoundOutcome.inProgress)
             Positioned.fill(child: _buildOutcomeOverlay()),
         ],
@@ -4846,3 +5256,39 @@ class _HouseBanner extends StatelessWidget {
 }
 
 enum _DynastyStep { result, dilemma, verdict, death, ending }
+
+/// A task card on its way from the middle of the table to whoever took it,
+/// shrinking as it goes.
+class _Flight {
+  _Flight(this.task, this.from, this.to, this.points, this.text);
+  final Task task;
+  final Rect from;
+  final Rect to;
+  final int points;
+  final String text;
+
+  static const duration = Duration(milliseconds: 480);
+
+  Widget build() => TweenAnimationBuilder<double>(
+        key: ObjectKey(this),
+        tween: Tween(begin: 0, end: 1),
+        duration: duration,
+        curve: Curves.easeInOutCubic,
+        builder: (context, t, child) => Positioned.fromRect(
+            rect: Rect.lerp(from, to, t)!, child: IgnorePointer(child: child!)),
+        child: FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox(
+            width: from.width,
+            height: from.height,
+            child: TableCard(
+              task: task,
+              points: points,
+              text: text,
+              width: from.width,
+              height: from.height,
+            ),
+          ),
+        ),
+      );
+}

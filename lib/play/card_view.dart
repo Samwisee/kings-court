@@ -18,7 +18,7 @@ class PlayingCardView extends StatelessWidget {
   final PlayingCard card;
   final double width;
 
-  /// Not playable right now.
+  /// Not playable right now: shaded (but never see-through).
   final bool dimmed;
 
   /// Won the trick.
@@ -43,10 +43,7 @@ class PlayingCardView extends StatelessWidget {
         color: _ink);
     return Semantics(
       label: card.label,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: dimmed ? 0.55 : 1,
-        child: Container(
+      child: Container(
           width: width,
           height: h,
           decoration: BoxDecoration(
@@ -73,6 +70,11 @@ class PlayingCardView extends StatelessWidget {
                     color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
             ],
           ),
+          foregroundDecoration: dimmed
+              ? BoxDecoration(
+                  color: const Color(0x66000000),
+                  borderRadius: BorderRadius.circular(width * 0.1))
+              : null,
           child: Stack(
             children: [
               Positioned(
@@ -105,7 +107,6 @@ class PlayingCardView extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }
