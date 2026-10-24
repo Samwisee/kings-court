@@ -1265,6 +1265,17 @@ void main() {
     expect(game.kingIndex, 1);
   });
 
+  test('A task only one player can take goes straight to them', () {
+    final g = GameState()
+      ..players = [for (int i = 0; i < 2; i++) Player('P$i', color: Colors.red)];
+    final kingTask = GameState.taskPool.firstWhere((t) => t.kingCantTake);
+    final other = GameState.taskPool.firstWhere((t) => !t.kingCantTake);
+    g.tasks = [kingTask.freshCopy(), other.freshCopy()];
+    g.setKing(0);
+    expect(g.tasks.first.assignedPlayerIndex, 1);
+    expect(g.tasks.last.assignedPlayerIndex, isNull);
+  });
+
   test('The King cannot take King-relative tasks', () {
     final game = GameState();
     final kingTask = GameState.taskPool.firstWhere((t) => t.kingCantTake);
