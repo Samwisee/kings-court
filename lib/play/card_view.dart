@@ -13,7 +13,11 @@ class PlayingCardView extends StatelessWidget {
     required this.width,
     this.dimmed = false,
     this.glow = false,
+    this.edge,
   });
+
+  /// A coloured border, such as the colour of the player who played it.
+  final Color? edge;
 
   final PlayingCard card;
   final double width;
@@ -56,12 +60,13 @@ class PlayingCardView extends StatelessWidget {
                 : null,
             borderRadius: BorderRadius.circular(width * 0.1),
             border: Border.all(
-                color: glow
-                    ? Palette.gold
-                    : card.isCourt
-                        ? Palette.goldDeep
-                        : const Color(0xFFD9D2C3),
-                width: glow ? 3 : card.isCourt ? 2 : 1),
+                color: edge ??
+                    (glow
+                        ? Palette.gold
+                        : card.isCourt
+                            ? Palette.goldDeep
+                            : const Color(0xFFD9D2C3)),
+                width: glow || edge != null ? 3 : card.isCourt ? 2 : 1),
             boxShadow: [
               if (glow)
                 const BoxShadow(color: Palette.gold, blurRadius: 14)

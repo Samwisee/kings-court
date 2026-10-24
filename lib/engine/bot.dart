@@ -105,22 +105,124 @@ class Bot {
     double total = 0;
     final inPlay = s.inPlay;
     for (int n = 0; n < playouts; n++) {
-      final sim = _Sim.from(s);
-      if (first != null) sim.play(first.$1, first.$2);
-      sim.playOut(rand);
-      final v = sim.view(s, inPlay);
-      int done = 0;
-      for (final e in assigned.entries) {
-        final t = s.tasks[e.key];
-        if (needsX(t.description) && (freeX || t.x == null)) {
-          done++;
-          continue;
-        }
-        if (taskRules[t.description]!(v, e.value, t.x) == Verdict.done) done++;
-      }
-      total += done == assigned.length ? 1 : 0.2 * done / max(1, assigned.length);
+      total += _playout(s, assigned, inPlay, first, freeX);
     }
     return total / playouts;
+  }
+
+  /// One random playout's value: 1 if every assigned task is done, a
+  /// little for each one done otherwise.
+  double _playout(MatchState s, Map<int, int> assigned,
+      Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX) {
+    final sim = _Sim.from(s);
+    if (first != null) sim.play(first.$1, first.$2);
+    sim.playOut(rand);
+    final v = sim.view(s, inPlay);
+    int done = 0;
+    for (final e in assigned.entries) {
+      final t = s.tasks[e.key];
+      if (needsX(t.description) && (freeX || t.x == null)) {
+        done++;
+        continue;
+      }
+      if (taskRules[t.description]!(v, e.value, t.x) == Verdict.done) done++;
+    }
+    return done == assigned.length ? 1 : 0.2 * done / max(1, assigned.length);
+  }
+
+  // ------------------------------------------------- without blocking the UI
+  //
+  // The same decisions, done a slice at a time so the screen keeps
+  // animating while a bot thinks (on the web everything shares one thread).
+
+  static const _slice = 24;
+
+  Future<double> _scoreAsync(MatchState s, Map<int, int> assigned,
+      int playouts, {(int, PlayingCard)? first, bool freeX = false}) async {
+    double total = 0;
+    final inPlay = s.inPlay;
+    for (int n = 0; n < playouts; n++) {
+      total += _playout(s, assigned, inPlay, first, freeX);
+      if (n % _slice == _slice - 1) await Future<void>.delayed(Duration.zero);
+    }
+    return total / playouts;
+  }
+
+  Future<double> scoreAsync(
+          MatchState s, Map<int, int> assigned, int playouts) =>
+      _scoreAsync(s, assigned, playouts);
+
+  Future<int> choosePickAsync(MatchState s, int seat) async {
+    final options = [
+      for (int i = 0; i < s.tasks.length; i++)
+        if (s.canTake(i, seat)) i
+    ];
+    if (options.length == 1) return options.first;
+    final per = max(20, budget ~/ options.length);
+    var best = options.first;
+    var bestScore = -1.0;
+    for (final i in options) {
+      final assigned = {
+        for (int t = 0; t < s.tasks.length; t++)
+          if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
+        i: seat,
+      };
+      final score = await _scoreAsync(s, assigned, per, freeX: true) +
+          rand.nextDouble() * 0.01;
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  Future<PlayingCard> choosePlayAsync(MatchState s, int seat) async {
+    final legal = s.legalFor(seat);
+    if (legal.length == 1) return legal.first;
+    final per = max(20, budget ~/ legal.length);
+    final assigned = {
+      for (int t = 0; t < s.tasks.length; t++)
+        if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
+    };
+    var best = legal.first;
+    var bestScore = -1.0;
+    for (final card in legal) {
+      final score = await _scoreAsync(s, assigned, per, first: (seat, card)) +
+          rand.nextDouble() * 0.01;
+      if (score > bestScore) {
+        bestScore = score;
+        best = card;
+      }
+    }
+    return best;
+  }
+
+  Future<int> chooseXAsync(MatchState s, int seat, int task) async {
+    final counts = List.filled(s.totalTricks + 1, 0);
+    final assigned = {
+      for (int t = 0; t < s.tasks.length; t++)
+        if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
+    };
+    final inPlay = s.inPlay;
+    for (int n = 0; n < budget; n++) {
+      final sim = _Sim.from(s);
+      sim.playOut(rand);
+      final v = sim.view(s, inPlay);
+      final others = assigned.entries.where((e) =>
+          e.key != task && !needsX(s.tasks[e.key].description));
+      if (others.every((e) =>
+          taskRules[s.tasks[e.key].description]!(v, e.value, s.tasks[e.key].x) ==
+          Verdict.done)) {
+        counts[v.tricksWon(seat)]++;
+      }
+      if (n % _slice == _slice - 1) await Future<void>.delayed(Duration.zero);
+    }
+    var best = 0;
+    for (int x = 1; x < counts.length; x++) {
+      if (counts[x] > counts[best]) best = x;
+    }
+    return best;
   }
 }
 

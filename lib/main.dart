@@ -447,7 +447,7 @@ class _HomePageState extends State<HomePage>
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
-    if (_dragging == null && _inGame) _save();
+    if (_dragging == null && _handDragCard == null && _inGame) _save();
     if (_digital && _inGame) {
       _syncCards();
       _launchTaskFlights();
@@ -702,14 +702,37 @@ class _HomePageState extends State<HomePage>
 
   /// Lets whichever bot is due act, after a short pause.
   void _scheduleBot() {
-    if (!_digital || _botTimer != null) return;
+    if (!_digital || _botTimer != null || _botBusy) return;
     _botTimer = Timer(botDelay, () {
       _botTimer = null;
       if (mounted) _botStep();
     });
   }
 
-  void _botStep() {
+  /// A bot is thinking (a slice at a time, so the screen stays smooth).
+  bool _botBusy = false;
+
+  /// What the round looks like now, to check nothing moved while a bot
+  /// was thinking.
+  String get _moment => _digital
+      ? '${game.dealId}|${game.pickTurn}|${game.tasks.where((t) => t.assignedPlayerIndex != null).length}|'
+          '${_cards.announced.length}|${_cards.tricks.length}|${_cards.current.length}'
+      : '';
+
+  Future<void> _botStep() async {
+    if (_botBusy) return;
+    _botBusy = true;
+    var acted = false;
+    try {
+      acted = await _botThink();
+    } finally {
+      _botBusy = false;
+    }
+    if (acted && mounted) _scheduleBot();
+  }
+
+  /// Returns true when a bot acted, so the next one can be scheduled.
+  Future<bool> _botThink() async {
     if (!_digital ||
         _choosingKing ||
         _crowning != null ||
@@ -718,18 +741,19 @@ class _HomePageState extends State<HomePage>
         _dragging != null ||
         _lastTrick != null ||
         game.outcome != RoundOutcome.inProgress) {
-      return;
+      return false;
     }
     final view = _matchView();
     _bot.budget = botBudget;
+    final before = _moment;
     final picker = game.pickTurn;
     if (picker != null) {
-      if (picker == _you) return;
+      if (picker == _you) return false;
       final open = [
         for (int i = 0; i < game.tasks.length; i++)
           if (game.tasks[i].assignedPlayerIndex == null) i
       ];
-      if (open.isEmpty) return;
+      if (open.isEmpty) return false;
       if (game.decree == Decree.kingsCommand) {
         // The King hands every task to whoever is best placed for it.
         final i = open.first;
@@ -737,7 +761,7 @@ class _HomePageState extends State<HomePage>
           for (int s = 0; s < game.players.length; s++)
             if (game.canTake(game.tasks[i], s)) s
         ];
-        if (seats.isEmpty) return;
+        if (seats.isEmpty) return false;
         int best = seats.first;
         double bestScore = -1;
         for (final s in seats) {
@@ -747,20 +771,24 @@ class _HomePageState extends State<HomePage>
                 t: game.tasks[t].assignedPlayerIndex!,
             i: s,
           };
-          final score = _bot.score(view, assigned, 120);
+          final score = await _bot.scoreAsync(view, assigned, 120);
           if (score > bestScore) {
             bestScore = score;
             best = s;
           }
         }
+        if (!mounted || _moment != before) return true;
         _assignTask(game.tasks[i], best);
+        return true;
       } else {
-        if (!open.any((i) => view.canTake(i, picker))) return;
-        _assignTask(game.tasks[_bot.choosePick(view, picker)], picker);
+        if (!open.any((i) => view.canTake(i, picker))) return false;
+        final pick = await _bot.choosePickAsync(view, picker);
+        if (!mounted || _moment != before) return true;
+        _assignTask(game.tasks[pick], picker);
+        return true;
       }
-      return;
     }
-    if (game.tasks.any((t) => t.assignedPlayerIndex == null)) return;
+    if (game.tasks.any((t) => t.assignedPlayerIndex == null)) return false;
     // Numbers for the "exactly X tricks" tasks.
     for (int i = 0; i < game.tasks.length; i++) {
       final t = game.tasks[i];
@@ -770,15 +798,19 @@ class _HomePageState extends State<HomePage>
       }
       if (t.assignedPlayerIndex == _you) {
         _askX(t);
-        return;
+        return false;
       }
-      setState(() => _cards.announced[t.description] =
-          _bot.chooseX(view, t.assignedPlayerIndex!, i));
-      return;
+      final x = await _bot.chooseXAsync(view, t.assignedPlayerIndex!, i);
+      if (!mounted || _moment != before) return true;
+      setState(() => _cards.announced[t.description] = x);
+      return true;
     }
     final turn = _cards.turn;
-    if (turn == _you) return;
-    _playCard(turn, _bot.choosePlay(view, turn));
+    if (turn == _you) return false;
+    final card = await _bot.choosePlayAsync(view, turn);
+    if (!mounted || _moment != before) return true;
+    _playCard(turn, card);
+    return true;
   }
 
   /// Asks how many tricks you'll win for an "exactly X" task.
@@ -1482,6 +1514,8 @@ class _HomePageState extends State<HomePage>
           final view = PlayingCardView(
             card: cards[i],
             width: cardW,
+            // Edged in the colour of whoever played it.
+            edge: game.players[seat].color,
             glow: trick != null && trick.winner == seat,
           );
           if (trick != null && _collecting) {
@@ -2387,7 +2421,7 @@ class _HomePageState extends State<HomePage>
     // crown and the main buttons; New Game opens its panel on the table.
     return Stack(children: [
     Scaffold(
-      appBar: _inGame
+      appBar: _inGame && _setupArgs == null
           ? _buildAppBar()
           : AppBar(actions: [_buildMenu(), const SizedBox(width: 4)]),
       body: SafeArea(
@@ -2422,7 +2456,7 @@ class _HomePageState extends State<HomePage>
                       Opacity(opacity: t, child: child),
                   child: ColoredBox(
                     // In a game, wash the table out so the setup reads.
-                    color: _inGame ? const Color(0xF00F4A2E) : Colors.transparent,
+                    color: _inGame ? Palette.felt : Colors.transparent,
                     child: Center(child: _buildSetupPanel()),
                   ),
                 ),
@@ -4076,16 +4110,24 @@ class _WelcomeIntro extends StatelessWidget {
   final double crownSize;
   final Widget button;
 
-  static const _cards = ['7♦', 'J♠', 'K♠', 'Q♠', 'A♥'];
+  static final _cards = [
+    PlayingCard.parse('7♦')!,
+    PlayingCard.jack,
+    PlayingCard.king,
+    PlayingCard.queen,
+    PlayingCard.parse('A♥')!,
+  ];
 
   static double _iv(double t, double a, double b, [Curve curve = Curves.linear]) =>
       curve.transform(((t - a) / (b - a)).clamp(0.0, 1.0).toDouble());
 
   @override
   Widget build(BuildContext context) {
-    final cardW = crownSize * 0.42;
-    final cardH = cardW * 1.45;
-    final stageH = crownSize * 1.35;
+    final cardW = crownSize * 0.4;
+    final cardH = PlayingCardView.heightFor(cardW);
+    // The crown sits above the hand, its band just touching the cards.
+    final handTop = crownSize * 0.8;
+    final stageH = handTop + cardH + 8;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 2600),
@@ -4112,14 +4154,15 @@ class _WelcomeIntro extends StatelessWidget {
                   for (int i = 0; i < _cards.length; i++)
                     Positioned(
                       left: crownSize - cardW / 2,
-                      top: stageH - cardH - 4 + (1 - rise) * 40,
+                      top: handTop + (1 - rise) * 40,
                       child: Opacity(
                         opacity: rise,
                         child: Transform.rotate(
-                          angle: (i - 2) * 0.32 * fan,
-                          alignment: const Alignment(0, 1.6),
-                          child: _IntroCard(
-                              label: _cards[i], width: cardW, height: cardH),
+                          // Fanned from a point below the hand, like cards
+                          // held in a hand.
+                          angle: (i - 2) * 0.2 * fan,
+                          alignment: const Alignment(0, 2.6),
+                          child: PlayingCardView(card: _cards[i], width: cardW),
                         ),
                       ),
                     ),
@@ -4129,7 +4172,7 @@ class _WelcomeIntro extends StatelessWidget {
                       child: CustomPaint(
                         painter: spark > 0 && spark < 1
                             ? _IntroSparks(
-                                origin: Offset(crownSize, stageH * 0.42),
+                                origin: Offset(crownSize, handTop),
                                 progress: spark,
                                 scale: crownSize / 120)
                             : null,
@@ -4139,7 +4182,7 @@ class _WelcomeIntro extends StatelessWidget {
                   // The crown, dropping onto the hand.
                   Positioned(
                     left: crownSize / 2,
-                    top: stageH * 0.42 - crownSize / 2 - (1 - drop) * stageH,
+                    top: handTop - crownSize * 0.75 - 6 - (1 - drop) * stageH,
                     child: Opacity(
                       opacity: crownIn,
                       child: CrownIcon(size: crownSize, color: Palette.gold),
@@ -4185,42 +4228,6 @@ class _WelcomeIntro extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-/// A playing card in the front-page hand.
-class _IntroCard extends StatelessWidget {
-  const _IntroCard(
-      {required this.label, required this.width, required this.height});
-  final String label;
-  final double width;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    final red = label.contains('♥') || label.contains('♦');
-    final court = label.contains('♠') && !label.startsWith('7');
-    return Container(
-      width: width,
-      height: height,
-      padding: EdgeInsets.all(width * 0.08),
-      decoration: BoxDecoration(
-        color: Palette.card,
-        borderRadius: BorderRadius.circular(width * 0.1),
-        border: Border.all(
-            color: court ? Palette.gold : const Color(0x33000000),
-            width: court ? 2 : 1),
-        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],
-      ),
-      alignment: Alignment.topLeft,
-      child: Text(label,
-          style: TextStyle(
-              fontFamily: bodyFont,
-              fontWeight: FontWeight.w800,
-              fontSize: width * 0.3,
-              height: 1,
-              color: red ? Palette.cardRed : Palette.ink)),
     );
   }
 }
@@ -4970,12 +4977,12 @@ class _SetupPanelState extends State<_SetupPanel> {
     };
     final last = step == _steps - 1;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 440),
+    // Fills the screen: progress at the top, the step in the middle, and
+    // the buttons fixed in the bottom corners so they never move.
+    return SizedBox.expand(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             // Progress: one pip per step.
             Row(
@@ -4994,37 +5001,29 @@ class _SetupPanelState extends State<_SetupPanel> {
                   ),
               ],
             ),
-            const SizedBox(height: 18),
-            Flexible(
-              child: SingleChildScrollView(
-                child: AnimatedSize(
-                  // Each step grows or shrinks smoothly into the next.
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeInOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 350),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, a) => FadeTransition(
-                    opacity: a,
-                    child: SlideTransition(
-                      position: Tween(
-                              begin: const Offset(0, 0.06), end: Offset.zero)
-                          .animate(a),
-                      child: child,
+            const SizedBox(height: 12),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, a) =>
+                    FadeTransition(opacity: a, child: child),
+                child: Center(
+                  key: ValueKey(step),
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: body,
+                      ),
                     ),
                   ),
-                  layoutBuilder: (current, previous) => Stack(
-                    alignment: Alignment.topCenter,
-                    children: [...previous, if (current != null) current],
-                  ),
-                  child: body,
-                ),
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Row(
               children: [
                 if (step > 0 || widget.canCancel)
@@ -5035,12 +5034,15 @@ class _SetupPanelState extends State<_SetupPanel> {
                 const Spacer(),
                 Flexible(
                   child: FilledButton(
-                  onPressed: _next,
-                  child: Text(maxLines: 1, overflow: TextOverflow.ellipsis, !last
-                      ? 'Next'
-                      : mode == GameMode.dynasty
-                              ? 'Begin the reign'
-                              : 'Deal tasks'),
+                    onPressed: _next,
+                    child: Text(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        !last
+                            ? 'Next'
+                            : mode == GameMode.dynasty
+                                ? 'Begin the reign'
+                                : 'Deal tasks'),
                   ),
                 ),
               ],
