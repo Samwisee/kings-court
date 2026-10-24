@@ -1422,10 +1422,15 @@ class _HomePageState extends State<HomePage>
     final colWidth = width / others.length;
     final taskWidth = math.min(colWidth - 6, 130.0);
     final c = _cards;
-    // A fixed height, so the table doesn't shift as tasks arrive.
-    return SizedBox(
-      height: maxHeight,
-      child: Row(
+    // Only as tall as the bots' tasks need (so there's room for the tasks
+    // being picked), growing smoothly as tasks arrive.
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.topCenter,
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final seat in others)
@@ -1466,6 +1471,7 @@ class _HomePageState extends State<HomePage>
               ),
             ),
         ],
+      ),
       ),
     );
   }
