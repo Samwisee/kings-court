@@ -14,6 +14,7 @@ import 'story.dart';
 import 'models.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
+import 'engine/conflicts.dart';
 import 'engine/match.dart';
 import 'engine/rules.dart';
 import 'play/card_view.dart';
@@ -915,13 +916,7 @@ class _HomePageState extends State<HomePage>
   /// are judged in seal order, and one done out of order fails.
   void _judgeTasks() {
     final c = _cards;
-    final king = game.kingIndex ?? c.king;
-    final v = RoundView(
-        players: c.players,
-        king: king,
-        tricks: c.tricks,
-        totalTricks: c.totalTricks,
-        inPlay: c.inPlay);
+    final v = _roundView;
     int order(Task t) => t.seal == null ? 0 : t.seal!;
     final pending = game.tasks
         .where((t) => t.status == TaskStatus.pending && t.assignedPlayerIndex != null)
@@ -951,6 +946,38 @@ class _HomePageState extends State<HomePage>
     // Nothing to undo when the cards decided.
     _lastMark = null;
   }
+
+  /// The tricks so far, as the task rules see them.
+  RoundView get _roundView {
+    final c = _cards;
+    return RoundView(
+        players: c.players,
+        king: game.kingIndex ?? c.king,
+        tricks: c.tricks,
+        totalTricks: c.totalTricks,
+        inPlay: c.inPlay);
+  }
+
+  /// How far along an on-screen task is ("2/4"), for the card's corner.
+  String? _progressOf(Task t) {
+    if (!_digital ||
+        _cards.dealId != game.dealId ||
+        t.assignedPlayerIndex == null ||
+        t.status != TaskStatus.pending) {
+      return null;
+    }
+    return taskProgress(t.description, _roundView, t.assignedPlayerIndex!,
+        _cards.announced[t.description]);
+  }
+
+  /// Colours of the players whose open tasks need [card] won.
+  List<Color> _marksFor(PlayingCard card) => [
+        for (final t in game.tasks)
+          if (t.assignedPlayerIndex != null &&
+              t.status == TaskStatus.pending &&
+              neededCards(t.description).contains(card))
+            game.players[t.assignedPlayerIndex!].color
+      ];
 
   /// A task's wording, with the announced number filled in.
   String _cardText(Task t) {
@@ -1103,6 +1130,7 @@ class _HomePageState extends State<HomePage>
                               card: card,
                               width: cardW,
                               dimmed: yourTurn && !legal.contains(card),
+                              marks: _marksFor(card),
                             ),
                           ),
                         ),
@@ -1295,6 +1323,7 @@ class _HomePageState extends State<HomePage>
                   ? null
                   : seatLabels(game.players)[t.assignedPlayerIndex!],
               charged: game.isCharged(t),
+              progress: _progressOf(t),
             ),
           ),
         ),
@@ -1413,7 +1442,7 @@ class _HomePageState extends State<HomePage>
   Future<void> _takeTask(Task t) async {
     if (game.decree != Decree.kingsCommand) {
       if (!game.canTake(t, _you)) {
-        _showSnack("The King can't take this task", Palette.feltDeep);
+        _showSnack(game.whyCantTake(t, _you)!, Palette.feltDeep);
         return;
       }
       _assignTask(t, _you);
@@ -1755,7 +1784,7 @@ class _HomePageState extends State<HomePage>
                   : t.assignedPlayerIndex != null
                       ? 'Tasks stay with whoever took them'
                       : !game.canTake(t, seat)
-                          ? "The King can't take this task"
+                          ? game.whyCantTake(t, seat)!
                           : 'Take tasks onto your own seat',
               Palette.feltDeep);
         }
@@ -1804,7 +1833,7 @@ class _HomePageState extends State<HomePage>
     _save();
     if (seat != null && !game.canTake(t, seat)) {
       _haptic(HapticFeedback.heavyImpact);
-      _showSnack("The King can't take this task", Palette.lost);
+      _showSnack(game.whyCantTake(t, seat)!, Palette.lost);
     }
   }
 

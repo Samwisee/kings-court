@@ -600,9 +600,13 @@ class TableCard extends StatelessWidget {
     this.lifted = false,
     this.faceDown = false,
     this.charged = false,
+    this.progress,
   });
 
   final Task task;
+
+  /// How far along the task is, e.g. "2/4", shown in the bottom corner.
+  final String? progress;
 
   /// Dynasty: a royal charge, dealt straight to one house.
   final bool charged;
@@ -800,6 +804,27 @@ class TableCard extends StatelessWidget {
               ],
             ),
           ),
+          if (progress != null && !task.isCompleted)
+            Positioned(
+              left: charged ? 20 : 4,
+              bottom: 4,
+              child: Container(
+                height: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Palette.ink,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(progress!,
+                    style: const TextStyle(
+                        fontFamily: bodyFont,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                        color: Palette.gold)),
+              ),
+            ),
           // A royal charge: a gold ribbon in the corner by the owner badge.
           if (charged)
             const Positioned(

@@ -14,7 +14,11 @@ class PlayingCardView extends StatelessWidget {
     this.dimmed = false,
     this.glow = false,
     this.edge,
+    this.marks = const [],
   });
+
+  /// Colours of the players whose tasks need this card, shown as pips.
+  final List<Color> marks;
 
   /// A coloured border, such as the colour of the player who played it.
   final Color? edge;
@@ -82,6 +86,28 @@ class PlayingCardView extends StatelessWidget {
               : null,
           child: Stack(
             children: [
+              if (marks.isNotEmpty)
+                Positioned(
+                  right: width * 0.07,
+                  top: width * 0.07,
+                  child: Column(
+                    children: [
+                      for (final m in marks)
+                        Container(
+                          width: width * 0.2,
+                          height: width * 0.2,
+                          margin: const EdgeInsets.only(bottom: 2),
+                          decoration: BoxDecoration(
+                            color: m,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Palette.ink, width: 1.2),
+                          ),
+                          child: Icon(Icons.flag_rounded,
+                              size: width * 0.13, color: Colors.white),
+                        ),
+                    ],
+                  ),
+                ),
               Positioned(
                 left: width * 0.08,
                 top: width * 0.07,

@@ -466,3 +466,86 @@ bool schemeSucceeded(int scheme, RoundView v, int seat) {
   }
   return false;
 }
+
+// ------------------------------------------------------------- progress
+
+/// How far along a task is, in a few characters for the corner of its
+/// card ("2/4", "1 trick"), or null when there's nothing to count.
+String? taskProgress(String d, RoundView v, int owner, int? x) {
+  int won(bool Function(PlayingCard) test) => v.countWon(owner, test);
+  String of(int a, int b) => '$a/$b';
+  bool rank(PlayingCard c, int r) => !c.isCourt && c.rank == r;
+
+  // Named cards: how many of them are won.
+  final named = [
+    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+      PlayingCard.parse(m.group(0)!)!
+  ];
+  if (d.startsWith('Win the ') &&
+      named.length > 1 &&
+      !d.contains(' with ') &&
+      !d.contains('last trick')) {
+    final mine = v.won(owner).toSet();
+    return of(named.where(mine.contains).length, named.length);
+  }
+  final allFour = RegExp(r'^Win all four (\d)s$').firstMatch(d);
+  if (allFour != null) {
+    final r = int.parse(allFour.group(1)!);
+    return of(won((c) => rank(c, r)), 4);
+  }
+  final ranks = RegExp(r'^Win (at least|exactly) (two|three) (\d)s$').firstMatch(d);
+  if (ranks != null) {
+    final n = ranks.group(2) == 'two' ? 2 : 3;
+    final r = int.parse(ranks.group(3)!);
+    return of(won((c) => rank(c, r)), n);
+  }
+  const words = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'seven': 7};
+  final suits = RegExp(r'^Win (at least|exactly) (\w+) ([♥♦♠♣]) cards?$').firstMatch(d);
+  if (suits != null) {
+    final suit = Suit.values.firstWhere((s) => s.symbol == suits.group(3));
+    return of(won((c) => c.suit == suit), words[suits.group(2)] ?? 0);
+  }
+  if (d == 'Win exactly one ♥ and one ♣ card') {
+    return '♥${won((c) => c.suit == Suit.hearts)} ♣${won((c) => c.suit == Suit.clubs)}';
+  }
+  final courts = RegExp(r'^Win exactly (\w+) Court Cards?').firstMatch(d);
+  if (courts != null) return of(won((c) => c.isCourt), words[courts.group(1)] ?? 0);
+  final tricks = RegExp(r'^Win exactly (\w+) tricks?').firstMatch(d);
+  if (tricks != null) {
+    final n = tricks.group(1) == 'X' ? x : words[tricks.group(1)];
+    final secret = d.contains('secret');
+    final mine = v.tricksWon(owner);
+    return n == null || secret ? '$mine' : of(mine, n);
+  }
+  final firstN = RegExp(r'^Win the first (two|three) tricks$').firstMatch(d);
+  if (firstN != null) {
+    final n = words[firstN.group(1)]!;
+    return of(v.tricks.take(n).where((t) => t.winner == owner).length, n);
+  }
+  if (d.contains('as many ♥ cards as ♦')) {
+    return '♥${won((c) => c.suit == Suit.hearts)} ♦${won((c) => c.suit == Suit.diamonds)}';
+  }
+  if (d.startsWith('Win more ♦ cards than ♠')) {
+    return '♦${won((c) => c.suit == Suit.diamonds)} ♠${won((c) => c.suit == Suit.spades)}';
+  }
+  if (d.startsWith('Win more ♥ cards than ♣')) {
+    return '♥${won((c) => c.suit == Suit.hearts)} ♣${won((c) => c.suit == Suit.clubs)}';
+  }
+  if (d.contains('than the King') || d.contains('as the King')) {
+    return '${v.tricksWon(owner)} v ${v.tricksWon(v.king)}';
+  }
+  if (d.startsWith('Win more tricks than everyone') ||
+      d.startsWith('Win fewer tricks than everyone')) {
+    return '${v.tricksWon(owner)} tricks';
+  }
+  if (d.contains('in a row') && !d.startsWith("Don't")) {
+    return 'run ${v.longestRun(owner)}';
+  }
+  if (d == 'Win at least one card of each suit (Court Cards don\'t count)') {
+    final have = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs]
+        .where((s) => v.won(owner).any((c) => c.suit == s))
+        .length;
+    return of(have, 4);
+  }
+  return null;
+}

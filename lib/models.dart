@@ -4,6 +4,7 @@ import 'chronicle.dart';
 import 'courtiers.dart';
 import 'story.dart';
 import 'engine/match.dart';
+import 'engine/conflicts.dart';
 import 'tasks.dart';
 
 enum TaskStatus { pending, completed, failed }
@@ -537,6 +538,15 @@ class GameState {
 
   /// The next seat clockwise after [from] that may pick a task.
   int? _nextPicker(int from) {
+    // Skip anyone who can't take any of the tasks left.
+    for (int step = 1; step <= players.length; step++) {
+      final seat = (from + step) % players.length;
+      if (seat != exiledSeat &&
+          !isAntagonist(seat) &&
+          tasks.any((t) => t.assignedPlayerIndex == null && canTake(t, seat))) {
+        return seat;
+      }
+    }
     for (int step = 1; step <= players.length; step++) {
       final seat = (from + step) % players.length;
       if (seat != exiledSeat && !isAntagonist(seat)) return seat;
@@ -667,9 +677,25 @@ class GameState {
 
   /// Whether [playerIndex] may take [task].
   bool canTake(Task task, int playerIndex) =>
-      playerIndex != exiledSeat &&
-      !isAntagonist(playerIndex) &&
-      !(task.kingCantTake && playerIndex == kingIndex);
+      whyCantTake(task, playerIndex) == null;
+
+  /// Why [seat] can't take [task], or null if they can.
+  String? whyCantTake(Task task, int seat) {
+    if (seat == exiledSeat) return 'Exiled: no tasks this round';
+    if (isAntagonist(seat)) return 'A traitor takes no tasks';
+    if (task.kingCantTake && seat == kingIndex) {
+      return "The King can't take this task";
+    }
+    // Someone can't hold two tasks that work against each other.
+    for (final o in tasks) {
+      if (o != task &&
+          o.assignedPlayerIndex == seat &&
+          selfClash(o.description, task.description)) {
+        return 'That clashes with a task they already hold';
+      }
+    }
+    return null;
+  }
 
   /// Whether [seat] may reveal a card right now, given the decree.
   bool canSpeak(int seat) => switch (decree) {
@@ -817,6 +843,8 @@ class GameState {
       if (currentTotal >= targetPoints) break;
       final points = task.getPointsForPlayerCount(playerCount);
       if (currentTotal + points > targetPoints) continue;
+      // Never deal two tasks that can't both be done.
+      if (tasks.any((t) => clash(t.description, task.description))) continue;
       tasks.add(task.freshCopy()..seal = null);
       currentTotal += points;
     }

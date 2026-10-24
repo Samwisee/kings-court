@@ -1,8 +1,10 @@
 import 'dart:math';
+import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
+import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
@@ -163,5 +165,69 @@ void main() {
     final notYou = (s.pickTurn! + 1) % 4;
     expect(s.problem(PickTask(notYou, 0)), isNotNull);
     expect(() => s.apply(PlayCard(0, s.hands[0].first)), throwsStateError);
+  });
+
+  test('Task profiles name real tasks', () {
+    final names = GameState.taskPool.map((t) => t.description).toSet();
+    for (final d in profiledTasks) {
+      expect(names, contains(d), reason: d);
+    }
+  });
+
+  test('Clashing tasks are spotted', () {
+    expect(clash('Win the 3♥', 'Win all four 3s'), isTrue);
+    expect(clash('Win the first trick', 'Win the first two tricks'), isTrue);
+    expect(clash('Win more tricks than everyone else',
+        'Win more tricks than everyone else together'), isTrue);
+    expect(clash('Win exactly three Court Cards (redeal if one player holds all four)',
+        'Win exactly two Court Cards (redeal if one player holds the J♠, Q♠ and K♠)'), isTrue);
+    expect(clash('Win the 3♥', 'Win the 4♠'), isFalse);
+    expect(selfClash('Win no ♥ cards', 'Win the 3♥'), isTrue);
+    expect(selfClash("Don't win any tricks", 'Win the last trick'), isTrue);
+    expect(selfClash('Win exactly one trick', 'Win exactly two tricks'), isTrue);
+    expect(selfClash('Win the 3♥', 'Win the 4♠'), isFalse);
+  });
+
+  test('Rounds never deal tasks that clash', () {
+    for (int i = 0; i < 300; i++) {
+      final g = GameState()..addTasksUntilTarget(3 + i % 4, 10 + i % 21);
+      for (final a in g.tasks) {
+        for (final b in g.tasks) {
+          if (a != b) {
+            expect(clash(a.description, b.description), isFalse,
+                reason: '${a.description} / ${b.description}');
+          }
+        }
+      }
+    }
+  });
+
+  test('Nobody may hold two tasks that work against each other', () {
+    final g = GameState()
+      ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: const Color(0xFF000000))];
+    Task task(String d) =>
+        GameState.taskPool.firstWhere((t) => t.description == d).freshCopy();
+    final noHearts = task('Win no ♥ cards')..assignedPlayerIndex = 1;
+    final threeHearts = task('Win the 3♥');
+    g.tasks = [noHearts, threeHearts];
+    expect(g.canTake(threeHearts, 1), isFalse);
+    expect(g.whyCantTake(threeHearts, 1), contains('clashes'));
+    expect(g.canTake(threeHearts, 2), isTrue);
+  });
+
+  test('Progress counts what a task has won so far', () {
+    final v = RoundView(
+        players: 4,
+        king: 0,
+        tricks: [
+          Trick(0, [0, 1, 2, 3], [c('3♥'), c('3♦'), c('5♥'), c('2♥')], 2),
+        ],
+        totalTricks: 10,
+        inPlay: fullDeck().toSet());
+    expect(taskProgress('Win all four 3s', v, 2, null), '2/4');
+    expect(taskProgress('Win at least five ♥ cards', v, 2, null), '3/5');
+    expect(taskProgress('Win exactly X tricks, announced to everyone', v, 2, 2),
+        '1/2');
+    expect(taskProgress('Win the 3♥', v, 2, null), isNull);
   });
 }

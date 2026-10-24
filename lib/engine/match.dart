@@ -12,6 +12,7 @@ import 'dart:math';
 
 import '../models.dart';
 import 'cards.dart';
+import 'conflicts.dart';
 import 'rules.dart';
 
 enum Phase { picking, announcing, playing, roundOver }
@@ -168,6 +169,7 @@ class MatchState {
       if (total + points > target) continue;
       if (!taskRules.containsKey(t.description)) continue;
       if (!playableWith(t.description, hands, inPlay)) continue;
+      if (drawn.any((d) => clash(d.description, t.description))) continue;
       drawn.add(MatchTask(t.freshCopy()));
       total += points;
     }
