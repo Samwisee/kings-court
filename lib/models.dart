@@ -779,7 +779,8 @@ class GameState {
       chargeSeat = byKing;
       chargeByKing = true;
     } else if (t?.house != null) {
-      chargeSeat = courtiers.indexOf(t!.house!);
+      final seat = courtiers.indexOf(t!.house!);
+      if (_canBeCharged(seat)) chargeSeat = seat;
     }
   }
 
