@@ -125,7 +125,7 @@ void main() {
             'texts=${find.byType(Text).hitTestable().evaluate().take(6).map((e) => (e.widget as Text).data).toList()}');
       }
       String? tap;
-      for (final t in ['So it begins', 'Hear the council', 'The next matter', 'To the cards', 'Got it', 'Announce']) {
+      for (final t in ['So it begins', 'Hear the council', 'The next matter', 'To the cards', 'Got it', 'Announce', 'Let it be done']) {
         if (find.text(t).hitTestable().evaluate().isNotEmpty) tap = t;
       }
       // A matter before the throne: take the first choice.
