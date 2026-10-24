@@ -147,9 +147,12 @@ class _TableGeometry {
   /// the seat, then beside it along the table edge, then further in. Spots
   /// are worked out in the owner's frame (their right, and "up" towards
   /// the middle), so every card sits square to the person who holds it.
-  Map<Task, Offset> layoutOwned(List<Task> order) {
+  Map<Task, Offset> layoutOwned(List<Task> order,
+      {List<Rect> obstacles = const []}) {
     final table = playArea;
     final placed = <Rect>[
+      // Cards still waiting to be taken: owned cards keep clear of them.
+      ...obstacles,
       for (int i = 0; i < players; i++)
         // The whole seat: crown above the token, name below it. Seats can
         // be turned at any angle, so keep a square clear around them.
@@ -1230,7 +1233,15 @@ class _HomePageState extends State<HomePage>
   /// Re-stacks every player's cards after one is added or removed.
   void _layoutOwned() {
     final geo = _geo;
-    geo.layoutOwned(_order).forEach((t, p) {
+    final loose = [
+      for (final t in _order)
+        if (t.assignedPlayerIndex == null && _pos[t] != null && t != _dragging)
+          Rect.fromCenter(
+              center: _toPx(_pos[t]!),
+              width: geo.cardSize(t).width,
+              height: geo.cardSize(t).height),
+    ];
+    geo.layoutOwned(_order, obstacles: loose).forEach((t, p) {
       _pos[t] = _toFrac(geo.clampToTable(p, geo.cardSize(t)));
     });
   }
