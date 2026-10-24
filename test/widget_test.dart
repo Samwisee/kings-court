@@ -769,17 +769,14 @@ void main() {
     expect(game.reign, 1);
 
     // Win the round.
-    final pending =
-        find.byWidgetPredicate((w) => w is TableCard && !w.task.isCompleted);
-    while (find.text('Round won').evaluate().isEmpty) {
-      // Dynasty rounds have at most one seal, so any order is fine.
-      final card = pending.first;
-      await tester.tap(card);
-      await tester.pumpAndSettle();
-      await tester.tap(find.descendant(
-          of: find.byType(AlertDialog), matching: find.text('Done')));
+    // Seals in order, Ω last.
+    final ordered = List.of(game.tasks)
+      ..sort((a, b) => (a.seal ?? 0).compareTo(b.seal ?? 0));
+    for (final task in ordered) {
+      state.debugComplete(task);
       await tester.pumpAndSettle();
     }
+    expect(find.text('Round won'), findsOneWidget);
     await tester.tap(find.text('The King must decide'));
     await tester.pumpAndSettle();
     expect(find.text('The King\u2019s Dilemma'), findsOneWidget);

@@ -1092,6 +1092,10 @@ class _HomePageState extends State<HomePage>
     ];
   }
 
+  /// Marks a task done, for tests.
+  @visibleForTesting
+  void debugComplete(Task t) => _setTaskStatus(t, TaskStatus.completed);
+
   /// Plays your part, for tests: picks, announces or plays the first
   /// thing allowed. Returns false when there's nothing for you to do.
   @visibleForTesting
