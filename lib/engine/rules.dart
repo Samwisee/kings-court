@@ -409,6 +409,86 @@ final Map<String, TaskRule> taskRules = {
       !t.cards.any(_court) && t.cards.map((c) => c.suit).toSet().length > 1),
 };
 
+/// When a task can be completed, which decides whether a seal on it makes
+/// sense. A seal orders tasks by when they're done, so it needs tasks that
+/// can be done on any trick: a task only settled when the round ends
+/// ("Don't win any ♦ cards") can't come before anything, and one settled by
+/// the first few tricks can't come after anything.
+enum TaskTiming {
+  /// Done the moment it happens, on any trick.
+  anyTrick,
+
+  /// Settled within the first few tricks.
+  early,
+
+  /// Only settled when the round ends (or close to it).
+  end,
+}
+
+const _anyTrickTasks = {
+  'Win a trick where every card is lower than 7, with no Court Cards',
+  'Win a trick where every card is higher than 5',
+  'Win a trick with a 6',
+  'Win a trick with a 5',
+  'Win a trick with a 3',
+  'Win a 5 with a 7',
+  'Win an 8 with a 4',
+  'Win any 6 with another 6',
+  'Win a trick with a 2',
+  'Win the 3♥',
+  'Win the A♦',
+  'Win the 4♠',
+  'Win the 6♣',
+  'Win all four 3s',
+  'Win at least three 5s',
+  'Win at least three 9s',
+  'Win at least two 7s',
+  'Win all four 9s',
+  'Win the A♠, 2♠ and 3♠',
+  'Win the 6♠ and the 7♦',
+  'Win the 5♥ and the 6♦',
+  'Win the 5♣ and the 8♠',
+  'Win the 5♠ and the 8♥',
+  'Win the 9♥ and the 8♦',
+  'Win the A♥ and the 7♣',
+  'Win the 9♦ and the 7♠',
+  'Win the 3♣, 4♦ and 5♦',
+  'Win at least seven ♦ cards',
+  'Win at least five ♥ cards',
+  "Win at least one card of each suit (Court Cards don't count)",
+  'Win a trick of only even numbers (that means only 2s, 4s, 6s and 8s)',
+  'Win a trick of only odd numbers (that means only Aces, 3s, 5s, 7s and 9s)',
+  'Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards',
+  'Win a trick totalling less than 8 / 12 / 16 / 20 (2–3 / 4 / 5 / 6 players), with no Court Cards',
+  'Win a trick totalling exactly 22 or 23',
+  'Win the Q♠',
+  'Win the 7♥ with a Court Card',
+  'Win the 9♣ with a Court Card',
+  'Win two tricks in a row',
+  'Win three tricks in a row',
+  'Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)',
+  'Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)',
+  'Win a mixed-suit trick without trumps',
+};
+
+const _earlyTasks = {
+  "Don't win any of the first four tricks",
+  "Don't win any of the first three tricks",
+  "Don't win any of the first five tricks",
+  'Win the first three tricks',
+  'Win the first two tricks',
+  'Win the first trick',
+};
+
+/// Every task named in the timing lists, for checking they're real tasks.
+Set<String> get timedTaskNames => {..._anyTrickTasks, ..._earlyTasks};
+
+TaskTiming timingOf(String description) => _anyTrickTasks.contains(description)
+    ? TaskTiming.anyTrick
+    : _earlyTasks.contains(description)
+        ? TaskTiming.early
+        : TaskTiming.end;
+
 /// Tasks that need an announced number of tricks.
 bool needsX(String description) => description.startsWith('Win exactly X');
 

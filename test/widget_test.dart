@@ -11,7 +11,10 @@ import 'package:kings_court/sfx.dart';
 import 'package:kings_court/story.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/widgets.dart';
+import 'dart:math';
+import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/rules.dart';
 
 void setPhoneSize(WidgetTester tester) {
   tester.view.physicalSize = const Size(1170, 2532); // iPhone-sized
@@ -590,8 +593,14 @@ void main() {
   test('Seals must be completed in order, Ω last', () {
     final game = GameState()
       ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: Colors.red)]
-      ..sealCount = 3
+      ..sealCount = 0
       ..addTasksUntilTarget(4, 14, newRound: false);
+    while (game.tasks.length < 4) {
+      game.tasks.add(GameState.taskPool[game.tasks.length].freshCopy());
+    }
+    game.tasks[0].seal = 1;
+    game.tasks[1].seal = 2;
+    game.tasks[2].seal = Seals.last;
     final sealed = {for (final t in game.tasks) if (t.seal != null) t.seal!: t};
     expect(sealed.keys.toSet(), {1, 2, Seals.last});
     expect(game.sealProblem(sealed[2]!), contains('Seal I'));
@@ -877,6 +886,90 @@ void main() {
       expect(sealed == 0 || sealed >= 2, isTrue);
     }
     expect(chronicle.every((c) => c.seals == 0 || c.seals >= 2), isTrue);
+  });
+
+  test('Seals only sit where they can be kept', () {
+    var omegas = 0, numbered = 0;
+    for (int i = 0; i < 400; i++) {
+      final g = GameState()
+        ..sealCount = const [2, 3, 4][i % 3]
+        ..addTasksUntilTarget(3 + i % 3, 6 + i % 14, newRound: false);
+      final sealed = g.tasks.where((t) => t.seal != null).toList();
+      expect(sealed.length == 0 || sealed.length >= 2, isTrue);
+      for (final t in sealed) {
+        // A seal orders tasks by when they're done: no seal on a task only
+        // settled at the end of the round, or by the first few tricks.
+        expect(timingOf(t.description), TaskTiming.anyTrick,
+            reason: '${t.description} has seal ${t.seal}');
+      }
+      if (sealed.any((t) => t.seal == Seals.last)) {
+        omegas++;
+        // Ω must be done last, so nothing else may wait for the end.
+        expect(
+            g.tasks.where((t) =>
+                t.seal == null && timingOf(t.description) == TaskTiming.end),
+            isEmpty);
+      } else if (sealed.isNotEmpty) {
+        numbered++;
+        final nums = sealed.map((t) => t.seal!).toList()..sort();
+        expect(nums, [for (int n = 1; n <= nums.length; n++) n]);
+      }
+    }
+    expect(numbered, greaterThan(0));
+    expect(omegas + numbered, greaterThan(200));
+  });
+
+  test('Every timed task is a real task', () {
+    for (final d in timedTaskNames) {
+      expect(taskRules.containsKey(d), isTrue, reason: d);
+    }
+  });
+
+  test('Tasks marked any-trick can be done before the last trick', () {
+    // Random rounds: each any-trick task should sometimes be done before
+    // the last trick.
+    final rand = Random(7);
+    final early = <String>{};
+    for (int r = 0; r < 600; r++) {
+      final players = 3 + r % 3;
+      final dealt = deal(players, rand);
+      final hands = [for (final h in dealt.hands) List.of(h)];
+      final inPlay = hands.expand((h) => h).toSet();
+      final total = hands.first.length;
+      final tricks = <Trick>[];
+      var leader = 0;
+      while (tricks.length < total - 1) {
+        final seats = <int>[], cards = <PlayingCard>[];
+        for (int i = 0; i < players; i++) {
+          final s = (leader + i) % players;
+          final legal =
+              legalPlays(hands[s], cards.isEmpty ? null : cards.first);
+          final c = legal[rand.nextInt(legal.length)];
+          hands[s].remove(c);
+          seats.add(s);
+          cards.add(c);
+        }
+        final w = seats[winningPlay(cards)];
+        tricks.add(Trick(leader, seats, cards, w));
+        leader = w;
+        final v = RoundView(
+            players: players,
+            king: 0,
+            tricks: tricks,
+            totalTricks: total,
+            inPlay: inPlay);
+        for (final e in taskRules.entries) {
+          for (int o = 0; o < players; o++) {
+            if (e.value(v, o, 1) == Verdict.done) early.add(e.key);
+          }
+        }
+      }
+    }
+    for (final d in taskRules.keys) {
+      if (timingOf(d) == TaskTiming.anyTrick) {
+        expect(early.contains(d), isTrue, reason: d);
+      }
+    }
   });
 
   for (final mode in ['Free play', 'Dynasty']) {

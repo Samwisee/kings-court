@@ -5,6 +5,7 @@ import 'courtiers.dart';
 import 'story.dart';
 import 'engine/match.dart';
 import 'engine/conflicts.dart';
+import 'engine/rules.dart';
 import 'tasks.dart';
 
 enum TaskStatus { pending, completed, failed }
@@ -853,24 +854,60 @@ class GameState {
       }
       if (decree == Decree.exile && playerCount < 3) decree = Decree.silence;
     }
+    // Draw the tasks, and if the round has seals, try a few draws for
+    // enough tasks a seal can sit on.
+    List<Task> best = const [];
+    int bestFree = -1;
+    for (int attempt = 0; attempt < 12; attempt++) {
+      final drawn = _drawTasks(playerCount, targetPoints, rand);
+      final free = drawn.where(_sealable).length;
+      if (free > bestFree) {
+        best = drawn;
+        bestFree = free;
+      }
+      if (sealCount < 2 || free >= sealCount) break;
+    }
+    tasks.addAll(best);
+    _placeSeals(rand);
+  }
+
+  /// A seal orders tasks by when they're done, so it only goes on a task
+  /// that can be done on any trick (see [TaskTiming]).
+  static bool _sealable(Task t) =>
+      timingOf(t.description) == TaskTiming.anyTrick;
+
+  List<Task> _drawTasks(int playerCount, int targetPoints, Random rand) {
+    final drawn = <Task>[];
     int currentTotal = 0;
     final pool = List<Task>.of(taskPool)..shuffle(rand);
-
     for (final task in pool) {
       if (currentTotal >= targetPoints) break;
       final points = task.getPointsForPlayerCount(playerCount);
       if (currentTotal + points > targetPoints) continue;
       // Never deal two tasks that can't both be done.
-      if (tasks.any((t) => clash(t.description, task.description))) continue;
-      tasks.add(task.freshCopy()..seal = null);
+      if (drawn.any((t) => clash(t.description, task.description))) continue;
+      drawn.add(task.freshCopy()..seal = null);
       currentTotal += points;
     }
-    // A single seal orders nothing, so a round has two or none.
-    final seals = Seals.forCount(
-        tasks.length < 2 || sealCount < 2 ? 0 : min(sealCount, tasks.length));
-    final sealed = List.of(tasks)..shuffle(rand);
+    return drawn;
+  }
+
+  /// Puts [sealCount] seals on tasks that can take them. A single seal
+  /// orders nothing, so a round has two or none. The Ω seal must be the
+  /// last task done, so it's only used when no other task waits for the
+  /// round to end; otherwise the seals are all numbered.
+  void _placeSeals(Random rand) {
+    final free = tasks.where(_sealable).toList()..shuffle(rand);
+    final count = min(sealCount, free.length);
+    if (count < 2) return;
+    final othersWait = tasks.any((t) =>
+        !free.take(count).contains(t) &&
+        timingOf(t.description) == TaskTiming.end);
+    final seals = othersWait
+        ? [for (int i = 1; i <= count; i++) i]
+        : Seals.forCount(count);
     for (int i = 0; i < seals.length; i++) {
-      sealed[i].seal = seals[i];
+      free[i].seal = seals[i];
     }
   }
 
