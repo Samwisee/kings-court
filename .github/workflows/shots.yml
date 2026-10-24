@@ -1,0 +1,40 @@
+name: Screenshots
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shots
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Take screenshots
+        run: |
+          timeout 600 flutter test tool/shots/shots_test.dart --update-goldens --reporter expanded > shots.txt 2>&1 || true
+          tail -30 shots.txt
+          python3 tool/ci_annotate.py shots.txt || true
+      - name: Publish to the shots branch
+        run: |
+          mkdir -p /tmp/out && cp tool/shots/goldens/*.png /tmp/out/ 2>/dev/null || true
+          cp shots.txt /tmp/out/
+          cd /tmp/out
+          git init -q -b shots
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Screenshots for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" shots
