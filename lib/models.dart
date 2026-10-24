@@ -567,6 +567,15 @@ class GameState {
 
   static final List<Task> taskPool = _buildTaskPool();
 
+  /// The King holds the K♠, the highest card, so whenever they play it they
+  /// win that trick and a Court Card with it. These can never be theirs.
+  static const _impossibleForTheKing = [
+    'Win no Court Cards',
+    "Don't win any tricks",
+    'Win the Joker and no other Court Card',
+    'Win the J♠ and no other Court Card',
+  ];
+
   static List<Task> _buildTaskPool() {
     return tasksData
         .map((m) => Task(
@@ -575,7 +584,9 @@ class GameState {
               fourPlayerPoints: m['four'] as int,
               fivePlayerPoints: m['five'] as int,
               sixPlayerPoints: m['six'] as int,
-              kingCantTake: (m['kingCantTake'] as bool?) ?? false,
+              kingCantTake: ((m['kingCantTake'] as bool?) ?? false) ||
+                  _impossibleForTheKing.any(
+                      (d) => (m['description'] as String).startsWith(d)),
             ))
         .toList();
   }
@@ -731,7 +742,13 @@ class GameState {
     }
     _chooseExile();
     if (index != null && isDynasty) _assignCharge();
-    pickTurn = tasks.any((t) => t.assignedPlayerIndex == null) ? index : null;
+    // The King picks first, unless there's nothing they're allowed to take.
+    final loose = tasks.where((t) => t.assignedPlayerIndex == null);
+    pickTurn = loose.isEmpty || index == null
+        ? null
+        : loose.any((t) => canTake(t, index))
+            ? index
+            : _nextPicker(index);
     for (final t in tasks) {
       if (t.assignedPlayerIndex != null && !canTake(t, t.assignedPlayerIndex!)) {
         t.assignedPlayerIndex = null;

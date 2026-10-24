@@ -230,4 +230,25 @@ void main() {
         '1/2');
     expect(taskProgress('Win the 3♥', v, 2, null), isNull);
   });
+
+  test('The King can never take a task the K♠ makes impossible', () {
+    for (final d in ['Win no Court Cards', "Don't win any tricks"]) {
+      expect(
+          GameState.taskPool.firstWhere((t) => t.description == d).kingCantTake,
+          isTrue,
+          reason: d);
+    }
+  });
+
+  test("If the King can't take any task, the next player picks first", () {
+    final g = GameState()
+      ..players = [for (int i = 0; i < 3; i++) Player('P$i', color: const Color(0xFF000000))]
+      ..tasks = [
+        GameState.taskPool
+            .firstWhere((t) => t.description == 'Win no Court Cards')
+            .freshCopy()
+      ];
+    g.setKing(0);
+    expect(g.pickTurn, 1);
+  });
 }
