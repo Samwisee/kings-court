@@ -4392,7 +4392,7 @@ class _HomePageState extends State<HomePage>
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
                         foregroundColor: Palette.ink,
-                        side: const BorderSide(color: _ink)),
+                        side: BorderSide(color: _ink)),
                     child: Text(text, textAlign: TextAlign.center))
                 : FilledButton(
                     onPressed: onPressed,
