@@ -33,7 +33,18 @@ jobs:
           awk -F'|' 'NF>=8 && ($1=="ERROR" || $1=="WARNING") {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' analyze.txt
           ! grep -q '^ERROR|' analyze.txt
       - name: Test
-        run: flutter test --reporter github
+        run: |
+          set +e
+          flutter test --reporter expanded > test.txt 2>&1
+          code=$?
+          tail -5 test.txt
+          if [ $code -ne 0 ]; then
+            # The failures, with context, as one annotation per failing test.
+            awk '/\[E\]$/ {if (buf!="") print buf; buf=$0; n=1; next}
+                 buf!="" && n<60 {buf=buf"%0A"$0; n++}
+                 END {if (buf!="") print buf}' test.txt | head -20 | sed 's/^/::error::/'
+          fi
+          exit $code
 
   # Builds and publishes even if a test fails, so there's always something
   # to play; the test job shows what broke.
