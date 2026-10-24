@@ -3301,7 +3301,7 @@ class _HomePageState extends State<HomePage>
               child: child,
             ),
             layoutBuilder: (current, previous) =>
-                Stack(fit: StackFit.expand, children: [...previous, ?current]),
+                Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
             child: (_inGame && _setupArgs == null && _contest == null
                     ? _throneRoom()
                     : null) is Widget
