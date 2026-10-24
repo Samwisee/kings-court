@@ -1195,6 +1195,9 @@ void main() {
         await tester.pump(const Duration(milliseconds: 30));
         if (find.text('So it begins').evaluate().isNotEmpty) {
           await tester.tap(find.text('So it begins'));
+        } else if (find.text('Tap to continue').hitTestable().evaluate().isNotEmpty) {
+          // Solo Dynasty's throne room: a tap goes on.
+          await tester.tap(find.text('Tap to continue').hitTestable());
         } else if (find.text('So be it').evaluate().isNotEmpty) {
           await tester.tap(find.text('So be it'));
         } else if (find.text('Let it fail').evaluate().isNotEmpty) {

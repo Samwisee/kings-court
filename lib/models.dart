@@ -307,6 +307,20 @@ class GameState {
       standing[courtiers[s].name] = loyalty[s];
       courtColor[courtiers[s].name] = players[s].color.toARGB32();
     }
+    // The whole council is there for the coronation: every great house.
+    for (final c in Courtier.houses) {
+      if (court.contains(c) || court.length >= maxCourt) continue;
+      final used = {
+        players.first.color.toARGB32(),
+        ...courtColor.values,
+      };
+      court.add(c);
+      standing[c.name] = startingLoyalty;
+      courtColor[c.name] = Palette.players
+          .firstWhere((p) => !used.contains(p.toARGB32()),
+              orElse: () => Palette.players[court.length % Palette.players.length])
+          .toARGB32();
+    }
   }
 
   /// Writes what the seated courtiers think back to the court.
@@ -435,7 +449,7 @@ class GameState {
   String personAt(int seat) => courtiers[seat].title;
 
   /// The smallest and largest court in solo Dynasty (not counting you).
-  static const minCourt = 1, maxCourt = 5;
+  static const minCourt = 1, maxCourt = 6;
 
   /// Solo Dynasty, between rounds: the court changes with the story.
   /// Traitors who scheme too long flee, courtiers a choice sent away
@@ -534,7 +548,11 @@ class GameState {
   /// few of the court. A coronation seats everyone.
   List<Courtier> _castFor(Tiding? t, Random rand) {
     _ensureCourt();
-    if (t == null || t.arc == 'crown') return List.of(court);
+    // A coronation (or a new reign) seats three of the court for the
+    // first hand; the whole court watches from the hall.
+    if (t == null || t.arc == 'crown') {
+      return (List.of(court)..shuffle(rand)).take(3).toList();
+    }
     final cast = <Courtier>[
       if (t.house != null) t.house!,
       for (final c in t.cast)
@@ -544,9 +562,12 @@ class GameState {
       if (!court.contains(c)) _join(c, '${c.title} is summoned to court.');
     }
     cast.removeWhere((c) => !court.contains(c));
-    if (cast.isEmpty) {
-      final pool = List.of(court)..shuffle(rand);
-      cast.addAll(pool.take(1 + rand.nextInt(min(3, max(1, pool.length)))));
+    // Hands of two are rare: most scenes bring two or three of the court
+    // to the table.
+    final want = rand.nextDouble() < 0.15 ? 1 : 2 + rand.nextInt(2);
+    final pool = [for (final c in court) if (!cast.contains(c)) c]..shuffle(rand);
+    while (cast.length < want && pool.isNotEmpty) {
+      cast.add(pool.removeLast());
     }
     return cast;
   }

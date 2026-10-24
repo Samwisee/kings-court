@@ -812,6 +812,11 @@ class _HomePageState extends State<HomePage>
 
   /// Returns true when a bot acted, so the next one can be scheduled.
   Future<bool> _botThink() async {
+    // Traitors play for their schemes; the loyal play to stop them.
+    _cards.schemes = {
+      for (final seat in game.antagonists)
+        if (game.schemeOf[seat] != null) seat: game.schemeOf[seat]!
+    };
     if (_revealing || (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
       return false;
     }
@@ -1524,17 +1529,53 @@ class _HomePageState extends State<HomePage>
   }
 
   /// The bots across the top, each with their tasks under them.
+  /// A traitor's scheme as a black card: what they're plotting this hand,
+  /// and once the hand is over, whether you stopped them.
+  Widget _schemeCard(int seat, double width, double fontSize) {
+    final result = seat < game.schemeResult.length ? game.schemeResult[seat] : null;
+    return Padding(
+      padding: const EdgeInsets.only(top: 5),
+      child: Container(
+        width: width,
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFF120A0C),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Palette.lost, width: 2),
+          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.dangerous_rounded, size: 14, color: Palette.lost),
+              const SizedBox(width: 4),
+              Text(
+                  result == null
+                      ? 'Scheme'
+                      : result
+                          ? 'It worked'
+                          : 'Foiled',
+                  style: TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: fontSize,
+                      color: result == false ? Palette.won : Palette.lost)),
+            ]),
+            const SizedBox(height: 2),
+            SuitText(schemes[game.schemeOf[seat]!],
+                style: TextStyle(
+                    fontSize: fontSize, height: 1.25, color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// The scene at stake in this hand: its name, and what hangs on it.
   Widget _stakes(Tiding t) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Column(children: [
-          Text(t.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: Palette.gold)),
           Text(
               _chargeLine ??
                   'Every task done, and ${t.won.text[0].toLowerCase()}${t.won.text.substring(1)}',
@@ -1632,6 +1673,14 @@ class _HomePageState extends State<HomePage>
                           softWrap: false,
                           style: const TextStyle(
                               fontSize: 11, color: Colors.white54)),
+                    // A traitor's scheme, face up: a black card the court
+                    // must stop.
+                    if (seat != null &&
+                        game.solo &&
+                        !_storyActive &&
+                        game.isAntagonist(seat) &&
+                        game.schemeOf[seat] != null)
+                      _schemeCard(seat, taskWidth, colWidth < 80 ? 11 : 12),
                     if (seat != null)
                       for (final t in game.tasks)
                         if (!_storyActive &&
@@ -3454,11 +3503,15 @@ class _HomePageState extends State<HomePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-              game.mode == GameMode.chronicle && game.chapter != null
+              game.solo && game.currentTiding != null
+                  ? game.currentTiding!.title
+                  : game.mode == GameMode.chronicle && game.chapter != null
                   ? 'Chapter ${game.chapter! + 1}'
                   : game.isDynasty && game.reign > 0
                       ? 'Reign ${roman(game.reign)}'
                       : 'Round ${game.roundNumber}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                   fontFamily: displayFont,
                   fontWeight: FontWeight.w700,
@@ -3471,7 +3524,7 @@ class _HomePageState extends State<HomePage>
               if (_choosingKing)
                 const Text('Choose the King',
                     style: TextStyle(fontSize: 13, color: Colors.white70))
-              else
+              else if (!game.solo)
                 Flexible(child: TaskPips(tasks: game.tasks)),
               if (game.decree != null && !_choosingKing) ...[
                 const SizedBox(width: 8),
@@ -3496,8 +3549,9 @@ class _HomePageState extends State<HomePage>
                   ),
                 )),
               ],
-              // Antagonists' open schemes; tap to read or settle one.
-              if (!_choosingKing)
+              // Antagonists' open schemes; tap to read or settle one. (Solo,
+              // they're black cards on the table instead.)
+              if (!_choosingKing && !game.solo)
                 for (final seat in game.antagonists) ...[
                   const SizedBox(width: 6),
                   Flexible(child: InkWell(
@@ -4592,8 +4646,10 @@ class _HomePageState extends State<HomePage>
       kingName: 'King ${game.reignName}, Reign ${roman(game.reign)}',
       coffers: game.coffers,
       wounds: game.kingWounds,
+      // Buttons only for real decisions; otherwise a tap goes on.
       left: left,
-      right: right,
+      right: left == null ? null : right,
+      onContinue: left == null && right != null && right.enabled ? right.onTap : null,
       fast: botDelay.inMilliseconds < 5,
     );
   }

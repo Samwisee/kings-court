@@ -127,7 +127,16 @@ class Bot {
       }
       if (taskRules[t.description]!(v, e.value, t.x) == Verdict.done) done++;
     }
-    return done == assigned.length ? 1 : 0.2 * done / max(1, assigned.length);
+    final value =
+        done == assigned.length ? 1.0 : 0.2 * done / max(1, assigned.length);
+    if (s.schemes.isEmpty) return value;
+    // A traitor wants only their scheme; everyone else wants it stopped.
+    final me = first?.$1;
+    if (me != null && s.schemes.containsKey(me)) {
+      return schemeSucceeded(s.schemes[me]!, v, me) ? 1 : 0;
+    }
+    final schemed = s.schemes.entries.any((e) => schemeSucceeded(e.value, v, e.key));
+    return schemed ? value * 0.3 : value;
   }
 
   // ------------------------------------------------- without blocking the UI

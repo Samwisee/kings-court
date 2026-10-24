@@ -81,7 +81,11 @@ class ThroneRoom extends StatefulWidget {
     this.extra,
     this.fast = false,
     this.scene = '',
+    this.onContinue,
   });
+
+  /// When there's nothing to decide: a tap after the last line goes on.
+  final VoidCallback? onContinue;
 
   /// Which scene this is: a new one starts the talk again, but the court
   /// stays where it is.
@@ -181,7 +185,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
           final w = box.maxWidth, h = box.maxHeight;
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: _done ? null : _next,
+            onTap: _done ? widget.onContinue : _next,
             child: Stack(children: [
               Positioned.fill(child: CustomPaint(painter: _HallPainter())),
               // The court about the hall.
@@ -342,14 +346,14 @@ class _ThroneRoomState extends State<ThroneRoom> {
     final floor = _floor(w, h);
     // You speak from the throne; the court from the floor before it.
     final bottom = king ? 168.0 : h - floor.dy + (fig == null ? -20 : 34);
+    final shown = _done ? widget.lines.length - 1 : _line;
     return Positioned(
       left: 20,
       right: 20,
       bottom: bottom,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 260),
+      child: KeyedSubtree(
+        key: ValueKey('line-${widget.scene}-$shown'),
         child: Align(
-          key: ValueKey('line-$_line-$_done'),
           alignment: Alignment.bottomCenter,
           child: king
               ? SpeechBubble(line.text, who: line.name ?? 'You', tailBelow: true)
@@ -380,11 +384,11 @@ class _ThroneRoomState extends State<ThroneRoom> {
       bottom: 10,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         if (widget.extra != null && _done) widget.extra!,
-        if (!_done)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 6),
-            child: Text('Tap to hear more',
-                style: TextStyle(fontSize: 12, color: Colors.white38)),
+        if (!_done || widget.onContinue != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(_done ? 'Tap to continue' : 'Tap to hear more',
+                style: const TextStyle(fontSize: 12, color: Colors.white38)),
           ),
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
           slot(widget.left),

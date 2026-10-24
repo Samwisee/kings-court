@@ -1720,11 +1720,11 @@ class _SpeechBubbleState extends State<SpeechBubble>
     return AnimatedBuilder(
       animation: _c,
       builder: (context, child) {
-        final t = Curves.easeOutBack.transform(_c.value);
-        return Transform.scale(
-          scale: 0.6 + 0.4 * t,
-          alignment: Alignment.centerLeft,
-          child: Opacity(opacity: clampD(_c.value * 1.4, 0, 1), child: child),
+        // A gentle rise into place: no overshoot, no flicker.
+        final t = Curves.easeOutCubic.transform(_c.value);
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(offset: Offset(0, 10 * (1 - t)), child: child),
         );
       },
       child: CustomPaint(

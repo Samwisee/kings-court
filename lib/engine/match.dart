@@ -82,6 +82,9 @@ class MatchState {
   final int players;
   int target;
 
+  /// Traitors' schemes this round, by seat (see schemeSucceeded).
+  Map<int, int> schemes = {};
+
   int round = 0;
   int wins = 0;
   int losses = 0;
