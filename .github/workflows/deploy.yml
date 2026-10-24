@@ -33,10 +33,6 @@ jobs:
           flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine 2>&1 | tee analyze.txt || true
           awk -F'|' 'NF>=8 && ($1=="ERROR" || $1=="WARNING") {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' analyze.txt
           ! grep -q '^ERROR|' analyze.txt
-      - name: Debug drag
-        run: |
-          timeout 120 flutter test test/widget_test.dart --plain-name "Dragging a task" -r expanded > drag.txt 2>&1 || true
-          grep -E "DRAG|Expected|Actual" drag.txt | head -20 | tr '\n' '~' | sed 's/~/%0A/g; s/^/::warning::/'; echo
       - name: Test
         run: |
           set +e

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 
@@ -676,7 +677,6 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onDragStart(Task t) {
-    debugPrint('DRAGSTART ${t.description}');
     setState(() {
       _dragging = t;
       _order
@@ -689,7 +689,6 @@ class _HomePageState extends State<HomePage>
     setState(() {
       final geo = _geo;
       final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
-      debugPrint('DRAGUPDATE delta=$delta from=${_toPx(_pos[t]!)} to=$p card=${geo.cardSize(t)} area=${geo.playArea}');
       _pos[t] = _toFrac(p);
       final seat = _geo.seatAt(p);
       _hoverSeat = seat != null && game.canTake(t, seat) ? seat : null;
@@ -712,8 +711,6 @@ class _HomePageState extends State<HomePage>
     final p = _toPx(_pos[t]!);
     final seat = _geo.seatAt(p);
     final previous = t.assignedPlayerIndex;
-    debugPrint('DRAGEND p=$p seat=$seat table=$_tableSize '
-        'seats=${[for (int i = 0; i < game.players.length; i++) _geo.seatCenter(i)]}');
     setState(() {
       _dragging = null;
       _hoverSeat = null;
@@ -2125,6 +2122,9 @@ class _HomePageState extends State<HomePage>
                       duration: const Duration(milliseconds: 260),
                       curve: Curves.easeOutCubic,
                       child: GestureDetector(
+                        // Measure the drag from where the finger went down,
+                        // so the card doesn't lag behind by the touch slop.
+                        dragStartBehavior: DragStartBehavior.down,
                         onTapUp: (d) => _showTaskDetail(t, d.globalPosition),
                         onPanStart: (d) {
                           _lastPointer = d.globalPosition;
