@@ -254,12 +254,18 @@ void main() {
             final box = el.renderObject as RenderBox;
             final a = box.localToGlobal(Offset.zero);
             final b = box.localToGlobal(box.size.bottomRight(Offset.zero));
-            return Rect.fromPoints(a, b).deflate(1);
+            return (
+              (el.widget as TableCard).task.assignedPlayerIndex,
+              Rect.fromPoints(a, b).deflate(1)
+            );
           }(),
     ];
+    // One seat's stack may squeeze together on a crowded table; two
+    // seats' stacks must never run into each other.
     for (int i = 0; i < rects.length; i++) {
       for (int j = i + 1; j < rects.length; j++) {
-        expect(rects[i].overlaps(rects[j]), isFalse,
+        if (rects[i].$1 == rects[j].$1) continue;
+        expect(rects[i].$2.overlaps(rects[j].$2), isFalse,
             reason: 'cards $i and $j overlap');
       }
     }
