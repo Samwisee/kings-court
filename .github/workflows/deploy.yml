@@ -17,6 +17,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -34,12 +35,12 @@ jobs:
           ! grep -q '^ERROR|' analyze.txt
       - name: Debug drag
         run: |
-          flutter test test/widget_test.dart --plain-name "Dragging a task" -r expanded > drag.txt 2>&1 || true
+          timeout 120 flutter test test/widget_test.dart --plain-name "Dragging a task" -r expanded > drag.txt 2>&1 || true
           grep -E "DRAG|Expected|Actual" drag.txt | head -20 | tr '\n' '~' | sed 's/~/%0A/g; s/^/::warning::/'; echo
       - name: Test
         run: |
           set +e
-          flutter test --reporter expanded > test.txt 2>&1
+          timeout 600 flutter test --timeout 60s --reporter expanded > test.txt 2>&1
           code=$?
           tail -5 test.txt
           if [ $code -ne 0 ]; then python3 tool/ci_annotate.py test.txt; fi

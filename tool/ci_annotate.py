@@ -25,3 +25,6 @@ while i < len(lines) and len(out) < 25:
 for block in out:
     text = "%0A".join(l.replace("%", "%25") for l in block)[:6000]
     print("::error::" + text)
+# The last lines show which test was running if the run timed out.
+tail = [l for l in lines if l.strip()][-4:]
+print("::warning::LAST " + "%0A".join(l.replace("%", "%25") for l in tail)[:3000])
