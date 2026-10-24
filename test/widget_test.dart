@@ -752,7 +752,8 @@ void main() {
     final role = g.court.first;
     g.applyChoice(Choice('x', 'y', [Depart(role)]));
     g.nextDynastyRound(4, 8);
-    expect(g.court, isNot(contains(role)));
+    // They leave (though a scene may summon a new one at once).
+    expect(g.courtNews.first.role, role);
     expect(g.courtNews.first.arrived, isFalse);
     g.applyChoice(Choice('x', 'y', [Arrive(role)]));
     g.nextDynastyRound(4, 8);
