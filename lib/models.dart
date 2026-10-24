@@ -242,6 +242,17 @@ class GameState {
   /// changes around you.
   bool get solo => isDynasty && digital;
 
+  /// The royal coffers, in gold. Taxes come in each round; choices spend
+  /// it (or bring it in).
+  int coffers = 12;
+
+  /// Gold a choice costs (positive) or brings in (negative).
+  static int costOf(Choice c) =>
+      -c.effects.whereType<Gold>().fold<int>(0, (a, g) => a + g.delta);
+
+  /// Whether the coffers can pay for [c].
+  bool canAfford(Choice c) => costOf(c) <= 0 || coffers >= costOf(c);
+
   /// The round the main story (Karsk) last moved on.
   int mainBeatRound = -99;
 
@@ -913,6 +924,8 @@ class GameState {
           flags.remove(name);
         case Say():
           break;
+        case Gold(:final delta):
+          coffers += delta;
         case Depart(:final courtier):
           if (courtRoles.contains(courtier)) pendingDepartures.add(courtier);
         case Arrive(:final courtier):
@@ -1060,6 +1073,7 @@ class GameState {
       wins++;
       streak++;
       bestStreak = max(bestStreak, streak);
+      if (isDynasty) coffers += 3; // a good season's taxes
       if (isDynasty) {
         reignWins++;
         // Five victories in one reign: a golden age, told in the story.
@@ -1457,6 +1471,7 @@ class GameState {
         'traitorFor': traitorFor,
         'courtColor': courtColor,
         'scenePicked': scenePicked,
+        'coffers': coffers,
         'mainBeatRound': mainBeatRound,
         'streak': streak,
         'bestStreak': bestStreak,
@@ -1558,6 +1573,7 @@ class GameState {
         ..traitorFor = Map<String, int>.from((j['traitorFor'] as Map?) ?? const {})
         ..courtColor = Map<String, int>.from((j['courtColor'] as Map?) ?? const {})
         ..scenePicked = (j['scenePicked'] as int?) ?? -1
+        ..coffers = (j['coffers'] as int?) ?? 12
         ..mainBeatRound = (j['mainBeatRound'] as int?) ?? -99
         ..streak = j['streak'] as int
         ..bestStreak = j['bestStreak'] as int

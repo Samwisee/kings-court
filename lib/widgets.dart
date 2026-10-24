@@ -1674,8 +1674,11 @@ class _CharacterTokenState extends State<CharacterToken>
 /// (on its left).
 class SpeechBubble extends StatefulWidget {
   const SpeechBubble(this.text,
-      {super.key, this.who, this.delay = Duration.zero});
+      {super.key, this.who, this.delay = Duration.zero, this.tailBelow = false});
   final String text;
+
+  /// Point down at a speaker below, rather than left.
+  final bool tailBelow;
 
   /// Who is speaking, shown small above the words.
   final String? who;
@@ -1725,9 +1728,11 @@ class _SpeechBubbleState extends State<SpeechBubble>
         );
       },
       child: CustomPaint(
-        painter: _BubbleTail(),
+        painter: _BubbleTail(below: widget.tailBelow),
         child: Container(
-          margin: const EdgeInsets.only(left: 8),
+          margin: widget.tailBelow
+              ? const EdgeInsets.only(bottom: 9)
+              : const EdgeInsets.only(left: 8),
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           decoration: BoxDecoration(
             color: const Color(0xFFFBF5E6),
@@ -1759,8 +1764,22 @@ class _SpeechBubbleState extends State<SpeechBubble>
 }
 
 class _BubbleTail extends CustomPainter {
+  _BubbleTail({this.below = false});
+  final bool below;
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (below) {
+      final x = size.width / 2;
+      canvas.drawPath(
+          Path()
+            ..moveTo(x - 9, size.height - 10)
+            ..lineTo(x + 9, size.height - 10)
+            ..lineTo(x, size.height)
+            ..close(),
+          Paint()..color = const Color(0xFFFBF5E6));
+      return;
+    }
     final y = math.min(22.0, size.height / 2);
     final path = Path()
       ..moveTo(0, y)
@@ -1771,7 +1790,7 @@ class _BubbleTail extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_BubbleTail old) => false;
+  bool shouldRepaint(_BubbleTail old) => old.below != below;
 }
 
 /// Glides [child] from wherever it was last laid out to where it is now,

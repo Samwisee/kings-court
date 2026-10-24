@@ -357,7 +357,7 @@ const dilemmas = <Dilemma>[
     'The Merchant’s Loan',
     'The Merchant offers gold for the royal coffers, at a steep interest.',
     Choice('Take the gold', 'A feast is held. Your physicians are paid.',
-        [Wound(-1), Loyalty(Courtier.merchant, 1), Points(1)]),
+        [Gold(4), Wound(-1), Loyalty(Courtier.merchant, 1), Points(1)]),
     Choice('Refuse the loan', 'The Merchant closes his ledger with a snap.',
         [Loyalty(Courtier.merchant, -2)]),
     about: Courtier.merchant,
@@ -401,7 +401,7 @@ const dilemmas = <Dilemma>[
     'A Grand Tournament',
     'The court begs for a tournament to celebrate your reign.',
     Choice('Hold the tournament', 'Glory! The lists are hard fought.',
-        [AllLoyalty(1), Points(2), Arrive(Courtier.general), Arrive(Courtier.jester)]),
+        [Gold(-3), AllLoyalty(1), Points(2), Arrive(Courtier.general), Arrive(Courtier.jester)]),
     Choice('Save the gold', 'The banners stay furled.',
         [AllLoyalty(-1), Points(-1)]),
     council: true,
@@ -428,7 +428,7 @@ const dilemmas = <Dilemma>[
     'Famine',
     'The harvest has failed. The granaries are nearly empty.',
     Choice('Open the royal granary', 'Your people eat. Your court goes hungry.',
-        [AllLoyalty(-1), Points(-1)]),
+        [Gold(-2), AllLoyalty(-1), Points(-1)]),
     Choice('Ration the people', 'The court feasts while the city starves.',
         [AllLoyalty(1), Wound(1)]),
     council: true,
@@ -486,7 +486,7 @@ const dilemmas = <Dilemma>[
     Choice('Share it with the court', 'Every house drinks to the General.',
         [AllLoyalty(1)]),
     Choice('Fill the treasury', 'The crown grows richer. The soldiers grumble.',
-        [Points(-1), Loyalty(Courtier.general, -1)]),
+        [Gold(3), Points(-1), Loyalty(Courtier.general, -1)]),
     council: true,
     followUp: true,
   ),
@@ -494,7 +494,7 @@ const dilemmas = <Dilemma>[
     'The Fallen Fort',
     'Refugees from the lost fort crowd the city gates. The General wants another army.',
     Choice('Raise the army', 'The General marches again, at your command.',
-        [Loyalty(Courtier.general, 1), Charge(Courtier.general), Points(1)]),
+        [Gold(-3), Loyalty(Courtier.general, 1), Charge(Courtier.general), Points(1)]),
     Choice('Shelter the refugees', 'The city is crowded but grateful.',
         [Loyalty(Courtier.general, -1), AllLoyalty(1)]),
     about: Courtier.general,
@@ -514,7 +514,7 @@ const dilemmas = <Dilemma>[
     'The Merchant\u2019s Debt',
     'After the failed fair the Merchant begs the crown to cover his debts, or he will sell to your rivals.',
     Choice('Pay his debts', 'House Coyne is in your pocket now. So is its debt.',
-        [Loyalty(Courtier.merchant, 2), Points(1)]),
+        [Gold(-4), Loyalty(Courtier.merchant, 2), Points(1)]),
     Choice('Let him sell', 'Your rivals grow rich on Coyne silk.',
         [Loyalty(Courtier.merchant, -2)]),
     about: Courtier.merchant,
@@ -548,7 +548,7 @@ const dilemmas = <Dilemma>[
     'An Envoy from Karsk',
     'Lord Hask kneels, barely. "King Varric of Karsk offers friendship, for a yearly gift of gold. He would hate for your harvests to burn."',
     Choice('Pay the gift', 'Hask smiles and counts the coins twice.',
-        [Points(1), Flag('karsk_paid'), Arrive(Courtier.merchant), Say(Courtier.general, 'We pay a goatherd king not to visit? Shameful.')]),
+        [Gold(-4), Points(1), Flag('karsk_paid'), Arrive(Courtier.merchant), Say(Courtier.general, 'We pay a goatherd king not to visit? Shameful.')]),
     Choice('Send him home', 'Hask leaves with his beard shaved and his purse empty.',
         [Loyalty(Courtier.general, 1), Flag('karsk_defied'), Arrive(Courtier.general), Say(Courtier.merchant, 'There goes the eastern trade. And perhaps the eastern villages.')]),
     arc: 'karsk',
@@ -564,7 +564,7 @@ const dilemmas = <Dilemma>[
     'Tribute Doubled',
     'Lord Hask is back, and fatter. "King Varric finds last year’s gift... modest. He asks for twice as much."',
     Choice('Pay again', 'The treasury empties into Karsk wagons.',
-        [Points(2), Loyalty(Courtier.merchant, -1), Flag('karsk_vassal'), Say(Courtier.duke, 'My grandfather would have died first.')]),
+        [Gold(-6), Points(2), Loyalty(Courtier.merchant, -1), Flag('karsk_vassal'), Say(Courtier.duke, 'My grandfather would have died first.')]),
     Choice('Enough', 'You throw the purse back at him. The court roars.',
         [AllLoyalty(1), Unflag('karsk_paid'), Flag('karsk_defied')]),
     arc: 'karsk',
@@ -579,7 +579,7 @@ const dilemmas = <Dilemma>[
     'Scouts on the River',
     'Karsk scouts have been seen at the fords. The General wants walls around Ashford; the Spymaster wants agents in Varric’s camp.',
     Choice('Build the walls', 'Stone by stone, Ashford becomes a fortress.',
-        [Points(1), Charge(Courtier.general), Flag('walls'), Say(Courtier.general, 'Let them come.')]),
+        [Gold(-3), Points(1), Charge(Courtier.general), Flag('walls'), Say(Courtier.general, 'Let them come.')]),
     Choice('Send the agents', 'Three of your best cross the river at night.',
         [Loyalty(Courtier.spymaster, 2), Flag('spies'), Say(Courtier.spymaster, 'Varric will not sneeze without my hearing it.')]),
     arc: 'karsk',
@@ -595,7 +595,7 @@ const dilemmas = <Dilemma>[
     Choice('Accept the peace', 'The war is over. The bells ring in both kingdoms.',
         [AllLoyalty(1), Wound(-1), Flag('karsk_peace'), Unflag('karsk_defied')]),
     Choice('March on Karsk', 'You will finish this. The army turns east.',
-        [Loyalty(Courtier.general, 2), Points(2), Charge(Courtier.general), Flag('karsk_war'), Say(Courtier.bishop, 'Pride is a poor general.')]),
+        [Gold(-3), Loyalty(Courtier.general, 2), Points(2), Charge(Courtier.general), Flag('karsk_war'), Say(Courtier.bishop, 'Pride is a poor general.')]),
     arc: 'karsk',
     speaker: 'Prince Edric of Karsk',
     followUp: true,
@@ -656,7 +656,7 @@ const dilemmas = <Dilemma>[
     'A Feast for Two Kingdoms',
     'Peace with Karsk holds. The court wants a great feast to seal it, with King Varric himself at your table.',
     Choice('Invite Varric', 'Two kings drink from one cup. Nobody is poisoned.',
-        [AllLoyalty(1), Wound(-1), Flag('karsk_peace_sealed'), Say(Courtier.spymaster, 'I counted his guards. Twice.')]),
+        [Gold(-2), AllLoyalty(1), Wound(-1), Flag('karsk_peace_sealed'), Say(Courtier.spymaster, 'I counted his guards. Twice.')]),
     Choice('Feast without him', 'The court celebrates. Karsk hears of it, and sulks.',
         [Loyalty(Courtier.general, 1), Flag('karsk_peace_sealed')]),
     arc: 'karsk',
@@ -670,7 +670,7 @@ const dilemmas = <Dilemma>[
     'Surplus Grain',
     'The Merchant has a buyer for the spare grain: King Varric of Karsk, across the river, who pays in gold and asks no questions.',
     Choice('Sell to Karsk', 'Karsk wagons roll west, heavy with your bread.',
-        [Points(-1), Loyalty(Courtier.merchant, 2), Say(Courtier.general, 'Feeding the wolf, Majesty?')]),
+        [Gold(5), Points(-1), Loyalty(Courtier.merchant, 2), Say(Courtier.general, 'Feeding the wolf, Majesty?')]),
     Choice('Keep it for winter', 'The granaries stay full. The Merchant sulks.',
         [AllLoyalty(1), Loyalty(Courtier.merchant, -1)]),
     arc: 'karsk',
@@ -727,7 +727,7 @@ const dilemmas = <Dilemma>[
     'Elara’s Wedding Feast',
     'Elara marries Sir Tomas of the household guard. The Duke asks you to pay for a feast fit for a princess.',
     Choice('Spare nothing', 'Six hundred guests. Elara dances with you.',
-        [Points(1), Loyalty(Courtier.duke, 2), AllLoyalty(1)]),
+        [Gold(-3), Points(1), Loyalty(Courtier.duke, 2), AllLoyalty(1)]),
     Choice('A modest feast', 'The wine is thin. So is the Duke’s smile.',
         [Loyalty(Courtier.duke, -1)]),
     arc: 'elara',
@@ -739,7 +739,7 @@ const dilemmas = <Dilemma>[
     'The Merchant’s Fleet',
     'The Merchant unrolls a map of the southern seas. "Twelve ships, Majesty. Silk, spice and a fortune. All I need is the crown’s backing."',
     Choice('Back the fleet', 'Twelve ships sail on the morning tide.',
-        [Points(1), Loyalty(Courtier.merchant, 2), Flag('fleet')]),
+        [Gold(-4), Points(1), Loyalty(Courtier.merchant, 2), Flag('fleet')]),
     Choice('Too great a risk', 'The Merchant rolls up the map very slowly.',
         [Loyalty(Courtier.merchant, -1)]),
     arc: 'fleet',
@@ -753,7 +753,7 @@ const dilemmas = <Dilemma>[
     'Spice and Envy',
     'The fleet’s return has made House Coyne richer than Ashcombe. The Duke wants the Merchant taxed; the Merchant wants a title.',
     Choice('Tax the Merchant', '"A shopkeeper should pay like one," says the Duke.',
-        [Loyalty(Courtier.merchant, -2), Loyalty(Courtier.duke, 1), Points(-1)]),
+        [Gold(3), Loyalty(Courtier.merchant, -2), Loyalty(Courtier.duke, 1), Points(-1)]),
     Choice('Grant him a title', 'Lord Coyne. The Duke leaves before the ceremony.',
         [Loyalty(Courtier.merchant, 2), Loyalty(Courtier.duke, -2), Say(Courtier.duke, 'A crest on a shop sign.')]),
     arc: 'fleet',
@@ -763,7 +763,7 @@ const dilemmas = <Dilemma>[
     'The Lost Fleet',
     'Coyne is ruined, and the Merchant’s creditors are at the palace gate. He asks you to stand surety.',
     Choice('Stand surety', 'You save House Coyne, and inherit its debts.',
-        [Points(2), Loyalty(Courtier.merchant, 3)]),
+        [Gold(-5), Points(2), Loyalty(Courtier.merchant, 3)]),
     Choice('Let Coyne fall', 'The Merchant sells his house, then his name.',
         [Loyalty(Courtier.merchant, -3), Say(Courtier.merchant, 'I will not forget who watched me drown.'), Depart(Courtier.merchant)]),
     arc: 'fleet',
@@ -775,7 +775,7 @@ const dilemmas = <Dilemma>[
     'The Cathedral of Vell',
     'The Bishop dreams of a cathedral taller than any in the world. "Heaven will look kindly on the King who builds it."',
     Choice('Build it', 'Masons arrive from six kingdoms.',
-        [Points(1), Loyalty(Courtier.bishop, 2), Flag('cathedral')]),
+        [Gold(-4), Points(1), Loyalty(Courtier.bishop, 2), Flag('cathedral')]),
     Choice('Heaven can wait', 'The Bishop prays for you, loudly.',
         [Loyalty(Courtier.bishop, -1)]),
     arc: 'cathedral',
@@ -833,7 +833,7 @@ const dilemmas = <Dilemma>[
     'Blackmail',
     'A note under your door: the writer knows what the Jester is, and wants gold to keep quiet.',
     Choice('Pay', 'The note writer stays silent, for now.',
-        [Points(1), Say(Courtier.spymaster, 'Paying only teaches them the price.')]),
+        [Gold(-2), Points(1), Say(Courtier.spymaster, 'Paying only teaches them the price.')]),
     Choice('Let the truth out', 'The secret is out. The Jester laughs it off, badly.',
         [Loyalty(Courtier.jester, -1), Flag('jester_known')]),
     arc: 'jester',
@@ -1027,6 +1027,106 @@ class Arrive extends Effect {
   const Arrive(this.courtier);
   final Courtier courtier;
 }
+
+/// Gold in or out of the royal coffers.
+class Gold extends Effect {
+  const Gold(this.delta);
+  final int delta;
+}
+
+/// How each courtier introduces themselves to a new King.
+const introductions = <Courtier, String>{
+  Courtier.duke: 'The Duke of Ashcombe, Majesty. My family has knelt to six kings. I hope you will be the first worth it.',
+  Courtier.bishop: 'I anointed your father, Majesty, and today I anoint you. Heaven is watching. So am I.',
+  Courtier.general: 'The army is yours, Majesty. Keep it fed and paid, and it will keep you crowned.',
+  Courtier.spymaster: 'You won’t remember meeting me, Majesty. That is rather the point.',
+  Courtier.merchant: 'Congratulations, Majesty! House Coyne brings a small gift. And a small invoice.',
+  Courtier.jester: 'Long live the King! Well. As long as possible.',
+  Courtier.king: '',
+};
+
+/// The everyday talk of the council between matters.
+const chatter = <Courtier, List<String>>{
+  Courtier.duke: [
+    'The northern harvest is in, Majesty. Ashcombe’s barns are full, for once.',
+    'My tenants grumble about the new tolls. My tenants grumble about everything.',
+  ],
+  Courtier.bishop: [
+    'The bells ring for you every morning, Majesty. I hope you hear them.',
+    'The cathedral roof leaks again. Heaven tests us in small ways too.',
+  ],
+  Courtier.general: [
+    'The border is quiet, Majesty. Too quiet, if you ask me.',
+    'The recruits can march. Mostly in the same direction.',
+  ],
+  Courtier.spymaster: [
+    'Three letters from Karsk this week, Majesty. None of them addressed to me. I read them anyway.',
+    'Someone in this room talks in their sleep. I won’t say who.',
+  ],
+  Courtier.merchant: [
+    'Prices are up, Majesty. Mine especially.',
+    'The harbour is full of ships. Every one of them owes me money.',
+  ],
+  Courtier.jester: [
+    'Has anyone noticed the throne squeaks? No? Just me, then.',
+    'I’ve written a song about the council. Nobody comes out of it well.',
+  ],
+  Courtier.king: [''],
+};
+
+/// What the council says when Karsk is on everyone's mind.
+const warChatter = <Courtier, String>{
+  Courtier.duke: 'Varric’s banners on the far bank again, Majesty. My riders count more every week.',
+  Courtier.bishop: 'I pray for peace, Majesty. I also pray for good walls.',
+  Courtier.general: 'If Varric wants a war, Majesty, he can have one. I’ve been saving it.',
+  Courtier.spymaster: 'Karsk is buying horses, Majesty. Lots of horses.',
+  Courtier.merchant: 'War is terrible for trade, Majesty. Unless one is selling swords.',
+  Courtier.jester: 'Good news! Karsk hates us all equally.',
+  Courtier.king: '',
+};
+
+/// A courtier taking up a royal charge.
+const acceptances = <Courtier, String>{
+  Courtier.duke: 'Ashcombe will see it done, Majesty.',
+  Courtier.bishop: 'With heaven’s help, Majesty, and mine.',
+  Courtier.general: 'Consider it done, Majesty.',
+  Courtier.spymaster: 'It is already in hand, Majesty.',
+  Courtier.merchant: 'For a modest fee, Majesty. I jest. Mostly.',
+  Courtier.jester: 'Me? Well, somebody has to.',
+  Courtier.king: '',
+};
+
+/// A courtier answering someone who argued the other way. {other} is
+/// who they're answering ("the Duke").
+const retorts = <Courtier, String>{
+  Courtier.duke: 'With respect, Majesty, {other} has never held land worth defending.',
+  Courtier.bishop: '{Other} speaks for the purse, Majesty. I speak for your soul.',
+  Courtier.general: 'Talk, talk. {Other} has never stood in a shield wall.',
+  Courtier.spymaster: 'Interesting advice, {other}. I wonder who taught you to give it.',
+  Courtier.merchant: '{Other} forgets who pays for all this, Majesty.',
+  Courtier.jester: '{Other} is right, of course. That is what worries me.',
+  Courtier.king: '',
+};
+
+/// How courtiers take a round's outcome.
+const cheers = <Courtier, String>{
+  Courtier.duke: 'Well done, Majesty. Ashcombe is pleased.',
+  Courtier.bishop: 'Heaven smiles on this court today.',
+  Courtier.general: 'That’s how it’s done!',
+  Courtier.spymaster: 'Exactly as I foresaw. Naturally.',
+  Courtier.merchant: 'Profitable. My favourite word.',
+  Courtier.jester: 'Huzzah! Someone write that down before we forget how.',
+  Courtier.king: '',
+};
+const groans = <Courtier, String>{
+  Courtier.duke: 'My grandfather would never have let that happen.',
+  Courtier.bishop: 'We must all pray harder. Some of us much harder.',
+  Courtier.general: 'Sloppy. We’ll drill until it isn’t.',
+  Courtier.spymaster: 'Someone talked. I’ll find out who.',
+  Courtier.merchant: 'That will cost us, Majesty. It always does.',
+  Courtier.jester: 'Well, it could have been worse. I can’t think how.',
+  Courtier.king: '',
+};
 
 /// Regnal names for the solo King, one per reign.
 const regnalNames = [

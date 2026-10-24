@@ -20,6 +20,7 @@ import 'engine/match.dart';
 import 'engine/rules.dart';
 import 'play/card_view.dart';
 import 'play/contest_table.dart';
+import 'play/throne_room.dart';
 import 'sfx.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -3236,6 +3237,9 @@ class _HomePageState extends State<HomePage>
             child: Material(
                 type: MaterialType.transparency,
                 child: _buildOutcomeOverlay())),
+      // Solo Dynasty's story takes the whole screen: the throne room.
+      if (_inGame && _setupArgs == null && _contest == null)
+        if (_throneRoom() case final room?) Positioned.fill(child: room),
       // A divided court plays its Trial of Hearts over everything.
       if (_contest case final contest? when _inGame)
         Positioned.fill(
@@ -4205,6 +4209,277 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  /// Solo Dynasty's story scenes, played out in the throne room: the
+  /// round's news, its result, the matters before the throne and what
+  /// came of them. Null when the cards are in play (or for the death of a
+  /// King and the end, which keep their cards).
+  Widget? _throneRoom() {
+    if (!game.solo || !_storyActive) return null;
+    final won = game.outcome == RoundOutcome.won;
+    final news = _decreePending && game.currentTiding != null;
+    if (!news && (_step == _DynastyStep.death || _step == _DynastyStep.ending)) {
+      return null;
+    }
+    final rand = math.Random(game.dealId * 31 + (_dilemma ?? 0) + _mattersLeft);
+    final court = List.of(game.court);
+    final figures = <HallFigure>[];
+    final lines = <HallLine>[];
+    HallFigure add(Courtier c, {int enterAt = 0, int? exitAt, Color? color}) {
+      final f = HallFigure(c.name, c, color ?? game.colorOf(c),
+          enterAt: enterAt, exitAt: exitAt);
+      figures.add(f);
+      return f;
+    }
+
+    void herald(String text) => lines.add(HallLine(text));
+    void say(Courtier c, String text,
+            {CharacterMood mood = CharacterMood.speaking, int side = 0}) =>
+        lines.add(HallLine(text, who: c.name, mood: mood, side: side));
+    String title;
+    HallChoice? left, right;
+
+    if (news) {
+      final t = game.currentTiding!;
+      title = t.title;
+      // Who left, and who has come.
+      for (final n in game.courtNews.where((n) => !n.arrived)) {
+        if (court.contains(n.role)) continue;
+        add(n.role, exitAt: lines.length, color: Color(n.color));
+        herald(n.text);
+      }
+      final arrived = {for (final n in game.courtNews) if (n.arrived) n.role};
+      for (final c in court) {
+        if (!arrived.contains(c)) add(c);
+      }
+      for (final c in court.where(arrived.contains)) {
+        add(c, enterAt: lines.length);
+        say(c, introductions[c]!);
+      }
+      if (t.arc == 'crown') {
+        herald(t.story);
+        // Each house introduces itself to the new King.
+        for (final c in court.where((c) => !arrived.contains(c))) {
+          say(c, introductions[c]!);
+        }
+      } else {
+        // The council talks of the kingdom before the news comes in.
+        final war = game.flags.contains('karsk_defied') ||
+            game.flags.contains('karsk_war');
+        final talkers = List.of(court)..shuffle(rand);
+        for (final c in talkers.take(math.min(2, talkers.length))) {
+          final pool = chatter[c]!;
+          say(c, war && rand.nextBool() ? warChatter[c]! : pool[rand.nextInt(pool.length)]);
+        }
+        herald(t.story);
+      }
+      final charged = game.chargeSeat;
+      if (charged != null && charged < game.courtiers.length) {
+        final role = game.courtiers[charged];
+        final task = game.tasks.where(game.isCharged).firstOrNull;
+        herald('${_chargeLine ?? ''}${task == null ? '' : '\nTheir charge: ${task.description}'}');
+        say(role, acceptances[role]!, mood: CharacterMood.pleased);
+      }
+      if (game.decree != null) {
+        herald('Royal Decree: ${game.decree!.title}. ${game.decree!.rule}');
+      }
+      right = HallChoice('So it begins',
+          () => setState(() => _decreeReadFor = game.dealId));
+    } else if (_step == _DynastyStep.result) {
+      for (final c in court) {
+        add(c);
+      }
+      title = won ? 'Victory' : 'Defeat';
+      final t = game.currentTiding;
+      herald(t == null
+          ? (won ? 'Every task is done.' : 'A task failed.')
+          : (won ? t.won.text : t.lost.text));
+      // Someone has something to say about it.
+      final charged = game.chargeSeat;
+      final who = charged != null && charged < game.courtiers.length
+          ? game.courtiers[charged]
+          : court.isEmpty
+              ? null
+              : court[rand.nextInt(court.length)];
+      if (who != null && court.contains(who)) {
+        say(who, won ? cheers[who]! : groans[who]!,
+            mood: won ? CharacterMood.pleased : CharacterMood.angry);
+      }
+      for (final seat in game.antagonists) {
+        final scheme = game.schemeOf[seat];
+        if (scheme != null) {
+          herald('${game.courtiers[seat].title} schemed: ${schemes[scheme]}');
+        }
+      }
+      right = HallChoice(
+          game.kingFallen
+              ? 'Attend the King'
+              : game.ending == DynastyEnding.goldenAge
+                  ? 'The realm is secured'
+                  : game.ending != null
+                      ? 'The traitors rise'
+                      : 'Hear the council',
+          () => _afterResult(won),
+          enabled: game.schemesSettled);
+    } else {
+      final d = dilemmas[_dilemma ?? 0];
+      title = d.title;
+      for (final c in court) {
+        add(c);
+      }
+      final deciding = _step == _DynastyStep.dilemma;
+      if (deciding) {
+        final bringer = d.about != null && court.contains(d.about) ? d.about : null;
+        if (bringer != null) {
+          say(bringer, d.story);
+        } else if (d.speaker != null) {
+          herald('${d.speaker}:\n${d.story}');
+        } else {
+          herald(d.story);
+        }
+        final pleas = _pleasFor(d);
+        for (final p in pleas) {
+          say(p.courtier, p.line, side: p.forA ? -1 : 1);
+        }
+        // Back and forth: the first voice answers the other side.
+        final a = pleas.where((p) => p.forA).firstOrNull;
+        final b = pleas.where((p) => !p.forA).firstOrNull;
+        if (a != null && b != null) {
+          final other = b.courtier.title.replaceFirst('The', 'the');
+          final line = retorts[a.courtier]!
+              .replaceAll('{other}', other)
+              .replaceAll('{Other}', b.courtier.title);
+          say(a.courtier, line, mood: CharacterMood.angry, side: -1);
+        }
+        HallFigure? figOf(Courtier c) =>
+            figures.where((f) => f.role == c).firstOrNull;
+        HallChoice choice(Choice ch, bool isA) => HallChoice(
+              ch.label,
+              d.council ? () => _chooseSide(d, isA) : () => _decide(ch),
+              backers: [
+                for (final p in pleas)
+                  if (p.forA == isA)
+                    if (figOf(p.courtier) case final f?) f
+              ],
+              cost: GameState.costOf(ch),
+              enabled: game.canAfford(ch),
+            );
+        if (d.council) {
+          herald('The court is divided. Choose your side, Majesty, and the Trial of Hearts will decide.');
+        }
+        left = choice(d.a, true);
+        right = choice(d.b, false);
+      } else {
+        herald(_verdictStory);
+        for (final (role, text, mood) in _verdict) {
+          if (role != null && court.contains(role)) {
+            say(role, text, mood: mood);
+          } else {
+            herald(text);
+          }
+        }
+        right = HallChoice(
+            game.kingFallen
+                ? 'Attend the King'
+                : game.ending != null
+                    ? 'The traitors rise'
+                    : _mattersLeft > 0
+                        ? 'The next matter'
+                        : 'To the cards',
+            () => _afterVerdict(won));
+      }
+    }
+    return ThroneRoom(
+      key: ValueKey(
+          'hall-${game.dealId}-$news-${_step.name}-$_dilemma-$_mattersLeft'),
+      title: title,
+      figures: figures,
+      lines: lines,
+      king: SeatToken(
+        player: game.players[_you],
+        label: seatLabels(game.players)[_you],
+        isKing: true,
+        size: 44,
+        shape: TokenShape.shield,
+        wounds: game.kingWounds,
+        tight: true,
+      ),
+      kingName: 'King ${game.reignName}, Reign ${roman(game.reign)}',
+      coffers: game.coffers,
+      wounds: game.kingWounds,
+      left: left,
+      right: right,
+      fast: botDelay.inMilliseconds < 5,
+    );
+  }
+
+  /// A divided court: you take a side, the court chooses in secret, and
+  /// the Trial of Hearts decides (unless everyone agrees).
+  void _chooseSide(Dilemma d, bool forA) {
+    _votes = {_you: forA};
+    _botsTakeSides();
+    final sides = _votes.values.toSet();
+    if (sides.length == 1) {
+      _decide(forA ? d.a : d.b,
+          heeded: true, lead: const ['The court stands as one.']);
+      return;
+    }
+    setState(() => _contest = ContestState.deal(
+        players: game.players.length,
+        king: game.kingIndex ?? _you,
+        sideA: [for (int i = 0; i < game.players.length; i++) _votes[i] ?? forA],
+        rand: math.Random()));
+  }
+
+  /// On from the King's decision: the next matter, or the next hand.
+  void _afterVerdict(bool won) => setState(() {
+              if (game.kingFallen) {
+                _step = _DynastyStep.death;
+                Sfx.lose();
+              } else if (game.ending != null) {
+                _step = _DynastyStep.ending;
+                Sfx.lose();
+              } else if (_mattersLeft > 0) {
+                // The next matter before the throne.
+                _mattersLeft--;
+                _dilemma = game.pickDilemma();
+                _votes = {};
+                _sidesShown = false;
+                _contest = null;
+                _step = _DynastyStep.dilemma;
+                _botsTakeSides();
+              } else {
+                _nextDynastyRound(won);
+              }
+            });
+
+  void _afterResult(bool won) => setState(() {
+                    // The tidings play out before anything else.
+                    game.resolveTiding(won);
+                    if (game.kingFallen) {
+                      _step = _DynastyStep.death;
+                      Sfx.lose();
+                    } else if (game.ending != null) {
+                      _step = _DynastyStep.ending;
+                      if (game.ending == DynastyEnding.goldenAge) {
+                        Sfx.fanfare();
+                      } else {
+                        Sfx.lose();
+                      }
+                    } else {
+                      _dilemma = game.pickDilemmaAfter(won);
+                      // Solo, the court often has more business before
+                      // the next hand is dealt.
+                      _mattersLeft = game.solo
+                          ? const [0, 1, 1, 2][_rand.nextInt(4)]
+                          : 0;
+                      _votes = {};
+                      _sidesShown = false;
+                      _contest = null;
+                      _step = _DynastyStep.dilemma;
+                      _botsTakeSides();
+                    }
+                  });
+
   Widget _dynastyResult(bool won) {
     final fg = won && !_onFelt ? Palette.ink : Colors.white;
     final settled = game.schemesSettled;
@@ -4259,33 +4534,7 @@ class _HomePageState extends State<HomePage>
         FilledButton(
           onPressed: !settled
               ? null
-              : () => setState(() {
-                    // The tidings play out before anything else.
-                    game.resolveTiding(won);
-                    if (game.kingFallen) {
-                      _step = _DynastyStep.death;
-                      Sfx.lose();
-                    } else if (game.ending != null) {
-                      _step = _DynastyStep.ending;
-                      if (game.ending == DynastyEnding.goldenAge) {
-                        Sfx.fanfare();
-                      } else {
-                        Sfx.lose();
-                      }
-                    } else {
-                      _dilemma = game.pickDilemmaAfter(won);
-                      // Solo, the court often has more business before
-                      // the next hand is dealt.
-                      _mattersLeft = game.solo
-                          ? const [0, 1, 1, 2][_rand.nextInt(4)]
-                          : 0;
-                      _votes = {};
-                      _sidesShown = false;
-                      _contest = null;
-                      _step = _DynastyStep.dilemma;
-                      _botsTakeSides();
-                    }
-                  }),
+              : () => _afterResult(won),
           style: won
               ? FilledButton.styleFrom(
                   backgroundColor: Palette.ink, foregroundColor: Palette.gold)
@@ -4439,26 +4688,7 @@ class _HomePageState extends State<HomePage>
             ),
           const SizedBox(height: 10),
           FilledButton(
-            onPressed: () => setState(() {
-              if (game.kingFallen) {
-                _step = _DynastyStep.death;
-                Sfx.lose();
-              } else if (game.ending != null) {
-                _step = _DynastyStep.ending;
-                Sfx.lose();
-              } else if (_mattersLeft > 0) {
-                // The next matter before the throne.
-                _mattersLeft--;
-                _dilemma = game.pickDilemma();
-                _votes = {};
-                _sidesShown = false;
-                _contest = null;
-                _step = _DynastyStep.dilemma;
-                _botsTakeSides();
-              } else {
-                _nextDynastyRound(won);
-              }
-            }),
+            onPressed: () => _afterVerdict(won),
             style: FilledButton.styleFrom(
                 backgroundColor: Palette.cardRed, foregroundColor: Colors.white),
             child: Text(game.kingFallen
@@ -4793,6 +5023,13 @@ class _HomePageState extends State<HomePage>
   /// end, the King's decision. Null while the cards are in play.
   Widget? _storyStage() {
     if (!_onFelt || !_inGame || _setupArgs != null) return null;
+    // Solo, the throne room has the story, except the death of a King and
+    // the end, which are told here.
+    if (game.solo &&
+        ((_decreePending && game.currentTiding != null) ||
+            (_step != _DynastyStep.death && _step != _DynastyStep.ending))) {
+      return null;
+    }
     final Widget? stage;
     final String key;
     if (_decreePending && game.currentTiding != null) {
