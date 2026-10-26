@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/rules.dart';
+import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/task_help.dart';
 
 void main() {
@@ -72,5 +73,32 @@ void main() {
     expect(s, contains('6♥ (trick 1)'));
     expect(s, contains('6♦'));
     expect(s, isNot(contains('Not yet')));
+  });
+
+  test('Some pairs of trick tasks are impossible at a bigger table', () {
+    const most = 'Win more tricks than everyone else';
+    const two = "Win exactly two tricks, and they're in a row";
+    expect(selfClash(most, two, players: 4), isTrue);
+    expect(selfClash(two, most, players: 5), isTrue);
+  });
+
+  test('Your own hand can rule a task out', () {
+    PlayingCard c(String l) => PlayingCard.parse(l)!;
+    expect(handBlocks('Win the 7♥ with a Court Card', [c('7♥'), PlayingCard.jack]),
+        contains('You hold the 7♥'));
+    expect(handBlocks('Win the 7♥ with a Court Card', [c('2♣')]), isNotNull);
+    expect(handBlocks('Win the 7♥ with a Court Card', [c('2♣'), PlayingCard.jack]),
+        isNull);
+    expect(handBlocks('Win any 6 with another 6', [c('2♣')]), isNotNull);
+    expect(handBlocks('Win a trick with a 3', [c('3♣')]), isNull);
+  });
+
+  test('A task close-up shows the cards it is about', () {
+    PlayingCard c(String l) => PlayingCard.parse(l)!;
+    expect(relevantCards('Win the A♥ and the 7♣'), [c('A♥'), c('7♣')]);
+    expect(relevantCards('Win any 6 with another 6'), hasLength(4));
+    expect(relevantCards('Win no Court Cards'), hasLength(4));
+    expect(relevantCards("Don't win any ♦ or ♣ cards"), hasLength(18));
+    expect(relevantCards('Win the first trick'), isEmpty);
   });
 }

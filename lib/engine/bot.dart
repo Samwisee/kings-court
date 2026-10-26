@@ -127,6 +127,9 @@ class Bot {
       }
       if (taskRules[t.description]!(v, e.value, t.x) == Verdict.done) done++;
     }
+    // Seals: tasks must be done in their order (Ω last), or the round is
+    // lost even with every task done.
+    if (done == assigned.length && !_sealsKept(s, assigned, v)) done--;
     final value =
         done == assigned.length ? 1.0 : 0.2 * done / max(1, assigned.length);
     if (s.schemes.isEmpty) return value;
@@ -137,6 +140,49 @@ class Bot {
     }
     final schemed = s.schemes.entries.any((e) => schemeSucceeded(e.value, v, e.key));
     return schemed ? value * 0.3 : value;
+  }
+
+  /// Whether the sealed tasks among [assigned] were done in seal order
+  /// (numbered seals in turn, Ω after every other task) in the round [v].
+  static bool _sealsKept(MatchState s, Map<int, int> assigned, RoundView v) {
+    const omega = 99;
+    final seals = {
+      for (final e in assigned.entries)
+        if (s.tasks[e.key].task.seal != null) e.key: s.tasks[e.key].task.seal!
+    };
+    if (seals.isEmpty) return true;
+    // The trick each task was done on (they're all done by now).
+    int doneAt(int t) {
+      final task = s.tasks[t];
+      for (int k = 1; k <= v.tricks.length; k++) {
+        final upTo = RoundView(
+            players: v.players,
+            king: v.king,
+            tricks: v.tricks.sublist(0, k),
+            totalTricks: v.totalTricks,
+            inPlay: v.inPlay);
+        if (taskRules[task.description]!(upTo, assigned[t]!, task.x) ==
+            Verdict.done) {
+          return k;
+        }
+      }
+      return v.tricks.length;
+    }
+
+    final hasOmega = seals.values.contains(omega);
+    final at = {
+      for (final t in hasOmega ? assigned.keys : seals.keys) t: doneAt(t)
+    };
+    final numbered = seals.entries.where((e) => e.value != omega).toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    for (int i = 1; i < numbered.length; i++) {
+      if (at[numbered[i].key]! < at[numbered[i - 1].key]!) return false;
+    }
+    if (hasOmega) {
+      final o = seals.entries.firstWhere((e) => e.value == omega).key;
+      if (at.entries.any((e) => e.key != o && e.value > at[o]!)) return false;
+    }
+    return true;
   }
 
   // ------------------------------------------------- without blocking the UI

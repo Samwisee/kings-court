@@ -295,6 +295,23 @@ class _TutorialIntroState extends State<TutorialIntro> {
             ),
           const Icon(Icons.handshake_rounded, size: 40, color: Palette.gold),
         ]);
+      case IntroArt.speak:
+        return Row(mainAxisSize: MainAxisSize.min, children: [
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: Palette.players[1],
+            child: const Text('D',
+                style: TextStyle(
+                    fontWeight: FontWeight.w900, fontSize: 22, color: Colors.white)),
+          ),
+          const SizedBox(width: 8),
+          Column(mainAxisSize: MainAxisSize.min, children: [
+            _card('7♠', width: 37),
+            _caption('highest', color: Palette.gold),
+          ]),
+          const SizedBox(width: 22),
+          const Icon(Icons.record_voice_over, size: 40, color: Palette.gold),
+        ]);
       case IntroArt.table:
         // A phone in the middle of a real table, players around it.
         Widget seat(int i, String label) => CircleAvatar(

@@ -103,7 +103,7 @@ class Lesson {
 
 /// The pictures that go with the tutorial's opening pages (drawn in
 /// play/tutorial_intro.dart).
-enum IntroArt { court, goal, cards, trick, follow, courtCards, tasks, together, table, lessons }
+enum IntroArt { court, goal, cards, trick, follow, courtCards, tasks, together, speak, table, lessons }
 
 /// One page of the tutorial's opening: read at your own pace, each waits
 /// for Continue.
@@ -155,9 +155,16 @@ const introPages = <IntroPage>[
   ], IntroArt.tasks),
   IntroPage('Playing together', [
     'Before the first trick, everyone takes tasks one at a time, starting with the King. Take the tasks your cards can do: high cards win tricks, low cards lose them.',
-    'You can’t say what’s in your hand. Watch what the others play instead. Once a round, each player may show one card: their highest, lowest or only card of a suit (never a Court Card).',
+    'You can’t say what’s in your hand. Watch what the others play instead, and once a round you may show one card (next page).',
+    'If no task suits your cards when it’s your turn to pick, you may pass once a round and let the next player choose.',
     'Your courtiers on screen play with you, not against you. They’ll try to help you with your tasks, and you can help them with theirs.',
   ], IntroArt.together),
+  IntroPage('Showing a card', [
+    'Once a round, each player may show one card to everyone. It stays in their hand, face up, until it’s played.',
+    'You can only show your highest, lowest or only card of a suit, and everyone sees which. A 7♠ marked “highest” tells the table you have no ♠ above it, so the 8♠ and 9♠ are with someone else (or set aside). Court Cards can never be shown.',
+    'To show a card, tap the speech button at the right of your hand, then tap the card. You can do it while the tasks are being chosen (the table pauses for a moment before the first pick), before a trick starts, or between tricks. Tap it mid-trick and you’ll show your card as soon as the trick ends.',
+    'Use it to help: show a card someone’s task needs, or warn that you can’t take a suit.',
+  ], IntroArt.speak),
   IntroPage('At a real table', [
     'You can also play King’s Court with friends and a real pack of cards, 2 to 6 players around a table.',
     'Take an ordinary pack and keep the Ace to 9 of each suit (the Ace counts as 1). Put the 10s and picture cards aside, then add four Court Cards: a Joker, a Jack, a Queen and a King. They play as their own suit, whatever suit is printed on them.',

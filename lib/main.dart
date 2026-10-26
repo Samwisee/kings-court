@@ -864,11 +864,27 @@ class _HomePageState extends State<HomePage>
       return;
     }
     if (!_digital || _botTimer != null || _botBusy) return;
-    _botTimer = Timer(game.isTutorial ? botDelay * 2 : botDelay, () {
+    // Before anyone takes a task, the table pauses a moment so a card can
+    // be shown first.
+    final delay = game.isTutorial
+        ? botDelay * 2
+        : _openingPick
+            ? botDelay * 4
+            : botDelay;
+    _botTimer = Timer(delay, () {
       _botTimer = null;
       if (mounted) _botStep();
     });
   }
+
+  /// Picking hasn't started: nobody has taken a task yet (royal charges
+  /// aside), and a courtier picks first.
+  bool get _openingPick =>
+      _digital &&
+      game.pickTurn != null &&
+      game.pickTurn != _you &&
+      _cards.dealId == game.dealId &&
+      game.tasks.every((t) => t.assignedPlayerIndex == null || game.isCharged(t));
 
   /// A bot is thinking (a slice at a time, so the screen stays smooth).
   bool _botBusy = false;
@@ -951,6 +967,8 @@ class _HomePageState extends State<HomePage>
         return true;
       } else {
         if (!open.any((i) => view.canTake(i, picker))) return false;
+        // A courtier may show a card someone's task needs before picking.
+        if (_botReveals(picker)) return true;
         final pick = await _bot.choosePickAsync(view, picker);
         if (!mounted || _moment != before) return true;
         _assignTask(game.tasks[pick], picker);
@@ -1193,6 +1211,32 @@ class _HomePageState extends State<HomePage>
     };
   }
 
+  /// The cards [t] is about, and what's become of each this round.
+  List<(PlayingCard, _CardFate)> _cardStates(Task t) {
+    final cards = relevantCards(t.description);
+    if (!_digital || _cards.dealId != game.dealId) {
+      return [for (final c in cards) (c, _CardFate.unknown)];
+    }
+    final owner = t.assignedPlayerIndex;
+    final wants = wantsToWin(t.description);
+    final named = RegExp(r'[A2-9][♥♦♠♣]|Queen|Joker|Jack').hasMatch(t.description);
+    _CardFate fate(PlayingCard c) {
+      for (final trick in _cards.tricks) {
+        if (!trick.cards.contains(c)) continue;
+        if (owner == null) return _CardFate.played;
+        if (trick.winner == owner) return wants ? _CardFate.good : _CardFate.bad;
+        return wants && named ? _CardFate.bad : _CardFate.played;
+      }
+      if (_cards.current.contains(c)) return _CardFate.onTable;
+      if (_cards.hands.length > _you && _cards.hands[_you].contains(c)) {
+        return _CardFate.yours;
+      }
+      return _CardFate.unknown;
+    }
+
+    return [for (final c in cards) (c, fate(c))];
+  }
+
   String? _progressOf(Task t) {
     if (!_digital ||
         _cards.dealId != game.dealId ||
@@ -1239,6 +1283,9 @@ class _HomePageState extends State<HomePage>
                 ? 'Your pick: tap a task, or pass once a round'
                 : 'Your pick: tap a task to take it';
       }
+      if (_openingPick && _mayAskToSpeak) {
+        return '${game.players[game.pickTurn!].name} picks first. Show a card now if it helps.';
+      }
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
     if (!_tasksSettled) return 'Announcing numbers…';
@@ -1262,6 +1309,9 @@ class _HomePageState extends State<HomePage>
   /// up, the rest dim. Tap one to play it.
   /// How wide the hand's cards may spread on a wide screen.
   double _handLimit = double.infinity;
+
+  /// The height the on-screen game has, table and hand together.
+  double _gameHeight = 800;
 
   Widget _buildHand() {
     final c = _cards;
@@ -1350,7 +1400,7 @@ class _HomePageState extends State<HomePage>
             final width = box.maxWidth;
             // Wider screens get bigger cards, as far as the height allows.
             final cardW = clampD(
-                math.min(width / 6.2, MediaQuery.sizeOf(context).height * 0.12),
+                math.min(width / 6.2, _gameHeight * 0.105),
                 44,
                 108);
             final h = PlayingCardView.heightFor(cardW);
@@ -1844,7 +1894,8 @@ class _HomePageState extends State<HomePage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (seat != null)
-                      _withReveal(seat, _digiToken(seat, width > 600 ? 48 : 38, tight: true))
+                      _withReveal(seat, _digiToken(seat, width > 600 ? 48 : 38, tight: true),
+                          size: width > 600 ? 48 : 38)
                     else
                       // At court but not at the table this round.
                       CharacterToken(
@@ -1956,20 +2007,21 @@ class _HomePageState extends State<HomePage>
 
   /// [token] with the card [seat] has shown tucked beside it, so showing a
   /// card never takes room from the trick.
-  Widget _withReveal(int seat, Widget token) {
-    final r = _revealedView(seat);
+  Widget _withReveal(int seat, Widget token, {required double size}) {
+    final r = _revealedView(seat, height: size);
     if (r == null) return token;
     return Stack(
       clipBehavior: Clip.none,
       children: [
         token,
-        Positioned(right: -34, top: 0, child: r),
+        // Level with the token (below its crown slot), as tall as it.
+        Positioned(right: -(size / 1.42 + 8), top: 14, child: r),
       ],
     );
   }
 
   /// A card shown with the speech token, while it's still in hand.
-  Widget? _revealedView(int seat) {
+  Widget? _revealedView(int seat, {double height = 40}) {
     final c = _cards;
     final card = c.revealed[seat];
     if (card == null || c.dealId != game.dealId || !c.hands[seat].contains(card)) {
@@ -1978,10 +2030,10 @@ class _HomePageState extends State<HomePage>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        PlayingCardView(card: card, width: 24),
+        PlayingCardView(card: card, width: height / 1.42),
         Text(c.revealHint[seat] ?? '',
             style: const TextStyle(
-                fontSize: 10, fontWeight: FontWeight.w700, color: Palette.gold)),
+                fontSize: 11, fontWeight: FontWeight.w700, color: Palette.gold)),
       ],
     );
   }
@@ -2143,7 +2195,7 @@ class _HomePageState extends State<HomePage>
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _withReveal(_you, _digiToken(_you, 46)),
+            _digiToken(_you, 46),
             // Room kept from the start, so nothing shifts when it appears.
             Opacity(
               opacity:
@@ -2158,7 +2210,12 @@ class _HomePageState extends State<HomePage>
             ),
           ],
         ),
-        const SizedBox(width: 10),
+        // A place kept for the card you show, as tall as your token, so it
+        // never covers your tasks.
+        SizedBox(
+          width: 46 / 1.42 + 16,
+          child: Center(child: _revealedView(_you, height: 46)),
+        ),
         Expanded(
           child: _storyActive
               ? const SizedBox.shrink()
@@ -2307,12 +2364,10 @@ class _HomePageState extends State<HomePage>
       return;
     }
     if (!_mayAskToSpeak) return;
-    if (!_playing || _cards.current.isNotEmpty || _lastTrick != null) {
+    // Mid-trick, you speak as soon as the trick is over. Otherwise, while
+    // tasks are being chosen or between tricks, right away.
+    if (_cards.current.isNotEmpty || _lastTrick != null) {
       setState(() => _wantsToSpeak = !_wantsToSpeak);
-      if (_wantsToSpeak && !_playing) {
-        _showSnack('You\u2019ll show a card before the first trick',
-            Palette.feltDeep);
-      }
       return;
     }
     if (!_cards.hands[_you].any((c) => _cards.revealFor(_you, c) != null)) {
@@ -3610,26 +3665,19 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                 ),
-              // What it means, in plain words, and the game words it uses.
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2, right: 6),
-                      child: Icon(Icons.lightbulb_outline_rounded,
-                          size: 17, color: Palette.goldDeep),
-                    ),
-                    Expanded(
-                      child: SuitText(explainTask(task.description),
-                          style: const TextStyle(
-                              fontSize: 15, height: 1.4, color: Palette.ink)),
-                    ),
-                  ],
-                ),
+              // The cards it's about, and what's become of them.
+              if (relevantCards(task.description).isNotEmpty)
+                _TaskCardsRow(cards: _cardStates(task)),
+              // What it means, the game words it uses and any fine print,
+              // behind an info button.
+              _MoreAbout(
+                explanation: explainTask(task.description),
+                terms: termsIn(task.description),
+                notes: [
+                  ...task.notes,
+                  if (task.kingCantTake) "The King can't take this task.",
+                ],
               ),
-              _TermsList(terms: termsIn(task.description)),
               if (task.seal != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
@@ -3649,33 +3697,6 @@ class _HomePageState extends State<HomePage>
                       ),
                     ],
                   ),
-                ),
-              for (final note in task.notes)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2, right: 6),
-                        child: Icon(Icons.info_outline,
-                            size: 16, color: Palette.inkSoft),
-                      ),
-                      Expanded(
-                        child: SuitText(note,
-                            style: const TextStyle(
-                                fontSize: 15,
-                                height: 1.35,
-                                color: Palette.ink)),
-                      ),
-                    ],
-                  ),
-                ),
-              if (task.kingCantTake)
-                const Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text("The King can't take this task.",
-                      style: TextStyle(fontSize: 15, color: Palette.inkSoft)),
                 ),
             ],
           ),
@@ -3836,18 +3857,32 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     // One page: the felt is always there. Before a game it shows the
     // crown and the main buttons; New Game opens its panel on the table.
+    // On a wide screen the on-screen table sits in the middle with room
+    // either side for the title and menu, so it can use the top bar's
+    // height too.
+    final screen = MediaQuery.sizeOf(context);
+    final useTopBar = _inGame &&
+        _setupArgs == null &&
+        _digital &&
+        screen.width - math.max(480.0, screen.height) >= 560;
     return Stack(children: [
     Scaffold(
+      extendBodyBehindAppBar: useTopBar,
       appBar: _inGame && _setupArgs == null
           ? _buildAppBar()
           : AppBar(actions: [_buildMenu(), const SizedBox(width: 4)]),
       body: SafeArea(
+        top: !useTopBar,
         child: Stack(
           children: [
             Positioned.fill(
               child: _inGame
                   ? _digital
-                      ? LayoutBuilder(builder: (context, c) {
+                      ? ScrollConfiguration(
+                          // No scrollbars on the table: it's laid out to fit.
+                          behavior: ScrollConfiguration.of(context)
+                              .copyWith(scrollbars: false),
+                          child: LayoutBuilder(builder: (context, c) {
                           // On a wide screen the table and the coach stay in
                           // the middle; the hand's bar still runs edge to
                           // edge, with the cards centred in it.
@@ -3856,6 +3891,7 @@ class _HomePageState extends State<HomePage>
                               ? w
                               : Center(child: SizedBox(width: limit, child: w));
                           _handLimit = limit;
+                          _gameHeight = c.maxHeight;
                           return Column(children: [
                           Expanded(child: mid(_buildDigitalTable())),
                           if (game.isTutorial) mid(_buildCoach()),
@@ -3868,7 +3904,7 @@ class _HomePageState extends State<HomePage>
                                 : const SizedBox(width: double.infinity),
                           ),
                         ]);
-                        })
+                        }))
                       : _centred(_buildTable(), aspect: 1.2)
                   : Stack(
                       children: [
@@ -4096,12 +4132,18 @@ class _HomePageState extends State<HomePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      toolbarHeight: 60,
-      title: Column(
+      toolbarHeight: 56,
+      titleSpacing: 22,
+      backgroundColor: Colors.transparent,
+      title: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        // The round's name, with anything in force this round beside it.
+        child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          Flexible(
+            flex: 3,
+            child: Text(
               game.solo && game.currentTiding != null
                   ? game.currentTiding!.title
                   : game.mode == GameMode.chronicle && game.chapter != null
@@ -4118,15 +4160,16 @@ class _HomePageState extends State<HomePage>
                   fontWeight: FontWeight.w700,
                   fontSize: 22,
                   color: Palette.gold)),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_choosingKing)
-                const Text('Choose the King',
-                    style: TextStyle(fontSize: 13, color: Colors.white70))
-              else if (!game.solo)
-                Flexible(child: TaskPips(tasks: game.tasks)),
+          ),
+              if (_choosingKing) ...[
+                const SizedBox(width: 12),
+                const Flexible(
+                  child: Text('Choose the King',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: Colors.white70)),
+                ),
+              ],
               if (game.decree != null && !_choosingKing) ...[
                 const SizedBox(width: 8),
                 // The decree in force; tap to read it again.
@@ -4177,9 +4220,8 @@ class _HomePageState extends State<HomePage>
                     ),
                   )),
                 ],
-            ],
-          ),
         ],
+      ),
       ),
       actions: [
         // At a real table: whoever's picking may pass, once a round.
@@ -8151,6 +8193,147 @@ class _TermsListState extends State<_TermsList> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// What has become of a card a task is about.
+enum _CardFate {
+  /// Not played yet, and not in your hand.
+  unknown,
+
+  /// In your hand.
+  yours,
+
+  /// In the trick being played now.
+  onTable,
+
+  /// Played, and went the way the task wants.
+  good,
+
+  /// Played, and went the way the task doesn't want.
+  bad,
+
+  /// Played, and doesn't decide anything by itself.
+  played,
+}
+
+/// The cards a task is about, each marked with what's become of it.
+class _TaskCardsRow extends StatelessWidget {
+  const _TaskCardsRow({required this.cards});
+  final List<(PlayingCard, _CardFate)> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget mark(_CardFate f) => switch (f) {
+          _CardFate.good => const Icon(Icons.check_circle, size: 16, color: Palette.won),
+          _CardFate.bad => const Icon(Icons.cancel, size: 16, color: Palette.lost),
+          _CardFate.played => const Icon(Icons.remove_circle, size: 16, color: Palette.inkSoft),
+          _CardFate.onTable => const Icon(Icons.play_circle, size: 16, color: Palette.goldDeep),
+          _CardFate.yours => const Icon(Icons.pan_tool_alt_rounded, size: 15, color: Palette.goldDeep),
+          _CardFate.unknown => const SizedBox(width: 16, height: 16),
+        };
+    final tracked = cards.any((c) => c.$2 != _CardFate.unknown);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final (card, fate) in cards)
+                Semantics(
+                  label: '${card.spoken}: ${switch (fate) {
+                    _CardFate.good => 'won as needed',
+                    _CardFate.bad => 'went the wrong way',
+                    _CardFate.played => 'played',
+                    _CardFate.onTable => 'on the table now',
+                    _CardFate.yours => 'in your hand',
+                    _CardFate.unknown => 'not played yet',
+                  }}',
+                  excludeSemantics: true,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    PlayingCardView(
+                        card: card,
+                        width: 30,
+                        dimmed: fate == _CardFate.good ||
+                            fate == _CardFate.bad ||
+                            fate == _CardFate.played),
+                    const SizedBox(height: 2),
+                    mark(fate),
+                  ]),
+                ),
+            ],
+          ),
+          if (tracked)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                  '✓ won as needed   ✗ went the wrong way   – played   ✋ in your hand',
+                  style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A task's explanation, game words and fine print, behind an info button.
+class _MoreAbout extends StatefulWidget {
+  const _MoreAbout(
+      {required this.explanation, required this.terms, required this.notes});
+  final String explanation;
+  final List<String> terms;
+  final List<String> notes;
+
+  @override
+  State<_MoreAbout> createState() => _MoreAboutState();
+}
+
+class _MoreAboutState extends State<_MoreAbout> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 6),
+        TextButton.icon(
+          onPressed: () => setState(() => _open = !_open),
+          style: TextButton.styleFrom(
+              foregroundColor: Palette.goldDeep,
+              padding: const EdgeInsets.symmetric(horizontal: 4)),
+          icon: Icon(_open ? Icons.expand_less_rounded : Icons.info_outline_rounded,
+              size: 20),
+          label: Text(_open ? 'Less' : 'What this task means'),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          alignment: Alignment.topCenter,
+          child: !_open
+              ? const SizedBox(width: double.infinity)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SuitText(widget.explanation,
+                        style: const TextStyle(
+                            fontSize: 15, height: 1.4, color: Palette.ink)),
+                    for (final n in widget.notes)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: SuitText(n,
+                            style: const TextStyle(
+                                fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
+                      ),
+                    _TermsList(terms: widget.terms),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 }

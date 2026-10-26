@@ -100,7 +100,8 @@ String explainTask(String d) {
     final card = withCourt.group(1)!;
     return 'The $card must fall in a trick that you win by playing a Court Card. '
         'Usually someone leads the ${card.substring(card.length - 1)} suit when you have none, so you can play a Court Card on it. '
-        'If the $card is won any other way, the task fails.';
+        'If the $card is won any other way, the task fails. '
+        'You can’t do this if you hold the $card yourself (you can’t play it and a Court Card in the same trick), and you need a Court Card in your hand.';
   }
   final winWith = RegExp(r'^Win a trick with a (\d)$').firstMatch(d);
   if (winWith != null) {
@@ -557,3 +558,54 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
   }
   return 'It wasn’t done by the end of the round.';
 }
+
+/// The cards a task is about, to show in its close-up with whether
+/// they've been played: the cards it names, every card of a number or
+/// suit it counts, or the Court Cards. Empty for tasks about tricks.
+List<PlayingCard> relevantCards(String d) {
+  final out = <PlayingCard>[];
+  void add(Iterable<PlayingCard> cs) {
+    for (final c in cs) {
+      if (!out.contains(c)) out.add(c);
+    }
+  }
+
+  final deck = fullDeck();
+  add([
+    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+      PlayingCard.parse(m.group(0)!)!
+  ]);
+  final lower = d.toLowerCase();
+  if (lower.contains('court card') ||
+      d.contains('Queen') ||
+      d.contains('Joker') ||
+      d.contains('Jack')) {
+    add(const [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king]);
+  }
+  // Numbers: "a 6", "6s", "Aces", "8s or 9s".
+  if (!lower.contains('total') && !lower.contains('every card is')) {
+    final ranks = <int>{
+      for (final m in RegExp(r'\b(\d)s\b').allMatches(d)) int.parse(m.group(1)!),
+      for (final m in RegExp(r'\b(?:a|an|another) (\d)\b').allMatches(d))
+        int.parse(m.group(1)!),
+      if (d.contains('Aces')) 1,
+    };
+    if (!lower.contains('even') && !lower.contains('odd')) {
+      add([for (final c in deck) if (!c.isCourt && ranks.contains(c.rank)) c]);
+    }
+  }
+  // Suits it counts: "five ♥ cards", "no ♥ cards", "any ♦ or ♣ cards".
+  if (RegExp(r'[♥♦♠♣] (or [♥♦♠♣] )?cards?').hasMatch(d) &&
+      !d.startsWith("Don't lead") &&
+      !d.contains('as many')) {
+    final suits = {
+      for (final m in RegExp(r'([♥♦♠♣])(?! *[A2-9])').allMatches(d)) m.group(1)!
+    };
+    add([for (final c in deck) if (suits.contains(c.suit.symbol)) c]);
+  }
+  return out;
+}
+
+/// Whether winning a card is what [d]'s owner wants (false for "Don't
+/// win…" and "Win no…" tasks).
+bool wantsToWin(String d) => !(d.startsWith("Don't") || d.startsWith('Win no'));

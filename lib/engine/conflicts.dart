@@ -183,9 +183,27 @@ bool clash(String a, String b) {
   return false;
 }
 
-/// Whether one player can't do both tasks.
-bool selfClash(String a, String b) {
+/// Whether one player can't do both tasks, at a table of [players]
+/// (the 2-player game deals three hands).
+bool selfClash(String a, String b, {int players = 4}) {
   final p = profileOf(a), q = profileOf(b);
+  // "More tricks than everyone else" with a cap on your own tricks: the
+  // others can't share out the rest without one of them catching up.
+  final hands = players < 3 ? 3 : players;
+  final total = 40 ~/ hands;
+  bool tooFew(String most, TaskProfile capped) {
+    final n = capped.maxTricks;
+    if (n == null) return false;
+    if (most == 'Win more tricks than everyone else together') {
+      return n * 2 <= total;
+    }
+    if (most == 'Win more tricks than everyone else') {
+      return n + (hands - 1) * (n - 1) < total;
+    }
+    return false;
+  }
+
+  if (p.mostTricks && tooFew(a, q) || q.mostTricks && tooFew(b, p)) return true;
   bool forbids(TaskProfile f, TaskProfile n) {
     final bad = f.forbidCard;
     if (bad != null && n.cards.any(bad)) return true;
@@ -205,6 +223,28 @@ bool selfClash(String a, String b) {
     return true;
   }
   return false;
+}
+
+/// Why a player holding [hand] can't do [d] at all, or null. Some tasks
+/// need a particular card in your own hand ("Win a trick with a 6"), and
+/// one can't be done if you hold the card it names ("Win the 7♥ with a
+/// Court Card": you can't play the 7♥ and a Court Card in one trick).
+String? handBlocks(String d, List<PlayingCard> hand) {
+  final court = RegExp(r'^Win the ([A2-9][♥♦♠♣]) with a Court Card$').firstMatch(d);
+  if (court != null) {
+    final card = PlayingCard.parse(court.group(1)!)!;
+    if (hand.contains(card)) {
+      return 'You hold the ${card.label}: you can’t play it and win it with a Court Card in the same trick';
+    }
+    if (!hand.any((c) => c.isCourt)) return 'You need a Court Card in your hand for this';
+  }
+  bool has(int r) => hand.any((c) => !c.isCourt && c.rank == r);
+  final withRank = RegExp(r'^Win (?:a trick|a \d|an \d|any \d) with (?:a|another) (\d)$').firstMatch(d);
+  if (withRank != null) {
+    final r = int.parse(withRank.group(1)!);
+    if (!has(r)) return 'You need a $r in your hand to win a trick with it';
+  }
+  return null;
 }
 
 /// Every task that has a profile (for tests: they must all be real tasks).

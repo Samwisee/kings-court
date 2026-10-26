@@ -1209,8 +1209,26 @@ class GameState {
     for (final o in tasks) {
       if (o != task &&
           o.assignedPlayerIndex == seat &&
-          selfClash(o.description, task.description)) {
+          selfClash(o.description, task.description, players: players.length)) {
         return 'That clashes with a task they already hold';
+      }
+    }
+    // On screen the app knows every hand: no task someone's cards make
+    // impossible for them (unless nobody else could take it either).
+    final m = cards;
+    if (m != null && m.dealId == dealId && seat < m.hands.length) {
+      final why = handBlocks(task.description, m.hands[seat]);
+      if (why != null) {
+        final someoneElse = [
+          for (int s = 0; s < players.length && s < m.hands.length; s++)
+            if (s != seat &&
+                s != exiledSeat &&
+                !isAntagonist(s) &&
+                !(task.kingCantTake && s == kingIndex) &&
+                handBlocks(task.description, m.hands[s]) == null)
+              s
+        ].isNotEmpty;
+        if (someoneElse) return why;
       }
     }
     return null;
