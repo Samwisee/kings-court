@@ -46,10 +46,14 @@ jobs:
       - name: Publish to the balance branch
         run: |
           v=${GITHUB_SHA::8}
-          git clone -q --branch balance --single-branch "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" /tmp/out 2>/dev/null || (mkdir -p /tmp/out && cd /tmp/out && git init -q -b balance)
-          cp tool/balance/out/report.txt /tmp/out/latest.txt || cp balance.txt /tmp/out/latest.txt
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          mkdir -p /tmp/old /tmp/out
+          # Keep the earlier reports, then publish a fresh branch with them.
+          git clone -q --depth 1 --branch balance "$url" /tmp/old 2>/dev/null && cp /tmp/old/*.txt /tmp/out/ 2>/dev/null || true
+          if [ -f tool/balance/out/report.txt ]; then cp tool/balance/out/report.txt /tmp/out/latest.txt; else cp balance.txt /tmp/out/latest.txt; fi
           cp /tmp/out/latest.txt /tmp/out/report-$v.txt
           cd /tmp/out
+          git init -q -b balance
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Balance report for ${GITHUB_SHA}"
-          git push -q "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:balance
+          git push -qf "$url" balance || echo "::error::Could not publish the balance report"
