@@ -266,7 +266,11 @@ String _tricks(int n) => n == 1 ? '1 trick' : '$n tricks';
 /// something to count, otherwise what has happened and what's left.
 String taskStatus(String d, RoundView v, int owner, int? x) {
   final rule = taskRules[d];
-  final verdict = rule?.call(v, owner, x) ?? Verdict.pending;
+  // Nothing is decided before the first trick (and some rules look at the
+  // last trick played, so they need one).
+  final verdict = v.tricks.isEmpty
+      ? Verdict.pending
+      : rule?.call(v, owner, x) ?? Verdict.pending;
   final played = v.tricks.length;
   final left = v.totalTricks - played;
   final won = v.tricksWon(owner);

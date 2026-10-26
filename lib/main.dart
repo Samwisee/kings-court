@@ -472,8 +472,9 @@ class _HomePageState extends State<HomePage>
       try {
         final data = jsonDecode(legacy) as Map<String, dynamic>;
         final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
-        final key = _slotKey(g.mode);
-        if (prefs.getString(key) == null) await prefs.setString(key, legacy);
+        if (g != null && prefs.getString(_slotKey(g.mode)) == null) {
+          await prefs.setString(_slotKey(g.mode), legacy);
+        }
       } catch (_) {}
       await prefs.remove(_legacySaveKey);
     }
@@ -485,7 +486,7 @@ class _HomePageState extends State<HomePage>
       try {
         final data = jsonDecode(raw) as Map<String, dynamic>;
         final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
-        if (g.outcome != RoundOutcome.inProgress) continue;
+        if (g == null || g.outcome != RoundOutcome.inProgress) continue;
         saves.add(_SavedGame(g, data,
             DateTime.fromMillisecondsSinceEpoch(data['savedAt'] as int? ?? 0)));
       } catch (_) {
