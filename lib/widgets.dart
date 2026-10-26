@@ -2142,9 +2142,13 @@ class Masonry extends StatefulWidget {
       {super.key,
       required this.columnWidth,
       this.spacing = 6,
+      this.minHeight = 0,
       required this.children});
   final double columnWidth;
   final double spacing;
+
+  /// At least this tall, with the cards centred up and down in it.
+  final double minHeight;
   final List<Widget> children;
 
   @override
@@ -2165,6 +2169,7 @@ class _MasonryState extends State<Masonry> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) => _MasonryLayout(
         columnWidth: widget.columnWidth,
         spacing: widget.spacing,
+        minHeight: widget.minHeight,
         glide: _c,
         children: widget.children,
       );
@@ -2174,21 +2179,24 @@ class _MasonryLayout extends MultiChildRenderObjectWidget {
   const _MasonryLayout(
       {required this.columnWidth,
       required this.spacing,
+      required this.minHeight,
       required this.glide,
       required super.children});
   final double columnWidth;
   final double spacing;
+  final double minHeight;
   final AnimationController glide;
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderMasonry(columnWidth, spacing, glide);
+      _RenderMasonry(columnWidth, spacing, glide)..minHeight = minHeight;
 
   @override
   void updateRenderObject(BuildContext context, _RenderMasonry r) {
     r
       ..columnWidth = columnWidth
-      ..spacing = spacing;
+      ..spacing = spacing
+      ..minHeight = minHeight;
   }
 }
 
@@ -2218,6 +2226,13 @@ class _RenderMasonry extends RenderBox
   set spacing(double v) {
     if (v == _spacing) return;
     _spacing = v;
+    markNeedsLayout();
+  }
+
+  double _minHeight = 0;
+  set minHeight(double v) {
+    if (v == _minHeight) return;
+    _minHeight = v;
     markNeedsLayout();
   }
 
@@ -2265,6 +2280,8 @@ class _RenderMasonry extends RenderBox
     final left = (maxW - used) / 2;
     var moved = false;
     final shownNow = <_MasonryData, Offset>{};
+    // First where each card goes, then how far down to centre the lot.
+    final places = <_MasonryData, Offset>{};
     var child = firstChild;
     while (child != null) {
       child.layout(BoxConstraints.tightFor(width: colW), parentUsesSize: true);
@@ -2273,13 +2290,22 @@ class _RenderMasonry extends RenderBox
         if (heights[i] < heights[c] - 0.5) c = i;
       }
       final data = child.parentData as _MasonryData;
-      final next = Offset(left + c * (colW + _spacing), heights[c]);
+      places[data] = Offset(left + c * (colW + _spacing), heights[c]);
+      heights[c] += child.size.height + _spacing;
+      child = data.nextSibling;
+    }
+    final content = math.max(0.0, heights.fold<double>(0, math.max) - _spacing);
+    final tall = math.max(content, _minHeight);
+    final top = (tall - content) / 2;
+    child = firstChild;
+    while (child != null) {
+      final data = child.parentData as _MasonryData;
+      final next = places[data]! + Offset(0, top);
       // Wherever it shows now, mid-glide or not; new cards just appear.
       shownNow[data] = data.placed ? _shown(data) : next;
       if (data.placed && (next - data.offset).distance > 1) moved = true;
       data.offset = next;
       data.placed = true;
-      heights[c] += child.size.height + _spacing;
       child = data.nextSibling;
     }
     if (moved) {
@@ -2293,8 +2319,7 @@ class _RenderMasonry extends RenderBox
         if (attached) _glide.forward(from: 0);
       });
     }
-    final h = heights.fold<double>(0, math.max);
-    size = constraints.constrain(Size(maxW, math.max(0, h - _spacing)));
+    size = constraints.constrain(Size(maxW, tall));
   }
 
   @override

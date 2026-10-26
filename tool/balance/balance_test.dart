@@ -92,7 +92,7 @@ void main() {
     final dealt4 = <String, int>{}, failed4 = <String, int>{};
     final configs = [
       for (final p in [3, 4, 5])
-        for (final t in [6, 10, 14, 18, 22]) (p, t)
+        for (final t in [6, 10, 14, 17, 20]) (p, t)
     ];
     final byConfig = {for (final c in configs) c: _Tally()};
     final tasksIn = {for (final c in configs) c: 0};

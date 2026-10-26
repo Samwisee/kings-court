@@ -283,7 +283,7 @@ void main() {
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/wide-$name-5-cards.png'));
         // The top of the dock closes it.
-        await tester.tapAt(const Offset(960, 1080 * 0.5 + 14));
+        await tester.tapAt(const Offset(960, 200));
         for (int i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }

@@ -617,7 +617,7 @@ class _HomePageState extends State<HomePage>
     setState(() {
       game = g;
       playerCount = data['playerCount'] as int;
-      targetPoints = data['targetPoints'] as int;
+      targetPoints = (data['targetPoints'] as int).clamp(1, maxTarget);
       _resetTable();
       final pos = data['pos'] as List;
       final tilt = data['tilt'] as List;
@@ -1297,23 +1297,16 @@ class _HomePageState extends State<HomePage>
       return;
     }
     _trackerTimer?.cancel();
-    if (!_trackerMounted) {
-      // Built the first time just off screen, then slid up. After that it
-      // stays built, so opening it again is only the slide.
-      setState(() => _trackerMounted = true);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _trackerMounted) {
-          setState(() {
-            _trackerOpen = true;
-            _trackerSliding = true;
-          });
-        }
-      });
-      return;
-    }
+    // First drawn just below the screen (the slow frame, if there is one),
+    // and only then slid up, so the slide itself runs at full speed.
     setState(() {
-      _trackerOpen = true;
+      _trackerMounted = true;
       _trackerSliding = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _trackerSliding) setState(() => _trackerOpen = true);
+      });
     });
   }
 
@@ -2275,11 +2268,7 @@ class _HomePageState extends State<HomePage>
     const shuffleMs = 1000;
     // Packed in columns so short and tall cards fill the space; when one
     // is taken the rest glide to their new places.
-    final tasks = Masonry(
-      key: _middleTasksKey,
-      columnWidth: w,
-      spacing: 6,
-      children: [
+    final taskChips = <Widget>[
         for (int i = 0; i < slots.length; i++)
           KeyedSubtree(
             key: ValueKey('slot-${slots[i].description}'),
@@ -2408,11 +2397,22 @@ class _HomePageState extends State<HomePage>
             );
           }(),
           ),
-      ],
-    );
+    ];
     // Full size, always readable; on the rare table with no room left the
-    // middle scrolls rather than spilling over anything.
-    return Center(child: SingleChildScrollView(child: tasks));
+    // middle scrolls rather than spilling over anything. The tasks centre
+    // themselves in the middle, so when they close up (two rows to one)
+    // they glide to the new centre too.
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        child: Masonry(
+          key: _middleTasksKey,
+          columnWidth: w,
+          spacing: 6,
+          minHeight: box.maxHeight.isFinite ? box.maxHeight : 0,
+          children: taskChips,
+        ),
+      ),
+    );
   }
 
   bool _mayTake(Task t) => game.decree == Decree.kingsCommand
@@ -3474,7 +3474,7 @@ class _HomePageState extends State<HomePage>
           _saveSettings();
         }
         _nextTarget = game.campaign && game.outcome == RoundOutcome.won
-            ? math.min(30, targetPoints + 1)
+            ? math.min(maxTarget, targetPoints + 1)
             : targetPoints;
         if (game.bestStreak > _bestStreak) _bestStreak = game.bestStreak;
         _step = _DynastyStep.result;
@@ -4102,10 +4102,10 @@ class _HomePageState extends State<HomePage>
                         fontSize: 40,
                         color: Palette.gold)),
                 Slider(
-                  value: target.toDouble(),
+                  value: target.clamp(1, maxTarget).toDouble(),
                   min: 1,
-                  max: 30,
-                  divisions: 29,
+                  max: maxTarget.toDouble(),
+                  divisions: maxTarget - 1,
                   onChanged: (v) => setDialogState(() => target = v.round()),
                 ),
                 const Text(
@@ -4330,14 +4330,11 @@ class _HomePageState extends State<HomePage>
             duration: _trackerSlide,
             curve: Curves.easeInOutCubic,
             child: RepaintBoundary(
+              // No shadow or rounded clipping: both are slow to draw on
+              // the web on every frame of the slide.
               child: Material(
                 color: Palette.feltDeep,
-                elevation: 16,
-                shadowColor: Colors.black,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-                ),
-                clipBehavior: Clip.antiAlias,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                 child: Stack(children: [
                   Positioned.fill(
                     child: SafeArea(
@@ -6376,7 +6373,7 @@ class _HomePageState extends State<HomePage>
 
   void _nextDynastyRound(bool won) {
     final target = (targetPoints + (won ? 1 : 0) + game.pointsBonus)
-        .clamp(1, 30)
+        .clamp(1, maxTarget)
         .toInt();
     game.pointsBonus = 0;
     targetPoints = target;
@@ -6680,10 +6677,10 @@ class _HomePageState extends State<HomePage>
                 inactiveTrackColor: won ? Colors.black26 : Colors.white24,
               ),
               child: Slider(
-                value: _nextTarget.toDouble(),
+                value: _nextTarget.clamp(1, maxTarget).toDouble(),
                 min: 1,
-                max: 30,
-                divisions: 29,
+                max: maxTarget.toDouble(),
+                divisions: maxTarget - 1,
                 onChanged: (v) => setCardState(() => _nextTarget = v.round()),
               ),
             ),
@@ -7241,7 +7238,7 @@ const _modeInfo = {
 class _SetupPanelState extends State<_SetupPanel> {
   late int count =
       widget.digital && widget.playerCount < 3 ? 3 : widget.playerCount;
-  late int target = widget.targetPoints;
+  late int target = widget.targetPoints.clamp(1, maxTarget);
   late GameMode mode = widget.mode;
   late bool surprise = widget.surprise;
   late bool roles = widget.roles;
@@ -7625,10 +7622,10 @@ class _SetupPanelState extends State<_SetupPanel> {
               ],
             ),
             Slider(
-              value: target.toDouble(),
+              value: target.clamp(1, maxTarget).toDouble(),
               min: 1,
-              max: 30,
-              divisions: 29,
+              max: maxTarget.toDouble(),
+              divisions: maxTarget - 1,
               onChanged: (v) => setState(() => target = v.round()),
             ),
             const Text('Higher targets mean more or harder tasks.',
@@ -8756,15 +8753,13 @@ class _CardTracker extends StatelessWidget {
                           color: Colors.white54))
                   : Wrap(spacing: 3, runSpacing: 3, children: [
                       for (final c in cs)
-                        Opacity(
-                          opacity: g.certain.contains(c) ? 1 : 0.45,
-                          child: _MiniCard(
-                              card: c,
-                              width: small,
-                              edge: g.certain.contains(c)
-                                  ? players[g.seat].color
-                                  : null),
-                        ),
+                        _MiniCard(
+                            card: c,
+                            width: small,
+                            faint: !g.certain.contains(c),
+                            edge: g.certain.contains(c)
+                                ? players[g.seat].color
+                                : null),
                     ]),
             ),
           ]),
@@ -8804,89 +8799,55 @@ class _CardTracker extends StatelessWidget {
     return RepaintBoundary(
       child: LayoutBuilder(builder: (context, box) {
         final width = math.min(box.maxWidth, 720.0) - 24;
-        const header = 36.0;
+        const header = 40.0; // the legend above the grid
         // The whole deck fits in view at once: five rows across the full
         // width, as tall as the panel allows.
         final byWidth = (width - 8 * 4) / 9;
         final byHeight = ((box.maxHeight - header - 8) / 5 - 4) / 1.3;
         final w = math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
         final small = clampD(w * 0.7, 20, 34);
-        return Column(
+        Widget centred(Widget child) =>
+            Center(child: SizedBox(width: width, child: child));
+        // A list, so only what's in view is built and drawn, and the legend
+        // scrolls away with the rest.
+        return ListView(
+          padding: const EdgeInsets.only(top: 14, bottom: 16),
           children: [
-            // The top: tap it to put the tracker away.
-            Semantics(
-              button: true,
-              label: 'Close the card tracker',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onClose,
-                onVerticalDragEnd: (d) {
-                  if ((d.primaryVelocity ?? 0) > 0) onClose?.call();
-                },
-                child: SizedBox(
-                  height: header,
-                  child: Center(
-                    child: SizedBox(
-                      width: width,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(children: [
-                            for (final p in players) ...[
-                              swatch(p),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(p.name.replaceFirst('The ', ''),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 12.5, color: Colors.white70)),
-                              ),
-                              const SizedBox(width: 10),
-                            ],
-                          ]),
-                        ],
-                      ),
-                    ),
-                  ),
+            centred(Row(children: [
+              for (final p in players) ...[
+                swatch(p),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(p.name.replaceFirst('The ', ''),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 12.5, color: Colors.white70)),
                 ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Center(
-                  child: SizedBox(
-                    width: width,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (final suit in suits) ...[
-                          Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            children: [
-                              for (final c in deck)
-                                if (c.suit == suit) cell(c, w)
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                        ],
-                        heading('What the others may hold'),
-                        Text(
-                            '$toCome cards still to come in other hands'
-                            '${cards.setAside.isNotEmpty ? ' (one set aside, unseen)' : ''}. '
-                            'Bright cards are certain; faint ones are possible.',
-                            style: const TextStyle(
-                                fontSize: 14, height: 1.35, color: Colors.white70)),
-                        for (final g in guesses) guessBox(g, small),
-                      ],
-                    ),
-                  ),
+                const SizedBox(width: 10),
+              ],
+            ])),
+            const SizedBox(height: 10),
+            for (final suit in suits)
+              centred(Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    for (final c in deck)
+                      if (c.suit == suit) cell(c, w)
+                  ],
                 ),
-              ),
-            ),
+              )),
+            centred(heading('What the others may hold')),
+            centred(Text(
+                '$toCome cards still to come in other hands'
+                '${cards.setAside.isNotEmpty ? ' (one set aside, unseen)' : ''}. '
+                'Bright cards are certain; faint ones are possible.',
+                style: const TextStyle(
+                    fontSize: 14, height: 1.35, color: Colors.white70))),
+            for (final g in guesses) centred(guessBox(g, small)),
           ],
         );
       }),
@@ -8894,13 +8855,17 @@ class _CardTracker extends StatelessWidget {
   }
 }
 
-/// A plain card face for the card tracker: just its number and suit (or
-/// the Court Card's letter) and an outline, cheap enough to show dozens.
 /// Courtiers' powers and Dynasty are being reworked; until then they're
 /// shown as coming soon.
 const powersComingSoon = true;
 const dynastyComingSoon = true;
 
+/// The highest points target a round can have. The balance report shows
+/// rounds above this are close to impossible.
+const maxTarget = 20;
+
+/// A plain card face for the card tracker: just its number and suit (or
+/// the Court Card's letter) and an outline, cheap enough to show dozens.
 class _MiniCard extends StatelessWidget {
   const _MiniCard(
       {required this.card,
@@ -8908,7 +8873,12 @@ class _MiniCard extends StatelessWidget {
       this.dimmed = false,
       this.edge,
       this.trick,
+      this.faint = false,
       this.centred = true});
+
+  /// Only possibly there: drawn in faded colours (cheaper than making it
+  /// see-through).
+  final bool faint;
   final PlayingCard card;
   final double width;
 
@@ -8933,12 +8903,18 @@ class _MiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final court = card.isCourt;
-    final ink = court ? Palette.gold : Palette.suitColour(card.suit);
-    final face = court
-        ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.5 : 0)!
-        : dimmed
-            ? const Color(0xFFB4AFA4)
-            : Palette.card;
+    const felt = Palette.feltDeep;
+    final fade = faint ? 0.55 : 0.0;
+    final ink = Color.lerp(
+        court ? Palette.gold : Palette.suitColour(card.suit), felt, fade)!;
+    final face = Color.lerp(
+        court
+            ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.5 : 0)!
+            : dimmed
+                ? const Color(0xFFB4AFA4)
+                : Palette.card,
+        felt,
+        fade)!;
     final r = width * 0.14;
     final edgeW = edge != null ? math.max(2.5, width * 0.08) : 1.0;
     final label = Center(
@@ -8980,7 +8956,9 @@ class _MiniCard extends StatelessWidget {
           color: face,
           borderRadius: BorderRadius.circular(r - 1),
           border: Border.all(
-              color: edge ?? (court ? Palette.gold : const Color(0xFFD9D2C3)),
+              color: edge ??
+                  Color.lerp(court ? Palette.gold : const Color(0xFFD9D2C3),
+                      felt, fade)!,
               width: edgeW),
         ),
         child: Container(

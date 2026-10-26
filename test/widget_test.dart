@@ -1256,7 +1256,11 @@ void main() {
         final grid = find.byTooltip('Cards played and still to come');
         if (grid.hitTestable().evaluate().isNotEmpty) {
           await tester.tap(grid.hitTestable());
-          await tester.pump(const Duration(milliseconds: 500));
+          for (int i = 0; i < 20; i++) {
+            await tester.pump(const Duration(milliseconds: 30));
+          }
+          await tester.dragUntilVisible(find.text('What the others may hold'),
+              find.byType(ListView).last, const Offset(0, -200));
           expect(find.text('What the others may hold'), findsOneWidget);
         }
       }
