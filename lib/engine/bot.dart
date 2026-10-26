@@ -46,6 +46,7 @@ class Bot {
   /// The number of tricks [seat] should announce for task [task].
   int chooseX(MatchState s, int seat, int task) {
     final counts = List.filled(s.totalTricks + 1, 0);
+    final all = List.filled(s.totalTricks + 1, 0);
     final assigned = {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
@@ -56,6 +57,7 @@ class Bot {
       sim.playOut(rand);
       // Count this playout if everything else would succeed.
       final v = sim.view(s, inPlay);
+      all[v.tricksWon(seat)]++;
       final others = assigned.entries.where((e) =>
           e.key != task && !needsX(s.tasks[e.key].description));
       if (others.every((e) =>
@@ -64,11 +66,7 @@ class Bot {
         counts[v.tricksWon(seat)]++;
       }
     }
-    var best = 0;
-    for (int x = 1; x < counts.length; x++) {
-      if (counts[x] > counts[best]) best = x;
-    }
-    return best;
+    return _bestX(counts, all, s, seat);
   }
 
   /// The card [seat] should play.
@@ -185,6 +183,20 @@ class Bot {
     return true;
   }
 
+  /// The number of tricks to announce: the count that most often lets
+  /// every other task succeed, or failing that the most likely count. Never
+  /// fewer than the tricks [seat] is sure to win (the King card always
+  /// wins its trick).
+  static int _bestX(List<int> counts, List<int> all, MatchState s, int seat) {
+    final least = s.hands[seat].contains(PlayingCard.king) ? 1 : 0;
+    final useful = counts.any((c) => c > 0) ? counts : all;
+    var best = least;
+    for (int x = least; x < useful.length; x++) {
+      if (useful[x] > useful[best]) best = x;
+    }
+    return best;
+  }
+
   // ------------------------------------------------- without blocking the UI
   //
   // The same decisions, done a slice at a time so the screen keeps
@@ -255,6 +267,7 @@ class Bot {
 
   Future<int> chooseXAsync(MatchState s, int seat, int task) async {
     final counts = List.filled(s.totalTricks + 1, 0);
+    final all = List.filled(s.totalTricks + 1, 0);
     final assigned = {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
@@ -264,6 +277,7 @@ class Bot {
       final sim = _Sim.from(s);
       sim.playOut(rand);
       final v = sim.view(s, inPlay);
+      all[v.tricksWon(seat)]++;
       final others = assigned.entries.where((e) =>
           e.key != task && !needsX(s.tasks[e.key].description));
       if (others.every((e) =>
@@ -273,11 +287,7 @@ class Bot {
       }
       if (n % _slice == _slice - 1) await Future<void>.delayed(Duration.zero);
     }
-    var best = 0;
-    for (int x = 1; x < counts.length; x++) {
-      if (counts[x] > counts[best]) best = x;
-    }
-    return best;
+    return _bestX(counts, all, s, seat);
   }
 }
 

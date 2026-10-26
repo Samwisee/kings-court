@@ -47,12 +47,14 @@ class Palette {
   /// Seat colours. Chosen to stay clear of the card red so a player's
   /// colour is never mistaken for a suit.
   static const players = <Color>[
-    Color(0xFFE8822A), // orange
-    Color(0xFF3B7BE0), // blue
-    Color(0xFFA05CD6), // violet
-    Color(0xFF1FB5B0), // teal
-    Color(0xFFE0558C), // pink
-    Color(0xFF9DB534), // lime
+    // From the Okabe–Ito set, chosen to stay distinct for colour-blind
+    // players and from each other at a glance.
+    Color(0xFFE69F00), // orange
+    Color(0xFF56B4E9), // sky blue
+    Color(0xFFCC79A7), // reddish purple
+    Color(0xFF009E73), // bluish green
+    Color(0xFFF0E442), // yellow
+    Color(0xFF0072B2), // deep blue
   ];
 }
 
