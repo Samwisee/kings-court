@@ -254,7 +254,15 @@ class _TableGeometry {
             }
           }
         }
-        // Table completely full: fall back to just in front of the seat.
+        // Table completely full: fan this card over the seat's own last
+        // card, so it never lands on a neighbour's.
+        final mine = [
+          for (int k = 0; k < placed.length; k++)
+            if (placedBy[k] == i) placed[k]
+        ];
+        if (chosen == null && mine.isNotEmpty) {
+          chosen = mine.last.center + right * 10 + up * 10;
+        }
         chosen ??= clampToTable(seat + up * (tokenHalfH + cardHeight / 2));
         chosenRect ??= Rect.fromCenter(
             center: chosen, width: size.width, height: size.height);
@@ -7749,6 +7757,12 @@ class _TaskChip extends StatelessWidget {
     final narrow = width < 72;
     final top = Row(
       children: [
+        Flexible(
+          flex: 3,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
         Text('$points',
             style: TextStyle(
                 fontFamily: displayFont,
@@ -7779,13 +7793,16 @@ class _TaskChip extends StatelessWidget {
           const SizedBox(width: 2),
           Icon(Icons.workspace_premium, size: fontSize + 2, color: Palette.goldDeep),
         ],
+            ]),
+          ),
+        ),
         const Spacer(),
         if (failed)
           Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost)
         else if (progress != null)
           // Shrinks to fit a narrow chip rather than overflowing.
           Flexible(
-            flex: 1000,
+            flex: 3,
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,
