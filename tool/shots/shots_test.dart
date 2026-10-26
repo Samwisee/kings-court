@@ -124,7 +124,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(Slider), const Offset(200, 0));
+    await tester.drag(find.byType(Slider), const Offset(90, 0));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Deal tasks'));
     final state = tester.state(find.byType(HomePage)) as dynamic;
@@ -132,14 +132,15 @@ void main() {
     var shot = 0;
     Future<void> snap() => expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/phone-${shot++}.png'));
-    for (int i = 0; i < 60; i++) {
+    // Dealt, and waiting to hear whether you'll share a card.
+    for (int i = 0; i < 160; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await snap();
     for (int i = 0; i < 400 && game.pickTurn != null; i++) {
       await tester.pump(const Duration(milliseconds: 30));
-      if (i == 30) await snap();
-      state.debugYourMove();
+      if (i == 3) await snap();
+      if (i % 4 == 0) state.debugYourMove();
     }
     for (int i = 0; i < 900 && shot < 5; i++) {
       await tester.pump(const Duration(milliseconds: 30));
