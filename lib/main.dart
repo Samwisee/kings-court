@@ -851,7 +851,20 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Lets whichever bot is due act, after a short pause.
+  /// A card you chose early, played as soon as it's your turn.
+  PlayingCard? _queued;
+
   void _scheduleBot() {
+    if (_queued != null && _yourPlay) {
+      final card = _queued!;
+      _queued = null;
+      if (_cards.legalFor(_you).contains(card)) {
+        scheduleMicrotask(() {
+          if (mounted && _yourPlay) _playCard(_you, card);
+        });
+        return;
+      }
+    }
     // You asked to speak: once play is between tricks, stop for you.
     if (_wantsToSpeak &&
         !_revealing &&
@@ -1382,6 +1395,15 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHand() {
     final c = _cards;
+    // Once a suit is led you may choose your card early; it's played as
+    // soon as your turn comes.
+    final canQueue = _playing &&
+        !_yourPlay &&
+        c.dealId == game.dealId &&
+        c.current.isNotEmpty &&
+        !c.currentSeats.contains(_you) &&
+        _lastTrick == null;
+    if (!canQueue && !_yourPlay) _queued = null;
     // Showing a card: only those you may show stand out.
     final showing = _revealing || _speakPromptDue;
     final yourTurn = _yourPlay || showing;
@@ -1395,7 +1417,8 @@ class _HomePageState extends State<HomePage>
             : const <PlayingCard>{};
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+      // Room below the cards so they clear the brass trim.
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
       decoration: const BoxDecoration(
         color: Palette.feltDeep,
         border: Border(top: BorderSide(color: Color(0x66D4A63A))),
@@ -1433,6 +1456,8 @@ class _HomePageState extends State<HomePage>
                   child: Text(
                       _revealing
                           ? 'Tap a card to show it (highest, lowest or only of its suit)'
+                          : _queued != null
+                          ? 'You\u2019ll play the ${_queued!.label} on your turn (tap it again to change your mind)'
                           : _wantsToSpeak && _playing
                               ? 'You\u2019ll show a card after this trick'
                               : _cardStatus,
@@ -1497,7 +1522,9 @@ class _HomePageState extends State<HomePage>
                       final card = hand[i];
                       final dragging = _handDragCard == card.id;
                       final left = (width - total) / 2 + i * step;
-                      final top = legal.contains(card) ? 0.0 : 12.0;
+                      final top = legal.contains(card) || _queued == card
+                          ? 0.0
+                          : 12.0;
                       void play() {
                         if (_revealing || _speakPromptDue) {
                           if (_cards.revealFor(_you, card) == null) {
@@ -1509,6 +1536,20 @@ class _HomePageState extends State<HomePage>
                           final opening = _speakPromptDue;
                           _reveal(_you, card);
                           if (opening) _startChoosing();
+                          return;
+                        }
+                        if (!_yourPlay && canQueue) {
+                          final ok = legalPlays(c.hands[_you], c.current.first);
+                          if (!ok.contains(card)) {
+                            final led = c.current.first;
+                            _showSnack(
+                                led.isCourt
+                                    ? 'You must follow with a Court Card'
+                                    : 'You must follow ${led.suit.name}',
+                                Palette.feltDeep);
+                            return;
+                          }
+                          setState(() => _queued = _queued == card ? null : card);
                           return;
                         }
                         if (!_yourPlay) return;
@@ -1577,7 +1618,8 @@ class _HomePageState extends State<HomePage>
                                 card: card,
                                 width: cardW,
                                 dimmed: yourTurn && !legal.contains(card),
-                                glow: yourTurn && card == _tutorialHint,
+                                glow: (yourTurn && card == _tutorialHint) ||
+                                    _queued == card,
                                 marks: _marksFor(card),
                               ),
                             ),
@@ -1706,7 +1748,8 @@ class _HomePageState extends State<HomePage>
           clipBehavior: Clip.none,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+              // Room above the tokens so a King's crown clears the edge.
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
               child: Column(
                 children: [
                   // Solo Dynasty: what this hand is for, in the story.
@@ -3109,16 +3152,8 @@ class _HomePageState extends State<HomePage>
   Widget _buildLessonCard(bool won, Color fg) {
     final l = lessons[math.min(game.lesson, lessons.length - 1)];
     final last = game.lesson >= lessons.length - 1;
-    return Container(
-      margin: const EdgeInsets.all(24),
-      padding: const EdgeInsets.fromLTRB(24, 22, 24, 14),
-      constraints: const BoxConstraints(maxWidth: 380),
-      decoration: BoxDecoration(
-        color: won ? Palette.gold : Palette.feltDeep,
-        borderRadius: BorderRadius.circular(16),
-        border: won ? null : Border.all(color: Palette.lost, width: 2),
-        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
-      ),
+    return OrnateCard(
+      won: won,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -6393,16 +6428,8 @@ class _HomePageState extends State<HomePage>
     final chapter = game.mode == GameMode.chronicle ? game.chapter : null;
     final hasNext = chapter != null && chapter < chronicle.length - 1;
     return StatefulBuilder(
-      builder: (context, setCardState) => Container(
-        margin: const EdgeInsets.all(24),
-        padding: const EdgeInsets.fromLTRB(24, 22, 24, 14),
-        constraints: const BoxConstraints(maxWidth: 380),
-        decoration: BoxDecoration(
-          color: won ? Palette.gold : Palette.feltDeep,
-          borderRadius: BorderRadius.circular(16),
-          border: won ? null : Border.all(color: Palette.lost, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
-        ),
+      builder: (context, setCardState) => OrnateCard(
+        won: won,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -6422,7 +6449,8 @@ class _HomePageState extends State<HomePage>
                     fontWeight: FontWeight.w900,
                     fontSize: 32,
                     color: fg)),
-            const SizedBox(height: 4),
+            OrnateDivider(
+                color: won ? const Color(0xFF6E4E0E) : Palette.gold),
             Text(
               won
                   ? 'Every task is done. The court rejoices.'

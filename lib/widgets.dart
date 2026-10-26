@@ -1884,3 +1884,133 @@ class _SlideToPlaceState extends State<SlideToPlace>
     );
   }
 }
+
+/// The card that announces a round's end: a framed panel with a double
+/// rule, gem corners and a soft sheen. Gold for a win; dark wine edged in
+/// red and gold for a loss.
+class OrnateCard extends StatelessWidget {
+  const OrnateCard({super.key, required this.won, required this.child});
+  final bool won;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final edge = won ? const Color(0xFF6E4E0E) : Palette.lost;
+    final rule = won ? const Color(0x996E4E0E) : const Color(0x88D4A63A);
+    final gem = won ? const Color(0xFF6E4E0E) : Palette.gold;
+    Widget corner(Alignment a) => Align(
+          alignment: a,
+          child: Transform.rotate(
+            angle: math.pi / 4,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: gem,
+                border: Border.all(
+                    color: won ? const Color(0xFFF9E08C) : const Color(0xFF2A0E12),
+                    width: 1.5),
+              ),
+            ),
+          ),
+        );
+    return Container(
+      margin: const EdgeInsets.all(24),
+      constraints: const BoxConstraints(maxWidth: 400),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: won
+              ? const [Color(0xFFF9E08C), Color(0xFFD4A63A), Color(0xFFB98A24)]
+              : const [Color(0xFF3A1218), Color(0xFF1C0A0E), Color(0xFF12080A)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: edge, width: 2.5),
+        boxShadow: [
+          const BoxShadow(color: Colors.black54, blurRadius: 28, offset: Offset(0, 8)),
+          BoxShadow(
+              color: (won ? Palette.gold : Palette.lost).withValues(alpha: 0.35),
+              blurRadius: 40,
+              spreadRadius: 2),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // The inner rule, inset from the edge.
+          Positioned.fill(
+            child: Container(
+              margin: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: rule, width: 1.2),
+              ),
+            ),
+          ),
+          // A gem at each corner of the inner rule.
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: Stack(children: [
+                corner(Alignment.topLeft),
+                corner(Alignment.topRight),
+                corner(Alignment.bottomLeft),
+                corner(Alignment.bottomRight),
+              ]),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(26, 24, 26, 16),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A rule with a gem in the middle, for under a title.
+class OrnateDivider extends StatelessWidget {
+  const OrnateDivider({super.key, required this.color, this.width = 180});
+  final Color color;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget line(bool left) => Expanded(
+          child: Container(
+            height: 1.5,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: left
+                    ? [color.withValues(alpha: 0), color]
+                    : [color, color.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        );
+    return SizedBox(
+      width: width,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(children: [
+          line(true),
+          const SizedBox(width: 6),
+          Transform.rotate(
+            angle: math.pi / 4,
+            child: Container(width: 7, height: 7, color: color),
+          ),
+          const SizedBox(width: 4),
+          CrownIcon(size: 14, color: color),
+          const SizedBox(width: 4),
+          Transform.rotate(
+            angle: math.pi / 4,
+            child: Container(width: 7, height: 7, color: color),
+          ),
+          const SizedBox(width: 6),
+          line(false),
+        ]),
+      ),
+    );
+  }
+}
