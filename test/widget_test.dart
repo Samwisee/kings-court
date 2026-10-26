@@ -290,7 +290,9 @@ void main() {
       for (int j = i + 1; j < rects.length; j++) {
         if (rects[i].$1 == rects[j].$1) continue;
         expect(rects[i].$2.overlaps(rects[j].$2), isFalse,
-            reason: 'cards $i and $j overlap');
+            reason: 'cards $i and $j overlap: $rects, '
+                'seats ${[for (int s = 0; s < 6; s++) tester.getCenter(find.byType(SeatToken).at(s))]}, '
+                'screen ${tester.view.physicalSize / tester.view.devicePixelRatio}');
       }
     }
     // Drags on the round table are occasionally missed in the test

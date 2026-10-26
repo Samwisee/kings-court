@@ -43,7 +43,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Skip to the lessons'),
+            child: const Text('Skip'),
           ),
         ],
       ),
@@ -124,20 +124,30 @@ class _TutorialIntroState extends State<TutorialIntro> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 560),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextButton(
                         onPressed: _back,
                         child: Text(page == 0 ? 'Cancel' : 'Back'),
                       ),
-                      const Spacer(),
-                      FilledButton.icon(
-                        onPressed: _continue,
-                        style: FilledButton.styleFrom(
-                            minimumSize: const Size(160, 52)),
-                        icon: Icon(_last
-                            ? Icons.play_arrow_rounded
-                            : Icons.arrow_forward_rounded),
-                        label: Text(_last ? 'Start lesson 1' : 'Continue'),
+                      const SizedBox(width: 12),
+                      // Shrinks rather than overflowing on a narrow screen
+                      // or with large text.
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: FilledButton.icon(
+                            onPressed: _continue,
+                            style: FilledButton.styleFrom(
+                                minimumSize: const Size(160, 52)),
+                            icon: Icon(_last
+                                ? Icons.play_arrow_rounded
+                                : Icons.arrow_forward_rounded),
+                            label:
+                                Text(_last ? 'Start lesson 1' : 'Continue'),
+                          ),
+                        ),
                       ),
                     ],
                   ),
