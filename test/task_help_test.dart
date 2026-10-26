@@ -47,4 +47,30 @@ void main() {
     expect(taskStatus("Don't win any of the first three tricks", v, 1, null),
         contains('1 of the first 3'));
   });
+
+  test('A failed task says why', () {
+    PlayingCard c(String l) => PlayingCard.parse(l)!;
+    final names = ['You', 'The Duke', 'The Bishop'];
+    final t = Trick(0, const [0, 1, 2], [c('2♥'), c('3♥'), c('9♣')], 1);
+    final v = view([t]);
+    expect(failReason('Win the 3♥', v, 0, null, names),
+        'The Duke won the 3♥ in trick 1.');
+    final mine = Trick(0, const [0, 1, 2], [c('9♠'), c('2♠'), c('3♠')], 0);
+    expect(
+        failReason("Don't win any of the first three tricks", view([mine]), 0,
+            null, names),
+        'You won trick 1.');
+    expect(failReason("Don't win any ♣ cards", view([Trick(0, const [0, 1, 2], [c('9♣'), c('2♣'), c('3♠')], 0)]), 0, null, names),
+        contains('trick 1'));
+  });
+
+  test('Number tasks track which cards are still to come', () {
+    PlayingCard c(String l) => PlayingCard.parse(l)!;
+    final v = view([Trick(0, const [0, 1, 2], [c('6♥'), c('2♥'), c('3♥')], 0)]);
+    expect(taskProgress('Win any 6 with another 6', v, 1, null), '6s: 3 left');
+    final s = taskStatus('Win any 6 with another 6', v, 1, null);
+    expect(s, contains('6♥ (trick 1)'));
+    expect(s, contains('6♦'));
+    expect(s, isNot(contains('Not yet')));
+  });
 }

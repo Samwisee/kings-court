@@ -627,6 +627,13 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
         .length;
     return of(have, 4);
   }
+  // Tasks won with a particular number: how many of it are still to come.
+  final withRank = RegExp(r'^Win (?:a trick|a \d|an \d|any \d) with (?:a|another) (\d)$').firstMatch(d);
+  if (withRank != null) {
+    final r = int.parse(withRank.group(1)!);
+    final played = v.tricks.expand((t) => t.cards).where((c) => rank(c, r)).length;
+    return '${r}s: ${4 - played} left';
+  }
   // Tasks about what you mustn't do: how far you've got safely.
   final notFirst = RegExp(r"^Don't win any of the first (\w+) tricks$").firstMatch(d);
   if (notFirst != null) {

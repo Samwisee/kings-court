@@ -123,8 +123,8 @@ void main() {
           matchesGoldenFile('goldens/wide-0-modes.png'));
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
-      final sw = find.widgetWithText(SwitchListTile, 'On-screen cards');
-      if (tester.widget<SwitchListTile>(sw).value != onScreen) {
+      final sw = find.widgetWithText(CheckboxListTile, 'Use a real deck');
+      if (tester.widget<CheckboxListTile>(sw).value != !onScreen) {
         await tester.tap(sw);
         await tester.pumpAndSettle();
       }

@@ -292,6 +292,12 @@ class _SwordAndShield extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final gilt = _gilt(Offset.zero & size);
+    // Drawn a third larger than its space, so it reads as boldly as the
+    // other Court Cards' emblems.
+    canvas.save();
+    canvas.translate(w / 2, h * 0.5);
+    canvas.scale(1.35);
+    canvas.translate(-w / 2, -h * 0.5);
     // A gold sword, point down: pommel, a long grip and the crossguard
     // above the shield.
     canvas.drawCircle(Offset(w * 0.5, h * 0.0), w * 0.045, gilt);
@@ -330,6 +336,7 @@ class _SwordAndShield extends CustomPainter {
       ..lineTo(w * 0.32, h * 0.58)
       ..close();
     canvas.drawPath(chevron, Paint()..color = const Color(0xFF0F5B3A));
+    canvas.restore();
   }
 
   @override

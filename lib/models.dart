@@ -128,6 +128,10 @@ class GameState {
   /// Whether each player has used their once-per-round card reveal.
   List<bool> spoke = [];
 
+  /// Seats that have passed on taking a task this round. Each player may
+  /// pass once a round, handing the pick to the next player.
+  Set<int> passed = {};
+
   /// Whose turn it is to pick a task, or null once every task has an owner.
   int? pickTurn;
 
@@ -1319,6 +1323,24 @@ class GameState {
     powerUsed = List.filled(players.length, false);
     schemeResult = List.filled(players.length, null);
     pickTurn = null;
+    passed = {};
+  }
+
+  /// Whether [seat] may pass on picking a task right now: it's their turn,
+  /// they haven't passed this round, and someone else could pick instead.
+  bool canPass(int seat) =>
+      pickTurn == seat &&
+      !isTutorial &&
+      decree != Decree.kingsCommand &&
+      !passed.contains(seat) &&
+      tasks.any((t) => t.assignedPlayerIndex == null) &&
+      _nextPicker(seat) != seat;
+
+  /// [seat] passes: the pick moves on clockwise.
+  void pass(int seat) {
+    if (!canPass(seat)) return;
+    passed.add(seat);
+    pickTurn = _nextPicker(seat);
   }
 
   /// Replays the same tasks in a new round: clears results and assignments.
@@ -1474,6 +1496,7 @@ class GameState {
         'wins': wins,
         'losses': losses,
         'spoke': spoke,
+        'passed': passed.toList(),
         'pickTurn': pickTurn,
         'mode': mode.index,
         'chapter': chapter,
@@ -1550,6 +1573,7 @@ class GameState {
         ..wins = j['wins'] as int
         ..losses = j['losses'] as int
         ..spoke = List<bool>.from(j['spoke'] as List)
+        ..passed = {for (final s in (j['passed'] as List?) ?? const []) s as int}
         ..pickTurn = j['pickTurn'] as int?
         ..mode = GameMode.values[(j['mode'] as int?) ?? 0]
         ..chapter = j['chapter'] as int?

@@ -1085,6 +1085,12 @@ class _HomePageState extends State<HomePage>
       final status = verdict == Verdict.done && game.sealProblem(t) == null
           ? TaskStatus.completed
           : TaskStatus.failed;
+      if (status == TaskStatus.failed) {
+        _whyFailed[t] = verdict == Verdict.done
+            ? 'Done out of order: ${game.sealProblem(t)}'
+            : failReason(t.description, v, t.assignedPlayerIndex!,
+                c.announced[t.description], [for (final p in game.players) p.name]);
+      }
       if (status == TaskStatus.failed && await _offerAbsolution(t)) continue;
       if (!mounted || !game.tasks.contains(t)) continue;
       _setTaskStatus(t, status);
@@ -1103,6 +1109,9 @@ class _HomePageState extends State<HomePage>
     // Nothing to undo when the cards decided.
     _lastMark = null;
   }
+
+  /// Why each failed task failed this round, for the end of the round.
+  final _whyFailed = <Task, String>{};
 
   /// The tricks so far, as the task rules see them.
   RoundView get _roundView {
@@ -1130,7 +1139,8 @@ class _HomePageState extends State<HomePage>
       return 'The tricks haven’t started yet.';
     }
     return taskStatus(t.description, _roundView, t.assignedPlayerIndex!,
-        _cards.announced[t.description]);
+        _cards.announced[t.description],
+        names: [for (final p in game.players) p.name]);
   }
 
   /// The cards [t] names that its owner has already won, to cross out.
@@ -1191,7 +1201,9 @@ class _HomePageState extends State<HomePage>
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
-            : 'Your pick: tap a task to take it';
+            : game.canPass(_you)
+                ? 'Your pick: tap a task, or pass once a round'
+                : 'Your pick: tap a task to take it';
       }
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
@@ -1270,6 +1282,13 @@ class _HomePageState extends State<HomePage>
                       textAlign: TextAlign.center),
                 ),
               ),
+              // Pass on picking, once a round.
+              if (game.canPass(_you))
+                TextButton(
+                  onPressed: () => setState(() => game.pass(_you)),
+                  style: TextButton.styleFrom(foregroundColor: Palette.gold),
+                  child: const Text('Pass'),
+                ),
               // The speech token: show one card, once a round.
               SizedBox(
                 width: 44,
@@ -1472,8 +1491,13 @@ class _HomePageState extends State<HomePage>
     final taken = <(Task, Rect)>[];
     for (final t in game.tasks) {
       final owner = owners[t];
-      final from = _openTaskRects[t];
-      if (_owners[t] != null || owner == null || from == null) continue;
+      if (_owners[t] != null || owner == null) continue;
+      // Where the card is right now on screen (last frame), not where it
+      // was when the middle was last built: that may have been part way
+      // through the deal, when it was still sliding in from the side.
+      final key = _openTaskKeys[t];
+      final from = (key == null ? null : _rectOn(key)) ?? _openTaskRects[t];
+      if (from == null) continue;
       _landing.add(t);
       taken.add((t, from));
     }
@@ -2864,6 +2888,7 @@ class _HomePageState extends State<HomePage>
     _dealtFor = -1;
     _deal.reset();
     _landing.clear();
+    _whyFailed.clear();
   }
 
   void _shuffleTasks() {
@@ -4118,6 +4143,18 @@ class _HomePageState extends State<HomePage>
         ],
       ),
       actions: [
+        // At a real table: whoever's picking may pass, once a round.
+        if (!_digital &&
+            game.pickTurn != null &&
+            game.canPass(game.pickTurn!))
+          Tooltip(
+            message: '${game.players[game.pickTurn!].name} passes the pick on (once a round)',
+            child: TextButton(
+              onPressed: () => setState(() => game.pass(game.pickTurn!)),
+              style: TextButton.styleFrom(foregroundColor: Palette.gold),
+              child: const Text('Pass'),
+            ),
+          ),
         // Dynasty is about the story: the points grow on their own.
         if (!game.isDynasty)
         Tooltip(
@@ -6108,10 +6145,48 @@ class _HomePageState extends State<HomePage>
                     color: fg)),
             const SizedBox(height: 4),
             Text(
-              won ? 'Every task is done. The court rejoices.' : 'A task failed.',
+              won
+                  ? 'Every task is done. The court rejoices.'
+                  : game.tasks.where((t) => t.isFailed).length > 1
+                      ? 'These tasks failed:'
+                      : 'This task failed:',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 17, color: fg),
             ),
+            // What went wrong: each failed task, whose it was, and why.
+            if (!won)
+              for (final t in game.tasks.where((t) => t.isFailed))
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
+                  decoration: BoxDecoration(
+                    color: const Color(0x22FFFFFF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0x55D9483B)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SuitText(_cardText(t),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
+                      const SizedBox(height: 2),
+                      SuitText(
+                          [
+                            if (t.assignedPlayerIndex != null)
+                              t.assignedPlayerIndex == _you && _digital
+                                  ? 'Your task.'
+                                  : '${game.players[t.assignedPlayerIndex!].name}\u2019s task.',
+                            _whyFailed[t] ?? 'Marked as failed.',
+                          ].join(' '),
+                          style: const TextStyle(
+                              fontSize: 14.5, height: 1.3, color: Colors.white70)),
+                    ],
+                  ),
+                ),
             if (chapter != null && won) ...[
               const SizedBox(height: 8),
               // Crowns earned: 3 first time, 2 within three attempts, else 1.
@@ -6566,7 +6641,7 @@ Future<void> showRulesDialog(BuildContext context) {
     (
       'Playing the cards on screen',
       [
-        'Free play, Endless and the Chronicle work without a deck: turn on On-screen cards when you set up (Dynasty always uses them). You take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
+        'Free play, Endless and the Chronicle are played on screen by default, no deck needed (Dynasty always is). To play with real cards instead, tick Use a real deck when you set up. On screen, you take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
         'The app deals, and whoever holds the King card is crowned. In a Dynasty the reigning King takes the King card into their hand each round.',
         'When it\'s your pick, drag a task onto your seat. Then tap a card in your hand to play it: cards you may play stand up.',
         'Tasks, seals and traitors\' schemes are judged by the cards as the tricks fall. Decrees apply as usual.',
@@ -7029,20 +7104,54 @@ class _SetupPanelState extends State<_SetupPanel> {
             ],
           ),
         const SizedBox(height: 8),
-        // With a real deck, or played on screen with bot courtiers.
-        SwitchListTile(
+        // Played on screen with bot courtiers, or with a real deck.
+        CheckboxListTile(
           contentPadding: EdgeInsets.zero,
-          value: digital,
-          activeThumbColor: Palette.gold,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: !digital,
+          activeColor: Palette.gold,
+          checkColor: Palette.ink,
           onChanged: (v) => setState(() {
-            digital = v;
+            digital = !(v ?? false);
             if (digital && count < 3) count = 3;
           }),
-          title: const Text('On-screen cards', style: TextStyle(fontSize: 16)),
-          subtitle: const Text(
-              'No deck needed: you play on screen with bot courtiers. The app deals, keeps the rules and checks every task.',
-              style: TextStyle(color: Colors.white70)),
+          title: const Text('Use a real deck', style: TextStyle(fontSize: 16)),
+          subtitle: Text(
+              digital
+                  ? 'Off: you play on screen with bot courtiers. The app deals, keeps the rules and checks every task.'
+                  : 'Everyone plays with real cards; the app sits in the middle and keeps track of the tasks.',
+              style: const TextStyle(color: Colors.white70)),
         ),
+        if (!digital)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+            decoration: BoxDecoration(
+              color: const Color(0x22000000),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Setting up the deck',
+                    style: TextStyle(
+                        fontFamily: displayFont,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Palette.gold)),
+                SizedBox(height: 6),
+                SuitText(
+                    '1. From an ordinary pack, keep the Ace to 9 of ♥ ♦ ♠ ♣ (Aces count as 1). Put the 10s and picture cards aside.\n'
+                    '2. Add four Court Cards: a Joker, a Jack, a Queen and a King. They are their own suit and beat every other card, Joker lowest, King highest.\n'
+                    '3. That makes 40 cards. Shuffle and deal them all out; some players may get one more card than others.\n'
+                    '4. Whoever has the King card is the King: tap their seat and the tasks are dealt.',
+                    style: TextStyle(
+                        fontSize: 14.5, height: 1.4, color: Colors.white)),
+              ],
+            ),
+          ),
         const SizedBox(height: 6),
         // Room is kept for the hint so nothing jumps when it appears.
         SizedBox(
@@ -7360,11 +7469,6 @@ class _ModeTile extends StatelessWidget {
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Colors.white70)),
-                  ],
-                  if (selected) ...[
-                    const Spacer(),
-                    const Icon(Icons.check_circle_rounded,
-                        size: 20, color: Palette.gold),
                   ],
                 ],
               ),

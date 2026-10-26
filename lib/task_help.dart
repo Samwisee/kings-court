@@ -265,7 +265,10 @@ String _tricks(int n) => n == 1 ? '1 trick' : '$n tricks';
 /// How [d] is going this round, as a sentence for its close-up, or null
 /// before the cards are dealt. Covers every task: counts where there is
 /// something to count, otherwise what has happened and what's left.
-String taskStatus(String d, RoundView v, int owner, int? x) {
+String taskStatus(String d, RoundView v, int owner, int? x,
+    {List<String> names = const []}) {
+  String who(int seat) => seat < names.length ? names[seat] : 'Player ${seat + 1}';
+  final me = names.isEmpty ? 'You' : who(owner);
   final rule = taskRules[d];
   // Nothing is decided before the first trick (and some rules look at the
   // last trick played, so they need one).
@@ -291,39 +294,266 @@ String taskStatus(String d, RoundView v, int owner, int? x) {
     return 'Safe so far, $played of ${v.totalTricks} tricks in. ${_tricks(left)} to go.';
   }
   final progress = taskProgress(d, v, owner, x);
+  final toGo = left == 1 ? '1 trick to go' : '$left tricks to go';
+  final playedCards = v.tricks.expand((t) => t.cards).toSet();
+  String unplayed(bool Function(PlayingCard) test) {
+    final out = [
+      for (final c in fullDeck())
+        if (test(c) && !playedCards.contains(c)) c.label
+    ];
+    return out.isEmpty ? 'none' : out.join(', ');
+  }
+
+  String playedOf(bool Function(PlayingCard) test) {
+    final out = <String>[];
+    for (int i = 0; i < v.tricks.length; i++) {
+      for (final c in v.tricks[i].cards) {
+        if (test(c)) out.add('${c.label} (trick ${i + 1})');
+      }
+    }
+    return out.isEmpty ? 'none yet' : out.join(', ');
+  }
+
+  bool rank(PlayingCard c, int r) => !c.isCourt && c.rank == r;
+
   final named = [
     for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
       PlayingCard.parse(m.group(0)!)!
   ];
   if (named.isNotEmpty && d.startsWith('Win the ') && !d.contains('last trick')) {
     if (named.length == 1) {
-      return 'The ${named.single.label} hasn’t been played yet. ${_tricks(left)} to go.';
+      return 'The ${named.single.label} hasn’t been played yet. $toGo.';
     }
     final mine = v.won(owner).toSet();
     final need = [for (final c in named) if (!mine.contains(c)) c.label];
     return 'Won ${named.length - need.length} of ${named.length}. Still to win: ${need.join(', ')}.';
   }
+  if (d == 'Win the 2♣ in the last trick') {
+    return 'The 2♣ is still in someone’s hand. Keep it back for trick ${v.totalTricks}; $toGo.';
+  }
+  final withRank = RegExp(r'^Win a trick with a (\d)$').firstMatch(d);
+  if (withRank != null) {
+    final r = int.parse(withRank.group(1)!);
+    return '$me hasn’t won a trick with a $r yet. ${r}s played: ${playedOf((c) => rank(c, r))}. Still to come: ${unplayed((c) => rank(c, r))}.'
+        .replaceFirst('You hasn’t', 'You haven’t');
+  }
+  final pair = RegExp(r'^Win (?:a|an) (\d) with a (\d)$').firstMatch(d);
+  if (pair != null) {
+    final target = int.parse(pair.group(1)!), by = int.parse(pair.group(2)!);
+    return '${by}s still to come: ${unplayed((c) => rank(c, by))}. ${target}s still to come: ${unplayed((c) => rank(c, target))}. $toGo.';
+  }
+  if (d == 'Win any 6 with another 6') {
+    return '6s played: ${playedOf((c) => rank(c, 6))}. Still to come: ${unplayed((c) => rank(c, 6))}. Two of them must fall in one trick, won with a 6.';
+  }
+  if (d == 'Win the Queen') {
+    return 'The Queen hasn’t been played yet. Only the King card beats her. $toGo.';
+  }
+  final courtOnly = RegExp(r'^Win the (Joker|Jack) and no other').firstMatch(d);
+  if (courtOnly != null) {
+    final name = courtOnly.group(1)!;
+    final card = name == 'Joker' ? PlayingCard.joker : PlayingCard.jack;
+    final mine = v.won(owner).toSet();
+    final others = [
+      for (final c in const [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king])
+        if (c != card && !playedCards.contains(c)) c.label
+    ];
+    return '${mine.contains(card) ? 'The $name is won.' : 'The $name isn’t won yet.'} Court Cards still to come, which must go to others: ${others.isEmpty ? 'none' : others.join(', ')}.';
+  }
+  if (d.startsWith('Win at least one card of each suit')) {
+    final mine = v.won(owner);
+    final need = [
+      for (final s in const [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs])
+        if (!mine.any((c) => c.suit == s)) s.symbol
+    ];
+    return 'Still to win: ${need.join(' ')}. $toGo.';
+  }
+  if (d.startsWith('Win every card of at least one suit')) {
+    final others = v.wonByOthers(owner);
+    final mine = v.won(owner);
+    final open = [
+      for (final s in const [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs])
+        if (!others.any((c) => c.suit == s))
+          '${s.symbol} (${mine.where((c) => c.suit == s).length} won)'
+    ];
+    return 'Suits still possible: ${open.join(', ')}. $toGo.';
+  }
+  if (d.contains('totalling')) {
+    final best = [
+      for (final t in v.tricks)
+        if (t.winner == owner && !t.cards.any((c) => c.isCourt))
+          t.cards.fold<int>(0, (a, c) => a + c.rank)
+    ];
+    return best.isEmpty
+        ? 'No trick won without a Court Card yet. $toGo.'
+        : 'Totals of the tricks won so far: ${best.join(', ')}. $toGo.';
+  }
+  if (d.contains('than everyone') || d.contains('fewer tricks than everyone')) {
+    if (names.isNotEmpty) {
+      return 'Tricks so far: ${[for (int s = 0; s < v.players; s++) '${who(s)} ${v.tricksWon(s)}'].join(', ')}. $toGo.';
+    }
+  }
   if (progress != null) {
-    return '${_describeProgress(d, progress, won)} ${_tricks(left)} to go.';
+    return '${_describeProgress(d, progress, won, me)} $toGo.';
+  }
+  if (RegExp(r'^Win (the|only the) first').hasMatch(d)) {
+    return played == 0
+        ? 'Decided by the first trick, which the King leads.'
+        : '$toGo.';
   }
   if (d.contains('last trick')) {
-    return 'The last trick is trick ${v.totalTricks}; $played played so far.';
+    return 'Decided by the last trick, trick ${v.totalTricks}. $toGo.';
   }
-  return played == 0
-      ? 'Not yet. All ${_tricks(v.totalTricks)} still to play.'
-      : 'Not yet. You’ve won ${_tricks(won)} so far, ${_tricks(left)} to go.';
+  if (timingOf(d) == TaskTiming.anyTrick) {
+    return played == 0
+        ? 'It can happen on any trick. All ${_tricks(v.totalTricks)} to play.'
+        : 'No trick like that won yet. $toGo.';
+  }
+  return 'Decided at the end of the round. $toGo.';
 }
 
-String _describeProgress(String d, String progress, int won) {
+String _describeProgress(String d, String progress, int won, String me) {
   final frac = RegExp(r'^(\d+)/(\d+)$').firstMatch(progress);
   if (frac != null) return 'So far ${frac.group(1)} of ${frac.group(2)}.';
   if (progress.startsWith('run ')) {
-    return 'Your longest run so far: ${progress.substring(4)} in a row.';
+    return 'Longest run so far: ${progress.substring(4)} in a row.';
   }
   if (progress.contains(' v ')) {
     final p = progress.split(' v ');
-    return 'You ${p[0]}, the King ${p[1]}.';
+    return '$me ${p[0]}, the King ${p[1]}.';
   }
-  if (progress.endsWith('tricks')) return 'You’ve won ${_tricks(won)} so far.';
+  if (progress.endsWith('tricks')) return '$me: ${_tricks(won)} won so far.';
   return 'So far: $progress.';
+}
+
+/// Why [d] failed, in a sentence, judged from the tricks played. [names]
+/// gives each seat's name ("You", "The Duke"); [owner] held the task.
+String failReason(String d, RoundView v, int owner, int? x, List<String> names) {
+  String who(int seat) => seat < names.length ? names[seat] : 'Player ${seat + 1}';
+  final me = who(owner);
+  final over = v.over;
+  int? trickOf(PlayingCard c) {
+    for (int i = 0; i < v.tricks.length; i++) {
+      if (v.tricks[i].cards.contains(c)) return i;
+    }
+    return null;
+  }
+
+  final named = [
+    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+      PlayingCard.parse(m.group(0)!)!
+  ];
+  // A named card went the wrong way.
+  if (named.isNotEmpty && d.startsWith('Win')) {
+    for (final c in named) {
+      final i = trickOf(c);
+      if (i == null) continue;
+      final t = v.tricks[i];
+      if (d.contains('with a Court Card') && t.winner == owner) {
+        return '$me won the ${c.label} in trick ${i + 1}, but not with a Court Card.';
+      }
+      if (d.contains('last trick') && i != v.totalTricks - 1) {
+        return 'The ${c.label} was played in trick ${i + 1}, not the last trick.';
+      }
+      if (t.winner != owner) {
+        return '${who(t.winner)} won the ${c.label} in trick ${i + 1}.';
+      }
+    }
+  }
+  if (RegExp(r"^(Don't win any|Win no)").hasMatch(d) && !d.contains('trick')) {
+    for (int i = 0; i < v.tricks.length; i++) {
+      final t = v.tricks[i];
+      if (t.winner != owner) continue;
+      final rule = taskRules[d];
+      // The first trick after which the task had failed.
+      final upTo = RoundView(
+          players: v.players,
+          king: v.king,
+          tricks: v.tricks.sublist(0, i + 1),
+          totalTricks: v.totalTricks,
+          inPlay: v.inPlay);
+      if (rule != null && rule(upTo, owner, x) == Verdict.failed) {
+        return '$me won trick ${i + 1}, and it held ${t.cards.map((c) => c.label).join(', ')}.';
+      }
+    }
+  }
+  final notFirst = RegExp(r"^Don't win any of the first (\w+) tricks$").firstMatch(d);
+  if (notFirst != null || d == "Don't win any tricks") {
+    final mine = v.wonIndexes(owner);
+    if (mine.isNotEmpty) return '$me won trick ${mine.first + 1}.';
+  }
+  if (d == "Don't win two tricks in a row") {
+    final mine = v.wonIndexes(owner);
+    for (int k = 1; k < mine.length; k++) {
+      if (mine[k] == mine[k - 1] + 1) {
+        return '$me won tricks ${mine[k - 1] + 1} and ${mine[k] + 1}, one after the other.';
+      }
+    }
+  }
+  if (d.startsWith("Don't lead")) {
+    for (int i = 0; i < v.tricks.length; i++) {
+      final t = v.tricks[i];
+      if (t.leader == owner) {
+        final upTo = v.tricks.sublist(0, i + 1);
+        if (taskRules[d]!(
+                RoundView(
+                    players: v.players,
+                    king: v.king,
+                    tricks: upTo,
+                    totalTricks: v.totalTricks,
+                    inPlay: v.inPlay),
+                owner,
+                x) ==
+            Verdict.failed) {
+          return '$me led the ${t.led.label} in trick ${i + 1}.';
+        }
+      }
+    }
+  }
+  if (RegExp(r'^Win the first|^Win only the first').hasMatch(d) && v.tricks.isNotEmpty) {
+    for (int i = 0; i < v.tricks.length; i++) {
+      if (v.tricks[i].winner != owner) {
+        return '${who(v.tricks[i].winner)} won trick ${i + 1}.';
+      }
+      if (d.startsWith('Win only the first') && i > 0) {
+        return '$me won trick ${i + 1} as well.';
+      }
+    }
+  }
+  final won = v.tricksWon(owner);
+  if (d.contains('than the King') || d.contains('as the King')) {
+    return '$me won ${_tricks(won)}; the King won ${_tricks(v.tricksWon(v.king))}.';
+  }
+  if (d.contains('than everyone')) {
+    final counts = [
+      for (int s = 0; s < v.players; s++) '${who(s)} ${v.tricksWon(s)}'
+    ];
+    return 'Tricks won: ${counts.join(', ')}.';
+  }
+  final exact = RegExp(r'^Win exactly (\w+|X) tricks?').firstMatch(d);
+  if (exact != null) {
+    final n = exact.group(1) == 'X' ? x : _numbers[exact.group(1)];
+    if (n != null) {
+      if (won > n) return '$me won ${_tricks(won)}, more than $n.';
+      return over
+          ? '$me finished with ${_tricks(won)}, not $n.'
+          : 'Too few tricks were left for $me to reach $n.';
+    }
+  }
+  if (d.contains('in the last trick') || d.endsWith('last trick')) {
+    if (over) {
+      final last = v.tricks.last;
+      if (last.winner != owner) return '${who(last.winner)} won the last trick.';
+    }
+    final extra = v.wonIndexes(owner).where((i) => i != v.totalTricks - 1);
+    if (extra.isNotEmpty && d.startsWith('Win only')) {
+      return '$me won trick ${extra.first + 1}, not only the last.';
+    }
+  }
+  if (over && timingOf(d) == TaskTiming.anyTrick) {
+    return 'The round ended before $me won a trick like that.';
+  }
+  if (!over) {
+    return 'It could no longer be done: the cards it needed were gone.';
+  }
+  return 'It wasn’t done by the end of the round.';
 }

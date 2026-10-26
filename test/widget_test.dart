@@ -94,8 +94,8 @@ Future<void> setupThrough(WidgetTester tester,
 
 /// Turns on-screen cards on or off on the players step.
 Future<void> setOnScreen(WidgetTester tester, bool on) async {
-  final f = find.widgetWithText(SwitchListTile, 'On-screen cards');
-  if (tester.widget<SwitchListTile>(f).value != on) {
+  final f = find.widgetWithText(CheckboxListTile, 'Use a real deck');
+  if (tester.widget<CheckboxListTile>(f).value != !on) {
     await tester.tap(f);
     await tester.pumpAndSettle();
   }
@@ -1032,7 +1032,7 @@ void main() {
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(find.text('You will be King'), findsNothing);
-    expect(find.text('On-screen cards'), findsNothing);
+    expect(find.text('Use a real deck'), findsNothing);
     expect(find.text('A crown awaits'), findsOneWidget);
     await tester.tap(find.text('Begin the reign'));
     await tester.pump();
@@ -1296,6 +1296,26 @@ void main() {
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
     expect(find.text('Play'), findsOneWidget); // back at the welcome
+  });
+
+  test('Each player may pass on picking once a round', () {
+    final g = GameState()
+      ..players = [for (int i = 0; i < 3; i++) Player('P$i', color: Colors.teal)]
+      ..addTasksUntilTarget(3, 10);
+    g.setKing(0);
+    final first = g.pickTurn!;
+    expect(g.canPass(first), isTrue);
+    g.pass(first);
+    expect(g.pickTurn, isNot(first));
+    // Picking goes round; when it comes back, no second pass.
+    for (int i = 0; i < 6 && g.pickTurn != null && g.pickTurn != first; i++) {
+      final seat = g.pickTurn!;
+      final t = g.tasks.firstWhere(
+          (t) => t.assignedPlayerIndex == null && g.canTake(t, seat),
+          orElse: () => g.tasks.firstWhere((t) => t.assignedPlayerIndex == null));
+      g.assign(t, seat);
+    }
+    if (g.pickTurn == first) expect(g.canPass(first), isFalse);
   });
 
   testWidgets('Cards a task needs are crossed out once won', (tester) async {
