@@ -1868,7 +1868,9 @@ class _HomePageState extends State<HomePage>
             if (_rectOn(e.value) case final r?) e.key: r,
       };
     });
-    final w = math.min(130.0, (width - 16) / 3);
+    // Bigger on a big screen, where there's room to read them easily.
+    final big = width > 600;
+    final w = math.min(big ? 200.0 : 130.0, (width - 16) / 3);
     // Every task keeps its place until picking is over, so nothing jumps
     // when one is taken. (Royal charges go straight to their house.)
     final slots = [for (final t in game.tasks) if (!game.isCharged(t)) t];
@@ -1935,7 +1937,7 @@ class _HomePageState extends State<HomePage>
                         text: _cardText(t),
                         color: Palette.inkSoft,
                         width: w,
-                        fontSize: 13,
+                        fontSize: big ? 16 : 13,
                         onTap: () => _yourPick
                             ? _takeTask(t)
                             : _showTaskDetail(t, Offset.zero),
@@ -2020,8 +2022,9 @@ class _HomePageState extends State<HomePage>
                     for (final t in mine)
                       Padding(
                         padding: const EdgeInsets.only(right: 6),
-                        child: _miniTask(t, math.min(140.0, width / 3),
-                            fontSize: 13),
+                        child: _miniTask(
+                            t, math.min(width > 600 ? 190.0 : 140.0, width / 3),
+                            fontSize: width > 600 ? 15 : 13),
                       ),
                   ]),
                 ),
@@ -3699,7 +3702,7 @@ class _HomePageState extends State<HomePage>
                                 : const SizedBox(width: double.infinity),
                           ),
                         ]))
-                      : _centred(_buildTable(), aspect: 1.35)
+                      : _centred(_buildTable(), aspect: 1.2)
                   : Stack(
                       children: [
                         Positioned.fill(

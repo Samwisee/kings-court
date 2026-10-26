@@ -152,14 +152,16 @@ void main() {
       } else {
         await tester.pump(const Duration(milliseconds: 400));
         await tester.tap(find.byType(SeatToken).first);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 250; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
       }
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/wide-$name-1.png'));
       // A task's close-up: what it means, its words, how it's going.
-      final cards = find.byType(TableCard).hitTestable();
+      final cards = find
+          .textContaining(RegExp(r"^(Win|Don't)"), findRichText: true)
+          .hitTestable();
       if (cards.evaluate().isNotEmpty) {
         await tester.tap(cards.first);
         for (int i = 0; i < 20; i++) {
