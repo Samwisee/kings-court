@@ -2838,7 +2838,7 @@ class _HomePageState extends State<HomePage>
         backgroundColor: Palette.feltDeep,
         title: const Text('Absolution?'),
         content: SuitText(
-            '${game.players[t.assignedPlayerIndex!].name}’s task is about to fail: '
+            '${t.assignedPlayerIndex == _you && _digital ? 'Your' : '${game.players[t.assignedPlayerIndex!].name}’s'} task is about to fail: '
             '${t.cardText(playerCount)}\n\nAbsolve it, and you must take a penance in its place: '
             '${penance.cardText(playerCount)}',
             style: const TextStyle(fontSize: 16, height: 1.35, color: Colors.white)),
