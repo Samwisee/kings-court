@@ -7681,9 +7681,9 @@ class _Flight {
   /// The chip as it looks at one end of the flight, scaled to fit [rect].
   Widget _look(Rect size, double font, Color color) => FittedBox(
         fit: BoxFit.fill,
+        // Its own natural height at that width, stretched to the flight.
         child: SizedBox(
           width: size.width,
-          height: size.height,
           child: _TaskChip(
             task: task,
             points: points,
