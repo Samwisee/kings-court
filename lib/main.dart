@@ -2390,7 +2390,9 @@ class _HomePageState extends State<HomePage>
               ? const SizedBox.shrink()
               : game.canPass(_you) && !_speakPromptDue
               // Your pick: take a task from the middle, or pass it on.
-              ? Row(children: [
+              ? SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: [
                   for (final t in mine)
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
@@ -2401,18 +2403,13 @@ class _HomePageState extends State<HomePage>
                   OutlinedButton.icon(
                     onPressed: () => setState(() => game.pass(_you)),
                     icon: const Icon(Icons.redo_rounded, size: 18),
-                    label: const Text('Pass'),
+                    label: const Text('Pass (once a round)'),
                     style: OutlinedButton.styleFrom(
                         foregroundColor: Palette.gold,
                         side: const BorderSide(color: Palette.gold),
                         minimumSize: const Size(0, 44)),
                   ),
-                  const SizedBox(width: 8),
-                  const Flexible(
-                    child: Text('once a round',
-                        style: TextStyle(fontSize: 12, color: Colors.white54)),
-                  ),
-                ])
+                ]))
               : mine.isEmpty
               ? Text(
                   game.pickTurn != null ? 'Your tasks will appear here' : 'No tasks for you this round',
