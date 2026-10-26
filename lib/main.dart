@@ -7158,7 +7158,10 @@ class _SetupPanelState extends State<_SetupPanel> {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
+            // Kept near the step on a wide screen, not out in the corners.
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Row(
               children: [
                 if (step > 0 || widget.canCancel)
                   TextButton(
@@ -7189,6 +7192,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                   ),
                 ),
               ],
+            ),
             ),
           ],
         ),

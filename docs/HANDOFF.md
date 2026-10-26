@@ -18,8 +18,8 @@ Saved games store the enum index, so **new modes go on the end**.
 | `free` | Pick a points target; tasks are drawn to match. Optional *Seals and decrees*. |
 | `endless` | Each win adds a point to the next round; win streaks are tracked. |
 | `chronicle` | 24 chapters with set points, seals and decrees; crowns for wins (`lib/chronicle.dart`). |
-| `dynasty` | Story mode. Solo on-screen Dynasty is the main focus: **you are always the King**, courtiers come and go with the story, a throne room scene runs between hands. |
-| `tutorial` | Four scripted lessons (`lib/tutorial.dart`). Added most recently. |
+| `dynasty` | Story mode, labelled **Dynasty (Alpha)**. Always solo with on-screen cards (setup skips the players step): **you are always the King**, courtiers come and go with the story, a throne room scene runs between hands. Old saves of physical Dynasty still load. |
+| `tutorial` | Opening pages (story, goal, cards, tricks, following suit, Court Cards, reading tasks, playing together), then four scripted lessons (`lib/tutorial.dart`, `lib/play/tutorial_intro.dart`). Never saved. |
 
 Two ways to use any mode:
 - **At a real table:** the phone sits in the middle and tracks tasks for a physical deck.
@@ -73,7 +73,9 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 | `lib/play/throne_room.dart` | The solo Dynasty throne room: figures, speech bubbles, the felt stage set that lowers in, choices from the throne. |
 | `lib/play/card_view.dart`, `lib/widgets.dart`, `lib/theme.dart` | Cards (Court Card faces), tokens, crowns, the palette and fonts (Cinzel Decorative and Alegreya Sans). |
 | `lib/chronicle.dart` | The 24 chapters, `Seals`, `Decree`. |
-| `lib/tutorial.dart` | Tutorial lessons: fixed tasks, a rigged `deal()`, the courtiers' script, coach lines, the suggested card. |
+| `lib/tutorial.dart` | Tutorial opening pages (`introPages`) and lessons: fixed tasks, a rigged `deal()`, the courtiers' script, coach lines, the suggested card. |
+| `lib/play/tutorial_intro.dart` | The tutorial's opening pages, each waiting for Continue. |
+| `lib/task_help.dart` | Plain-words help for tasks: `explainTask` (every task), `glossary`/`termsIn` (game words, shown as chips in a task's close-up), `taskStatus` (how it's going, for every task). Short corner trackers stay in `taskProgress` (rules.dart). |
 | `test/` | `engine_test.dart` (rules, deals, bots), `widget_test.dart` (UI flows, whole on-screen rounds), `tutorial_test.dart` (each lesson is fair and winnable). |
 
 ### How an on-screen round flows
@@ -87,6 +89,12 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 `setState` is overridden: every change saves the game and nudges `_syncCards` and the bots.
 
 ## Recent history (newest first)
+
+- **Play menu and save slots:** Play on the welcome screen opens a chooser: Continue (one save per way to play, newest first), New game, Tutorial. Saves live under `kingsCourt.game.<mode>`; the old single `kingsCourt.game` save moves into its slot on first load.
+- **Every task explains itself:** the close-up shows how it's going, what it means in plain words, and tappable game words. "Don't…" and "last trick" tasks got corner trackers ("safe 1/3", "9 to go").
+- **Wide screens:** the on-screen table is no wider than its height and the round table no wider than 1.2× its height (`_centred`); hand, trick and task cards grow on big screens.
+- **Accessibility:** a *Four-colour suits* setting in the menu (♦ blue, ♣ green; `Palette.suitColour`), suits stay readable on dark backgrounds, cards have spoken labels for screen readers, menu settings show tick boxes, the welcome flourish and intro respect reduced motion.
+- **Look:** crown favicon and app icons (`web/`), a curvier Queen's tiara.
 
 - **Tutorial** (`GameMode.tutorial`). Four lessons: *Lead and win*, *Win a card*, *Court Cards*, *Help each other*.
   - Start it from **Learn to play** on the welcome screen, or **Tutorial** in setup.
