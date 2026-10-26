@@ -646,6 +646,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    _toastTimer?.cancel();
     _deal.dispose();
     _crown.dispose();
     _play.dispose();
