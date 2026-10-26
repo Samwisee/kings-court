@@ -105,6 +105,51 @@ void main() {
     await snap('5-ready');
   });
 
+  testWidgets('A phone, a big round', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Single player'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Free play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('4').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Slider), const Offset(200, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deal tasks'));
+    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final game = state.game as GameState;
+    var shot = 0;
+    Future<void> snap() => expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/phone-${shot++}.png'));
+    for (int i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await snap();
+    for (int i = 0; i < 400 && game.pickTurn != null; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      if (i == 30) await snap();
+      state.debugYourMove();
+    }
+    for (int i = 0; i < 900 && shot < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      if (i % 150 == 40) await snap();
+      state.debugYourMove();
+    }
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('A laptop window during play', (tester) async {
     tester.view.physicalSize = const Size(2192, 1518);
     tester.view.devicePixelRatio = 2;
