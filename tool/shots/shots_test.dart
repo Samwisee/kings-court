@@ -12,6 +12,7 @@ import 'package:kings_court/widgets.dart';
 import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/play/throne_room.dart';
 import 'package:kings_court/tutorial.dart';
+import 'package:kings_court/play/card_view.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -102,6 +103,53 @@ void main() {
     }
     await frames(30);
     await snap('5-ready');
+  });
+
+  testWidgets('A laptop window during play', (tester) async {
+    tester.view.physicalSize = const Size(2192, 1518);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Free play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('4').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deal tasks'));
+    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final game = state.game as GameState;
+    var shot = 0;
+    Future<void> snap() async {
+      for (final e in find.byType(PlayingCardView).evaluate().take(3)) {
+        final box = e.renderObject as RenderBox;
+        debugPrint('LAPTOP card ${box.localToGlobal(Offset.zero)} ${box.size}');
+      }
+      await expectLater(find.byType(MaterialApp),
+          matchesGoldenFile('goldens/laptop-${shot++}.png'));
+    }
+
+    for (int i = 0; i < 400 && game.pickTurn != null; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      if (i == 40) await snap();
+      state.debugYourMove();
+    }
+    await snap();
+    for (int i = 0; i < 1500 && shot < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      if (i % 120 == 60) await snap();
+      state.debugYourMove();
+    }
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 3));
   });
 
   for (final onScreen in [true, false]) {
