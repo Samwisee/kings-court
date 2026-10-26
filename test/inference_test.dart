@@ -36,4 +36,19 @@ void main() {
     expect(duke.possible, isNot(contains(c('9♥'))));
     expect(duke.possible, isNot(contains(c('8♥'))));
   });
+
+  test('Everyone knows who holds the King', () {
+    final m = MatchState(players: 3, target: 1)
+      ..hands = [
+        [c('2♠')],
+        [c('3♠')],
+        [PlayingCard.king],
+      ]
+      ..king = 2
+      ..setAside = [c('4♠')];
+    final g = guessHands(m, 0);
+    expect(g.firstWhere((h) => h.seat == 2).certain, contains(PlayingCard.king));
+    expect(g.firstWhere((h) => h.seat == 1).possible,
+        isNot(contains(PlayingCard.king)));
+  });
 }

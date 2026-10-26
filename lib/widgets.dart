@@ -1708,11 +1708,14 @@ class _CharacterTokenState extends State<CharacterToken>
 /// (on its left).
 class SpeechBubble extends StatefulWidget {
   const SpeechBubble(this.text,
-      {super.key, this.who, this.delay = Duration.zero, this.tailBelow = false});
+      {super.key, this.who, this.delay = Duration.zero, this.tailBelow = false, this.tailAbove = false});
   final String text;
 
   /// Point down at a speaker below, rather than left.
   final bool tailBelow;
+
+  /// Point up at a speaker above.
+  final bool tailAbove;
 
   /// Who is speaking, shown small above the words.
   final String? who;
@@ -1762,11 +1765,13 @@ class _SpeechBubbleState extends State<SpeechBubble>
         );
       },
       child: CustomPaint(
-        painter: _BubbleTail(below: widget.tailBelow),
+        painter: _BubbleTail(below: widget.tailBelow, above: widget.tailAbove),
         child: Container(
           margin: widget.tailBelow
               ? const EdgeInsets.only(bottom: 9)
-              : const EdgeInsets.only(left: 8),
+              : widget.tailAbove
+                  ? const EdgeInsets.only(top: 9)
+                  : const EdgeInsets.only(left: 8),
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           decoration: BoxDecoration(
             color: const Color(0xFFFBF5E6),
@@ -1798,8 +1803,9 @@ class _SpeechBubbleState extends State<SpeechBubble>
 }
 
 class _BubbleTail extends CustomPainter {
-  _BubbleTail({this.below = false});
+  _BubbleTail({this.below = false, this.above = false});
   final bool below;
+  final bool above;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1814,6 +1820,17 @@ class _BubbleTail extends CustomPainter {
           Paint()..color = const Color(0xFFFBF5E6));
       return;
     }
+    if (above) {
+      final x = size.width / 2;
+      canvas.drawPath(
+          Path()
+            ..moveTo(x - 9, 10)
+            ..lineTo(x + 9, 10)
+            ..lineTo(x, 0)
+            ..close(),
+          Paint()..color = const Color(0xFFFBF5E6));
+      return;
+    }
     final y = math.min(22.0, size.height / 2);
     final path = Path()
       ..moveTo(0, y)
@@ -1824,15 +1841,23 @@ class _BubbleTail extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_BubbleTail old) => old.below != below;
+  bool shouldRepaint(_BubbleTail old) => old.below != below || old.above != above;
 }
 
 /// Glides [child] from wherever it was last laid out to where it is now,
 /// so a courtier changing places walks there instead of jumping. Give it
 /// a key that follows the courtier.
 class SlideToPlace extends StatefulWidget {
-  const SlideToPlace({super.key, required this.child});
+  const SlideToPlace(
+      {super.key, required this.child, this.hop = true, this.within});
   final Widget child;
+
+  /// A little hop in each step, for walking courtiers.
+  final bool hop;
+
+  /// Only moves within this ancestor count (so the whole thing scrolling
+  /// or shifting doesn't set it gliding).
+  final GlobalKey? within;
 
   @override
   State<SlideToPlace> createState() => _SlideToPlaceState();
@@ -1855,7 +1880,9 @@ class _SlideToPlaceState extends State<SlideToPlace>
     if (!mounted) return;
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize || !box.attached) return;
-    final now = box.localToGlobal(Offset.zero);
+    final anchor = widget.within?.currentContext?.findRenderObject();
+    final now = box.localToGlobal(Offset.zero,
+        ancestor: anchor is RenderBox && anchor.attached ? anchor : null);
     final last = _last;
     _last = now;
     if (last == null) return;
@@ -1878,7 +1905,9 @@ class _SlideToPlaceState extends State<SlideToPlace>
         final t = Curves.easeInOutCubic.transform(_c.value);
         final off = _c.isAnimating || _c.value < 1 ? _from * (1 - t) : Offset.zero;
         // A little hop in each step as they walk.
-        final hop = _c.isAnimating ? -(math.sin(t * math.pi * 4)).abs() * 4 : 0.0;
+        final hop = widget.hop && _c.isAnimating
+            ? -(math.sin(t * math.pi * 4)).abs() * 4
+            : 0.0;
         return Transform.translate(offset: off + Offset(0, hop), child: child);
       },
     );
@@ -2098,4 +2127,90 @@ class OrnateDivider extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// Cards of one width laid out in columns, each going under the shortest
+/// column so far, so short and tall cards pack together with no gaps.
+/// The columns are centred in the space.
+class Masonry extends MultiChildRenderObjectWidget {
+  const Masonry(
+      {super.key,
+      required this.columnWidth,
+      this.spacing = 6,
+      required super.children});
+  final double columnWidth;
+  final double spacing;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderMasonry(columnWidth, spacing);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderMasonry r) {
+    r
+      ..columnWidth = columnWidth
+      ..spacing = spacing;
+  }
+}
+
+class _MasonryData extends ContainerBoxParentData<RenderBox> {}
+
+class _RenderMasonry extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _MasonryData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _MasonryData> {
+  _RenderMasonry(this._columnWidth, this._spacing);
+  double _columnWidth, _spacing;
+  set columnWidth(double v) {
+    if (v == _columnWidth) return;
+    _columnWidth = v;
+    markNeedsLayout();
+  }
+
+  set spacing(double v) {
+    if (v == _spacing) return;
+    _spacing = v;
+    markNeedsLayout();
+  }
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _MasonryData) child.parentData = _MasonryData();
+  }
+
+  @override
+  void performLayout() {
+    final maxW = constraints.maxWidth.isFinite
+        ? constraints.maxWidth
+        : _columnWidth * 3 + _spacing * 2;
+    final colW = math.min(_columnWidth, maxW);
+    var cols = math.max(1, ((maxW + _spacing) / (colW + _spacing)).floor());
+    cols = math.max(1, math.min(cols, childCount));
+    final heights = List<double>.filled(cols, 0);
+    final used = cols * colW + (cols - 1) * _spacing;
+    final left = (maxW - used) / 2;
+    var child = firstChild;
+    while (child != null) {
+      child.layout(BoxConstraints.tightFor(width: colW), parentUsesSize: true);
+      var c = 0;
+      for (int i = 1; i < cols; i++) {
+        if (heights[i] < heights[c] - 0.5) c = i;
+      }
+      final data = child.parentData as _MasonryData;
+      data.offset = Offset(left + c * (colW + _spacing), heights[c]);
+      heights[c] += child.size.height + _spacing;
+      child = data.nextSibling;
+    }
+    final h = heights.fold<double>(0, math.max);
+    size = constraints.constrain(Size(maxW, math.max(0, h - _spacing)));
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) =>
+      defaultPaint(context, offset);
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      defaultHitTestChildren(result, position: position);
 }

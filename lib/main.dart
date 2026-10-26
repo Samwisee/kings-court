@@ -1903,6 +1903,7 @@ class _HomePageState extends State<HomePage>
             struck: _wonNamed(t),
             charged: game.isCharged(t),
             onTap: () => _showTaskDetail(t, Offset.zero),
+            onLongPress: () => _showTaskDetail(t, Offset.zero),
           ),
           ),
         ),
@@ -2111,13 +2112,13 @@ class _HomePageState extends State<HomePage>
                 ),
                 if (seat != null && _quips[seat] != null)
                   Positioned(
-                    top: (width > 600 ? 48 : 38) + 58,
+                    top: (width > 600 ? 48 : 38) + 4,
                     left: 0,
                     right: 0,
                     child: Center(
                       child: SpeechBubble(_quips[seat]!,
                           key: ValueKey('quip-$seat-${_quips[seat]}'),
-                          tailBelow: false),
+                          tailAbove: true),
                     ),
                   ),
                   ],
@@ -2171,7 +2172,7 @@ class _HomePageState extends State<HomePage>
       children: [
         token,
         // Level with the token (below its crown slot), as tall as it.
-        Positioned(right: -(size / 1.42 + 8), top: 14, child: r),
+        Positioned(right: -(size / 1.3 + 8), top: 14, child: r),
       ],
     );
   }
@@ -2186,7 +2187,7 @@ class _HomePageState extends State<HomePage>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        PlayingCardView(card: card, width: height / 1.42),
+        _MiniCard(card: card, width: height / 1.3, centred: true),
         Text(c.revealHint[seat] ?? '',
             style: const TextStyle(
                 fontSize: 11, fontWeight: FontWeight.w700, color: Palette.gold)),
@@ -2196,6 +2197,8 @@ class _HomePageState extends State<HomePage>
 
   /// The middle of the table: the tasks to take while picking (tap one),
   /// then the trick.
+  final _middleTasksKey = GlobalKey(debugLabel: 'middle tasks');
+
   Widget _digiMiddle(double width) {
     if (_choosingKing) return const SizedBox.expand();
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
@@ -2250,13 +2253,19 @@ class _HomePageState extends State<HomePage>
       });
     }
     const shuffleMs = 1000;
-    final tasks = Wrap(
-      alignment: WrapAlignment.center,
+    // Packed in columns so short and tall cards fill the space; when one
+    // is taken the rest glide to their new places.
+    final tasks = Masonry(
+      key: _middleTasksKey,
+      columnWidth: w,
       spacing: 6,
-      runSpacing: 6,
       children: [
         for (int i = 0; i < slots.length; i++)
-          () {
+          SlideToPlace(
+            key: ValueKey('slot-${slots[i].description}'),
+            hop: false,
+            within: _middleTasksKey,
+            child: () {
             final t = slots[i];
             final taken = t.assignedPlayerIndex != null;
             // Who could take it: a task only one player may take is marked
@@ -2294,6 +2303,7 @@ class _HomePageState extends State<HomePage>
                     onTap: () => _yourPick
                         ? _takeTask(t)
                         : _showTaskDetail(t, Offset.zero),
+                    onLongPress: () => _showTaskDetail(t, Offset.zero),
                   ),
                   if (only != null)
                     Padding(
@@ -2379,6 +2389,7 @@ class _HomePageState extends State<HomePage>
               child: chip,
             );
           }(),
+          ),
       ],
     );
     // Full size, always readable; on the rare table with no room left the
@@ -2454,7 +2465,7 @@ class _HomePageState extends State<HomePage>
         // A place kept for the card you show, as tall as your token, so it
         // never covers your tasks.
         SizedBox(
-          width: 40 / 1.42 + 12,
+          width: 40 / 1.3 + 12,
           child: Center(child: _revealedView(_you, height: 40)),
         ),
         Expanded(
@@ -4263,6 +4274,15 @@ class _HomePageState extends State<HomePage>
       // so it sits the same distance from every edge.
       const Positioned.fill(
           child: IgnorePointer(child: SafeArea(child: TableTrim()))),
+      // While the tracker is up, a tap anywhere else on the table puts it
+      // away.
+      if (_trackerOpen)
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _closeTracker,
+          ),
+        ),
       // The card tracker, docked over the lower half, above the inlay. It
       // slides up and down; it's only built while it's showing.
       if (_trackerMounted &&
@@ -7972,6 +7992,7 @@ class _TaskChip extends StatelessWidget {
     this.progress,
     this.charged = false,
     this.onTap,
+    this.onLongPress,
     this.struck = const {},
   });
 
@@ -7988,6 +8009,9 @@ class _TaskChip extends StatelessWidget {
   final bool charged;
   final VoidCallback? onTap;
 
+  /// Always opens the task's close-up, even while tapping would take it.
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
     final done = task.isCompleted, failed = task.isFailed;
@@ -7996,9 +8020,9 @@ class _TaskChip extends StatelessWidget {
     // the task's close-up).
     final narrow = width < 72;
     final top = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          flex: 3,
+        Expanded(
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -8036,13 +8060,13 @@ class _TaskChip extends StatelessWidget {
             ]),
           ),
         ),
-        const Spacer(),
         if (failed)
           Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost)
         else if (progress != null)
-          // Shrinks to fit a narrow chip rather than overflowing.
-          Flexible(
-            flex: 3,
+          // Tucked into the top right corner; shrinks to fit a narrow chip
+          // rather than overflowing.
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: math.max(20, (width - 12) * 0.6)),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,
@@ -8095,6 +8119,7 @@ class _TaskChip extends StatelessWidget {
     // Done: the chip turns over to show a seal of completion.
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: TweenAnimationBuilder<double>(
         tween: Tween(end: done ? 1 : 0),
         duration: const Duration(milliseconds: 650),
@@ -8697,7 +8722,7 @@ class _CardTracker extends StatelessWidget {
     return RepaintBoundary(
       child: LayoutBuilder(builder: (context, box) {
         final width = math.min(box.maxWidth, 720.0) - 24;
-        const header = 50.0;
+        const header = 36.0;
         // The whole deck fits in view at once: five rows across the full
         // width, as tall as the panel allows.
         final byWidth = (width - 8 * 4) / 9;
@@ -8724,14 +8749,6 @@ class _CardTracker extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                                color: Colors.white38,
-                                borderRadius: BorderRadius.circular(2)),
-                          ),
                           Row(children: [
                             for (final p in players) ...[
                               swatch(p),
@@ -8803,9 +8820,13 @@ class _MiniCard extends StatelessWidget {
       required this.width,
       this.dimmed = false,
       this.edge,
-      this.trick});
+      this.trick,
+      this.centred = false});
   final PlayingCard card;
   final double width;
+
+  /// Rank and suit large in the middle, for a card shown on its own.
+  final bool centred;
 
   /// Played: greyed inside, but its outline stays bright.
   final bool dimmed;
@@ -8842,7 +8863,29 @@ class _MiniCard extends StatelessWidget {
             color: edge ?? (court ? Palette.gold : const Color(0xFFD9D2C3)),
             width: edge != null ? 3 : 1),
       ),
-      child: Stack(children: [
+      child: centred
+          ? Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                        text: card.rankLabel,
+                        style: TextStyle(
+                            fontFamily: court ? displayFont : bodyFont,
+                            fontWeight: FontWeight.w900,
+                            fontSize: width * 0.5)),
+                    if (!court)
+                      TextSpan(
+                          text: '\n${card.suit.symbol}',
+                          style: TextStyle(fontSize: width * 0.46)),
+                  ]),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(height: 1.0, color: textInk),
+                ),
+              ),
+            )
+          : Stack(children: [
         Text.rich(
           TextSpan(children: [
             TextSpan(

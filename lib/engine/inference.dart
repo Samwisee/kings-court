@@ -69,6 +69,13 @@ List<HandGuess> guessHands(MatchState m, int viewer) {
   for (final e in m.revealed.entries) {
     if (!played.contains(e.value)) shownBy[e.value] = e.key;
   }
+  // Everyone knows who the King is, so everyone knows who holds the King.
+  if (!played.contains(PlayingCard.king) &&
+      m.king != viewer &&
+      m.king >= 0 &&
+      m.king < m.players) {
+    shownBy[PlayingCard.king] = m.king;
+  }
   bool ruledOut(HandGuess g, PlayingCard c) {
     final owner = shownBy[c];
     if (owner != null) return owner != g.seat;
