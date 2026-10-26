@@ -363,7 +363,7 @@ void main() {
 
   testWidgets('Long tasks get taller cards instead of tiny text',
       (tester) async {
-    const width = 100.0;
+    const width = 140.0;
     final short = TableCard.sizeFor('Win the 3♥', width);
     final long = TableCard.sizeFor(
         'Win a trick where every card is lower than 7, with no Court Cards',
