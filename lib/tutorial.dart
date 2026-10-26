@@ -169,7 +169,7 @@ const introPages = <IntroPage>[
   IntroPage('At a real table', [
     'You can also play King’s Court with friends and a real pack of cards, 2 to 6 players around a table.',
     'Take an ordinary pack and keep the Ace to 9 of each suit (the Ace counts as 1). Put the 10s and picture cards aside, then add four Court Cards: a Joker, a Jack, a Queen and a King. They play as their own suit, whatever suit is printed on them.',
-    'When you set up a game, tick Use a real deck, and put the phone in the middle. Whoever holds the King card taps their seat, the app deals the tasks, and each player drags the tasks they take onto their seat. Tap a task to mark it done or failed.',
+    'When you set up a game, choose In person, and put the phone in the middle. Whoever holds the King card taps their seat, the app deals the tasks, and each player drags the tasks they take onto their seat. Tap a task to mark it done or failed.',
     'With two players, the King also plays a third hand, the Dummy. How to Play in the menu has all the details.',
   ], IntroArt.table),
   IntroPage('Now try it', [

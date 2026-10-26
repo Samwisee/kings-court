@@ -72,33 +72,22 @@ Future<void> dealGame(WidgetTester tester, int players) async {
   await tester.pumpAndSettle();
 }
 
-/// Walks the setup steps: way to play, players, names, then stops on the
-/// last step.
+/// Walks the setup steps for a game at a real table: in person, the game,
+/// players, names, then stops on the last step.
 Future<void> setupThrough(WidgetTester tester,
     {int players = 4, required String mode}) async {
+  await tester.tap(find.text('In person'));
+  await tester.pumpAndSettle();
   await tester.ensureVisible(find.text(mode));
   await tester.pumpAndSettle();
   await tester.tap(find.text(mode));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Next'));
-  await tester.pumpAndSettle();
-  // These tests use the table with a real deck.
-  await setOnScreen(tester, false);
   await tester.tap(find.text('$players').last);
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
-}
-
-/// Turns on-screen cards on or off on the players step.
-Future<void> setOnScreen(WidgetTester tester, bool on) async {
-  final f = find.widgetWithText(CheckboxListTile, 'Use a real deck');
-  if (tester.widget<CheckboxListTile>(f).value != !on) {
-    await tester.tap(f);
-    await tester.pumpAndSettle();
-  }
 }
 
 void main() {
@@ -136,7 +125,7 @@ void main() {
     // Everything scrolls, the button included.
     await tester.scrollUntilVisible(find.text('Got it'), 300);
     await tester.pumpAndSettle();
-    expect(find.text('Two players'), findsOneWidget);
+    expect(find.text('Two players'), findsWidgets);
     await tester.tap(find.text('Got it'));
     await tester.pumpAndSettle();
     expect(find.text('Two players'), findsNothing);
@@ -1025,11 +1014,12 @@ void main() {
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
     await openSetup(tester);
+    expect(find.text('Multiplayer'), findsOneWidget);
+    await tester.tap(find.text('Single player'));
+    await tester.pumpAndSettle();
     expect(find.text('(Alpha)'), findsOneWidget);
     await tester.ensureVisible(find.text('Dynasty'));
     await tester.tap(find.text('Dynasty'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(find.text('You will be King'), findsNothing);
     expect(find.text('Use a real deck'), findsNothing);
@@ -1202,14 +1192,13 @@ void main() {
       await tester.pumpWidget(const TheKingsCourtApp());
       await tester.pumpAndSettle();
       await openSetup(tester);
+      await tester.tap(find.text('Single player'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text(mode));
       await tester.tap(find.text(mode));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
       // Dynasty is always solo with on-screen cards: no players step.
       if (mode != 'Dynasty') {
-        await setOnScreen(tester, true);
         await tester.tap(find.text('3').last);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Next'));
@@ -1225,15 +1214,15 @@ void main() {
       if (mode == 'Free play') {
         // Before anyone picks, the table asks about showing a card.
         for (int i = 0;
-            i < 300 && find.text('Save it').evaluate().isEmpty;
+            i < 300 && find.text('Skip').evaluate().isEmpty;
             i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
-        expect(find.text('Save it'), findsOneWidget);
+        expect(find.text('Skip'), findsOneWidget);
         expect(game.tasks.every((t) => t.assignedPlayerIndex == null), isTrue);
-        await tester.tap(find.text('Save it'));
+        await tester.tap(find.text('Skip'));
         await tester.pump();
-        expect(find.text('Save it'), findsNothing);
+        expect(find.text('Skip'), findsNothing);
       }
       for (int i = 0;
           i < 3000 && game.outcome == RoundOutcome.inProgress;
@@ -1263,7 +1252,7 @@ void main() {
         if (grid.hitTestable().evaluate().isNotEmpty) {
           await tester.tap(grid.hitTestable());
           await tester.pump(const Duration(milliseconds: 500));
-          expect(find.text('The cards'), findsOneWidget);
+          expect(find.text('What the others may hold'), findsOneWidget);
         }
       }
       await tester.pumpWidget(const SizedBox());

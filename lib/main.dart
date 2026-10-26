@@ -23,6 +23,7 @@ import 'play/card_view.dart';
 import 'play/contest_table.dart';
 import 'play/throne_room.dart';
 import 'play/tutorial_intro.dart';
+import 'play/rules_page.dart';
 import 'sfx.dart';
 import 'task_help.dart';
 import 'theme.dart';
@@ -1277,37 +1278,10 @@ class _HomePageState extends State<HomePage>
 
   /// Every card in the deck, by suit: played (and in which trick, by
   /// whom), in your hand, shown by someone, or still to come.
-  void _showCardTracker() {
-    // Half the screen to start, so the table stays in view; drag it up
-    // for more, or down (or tap the table) to put it away.
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black26,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.5,
-        minChildSize: 0.2,
-        maxChildSize: 0.95,
-        snap: true,
-        snapSizes: const [0.5],
-        builder: (context, controller) => Container(
-          decoration: const BoxDecoration(
-            color: Palette.feltDeep,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-            border: Border(top: BorderSide(color: Color(0x88D4A63A))),
-          ),
-          child: _CardTracker(
-            cards: _cards,
-            you: _you,
-            players: game.players,
-            controller: controller,
-          ),
-        ),
-      ),
-    );
-  }
+  /// The card tracker, docked over the bottom half of the screen.
+  bool _trackerOpen = false;
+
+  void _showCardTracker() => setState(() => _trackerOpen = !_trackerOpen);
 
   /// The cards [t] is about, and what's become of each this round.
   List<(PlayingCard, _CardFate)> _cardStates(Task t) {
@@ -1374,7 +1348,7 @@ class _HomePageState extends State<HomePage>
     }
     if (_choosingKing) return '';
     if (game.pickTurn != null) {
-      if (_speakPromptDue) return 'Show a card first? Tap one';
+      if (_speakPromptDue) return 'Show a card first? Tap one, or skip';
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
@@ -1382,7 +1356,7 @@ class _HomePageState extends State<HomePage>
                 ? 'Your pick: tap a task'
                 : 'Your pick: tap a task to take it';
       }
-      if (_speakPromptDue) return 'Show a card first? Tap one';
+      if (_speakPromptDue) return 'Show a card first? Tap one, or skip';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
     if (!_tasksSettled) return 'Announcing numbers…';
@@ -1466,18 +1440,6 @@ class _HomePageState extends State<HomePage>
         children: [
           Row(
             children: [
-              // Your courtier's power, when it can be used.
-              SizedBox(
-                width: 44,
-                child: _yourCourtier == null
-                    ? null
-                    : IconButton(
-                        tooltip: '${_yourCourtier!.power}: ${_yourCourtier!.powerRule}',
-                        onPressed: _canUsePower ? _usePower : null,
-                        icon: Icon(Icons.bolt_rounded,
-                            color: _canUsePower ? Palette.gold : Colors.white24),
-                      ),
-              ),
               Expanded(
                 child: AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
@@ -1506,7 +1468,7 @@ class _HomePageState extends State<HomePage>
               // The action of the moment, beside what's happening: save
               // your card for later, or pass on picking.
               if (_speakPromptDue)
-                _barAction('Save it', Icons.bookmark_added_outlined, _startChoosing)
+                _barAction('Skip', Icons.skip_next_rounded, _startChoosing)
               else if (game.canPass(_you))
                 _barAction('Pass', Icons.redo_rounded,
                     () => setState(() => game.pass(_you))),
@@ -3160,7 +3122,7 @@ class _HomePageState extends State<HomePage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CrownIcon(size: 44, color: won ? Palette.ink : Palette.lost),
+          const SizedBox.shrink(),
           const SizedBox(height: 6),
           Text('Lesson ${game.lesson + 1}: ${l.title}',
               textAlign: TextAlign.center,
@@ -4115,10 +4077,11 @@ class _HomePageState extends State<HomePage>
     // either side for the title and menu, so it can use the top bar's
     // height too.
     final screen = MediaQuery.sizeOf(context);
-    final useTopBar = _inGame &&
-        _setupArgs == null &&
-        _digital &&
-        screen.width - math.max(480.0, screen.height) >= 560;
+    // The setup panel uses it too, so every choice fits on a phone.
+    final useTopBar = _setupArgs != null ||
+        _inGame &&
+            _digital &&
+            screen.width - math.max(480.0, screen.height) >= 560;
     return Stack(children: [
     Scaffold(
       extendBodyBehindAppBar: useTopBar,
@@ -4167,6 +4130,40 @@ class _HomePageState extends State<HomePage>
                       ],
                     ),
             ),
+            // The card tracker, docked over the lower half.
+            if (_trackerOpen &&
+                _inGame &&
+                _setupArgs == null &&
+                _digital &&
+                _cards.dealId == game.dealId)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: MediaQuery.sizeOf(context).height * 0.5,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 1, end: 0),
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, v, child) => FractionalTranslation(
+                      translation: Offset(0, v), child: child),
+                  child: Material(
+                    color: Palette.feltDeep,
+                    elevation: 12,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                      side: BorderSide(color: Color(0x88D4A63A)),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: _CardTracker(
+                      cards: _cards,
+                      you: _you,
+                      players: game.players,
+                      onClose: () => setState(() => _trackerOpen = false),
+                    ),
+                  ),
+                ),
+              ),
             if (_setupArgs != null)
               Positioned.fill(
                 child: TweenAnimationBuilder<double>(
@@ -4322,7 +4319,28 @@ class _HomePageState extends State<HomePage>
           case 'new':
             _showSetupDialog();
           case 'rules':
-            showRulesDialog(context);
+            showRulesPage(context,
+                game: _inGame && !game.isTutorial
+                    ? RulesContext(
+                        modeName: switch (game.mode) {
+                          GameMode.free => 'Free play',
+                          GameMode.endless => 'Endless',
+                          GameMode.chronicle => 'The Chronicle',
+                          GameMode.dynasty => 'Dynasty (Alpha)',
+                          GameMode.tutorial => 'Tutorial',
+                        },
+                        onScreen: _digital,
+                        players: game.players.length,
+                        dynasty: game.isDynasty,
+                        points: game.isDynasty ? null : targetPoints,
+                        seals: [
+                          for (final t in game.tasks)
+                            if (t.seal != null) t.seal!
+                        ]..sort(),
+                        decree: game.decree?.title,
+                        roles: game.hasRoles,
+                      )
+                    : null);
           case 'shuffle':
             _shuffleTasks();
           case 'tidings':
@@ -6449,7 +6467,7 @@ class _HomePageState extends State<HomePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CrownIcon(size: 44, color: won ? Palette.ink : Palette.lost),
+            const SizedBox.shrink(),
             const SizedBox(height: 6),
             if (chapter != null)
               Text('Chapter ${chapter + 1}: ${chronicle[chapter].title}',
@@ -6716,12 +6734,12 @@ class _WelcomeIntro extends StatelessWidget {
   final double crownSize;
   final Widget button;
 
-  static final _cards = [
-    PlayingCard.parse('7♦')!,
+  /// The four Court Cards, lowest to highest.
+  static const _cards = [
+    PlayingCard.joker,
     PlayingCard.jack,
-    PlayingCard.king,
     PlayingCard.queen,
-    PlayingCard.parse('A♥')!,
+    PlayingCard.king,
   ];
 
   static double _iv(double t, double a, double b, [Curve curve = Curves.linear]) =>
@@ -6768,7 +6786,7 @@ class _WelcomeIntro extends StatelessWidget {
                         child: Transform.rotate(
                           // Fanned from a point below the hand, like cards
                           // held in a hand.
-                          angle: (i - 2) * 0.2 * fan,
+                          angle: (i - (_cards.length - 1) / 2) * 0.24 * fan,
                           alignment: const Alignment(0, 2.6),
                           child: PlayingCardView(card: _cards[i], width: cardW),
                         ),
@@ -6866,195 +6884,6 @@ class _IntroSparks extends CustomPainter {
 }
 
 /// The rules, available from the welcome screen and during a game.
-Future<void> showRulesDialog(BuildContext context) {
-  const rules = <(String, List<String>)>[
-    (
-      'The aim',
-      [
-        "Everyone plays together. Each round you deal tasks such as 'Win a trick with a 6', share them out, then play tricks to complete them all.",
-        'Complete every task and the round is won. If any task fails, the round is lost.',
-      ]
-    ),
-    (
-      'The deck',
-      [
-        'Use 40 cards: Ace to 9 in all four suits, with the Ace counting as 1. Remove the 10s and the face cards.',
-        'Add the four Court Cards: the Joker, Jack, Queen and King. Court Cards beat every suit. From lowest to highest: Joker, Jack, Queen, King.',
-        'Shuffle and deal out every card. With 3 or 6 players, some players get one extra card.',
-      ]
-    ),
-    (
-      'Choosing tasks',
-      [
-        'Whoever holds the King card shows it and becomes the King. Tap their seat in the app and the tasks are dealt onto the table.',
-        'Look at your hand. Then, starting with the King and going clockwise, each player takes one task until all are taken. Drag a task onto your seat to take it. A glowing gold ring shows whose turn it is to pick.',
-        'A task is yours alone: only the tricks you win count towards it.',
-      ]
-    ),
-    (
-      'Playing a trick',
-      [
-        'The King leads the first trick by playing any card face up.',
-        'Going clockwise, everyone plays one card. You must play the suit that was led if you can. If you can\'t, play any card, including a Court Card.',
-        'The highest card of the suit led wins the trick, unless a Court Card was played. Then the highest Court Card wins.',
-        'The winner takes the trick, keeps it in front of them and leads the next one. Keep playing until every card is used.',
-      ]
-    ),
-    (
-      'Talking',
-      [
-        "Don't talk about the cards in your hand or suggest what anyone should play.",
-        'Once per round, before you play a card, you may lay one card from your hand face up and say whether it is your highest, your lowest or your only card of that suit. Court Cards can\'t be shown.',
-        'When you do, tap your seat to flip your speech token over. With courtly roles on, tapping your seat opens your courtier\'s card, where you mark it.',
-      ]
-    ),
-    (
-      'Tracking tasks',
-      [
-        'Tap a task to read it up close and mark it done or failed. Done tasks flip face down.',
-        'Mark a task failed as soon as it can no longer be completed. The round ends there.',
-        'Press and hold the felt in front of you to turn every task towards you. Let go and they turn back to their owners.',
-        'Each player\'s seat shows their seat number or initials, and every task they hold is edged in their colour.',
-        'Some tasks show icons under their points. 🚫 means the King can\'t take it. ⓘ means there is an extra condition: tap the task to read it.',
-      ]
-    ),
-    (
-      'Seals',
-      [
-        'Some tasks carry a red wax seal. Sealed tasks must be completed in order: seal I before seal II before seal III.',
-        'The Ω seal must be the very last task completed in the round.',
-        'Completing a sealed task out of order fails the round. The app checks when you mark it done.',
-      ]
-    ),
-    (
-      'Royal decrees',
-      [
-        'Some rounds bring a royal decree, read out after the King is crowned. Tap the red decree name at the top to read it again.',
-        'Silence: no card reveals. Late Counsel: no reveals until three tricks have been played.',
-        "King's Command: the King hands out every task. Exile: one player, chosen at random, may take no tasks this round.",
-      ]
-    ),
-    (
-      'Ways to play',
-      [
-        'Tutorial: four short, guided rounds that teach the basics. Tap Play on the welcome screen, then Tutorial.',
-        'Free play: you choose the points. Turn on Seals and decrees for surprises.',
-        'Courtly roles (any mode): everyone plays a courtier of a great house, with a token shape and a power to use once per round. Tap your seat to read your house and power and to mark it used.',
-        'Dynasty (Alpha): a solo story played with on-screen cards. You are the King, reigning until you fall, with courtiers, powers and dilemmas (see below).',
-        'Endless: each win adds a point to the next round, and the app keeps your current and best win streaks.',
-        'The Chronicle: 24 chapters with set points, seals and decrees. Beat a chapter to unlock the next and earn crowns: 3 on your first attempt, 2 within three attempts, 1 after that.',
-        'Your game saves as you play, with one save for each way to play. Close the app, tap Play, and pick up any of them where you left off. New game, Shuffle tasks, the laptop view (everything upright, no turning to each seat) and sound are in the menu at the top right.',
-      ]
-    ),
-    (
-      'Dynasty (Alpha)',
-      [
-        'You are the King. Before every deal you take the King card into your hand, and keep the crown round after round.',
-        'Every lost round wounds the King (the drops by the crown). How many wounds they can bear is secret: one, two or three. When the King falls, crown an heir and the dynasty goes on.',
-        'Every seat is a courtier of a great house, with a token shape and a power used once per round. Tap your seat to read your house and power.',
-        'After each round the King faces a dilemma and chooses. Choices win or lose courtiers\' loyalty, heal or wound the King, and can bring decrees.',
-        'Loyalty is a candle by each courtier\'s seat: the taller the flame, the more loyal. It flickers when loyalty changes. Deeds count too: after a won round, whoever did the most tasks gains favour, and a failed task shakes its owner\'s faith.',
-        'The King earns a name from their choices: the Kind, the Stern, the Bold and more.',
-        'Each round opens with tidings: news from the kingdom that may bring a decree and charge one house with a task. A royal charge (the gold ribbon) is dealt straight to that house and stays with them. Do it and they gain favour; fail and they lose it. Some dilemmas then follow from how the round went.',
-        'Some matters divide the court: everyone takes a side in secret, then all play the Trial of Hearts, a round where every \u2665 won is a mark of shame and the Q\u2660 is five. The side with the fewest marks per courtier has its way (a tie goes to the King). If the King\u2019s side loses, the King bows to the court; those who lose to the King remember.',
-        'How it ends: the story runs from the harvest to war with Karsk. Conquer Karsk or seal a lasting peace, and the realm is secured. If three Kings fall, the dynasty falls. If traitors ever outnumber the loyal, they seize the throne. Five victories in one reign bring a golden age to the story, but not its end.',
-        'A courtier whose loyalty falls to nothing openly turns against the King. Their token turns blood-red and they gain a scheme, shown at the top. They take no tasks and don\'t pick. If their scheme succeeds, the King is wounded. A later dilemma can win them back.',
-      ]
-    ),
-    (
-      'Playing the cards on screen',
-      [
-        'Free play, Endless and the Chronicle are played on screen by default, no deck needed (Dynasty always is). To play with real cards instead, tick Use a real deck when you set up. On screen, you take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
-        'The app deals, and whoever holds the King card is crowned. In a Dynasty the reigning King takes the King card into their hand each round.',
-        'When it\'s your pick, drag a task onto your seat. Then tap a card in your hand to play it: cards you may play stand up.',
-        'Tasks, seals and traitors\' schemes are judged by the cards as the tricks fall. Decrees apply as usual.',
-        'With 3, 5 or 6 players a few cards are set aside unseen so everyone has the same number. Card reveals aren\'t used on screen, and powers are marked by hand.',
-      ]
-    ),
-    (
-      'Two players',
-      [
-        'Deal 13 cards to each player. The other 14 go to a third hand, the Dummy: 7 face down, with 7 face up on top.',
-        'When a face-up Dummy card is played, flip the card underneath it.',
-        'The King plays the Dummy\'s cards as well as their own. If the King card is in the Dummy, choose a King together.',
-        'Only the two players take tasks. Tasks use the 3-player difficulty.',
-      ]
-    ),
-  ];
-
-  // One scrolling sheet: the title, every rule and the button all move
-  // together, so nothing is pinned on a small screen.
-  return showDialog<void>(
-    context: context,
-    builder: (context) => Dialog(
-      backgroundColor: Palette.card,
-      surfaceTintColor: Colors.transparent,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('How to Play',
-                  style: TextStyle(
-                      fontFamily: displayFont,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 26,
-                      color: Palette.ink)),
-              const SizedBox(height: 10),
-              for (final (heading, items) in rules) ...[
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 6),
-                  child: Text(heading,
-                      style: const TextStyle(
-                          fontFamily: displayFont,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 19,
-                          color: Palette.goldDeep)),
-                ),
-                for (final rule in items)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.only(top: 5, right: 10),
-                          child: CrownIcon(size: 11, color: Palette.goldDeep),
-                        ),
-                        Expanded(
-                          child: SuitText(rule,
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  height: 1.4,
-                                  color: Palette.ink)),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 6),
-              ],
-              const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: FilledButton.styleFrom(
-                      backgroundColor: Palette.ink,
-                      foregroundColor: Palette.gold),
-                  child: const Text('Got it'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
 /// Chooses a Chronicle chapter in the setup dialog: any chapter up to the
 /// first one not yet beaten.
 class _ChapterPicker extends StatelessWidget {
@@ -7287,19 +7116,19 @@ class _SetupPanel extends StatefulWidget {
 const _modeInfo = {
   GameMode.free: (
     'Free play',
-    'Pick a points target and play round after round. Add surprise seals and decrees if you like.'
+    'Choose a points target; add surprise seals and decrees if you like.'
   ),
   GameMode.endless: (
     'Endless',
-    'Every win adds a point to the next round. How long a winning streak can your court keep?'
+    'Each win adds a point to the next round. How long can your streak last?'
   ),
   GameMode.chronicle: (
     'The Chronicle',
-    '24 chapters with set points, seals and decrees that build in difficulty. Earn up to three crowns for each.'
+    '24 chapters of rising difficulty. Earn up to three crowns for each.'
   ),
   GameMode.dynasty: (
     'Dynasty',
-    'Solo, with on-screen cards. A story of kings. The King rules until wounds bring them down. Face dilemmas, keep your courtiers loyal, and watch for traitors.'
+    'A story of kings. Rule until wounds bring you down; face dilemmas, keep your courtiers loyal, watch for traitors.'
   ),
   GameMode.tutorial: (
     'Tutorial',
@@ -7329,7 +7158,17 @@ class _SetupPanelState extends State<_SetupPanel> {
   /// Dynasty is always played solo with on-screen cards, so it goes
   /// straight from the way to play to the story.
   bool get _solo => mode == GameMode.dynasty;
-  int get _steps => _solo ? 2 : digital ? 3 : 4;
+
+  /// The steps, in order: how you'll play, which game, then the table and
+  /// the details. The first two go on as soon as you tap a choice.
+  List<String> get _flow => [
+        'how',
+        'mode',
+        if (!_solo) 'count',
+        if (!_solo && !digital) 'names',
+        'final',
+      ];
+  int get _steps => _flow.length;
 
   @override
   void dispose() {
@@ -7380,20 +7219,81 @@ class _SetupPanelState extends State<_SetupPanel> {
       key: const ValueKey('mode'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('How will you play?',
-            textAlign: TextAlign.center, style: _heading),
-        const SizedBox(height: 14),
-        for (final m in GameMode.values)
+        const Text('Which game?', textAlign: TextAlign.center, style: _heading),
+        const SizedBox(height: 12),
+        for (final m in [
+          GameMode.free,
+          GameMode.endless,
+          GameMode.chronicle,
+          if (digital) GameMode.dynasty,
+        ])
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 8),
             child: _ModeTile(
               title: _modeInfo[m]!.$1,
               badge: m == GameMode.dynasty ? '(Alpha)' : null,
               description: _modeInfo[m]!.$2,
-              selected: mode == m,
-              onTap: () => setState(() => mode = m),
+              selected: false,
+              onTap: () => setState(() {
+                mode = m;
+                step++;
+              }),
             ),
           ),
+      ],
+    );
+  }
+
+  /// The first choice: how you'll play. Tap one to go on.
+  Widget _howStep() {
+    Widget tile(String title, String description, IconData icon,
+            VoidCallback? onTap, {String? badge}) =>
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Opacity(
+            opacity: onTap == null ? 0.55 : 1,
+            child: _ModeTile(
+              title: title,
+              badge: badge,
+              icon: icon,
+              description: description,
+              selected: false,
+              onTap: onTap ?? () {},
+            ),
+          ),
+        );
+    return Column(
+      key: const ValueKey('how'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('How will you play?',
+            textAlign: TextAlign.center, style: _heading),
+        const SizedBox(height: 12),
+        tile('Tutorial', 'New to the court? Learn the rules step by step.',
+            Icons.school_rounded, () {
+          mode = GameMode.tutorial;
+          _start();
+        }),
+        tile('Single player',
+            'Just you, with the cards on screen and courtiers who play with you.',
+            Icons.person_rounded, () => setState(() {
+                  digital = true;
+                  if (count < 3) count = 3;
+                  if (mode == GameMode.tutorial) mode = GameMode.free;
+                  step++;
+                })),
+        tile('Multiplayer', 'Play with friends online, each on your own phone.',
+            Icons.groups_rounded, null,
+            badge: '(Coming soon)'),
+        tile('In person',
+            'Round a real table with a real deck; the app keeps the tasks.',
+            Icons.table_restaurant_rounded, () => setState(() {
+                  digital = false;
+                  if (mode == GameMode.dynasty || mode == GameMode.tutorial) {
+                    mode = GameMode.free;
+                  }
+                  step++;
+                })),
       ],
     );
   }
@@ -7427,24 +7327,6 @@ class _SetupPanelState extends State<_SetupPanel> {
             ],
           ),
         const SizedBox(height: 8),
-        // Played on screen with bot courtiers, or with a real deck.
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          value: !digital,
-          activeColor: Palette.gold,
-          checkColor: Palette.ink,
-          onChanged: (v) => setState(() {
-            digital = !(v ?? false);
-            if (digital && count < 3) count = 3;
-          }),
-          title: const Text('Use a real deck', style: TextStyle(fontSize: 16)),
-          subtitle: Text(
-              digital
-                  ? 'Off: you play on screen with bot courtiers. The app deals, keeps the rules and checks every task.'
-                  : 'Everyone plays with real cards; the app sits in the middle and keeps track of the tasks.',
-              style: const TextStyle(color: Colors.white70)),
-        ),
         if (!digital)
           Container(
             width: double.infinity,
@@ -7638,39 +7520,61 @@ class _SetupPanelState extends State<_SetupPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final body = switch (step) {
-      0 => _modeStep(),
-      1 when !_solo => _countStep(),
-      2 when !digital => _namesStep(),
+    final body = switch (_flow[math.min(step, _steps - 1)]) {
+      'how' => _howStep(),
+      'mode' => _modeStep(),
+      'count' => _countStep(),
+      'names' => _namesStep(),
       _ => _finalStep(),
     };
+    final choosing = step < 2;
     final last = step == _steps - 1;
 
     // Fills the screen: progress at the top, the step in the middle, and
     // the buttons fixed in the bottom corners so they never move.
     return SizedBox.expand(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
         child: Column(
           children: [
-            // Progress: one pip per step.
+            // Progress: one pip per step, with a way back on the first
+            // two (which go on as soon as you choose).
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                for (int i = 0; i < _steps; i++)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == step ? 22 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: i <= step ? Palette.gold : Colors.white24,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                SizedBox(
+                  width: 48,
+                  child: choosing && (step > 0 || widget.canCancel)
+                      ? IconButton(
+                          tooltip: step == 0 ? 'Cancel' : 'Back',
+                          onPressed: _back,
+                          icon: Icon(step == 0
+                              ? Icons.close_rounded
+                              : Icons.arrow_back_rounded),
+                        )
+                      : null,
+                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (int i = 0; i < _steps; i++)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: i == step ? 22 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: i <= step ? Palette.gold : Colors.white24,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                    ],
                   ),
+                ),
+                const SizedBox(width: 48),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),
@@ -7692,8 +7596,9 @@ class _SetupPanelState extends State<_SetupPanel> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            if (!choosing) const SizedBox(height: 12),
             // Kept near the step on a wide screen, not out in the corners.
+            if (!choosing)
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Row(
@@ -7741,10 +7646,14 @@ class _ModeTile extends StatelessWidget {
   const _ModeTile(
       {required this.title,
       this.badge,
+      this.icon,
       required this.description,
       required this.selected,
       required this.onTap});
   final String title;
+
+  /// A gold icon at the start of the tile.
+  final IconData? icon;
 
   /// A note beside the title, such as "(Alpha)" for a mode still taking
   /// shape.
@@ -7771,7 +7680,13 @@ class _ModeTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+          padding: const EdgeInsets.fromLTRB(14, 9, 12, 10),
+          child: Row(children: [
+            if (icon != null) ...[
+              Icon(icon, color: Palette.gold, size: 28),
+              const SizedBox(width: 14),
+            ],
+            Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -7795,12 +7710,15 @@ class _ModeTile extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(description,
                   style: const TextStyle(
-                      fontSize: 14.5, height: 1.35, color: Colors.white70)),
+                      fontSize: 14, height: 1.3, color: Colors.white70)),
             ],
           ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+          ]),
         ),
       ),
     ),
@@ -8590,8 +8508,8 @@ class _CardTracker extends StatelessWidget {
       {required this.cards,
       required this.you,
       required this.players,
-      this.controller});
-  final ScrollController? controller;
+      this.onClose});
+  final VoidCallback? onClose;
   final MatchState cards;
   final int you;
   final List<Player> players;
@@ -8646,10 +8564,10 @@ class _CardTracker extends StatelessWidget {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             _MiniCard(card: c, width: w, dimmed: p != null, edge: edge),
             SizedBox(
-              height: 14,
+              height: 13,
               child: Text(p != null ? '${p.$1}' : '',
                   style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       color: Colors.white70)),
             ),
@@ -8750,77 +8668,106 @@ class _CardTracker extends StatelessWidget {
       );
     }
 
-    return SafeArea(
-      child: RepaintBoundary(
-        child: LayoutBuilder(builder: (context, box) {
+    return RepaintBoundary(
+      child: LayoutBuilder(builder: (context, box) {
         final width = math.min(box.maxWidth, 620.0) - 32;
-        final w = clampD((width - 8 * 4) / 9, 22, 54);
-        final small = clampD(w * 0.62, 18, 30);
-        return Center(
-          child: SizedBox(
-            width: width,
-            child: SingleChildScrollView(
-              controller: controller,
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // A handle to drag the panel up or down.
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: Colors.white38,
-                          borderRadius: BorderRadius.circular(2)),
+        const header = 58.0;
+        // The whole deck fits in view at once: five rows, as big as the
+        // width and the panel's height allow.
+        final byWidth = (width - 8 * 4) / 9;
+        final byHeight = ((box.maxHeight - header - 12) / 5 - 18) / 1.42;
+        final w = clampD(math.min(byWidth, byHeight), 16, 54);
+        final small = clampD(w * 0.62, 16, 30);
+        return Column(
+          children: [
+            // The top: tap it to put the tracker away.
+            Semantics(
+              button: true,
+              label: 'Close the card tracker',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onClose,
+                onVerticalDragEnd: (d) {
+                  if ((d.primaryVelocity ?? 0) > 0) onClose?.call();
+                },
+                child: SizedBox(
+                  height: header,
+                  child: Center(
+                    child: SizedBox(
+                      width: width,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                                color: Colors.white38,
+                                borderRadius: BorderRadius.circular(2)),
+                          ),
+                          Row(children: [
+                            for (final p in players) ...[
+                              swatch(p),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(p.name.replaceFirst('The ', ''),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 12.5, color: Colors.white70)),
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+                            const Spacer(),
+                            const Icon(Icons.expand_more_rounded,
+                                color: Colors.white54),
+                          ]),
+                        ],
+                      ),
                     ),
                   ),
-                  heading('The cards'),
-                  Text(
-                      '$toCome still to come in other hands'
-                      '${cards.setAside.isNotEmpty ? ' (one of them set aside, unseen)' : ''}. '
-                      'Played cards are shaded and outlined in the colour of who played them, with their trick number. '
-                      'Unplayed cards outlined in a colour are known to be in that player’s hand.',
-                      style: const TextStyle(
-                          fontSize: 14, height: 1.35, color: Colors.white70)),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 14, runSpacing: 6, children: [
-                    for (final p in players)
-                      Row(mainAxisSize: MainAxisSize.min, children: [
-                        swatch(p),
-                        const SizedBox(width: 6),
-                        Text(p.name,
-                            style: const TextStyle(
-                                fontSize: 13, color: Colors.white70)),
-                      ]),
-                  ]),
-                  const SizedBox(height: 10),
-                  for (final suit in suits) ...[
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        for (final c in deck)
-                          if (c.suit == suit) cell(c, w)
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                  ],
-                  heading('What the others may hold'),
-                  const Text(
-                      'Worked out from who couldn’t follow suit and the cards shown. Bright cards are certain; faint ones are possible.',
-                      style: TextStyle(
-                          fontSize: 14, height: 1.35, color: Colors.white70)),
-                  for (final g in guesses) guessBox(g, small),
-                ],
+                ),
               ),
             ),
-          ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: width,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final suit in suits) ...[
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: [
+                              for (final c in deck)
+                                if (c.suit == suit) cell(c, w)
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        heading('What the others may hold'),
+                        Text(
+                            '$toCome cards still to come in other hands'
+                            '${cards.setAside.isNotEmpty ? ' (one set aside, unseen)' : ''}. '
+                            'Bright cards are certain; faint ones are possible.',
+                            style: const TextStyle(
+                                fontSize: 14, height: 1.35, color: Colors.white70)),
+                        for (final g in guesses) guessBox(g, small),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       }),
-      ),
     );
   }
 }

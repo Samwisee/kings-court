@@ -1896,26 +1896,9 @@ class OrnateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final edge = won ? const Color(0xFF6E4E0E) : Palette.lost;
-    final rule = won ? const Color(0x996E4E0E) : const Color(0x88D4A63A);
-    final gem = won ? const Color(0xFF6E4E0E) : Palette.gold;
-    Widget corner(Alignment a) => Align(
-          alignment: a,
-          child: Transform.rotate(
-            angle: math.pi / 4,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: gem,
-                border: Border.all(
-                    color: won ? const Color(0xFFF9E08C) : const Color(0xFF2A0E12),
-                    width: 1.5),
-              ),
-            ),
-          ),
-        );
+    final ink = won ? const Color(0xFF6E4E0E) : Palette.gold;
     return Container(
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(24, 46, 24, 24),
       constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1936,37 +1919,139 @@ class OrnateCard extends StatelessWidget {
         ],
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          // The inner rule, inset from the edge.
+          // A faint damask of diamonds across the panel, the double rule
+          // and filigree scrolls in every corner.
           Positioned.fill(
-            child: Container(
-              margin: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: rule, width: 1.2),
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: CustomPaint(painter: _Damask(ink.withValues(alpha: 0.07))),
             ),
           ),
-          // A gem at each corner of the inner rule.
           Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: Stack(children: [
-                corner(Alignment.topLeft),
-                corner(Alignment.topRight),
-                corner(Alignment.bottomLeft),
-                corner(Alignment.bottomRight),
-              ]),
-            ),
+            child: CustomPaint(painter: _Filigree(ink.withValues(alpha: 0.8))),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(26, 24, 26, 16),
+            padding: const EdgeInsets.fromLTRB(28, 30, 28, 18),
             child: child,
+          ),
+          // A medallion over the top edge.
+          Positioned(
+            top: -30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: won
+                        ? const [Color(0xFFFFF1B8), Color(0xFFD4A63A)]
+                        : const [Color(0xFF5A1A22), Color(0xFF2A0E12)],
+                  ),
+                  border: Border.all(color: edge, width: 2.5),
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],
+                ),
+                alignment: Alignment.center,
+                child: CrownIcon(size: 30, color: won ? Palette.ink : Palette.gold),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// A lattice of small diamonds, very faint, like woven damask.
+class _Damask extends CustomPainter {
+  _Damask(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color;
+    const step = 18.0;
+    for (double y = 0; y < size.height + step; y += step) {
+      for (double x = (y ~/ step).isOdd ? step / 2 : 0; x < size.width + step; x += step) {
+        final path = Path()
+          ..moveTo(x, y - 4)
+          ..lineTo(x + 4, y)
+          ..lineTo(x, y + 4)
+          ..lineTo(x - 4, y)
+          ..close();
+        canvas.drawPath(path, p);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Damask old) => old.color != color;
+}
+
+/// The inner double rule, with a curling scroll and a gem at each corner.
+class _Filigree extends CustomPainter {
+  _Filigree(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3
+      ..strokeCap = StrokeCap.round;
+    const inset = 8.0, r = 12.0;
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2),
+            const Radius.circular(r)),
+        line);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(inset + 4, inset + 4, size.width - inset * 2 - 8,
+                size.height - inset * 2 - 8),
+            const Radius.circular(r - 3)),
+        line..strokeWidth = 0.8);
+    line.strokeWidth = 1.6;
+    // A scroll in the top-left corner, mirrored into the others.
+    void corner(double sx, double sy, Offset o) {
+      canvas.save();
+      canvas.translate(o.dx, o.dy);
+      canvas.scale(sx, sy);
+      final scroll = Path()
+        ..moveTo(4, 30)
+        ..cubicTo(4, 12, 12, 4, 30, 4)
+        ..moveTo(14, 26)
+        ..cubicTo(14, 18, 18, 14, 26, 14)
+        ..moveTo(26, 14)
+        ..cubicTo(32, 14, 34, 20, 30, 22)
+        ..cubicTo(27, 24, 24, 21, 26, 19)
+        ..moveTo(14, 26)
+        ..cubicTo(14, 32, 20, 34, 22, 30)
+        ..cubicTo(24, 27, 21, 24, 19, 26);
+      canvas.drawPath(scroll, line);
+      final gem = Path()
+        ..moveTo(10, 4)
+        ..lineTo(14, 8)
+        ..lineTo(10, 12)
+        ..lineTo(6, 8)
+        ..close();
+      canvas.drawPath(gem.shift(const Offset(-2, -2)), Paint()..color = color);
+      canvas.restore();
+    }
+
+    corner(1, 1, const Offset(4, 4));
+    corner(-1, 1, Offset(size.width - 4, 4));
+    corner(1, -1, Offset(4, size.height - 4));
+    corner(-1, -1, Offset(size.width - 4, size.height - 4));
+  }
+
+  @override
+  bool shouldRepaint(_Filigree old) => old.color != color;
 }
 
 /// A rule with a gem in the middle, for under a title.

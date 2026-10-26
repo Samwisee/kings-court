@@ -88,28 +88,37 @@ ThemeData buildTheme() {
       elevation: 0,
       scrolledUnderElevation: 0,
     ),
+    // Buttons with cut corners and a gilt edge, like plaques at court.
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: Palette.gold,
         foregroundColor: Palette.ink,
         minimumSize: const Size(48, 48),
         padding: const EdgeInsets.symmetric(horizontal: 22),
+        elevation: 3,
+        shadowColor: Colors.black,
         textStyle: const TextStyle(
-            fontFamily: bodyFont, fontSize: 17, fontWeight: FontWeight.w700),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            fontFamily: displayFont,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.6),
+        side: const BorderSide(color: Color(0xFF7A5A12), width: 1.5),
+        shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white54),
+        backgroundColor: const Color(0x22000000),
+        side: const BorderSide(color: Color(0xAAD4A63A), width: 1.5),
         minimumSize: const Size(48, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         textStyle: const TextStyle(
-            fontFamily: bodyFont, fontSize: 16, fontWeight: FontWeight.w500),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            fontFamily: displayFont,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5),
+        shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),

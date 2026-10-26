@@ -116,9 +116,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Free play'));
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/laptop-how.png'));
+    await tester.tap(find.text('Single player'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
+    await tester.tap(find.text('Free play'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('4').last);
     await tester.pumpAndSettle();
@@ -165,17 +167,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('New game'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Free play'));
+      await tester.tap(find.text(onScreen ? 'Single player' : 'In person'));
       await tester.pumpAndSettle();
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/wide-0-modes.png'));
-      await tester.tap(find.text('Next'));
+      await tester.tap(find.text('Free play'));
       await tester.pumpAndSettle();
-      final sw = find.widgetWithText(CheckboxListTile, 'Use a real deck');
-      if (tester.widget<CheckboxListTile>(sw).value != !onScreen) {
-        await tester.tap(sw);
-        await tester.pumpAndSettle();
-      }
       await tester.tap(find.text(onScreen ? '3' : '4').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Next'));
@@ -239,7 +236,7 @@ void main() {
         }
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/wide-$name-5-cards.png'));
-        await tester.tapAt(const Offset(20, 20));
+        await tester.tap(find.byIcon(Icons.expand_more_rounded));
         for (int i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
@@ -307,10 +304,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Single player'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Dynasty'));
     await tester.tap(find.text('Dynasty'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Begin the reign'));
     final state = tester.state(find.byType(HomePage)) as dynamic;
