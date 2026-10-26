@@ -295,6 +295,55 @@ class _TutorialIntroState extends State<TutorialIntro> {
             ),
           const Icon(Icons.handshake_rounded, size: 40, color: Palette.gold),
         ]);
+      case IntroArt.table:
+        // A phone in the middle of a real table, players around it.
+        Widget seat(int i, String label) => CircleAvatar(
+              radius: 18,
+              backgroundColor: Palette.players[i],
+              child: Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, color: Colors.white)),
+            );
+        return SizedBox(
+          width: 240,
+          height: 170,
+          child: Stack(alignment: Alignment.center, children: [
+            Container(
+              width: 220,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Palette.feltDeep,
+                borderRadius: BorderRadius.circular(70),
+                border: Border.all(color: Palette.gold, width: 2),
+              ),
+            ),
+            Container(
+              width: 46,
+              height: 78,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: Colors.white54, width: 2),
+              ),
+              alignment: Alignment.center,
+              child: const CrownIcon(size: 22),
+            ),
+            Positioned(top: 0, child: seat(2, '3')),
+            Positioned(bottom: 0, child: seat(0, '1')),
+            Positioned(left: 0, child: seat(1, '2')),
+            Positioned(right: 0, child: seat(3, '4')),
+            Positioned(
+              bottom: 30,
+              right: 64,
+              child: Transform.rotate(angle: 0.2, child: _card('7♠', width: 26)),
+            ),
+            Positioned(
+              top: 30,
+              left: 66,
+              child: Transform.rotate(angle: -0.3, child: _card('3♥', width: 26)),
+            ),
+          ]),
+        );
       case IntroArt.lessons:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

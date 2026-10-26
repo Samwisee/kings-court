@@ -336,83 +336,77 @@ class _SwordAndShield extends CustomPainter {
   bool shouldRepaint(_SwordAndShield old) => false;
 }
 
-/// The Queen's tiara: a graceful band of swooping scallops rising to a
-/// tall centre, with pearls on every tip, a row of pearls along the band
-/// and a teardrop jewel at its heart. Softer and curvier than the King's
-/// pointed crown, so the two read differently at a glance.
+/// The Queen's tiara, all in gold filigree: a curved band, a tall pointed
+/// oval with a gem-shaped centre, and a scroll curling down on each side,
+/// with a smaller curl beyond it. Soft and curling where the King's crown
+/// is all points.
 class _Tiara extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final peaks = [
-      Offset(w * 0.12, h * 0.56),
-      Offset(w * 0.31, h * 0.4),
-      Offset(w * 0.5, h * 0.18),
-      Offset(w * 0.69, h * 0.4),
-      Offset(w * 0.88, h * 0.56),
-    ];
-    final valley = h * 0.66;
-    final body = Path()
-      ..moveTo(w * 0.07, h * 0.8)
-      ..quadraticBezierTo(w * 0.07, h * 0.6, peaks.first.dx, peaks.first.dy);
-    for (int i = 1; i < peaks.length; i++) {
-      final a = peaks[i - 1], b = peaks[i];
-      final mid = (a.dx + b.dx) / 2;
-      // Rounded arches, like scallops: each tip is a soft dome that
-      // curves down to a dip, then up into the next dome.
-      body
-        ..quadraticBezierTo(a.dx + (mid - a.dx) * 0.55, a.dy, mid, valley)
-        ..quadraticBezierTo(b.dx - (b.dx - mid) * 0.55, b.dy, b.dx, b.dy);
-    }
-    body
-      ..quadraticBezierTo(w * 0.93, h * 0.6, w * 0.93, h * 0.8)
-      // The band curves gently, like a tiara seen from the front.
-      ..quadraticBezierTo(w * 0.5, h * 0.98, w * 0.07, h * 0.8)
-      ..close();
-    final gilt = _gilt(Offset.zero & size);
-    canvas.drawPath(body, gilt);
-    canvas.drawPath(
-        body,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 0.012
-          ..color = _goldDark);
-
-    final pearl = Paint()..color = const Color(0xFFFFF6E6);
-    final pearlEdge = Paint()
+    // Drawn in a box [s] wide and 0.8 s tall, centred in the space.
+    final s = math.min(size.width, size.height / 0.8);
+    final ox = (size.width - s) / 2, oy = (size.height - s * 0.8) / 2;
+    Offset p(double x, double y) => Offset(ox + x * s, oy + y * s);
+    final box = Offset.zero & size;
+    final fill = _gilt(box);
+    Paint stroke(double width) => _gilt(box)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.008
-      ..color = _goldDark;
-    void drawPearl(Offset c, double r) {
-      canvas.drawCircle(c, r, pearl);
-      canvas.drawCircle(c, r, pearlEdge);
-      canvas.drawCircle(c + Offset(-r * 0.35, -r * 0.35), r * 0.3,
-          Paint()..color = Colors.white);
+      ..strokeWidth = s * width
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    void cubic(Path path, List<double> c) {
+      final c1 = p(c[0], c[1]), c2 = p(c[2], c[3]), e = p(c[4], c[5]);
+      path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, e.dx, e.dy);
     }
 
-    // Pearls along the band, following its curve.
-    for (int i = 0; i <= 8; i++) {
-      final t = 0.1 + i * 0.1;
-      final x = w * (0.07 + 0.86 * t);
-      final y = h * (0.8 + 0.18 * 4 * t * (1 - t)) - h * 0.075;
-      drawPearl(Offset(x, y), w * 0.022);
+    // The band: a crescent, curving up at the ends.
+    final band = Path()..moveTo(p(0.04, 0.64).dx, p(0.04, 0.64).dy);
+    cubic(band, [0.3, 0.7, 0.7, 0.7, 0.96, 0.64]);
+    cubic(band, [0.72, 0.79, 0.28, 0.79, 0.04, 0.64]);
+    canvas.drawPath(band..close(), fill);
+
+    // The tall pointed oval, and the gem inside it.
+    final oval = Path()..moveTo(p(0.5, 0.66).dx, p(0.5, 0.66).dy);
+    cubic(oval, [0.36, 0.56, 0.38, 0.24, 0.5, 0.08]);
+    cubic(oval, [0.62, 0.24, 0.64, 0.56, 0.5, 0.66]);
+    canvas.drawPath(oval, stroke(0.04));
+    final gem = Path()..moveTo(p(0.5, 0.58).dx, p(0.5, 0.58).dy);
+    cubic(gem, [0.42, 0.5, 0.43, 0.3, 0.5, 0.2]);
+    cubic(gem, [0.57, 0.3, 0.58, 0.5, 0.5, 0.58]);
+    canvas.drawPath(gem..close(), fill);
+
+    // A scroll: a sweep up from the band that curls down into a spiral.
+    Path scroll(List<double> start, List<double> curve, Offset centre,
+        double turn, double endRadius) {
+      final path = Path()..moveTo(p(start[0], start[1]).dx, p(start[0], start[1]).dy);
+      cubic(path, curve);
+      final from = p(curve[4], curve[5]);
+      final c = p(centre.dx, centre.dy);
+      final a0 = math.atan2(from.dy - c.dy, from.dx - c.dx);
+      final r0 = (from - c).distance;
+      const steps = 48;
+      for (int k = 1; k <= steps; k++) {
+        final f = k / steps;
+        final a = a0 - turn * f;
+        final r = r0 + (endRadius * s - r0) * f;
+        path.lineTo(c.dx + r * math.cos(a), c.dy + r * math.sin(a));
+      }
+      return path;
     }
-    // A pearl on every tip, the tallest the largest.
-    for (int i = 0; i < peaks.length; i++) {
-      drawPearl(peaks[i], w * (i == 2 ? 0.05 : i.isOdd ? 0.04 : 0.032));
+
+    final big = scroll([0.44, 0.66], [0.4, 0.36, 0.28, 0.22, 0.17, 0.43],
+        const Offset(0.245, 0.52), math.pi * 1.83, 0.035);
+    final small = scroll([0.2, 0.66], [0.16, 0.5, 0.09, 0.45, 0.05, 0.53],
+        const Offset(0.09, 0.58), math.pi * 1.67, 0.02);
+    // The right side mirrors the left across the middle of the space.
+    final flip = Matrix4.diagonal3Values(-1, 1, 1)
+      ..setTranslationRaw(size.width, 0, 0);
+    for (final path in [big, small]) {
+      final width = path == big ? 0.042 : 0.034;
+      canvas.drawPath(path, stroke(width));
+      canvas.drawPath(path.transform(flip.storage), stroke(width));
     }
-    // The teardrop jewel at the heart of the tiara.
-    final c = Offset(w * 0.5, h * 0.56);
-    final r = w * 0.075;
-    final drop = Path()
-      ..moveTo(c.dx, c.dy - r * 1.9)
-      ..quadraticBezierTo(c.dx + r * 1.15, c.dy - r * 0.2, c.dx, c.dy + r)
-      ..quadraticBezierTo(c.dx - r * 1.15, c.dy - r * 0.2, c.dx, c.dy - r * 1.9)
-      ..close();
-    canvas.drawPath(drop, Paint()..color = const Color(0xFFE8739A));
-    canvas.drawPath(drop, pearlEdge);
-    canvas.drawCircle(c + Offset(-r * 0.3, -r * 0.2), r * 0.28,
-        Paint()..color = const Color(0xCCFFFFFF));
   }
 
   @override

@@ -1298,6 +1298,18 @@ void main() {
     expect(find.text('Play'), findsOneWidget); // back at the welcome
   });
 
+  testWidgets('Cards a task needs are crossed out once won', (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+        home: SuitText('Win the A♥ and the 7♣',
+            struck: {'A♥'}, style: TextStyle(color: Colors.black))));
+    final rich = tester.widget<Text>(find.byType(Text)).textSpan! as TextSpan;
+    final spans = rich.children!.cast<TextSpan>();
+    final ace = spans.firstWhere((t) => t.text == 'A');
+    final seven = spans.firstWhere((t) => t.text == '7');
+    expect(ace.style!.decoration, TextDecoration.lineThrough);
+    expect(seven.style!.decoration, TextDecoration.none);
+  });
+
   test('Roman numerals for reigns', () {
     expect([1, 2, 4, 9, 14].map(roman), ['I', 'II', 'IV', 'IX', 'XIV']);
   });

@@ -103,7 +103,7 @@ class Lesson {
 
 /// The pictures that go with the tutorial's opening pages (drawn in
 /// play/tutorial_intro.dart).
-enum IntroArt { court, goal, cards, trick, follow, courtCards, tasks, together, lessons }
+enum IntroArt { court, goal, cards, trick, follow, courtCards, tasks, together, table, lessons }
 
 /// One page of the tutorial's opening: read at your own pace, each waits
 /// for Continue.
@@ -158,6 +158,12 @@ const introPages = <IntroPage>[
     'You can’t say what’s in your hand. Watch what the others play instead. Once a round, each player may show one card: their highest, lowest or only card of a suit (never a Court Card).',
     'Your courtiers on screen play with you, not against you. They’ll try to help you with your tasks, and you can help them with theirs.',
   ], IntroArt.together),
+  IntroPage('At a real table', [
+    'You can also play King’s Court with friends and a real pack of cards, 2 to 6 players around a table.',
+    'Take an ordinary pack and keep the Ace to 9 of each suit (the Ace counts as 1). Put the 10s and picture cards aside, then add four Court Cards: a Joker, a Jack, a Queen and a King. They play as their own suit, whatever suit is printed on them.',
+    'Set up a game with On-screen cards turned off and put the phone in the middle. Whoever holds the King card taps their seat, the app deals the tasks, and each player drags the tasks they take onto their seat. Tap a task to mark it done or failed.',
+    'With two players, the King also plays a third hand, the Dummy. How to Play in the menu has all the details.',
+  ], IntroArt.table),
   IntroPage('Now try it', [
     'Four short lessons, each with one idea. The cards are set up so each lesson always plays out the same way, and a note under the table tells you what to do. Your best card glows.',
     'Take your time: the courtiers wait for you.',

@@ -54,31 +54,58 @@ class _CrownPainter extends CustomPainter {
 /// ♠ ♣ in black) and the term "Court Cards" always capitalised and set a
 /// little bolder, so it reads as a game term.
 class SuitText extends StatelessWidget {
-  const SuitText(this.text, {super.key, required this.style, this.textAlign});
+  const SuitText(this.text,
+      {super.key, required this.style, this.textAlign, this.struck = const {}});
   final String text;
   final TextStyle style;
   final TextAlign? textAlign;
 
-  static final _marked = RegExp(r'[♥♦♠♣]|\bcourt cards?\b', caseSensitive: false);
+  /// Cards named in the text that are already won ("A♥"), crossed out.
+  final Set<String> struck;
+
+  static final _marked =
+      RegExp(r'([A2-9])([♥♦♠♣])|[♥♦♠♣]|\bcourt cards?\b', caseSensitive: false);
 
   @override
   Widget build(BuildContext context) {
     final spans = <TextSpan>[];
+    // On a dark background, suits are printed in lighter colours so they
+    // keep their contrast.
+    final dark = (style.color?.computeLuminance() ?? 0) > 0.5;
+    Color suitColour(String symbol) {
+      final suit = Suit.values.firstWhere((s) => s.symbol == symbol);
+      return dark
+          ? Palette.suitColourOnDark(suit, style.color!)
+          : Palette.suitColour(suit);
+    }
+
     var last = 0;
     for (final m in _marked.allMatches(text)) {
       if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
       final token = m.group(0)!;
-      if (token.length == 1) {
-        final suit = Suit.values.firstWhere((s) => s.symbol == token);
-        // On a dark background, suits are printed in lighter colours so
-        // they keep their contrast.
-        final dark = (style.color?.computeLuminance() ?? 0) > 0.5;
+      if (m.group(1) != null) {
+        // A named card: its rank, then its suit in colour; crossed out once
+        // it's been won.
+        final done = struck.contains(token);
+        final cross = done
+            ? TextDecoration.lineThrough
+            : TextDecoration.none;
+        final mark = TextStyle(
+            decoration: cross,
+            decorationThickness: 2.5,
+            decorationColor: style.color ?? Palette.ink);
         spans.add(TextSpan(
-            text: token,
-            style: TextStyle(
-                color: dark
-                    ? Palette.suitColourOnDark(suit, style.color!)
-                    : Palette.suitColour(suit))));
+            text: m.group(1),
+            style: mark.copyWith(
+                color: done ? (style.color ?? Palette.ink).withValues(alpha: 0.5) : null)));
+        spans.add(TextSpan(
+            text: m.group(2),
+            style: mark.copyWith(
+                color: done
+                    ? suitColour(m.group(2)!).withValues(alpha: 0.5)
+                    : suitColour(m.group(2)!))));
+      } else if (token.length == 1) {
+        spans.add(TextSpan(text: token, style: TextStyle(color: suitColour(token))));
       } else {
         final plural = token.toLowerCase().endsWith('s');
         spans.add(TextSpan(

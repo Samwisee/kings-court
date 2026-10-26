@@ -1133,6 +1133,22 @@ class _HomePageState extends State<HomePage>
         _cards.announced[t.description]);
   }
 
+  /// The cards [t] names that its owner has already won, to cross out.
+  Set<String> _wonNamed(Task t) {
+    final owner = t.assignedPlayerIndex;
+    if (!_digital ||
+        owner == null ||
+        _cards.dealId != game.dealId ||
+        t.description.startsWith("Don't")) {
+      return const {};
+    }
+    final won = {for (final c in _roundView.won(owner)) c.label};
+    return {
+      for (final m in RegExp(r'[A2-9][♥♦♠♣]').allMatches(t.description))
+        if (won.contains(m.group(0))) m.group(0)!
+    };
+  }
+
   String? _progressOf(Task t) {
     if (!_digital ||
         _cards.dealId != game.dealId ||
@@ -1198,6 +1214,9 @@ class _HomePageState extends State<HomePage>
 
   /// Your hand along the bottom, fanned to fit: cards you may play stand
   /// up, the rest dim. Tap one to play it.
+  /// How wide the hand's cards may spread on a wide screen.
+  double _handLimit = double.infinity;
+
   Widget _buildHand() {
     final c = _cards;
     final yourTurn = _yourPlay;
@@ -1210,7 +1229,10 @@ class _HomePageState extends State<HomePage>
         color: Palette.feltDeep,
         border: Border(top: BorderSide(color: Color(0x66D4A63A))),
       ),
-      child: Column(
+      child: Center(
+        child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: _handLimit),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
@@ -1388,6 +1410,8 @@ class _HomePageState extends State<HomePage>
           }),
         ],
       ),
+      ),
+      ),
     );
   }
 
@@ -1429,30 +1453,60 @@ class _HomePageState extends State<HomePage>
         box.size;
   }
 
-  /// Sends each newly taken task flying from the middle to its owner.
+  /// Tasks on their way to their owner: laid out there but not shown yet.
+  final Set<Task> _landing = {};
+
+  /// Where each task sits in front of its owner, and how it's drawn there.
+  final _destKeys = <Task, GlobalKey>{};
+  final _miniStyle = <Task, (double, double)>{};
+
+  /// How the open tasks in the middle are drawn (their font size).
+  double _openFontSize = 13;
+
+  /// Sends each newly taken task flying from the middle to its owner. The
+  /// task is laid out at its owner first (hidden); a frame later, once its
+  /// place is known, the flight goes exactly there.
   void _launchTaskFlights() {
     if (!_digital) return;
     final owners = {for (final t in game.tasks) t: t.assignedPlayerIndex};
+    final taken = <(Task, Rect)>[];
     for (final t in game.tasks) {
       final owner = owners[t];
       final from = _openTaskRects[t];
       if (_owners[t] != null || owner == null || from == null) continue;
-      final area = owner == _you ? _rectOn(_yourRowKey) : _rectOn(_seatKey(owner));
-      if (area == null) continue;
-      final to = owner == _you
-          ? Rect.fromLTWH(area.left + 64, area.top, from.width * 0.85,
-              from.height * 0.85)
-          : Rect.fromCenter(
-              center: area.bottomCenter + Offset(0, from.height * 0.45),
-              width: from.width * 0.7,
-              height: from.height * 0.7);
-      final flight = _Flight(t, from, to, _points(t), _cardText(t));
-      _flights.add(flight);
-      _flightTimers.add(Timer(_Flight.duration, () {
-        if (mounted) setState(() => _flights.remove(flight));
-      }));
+      _landing.add(t);
+      taken.add((t, from));
     }
     _owners = owners;
+    if (taken.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final (t, from) in taken) {
+        final key = _destKeys[t];
+        final to = key == null ? null : _rectOn(key);
+        if (to == null) {
+          _landing.remove(t);
+          continue;
+        }
+        final style = _miniStyle[t] ?? (to.width, 12.0);
+        final flight = _Flight(t, from, to, _points(t), _cardText(t),
+            fromFont: _openFontSize,
+            toFont: style.$2,
+            toColor: t.assignedPlayerIndex == null
+                ? Palette.inkSoft
+                : game.players[t.assignedPlayerIndex!].color);
+        _flights.add(flight);
+        _flightTimers.add(Timer(_Flight.duration, () {
+          if (mounted) {
+            setState(() {
+              _flights.remove(flight);
+              _landing.remove(t);
+            });
+          }
+        }));
+      }
+      setState(() {});
+    });
   }
 
   Widget _buildDigitalTable() {
@@ -1562,17 +1616,19 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _miniTask(Task t, double width, {double fontSize = 12}) =>
-      TweenAnimationBuilder<double>(
-        // Fades in as the flying copy lands.
+  /// A task in front of its owner. It's laid out as soon as the task is
+  /// taken, but kept hidden while its flying copy travels there: the
+  /// flight lands exactly on it, then it shows, so nothing jumps.
+  Widget _miniTask(Task t, double width, {double fontSize = 12}) {
+    _miniStyle[t] = (width, fontSize);
+    return Opacity(
         key: ValueKey('mini-${t.description}'),
-        tween: Tween(begin: 0, end: 1),
-        duration: _Flight.duration + const Duration(milliseconds: 120),
-        curve: const Interval(0.75, 1),
-        builder: (context, o, child) => Opacity(opacity: o, child: child),
+        opacity: _landing.contains(t) ? 0 : 1,
         child: Padding(
           padding: const EdgeInsets.only(top: 5),
-          child: _TaskChip(
+          child: KeyedSubtree(
+            key: _destKeys.putIfAbsent(t, GlobalKey.new),
+            child: _TaskChip(
             task: t,
             points: _points(t),
             text: _cardText(t),
@@ -1582,11 +1638,14 @@ class _HomePageState extends State<HomePage>
             width: width,
             fontSize: fontSize,
             progress: _progressOf(t),
+            struck: _wonNamed(t),
             charged: game.isCharged(t),
             onTap: () => _showTaskDetail(t, Offset.zero),
           ),
+          ),
         ),
       );
+  }
 
   /// The crowning on the on-screen table: from the middle of the table to
   /// the new King's token, with a trumpet from everyone else.
@@ -1710,9 +1769,15 @@ class _HomePageState extends State<HomePage>
           child: SlideToPlace(
             key: ValueKey('slide-${role?.name ?? seat}'),
             child: SingleChildScrollView(
+              clipBehavior: Clip.none,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Column(
+                // A courtier's quip floats over their column rather than
+                // pushing their tasks down and back up again.
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (seat != null)
@@ -1734,26 +1799,26 @@ class _HomePageState extends State<HomePage>
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 13, color: Colors.white70)),
-                    if (seat != null && _quips[seat] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: SpeechBubble(_quips[seat]!,
-                            key: ValueKey('quip-$seat-${_quips[seat]}'),
-                            tailBelow: false),
+                    // Trick counts once the tricks begin (and not in the
+                    // story, where the tasks keep count). Their room is
+                    // kept from the start, so nothing shifts when they
+                    // appear.
+                    if (seat != null && !game.solo)
+                      Opacity(
+                        opacity: c.dealId == game.dealId &&
+                                (_playing || c.tricks.isNotEmpty)
+                            ? 1
+                            : 0,
+                        child: Text(
+                            c.dealId == game.dealId
+                                ? '${c.tricksWon(seat)} won · ${c.hands[seat].length} cards'
+                                : '0 won · 0 cards',
+                            maxLines: 1,
+                            overflow: TextOverflow.fade,
+                            softWrap: false,
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.white54)),
                       ),
-                    // Trick counts only once the tricks begin (and not in
-                    // the story, where the tasks keep count).
-                    if (seat != null &&
-                        !game.solo &&
-                        c.dealId == game.dealId &&
-                        (_playing || c.tricks.isNotEmpty))
-                      Text(
-                          '${c.tricksWon(seat)} won · ${c.hands[seat].length} left',
-                          maxLines: 1,
-                          overflow: TextOverflow.fade,
-                          softWrap: false,
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.white54)),
                     // A traitor's scheme, face up: a black card the court
                     // must stop.
                     if (seat != null &&
@@ -1765,14 +1830,26 @@ class _HomePageState extends State<HomePage>
                     if (seat != null)
                       for (final t in game.tasks)
                         if (!_storyActive &&
-                            t.assignedPlayerIndex == seat &&
-                            !_flights.any((f) => f.task == t))
+                            t.assignedPlayerIndex == seat)
                           _miniTask(t, taskWidth,
                               fontSize: colWidth < 80
                                   ? 11
                                   : width > 600
                                       ? 13.5
                                       : 12),
+                  ],
+                ),
+                if (seat != null && _quips[seat] != null)
+                  Positioned(
+                    top: (width > 600 ? 48 : 38) + 38,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: SpeechBubble(_quips[seat]!,
+                          key: ValueKey('quip-$seat-${_quips[seat]}'),
+                          tailBelow: false),
+                    ),
+                  ),
                   ],
                 ),
               ),
@@ -1851,7 +1928,7 @@ class _HomePageState extends State<HomePage>
   Widget _digiMiddle(double width) {
     if (_choosingKing) return const SizedBox.expand();
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
-    if (open.isEmpty && (game.pickTurn == null || _flights.isEmpty)) {
+    if (open.isEmpty && _landing.isEmpty && _flights.isEmpty) {
       // The trick, laid out right here so it always shows.
       return LayoutBuilder(
         builder: (context, box) => Stack(
@@ -1871,6 +1948,7 @@ class _HomePageState extends State<HomePage>
     // Bigger on a big screen, where there's room to read them easily.
     final big = width > 600;
     final w = math.min(big ? 200.0 : 130.0, (width - 16) / 3);
+    _openFontSize = big ? 16 : 13;
     // Every task keeps its place until picking is over, so nothing jumps
     // when one is taken. (Royal charges go straight to their house.)
     final slots = [for (final t in game.tasks) if (!game.isCharged(t)) t];
@@ -1994,7 +2072,7 @@ class _HomePageState extends State<HomePage>
   Widget _digiYou(double width) {
     final mine = [
       for (final t in game.tasks)
-        if (t.assignedPlayerIndex == _you && !_flights.any((f) => f.task == t)) t
+        if (t.assignedPlayerIndex == _you) t
     ];
     final c = _cards;
     return Row(
@@ -2003,9 +2081,18 @@ class _HomePageState extends State<HomePage>
           mainAxisSize: MainAxisSize.min,
           children: [
             _withReveal(_you, _digiToken(_you, 46)),
-            if (c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty))
-              Text('${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}',
+            // Room kept from the start, so nothing shifts when it appears.
+            Opacity(
+              opacity:
+                  c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty)
+                      ? 1
+                      : 0,
+              child: Text(
+                  c.dealId == game.dealId
+                      ? '${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}'
+                      : '0 tricks',
                   style: const TextStyle(fontSize: 11, color: Colors.white54)),
+            ),
           ],
         ),
         const SizedBox(width: 10),
@@ -2678,9 +2765,13 @@ class _HomePageState extends State<HomePage>
                     padding: const EdgeInsets.only(right: 8),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 250),
-                      child: SizedBox(
+                      child: Container(
                         key: ValueKey(line),
                         width: double.infinity,
+                        // Room for three lines, so the hand below doesn't
+                        // bob up and down as the advice changes.
+                        constraints: const BoxConstraints(minHeight: 64),
+                        alignment: Alignment.topLeft,
                         child: SuitText(line,
                             style: const TextStyle(
                                 fontSize: 15.5, height: 1.35, color: Palette.ink)),
@@ -2772,6 +2863,7 @@ class _HomePageState extends State<HomePage>
     _order = [];
     _dealtFor = -1;
     _deal.reset();
+    _landing.clear();
   }
 
   void _shuffleTasks() {
@@ -3392,6 +3484,7 @@ class _HomePageState extends State<HomePage>
                   const SizedBox(width: 14),
                   Expanded(
                     child: SuitText(task.cardText(playerCount),
+                        struck: _wonNamed(task),
                         style: const TextStyle(
                             fontSize: 21,
                             height: 1.3,
@@ -3690,9 +3783,18 @@ class _HomePageState extends State<HomePage>
             Positioned.fill(
               child: _inGame
                   ? _digital
-                      ? _centred(aspect: 1.0, Column(children: [
-                          Expanded(child: _buildDigitalTable()),
-                          if (game.isTutorial) _buildCoach(),
+                      ? LayoutBuilder(builder: (context, c) {
+                          // On a wide screen the table and the coach stay in
+                          // the middle; the hand's bar still runs edge to
+                          // edge, with the cards centred in it.
+                          final limit = math.max(480.0, c.maxHeight);
+                          Widget mid(Widget w) => c.maxWidth <= limit
+                              ? w
+                              : Center(child: SizedBox(width: limit, child: w));
+                          _handLimit = limit;
+                          return Column(children: [
+                          Expanded(child: mid(_buildDigitalTable())),
+                          if (game.isTutorial) mid(_buildCoach()),
                           // The story has the table: no hand to play.
                           AnimatedSize(
                             duration: const Duration(milliseconds: 350),
@@ -3701,7 +3803,8 @@ class _HomePageState extends State<HomePage>
                                 ? _buildHand()
                                 : const SizedBox(width: double.infinity),
                           ),
-                        ]))
+                        ]);
+                        })
                       : _centred(_buildTable(), aspect: 1.2)
                   : Stack(
                       children: [
@@ -7419,38 +7522,58 @@ enum _DynastyStep { result, dilemma, verdict, death, ending }
 /// A task card on its way from the middle of the table to whoever took it,
 /// shrinking as it goes.
 class _Flight {
-  _Flight(this.task, this.from, this.to, this.points, this.text);
+  _Flight(this.task, this.from, this.to, this.points, this.text,
+      {this.fromFont = 13, this.toFont = 12, this.toColor = Palette.inkSoft});
   final Task task;
   final Rect from;
   final Rect to;
   final int points;
   final String text;
+  final double fromFont;
+  final double toFont;
+  final Color toColor;
 
-  static const duration = Duration(milliseconds: 480);
+  static const duration = Duration(milliseconds: 520);
 
-  Widget build() => TweenAnimationBuilder<double>(
-        key: ObjectKey(this),
-        tween: Tween(begin: 0, end: 1),
-        duration: duration,
-        curve: Curves.easeInOutCubic,
-        builder: (context, t, child) => Positioned.fromRect(
-            rect: Rect.lerp(from, to, t)!, child: IgnorePointer(child: child!)),
-        child: FittedBox(
-          fit: BoxFit.fill,
-          child: SizedBox(
-            width: from.width,
-            height: from.height,
-            child: _TaskChip(
-              task: task,
-              points: points,
-              text: text,
-              color: Palette.inkSoft,
-              width: from.width,
-              fontSize: 13,
-            ),
+  /// The chip as it looks at one end of the flight, scaled to fit [rect].
+  Widget _look(Rect size, double font, Color color) => FittedBox(
+        fit: BoxFit.fill,
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
+          child: _TaskChip(
+            task: task,
+            points: points,
+            text: text,
+            color: color,
+            width: size.width,
+            fontSize: font,
           ),
         ),
       );
+
+  Widget build() {
+    return TweenAnimationBuilder<double>(
+      key: ObjectKey(this),
+      tween: Tween(begin: 0, end: 1),
+      duration: duration,
+      curve: Curves.easeInOutCubic,
+      builder: (context, t, _) {
+        final rect = Rect.lerp(from, to, t)!;
+        // A gentle arc, and the open card's look fading into the owner's.
+        final lift = math.sin(t * math.pi) * 18;
+        return Positioned.fromRect(
+          rect: rect.translate(0, -lift),
+          child: IgnorePointer(
+            child: Stack(fit: StackFit.expand, children: [
+              Opacity(opacity: 1 - t, child: _look(from, fromFont, Palette.inkSoft)),
+              Opacity(opacity: t, child: _look(to, toFont, toColor)),
+            ]),
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// A task on the on-screen table, sized to be read rather than to look
@@ -7466,6 +7589,7 @@ class _TaskChip extends StatelessWidget {
     this.progress,
     this.charged = false,
     this.onTap,
+    this.struck = const {},
   });
 
   final Task task;
@@ -7475,6 +7599,9 @@ class _TaskChip extends StatelessWidget {
   final double width;
   final double fontSize;
   final String? progress;
+
+  /// Cards the task names that its owner has already won.
+  final Set<String> struck;
   final bool charged;
   final VoidCallback? onTap;
 
@@ -7553,6 +7680,7 @@ class _TaskChip extends StatelessWidget {
           top,
           const SizedBox(height: 3),
           SuitText(text,
+              struck: struck,
               style: TextStyle(
                   fontSize: fontSize,
                   height: 1.15,
