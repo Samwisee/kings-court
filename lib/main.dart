@@ -15,6 +15,7 @@ import 'models.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
 import 'engine/conflicts.dart';
+import 'engine/deal_mix.dart';
 import 'engine/contest.dart';
 import 'engine/inference.dart';
 import 'engine/match.dart';
@@ -802,7 +803,8 @@ class _HomePageState extends State<HomePage>
             !names.contains(p.description) &&
             !needsX(p.description) &&
             _points(p) <= _points(t) + 1 &&
-            !game.tasks.any((o) => o != t && clash(o.description, p.description)) &&
+            fitsDeal([for (final o in game.tasks) if (o != t) o.description],
+                p.description, math.max(3, game.players.length)) &&
             playableWith(p.description, c.hands, c.inPlay) &&
             _possible(p, c.hands, c.inPlay)).firstOrNull;
         if (swap != null) game.tasks[i] = swap.freshCopy()..seal = t.seal;

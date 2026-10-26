@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/conflicts.dart';
+import 'package:kings_court/engine/deal_mix.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
@@ -214,6 +215,42 @@ void main() {
                 reason: '${a.description} / ${b.description}');
           }
         }
+      }
+    }
+  });
+
+  test('Avoiding something clashes with needing enough of it', () {
+    expect(selfClash("Don't win any 9s", 'Win at least three 9s'), isTrue);
+    expect(selfClash("Don't win any ♦ or ♣ cards", 'Win at least seven ♦ cards'), isTrue);
+    expect(selfClash('Win no Court Cards', 'Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)'), isTrue);
+    expect(selfClash("Don't win any 9s", 'Win at least three 5s'), isFalse);
+  });
+
+  test('No card is avoided by every player', () {
+    const a = "Don't win any ♦ cards", b = "Don't win any ♦ or ♣ cards";
+    expect(overAvoided([a, b], "Don't win any tricks", 3), isTrue);
+    expect(overAvoided([a], b, 3), isFalse);
+    expect(overAvoided([a, b], 'Win the 3♥', 3), isFalse);
+  });
+
+  test('Every task has a tier, and deals keep within the tier limits', () {
+    expect(tierOf('Win exactly two tricks'), TaskTier.precise);
+    expect(tierOf('Win only the last trick'), TaskTier.precise);
+    expect(tierOf("Don't win any 9s"), TaskTier.avoid);
+    expect(tierOf('Win more tricks than the King'), TaskTier.race);
+    expect(tierOf('Win the 3♥'), TaskTier.capture);
+    expect(tierOf('Win a trick with a 6'), TaskTier.trick);
+    for (int i = 0; i < 400; i++) {
+      final players = 3 + i % 3;
+      final g = GameState()..addTasksUntilTarget(players, 6 + i % 25);
+      final ds = g.tasks.map((t) => t.description).toList();
+      for (final e in tierLimit.entries) {
+        expect(ds.where((d) => tierOf(d) == e.key).length,
+            lessThanOrEqualTo(e.value), reason: ds.join(' / '));
+      }
+      for (int k = 0; k < ds.length; k++) {
+        expect(overAvoided(ds.sublist(0, k) + ds.sublist(k + 1), ds[k], players), isFalse,
+            reason: ds.join(' / '));
       }
     }
   });

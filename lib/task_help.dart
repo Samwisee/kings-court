@@ -257,6 +257,14 @@ const _special = <String, String>{
       'By the end of the round, your tricks must hold more ♦ cards than ♠ cards.',
   'Win more ♥ cards than ♣ cards (winning no ♣ cards is fine)':
       'By the end of the round, your tricks must hold more ♥ cards than ♣ cards.',
+  'Win at least two Aces':
+      'Win two or more Aces, of any suit, in the tricks you win. Aces are the lowest card of each suit, so they usually fall to whoever wins the trick they’re played in.',
+  'Win a trick containing an Ace and a 9':
+      'Win one trick that has both an Ace and a 9 in it, of any suits. Whoever plays them doesn’t matter, as long as you win the trick.',
+  'Win a trick led with a Court Card':
+      'Win one trick whose first card was a Court Card (Joker, Jack, Queen or King). Everyone must answer a Court Card lead with a Court Card if they can, so the highest Court Card played takes it. You need a Court Card in your hand.',
+  'Win a 9 with a Court Card':
+      'Win a trick with a Court Card as your winning card, in a trick that also has a 9 in it (any suit). Usually someone leads a suit you have none of, so you can play a Court Card on their 9. You need a Court Card in your hand.',
   'Win a mixed-suit trick with no Court Cards':
       'Win one trick that has cards from at least two suits in it, and no Court Cards. It happens when someone can’t follow suit.',
 };
@@ -588,7 +596,7 @@ List<PlayingCard> relevantCards(String d) {
       for (final m in RegExp(r'\b(\d)s\b').allMatches(d)) int.parse(m.group(1)!),
       for (final m in RegExp(r'\b(?:a|an|another) (\d)\b').allMatches(d))
         int.parse(m.group(1)!),
-      if (d.contains('Aces')) 1,
+      if (d.contains('Aces') || d.contains('an Ace')) 1,
     };
     if (!lower.contains('even') && !lower.contains('odd')) {
       add([for (final c in deck) if (!c.isCourt && ranks.contains(c.rank)) c]);

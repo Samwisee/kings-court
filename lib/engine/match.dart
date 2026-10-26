@@ -12,7 +12,7 @@ import 'dart:math';
 
 import '../models.dart';
 import 'cards.dart';
-import 'conflicts.dart';
+import 'deal_mix.dart';
 import 'rules.dart';
 
 enum Phase { picking, announcing, playing, roundOver }
@@ -180,7 +180,10 @@ class MatchState {
 
   List<MatchTask> _drawTasks(Random rand) {
     final inPlay = this.inPlay;
-    final pool = List<Task>.of(GameState.taskPool)..shuffle(rand);
+    final pool = drawOrder(GameState.taskPool, rand,
+        description: (t) => t.description,
+        points: (t) => t.getPointsForPlayerCount(players),
+        target: target);
     final drawn = <MatchTask>[];
     int total = 0;
     for (final t in pool) {
@@ -189,7 +192,10 @@ class MatchState {
       if (total + points > target) continue;
       if (!taskRules.containsKey(t.description)) continue;
       if (!playableWith(t.description, hands, inPlay)) continue;
-      if (drawn.any((d) => clash(d.description, t.description))) continue;
+      if (!fitsDeal([for (final d in drawn) d.description], t.description,
+          players < 3 ? 3 : players)) {
+        continue;
+      }
       drawn.add(MatchTask(t.freshCopy()));
       total += points;
     }

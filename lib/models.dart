@@ -5,6 +5,7 @@ import 'courtiers.dart';
 import 'story.dart';
 import 'engine/match.dart';
 import 'engine/conflicts.dart';
+import 'engine/deal_mix.dart';
 import 'engine/rules.dart';
 import 'tasks.dart';
 import 'tutorial.dart';
@@ -1463,13 +1464,19 @@ class GameState {
   List<Task> _drawTasks(int playerCount, int targetPoints, Random rand) {
     final drawn = <Task>[];
     int currentTotal = 0;
-    final pool = List<Task>.of(taskPool)..shuffle(rand);
+    final pool = drawOrder(taskPool, rand,
+        description: (t) => t.description,
+        points: (t) => t.getPointsForPlayerCount(playerCount),
+        target: targetPoints);
+    final hands = playerCount < 3 ? 3 : playerCount;
     for (final task in pool) {
       if (currentTotal >= targetPoints) break;
       final points = task.getPointsForPlayerCount(playerCount);
       if (currentTotal + points > targetPoints) continue;
-      // Never deal two tasks that can't both be done.
-      if (drawn.any((t) => clash(t.description, task.description))) continue;
+      // Never deal tasks that can't all be done (see deal_mix.dart).
+      if (!fitsDeal([for (final t in drawn) t.description], task.description, hands)) {
+        continue;
+      }
       drawn.add(task.freshCopy()..seal = null);
       currentTotal += points;
     }

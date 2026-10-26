@@ -405,6 +405,19 @@ final Map<String, TaskRule> taskRules = {
       v.countWon(o, _suit(Suit.diamonds)) > v.countWon(o, _suit(Suit.spades))),
   'Win more ♥ cards than ♣ cards (winning no ♣ cards is fine)': atEnd((v, o) =>
       v.countWon(o, _suit(Suit.hearts)) > v.countWon(o, _suit(Suit.clubs))),
+  'Win a trick with a 4': winWith(4),
+  'Win a trick with a 7': winWith(7),
+  'Win the 2♦': winAll(_cs(['2♦'])),
+  'Win the 8♣': winAll(_cs(['8♣'])),
+  'Win the 9♠': winAll(_cs(['9♠'])),
+  'Win the 2♥ and the 3♦': winAll(_cs(['2♥', '3♦'])),
+  'Win at least two Aces': atLeast(2, _rank(1)),
+  'Win at least four ♠ cards': atLeast(4, _suit(Suit.spades)),
+  'Win a trick containing an Ace and a 9': anyTrick((t) =>
+      t.cards.any((c) => _rank(1)(c)) && t.cards.any((c) => _rank(9)(c))),
+  'Win a trick led with a Court Card': anyTrick((t) => t.cards.first.isCourt),
+  'Win a 9 with a Court Card': anyTrick(
+      (t) => t.winningCard.isCourt && t.cards.any((c) => _rank(9)(c))),
   'Win a mixed-suit trick with no Court Cards': anyTrick((t) =>
       !t.cards.any(_court) && t.cards.map((c) => c.suit).toSet().length > 1),
 };
@@ -469,6 +482,17 @@ const _anyTrickTasks = {
   'Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)',
   'Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)',
   'Win a mixed-suit trick with no Court Cards',
+  'Win a trick with a 4',
+  'Win a trick with a 7',
+  'Win the 2♦',
+  'Win the 8♣',
+  'Win the 9♠',
+  'Win the 2♥ and the 3♦',
+  'Win at least two Aces',
+  'Win at least four ♠ cards',
+  'Win a trick containing an Ace and a 9',
+  'Win a trick led with a Court Card',
+  'Win a 9 with a Court Card',
 };
 
 const _earlyTasks = {
@@ -573,6 +597,7 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
     final r = int.parse(allFour.group(1)!);
     return of(won((c) => rank(c, r)), 4);
   }
+  if (d == 'Win at least two Aces') return of(won((c) => rank(c, 1)), 2);
   final ranks = RegExp(r'^Win (at least|exactly) (two|three) (\d)s$').firstMatch(d);
   if (ranks != null) {
     final n = ranks.group(2) == 'two' ? 2 : 3;

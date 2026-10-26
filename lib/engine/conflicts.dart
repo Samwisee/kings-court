@@ -148,6 +148,18 @@ final Map<String, TaskProfile> _profiles = {
       const TaskProfile(maxTricks: 3),
   "Win exactly two tricks, and they're in a row":
       const TaskProfile(maxTricks: 2),
+  'Win a trick with a 4': const TaskProfile(ranks: {4: 1}),
+  'Win a trick with a 7': const TaskProfile(ranks: {7: 1}),
+  'Win the 2♦': TaskProfile(cards: _cs(['2♦'])),
+  'Win the 8♣': TaskProfile(cards: _cs(['8♣'])),
+  'Win the 9♠': TaskProfile(cards: _cs(['9♠'])),
+  'Win the 2♥ and the 3♦': TaskProfile(cards: _cs(['2♥', '3♦'])),
+  'Win at least two Aces': const TaskProfile(ranks: {1: 2}),
+  'Win at least four ♠ cards': const TaskProfile(suits: {Suit.spades: 4}),
+  'Win a trick containing an Ace and a 9':
+      const TaskProfile(ranks: {1: 1, 9: 1}),
+  'Win a trick led with a Court Card': const TaskProfile(courts: 1),
+  'Win a 9 with a Court Card': const TaskProfile(ranks: {9: 1}, courts: 1),
 };
 
 TaskProfile profileOf(String description) =>
@@ -183,6 +195,26 @@ bool clash(String a, String b) {
   return false;
 }
 
+/// Whether adding [next] to the tasks already [drawn] would leave a card
+/// nobody may win: every player would need an "avoid" task that forbids it,
+/// but someone has to win every trick. Conservative: counts the tasks that
+/// forbid each card, and allows at most one fewer than there are players
+/// (so whoever's left can always take it).
+bool overAvoided(List<String> drawn, String next, int players) {
+  final all = [...drawn, next];
+  int forbidding(PlayingCard c) => all.where((d) {
+        final p = profileOf(d);
+        if (p.maxTricks == 0) return true;
+        return p.forbidCard?.call(c) ?? false;
+      }).length;
+  for (final c in fullDeck()) {
+    if (forbidding(c) >= players) return true;
+  }
+  // Tasks that win no tricks at all: someone else must win them all.
+  final none = all.where((d) => profileOf(d).maxTricks == 0).length;
+  return none >= players;
+}
+
 /// Whether one player can't do both tasks, at a table of [players]
 /// (the 2-player game deals three hands).
 bool selfClash(String a, String b, {int players = 4}) {
@@ -207,6 +239,24 @@ bool selfClash(String a, String b, {int players = 4}) {
   bool forbids(TaskProfile f, TaskProfile n) {
     final bad = f.forbidCard;
     if (bad != null && n.cards.any(bad)) return true;
+    // Counting tasks: not enough of what's counted is left once the other
+    // task rules some of it out ("Don't win any 9s" with "Win at least
+    // three 9s").
+    if (bad != null) {
+      final deck = fullDeck();
+      for (final e in n.ranks.entries) {
+        final ok = deck.where((c) => !c.isCourt && c.rank == e.key && !bad(c));
+        if (ok.length < e.value) return true;
+      }
+      for (final e in n.suits.entries) {
+        final ok = deck.where((c) => c.suit == e.key && !bad(c));
+        if (ok.length < e.value) return true;
+      }
+      if (n.courts > 0 &&
+          deck.where((c) => c.isCourt && !bad(c)).length < n.courts) {
+        return true;
+      }
+    }
     if (f.maxTricks != null && n.minTricks > f.maxTricks!) return true;
     if (f.forbidTricks.intersection(n.tricks).isNotEmpty) return true;
     if (f.maxTricks == 0 && (n.cards.isNotEmpty || n.mostTricks)) return true;
@@ -237,6 +287,10 @@ String? handBlocks(String d, List<PlayingCard> hand) {
       return 'You hold the ${card.label}: you can’t play it and win it with a Court Card in the same trick';
     }
     if (!hand.any((c) => c.isCourt)) return 'You need a Court Card in your hand for this';
+  }
+  if ((d == 'Win a 9 with a Court Card' || d == 'Win a trick led with a Court Card') &&
+      !hand.any((c) => c.isCourt)) {
+    return 'You need a Court Card in your hand for this';
   }
   bool has(int r) => hand.any((c) => !c.isCourt && c.rank == r);
   final withRank = RegExp(r'^Win (?:a trick|a \d|an \d|any \d) with (?:a|another) (\d)$').firstMatch(d);

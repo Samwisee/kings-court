@@ -1418,6 +1418,6 @@ void main() {
     for (final t in GameState.taskPool) {
       expect(t.sixPlayerPoints, greaterThan(0), reason: t.description);
     }
-    expect(GameState.taskPool.length, 97);
+    expect(GameState.taskPool.length, 108);
   });
 }
