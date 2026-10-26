@@ -867,11 +867,7 @@ class _HomePageState extends State<HomePage>
     if (!_digital || _botTimer != null || _botBusy) return;
     // Before anyone takes a task, the table pauses a moment so a card can
     // be shown first.
-    final delay = game.isTutorial
-        ? botDelay * 2
-        : _openingPick
-            ? botDelay * 4
-            : botDelay;
+    final delay = game.isTutorial ? botDelay * 2 : botDelay;
     _botTimer = Timer(delay, () {
       _botTimer = null;
       if (mounted) _botStep();
@@ -883,9 +879,48 @@ class _HomePageState extends State<HomePage>
   bool get _openingPick =>
       _digital &&
       game.pickTurn != null &&
-      game.pickTurn != _you &&
       _cards.dealId == game.dealId &&
       game.tasks.every((t) => t.assignedPlayerIndex == null || game.isCharged(t));
+
+  /// Where each open task starts from in the deal (the middle of the
+  /// table), measured once per deal.
+  Map<Task, Offset> _dealFrom = {};
+  int _dealMeasuredFor = -1;
+
+  /// The deal the table last asked "anyone want to show a card?" for.
+  int _speakAskedFor = -1;
+
+  /// Whether to ask before picking (off in fast tests unless switched on).
+  static bool askToSpeak = true;
+
+  /// The table is waiting to hear whether you'll show a card before the
+  /// first task is taken.
+  bool get _speakPromptDue =>
+      askToSpeak &&
+      !game.isTutorial &&
+      !_storyActive &&
+      _speakAskedFor != game.dealId &&
+      _openingPick &&
+      _mayAskToSpeak;
+
+  /// Picking begins: courtiers may show a card a task on the table needs,
+  /// then the first pick is made.
+  void _startChoosing({bool speak = false}) {
+    setState(() => _speakAskedFor = game.dealId);
+    final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
+    for (int seat = 0; seat < game.players.length; seat++) {
+      if (seat == _you || game.spoke[seat] || !game.canSpeak(seat)) continue;
+      for (final card in _cards.hands[seat]) {
+        if (_cards.revealFor(seat, card) == null) continue;
+        if (open.any((t) => neededCards(t.description).contains(card))) {
+          _reveal(seat, card);
+          _quip(seat, 'I hold the ${card.label}.');
+          break;
+        }
+      }
+    }
+    if (speak) _speak();
+  }
 
   /// A bot is thinking (a slice at a time, so the screen stays smooth).
   bool _botBusy = false;
@@ -916,7 +951,9 @@ class _HomePageState extends State<HomePage>
       for (final seat in game.antagonists)
         if (game.schemeOf[seat] != null) seat: game.schemeOf[seat]!
     };
-    if (_revealing || (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
+    if (_revealing ||
+        _speakPromptDue ||
+        (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
       return false;
     }
     if (!_digital ||
@@ -972,6 +1009,13 @@ class _HomePageState extends State<HomePage>
         if (_botReveals(picker)) return true;
         final pick = await _bot.choosePickAsync(view, picker);
         if (!mounted || _moment != before) return true;
+        // Nothing suits their hand: pass the pick on, once a round.
+        if (game.canPass(picker) && _bot.lastPickScore < 0.12) {
+          _quip(picker, 'I\u2019ll pass for now.');
+          _showSnack('${game.players[picker].name} passes', Palette.feltDeep);
+          setState(() => game.pass(picker));
+          return true;
+        }
         _assignTask(game.tasks[pick], picker);
         return true;
       }
@@ -1302,6 +1346,7 @@ class _HomePageState extends State<HomePage>
     }
     if (_choosingKing) return '';
     if (game.pickTurn != null) {
+      if (_speakPromptDue) return 'Before anyone chooses: show a card?';
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
@@ -1309,9 +1354,7 @@ class _HomePageState extends State<HomePage>
                 ? 'Your pick: tap a task, or pass once a round'
                 : 'Your pick: tap a task to take it';
       }
-      if (_openingPick && _mayAskToSpeak) {
-        return '${game.players[game.pickTurn!].name} picks first. Show a card now if it helps.';
-      }
+      if (_speakPromptDue) return 'Before anyone chooses: show a card?';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
     if (!_tasksSettled) return 'Announcing numbers…';
@@ -1399,13 +1442,7 @@ class _HomePageState extends State<HomePage>
                   onPressed: _showCardTracker,
                   icon: const Icon(Icons.grid_view_rounded, color: Palette.gold),
                 ),
-              // Pass on picking, once a round.
-              if (game.canPass(_you))
-                TextButton(
-                  onPressed: () => setState(() => game.pass(_you)),
-                  style: TextButton.styleFrom(foregroundColor: Palette.gold),
-                  child: const Text('Pass'),
-                ),
+
               // The speech token: show one card, once a round.
               SizedBox(
                 width: 44,
@@ -1919,9 +1956,12 @@ class _HomePageState extends State<HomePage>
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 // A courtier's quip floats over their column rather than
-                // pushing their tasks down and back up again.
+                // pushing their tasks down and back up again. The column
+                // fills its width so its contents stay centred.
                 child: Stack(
                   clipBehavior: Clip.none,
+                  alignment: Alignment.topCenter,
+                  fit: StackFit.passthrough,
                   children: [
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -2100,80 +2140,176 @@ class _HomePageState extends State<HomePage>
     // Every task keeps its place until picking is over, so nothing jumps
     // when one is taken. (Royal charges go straight to their house.)
     final slots = [for (final t in game.tasks) if (!game.isCharged(t)) t];
-    return Center(
-      child: SingleChildScrollView(
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (int i = 0; i < slots.length; i++)
-              () {
-                final t = slots[i];
-                final taken = t.assignedPlayerIndex != null;
-                // Dealt from the deck one after another, turning face up.
-                final delay = 250 + i * 120;
-                final total = 560 + delay;
-                return TweenAnimationBuilder<double>(
-                  key: ValueKey('deal-${game.dealId}-${t.description}'),
-                  tween: Tween(begin: 0, end: 1),
-                  duration: Duration(milliseconds: total),
-                  curve: Interval(delay / total, 1, curve: Curves.easeOutCubic),
-                  // Shuffled out sideways from the left, one after another.
-                  builder: (context, d, child) => Transform.translate(
-                    offset: Offset(-width * 0.8 * (1 - d), 0),
-                    child: Opacity(
-                      opacity: clampD(d * 3, 0, 1),
-                      child: FlipIn(
-                        t: clampD(d * 1.4 - 0.2, 0, 1),
-                        front: child!,
-                        // The back is exactly the size of the front.
-                        back: Stack(children: [
-                          Opacity(opacity: 0, child: child),
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF5A1620),
-                                borderRadius: BorderRadius.circular(8),
-                                border:
-                                    Border.all(color: Palette.gold, width: 1.5),
-                              ),
-                              alignment: Alignment.center,
-                              child: const CrownIcon(
-                                  size: 26, color: Palette.gold),
-                            ),
-                          ),
-                        ]),
-                      ),
-                    ),
+    // The deal: first laid out unseen to find each task's place, then
+    // shuffled as a pile in the middle and dealt out to those places.
+    final measured = _dealMeasuredFor == game.dealId;
+    if (!measured) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _dealMeasuredFor == game.dealId) return;
+        final middle = _rectOn(_middleKey);
+        if (middle == null) return;
+        setState(() {
+          _dealFrom = {
+            for (final t in slots)
+              if (_openTaskKeys[t] case final key?)
+                if (_rectOn(key) case final r?) t: middle.center - r.center,
+          };
+          _dealMeasuredFor = game.dealId;
+        });
+      });
+    }
+    const shuffleMs = 650;
+    final tasks = Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (int i = 0; i < slots.length; i++)
+          () {
+            final t = slots[i];
+            final taken = t.assignedPlayerIndex != null;
+            // Who could take it: a task only one player may take is marked
+            // in their colour, so the table knows it's theirs to choose.
+            final able = [
+              for (int s = 0; s < game.players.length; s++)
+                if (game.canTake(t, s)) s
+            ];
+            final only = !taken && able.length == 1 ? able.single : null;
+            final chip = IgnorePointer(
+              ignoring: taken,
+              child: AnimatedOpacity(
+                key: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
+                duration: Duration.zero,
+                opacity: taken
+                    ? 0
+                    : _yourPick && !_mayTake(t) && only == null
+                        ? 0.5
+                        : 1,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  _TaskChip(
+                    task: t,
+                    points: _points(t),
+                    text: _cardText(t),
+                    color: only == null
+                        ? Palette.inkSoft
+                        : game.players[only].color,
+                    width: w,
+                    fontSize: big ? 16 : 13,
+                    onTap: () => _yourPick
+                        ? _takeTask(t)
+                        : _showTaskDetail(t, Offset.zero),
                   ),
-                  child: IgnorePointer(
-                    ignoring: taken,
-                    child: AnimatedOpacity(
-                      key: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
-                      duration: Duration.zero,
-                      opacity: taken
-                          ? 0
-                          : _yourPick && !_mayTake(t)
-                              ? 0.5
-                              : 1,
-                      child: _TaskChip(
-                        task: t,
-                        points: _points(t),
-                        text: _cardText(t),
-                        color: Palette.inkSoft,
-                        width: w,
-                        fontSize: big ? 16 : 13,
-                        onTap: () => _yourPick
-                            ? _takeTask(t)
-                            : _showTaskDetail(t, Offset.zero),
-                      ),
+                  if (only != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                          only == _you
+                              ? 'Only you can take this'
+                              : 'Only ${game.players[only].name} can take this',
+                          style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: game.players[only].color)),
                     ),
+                ]),
+              ),
+            );
+            if (!measured) return Opacity(opacity: 0, child: chip);
+            final from = _dealFrom[t] ?? Offset.zero;
+            final startMs = shuffleMs + i * 110;
+            final total = startMs + 520;
+            return TweenAnimationBuilder<double>(
+              key: ValueKey('deal-${game.dealId}-${t.description}'),
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: total),
+              builder: (context, raw, child) {
+                final ms = raw * total;
+                // Shuffling: the pile riffles, cards nudging left and right.
+                final riffle = ms < shuffleMs
+                    ? math.sin(ms / shuffleMs * math.pi * 3) *
+                        (i.isEven ? 1 : -1) *
+                        w *
+                        0.18
+                    : 0.0;
+                final d = ms < startMs
+                    ? 0.0
+                    : Curves.easeOutCubic.transform((ms - startMs) / (total - startMs));
+                return Transform.translate(
+                  offset: from * (1 - d) + Offset(riffle, -i * 1.5 * (1 - d)),
+                  child: FlipIn(
+                    t: clampD(d * 1.4 - 0.2, 0, 1),
+                    front: child!,
+                    // The back is exactly the size of the front.
+                    back: Stack(children: [
+                      Opacity(opacity: 0, child: child),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF5A1620),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Palette.gold, width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: const CrownIcon(size: 26, color: Palette.gold),
+                        ),
+                      ),
+                    ]),
                   ),
                 );
-              }(),
-          ],
-        ),
+              },
+              child: chip,
+            );
+          }(),
+      ],
+    );
+    return Center(
+      child: SingleChildScrollView(
+        clipBehavior: Clip.none,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // Before the first pick: does anyone want to show a card?
+          if (_speakPromptDue)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              constraints: const BoxConstraints(maxWidth: 420),
+              decoration: BoxDecoration(
+                color: Palette.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Palette.gold, width: 1.5),
+                boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 10)],
+              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Text('Before anyone chooses a task',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontFamily: displayFont,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Palette.goldDeep)),
+                const SizedBox(height: 4),
+                const Text(
+                    'Want to show a card first? It can help the court choose. You can only do it once a round.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14.5, height: 1.35, color: Palette.ink)),
+                const SizedBox(height: 8),
+                Wrap(spacing: 10, runSpacing: 6, alignment: WrapAlignment.center, children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _startChoosing(speak: true),
+                    icon: const Icon(Icons.record_voice_over, size: 18),
+                    label: const Text('Show a card'),
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: Palette.goldDeep,
+                        side: const BorderSide(color: Palette.goldDeep)),
+                  ),
+                  FilledButton(
+                    onPressed: _startChoosing,
+                    child: const Text('Start choosing'),
+                  ),
+                ]),
+              ]),
+            ),
+          tasks,
+        ]),
       ),
     );
   }
@@ -2252,6 +2388,31 @@ class _HomePageState extends State<HomePage>
         Expanded(
           child: _storyActive
               ? const SizedBox.shrink()
+              : game.canPass(_you) && !_speakPromptDue
+              // Your pick: take a task from the middle, or pass it on.
+              ? Row(children: [
+                  for (final t in mine)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: _miniTask(
+                          t, math.min(width > 600 ? 190.0 : 140.0, width / 3),
+                          fontSize: width > 600 ? 15 : 13),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() => game.pass(_you)),
+                    icon: const Icon(Icons.redo_rounded, size: 18),
+                    label: const Text('Pass'),
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: Palette.gold,
+                        side: const BorderSide(color: Palette.gold),
+                        minimumSize: const Size(0, 44)),
+                  ),
+                  const SizedBox(width: 8),
+                  const Flexible(
+                    child: Text('once a round',
+                        style: TextStyle(fontSize: 12, color: Colors.white54)),
+                  ),
+                ])
               : mine.isEmpty
               ? Text(
                   game.pickTurn != null ? 'Your tasks will appear here' : 'No tasks for you this round',
@@ -2683,6 +2844,10 @@ class _HomePageState extends State<HomePage>
   bool debugYourMove() {
     if (_contest != null) {
       _contestKey.currentState?.debugYourMove();
+      return true;
+    }
+    if (_speakPromptDue) {
+      _startChoosing();
       return true;
     }
     if (_yourPick) {
@@ -8431,7 +8596,7 @@ class _CardTracker extends StatelessWidget {
         child: SizedBox(
           width: w,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            PlayingCardView(card: c, width: w, dimmed: p != null, edge: edge),
+            _MiniCard(card: c, width: w, dimmed: p != null, edge: edge),
             SizedBox(
               height: 14,
               child: Text(p != null ? '${p.$1}' : '',
@@ -8494,7 +8659,7 @@ class _CardTracker extends StatelessWidget {
                       for (final c in cs)
                         Opacity(
                           opacity: g.certain.contains(c) ? 1 : 0.45,
-                          child: PlayingCardView(
+                          child: _MiniCard(
                               card: c,
                               width: small,
                               edge: g.certain.contains(c)
@@ -8538,7 +8703,8 @@ class _CardTracker extends StatelessWidget {
     }
 
     return SafeArea(
-      child: LayoutBuilder(builder: (context, box) {
+      child: RepaintBoundary(
+        child: LayoutBuilder(builder: (context, box) {
         final width = math.min(box.maxWidth, 620.0) - 32;
         final w = clampD((width - 8 * 4) / 9, 22, 54);
         final small = clampD(w * 0.62, 18, 30);
@@ -8594,6 +8760,69 @@ class _CardTracker extends StatelessWidget {
           ),
         );
       }),
+      ),
+    );
+  }
+}
+
+/// A plain card face for the card tracker: just its number and suit (or
+/// the Court Card's letter) and an outline, cheap enough to show dozens.
+class _MiniCard extends StatelessWidget {
+  const _MiniCard(
+      {required this.card, required this.width, this.dimmed = false, this.edge});
+  final PlayingCard card;
+  final double width;
+  final bool dimmed;
+  final Color? edge;
+
+  static const _cloth = [
+    Color(0xFF4A2670),
+    Color(0xFF0F5B3A),
+    Color(0xFF203C8C),
+    Color(0xFF7E1828),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final court = card.isCourt;
+    final ink = court ? Palette.gold : Palette.suitColour(card.suit);
+    return Container(
+      width: width,
+      height: width * 1.42,
+      padding: EdgeInsets.all(width * 0.08),
+      decoration: BoxDecoration(
+        color: court ? _cloth[card.rank - 1] : Palette.card,
+        borderRadius: BorderRadius.circular(width * 0.12),
+        border: Border.all(
+            color: edge ?? (court ? Palette.gold : const Color(0xFFD9D2C3)),
+            width: edge != null ? 3 : 1),
+      ),
+      foregroundDecoration: dimmed
+          ? BoxDecoration(
+              color: const Color(0x88000000),
+              borderRadius: BorderRadius.circular(width * 0.12))
+          : null,
+      alignment: Alignment.topLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(card.rankLabel,
+                style: TextStyle(
+                    fontFamily: court ? displayFont : bodyFont,
+                    fontWeight: FontWeight.w900,
+                    fontSize: width * 0.38,
+                    height: 1,
+                    color: ink)),
+            if (!court)
+              Text(card.suit.symbol,
+                  style: TextStyle(fontSize: width * 0.36, height: 1.05, color: ink)),
+          ],
+        ),
+      ),
     );
   }
 }

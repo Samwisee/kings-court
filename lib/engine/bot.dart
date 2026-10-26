@@ -219,11 +219,15 @@ class Bot {
           MatchState s, Map<int, int> assigned, int playouts) =>
       _scoreAsync(s, assigned, playouts);
 
+  /// How well the last pick chosen is likely to go (0 to 1).
+  double lastPickScore = 1;
+
   Future<int> choosePickAsync(MatchState s, int seat) async {
     final options = [
       for (int i = 0; i < s.tasks.length; i++)
         if (s.canTake(i, seat)) i
     ];
+    lastPickScore = 1;
     if (options.length == 1) return options.first;
     final per = max(20, budget ~/ options.length);
     var best = options.first;
@@ -241,6 +245,7 @@ class Bot {
         best = i;
       }
     }
+    lastPickScore = bestScore;
     return best;
   }
 

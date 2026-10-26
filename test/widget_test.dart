@@ -1222,6 +1222,19 @@ void main() {
       final game = state.game as GameState;
       expect(game.digital, isTrue);
       expect(game.players.first.name, 'You');
+      if (mode == 'Free play') {
+        // Before anyone picks, the table asks about showing a card.
+        for (int i = 0;
+            i < 300 && find.text('Start choosing').evaluate().isEmpty;
+            i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+        expect(find.text('Start choosing'), findsOneWidget);
+        expect(game.tasks.every((t) => t.assignedPlayerIndex == null), isTrue);
+        await tester.tap(find.text('Start choosing'));
+        await tester.pump();
+        expect(find.text('Start choosing'), findsNothing);
+      }
       for (int i = 0;
           i < 3000 && game.outcome == RoundOutcome.inProgress;
           i++) {

@@ -143,7 +143,7 @@ void main() {
       if (onScreen) {
         for (int i = 0; i < 400 && game.pickTurn != null; i++) {
           await tester.pump(const Duration(milliseconds: 30));
-          if (game.pickTurn == 0) state.debugYourMove();
+          state.debugYourMove();
         }
         for (int i = 0; i < 160; i++) {
           await tester.pump(const Duration(milliseconds: 30));
