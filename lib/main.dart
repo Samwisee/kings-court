@@ -182,6 +182,9 @@ class _TableGeometry {
     ];
     const gap = 6.0;
     final result = <Task, Offset>{};
+    // Whose card each placed rect is (null for seats and loose cards), so
+    // a crowded stack may squeeze onto itself but never a neighbour's.
+    final placedBy = <int?>[for (final _ in placed) null];
 
     for (int i = 0; i < players; i++) {
       final owned = order.where((t) => t.assignedPlayerIndex == i).toList();
@@ -228,13 +231,36 @@ class _TableGeometry {
             break;
           }
         }
-        if (chosen == null) crowded = true;
+        if (chosen == null) {
+          crowded = true;
+          // No clear spot: overlap this seat's own cards rather than a
+          // neighbour's.
+          for (final s in spots) {
+            final p = seat + right * s.dx + up * s.dy;
+            final rect = Rect.fromCenter(
+                center: p, width: size.width, height: size.height);
+            final onTable = table.contains(rect.topLeft) &&
+                table.contains(rect.bottomRight - const Offset(1, 1));
+            var clear = onTable;
+            for (int k = 0; clear && k < placed.length; k++) {
+              if (placedBy[k] != i && placed[k].deflate(1).overlaps(rect)) {
+                clear = false;
+              }
+            }
+            if (clear) {
+              chosen = p;
+              chosenRect = rect;
+              break;
+            }
+          }
+        }
         // Table completely full: fall back to just in front of the seat.
         chosen ??= clampToTable(seat + up * (tokenHalfH + cardHeight / 2));
         chosenRect ??= Rect.fromCenter(
             center: chosen, width: size.width, height: size.height);
         result[t] = chosen;
         placed.add(chosenRect);
+        placedBy.add(i);
       }
     }
     return (spots: result, crowded: crowded);
@@ -7749,7 +7775,13 @@ class _TaskChip extends StatelessWidget {
         if (failed)
           Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost)
         else if (progress != null)
-          Container(
+          // Shrinks to fit a narrow chip rather than overflowing.
+          Flexible(
+            flex: 1000,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
             decoration: BoxDecoration(
               color: Palette.ink,
@@ -7762,6 +7794,8 @@ class _TaskChip extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     height: 1.1,
                     color: Palette.gold)),
+          ),
+            ),
           ),
       ],
     );
