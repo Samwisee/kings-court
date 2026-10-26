@@ -80,6 +80,25 @@ The bots see every card, so these are **best-case** numbers. Rough guide:
 * If a whole target is below about 40% for the bots, people will find it
   near impossible: lower tier weights or limits at that target.
 
+## What the first reports showed (Oct 2026)
+
+* **Precise tasks hurt most.** Rounds with no precise task were won 35% of
+  the time, rounds with one 21%; before the limit, rounds with two or more
+  were won 11%. Hence the limit of one.
+* **The number of tasks decides a round more than the points do.** Two or
+  three tasks: about 65%; five: 29%; seven: 10%; nine or more: 5% or less.
+* **Targets above about 14 are close to impossible even for the bots**
+  (4 players: 21% at 14, 7% at 18, 2% at 22), and leaning toward bigger
+  tasks barely helps because big tasks fail on their own. Making high
+  targets winnable needs something besides more tasks: a cap on the target,
+  harder seals or decrees instead of extra points, or new mid-value tasks
+  that are worth more without being harder.
+* Repriced from the data: Win no Court Cards, Win more ♦ than ♠, Win more ♥
+  than ♣ and Win more tricks than the King went up a point; the odd, even,
+  totalling 22 or 23, and every card lower than 7 tricks went down one.
+  Two-numbered "win a trick with" tasks now count the cards they need, so
+  they no longer get dealt beside "Win all four" of the same number.
+
 ## 5. Ideas that fit the system
 
 Safe (capture/trick, monotone):
