@@ -12,7 +12,7 @@
 /// * capture and trick: win particular cards, or a particular kind of
 ///   trick. Getting more never hurts, so they mix safely.
 ///
-/// At higher targets the draw leans toward bigger tasks, so the challenge
+/// Past 8 points the draw leans more and more toward bigger tasks, so the challenge
 /// comes from the tasks themselves rather than from ever more of them
 /// tangling together.
 library;
@@ -67,7 +67,10 @@ List<T> drawOrder<T>(List<T> pool, Random rand,
     {required String Function(T) description,
     required int Function(T) points,
     required int target}) {
-  final lean = ((target - 10) / 16).clamp(0.0, 0.8);
+  // The balance report shows the number of tasks, more than their points,
+  // decides how winnable a round is, so big targets lean hard toward big
+  // tasks.
+  final lean = ((target - 8) / 7).clamp(0.0, 2.5);
   final keyed = [
     for (final t in pool)
       (
