@@ -560,6 +560,9 @@ class FlipIn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Once face up, no 3D transform at all: on the web a lingering
+    // perspective layer can cut a card off as it's drawn.
+    if (t >= 1) return front;
     final angle = (1 - t) * math.pi;
     final showBack = angle > math.pi / 2;
     return Transform(
