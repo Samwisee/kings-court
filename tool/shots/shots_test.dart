@@ -282,7 +282,7 @@ void main() {
         }
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/wide-$name-5-cards.png'));
-        await tester.tap(find.byIcon(Icons.expand_more_rounded));
+        await tester.tap(find.bySemanticsLabel('Close the card tracker'));
         for (int i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }

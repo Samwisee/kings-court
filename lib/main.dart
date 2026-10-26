@@ -648,6 +648,7 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     _toastTimer?.cancel();
+    _trackerTimer?.cancel();
     _deal.dispose();
     _crown.dispose();
     _play.dispose();
@@ -1281,7 +1282,33 @@ class _HomePageState extends State<HomePage>
   /// The card tracker, docked over the bottom half of the screen.
   bool _trackerOpen = false;
 
-  void _showCardTracker() => setState(() => _trackerOpen = !_trackerOpen);
+  /// Built (opening, open or closing).
+  bool _trackerMounted = false;
+  Timer? _trackerTimer;
+
+  void _showCardTracker() {
+    if (_trackerOpen) {
+      _closeTracker();
+      return;
+    }
+    _trackerTimer?.cancel();
+    // Built first, just off screen, then slid up.
+    setState(() {
+      _trackerMounted = true;
+      _trackerOpen = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _trackerMounted) setState(() => _trackerOpen = true);
+    });
+  }
+
+  void _closeTracker() {
+    setState(() => _trackerOpen = false);
+    _trackerTimer?.cancel();
+    _trackerTimer = Timer(const Duration(milliseconds: 260), () {
+      if (mounted && !_trackerOpen) setState(() => _trackerMounted = false);
+    });
+  }
 
   /// The cards [t] is about, and what's become of each this round.
   List<(PlayingCard, _CardFate)> _cardStates(Task t) {
@@ -1427,7 +1454,7 @@ class _HomePageState extends State<HomePage>
     return Container(
       width: double.infinity,
       // Room below the cards so they clear the brass trim.
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+      padding: const EdgeInsets.fromLTRB(14, 2, 14, 16),
       decoration: const BoxDecoration(
         color: Palette.feltDeep,
         border: Border(top: BorderSide(color: Color(0x66D4A63A))),
@@ -1501,7 +1528,7 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
           LayoutBuilder(builder: (context, box) {
             final hand = c.dealId == game.dealId ? c.hands[_you] : const <PlayingCard>[];
             final width = box.maxWidth;
@@ -1755,7 +1782,7 @@ class _HomePageState extends State<HomePage>
           children: [
             Padding(
               // Room above the tokens so a King's crown clears the edge.
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
               child: Column(
                 children: [
                   // Solo Dynasty: what this hand is for, in the story.
@@ -1860,7 +1887,7 @@ class _HomePageState extends State<HomePage>
         key: ValueKey('mini-${t.description}'),
         opacity: _landing.contains(t) ? 0 : 1,
         child: Padding(
-          padding: const EdgeInsets.only(top: 5),
+          padding: const EdgeInsets.only(top: 3),
           child: KeyedSubtree(
             key: _destKeys.putIfAbsent(t, GlobalKey.new),
             child: _TaskChip(
@@ -2225,8 +2252,8 @@ class _HomePageState extends State<HomePage>
     const shuffleMs = 1000;
     final tasks = Wrap(
       alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 6,
+      runSpacing: 6,
       children: [
         for (int i = 0; i < slots.length; i++)
           () {
@@ -2354,16 +2381,9 @@ class _HomePageState extends State<HomePage>
           }(),
       ],
     );
-    // Shrinks to fit when there are many tasks, so they never spill over
-    // the courtiers or your own row.
-    return LayoutBuilder(
-      builder: (context, box) => Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: SizedBox(width: box.maxWidth, child: tasks),
-        ),
-      ),
-    );
+    // Full size, always readable; on the rare table with no room left the
+    // middle scrolls rather than spilling over anything.
+    return Center(child: SingleChildScrollView(child: tasks));
   }
 
   bool _mayTake(Task t) => game.decree == Decree.kingsCommand
@@ -2416,7 +2436,7 @@ class _HomePageState extends State<HomePage>
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _digiToken(_you, 46),
+            _digiToken(_you, 40),
             // Room kept from the start, so nothing shifts when it appears.
             Opacity(
               opacity:
@@ -2434,8 +2454,8 @@ class _HomePageState extends State<HomePage>
         // A place kept for the card you show, as tall as your token, so it
         // never covers your tasks.
         SizedBox(
-          width: 46 / 1.42 + 16,
-          child: Center(child: _revealedView(_you, height: 46)),
+          width: 40 / 1.42 + 12,
+          child: Center(child: _revealedView(_you, height: 40)),
         ),
         Expanded(
           child: _storyActive
@@ -4144,40 +4164,6 @@ class _HomePageState extends State<HomePage>
                       ],
                     ),
             ),
-            // The card tracker, docked over the lower half.
-            if (_trackerOpen &&
-                _inGame &&
-                _setupArgs == null &&
-                _digital &&
-                _cards.dealId == game.dealId)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: MediaQuery.sizeOf(context).height * 0.5,
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 1, end: 0),
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, v, child) => FractionalTranslation(
-                      translation: Offset(0, v), child: child),
-                  child: Material(
-                    color: Palette.feltDeep,
-                    elevation: 12,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-                      side: BorderSide(color: Color(0x88D4A63A)),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: _CardTracker(
-                      cards: _cards,
-                      you: _you,
-                      players: game.players,
-                      onClose: () => setState(() => _trackerOpen = false),
-                    ),
-                  ),
-                ),
-              ),
             if (_setupArgs != null)
               Positioned.fill(
                 child: TweenAnimationBuilder<double>(
@@ -4277,6 +4263,44 @@ class _HomePageState extends State<HomePage>
       // so it sits the same distance from every edge.
       const Positioned.fill(
           child: IgnorePointer(child: SafeArea(child: TableTrim()))),
+      // The card tracker, docked over the lower half, above the inlay. It
+      // slides up and down; it's only built while it's showing.
+      if (_trackerMounted &&
+          _inGame &&
+          _setupArgs == null &&
+          _digital &&
+          _cards.dealId == game.dealId)
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: MediaQuery.sizeOf(context).height * 0.5,
+          child: AnimatedSlide(
+            offset: _trackerOpen ? Offset.zero : const Offset(0, 1.05),
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            child: RepaintBoundary(
+              child: Material(
+                color: Palette.feltDeep,
+                elevation: 16,
+                shadowColor: Colors.black,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: SafeArea(
+                  top: false,
+                  child: _CardTracker(
+                    cards: _cards,
+                    you: _you,
+                    players: game.players,
+                    onClose: _closeTracker,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
     ]);
   }
 
@@ -4413,11 +4437,11 @@ class _HomePageState extends State<HomePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      toolbarHeight: 56,
+      toolbarHeight: 46,
       titleSpacing: 22,
       backgroundColor: Colors.transparent,
       title: Padding(
-        padding: const EdgeInsets.only(top: 6),
+        padding: const EdgeInsets.only(top: 2),
         // The round's name, with anything in force this round beside it.
         child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -8573,20 +8597,8 @@ class _CardTracker extends StatelessWidget {
       return Semantics(
         label: '${c.spoken}: $where',
         excludeSemantics: true,
-        child: SizedBox(
-          width: w,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _MiniCard(card: c, width: w, dimmed: p != null, edge: edge),
-            SizedBox(
-              height: 13,
-              child: Text(p != null ? '${p.$1}' : '',
-                  style: const TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white70)),
-            ),
-          ]),
-        ),
+        child: _MiniCard(
+            card: c, width: w, dimmed: p != null, edge: edge, trick: p?.$1),
       );
     }
 
@@ -8684,13 +8696,13 @@ class _CardTracker extends StatelessWidget {
 
     return RepaintBoundary(
       child: LayoutBuilder(builder: (context, box) {
-        final width = math.min(box.maxWidth, 620.0) - 32;
-        const header = 58.0;
-        // The whole deck fits in view at once: five rows, as big as the
-        // width and the panel's height allow.
+        final width = math.min(box.maxWidth, 720.0) - 24;
+        const header = 50.0;
+        // The whole deck fits in view at once: five rows across the full
+        // width, as tall as the panel allows.
         final byWidth = (width - 8 * 4) / 9;
-        final byHeight = ((box.maxHeight - header - 12) / 5 - 18) / 1.42;
-        final w = clampD(math.min(byWidth, byHeight), 16, 54);
+        final byHeight = ((box.maxHeight - header - 8) / 5 - 4) / 1.3;
+        final w = math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
         final small = clampD(w * 0.62, 16, 30);
         return Column(
           children: [
@@ -8733,9 +8745,6 @@ class _CardTracker extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                             ],
-                            const Spacer(),
-                            const Icon(Icons.expand_more_rounded,
-                                color: Colors.white54),
                           ]),
                         ],
                       ),
@@ -8790,11 +8799,20 @@ class _CardTracker extends StatelessWidget {
 /// the Court Card's letter) and an outline, cheap enough to show dozens.
 class _MiniCard extends StatelessWidget {
   const _MiniCard(
-      {required this.card, required this.width, this.dimmed = false, this.edge});
+      {required this.card,
+      required this.width,
+      this.dimmed = false,
+      this.edge,
+      this.trick});
   final PlayingCard card;
   final double width;
+
+  /// Played: greyed inside, but its outline stays bright.
   final bool dimmed;
   final Color? edge;
+
+  /// The trick it was played in, shown in its corner.
+  final int? trick;
 
   static const _cloth = [
     Color(0xFF4A2670),
@@ -8807,107 +8825,51 @@ class _MiniCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final court = card.isCourt;
     final ink = court ? Palette.gold : Palette.suitColour(card.suit);
+    final face = court
+        ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.55 : 0)!
+        : dimmed
+            ? const Color(0xFFA8A398)
+            : Palette.card;
+    final textInk = dimmed ? ink.withValues(alpha: court ? 0.6 : 0.9) : ink;
     return Container(
       width: width,
-      height: width * 1.42,
-      padding: EdgeInsets.all(width * 0.08),
+      height: width * 1.3,
+      padding: EdgeInsets.fromLTRB(width * 0.1, width * 0.06, width * 0.08, width * 0.04),
       decoration: BoxDecoration(
-        color: court ? _cloth[card.rank - 1] : Palette.card,
+        color: face,
         borderRadius: BorderRadius.circular(width * 0.12),
         border: Border.all(
             color: edge ?? (court ? Palette.gold : const Color(0xFFD9D2C3)),
             width: edge != null ? 3 : 1),
       ),
-      foregroundDecoration: dimmed
-          ? BoxDecoration(
-              color: const Color(0x88000000),
-              borderRadius: BorderRadius.circular(width * 0.12))
-          : null,
-      alignment: Alignment.topLeft,
-      child: Text.rich(
-        TextSpan(children: [
-          TextSpan(
-              text: card.rankLabel,
-              style: TextStyle(
-                  fontFamily: court ? displayFont : bodyFont,
-                  fontWeight: FontWeight.w900,
-                  fontSize: width * 0.36)),
-          if (!court)
-            TextSpan(text: '\n${card.suit.symbol}', style: TextStyle(fontSize: width * 0.32)),
-        ]),
-        style: TextStyle(height: 1.05, color: ink),
-        maxLines: 2,
-        overflow: TextOverflow.clip,
-        softWrap: false,
-      ),
-    );
-  }
-}
-
-
-/// A button that softly pulses with a gold glow, to draw the eye.
-class _GlowButton extends StatefulWidget {
-  const _GlowButton({required this.label, required this.onPressed});
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  State<_GlowButton> createState() => _GlowButtonState();
-}
-
-class _GlowButtonState extends State<_GlowButton>
-    with SingleTickerProviderStateMixin {
-  late final _pulse = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1200));
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // No pulsing for reduced motion (or in tests, where it would never
-    // settle).
-    final still = MediaQuery.of(context).disableAnimations ||
-        !CharacterToken.alive;
-    if (still) {
-      _pulse.stop();
-      _pulse.value = 0.6;
-    } else if (!_pulse.isAnimating) {
-      _pulse.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: AnimatedBuilder(
-        animation: _pulse,
-        builder: (context, child) => DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: Palette.gold.withValues(alpha: 0.25 + 0.45 * _pulse.value),
-                  blurRadius: 8 + 10 * _pulse.value,
-                  spreadRadius: 1),
-            ],
+      child: Stack(children: [
+        Text.rich(
+          TextSpan(children: [
+            TextSpan(
+                text: card.rankLabel,
+                style: TextStyle(
+                    fontFamily: court ? displayFont : bodyFont,
+                    fontWeight: FontWeight.w900,
+                    fontSize: width * 0.36)),
+            if (!court)
+              TextSpan(text: '\n${card.suit.symbol}', style: TextStyle(fontSize: width * 0.32)),
+          ]),
+          style: TextStyle(height: 1.05, color: textInk),
+          maxLines: 2,
+          overflow: TextOverflow.clip,
+          softWrap: false,
+        ),
+        if (trick != null)
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Text('$trick',
+                style: TextStyle(
+                    fontSize: width * 0.3,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                    color: edge ?? Colors.white)),
           ),
-          child: child,
-        ),
-        child: FilledButton(
-          onPressed: widget.onPressed,
-          style: FilledButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 18)),
-          child: Text(widget.label),
-        ),
-      ),
+      ]),
     );
   }
 }
