@@ -1225,15 +1225,15 @@ void main() {
       if (mode == 'Free play') {
         // Before anyone picks, the table asks about showing a card.
         for (int i = 0;
-            i < 300 && find.text('Start choosing').evaluate().isEmpty;
+            i < 300 && find.text('Save it').evaluate().isEmpty;
             i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
-        expect(find.text('Start choosing'), findsOneWidget);
+        expect(find.text('Save it'), findsOneWidget);
         expect(game.tasks.every((t) => t.assignedPlayerIndex == null), isTrue);
-        await tester.tap(find.text('Start choosing'));
+        await tester.tap(find.text('Save it'));
         await tester.pump();
-        expect(find.text('Start choosing'), findsNothing);
+        expect(find.text('Save it'), findsNothing);
       }
       for (int i = 0;
           i < 3000 && game.outcome == RoundOutcome.inProgress;

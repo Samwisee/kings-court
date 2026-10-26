@@ -905,7 +905,7 @@ class _HomePageState extends State<HomePage>
 
   /// Picking begins: courtiers may show a card a task on the table needs,
   /// then the first pick is made.
-  void _startChoosing({bool speak = false}) {
+  void _startChoosing() {
     setState(() => _speakAskedFor = game.dealId);
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
     for (int seat = 0; seat < game.players.length; seat++) {
@@ -914,12 +914,10 @@ class _HomePageState extends State<HomePage>
         if (_cards.revealFor(seat, card) == null) continue;
         if (open.any((t) => neededCards(t.description).contains(card))) {
           _reveal(seat, card);
-          _quip(seat, 'I hold the ${card.label}.');
           break;
         }
       }
     }
-    if (speak) _speak();
   }
 
   /// A bot is thinking (a slice at a time, so the screen stays smooth).
@@ -1346,7 +1344,7 @@ class _HomePageState extends State<HomePage>
     }
     if (_choosingKing) return '';
     if (game.pickTurn != null) {
-      if (_speakPromptDue) return 'Before anyone chooses: show a card?';
+      if (_speakPromptDue) return 'Before tasks are chosen: tap a card to show it, or save it';
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
@@ -1354,7 +1352,7 @@ class _HomePageState extends State<HomePage>
                 ? 'Your pick: tap a task, or pass once a round'
                 : 'Your pick: tap a task to take it';
       }
-      if (_speakPromptDue) return 'Before anyone chooses: show a card?';
+      if (_speakPromptDue) return 'Before tasks are chosen: tap a card to show it, or save it';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
     if (!_tasksSettled) return 'Announcing numbers…';
@@ -1384,9 +1382,17 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHand() {
     final c = _cards;
-    final yourTurn = _yourPlay;
-    final legal =
-        yourTurn ? c.legalFor(_you).toSet() : const <PlayingCard>{};
+    // Showing a card: only those you may show stand out.
+    final showing = _revealing || _speakPromptDue;
+    final yourTurn = _yourPlay || showing;
+    final legal = showing
+        ? {
+            for (final card in c.dealId == game.dealId ? c.hands[_you] : const <PlayingCard>[])
+              if (c.revealFor(_you, card) != null) card
+          }
+        : _yourPlay
+            ? c.legalFor(_you).toSet()
+            : const <PlayingCard>{};
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
@@ -1493,14 +1499,16 @@ class _HomePageState extends State<HomePage>
                       final left = (width - total) / 2 + i * step;
                       final top = legal.contains(card) ? 0.0 : 12.0;
                       void play() {
-                        if (_revealing) {
+                        if (_revealing || _speakPromptDue) {
                           if (_cards.revealFor(_you, card) == null) {
                             _showSnack(
                                 'Only your highest, lowest or only card of a suit can be shown, never a Court Card',
                                 Palette.feltDeep);
                             return;
                           }
+                          final opening = _speakPromptDue;
                           _reveal(_you, card);
+                          if (opening) _startChoosing();
                           return;
                         }
                         if (!_yourPlay) return;
@@ -2028,7 +2036,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 if (seat != null && _quips[seat] != null)
                   Positioned(
-                    top: (width > 600 ? 48 : 38) + 38,
+                    top: (width > 600 ? 48 : 38) + 58,
                     left: 0,
                     right: 0,
                     child: Center(
@@ -2158,7 +2166,7 @@ class _HomePageState extends State<HomePage>
         });
       });
     }
-    const shuffleMs = 650;
+    const shuffleMs = 1000;
     final tasks = Wrap(
       alignment: WrapAlignment.center,
       spacing: 8,
@@ -2216,44 +2224,67 @@ class _HomePageState extends State<HomePage>
             );
             if (!measured) return Opacity(opacity: 0, child: chip);
             final from = _dealFrom[t] ?? Offset.zero;
-            final startMs = shuffleMs + i * 110;
-            final total = startMs + 520;
+            // Halves of the pile alternate, so the riffle interleaves.
+            final side = i.isEven ? -1.0 : 1.0;
+            final startMs = shuffleMs + i * 120;
+            final total = startMs + 620;
             return TweenAnimationBuilder<double>(
               key: ValueKey('deal-${game.dealId}-${t.description}'),
               tween: Tween(begin: 0, end: 1),
               duration: Duration(milliseconds: total),
               builder: (context, raw, child) {
                 final ms = raw * total;
-                // Shuffling: the pile riffles, cards nudging left and right.
-                final riffle = ms < shuffleMs
-                    ? math.sin(ms / shuffleMs * math.pi * 3) *
-                        (i.isEven ? 1 : -1) *
-                        w *
-                        0.18
+                // The shuffle: the pile splits into two halves that swing
+                // apart and riffle back together, twice.
+                final p = clampD(ms / shuffleMs, 0, 1);
+                final apart = ms < shuffleMs
+                    ? math.sin(p * math.pi * 2).abs() * (1 - p * 0.3)
                     : 0.0;
+                // Then each card is dealt: it arcs out to its place,
+                // straightening and turning face up as it lands.
                 final d = ms < startMs
                     ? 0.0
-                    : Curves.easeOutCubic.transform((ms - startMs) / (total - startMs));
+                    : Curves.easeOutBack.transform(
+                        clampD((ms - startMs) / (total - startMs), 0, 1));
+                final dc = clampD(d, 0, 1);
+                final lift = math.sin(dc * math.pi) * 36;
+                final pile = Offset(side * apart * w * 0.6, -i * 1.6 - apart * 10);
                 return Transform.translate(
-                  offset: from * (1 - d) + Offset(riffle, -i * 1.5 * (1 - d)),
-                  child: FlipIn(
-                    t: clampD(d * 1.4 - 0.2, 0, 1),
-                    front: child!,
-                    // The back is exactly the size of the front.
-                    back: Stack(children: [
-                      Opacity(opacity: 0, child: child),
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF5A1620),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Palette.gold, width: 1.5),
+                  offset: from * (1 - d) + pile * (1 - dc) + Offset(0, -lift),
+                  child: Transform.rotate(
+                    angle: side * apart * 0.22 + side * 0.3 * math.sin(dc * math.pi),
+                    child: Transform.scale(
+                      scale: 0.86 + 0.14 * dc,
+                      child: FlipIn(
+                        t: clampD(dc * 1.5 - 0.3, 0, 1),
+                        front: child!,
+                        // The back is exactly the size of the front.
+                        back: Stack(children: [
+                          Opacity(opacity: 0, child: child),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [Color(0xFF7A1F2C), Color(0xFF3E0C14)],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Palette.gold, width: 1.5),
+                                boxShadow: const [
+                                  BoxShadow(
+                                      color: Colors.black45,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 3)),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: const CrownIcon(size: 26, color: Palette.gold),
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: const CrownIcon(size: 26, color: Palette.gold),
-                        ),
+                        ]),
                       ),
-                    ]),
+                    ),
                   ),
                 );
               },
@@ -2266,48 +2297,6 @@ class _HomePageState extends State<HomePage>
       child: SingleChildScrollView(
         clipBehavior: Clip.none,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Before the first pick: does anyone want to show a card?
-          if (_speakPromptDue)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-              constraints: const BoxConstraints(maxWidth: 420),
-              decoration: BoxDecoration(
-                color: Palette.card,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Palette.gold, width: 1.5),
-                boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 10)],
-              ),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('Before anyone chooses a task',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Palette.goldDeep)),
-                const SizedBox(height: 4),
-                const Text(
-                    'Want to show a card first? It can help the court choose. You can only do it once a round.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14.5, height: 1.35, color: Palette.ink)),
-                const SizedBox(height: 8),
-                Wrap(spacing: 10, runSpacing: 6, alignment: WrapAlignment.center, children: [
-                  OutlinedButton.icon(
-                    onPressed: () => _startChoosing(speak: true),
-                    icon: const Icon(Icons.record_voice_over, size: 18),
-                    label: const Text('Show a card'),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: Palette.goldDeep,
-                        side: const BorderSide(color: Palette.goldDeep)),
-                  ),
-                  FilledButton(
-                    onPressed: _startChoosing,
-                    child: const Text('Start choosing'),
-                  ),
-                ]),
-              ]),
-            ),
           tasks,
         ]),
       ),
@@ -2388,6 +2377,25 @@ class _HomePageState extends State<HomePage>
         Expanded(
           child: _storyActive
               ? const SizedBox.shrink()
+              : _speakPromptDue
+              // Before tasks are chosen: show a card (tap it in your hand)
+              // or keep it for later.
+              ? Row(children: [
+                  OutlinedButton.icon(
+                    onPressed: _startChoosing,
+                    icon: const Icon(Icons.bookmark_added_outlined, size: 18),
+                    label: const Text('Save it'),
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: Palette.gold,
+                        side: const BorderSide(color: Palette.gold),
+                        minimumSize: const Size(0, 44)),
+                  ),
+                  const SizedBox(width: 10),
+                  const Flexible(
+                    child: Text('or tap a card to show it',
+                        style: TextStyle(fontSize: 13, color: Colors.white70)),
+                  ),
+                ])
               : game.canPass(_you) && !_speakPromptDue
               // Your pick: take a task from the middle, or pass it on.
               ? SingleChildScrollView(
@@ -4091,13 +4099,8 @@ class _HomePageState extends State<HomePage>
                           Expanded(child: mid(_buildDigitalTable())),
                           if (game.isTutorial) mid(_buildCoach()),
                           // The story has the table: no hand to play.
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeOutCubic,
-                            child: !_storyActive
-                                ? _buildHand()
-                                : const SizedBox(width: double.infinity),
-                          ),
+                          // (Not size-animated: that clipped the cards.)
+                          if (!_storyActive) _buildHand(),
                         ]);
                         }))
                       : _centred(_buildTable(), aspect: 1.2)
