@@ -1199,7 +1199,9 @@ class GameState {
       whyCantTake(task, playerIndex) == null;
 
   /// Why [seat] can't take [task], or null if they can.
-  String? whyCantTake(Task task, int seat) {
+  /// With [publicOnly], nobody's hand is consulted: only what the whole
+  /// table can see.
+  String? whyCantTake(Task task, int seat, {bool publicOnly = false}) {
     if (seat == exiledSeat) return 'Exiled: no tasks this round';
     if (isAntagonist(seat)) return 'A traitor takes no tasks';
     if (task.kingCantTake && seat == kingIndex) {
@@ -1216,7 +1218,7 @@ class GameState {
     // On screen the app knows every hand: no task someone's cards make
     // impossible for them (unless nobody else could take it either).
     final m = cards;
-    if (m != null && m.dealId == dealId && seat < m.hands.length) {
+    if (!publicOnly && m != null && m.dealId == dealId && seat < m.hands.length) {
       final why = handBlocks(task.description, m.hands[seat]);
       if (why != null) {
         final someoneElse = [

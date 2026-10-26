@@ -1348,7 +1348,7 @@ class _HomePageState extends State<HomePage>
     }
     if (_choosingKing) return '';
     if (game.pickTurn != null) {
-      if (_speakPromptDue) return 'Show a card first? Tap one, or skip';
+      if (_speakPromptDue) return 'Share a card?';
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
@@ -1356,7 +1356,7 @@ class _HomePageState extends State<HomePage>
                 ? 'Your pick: tap a task'
                 : 'Your pick: tap a task to take it';
       }
-      if (_speakPromptDue) return 'Show a card first? Tap one, or skip';
+      if (_speakPromptDue) return 'Share a card?';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
     if (!_tasksSettled) return 'Announcing numbers…';
@@ -1468,7 +1468,7 @@ class _HomePageState extends State<HomePage>
               // The action of the moment, beside what's happening: save
               // your card for later, or pass on picking.
               if (_speakPromptDue)
-                _barAction('Skip', Icons.skip_next_rounded, _startChoosing)
+                _GlowButton(label: 'Skip', onPressed: _startChoosing)
               else if (game.canPass(_you))
                 _barAction('Pass', Icons.redo_rounded,
                     () => setState(() => game.pass(_you))),
@@ -2009,7 +2009,6 @@ class _HomePageState extends State<HomePage>
           child: SlideToPlace(
             key: ValueKey('slide-${role?.name ?? seat}'),
             child: SingleChildScrollView(
-              clipBehavior: Clip.none,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 // A courtier's quip floats over their column rather than
@@ -2194,9 +2193,17 @@ class _HomePageState extends State<HomePage>
     final big = width > 600;
     final w = math.min(big ? 200.0 : 130.0, (width - 16) / 3);
     _openFontSize = big ? 16 : 13;
-    // Every task keeps its place until picking is over, so nothing jumps
-    // when one is taken. (Royal charges go straight to their house.)
-    final slots = [for (final t in game.tasks) if (!game.isCharged(t)) t];
+    // Open tasks, and any still flying to their owner. Once a taken task
+    // has landed the rest close up, so the middle never runs out of room.
+    // (Royal charges go straight to their house.)
+    final slots = [
+      for (final t in game.tasks)
+        if (!game.isCharged(t) &&
+            (t.assignedPlayerIndex == null ||
+                _landing.contains(t) ||
+                _flights.any((f) => f.task == t)))
+          t
+    ];
     // The deal: first laid out unseen to find each task's place, then
     // shuffled as a pile in the middle and dealt out to those places.
     final measured = _dealMeasuredFor == game.dealId;
@@ -2227,9 +2234,14 @@ class _HomePageState extends State<HomePage>
             final taken = t.assignedPlayerIndex != null;
             // Who could take it: a task only one player may take is marked
             // in their colour, so the table knows it's theirs to choose.
+            // Only what everyone can see: your own hand counts for you,
+            // but nobody else's cards do.
             final able = [
               for (int s = 0; s < game.players.length; s++)
-                if (game.canTake(t, s)) s
+                if (s == _you
+                    ? game.canTake(t, s)
+                    : game.whyCantTake(t, s, publicOnly: true) == null)
+                  s
             ];
             final only = !taken && able.length == 1 ? able.single : null;
             final chip = IgnorePointer(
@@ -2342,12 +2354,14 @@ class _HomePageState extends State<HomePage>
           }(),
       ],
     );
-    return Center(
-      child: SingleChildScrollView(
-        clipBehavior: Clip.none,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          tasks,
-        ]),
+    // Shrinks to fit when there are many tasks, so they never spill over
+    // the courtiers or your own row.
+    return LayoutBuilder(
+      builder: (context, box) => Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(width: box.maxWidth, child: tasks),
+        ),
       ),
     );
   }
@@ -8825,6 +8839,74 @@ class _MiniCard extends StatelessWidget {
         maxLines: 2,
         overflow: TextOverflow.clip,
         softWrap: false,
+      ),
+    );
+  }
+}
+
+
+/// A button that softly pulses with a gold glow, to draw the eye.
+class _GlowButton extends StatefulWidget {
+  const _GlowButton({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  State<_GlowButton> createState() => _GlowButtonState();
+}
+
+class _GlowButtonState extends State<_GlowButton>
+    with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1200));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // No pulsing for reduced motion (or in tests, where it would never
+    // settle).
+    final still = MediaQuery.of(context).disableAnimations ||
+        !CharacterToken.alive;
+    if (still) {
+      _pulse.stop();
+      _pulse.value = 0.6;
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, child) => DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                  color: Palette.gold.withValues(alpha: 0.25 + 0.45 * _pulse.value),
+                  blurRadius: 8 + 10 * _pulse.value,
+                  spreadRadius: 1),
+            ],
+          ),
+          child: child,
+        ),
+        child: FilledButton(
+          onPressed: widget.onPressed,
+          style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 18)),
+          child: Text(widget.label),
+        ),
       ),
     );
   }
