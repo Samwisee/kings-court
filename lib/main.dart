@@ -3788,7 +3788,9 @@ class _HomePageState extends State<HomePage>
                   ? 'Chapter ${game.chapter! + 1}'
                   : game.isDynasty && game.reign > 0
                       ? 'Reign ${roman(game.reign)}'
-                      : 'Round ${game.roundNumber}',
+                      : game.isTutorial
+                          ? 'Lesson ${game.lesson + 1}'
+                          : 'Round ${game.roundNumber}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

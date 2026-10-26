@@ -1,0 +1,126 @@
+# The King's Court: hand-off for a new chat
+
+Read this first, then `docs/ONLINE.md` if the work touches multiplayer.
+
+## What the game is
+
+A cooperative trick-taking card game for 2 to 6 players, adapted from *The Crew: Mission Deep Sea*. Everyone plays together. Each round deals **tasks** ("Win the 3♥", "Win the first trick", "Win no Court Cards"), players take them in turn, then play tricks until every task is done (round won) or one fails (round lost).
+
+- **The deck:** 40 cards, Ace (1) to 9 in ♥ ♦ ♠ ♣, plus four **Court Cards** (Joker < Jack < Queen < King). Court Cards are their own suit and beat every suit. Whoever holds the King card is **the King**, picks the first task and leads the first trick. Players must follow the suit led if they can.
+- **Mapping from The Crew:** pink = ♥, yellow = ♦, blue = ♠, green = ♣. Submarines 1–4 = the Court Cards. Captain = the King. The task list in `lib/tasks.dart` comes from The Crew. The "six" column is our own (one point above the hardest original value).
+
+### Ways to play (`GameMode` in `lib/models.dart`)
+
+Saved games store the enum index, so **new modes go on the end**.
+
+| Mode | What it is |
+|---|---|
+| `free` | Pick a points target; tasks are drawn to match. Optional *Seals and decrees*. |
+| `endless` | Each win adds a point to the next round; win streaks are tracked. |
+| `chronicle` | 24 chapters with set points, seals and decrees; crowns for wins (`lib/chronicle.dart`). |
+| `dynasty` | Story mode. Solo on-screen Dynasty is the main focus: **you are always the King**, courtiers come and go with the story, a throne room scene runs between hands. |
+| `tutorial` | Four scripted lessons (`lib/tutorial.dart`). Added most recently. |
+
+Two ways to use any mode:
+- **At a real table:** the phone sits in the middle and tracks tasks for a physical deck.
+- **On-screen cards** (`game.cards != null`, `game.digital`): you in seat 0, cooperative bots elsewhere. This is the default and where nearly all recent work is.
+
+## How Sam works and what he wants
+
+- **The person:** Sam, a senior mobile engineer (Flutter/Android), in Melbourne. Prefers direct, honest critique over validation.
+- **How he tests:** on his phone, using the **web build on GitHub Pages**: https://samwisee.github.io/kings-court/. Feedback usually comes as phone screenshots plus a short list of changes. He often sends several fixes at once, so do them all, push, and say briefly what changed.
+- **Product direction:**
+  - Dynasty should be **story-driven rather than points-driven**, with *Yes, Your Grace* as a reference.
+  - Solo Dynasty: you are the King; the Duke, Bishop, General, Spymaster, Merchant and Jester (plus visitors) come and go.
+  - Scenes should present **dilemmas with personality**.
+  - Buttons appear only for real decisions; speech bubbles wait for a tap.
+- **Long-term:** a real **multiplayer** digital card game with a **Firebase** backend. The engine is pure Dart and action-based for that reason (see `docs/ONLINE.md`). The repo is public on purpose, because rules will be enforced server-side.
+
+## Building, testing and shipping
+
+There is **no Flutter SDK in the cloud sessions**: the package mirrors and `storage.googleapis.com` are blocked, so it can't be installed. The loop is CI:
+
+1. Commit and push to `main`.
+2. **Test and deploy** (`.github/workflows/deploy.yml`):
+   - `flutter analyze`: errors fail the job.
+   - `flutter test`: failures become run annotations via `tool/ci_annotate.py`.
+   - The web build deploys to Pages even if tests fail, so there's always something to play.
+3. **Screenshots** (`.github/workflows/shots.yml`) runs `tool/shots/shots_test.dart` and force-pushes the PNGs plus `shots.txt` to the **`shots` branch**.
+4. Reading results from a session:
+   - `gh run list --limit 4`, then `gh run view <id>`.
+   - Annotations carry the failure text: `gh api repos/Samwisee/kings-court/check-runs/<job-id>/annotations --jq '.[].message'`. Raw job logs are blocked by the proxy.
+   - Screenshots: `git fetch origin shots && git show origin/shots:<file>.png > /tmp/x.png`, then view the image.
+   - Golden fonts in CI lack the suit glyphs (♥ ♦ ♠ ♣ show as blanks). That's a test-font limit, not an app bug.
+
+- **Flutter version:** 3.41.4 stable (pinned in both workflows).
+- **Commit identity:** in these sessions a stop hook asks for `Claude <noreply@anthropic.com>` as author.
+- **Commit messages:** a plain sentence of what changed for the player ("The court stays put across scenes; petitioners come and go"), with the session's `Co-Authored-By` / `Claude-Session` lines.
+
+## Code map
+
+| File | What lives there |
+|---|---|
+| `lib/main.dart` (~7.4k lines) | Everything on screen. `_HomePageState` holds the game, the setup panel (`_SetupPanel`), the round-table layout (`_TableGeometry`), the on-screen table and hand, bots' turns (`_scheduleBot`, `_botThink`), Dynasty's end-of-round flow (`_DynastyStep`), outcome cards, How to Play (`showRulesDialog`). Test hooks: `HomePageTestHooks.fast()`, `debugYourMove()`. |
+| `lib/models.dart` | `GameState`: players, tasks, King, mode, seals and decrees, Dynasty state (courtiers, loyalty, wounds, reigns, story flags, coffers), JSON save/load. `addTasksUntilTarget` deals each round's tasks. |
+| `lib/engine/cards.dart` | Deck, `deal`, `legalPlays`, `winningPlay`, `Trick`. Pure Dart. |
+| `lib/engine/rules.dart` | `taskRules`: every task as a function of the tricks → `Verdict` (pending/done/failed). |
+| `lib/engine/conflicts.dart` | Which tasks clash; `playableWith`; timing (for seals). |
+| `lib/engine/match.dart` | `MatchState` (on-screen round: hands, tricks, phase) and `MatchAction`s, all JSON-able. Online play builds on this. |
+| `lib/engine/bot.dart` | Cooperative bots using random playouts (`choosePickAsync`, `choosePlayAsync`). |
+| `lib/engine/contest.dart`, `lib/play/contest_table.dart` | The *Trial of Hearts*: a hearts round that settles a divided court in Dynasty. |
+| `lib/courtiers.dart` | `Courtier` enum (titles, shapes, powers), Dynasty `Dilemma`s and `Choice`/`Effect`s, entrances and exits, and every line courtiers say (chatter, retorts, cheers, task quips). |
+| `lib/story.dart` | Tidings (news that opens a round), story arcs with flags, the main Karsk campaign from harvest to war. |
+| `lib/play/throne_room.dart` | The solo Dynasty throne room: figures, speech bubbles, the felt stage set that lowers in, choices from the throne. |
+| `lib/play/card_view.dart`, `lib/widgets.dart`, `lib/theme.dart` | Cards (Court Card faces), tokens, crowns, the palette and fonts (Cinzel Decorative and Alegreya Sans). |
+| `lib/chronicle.dart` | The 24 chapters, `Seals`, `Decree`. |
+| `lib/tutorial.dart` | Tutorial lessons: fixed tasks, a rigged `deal()`, the courtiers' script, coach lines, the suggested card. |
+| `test/` | `engine_test.dart` (rules, deals, bots), `widget_test.dart` (UI flows, whole on-screen rounds), `tutorial_test.dart` (each lesson is fair and winnable). |
+
+### How an on-screen round flows
+
+1. `game.addTasksUntilTarget` sets tasks and bumps `dealId`.
+2. `_syncCards` deals with `MatchState.dealFor`, rejecting deals that make a task impossible, and the King is crowned.
+3. Picking runs clockwise from the King (`game.assign`); bots pick through `_botThink`.
+4. Tricks are played with `_playCard`. Each finished trick is held for `trickPause`, then `_judgeTasks` checks `taskRules`.
+5. The outcome overlay appears. Dynasty goes on to dilemmas, verdicts, deaths and endings.
+
+`setState` is overridden: every change saves the game and nudges `_syncCards` and the bots.
+
+## Recent history (newest first)
+
+- **Tutorial** (`GameMode.tutorial`). Four lessons: *Lead and win*, *Win a card*, *Court Cards*, *Help each other*.
+  - Start it from **Learn to play** on the welcome screen, or **Tutorial** in setup.
+  - Each lesson has rigged hands, scripted courtiers (they fall back to normal bots if you go off-script), a coach note between the table and your hand, and a glowing suggested card. Tricks pause longer.
+  - The lesson card offers Try again / Next lesson, and a "You're ready" dialog closes it out.
+  - The tutorial is never saved, so it can't overwrite a game in progress.
+- **A big court stands in two rows** in the throne room.
+- **Earlier Dynasty polish:**
+  - fewer one-on-one hands
+  - the scene's title on top (no "Reign 1", no task pips)
+  - the whole council at the coronation
+  - steady speech bubbles
+  - buttons only for decisions
+  - traitors' schemes shown as black task cards
+- **The court persists across scenes:** petitioners come and go and argue more fully; solo Dynasty starts in the throne room.
+- **Private audiences** (one-on-one hands); the King speaks back; two-player hands end properly; finished tasks show their points.
+- **The felt throne room** lowers like a stage set; lines wait for a tap; the hand is tied to the scene (stakes on the table, courtiers call out, blame and praise after).
+
+`git log --oneline` has the full story; commit titles are written for the player.
+
+## Open threads and ideas
+
+- **Multiplayer/Firebase:** plan in `docs/ONLINE.md`. That doc mentions `lib/play/controller.dart` (`MatchConnection`), which **doesn't exist yet**: it's the planned seam, not current code.
+- **Tutorial follow-ups:** more lessons for seals, royal decrees, the speech token (showing a card), and a short Dynasty primer.
+- **`main.dart` is very large:** splitting out the on-screen table, setup panel and Dynasty flow into `lib/play/` would make work safer.
+- **Flaky test:** "Stacks for neighbouring seats never overlap" sometimes needs its built-in retry.
+- **Card reveals on screen** exist (`_speak`/`_reveal`) but bots only reveal outside the tutorial.
+
+## Working agreements
+
+- **Before changing the game, read the code nearby:** comments explain *why*, and the house style is full-sentence `///` docs.
+- **Keep saves compatible:** add JSON fields with defaults, append enum values.
+- **Every gameplay change gets a test.** Visual changes get a look via the `shots` branch.
+- **Wording players see:**
+  - capitalise *Court Cards*, *the King*, *Dynasty*
+  - Australian/British spelling (colour, honour)
+  - short sentences, no jargon
