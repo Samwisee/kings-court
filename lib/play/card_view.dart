@@ -345,23 +345,24 @@ class _Tiara extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final peaks = [
-      Offset(w * 0.15, h * 0.5),
-      Offset(w * 0.32, h * 0.34),
-      Offset(w * 0.5, h * 0.14),
-      Offset(w * 0.68, h * 0.34),
-      Offset(w * 0.85, h * 0.5),
+      Offset(w * 0.12, h * 0.56),
+      Offset(w * 0.31, h * 0.4),
+      Offset(w * 0.5, h * 0.18),
+      Offset(w * 0.69, h * 0.4),
+      Offset(w * 0.88, h * 0.56),
     ];
-    final valley = h * 0.64;
+    final valley = h * 0.66;
     final body = Path()
       ..moveTo(w * 0.07, h * 0.8)
       ..quadraticBezierTo(w * 0.07, h * 0.6, peaks.first.dx, peaks.first.dy);
     for (int i = 1; i < peaks.length; i++) {
       final a = peaks[i - 1], b = peaks[i];
       final mid = (a.dx + b.dx) / 2;
-      // Each scallop dips in a soft curve and sweeps up to the next tip.
+      // Rounded arches, like scallops: each tip is a soft dome that
+      // curves down to a dip, then up into the next dome.
       body
-        ..quadraticBezierTo(a.dx + (mid - a.dx) * 0.25, valley, mid, valley)
-        ..quadraticBezierTo(b.dx - (b.dx - mid) * 0.25, valley, b.dx, b.dy);
+        ..quadraticBezierTo(a.dx + (mid - a.dx) * 0.55, a.dy, mid, valley)
+        ..quadraticBezierTo(b.dx - (b.dx - mid) * 0.55, b.dy, b.dx, b.dy);
     }
     body
       ..quadraticBezierTo(w * 0.93, h * 0.6, w * 0.93, h * 0.8)
@@ -401,8 +402,8 @@ class _Tiara extends CustomPainter {
       drawPearl(peaks[i], w * (i == 2 ? 0.05 : i.isOdd ? 0.04 : 0.032));
     }
     // The teardrop jewel at the heart of the tiara.
-    final c = Offset(w * 0.5, h * 0.47);
-    final r = w * 0.055;
+    final c = Offset(w * 0.5, h * 0.56);
+    final r = w * 0.075;
     final drop = Path()
       ..moveTo(c.dx, c.dy - r * 1.9)
       ..quadraticBezierTo(c.dx + r * 1.15, c.dy - r * 0.2, c.dx, c.dy + r)
