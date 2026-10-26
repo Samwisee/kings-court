@@ -1,0 +1,55 @@
+name: Balance
+
+# Bots play many rounds to see how winnable the task mix is. Runs when the
+# tasks or the rules change, or by hand; the report goes to the balance
+# branch (latest.txt, plus one file per commit).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/tasks.dart'
+      - 'lib/models.dart'
+      - 'lib/engine/**'
+      - 'tool/balance/**'
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: 'How long to play for, in seconds'
+        default: '900'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: balance
+  cancel-in-progress: true
+
+jobs:
+  balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Play
+        env:
+          BALANCE_SECONDS: ${{ github.event.inputs.seconds || '900' }}
+        run: |
+          timeout 2100 flutter test tool/balance/balance_test.dart --timeout none --reporter expanded > balance.txt 2>&1 || true
+          tail -20 balance.txt
+          python3 tool/ci_annotate.py balance.txt || true
+      - name: Publish to the balance branch
+        run: |
+          v=${GITHUB_SHA::8}
+          git clone -q --branch balance --single-branch "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" /tmp/out 2>/dev/null || (mkdir -p /tmp/out && cd /tmp/out && git init -q -b balance)
+          cp tool/balance/out/report.txt /tmp/out/latest.txt || cp balance.txt /tmp/out/latest.txt
+          cp /tmp/out/latest.txt /tmp/out/report-$v.txt
+          cd /tmp/out
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Balance report for ${GITHUB_SHA}"
+          git push -q "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:balance
