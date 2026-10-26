@@ -201,6 +201,11 @@ class _TableGeometry {
       final tokenHalfW = seatSize / 2 + 8;
       final tokenHalfH = seatSize / 2 + 17;
 
+      // Rows as tall as this seat's tallest card, so a stack of long tasks
+      // still has room.
+      final rowH = owned
+          .map((t) => ownedCardSize(i, t).height)
+          .fold<double>(cardHeight, math.max);
       // Candidate spots in the owner's frame, nearest first.
       final spots = <Offset>[];
       for (int row = 0; row < 6; row++) {
@@ -208,7 +213,7 @@ class _TableGeometry {
           final dx = col * (cardWidth + gap);
           final dy = row == 0
               ? 0.0
-              : tokenHalfH + cardHeight / 2 + gap + (row - 1) * (cardHeight + gap);
+              : tokenHalfH + rowH / 2 + gap + (row - 1) * (rowH + gap);
           // The row level with the seat can't use the seat's own spot.
           if (row == 0 && col.abs() * (cardWidth + gap) < tokenHalfW + cardWidth / 2) {
             continue;
