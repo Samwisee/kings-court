@@ -21,7 +21,9 @@ import 'engine/rules.dart';
 import 'play/card_view.dart';
 import 'play/contest_table.dart';
 import 'play/throne_room.dart';
+import 'play/tutorial_intro.dart';
 import 'sfx.dart';
+import 'task_help.dart';
 import 'theme.dart';
 import 'tutorial.dart';
 import 'widgets.dart';
@@ -69,12 +71,14 @@ class HomePage extends StatefulWidget {
 class _TableGeometry {
   _TableGeometry(this.size, this.players, this.textOf,
       {double? fixedCardWidth, this.upright = false})
-      : seatSize = clampD(math.min(size.width, size.height) * 0.13, 36, 54) {
+      : seatSize = clampD(math.min(size.width, size.height) * 0.13, 36, 64) {
     seatExtent = seatSize + 32; // token, with room for the crown
     rx = size.width / 2 - seatExtent / 2 - trimInset;
     ry = size.height / 2 - seatExtent / 2 - trimInset;
     cardWidth = fixedCardWidth ??
-        clampD(math.min(size.width, size.height) * 0.27, 92, 128);
+        // Bigger on a big screen, so the table is easy to read from a
+        // distance.
+        clampD(math.min(size.width, size.height) * 0.27, 92, 172);
   }
 
   final Size size;
@@ -400,18 +404,22 @@ class _HomePageState extends State<HomePage>
 
   final _tableKey = GlobalKey();
 
-  /// A game saved from last time, offered on the welcome screen, with the
-  /// table layout that goes with it.
-  (GameState, Map<String, dynamic>)? _saved;
+  /// Games saved from last time, one for each way to play, newest first.
+  /// Play on the welcome screen offers them.
+  List<_SavedGame> _saves = [];
 
   /// Best win streak across every game on this device.
   int _bestStreak = 0;
 
-  static const _saveKey = 'kingsCourt.game';
+  /// Before save slots, one game was kept under this key. It moves to its
+  /// mode's slot the first time it's loaded.
+  static const _legacySaveKey = 'kingsCourt.game';
+  static String _slotKey(GameMode mode) => 'kingsCourt.game.${mode.name}';
   static const _bestKey = 'kingsCourt.bestStreak';
   static const _chronicleKey = 'kingsCourt.chronicle';
   static const _soundKey = 'kingsCourt.sound';
   static const _uprightKey = 'kingsCourt.upright';
+  static const _suitsKey = 'kingsCourt.fourColourSuits';
 
   /// Laptop view: everything upright instead of turned to each seat.
   bool _upright = false;
@@ -443,22 +451,49 @@ class _HomePageState extends State<HomePage>
               jsonDecode(chronicleRaw) as Map<String, dynamic>);
       Sfx.enabled = prefs.getBool(_soundKey) ?? true;
       _upright = prefs.getBool(_uprightKey) ?? false;
-      final raw = prefs.getString(_saveKey);
-      final data = raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
-      final saved = data == null
-          ? null
-          : GameState.fromJson(data['game'] as Map<String, dynamic>);
+      Palette.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
+      final saves = await _readSaves(prefs);
       if (!mounted) return;
       setState(() {
         _bestStreak = best;
         _progress = progress;
-        if (saved != null && saved.outcome == RoundOutcome.inProgress) {
-          _saved = (saved, data!);
-        }
+        _saves = saves;
       });
     } catch (_) {
       // No saved game (or storage unavailable): start fresh.
     }
+  }
+
+  /// Reads every saved game still in progress, newest first, moving an old
+  /// single save into its slot.
+  static Future<List<_SavedGame>> _readSaves(SharedPreferences prefs) async {
+    final legacy = prefs.getString(_legacySaveKey);
+    if (legacy != null) {
+      try {
+        final data = jsonDecode(legacy) as Map<String, dynamic>;
+        final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
+        final key = _slotKey(g.mode);
+        if (prefs.getString(key) == null) await prefs.setString(key, legacy);
+      } catch (_) {}
+      await prefs.remove(_legacySaveKey);
+    }
+    final saves = <_SavedGame>[];
+    for (final mode in GameMode.values) {
+      if (mode == GameMode.tutorial) continue;
+      final raw = prefs.getString(_slotKey(mode));
+      if (raw == null) continue;
+      try {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
+        if (g.outcome != RoundOutcome.inProgress) continue;
+        saves.add(_SavedGame(g, data,
+            DateTime.fromMillisecondsSinceEpoch(data['savedAt'] as int? ?? 0)));
+      } catch (_) {
+        // A save that no longer reads is skipped.
+      }
+    }
+    saves.sort((a, b) => b.at.compareTo(a.at));
+    return saves;
   }
 
   /// Saves after every change, so closing the app mid-round loses nothing.
@@ -489,9 +524,10 @@ class _HomePageState extends State<HomePage>
             if (_pos[t] != null) [_pos[t]!.dx, _pos[t]!.dy] else null,
         ],
         'tilt': [for (final t in game.tasks) _tilt[t] ?? 0.0],
+        'savedAt': DateTime.now().millisecondsSinceEpoch,
       };
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_saveKey, jsonEncode(data));
+      await prefs.setString(_slotKey(game.mode), jsonEncode(data));
       final best = math.max(_bestStreak, game.bestStreak);
       if (best > (prefs.getInt(_bestKey) ?? 0)) await prefs.setInt(_bestKey, best);
     } catch (_) {
@@ -506,6 +542,7 @@ class _HomePageState extends State<HomePage>
       await prefs.setString(_chronicleKey, jsonEncode(_progress.toJson()));
       await prefs.setBool(_soundKey, Sfx.enabled);
       await prefs.setBool(_uprightKey, _upright);
+      await prefs.setBool(_suitsKey, Palette.fourColourSuits);
     } catch (_) {}
   }
 
@@ -535,11 +572,10 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  /// Picks up the saved game exactly where it was left.
-  void _continueSaved() {
-    final saved = _saved;
-    if (saved == null) return;
-    final (g, data) = saved;
+  /// Picks up a saved game exactly where it was left.
+  void _continueSaved(_SavedGame saved) {
+    final g = saved.game;
+    final data = saved.data;
     setState(() {
       game = g;
       playerCount = data['playerCount'] as int;
@@ -561,7 +597,7 @@ class _HomePageState extends State<HomePage>
         _order = List.of(g.tasks);
         _dealtFor = g.dealId; // already on the table: no re-deal
       }
-      _saved = null;
+      _saves = [for (final s in _saves) if (s.game.mode != g.mode) s];
     });
     _keepAwake(true);
     // A trick won just before the game was closed still needs judging.
@@ -1079,6 +1115,23 @@ class _HomePageState extends State<HomePage>
   }
 
   /// How far along an on-screen task is ("2/4"), for the card's corner.
+  /// How [t] is going, in a sentence for its close-up (on-screen cards
+  /// only, once it's been taken).
+  String? _statusOf(Task t) {
+    if (!_digital ||
+        _cards.dealId != game.dealId ||
+        t.assignedPlayerIndex == null) {
+      return null;
+    }
+    if (t.isCompleted) return 'Done!';
+    if (t.isFailed) return 'Failed this round.';
+    if (_cards.tricks.isEmpty && game.pickTurn != null) {
+      return 'The tricks haven’t started yet.';
+    }
+    return taskStatus(t.description, _roundView, t.assignedPlayerIndex!,
+        _cards.announced[t.description]);
+  }
+
   String? _progressOf(Task t) {
     if (!_digital ||
         _cards.dealId != game.dealId ||
@@ -1219,7 +1272,11 @@ class _HomePageState extends State<HomePage>
           LayoutBuilder(builder: (context, box) {
             final hand = c.dealId == game.dealId ? c.hands[_you] : const <PlayingCard>[];
             final width = box.maxWidth;
-            final cardW = clampD(width / 6.2, 44, 74);
+            // Wider screens get bigger cards, as far as the height allows.
+            final cardW = clampD(
+                math.min(width / 6.2, MediaQuery.sizeOf(context).height * 0.12),
+                44,
+                108);
             final h = PlayingCardView.heightFor(cardW);
             if (hand.isEmpty) return SizedBox(height: h + 12);
             final step = hand.length == 1
@@ -1644,7 +1701,7 @@ class _HomePageState extends State<HomePage>
     _lastRoles = roles;
     final count = entries.length + _walkingOff.length;
     final colWidth = width / math.max(1, count);
-    final taskWidth = math.min(colWidth - 6, 130.0);
+    final taskWidth = math.min(colWidth - 6, width > 600 ? 170.0 : 130.0);
     final c = _cards;
     Widget column(Courtier? role, int? seat) => SizedBox(
           key: ValueKey('col-${role?.name ?? seat}'),
@@ -1658,7 +1715,7 @@ class _HomePageState extends State<HomePage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (seat != null)
-                      _withReveal(seat, _digiToken(seat, 38, tight: true))
+                      _withReveal(seat, _digiToken(seat, width > 600 ? 48 : 38, tight: true))
                     else
                       // At court but not at the table this round.
                       CharacterToken(
@@ -1710,7 +1767,11 @@ class _HomePageState extends State<HomePage>
                             t.assignedPlayerIndex == seat &&
                             !_flights.any((f) => f.task == t))
                           _miniTask(t, taskWidth,
-                              fontSize: colWidth < 80 ? 11 : 12),
+                              fontSize: colWidth < 80
+                                  ? 11
+                                  : width > 600
+                                      ? 13.5
+                                      : 12),
                   ],
                 ),
               ),
@@ -1970,7 +2031,7 @@ class _HomePageState extends State<HomePage>
 
   /// How wide trick cards are for a table [width] across with [n] players.
   static double _trickCardWidth(double width, int n) =>
-      clampD((width - 8 * n) / n, 34, 64);
+      clampD((width - 8 * n) / n, 34, width > 600 ? 100 : 64);
 
   /// The trick in the middle of the table: each card glides in from
   /// whoever played it, and once won the trick sweeps off to the winner.
@@ -1986,7 +2047,7 @@ class _HomePageState extends State<HomePage>
     // The same size every trick: set by the table's width, shrinking only
     // if the middle is truly short of room.
     final cardW = clampD(math.min(_trickCardWidth(area.width, n),
-        (area.height - 4) / 1.42), 34, 72);
+        (area.height - 4) / 1.42), 34, 100);
     final cardH = PlayingCardView.heightFor(cardW);
     // Where the middle sits on the table, to work out where cards come
     // from; if it isn't known yet the cards simply fade in.
@@ -2444,12 +2505,21 @@ class _HomePageState extends State<HomePage>
         }
       }
       _resetTable();
-      _saved = null;
+      // A new game takes the place of any saved game of the same kind.
+      _saves = [for (final s in _saves) if (s.game.mode != mode) s];
     });
     _keepAwake(true);
   }
 
   // ------------------------------------------------------------ tutorial
+
+  /// The tutorial: its opening pages (the story, the goal, tricks and
+  /// tasks), then the first lesson.
+  Future<void> _startTutorial() async {
+    final go = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const TutorialIntro()));
+    if (go == true && mounted) _beginLesson(0);
+  }
 
   /// Starts tutorial lesson [i] (see tutorial.dart): three seats, you as
   /// King, cards on screen.
@@ -2475,7 +2545,6 @@ class _HomePageState extends State<HomePage>
     setState(() {
       game = GameState();
       _resetTable();
-      _saved = null;
     });
     _keepAwake(false);
     // Any game saved before the tutorial can be continued again.
@@ -3295,8 +3364,9 @@ class _HomePageState extends State<HomePage>
         child: AlertDialog(
         backgroundColor: Palette.card,
         surfaceTintColor: Colors.transparent,
+        scrollable: true,
         content: SizedBox(
-          width: 340,
+          width: 360,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3337,28 +3407,68 @@ class _HomePageState extends State<HomePage>
                             : '${owner.name} has this task.',
                 style: const TextStyle(fontSize: 15, color: Palette.inkSoft),
               ),
-              if (RegExp(r'court card', caseSensitive: false)
-                  .hasMatch(task.description))
-                const Padding(
-                  padding: EdgeInsets.only(top: 6),
+              // How it's going, for every task, once the cards are dealt.
+              if (_statusOf(task) case final status?)
+                Container(
+                  margin: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3ECDD),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2D6BC)),
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(top: 3, right: 6),
-                        child: CrownIcon(size: 14, color: Palette.goldDeep),
+                        padding: const EdgeInsets.only(top: 1, right: 8),
+                        child: Icon(
+                            task.isCompleted
+                                ? Icons.check_circle_rounded
+                                : task.isFailed
+                                    ? Icons.cancel_rounded
+                                    : Icons.timelapse_rounded,
+                            size: 18,
+                            color: task.isCompleted
+                                ? Palette.won
+                                : task.isFailed
+                                    ? Palette.lost
+                                    : Palette.goldDeep),
                       ),
                       Expanded(
-                        child: SuitText(
-                            'Court Cards beat every other card. From lowest to highest: the Joker, Jack, Queen and King.',
-                            style: TextStyle(
-                                fontSize: 15,
-                                height: 1.35,
-                                color: Palette.ink)),
+                        child: Semantics(
+                          liveRegion: true,
+                          child: SuitText(status,
+                              style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  fontWeight: FontWeight.w700,
+                                  color: Palette.ink)),
+                        ),
                       ),
                     ],
                   ),
                 ),
+              // What it means, in plain words, and the game words it uses.
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2, right: 6),
+                      child: Icon(Icons.lightbulb_outline_rounded,
+                          size: 17, color: Palette.goldDeep),
+                    ),
+                    Expanded(
+                      child: SuitText(explainTask(task.description),
+                          style: const TextStyle(
+                              fontSize: 15, height: 1.4, color: Palette.ink)),
+                    ),
+                  ],
+                ),
+              ),
+              _TermsList(terms: termsIn(task.description)),
               if (task.seal != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
@@ -3464,7 +3574,7 @@ class _HomePageState extends State<HomePage>
   void _startFromSetup(_SetupResult r) {
     setState(() => _setupArgs = null);
     if (r.mode == GameMode.tutorial) {
-      _beginLesson(0);
+      _startTutorial();
       return;
     }
     _startGame(r.count, r.target, r.names, r.mode,
@@ -3551,6 +3661,16 @@ class _HomePageState extends State<HomePage>
 
   // ------------------------------------------------------------------ views
 
+  /// [child] in the middle of a wide screen, no wider than [aspect] times
+  /// its height, so on a laptop or desktop the seats and cards stay close
+  /// together instead of drifting to the far edges.
+  Widget _centred(Widget child, {required double aspect}) =>
+      LayoutBuilder(builder: (context, c) {
+        final most = math.max(480.0, c.maxHeight * aspect);
+        if (c.maxWidth <= most) return child;
+        return Center(child: SizedBox(width: most, child: child));
+      });
+
   @override
   Widget build(BuildContext context) {
     // One page: the felt is always there. Before a game it shows the
@@ -3566,7 +3686,7 @@ class _HomePageState extends State<HomePage>
             Positioned.fill(
               child: _inGame
                   ? _digital
-                      ? Column(children: [
+                      ? _centred(aspect: 1.0, Column(children: [
                           Expanded(child: _buildDigitalTable()),
                           if (game.isTutorial) _buildCoach(),
                           // The story has the table: no hand to play.
@@ -3577,8 +3697,8 @@ class _HomePageState extends State<HomePage>
                                 ? _buildHand()
                                 : const SizedBox(width: double.infinity),
                           ),
-                        ])
-                      : _buildTable()
+                        ]))
+                      : _centred(_buildTable(), aspect: 1.35)
                   : Stack(
                       children: [
                         Positioned.fill(
@@ -3744,6 +3864,16 @@ class _HomePageState extends State<HomePage>
           case 'sound':
             setState(() => Sfx.enabled = !Sfx.enabled);
             _saveSettings();
+          case 'suits':
+            setState(() => Palette.fourColourSuits = !Palette.fourColourSuits);
+            // Every card on screen repaints in the new colours, even ones
+            // built once and kept.
+            void rebuild(Element e) {
+              e.markNeedsBuild();
+              e.visitChildren(rebuild);
+            }
+            (context as Element).visitChildren(rebuild);
+            _saveSettings();
         }
       },
       itemBuilder: (context) => [
@@ -3753,7 +3883,7 @@ class _HomePageState extends State<HomePage>
           height: 40,
           child: Center(child: CrownIcon(size: 26, color: Palette.gold)),
         ),
-        if ((_inGame || _saved != null) && _setupArgs == null)
+        if ((_inGame || _saves.isNotEmpty) && _setupArgs == null)
           _menuItem('new', Icons.group_add_outlined, 'New game'),
         if (_inGame &&
             _setupArgs == null &&
@@ -3770,6 +3900,13 @@ class _HomePageState extends State<HomePage>
             'sound',
             Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
             Sfx.enabled ? 'Fanfares on' : 'Fanfares off'),
+        // For colour-blind players: no two suits share a colour.
+        _menuItem(
+            'suits',
+            Icons.palette_outlined,
+            Palette.fourColourSuits
+                ? 'Four-colour suits on'
+                : 'Four-colour suits off'),
       ],
     );
   }
@@ -5998,9 +6135,31 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  /// Play on the welcome screen: carry on with a saved game, start a new
+  /// one, or learn with the tutorial.
+  Future<void> _showPlayMenu() async {
+    try {
+      final saves = await _readSaves(await SharedPreferences.getInstance());
+      if (mounted) setState(() => _saves = saves);
+    } catch (_) {}
+    if (!mounted) return;
+    final choice = await showDialog<Object>(
+      context: context,
+      builder: (context) => _PlayMenu(saves: _saves),
+    );
+    if (!mounted || choice == null) return;
+    if (choice is _SavedGame) {
+      _continueSaved(choice);
+    } else if (choice == 'new') {
+      _showSetupDialog();
+    } else if (choice == 'tutorial') {
+      _startTutorial();
+    }
+  }
+
   /// The front of the table before a game: a hand of cards fans out, the
   /// crown drops onto it in a burst of sparks, then the name and one
-  /// button: Play, or Continue when a game is saved.
+  /// button, Play, which offers saved games, a new game and the tutorial.
   Widget _buildWelcome() {
     return LayoutBuilder(
       builder: (context, c) => Padding(
@@ -6017,23 +6176,10 @@ class _HomePageState extends State<HomePage>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _saved == null
-                        ? FilledButton.icon(
-                            onPressed: _showSetupDialog,
-                            icon: const Icon(Icons.play_arrow_rounded),
-                            label: const Text('Play'))
-                        : FilledButton.icon(
-                            onPressed: _continueSaved,
-                            icon: const Icon(Icons.play_arrow_rounded),
-                            label: const Text('Continue')),
-                    const SizedBox(height: 6),
-                    // New here: four short guided rounds.
-                    TextButton.icon(
-                      onPressed: () => _beginLesson(0),
-                      icon: const Icon(Icons.school_rounded, size: 20),
-                      label: const Text('Learn to play'),
-                      style: TextButton.styleFrom(foregroundColor: Palette.gold),
-                    ),
+                    FilledButton.icon(
+                        onPressed: _showPlayMenu,
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Play')),
                   ],
                 ),
               ),
@@ -6071,8 +6217,10 @@ class _WelcomeIntro extends StatelessWidget {
     // The crown sits above the hand, its band just touching the cards.
     final handTop = crownSize * 0.8;
     final stageH = handTop + cardH + 8;
+    // With reduced motion asked for, the flourish is skipped.
+    final still = MediaQuery.of(context).disableAnimations;
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
+      tween: Tween(begin: still ? 1 : 0, end: 1),
       duration: const Duration(milliseconds: 2600),
       builder: (context, t, _) {
         final fan = _iv(t, 0.05, 0.4, Curves.easeOutBack);
@@ -6272,19 +6420,19 @@ Future<void> showRulesDialog(BuildContext context) {
     (
       'Ways to play',
       [
-        'Tutorial: four short, guided rounds that teach the basics. Start it from Learn to play on the welcome screen, or pick Tutorial when you set up a game.',
+        'Tutorial: four short, guided rounds that teach the basics. Tap Play on the welcome screen, then Tutorial.',
         'Free play: you choose the points. Turn on Seals and decrees for surprises.',
         'Courtly roles (any mode): everyone plays a courtier of a great house, with a token shape and a power to use once per round. Tap your seat to read your house and power and to mark it used.',
-        'Dynasty: a King who reigns until they fall, with courtiers, powers and dilemmas (see below).',
+        'Dynasty (Alpha): a solo story played with on-screen cards. You are the King, reigning until you fall, with courtiers, powers and dilemmas (see below).',
         'Endless: each win adds a point to the next round, and the app keeps your current and best win streaks.',
         'The Chronicle: 24 chapters with set points, seals and decrees. Beat a chapter to unlock the next and earn crowns: 3 on your first attempt, 2 within three attempts, 1 after that.',
-        'Your game saves as you play. Close the app and pick up where you left off with Continue. New game, Shuffle tasks, the laptop view (everything upright, no turning to each seat) and sound are in the menu at the top right.',
+        'Your game saves as you play, with one save for each way to play. Close the app, tap Play, and pick up any of them where you left off. New game, Shuffle tasks, the laptop view (everything upright, no turning to each seat) and sound are in the menu at the top right.',
       ]
     ),
     (
-      'Dynasty',
+      'Dynasty (Alpha)',
       [
-        'Choose the first King. Before every deal the King takes the King card into their hand, and keeps the crown round after round.',
+        'You are the King. Before every deal you take the King card into your hand, and keep the crown round after round.',
         'Every lost round wounds the King (the drops by the crown). How many wounds they can bear is secret: one, two or three. When the King falls, crown an heir and the dynasty goes on.',
         'Every seat is a courtier of a great house, with a token shape and a power used once per round. Tap your seat to read your house and power.',
         'After each round the King faces a dilemma and chooses. Choices win or lose courtiers\' loyalty, heal or wound the King, and can bring decrees.',
@@ -6299,7 +6447,7 @@ Future<void> showRulesDialog(BuildContext context) {
     (
       'Playing the cards on screen',
       [
-        'Any way to play works without a deck: turn on On-screen cards when you set up. You take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
+        'Free play, Endless and the Chronicle work without a deck: turn on On-screen cards when you set up (Dynasty always uses them). You take the bottom seat and bot courtiers take the rest. They play with you, not against you.',
         'The app deals, and whoever holds the King card is crowned. In a Dynasty the reigning King takes the King card into their hand each round.',
         'When it\'s your pick, drag a task onto your seat. Then tap a card in your hand to play it: cards you may play stand up.',
         'Tasks, seals and traitors\' schemes are judged by the cards as the tricks fall. Decrees apply as usual.',
@@ -6634,7 +6782,7 @@ const _modeInfo = {
   ),
   GameMode.dynasty: (
     'Dynasty',
-    'A story of kings. The King rules until wounds bring them down. Face dilemmas, keep your courtiers loyal, and watch for traitors.'
+    'Solo, with on-screen cards. A story of kings. The King rules until wounds bring them down. Face dilemmas, keep your courtiers loyal, and watch for traitors.'
   ),
   GameMode.tutorial: (
     'Tutorial',
@@ -6661,7 +6809,10 @@ class _SetupPanelState extends State<_SetupPanel> {
           text: i < widget.players.length ? widget.players[i].name : ''),
   ];
 
-  int get _steps => digital ? 3 : 4;
+  /// Dynasty is always played solo with on-screen cards, so it goes
+  /// straight from the way to play to the story.
+  bool get _solo => mode == GameMode.dynasty;
+  int get _steps => _solo ? 2 : digital ? 3 : 4;
 
   @override
   void dispose() {
@@ -6675,7 +6826,7 @@ class _SetupPanelState extends State<_SetupPanel> {
     widget.onStart((
       // Solo Dynasty: the story decides who sits at the table; it opens
       // with three courtiers at the coronation.
-      count: mode == GameMode.dynasty && digital ? 4 : count,
+      count: _solo ? 4 : count,
       target: mode == GameMode.dynasty ? dynastyStartingPoints : target,
       names: [
         for (int i = 0; i < count; i++)
@@ -6686,7 +6837,7 @@ class _SetupPanelState extends State<_SetupPanel> {
       mode: mode,
       surprise: surprise,
       roles: roles,
-      digital: digital,
+      digital: _solo || digital,
       chapter: mode == GameMode.chronicle ? chapter : null,
     ));
   }
@@ -6720,6 +6871,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             padding: const EdgeInsets.only(bottom: 10),
             child: _ModeTile(
               title: _modeInfo[m]!.$1,
+              badge: m == GameMode.dynasty ? '(Alpha)' : null,
               description: _modeInfo[m]!.$2,
               selected: mode == m,
               onTap: () => setState(() => mode = m),
@@ -6873,7 +7025,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             Text('A crown awaits', style: _heading),
             SizedBox(height: 10),
             Text(
-              'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nThe King card will choose who wears the crown. How long they keep it is up to all of you. Win glory together, keep the houses loyal, and watch for the knife in the dark.',
+              'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nYou will wear the crown, and your courtiers play their own cards beside you. How long you keep it is up to you. Win glory together, keep the houses loyal, and watch for the knife in the dark.\n\nDynasty is still taking shape (alpha), so expect rough edges.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70),
             ),
@@ -6937,7 +7089,7 @@ class _SetupPanelState extends State<_SetupPanel> {
   Widget build(BuildContext context) {
     final body = switch (step) {
       0 => _modeStep(),
-      1 => _countStep(),
+      1 when !_solo => _countStep(),
       2 when !digital => _namesStep(),
       _ => _finalStep(),
     };
@@ -7033,23 +7185,32 @@ class _SetupPanelState extends State<_SetupPanel> {
 class _ModeTile extends StatelessWidget {
   const _ModeTile(
       {required this.title,
+      this.badge,
       required this.description,
       required this.selected,
       required this.onTap});
   final String title;
+
+  /// A note beside the title, such as "(Alpha)" for a mode still taking
+  /// shape.
+  final String? badge;
   final String description;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
       color: selected ? const Color(0x33D4A63A) : const Color(0x22000000),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
             color: selected ? Palette.gold : Colors.white24,
-            width: 2),
+            // Selection shows in the border's weight as well as its colour.
+            width: selected ? 3 : 1.5),
       ),
       child: InkWell(
         onTap: onTap,
@@ -7059,12 +7220,31 @@ class _ModeTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: TextStyle(
-                      fontFamily: displayFont,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      color: selected ? Palette.gold : Colors.white)),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(title,
+                        style: TextStyle(
+                            fontFamily: displayFont,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            color: selected ? Palette.gold : Colors.white)),
+                  ),
+                  if (badge != null) ...[
+                    const SizedBox(width: 8),
+                    Text(badge!,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white70)),
+                  ],
+                  if (selected) ...[
+                    const Spacer(),
+                    const Icon(Icons.check_circle_rounded,
+                        size: 20, color: Palette.gold),
+                  ],
+                ],
+              ),
               const SizedBox(height: 4),
               Text(description,
                   style: const TextStyle(
@@ -7073,6 +7253,7 @@ class _ModeTile extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -7398,6 +7579,266 @@ class _TaskChip extends StatelessWidget {
             ),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+
+/// A game saved on this device: its state, the table layout that goes with
+/// it, and when it was last saved.
+class _SavedGame {
+  _SavedGame(this.game, this.data, this.at);
+  final GameState game;
+  final Map<String, dynamic> data;
+  final DateTime at;
+
+  String get title => switch (game.mode) {
+        GameMode.free => 'Free play',
+        GameMode.endless => 'Endless',
+        GameMode.chronicle => 'The Chronicle',
+        GameMode.dynasty => 'Dynasty (Alpha)',
+        GameMode.tutorial => 'Tutorial',
+      };
+
+  /// Where the game had got to, in a few words.
+  String get detail {
+    final g = game;
+    final seats = g.digital
+        ? 'on-screen cards'
+        : '${g.players.length} at the table';
+    return switch (g.mode) {
+      GameMode.dynasty => [
+          'Reign ${roman(math.max(1, g.reign))}',
+          if (g.reignName.isNotEmpty) g.reignName,
+        ].join(' · '),
+      GameMode.chronicle =>
+        'Chapter ${(g.chapter ?? 0) + 1} · $seats',
+      GameMode.endless => 'Streak ${g.streak} · $seats',
+      _ => 'Round ${math.max(1, g.roundNumber)} · $seats',
+    };
+  }
+
+  String get ago {
+    final d = DateTime.now().difference(at);
+    if (at.millisecondsSinceEpoch == 0) return '';
+    if (d.inMinutes < 1) return 'just now';
+    if (d.inHours < 1) return '${d.inMinutes} min ago';
+    if (d.inDays < 1) return '${d.inHours} h ago';
+    if (d.inDays == 1) return 'yesterday';
+    return '${d.inDays} days ago';
+  }
+}
+
+/// What Play offers: every saved game to continue, then a new game and the
+/// tutorial. Pops with the chosen [_SavedGame], 'new' or 'tutorial'.
+class _PlayMenu extends StatelessWidget {
+  const _PlayMenu({required this.saves});
+  final List<_SavedGame> saves;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget option({
+      required Widget icon,
+      required String title,
+      required String subtitle,
+      required Object result,
+      bool primary = false,
+    }) =>
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Material(
+            color: primary ? const Color(0x33D4A63A) : const Color(0x22000000),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                  color: primary ? Palette.gold : Colors.white24,
+                  width: primary ? 2 : 1.5),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.pop(context, result),
+              child: ConstrainedBox(
+                // Comfortably above the 48 pt minimum tap target.
+                constraints: const BoxConstraints(minHeight: 64),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+                  child: Row(
+                    children: [
+                      IconTheme(
+                          data: const IconThemeData(
+                              color: Palette.gold, size: 28),
+                          child: icon),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(title,
+                                style: const TextStyle(
+                                    fontFamily: displayFont,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 17,
+                                    color: Colors.white)),
+                            const SizedBox(height: 2),
+                            Text(subtitle,
+                                style: const TextStyle(
+                                    fontSize: 14.5,
+                                    height: 1.3,
+                                    color: Colors.white70)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white54),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+    return Dialog(
+      backgroundColor: Palette.feltDeep,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Center(child: CrownIcon(size: 30)),
+              const SizedBox(height: 6),
+              const Text('Play',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 26,
+                      color: Palette.gold)),
+              const SizedBox(height: 14),
+              if (saves.isNotEmpty) ...[
+                Semantics(
+                  header: true,
+                  child: const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 8),
+                    child: Text('CONTINUE',
+                        style: TextStyle(
+                            fontSize: 13,
+                            letterSpacing: 1.4,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white70)),
+                  ),
+                ),
+                for (final (i, s) in saves.indexed)
+                  option(
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    title: s.title,
+                    subtitle: [s.detail, if (s.ago.isNotEmpty) s.ago].join(' · '),
+                    result: s,
+                    primary: i == 0,
+                  ),
+                const SizedBox(height: 6),
+              ],
+              option(
+                icon: const Icon(Icons.add_rounded),
+                title: 'New game',
+                subtitle: saves.isEmpty
+                    ? 'Choose how to play: Free play, Endless, the Chronicle or Dynasty.'
+                    : 'Starting one keeps your other saves; only a save of the same kind is replaced.',
+                result: 'new',
+                primary: saves.isEmpty,
+              ),
+              option(
+                icon: const Icon(Icons.school_rounded),
+                title: 'Tutorial',
+                subtitle:
+                    'New to the court, or to card games? Learn to play, step by step.',
+                result: 'tutorial',
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// The game words a task uses, each opening to say what it means: for
+/// anyone new to trick-taking games.
+class _TermsList extends StatefulWidget {
+  const _TermsList({required this.terms});
+  final List<String> terms;
+
+  @override
+  State<_TermsList> createState() => _TermsListState();
+}
+
+class _TermsListState extends State<_TermsList> {
+  String? _open;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.terms.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('New to these words? Tap one:',
+              style: TextStyle(fontSize: 13.5, color: Palette.inkSoft)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final t in widget.terms)
+                Semantics(
+                  button: true,
+                  expanded: _open == t,
+                  child: ChoiceChip(
+                    label: Text(t),
+                    selected: _open == t,
+                    showCheckmark: false,
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                    labelStyle: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: _open == t ? Colors.white : Palette.ink),
+                    selectedColor: Palette.goldDeep,
+                    backgroundColor: const Color(0xFFF3ECDD),
+                    side: const BorderSide(color: Color(0xFFD9C9A3)),
+                    onSelected: (on) => setState(() => _open = on ? t : null),
+                  ),
+                ),
+            ],
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            child: _open == null
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: SuitText('$_open: ${glossary[_open]}',
+                          style: const TextStyle(
+                              fontSize: 15, height: 1.4, color: Palette.ink)),
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

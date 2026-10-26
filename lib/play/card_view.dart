@@ -48,11 +48,7 @@ class PlayingCardView extends StatelessWidget {
 
   bool get _isKing => card == PlayingCard.king;
 
-  Color get _inkColour => card.isCourt
-      ? Palette.gold
-      : card.suit.isRed
-          ? Palette.cardRed
-          : Palette.ink;
+  Color get _inkColour => Palette.suitColour(card.suit);
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +71,9 @@ class PlayingCardView extends StatelessWidget {
     final thick = glow || edge != null || marks.isNotEmpty || card.isCourt;
 
     return Semantics(
-      label: card.label,
+      label: card.spoken,
+      value: dimmed ? 'can’t be played now' : glow ? 'suggested' : null,
+      excludeSemantics: true,
       child: Container(
         width: width,
         height: h,
@@ -338,34 +336,82 @@ class _SwordAndShield extends CustomPainter {
   bool shouldRepaint(_SwordAndShield old) => false;
 }
 
-/// The Queen's crown, drawn like the crown used across the app (see
-/// CrownIcon) but lighter: three low points with round tips.
+/// The Queen's tiara: a graceful band of swooping scallops rising to a
+/// tall centre, with pearls on every tip, a row of pearls along the band
+/// and a teardrop jewel at its heart. Softer and curvier than the King's
+/// pointed crown, so the two read differently at a glance.
 class _Tiara extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
-    final tips = [
-      Offset(w * 0.12, h * 0.36),
-      Offset(w * 0.5, h * 0.18),
-      Offset(w * 0.88, h * 0.36),
+    final peaks = [
+      Offset(w * 0.15, h * 0.5),
+      Offset(w * 0.32, h * 0.34),
+      Offset(w * 0.5, h * 0.14),
+      Offset(w * 0.68, h * 0.34),
+      Offset(w * 0.85, h * 0.5),
     ];
-    final body = Path()..moveTo(tips.first.dx, tips.first.dy);
-    for (int i = 1; i < tips.length; i++) {
-      final a = tips[i - 1], b = tips[i];
+    final valley = h * 0.64;
+    final body = Path()
+      ..moveTo(w * 0.07, h * 0.8)
+      ..quadraticBezierTo(w * 0.07, h * 0.6, peaks.first.dx, peaks.first.dy);
+    for (int i = 1; i < peaks.length; i++) {
+      final a = peaks[i - 1], b = peaks[i];
+      final mid = (a.dx + b.dx) / 2;
+      // Each scallop dips in a soft curve and sweeps up to the next tip.
       body
-        ..lineTo((a.dx + b.dx) / 2, h * 0.62)
-        ..lineTo(b.dx, b.dy);
+        ..quadraticBezierTo(a.dx + (mid - a.dx) * 0.25, valley, mid, valley)
+        ..quadraticBezierTo(b.dx - (b.dx - mid) * 0.25, valley, b.dx, b.dy);
     }
     body
-      ..lineTo(w * 0.84, h * 0.8)
-      ..lineTo(w * 0.16, h * 0.8)
-      ..close()
-      ..addRect(Rect.fromLTWH(w * 0.16, h * 0.85, w * 0.68, h * 0.1));
-    canvas.drawPath(body, _gilt(Offset.zero & size));
-    final tip = _gilt(Offset.zero & size);
-    for (final t in tips) {
-      canvas.drawCircle(t, w * 0.045, tip);
+      ..quadraticBezierTo(w * 0.93, h * 0.6, w * 0.93, h * 0.8)
+      // The band curves gently, like a tiara seen from the front.
+      ..quadraticBezierTo(w * 0.5, h * 0.98, w * 0.07, h * 0.8)
+      ..close();
+    final gilt = _gilt(Offset.zero & size);
+    canvas.drawPath(body, gilt);
+    canvas.drawPath(
+        body,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * 0.012
+          ..color = _goldDark);
+
+    final pearl = Paint()..color = const Color(0xFFFFF6E6);
+    final pearlEdge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.008
+      ..color = _goldDark;
+    void drawPearl(Offset c, double r) {
+      canvas.drawCircle(c, r, pearl);
+      canvas.drawCircle(c, r, pearlEdge);
+      canvas.drawCircle(c + Offset(-r * 0.35, -r * 0.35), r * 0.3,
+          Paint()..color = Colors.white);
     }
+
+    // Pearls along the band, following its curve.
+    for (int i = 0; i <= 8; i++) {
+      final t = 0.1 + i * 0.1;
+      final x = w * (0.07 + 0.86 * t);
+      final y = h * (0.8 + 0.18 * 4 * t * (1 - t)) - h * 0.075;
+      drawPearl(Offset(x, y), w * 0.022);
+    }
+    // A pearl on every tip, the tallest the largest.
+    for (int i = 0; i < peaks.length; i++) {
+      drawPearl(peaks[i], w * (i == 2 ? 0.05 : i.isOdd ? 0.04 : 0.032));
+    }
+    // The teardrop jewel at the heart of the tiara.
+    final c = Offset(w * 0.5, h * 0.47);
+    final r = w * 0.055;
+    final drop = Path()
+      ..moveTo(c.dx, c.dy - r * 1.9)
+      ..quadraticBezierTo(c.dx + r * 1.15, c.dy - r * 0.2, c.dx, c.dy + r)
+      ..quadraticBezierTo(c.dx - r * 1.15, c.dy - r * 0.2, c.dx, c.dy - r * 1.9)
+      ..close();
+    canvas.drawPath(drop, Paint()..color = const Color(0xFFE8739A));
+    canvas.drawPath(drop, pearlEdge);
+    canvas.drawCircle(c + Offset(-r * 0.3, -r * 0.2), r * 0.28,
+        Paint()..color = const Color(0xCCFFFFFF));
   }
 
   @override

@@ -1,11 +1,11 @@
 {
-    "name": "kings_court",
-    "short_name": "kings_court",
+    "name": "The King's Court",
+    "short_name": "King's Court",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0A3622",
+    "theme_color": "#0A3622",
+    "description": "A cooperative trick-taking card game.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

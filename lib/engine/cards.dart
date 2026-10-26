@@ -38,6 +38,14 @@ class PlayingCard implements Comparable<PlayingCard> {
     return '${rank == 1 ? 'A' : rank}${suit.symbol}';
   }
 
+  /// The card's name read aloud: "9 of spades", "Ace of hearts", "the
+  /// King".
+  String get spoken {
+    if (isCourt) return 'the $label';
+    final r = rank == 1 ? 'Ace' : '$rank';
+    return '$r of ${suit.name}';
+  }
+
   /// "3", "A" or the Court Card's letter, for the card's corner.
   String get rankLabel {
     if (isCourt) return const ['★', 'J', 'Q', 'K'][rank - 1];

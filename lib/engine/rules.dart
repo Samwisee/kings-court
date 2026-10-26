@@ -627,5 +627,17 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
         .length;
     return of(have, 4);
   }
+  // Tasks about what you mustn't do: how far you've got safely.
+  final notFirst = RegExp(r"^Don't win any of the first (\w+) tricks$").firstMatch(d);
+  if (notFirst != null) {
+    final n = words[notFirst.group(1)]!;
+    return 'safe ${of(v.tricks.length < n ? v.tricks.length : n, n)}';
+  }
+  if (d.startsWith("Don't") || d.startsWith('Win no ')) {
+    return 'safe ${of(v.tricks.length, v.totalTricks)}';
+  }
+  if (d.contains('last trick')) {
+    return '${v.totalTricks - v.tricks.length} to go';
+  }
   return null;
 }

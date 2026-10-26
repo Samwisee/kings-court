@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'chronicle.dart';
+import 'engine/cards.dart';
 import 'courtiers.dart';
 import 'models.dart';
 import 'theme.dart';
@@ -68,10 +69,16 @@ class SuitText extends StatelessWidget {
       if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
       final token = m.group(0)!;
       if (token.length == 1) {
-        final red = token == '♥' || token == '♦';
+        final suit = Suit.values.firstWhere((s) => s.symbol == token);
+        // On a dark background, suits are printed in lighter colours so
+        // they keep their contrast.
+        final dark = (style.color?.computeLuminance() ?? 0) > 0.5;
         spans.add(TextSpan(
             text: token,
-            style: TextStyle(color: red ? Palette.cardRed : Palette.ink)));
+            style: TextStyle(
+                color: dark
+                    ? Palette.suitColourOnDark(suit, style.color!)
+                    : Palette.suitColour(suit))));
       } else {
         final plural = token.toLowerCase().endsWith('s');
         spans.add(TextSpan(

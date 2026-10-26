@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'engine/cards.dart';
+
 /// The King's Court palette: card table felt, white card stock, card-red
 /// and black suits, and brass gold reserved for the King.
 class Palette {
@@ -10,6 +12,33 @@ class Palette {
   static const ink = Color(0xFF1D1B18);
   static const inkSoft = Color(0xFF6B655C);
   static const cardRed = Color(0xFFB3122B);
+
+  /// Four-colour suits (a setting in the menu): ♦ blue and ♣ green, so no
+  /// two suits share a colour. Easier to tell apart at a glance, for
+  /// colour-blind players and anyone on a small screen. Every suit keeps
+  /// its own shape either way.
+  static bool fourColourSuits = false;
+  static const diamondBlue = Color(0xFF1A5BC8);
+  static const clubGreen = Color(0xFF13793A);
+
+  /// The colour a suit is printed in.
+  static Color suitColour(Suit s) => switch (s) {
+        Suit.hearts => cardRed,
+        Suit.diamonds => fourColourSuits ? diamondBlue : cardRed,
+        Suit.spades => ink,
+        Suit.clubs => fourColourSuits ? clubGreen : ink,
+        Suit.court => gold,
+      };
+
+  /// The colour a suit is printed in on the felt or another dark
+  /// background, where [text] is the colour of the words around it.
+  static Color suitColourOnDark(Suit s, Color text) => switch (s) {
+        Suit.hearts => const Color(0xFFFF8A94),
+        Suit.diamonds =>
+          fourColourSuits ? const Color(0xFF8DBBFF) : const Color(0xFFFF8A94),
+        Suit.clubs => fourColourSuits ? const Color(0xFF7FD99A) : text,
+        Suit.spades || Suit.court => text,
+      };
   static const gold = Color(0xFFD4A63A);
   static const goldDeep = Color(0xFFA57C1B);
   static const won = Color(0xFF3FA66A);

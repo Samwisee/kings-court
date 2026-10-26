@@ -11,6 +11,7 @@ import 'package:kings_court/sfx.dart';
 import 'package:kings_court/widgets.dart';
 import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/play/throne_room.dart';
+import 'package:kings_court/tutorial.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -51,7 +52,24 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
         find.byType(MaterialApp), matchesGoldenFile('goldens/tut-0-welcome.png'));
-    await tester.tap(find.text('Learn to play'));
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    await expectLater(
+        find.byType(MaterialApp), matchesGoldenFile('goldens/tut-0-play.png'));
+    await tester.tap(find.text('Tutorial'));
+    await tester.pumpAndSettle();
+    for (int i = 0; i < introPages.length; i++) {
+      await expectLater(find.byType(MaterialApp),
+          matchesGoldenFile('goldens/tut-0-intro-$i.png'));
+      if (i == introPages.length - 1) {
+        await tester.tap(find.text('Start lesson 1'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      } else {
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+      }
+    }
     final state = tester.state(find.byType(HomePage)) as dynamic;
     final game = state.game as GameState;
     Future<void> frames(int n) async {
@@ -85,6 +103,101 @@ void main() {
     await frames(30);
     await snap('5-ready');
   });
+
+  for (final onScreen in [true, false]) {
+    testWidgets('A wide screen, ${onScreen ? 'on-screen cards' : 'round table'}',
+        (tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      HomePageTestHooks.fast();
+      await tester.pumpWidget(const TheKingsCourtApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Play'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New game'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Free play'));
+      await tester.pumpAndSettle();
+      await expectLater(find.byType(MaterialApp),
+          matchesGoldenFile('goldens/wide-0-modes.png'));
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      final sw = find.widgetWithText(SwitchListTile, 'On-screen cards');
+      if (tester.widget<SwitchListTile>(sw).value != onScreen) {
+        await tester.tap(sw);
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text(onScreen ? '3' : '4').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      if (!onScreen) {
+        await tester.tap(find.text('Next'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Deal tasks'));
+      final state = tester.state(find.byType(HomePage)) as dynamic;
+      final game = state.game as GameState;
+      final name = onScreen ? 'screen' : 'table';
+      if (onScreen) {
+        for (int i = 0; i < 400 && game.pickTurn != null; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+          if (game.pickTurn == 0) state.debugYourMove();
+        }
+        for (int i = 0; i < 160; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+          if (i == 60) state.debugYourMove();
+        }
+      } else {
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.tap(find.byType(SeatToken).first);
+        for (int i = 0; i < 100; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+      }
+      await expectLater(find.byType(MaterialApp),
+          matchesGoldenFile('goldens/wide-$name-1.png'));
+      // A task's close-up: what it means, its words, how it's going.
+      final cards = find.byType(TableCard).hitTestable();
+      if (cards.evaluate().isNotEmpty) {
+        await tester.tap(cards.first);
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+        await expectLater(find.byType(MaterialApp),
+            matchesGoldenFile('goldens/wide-$name-2-task.png'));
+        final chip = find.byType(ChoiceChip);
+        if (chip.evaluate().isNotEmpty) {
+          await tester.tap(chip.first);
+          for (int i = 0; i < 20; i++) {
+            await tester.pump(const Duration(milliseconds: 30));
+          }
+          await expectLater(find.byType(MaterialApp),
+              matchesGoldenFile('goldens/wide-$name-3-word.png'));
+        }
+        final close = find.text('Close');
+        if (close.evaluate().isNotEmpty) await tester.tap(close);
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+      }
+      if (onScreen) {
+        await tester.tap(find.byTooltip('Menu'));
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+        await tester.tap(find.text('Four-colour suits off'));
+        for (int i = 0; i < 30; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+        await expectLater(find.byType(MaterialApp),
+            matchesGoldenFile('goldens/wide-$name-4-four-colour.png'));
+      }
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
+    });
+  }
 
   testWidgets('A throne room on its own', (tester) async {
     tester.view.physicalSize = const Size(780, 1688);
@@ -132,16 +245,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Dynasty'));
     await tester.tap(find.text('Dynasty'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    final sw = find.widgetWithText(SwitchListTile, 'On-screen cards');
-    if (!tester.widget<SwitchListTile>(sw).value) {
-      await tester.tap(sw);
-      await tester.pumpAndSettle();
-    }
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Begin the reign'));

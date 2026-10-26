@@ -101,6 +101,69 @@ class Lesson {
   }
 }
 
+/// The pictures that go with the tutorial's opening pages (drawn in
+/// play/tutorial_intro.dart).
+enum IntroArt { court, goal, cards, trick, follow, courtCards, tasks, together, lessons }
+
+/// One page of the tutorial's opening: read at your own pace, each waits
+/// for Continue.
+class IntroPage {
+  const IntroPage(this.title, this.paragraphs, this.art);
+  final String title;
+  final List<String> paragraphs;
+  final IntroArt art;
+}
+
+/// Before the lessons: the story, the goal, and how cards, tricks and
+/// tasks work, for someone who has never played a trick-taking game.
+const introPages = <IntroPage>[
+  IntroPage('Welcome to the court', [
+    'The old King is gone, and the great houses gather in the throne hall. In King’s Court, you and your courtiers play cards together to keep the realm in order.',
+    'Everyone is on the same side. You win together or lose together, round by round.',
+    'It’s a trick-taking card game, the same family as Hearts, Spades and Bridge, and it’s adapted from The Crew. Never played one? That’s fine: these pages explain everything, then four short lessons let you try each idea.',
+  ], IntroArt.court),
+  IntroPage('The goal', [
+    'Every round, the court is given tasks, such as “Win the 3♥” or “Win the first trick”.',
+    'Each task is taken by one player, and that player has to make it happen during the round.',
+    'If every task is done, the round is won. If any task fails, the whole court loses the round. So the real game is helping each other: playing your cards so the right person wins the right thing.',
+  ], IntroArt.goal),
+  IntroPage('The cards', [
+    'There are 40 cards. Most belong to one of four suits: ♥ hearts, ♦ diamonds, ♠ spades and ♣ clubs. Each suit runs from the Ace (1, the lowest) up to 9.',
+    'Four more cards aren’t in any suit: the Court Cards. From lowest to highest they are the Joker, the Jack, the Queen and the King. They beat every plain card.',
+    'Whoever is dealt the King card is the King for the round: they take the first task and play first. In the tutorial, that’s always you.',
+  ], IntroArt.cards),
+  IntroPage('What is a trick?', [
+    'Cards are played in tricks. One player leads: they put any card from their hand in the middle. Then, in turn, everyone else plays one card.',
+    'Once everyone has played, the highest card of the suit that was led wins the trick. Its player takes all the cards in it, and leads the next trick.',
+    'Winning a trick also means winning every card in it, whoever played them. That matters for tasks like “Win the 3♥”.',
+    'A round goes on until everyone’s hand is empty.',
+  ], IntroArt.trick),
+  IntroPage('Follow the suit led', [
+    'If you have a card of the suit that was led, you must play one. This is called following suit. You choose which one.',
+    'If you have none of that suit, you may play any card. A card of a different suit can’t win the trick, unless it’s a Court Card.',
+    'Don’t worry about breaking the rules: the app only lets you play cards you’re allowed to, and shades the others.',
+  ], IntroArt.follow),
+  IntroPage('Court Cards win', [
+    'A Court Card beats any plain card of any suit. If more than one is played, the highest wins: the King beats the Queen, the Queen beats the Jack, the Jack beats the Joker.',
+    'You can play a Court Card when you lead, or when you can’t follow suit. If a Court Card is led, everyone must play a Court Card if they have one.',
+    'Other games call cards like these trumps.',
+  ], IntroArt.courtCards),
+  IntroPage('Reading a task', [
+    'A task card says what its owner must do. The number in the corner is how hard it is, in crowns.',
+    '“Win” means the card or trick ends up with you. “Don’t win” means it must go to someone else. A task about the first tricks is settled once they’re played; most others are decided by the end of the round.',
+    'During a round, tap any task to see whose it is, what it means in plain words, the game words it uses, and how it’s going. Many tasks count their progress in the corner, like “2/4” or “safe 1/3”.',
+  ], IntroArt.tasks),
+  IntroPage('Playing together', [
+    'Before the first trick, everyone takes tasks one at a time, starting with the King. Take the tasks your cards can do: high cards win tricks, low cards lose them.',
+    'You can’t say what’s in your hand. Watch what the others play instead. Once a round, each player may show one card: their highest, lowest or only card of a suit (never a Court Card).',
+    'Your courtiers on screen play with you, not against you. They’ll try to help you with your tasks, and you can help them with theirs.',
+  ], IntroArt.together),
+  IntroPage('Now try it', [
+    'Four short lessons, each with one idea. The cards are set up so each lesson always plays out the same way, and a note under the table tells you what to do. Your best card glows.',
+    'Take your time: the courtiers wait for you.',
+  ], IntroArt.lessons),
+];
+
 /// The names the two courtiers go by in the tutorial.
 const tutorialCourtiers = ['You', 'The Duke', 'The Bishop'];
 

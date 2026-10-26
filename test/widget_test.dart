@@ -55,11 +55,18 @@ Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
   await g.up();
 }
 
+/// Taps Play on the welcome screen, then New game.
+Future<void> openSetup(WidgetTester tester) async {
+  await tester.tap(find.text('Play'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('New game'));
+  await tester.pumpAndSettle();
+}
+
 Future<void> dealGame(WidgetTester tester, int players) async {
   await tester.pumpWidget(const TheKingsCourtApp());
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Play'));
-  await tester.pumpAndSettle();
+  await openSetup(tester);
   await setupThrough(tester, players: players, mode: 'Free play');
   await tester.tap(find.text('Deal tasks'));
   await tester.pumpAndSettle();
@@ -107,9 +114,14 @@ void main() {
     await tester.pump();
     expect(find.text("The King's Court"), findsOneWidget);
     expect(find.text('Play'), findsOneWidget);
-    expect(find.text('Learn to play'), findsOneWidget); // the tutorial
     expect(find.text('New Game'), findsNothing);
-    expect(find.text('Continue'), findsNothing); // nothing saved yet
+    await tester.pumpAndSettle();
+    // Play offers a new game and the tutorial; nothing is saved yet.
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    expect(find.text('New game'), findsOneWidget);
+    expect(find.text('Tutorial'), findsOneWidget);
+    expect(find.text('CONTINUE'), findsNothing);
   });
 
   testWidgets('How to play opens as a dialog with the 2-player rules',
@@ -502,8 +514,7 @@ void main() {
     setPhoneSize(tester);
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
+    await openSetup(tester);
     await setupThrough(tester, mode: 'Free play');
     await tester.ensureVisible(find.text('Courtly roles'));
     await tester.tap(find.text('Courtly roles'));
@@ -544,8 +555,10 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    expect(find.text('Continue'), findsOneWidget);
-    await tester.tap(find.text('Continue'));
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    expect(find.text('CONTINUE'), findsOneWidget);
+    await tester.tap(find.text('Free play'));
     await tester.pumpAndSettle();
 
     final state = tester.state(find.byType(HomePage)) as dynamic;
@@ -1004,68 +1017,85 @@ void main() {
     expect(h.annals.length, GameState.maxFallenKings);
   });
 
-  testWidgets('A Dynasty round ends with the King\'s dilemma', (tester) async {
+  testWidgets('Dynasty goes straight to the story, always on screen',
+      (tester) async {
     setPhoneSize(tester);
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await openSetup(tester);
+    expect(find.text('(Alpha)'), findsOneWidget);
+    await tester.ensureVisible(find.text('Dynasty'));
+    await tester.tap(find.text('Dynasty'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('You will be King'), findsNothing);
+    expect(find.text('On-screen cards'), findsNothing);
+    expect(find.text('A crown awaits'), findsOneWidget);
+    await tester.tap(find.text('Begin the reign'));
+    await tester.pump();
+    final game = (tester.state(find.byType(HomePage)) as dynamic).game
+        as GameState;
+    expect(game.isDynasty, isTrue);
+    expect(game.digital, isTrue);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Each way to play keeps its own save', (tester) async {
+    setPhoneSize(tester);
+    await dealGame(tester, 4);
+    // A second game of another kind, from the menu.
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
+    await setupThrough(tester, players: 3, mode: 'Endless');
+    await tester.tap(find.text('Deal tasks'));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
-    await setupThrough(tester, mode: 'Dynasty');
-    expect(find.text('Points target'), findsNothing); // the story sets them
-    await tester.tap(find.text('Begin the reign'));
+    expect(find.text('Free play'), findsOneWidget);
+    expect(find.text('Endless'), findsOneWidget);
+    await tester.tap(find.text('Free play'));
     await tester.pumpAndSettle();
-    expect(find.text('Who will be King?'), findsOneWidget);
-    await tester.tap(find.byType(SeatToken).first);
-    await tester.pumpAndSettle();
-    // Every Dynasty round opens with tidings.
-    expect(find.byIcon(Icons.history_edu), findsOneWidget);
-    await tester.tap(find.text('So it begins'));
-    await tester.pumpAndSettle();
-    expect(find.byType(ShapedToken), findsWidgets);
+    final game = (tester.state(find.byType(HomePage)) as dynamic).game
+        as GameState;
+    expect(game.mode, GameMode.free);
+    expect(game.players, hasLength(4));
+  });
 
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
-    expect(game.reign, 1);
-
-    // Win the round.
-    // Seals in order, Ω last.
-    final ordered = List.of(game.tasks)
-      ..sort((a, b) => (a.seal ?? 0).compareTo(b.seal ?? 0));
-    for (final task in ordered) {
-      state.debugComplete(task);
-      await tester.pumpAndSettle();
-    }
-    expect(find.text('Round won'), findsOneWidget);
-    await tester.tap(find.text('The King must decide'));
+  testWidgets('An old single save moves into its slot', (tester) async {
+    setPhoneSize(tester);
+    final old = GameState()
+      ..mode = GameMode.endless
+      ..addTasksUntilTarget(3, 4);
+    old.players = [
+      for (int i = 0; i < 3; i++) Player('P$i', color: Colors.teal)
+    ];
+    SharedPreferences.setMockInitialValues({
+      'kingsCourt.game': jsonEncode({
+        'game': old.toJson(),
+        'playerCount': 3,
+        'targetPoints': 4,
+        'cardWidth': 100.0,
+        'dealt': false,
+        'pos': [for (final _ in old.tasks) null],
+        'tilt': [for (final _ in old.tasks) 0.0],
+      }),
+    });
+    await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    final d = dilemmas[state.debugDilemma as int];
-    expect(find.text(d.title), findsOneWidget);
-    if (d.council) {
-      // Everyone secretly takes side A, so the court stands as one.
-      for (int i = 0;
-          i < 12 && find.textContaining('Pass the phone').evaluate().isNotEmpty;
-          i++) {
-        await tester.tap(find.textContaining('A.  ').first);
-        await tester.pumpAndSettle();
-      }
-      await tester.tap(find.textContaining('The court stands as one'));
-    } else {
-      await tester.tap(find.text(d.a.label));
-    }
+    await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
-    expect(find.text('Next round').evaluate().isNotEmpty ||
-        find.text('Attend the King').evaluate().isNotEmpty ||
-        find.text('The traitors rise').evaluate().isNotEmpty, isTrue);
-    await tester.tap(find.text(game.kingFallen
-        ? 'Attend the King'
-        : game.ending != null
-            ? 'The traitors rise'
-            : 'Next round'));
-    await tester.pumpAndSettle();
-    if (!game.kingFallen && game.ending == null) {
-      expect(game.kingIndex, 0); // the King reigns on
-      expect(find.text('Who will be King?'), findsNothing);
-    }
+    expect(find.text('Endless'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('kingsCourt.game'), isNull);
+    expect(prefs.getString('kingsCourt.game.endless'), isNotNull);
   });
 
   test('Seals come in twos or not at all', () {
@@ -1169,21 +1199,20 @@ void main() {
       HomePageTestHooks.fast();
       await tester.pumpWidget(const TheKingsCourtApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Play'));
-      await tester.pumpAndSettle();
+      await openSetup(tester);
       await tester.ensureVisible(find.text(mode));
       await tester.tap(find.text(mode));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
-      await setOnScreen(tester, true);
-      // Solo Dynasty: the story decides who sits at the table.
+      // Dynasty is always solo with on-screen cards: no players step.
       if (mode != 'Dynasty') {
+        await setOnScreen(tester, true);
         await tester.tap(find.text('3').last);
         await tester.pumpAndSettle();
+        await tester.tap(find.text('Next'));
+        await tester.pumpAndSettle();
       }
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
       await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Deal tasks'));
       await tester.pump();
 
@@ -1224,8 +1253,20 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Learn to play'));
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tutorial'));
+    await tester.pumpAndSettle();
+    // The opening pages wait for Continue, one at a time.
+    for (final page in introPages.take(introPages.length - 1)) {
+      expect(find.text(page.title), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text(introPages.last.title), findsOneWidget);
+    await tester.tap(find.text('Start lesson 1'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     final state = tester.state(find.byType(HomePage)) as dynamic;
     for (int lesson = 0; lesson < lessons.length; lesson++) {
       final game = state.game as GameState;
@@ -1252,7 +1293,7 @@ void main() {
     expect(find.text('You\u2019re ready'), findsOneWidget);
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
-    expect(find.text('Learn to play'), findsOneWidget); // back at the welcome
+    expect(find.text('Play'), findsOneWidget); // back at the welcome
   });
 
   test('Roman numerals for reigns', () {
