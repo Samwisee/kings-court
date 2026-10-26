@@ -126,7 +126,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Slider), const Offset(90, 0));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Deal tasks'));
+    await tester.tap(find.text('Start'));
     final state = tester.state(find.byType(HomePage)) as dynamic;
     final game = state.game as GameState;
     var shot = 0;
@@ -172,7 +172,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Deal tasks'));
+    await tester.tap(find.text('Start'));
     final state = tester.state(find.byType(HomePage)) as dynamic;
     final game = state.game as GameState;
     var shot = 0;
@@ -227,7 +227,7 @@ void main() {
         await tester.tap(find.text('Next'));
         await tester.pumpAndSettle();
       }
-      await tester.tap(find.text('Deal tasks'));
+      await tester.tap(find.text('Start'));
       final state = tester.state(find.byType(HomePage)) as dynamic;
       final game = state.game as GameState;
       final name = onScreen ? 'screen' : 'table';
@@ -341,6 +341,7 @@ void main() {
   });
 
   testWidgets('Throne room scenes', (tester) async {
+    if (dynastyComingSoon) return;
     tester.view.physicalSize = const Size(780, 1688);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);

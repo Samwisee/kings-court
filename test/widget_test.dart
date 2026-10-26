@@ -68,7 +68,7 @@ Future<void> dealGame(WidgetTester tester, int players) async {
   await tester.pumpAndSettle();
   await openSetup(tester);
   await setupThrough(tester, players: players, mode: 'Free play');
-  await tester.tap(find.text('Deal tasks'));
+  await tester.tap(find.text('Start'));
   await tester.pumpAndSettle();
 }
 
@@ -334,6 +334,7 @@ void main() {
         ['S', 'MJ', '3']);
     expect(seatLabels([p('Sam'), p('Sim'), p('Jo')]), ['Sa', 'Si', 'J']);
     expect(seatLabels([p('Sam'), p('Sam')]), ['1', '2']);
+    expect(seatLabels([p('The General'), p('The Duke')]), ['G', 'D']);
   });
 
   testWidgets('Holding the felt turns every card towards that seat',
@@ -502,6 +503,7 @@ void main() {
 
   testWidgets('Without roles, tapping a seat flips its speech token',
       (tester) async {
+    if (powersComingSoon) return;
     setPhoneSize(tester);
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
@@ -510,7 +512,7 @@ void main() {
     await tester.ensureVisible(find.text('Courtly roles'));
     await tester.tap(find.text('Courtly roles'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Deal tasks'));
+    await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(SeatToken).first);
     await tester.pumpAndSettle();
@@ -1010,6 +1012,7 @@ void main() {
 
   testWidgets('Dynasty goes straight to the story, always on screen',
       (tester) async {
+    if (dynastyComingSoon) return;
     setPhoneSize(tester);
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
@@ -1043,7 +1046,7 @@ void main() {
     await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
     await setupThrough(tester, players: 3, mode: 'Endless');
-    await tester.tap(find.text('Deal tasks'));
+    await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
 
     await tester.pumpWidget(const SizedBox());
@@ -1185,7 +1188,7 @@ void main() {
     }
   });
 
-  for (final mode in ['Free play', 'Dynasty']) {
+  for (final mode in ['Free play', if (!dynastyComingSoon) 'Dynasty']) {
     testWidgets('On-screen cards play a whole $mode round', (tester) async {
       setPhoneSize(tester);
       HomePageTestHooks.fast();
@@ -1204,7 +1207,7 @@ void main() {
         await tester.tap(find.text('Next'));
         await tester.pumpAndSettle();
       }
-      await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Deal tasks'));
+      await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Start'));
       await tester.pump();
 
       final state = tester.state(find.byType(HomePage)) as dynamic;

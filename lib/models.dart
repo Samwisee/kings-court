@@ -1704,7 +1704,11 @@ class GameState {
 List<String> seatLabels(List<Player> players) {
   final defaultName = RegExp(r'^player \d+$', caseSensitive: false);
   String initials(String name) {
-    final words = name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+    // "The General" is G: the article isn't part of the name.
+    final words = name
+        .replaceFirst(RegExp(r'^the\s+', caseSensitive: false), '')
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty);
     return words.take(2).map((w) => w[0].toUpperCase()).join();
   }
 
@@ -1725,7 +1729,10 @@ List<String> seatLabels(List<Player> players) {
     }
     for (int i = 0; i < labels.length; i++) {
       if (counts[labels[i]]! < 2) continue;
-      final name = players[i].name.trim();
+      final name = players[i]
+          .name
+          .trim()
+          .replaceFirst(RegExp(r'^the\s+', caseSensitive: false), '');
       labels[i] = pass == 0 && name.length >= 2 && !defaultName.hasMatch(name)
           ? '${name[0].toUpperCase()}${name[1].toLowerCase()}'
           : '${i + 1}';

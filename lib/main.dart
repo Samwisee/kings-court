@@ -2687,6 +2687,7 @@ class _HomePageState extends State<HomePage>
 
   /// Whether your courtier's power can be used right now, on screen.
   bool get _canUsePower {
+    if (powersComingSoon) return false;
     final me = _yourCourtier;
     if (me == null || !_playing || game.powerUsed[_you]) return false;
     final c = _cards;
@@ -2877,7 +2878,11 @@ class _HomePageState extends State<HomePage>
   /// The Bishop's Absolution: a failed task is set aside, but the Bishop
   /// must take a penance in its place.
   Future<bool> _offerAbsolution(Task t) async {
-    if (_yourCourtier != Courtier.bishop || game.powerUsed[_you]) return false;
+    if (powersComingSoon ||
+        _yourCourtier != Courtier.bishop ||
+        game.powerUsed[_you]) {
+      return false;
+    }
     final penance = _penanceFor(t);
     if (penance == null) return false;
     final yes = await showDialog<bool>(
@@ -3606,6 +3611,7 @@ class _HomePageState extends State<HomePage>
                                       fontWeight: FontWeight.w700,
                                       color: Palette.lost)),
                             ],
+                            if (!powersComingSoon) ...[
                             const Divider(height: 26),
                             Row(children: [
                               const Icon(Icons.bolt_rounded,
@@ -3622,10 +3628,12 @@ class _HomePageState extends State<HomePage>
                                     fontSize: 16,
                                     height: 1.4,
                                     color: Palette.ink)),
+                            ],
                             if (_digital && !_choosingKing) ...[
                               const SizedBox(height: 8),
                               if (seat == _you)
                                 Wrap(spacing: 8, runSpacing: 8, children: [
+                                  if (!powersComingSoon)
                                   FilledButton.icon(
                                     onPressed: _canUsePower
                                         ? () {
@@ -3660,12 +3668,13 @@ class _HomePageState extends State<HomePage>
                                 ])
                               else
                                 Text(
-                                    '${used ? 'Power used' : 'Power not used yet'} this round. '
+                                    '${powersComingSoon ? '' : '${used ? 'Power used' : 'Power not used yet'} this round. '}'
                                     '${spoke ? 'Has shown a card.' : 'Hasn\u2019t shown a card.'}',
                                     style: const TextStyle(
                                         fontSize: 15, color: Palette.inkSoft)),
                             ],
                             if (!_choosingKing && !_digital) ...[
+                              if (!powersComingSoon) ...[
                               const SizedBox(height: 8),
                               Align(
                                 alignment: Alignment.centerLeft,
@@ -3685,6 +3694,7 @@ class _HomePageState extends State<HomePage>
                                       foregroundColor: Palette.gold),
                                 ),
                               ),
+                              ],
                               const Divider(height: 26),
                               Row(children: [
                                 SpeakToken(
@@ -4340,10 +4350,14 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                   ),
-                  // Its own brass inlay, like the table's.
-                  const Positioned.fill(
-                    child: IgnorePointer(
-                        child: SafeArea(top: false, child: TableTrim())),
+                  // Its own brass inlay, like the table's, down the sides and
+                  // across the top (it runs on past the bottom edge).
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: -40,
+                    child: IgnorePointer(child: TableTrim()),
                   ),
                 ]),
               ),
@@ -4685,7 +4699,7 @@ class _HomePageState extends State<HomePage>
                     wounds: game.isDynasty && game.kingIndex == i
                         ? game.kingWounds
                         : null,
-                    powerUsed: game.hasRoles && !_choosingKing
+                    powerUsed: game.hasRoles && !_choosingKing && !powersComingSoon
                         ? game.powerUsed[i]
                         : null,
                     loyalty: game.isDynasty &&
@@ -6704,7 +6718,7 @@ class _HomePageState extends State<HomePage>
                       foregroundColor: fg,
                       side: BorderSide(
                           color: won ? Palette.ink : Colors.white54)),
-                  child: const Text('Retry these tasks'),
+                  child: const Text('Retry'),
                 ),
                 FilledButton(
                   onPressed: () {
@@ -6716,7 +6730,7 @@ class _HomePageState extends State<HomePage>
                           backgroundColor: Palette.ink,
                           foregroundColor: Palette.gold)
                       : null,
-                  child: Text('Deal $_nextTarget points'),
+                  child: const Text('Deal'),
                 ),
                 ],
               ],
@@ -7317,15 +7331,24 @@ class _SetupPanelState extends State<_SetupPanel> {
         ])
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: _ModeTile(
-              title: _modeInfo[m]!.$1,
-              badge: m == GameMode.dynasty ? '(Alpha)' : null,
-              description: _modeInfo[m]!.$2,
-              selected: false,
-              onTap: () => setState(() {
-                mode = m;
-                step++;
-              }),
+            child: Opacity(
+              opacity: m == GameMode.dynasty && dynastyComingSoon ? 0.55 : 1,
+              child: _ModeTile(
+                title: _modeInfo[m]!.$1,
+                badge: m == GameMode.dynasty
+                    ? dynastyComingSoon
+                        ? '(Coming soon)'
+                        : '(Alpha)'
+                    : null,
+                description: _modeInfo[m]!.$2,
+                selected: false,
+                onTap: m == GameMode.dynasty && dynastyComingSoon
+                    ? () {}
+                    : () => setState(() {
+                          mode = m;
+                          step++;
+                        }),
+              ),
             ),
           ),
       ],
@@ -7445,8 +7468,10 @@ class _SetupPanelState extends State<_SetupPanel> {
               ],
             ),
           ),
-        const SizedBox(height: 6),
-        // Room is kept for the hint so nothing jumps when it appears.
+        // Room is kept for the hint so nothing jumps when it appears (only
+        // at a real table, where there's one to give).
+        if (!digital) const SizedBox(height: 6),
+        if (!digital)
         SizedBox(
           height: 66,
           child: Text(
@@ -7502,16 +7527,38 @@ class _SetupPanelState extends State<_SetupPanel> {
   }
 
   /// Courtly roles: houses, shapes and powers. Always on in Dynasty.
-  Widget _rolesSwitch() => SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        value: roles,
-        activeThumbColor: Palette.gold,
-        onChanged: (v) => setState(() => roles = v),
-        title: const Text('Courtly roles', style: TextStyle(fontSize: 16)),
-        subtitle: const Text(
-            'Everyone plays a courtier of a great house, with a power to use once a round.',
-            style: TextStyle(color: Colors.white70)),
-      );
+  /// Courtiers keep their houses; their powers are still to come.
+  Widget _rolesSwitch() => powersComingSoon
+      ? const Opacity(
+          opacity: 0.55,
+          child: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: false,
+            onChanged: null,
+            title: Text.rich(TextSpan(children: [
+              TextSpan(text: 'Powers', style: TextStyle(fontSize: 16)),
+              TextSpan(
+                  text: '  (Coming soon)',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white70)),
+            ])),
+            subtitle: Text(
+                'Each courtier gets a power to use once a round.',
+                style: TextStyle(color: Colors.white70)),
+          ),
+        )
+      : SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: roles,
+          activeThumbColor: Palette.gold,
+          onChanged: (v) => setState(() => roles = v),
+          title: const Text('Powers', style: TextStyle(fontSize: 16)),
+          subtitle: const Text(
+              'Each courtier gets a power to use once a round.',
+              style: TextStyle(color: Colors.white70)),
+        );
 
   Widget _finalStep() {
     switch (mode) {
@@ -7561,7 +7608,7 @@ class _SetupPanelState extends State<_SetupPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(child: Text('How hard?', style: _heading)),
+            const Center(child: Text('Setup', style: _heading)),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -7631,7 +7678,7 @@ class _SetupPanelState extends State<_SetupPanel> {
               children: [
                 SizedBox(
                   width: 48,
-                  child: choosing && (step > 0 || widget.canCancel)
+                  child: choosing && step == 0 && widget.canCancel
                       ? IconButton(
                           tooltip: step == 0 ? 'Cancel' : 'Back',
                           onPressed: _back,
@@ -7684,9 +7731,9 @@ class _SetupPanelState extends State<_SetupPanel> {
                 ),
               ),
             ),
-            if (!choosing) const SizedBox(height: 12),
+            if (!choosing || step > 0) const SizedBox(height: 12),
             // Kept near the step on a wide screen, not out in the corners.
-            if (!choosing)
+            if (!choosing || step > 0)
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Row(
@@ -7697,6 +7744,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                     child: Text(step == 0 ? 'Cancel' : 'Back'),
                   ),
                 const SizedBox(width: 8),
+                if (!choosing)
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
@@ -7714,7 +7762,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                                 ? 'Next'
                                 : mode == GameMode.dynasty
                                     ? 'Begin the reign'
-                                    : 'Deal tasks'),
+                                    : 'Start'),
                       ),
                     ),
                   ),
@@ -8848,6 +8896,11 @@ class _CardTracker extends StatelessWidget {
 
 /// A plain card face for the card tracker: just its number and suit (or
 /// the Court Card's letter) and an outline, cheap enough to show dozens.
+/// Courtiers' powers and Dynasty are being reworked; until then they're
+/// shown as coming soon.
+const powersComingSoon = true;
+const dynastyComingSoon = true;
+
 class _MiniCard extends StatelessWidget {
   const _MiniCard(
       {required this.card,
