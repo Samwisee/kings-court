@@ -282,7 +282,8 @@ void main() {
         }
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/wide-$name-5-cards.png'));
-        await tester.tap(find.bySemanticsLabel('Close the card tracker'));
+        // The top of the dock closes it.
+        await tester.tapAt(const Offset(960, 1080 * 0.5 + 14));
         for (int i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
