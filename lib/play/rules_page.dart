@@ -45,6 +45,7 @@ const _sections = <_Section>[
   _Section('The aim', [
     'Everyone plays together. Each round the court is dealt tasks, such as “Win the 3♥” or “Win the first trick”. Each player takes some, then everyone plays tricks to complete them.',
     'Complete every task and the round is won. If any task fails, the round is lost.',
+    'The King’s Court is inspired by The Crew, the cooperative trick-taking game by Thomas Sing.',
   ]),
   _Section('The cards', [
     '40 cards: Ace (1) to 9 in ♥ ♦ ♠ ♣, plus four Court Cards: the Joker, Jack, Queen and King, from lowest to highest. Court Cards are their own suit and beat every plain card.',

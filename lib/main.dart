@@ -2977,6 +2977,12 @@ class _HomePageState extends State<HomePage>
         ]
         ..seatCourtiers()
         ..addTasksUntilTarget(count, target);
+      // The tutorial's courtiers are always the same: you, the Duke and
+      // the Bishop, each with their house's token.
+      if (mode == GameMode.tutorial) {
+        game.courtiers = List.of(tutorialHouses);
+        game.people = [for (final c in game.courtiers) c.title];
+      }
       if (digital) {
         // You sit at the bottom; bots take the other seats.
         game.cards = MatchState(players: count, target: target);
@@ -3014,7 +3020,7 @@ class _HomePageState extends State<HomePage>
   void _beginLesson(int i) {
     setState(() => _setupArgs = null);
     _startGame(3, 1, tutorialCourtiers, GameMode.tutorial,
-        roles: false, digital: true, lesson: i);
+        roles: true, digital: true, lesson: i);
   }
 
   void _nextLesson() {
@@ -6938,7 +6944,7 @@ class _WelcomeIntro extends StatelessWidget {
             Opacity(
               opacity: sub,
               child: const Text(
-                  'A cooperative trick-taking game for 2 to 6 players.',
+                  'A cooperative trick-taking game for 2 to 6 players. Inspired by The Crew.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.white70)),
             ),
@@ -7239,6 +7245,10 @@ class _SetupPanelState extends State<_SetupPanel> {
   late int count =
       widget.digital && widget.playerCount < 3 ? 3 : widget.playerCount;
   late int target = widget.targetPoints.clamp(1, maxTarget);
+
+  /// Which way the last step went, so pages turn the right way.
+  int _shownStep = 0;
+  bool _forward = true;
   late GameMode mode = widget.mode;
   late bool surprise = widget.surprise;
   late bool roles = widget.roles;
@@ -7661,6 +7671,11 @@ class _SetupPanelState extends State<_SetupPanel> {
     };
     final choosing = step < 2;
     final last = step == _steps - 1;
+    if (step != _shownStep) {
+      _forward = step > _shownStep;
+      _shownStep = step;
+    }
+    final still = MediaQuery.of(context).disableAnimations;
 
     // Fills the screen: progress at the top, the step in the middle, and
     // the buttons fixed in the bottom corners so they never move.
@@ -7688,16 +7703,19 @@ class _SetupPanelState extends State<_SetupPanel> {
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    // A crown for each step: gold once reached, and the
+                    // current one larger, springing up as you arrive.
                     children: [
                       for (int i = 0; i < _steps; i++)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: i == step ? 22 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: i <= step ? Palette.gold : Colors.white24,
-                            borderRadius: BorderRadius.circular(4),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: AnimatedScale(
+                            scale: i == step ? 1.5 : 1,
+                            duration: const Duration(milliseconds: 420),
+                            curve: Curves.elasticOut,
+                            child: CrownIcon(
+                                size: 14,
+                                color: i <= step ? Palette.gold : Colors.white24),
                           ),
                         ),
                     ],
@@ -7709,11 +7727,25 @@ class _SetupPanelState extends State<_SetupPanel> {
             const SizedBox(height: 4),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, a) =>
-                    FadeTransition(opacity: a, child: child),
+                duration: Duration(milliseconds: still ? 200 : 620),
+                // The old page turns away first, then the new one turns in.
+                switchInCurve: still
+                    ? Curves.easeOut
+                    : const Interval(0.45, 1, curve: Curves.easeOutBack),
+                switchOutCurve: still
+                    ? Curves.easeIn
+                    : const Interval(0.45, 1, curve: Curves.easeInCubic),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.center,
+                  children: [...previous, if (current != null) current],
+                ),
+                transitionBuilder: (child, a) => still
+                    ? FadeTransition(opacity: a, child: child)
+                    : _PageTurn(
+                        animation: a,
+                        incoming: child.key == ValueKey(step),
+                        forward: _forward,
+                        child: child),
                 child: Center(
                   key: ValueKey(step),
                   child: SingleChildScrollView(
@@ -8554,7 +8586,7 @@ class _TaskCardsRow extends StatelessWidget {
                   }}',
                   excludeSemantics: true,
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    PlayingCardView(
+                    _MiniCard(
                         card: card,
                         width: 30,
                         dimmed: fate == _CardFate.good ||
@@ -8859,6 +8891,68 @@ class _CardTracker extends StatelessWidget {
 /// shown as coming soon.
 const powersComingSoon = true;
 const dynastyComingSoon = true;
+
+/// A setup page turning like a card on the King's table: it swings on its
+/// edge (away to one side, in from the other), and a glint of gold runs
+/// across it as it lands face up.
+class _PageTurn extends StatelessWidget {
+  const _PageTurn(
+      {required this.animation,
+      required this.incoming,
+      required this.forward,
+      required this.child});
+  final Animation<double> animation;
+  final bool incoming;
+  final bool forward;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final t = animation.value; // 0 hidden, 1 face up
+        // Forward: the old page turns off to the left, the new one comes
+        // in from the right; back is the other way round.
+        final side = (incoming ? 1 : -1) * (forward ? 1 : -1);
+        final angle = (1 - t) * side * math.pi / 2;
+        final glint = incoming ? math.sin(t.clamp(0.0, 1.0) * math.pi) : 0.0;
+        return Opacity(
+          opacity: t.clamp(0.0, 1.0) < 0.02 ? 0 : 1,
+          child: Transform(
+            alignment: side > 0 ? Alignment.centerRight : Alignment.centerLeft,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0012)
+              ..rotateY(angle)
+              ..multiply(Matrix4.diagonal3Values(0.9 + 0.1 * t, 0.9 + 0.1 * t, 1)),
+            child: Stack(children: [
+              child!,
+              if (glint > 0.01)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment(-1.6 + 3.2 * t, -1),
+                          end: Alignment(-0.6 + 3.2 * t, 1),
+                          colors: [
+                            Palette.gold.withValues(alpha: 0),
+                            Palette.gold.withValues(alpha: 0.28 * glint),
+                            Palette.gold.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ]),
+          ),
+        );
+      },
+    );
+  }
+}
 
 /// The highest points target a round can have. The balance report shows
 /// rounds above this are close to impossible.

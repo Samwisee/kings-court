@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../courtiers.dart';
 import '../engine/cards.dart';
 import '../models.dart';
 import '../theme.dart';
@@ -195,6 +196,18 @@ class _TutorialIntroState extends State<TutorialIntro> {
         height: size.height);
   }
 
+  /// A seat token as at the table: the house's shape in the player's
+  /// colour. Seat 0 is you (the General), 1 the Duke, 2 the Bishop.
+  Widget _token(int seat, String label, double size, {TokenShape? shape}) =>
+      IgnorePointer(
+        child: SeatToken(
+          player: Player(label, color: Palette.players[seat]),
+          label: label,
+          size: size,
+          shape: shape ?? tutorialHouses[seat].shape,
+        ),
+      );
+
   Widget _art(IntroArt art) {
     switch (art) {
       case IntroArt.court:
@@ -281,15 +294,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Column(children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Palette.players[i],
-                  child: Text(name[0],
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 20,
-                          color: Colors.white)),
-                ),
+                _token(i, name[0], 48),
                 _caption(name),
               ]),
             ),
@@ -297,13 +302,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
         ]);
       case IntroArt.speak:
         return Row(mainAxisSize: MainAxisSize.min, children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: Palette.players[1],
-            child: const Text('D',
-                style: TextStyle(
-                    fontWeight: FontWeight.w900, fontSize: 22, color: Colors.white)),
-          ),
+          _token(1, 'D', 52),
           const SizedBox(width: 8),
           Column(mainAxisSize: MainAxisSize.min, children: [
             _card('7♠', width: 37),
@@ -314,13 +313,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
         ]);
       case IntroArt.table:
         // A phone in the middle of a real table, players around it.
-        Widget seat(int i, String label) => CircleAvatar(
-              radius: 18,
-              backgroundColor: Palette.players[i],
-              child: Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w900, color: Colors.white)),
-            );
+        Widget seat(int i, String label) => _token(i, label, 36,
+            shape: Courtier.houses[i].shape);
         return SizedBox(
           width: 240,
           height: 170,

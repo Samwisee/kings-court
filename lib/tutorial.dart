@@ -9,6 +9,7 @@
 /// normal and the lesson can be tried again.
 library;
 
+import 'courtiers.dart';
 import 'engine/cards.dart';
 
 class Lesson {
@@ -120,7 +121,7 @@ const introPages = <IntroPage>[
   IntroPage('Welcome to the court', [
     'The old King is gone, and the great houses gather in the throne hall. In King’s Court, you and your courtiers play cards together to keep the realm in order.',
     'Everyone is on the same side. You win together or lose together, round by round.',
-    'It’s a trick-taking card game, the same family as Hearts, Spades and Bridge, and it’s adapted from The Crew. Never played one? That’s fine: these pages explain everything, then four short lessons let you try each idea.',
+    'It’s a trick-taking card game, the same family as Hearts, Spades and Bridge, and it’s inspired by The Crew. Never played one? That’s fine: these pages explain everything, then four short lessons let you try each idea.',
   ], IntroArt.court),
   IntroPage('The goal', [
     'Every round, the court is given tasks, such as “Win the 3♥” or “Win the first trick”.',
@@ -180,6 +181,9 @@ const introPages = <IntroPage>[
 
 /// The names the two courtiers go by in the tutorial.
 const tutorialCourtiers = ['You', 'The Duke', 'The Bishop'];
+
+/// Their houses, for their tokens (yours is the General's).
+const tutorialHouses = [Courtier.general, Courtier.duke, Courtier.bishop];
 
 const lessons = <Lesson>[
   Lesson(

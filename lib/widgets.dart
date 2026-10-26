@@ -677,22 +677,26 @@ class TableCard extends StatelessWidget {
   /// Smallest size the task text may shrink to, relative to [textStyle].
   static const minTextScale = 12 / 13.5;
 
-  static double heightFor(double width) => width * 0.7;
-  static double _indexSize(double width) => clampD(width * 0.17, 12, 18);
-  static const _pad = 5.0;
+  // The same look as the task cards in on-screen games: points and
+  // conditions along the top, the tracker top right, the words beneath.
+  static double heightFor(double width) => width * 0.6;
+  static double _indexSize(double width) => clampD(width * 0.15, 13, 18);
+  static const _pad = 6.0;
   static const _badgeRoom = 14.0;
-  static const _sealRoom = 17.0;
 
   /// Card size for [text] at [width]: the usual shape, but taller when the
   /// task needs it so its text never shrinks below [minTextScale].
   static Size sizeFor(String text, double width, {bool sealed = false}) {
-    final textWidth = width - 2 * _pad - _indexSize(width) * 1.05 - 3 -
-        (sealed ? _sealRoom : 0);
+    final textWidth = width - 2 * _pad;
     final painter = TextPainter(
       text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: textWidth / minTextScale);
-    final needed = painter.height * minTextScale + 2 * _pad + _badgeRoom;
+    final needed = painter.height * minTextScale +
+        _indexSize(width) +
+        3 +
+        2 * _pad +
+        _badgeRoom;
     painter.dispose();
     return Size(width, math.min(math.max(heightFor(width), needed), width * 1.3));
   }
@@ -729,7 +733,7 @@ class TableCard extends StatelessWidget {
   BoxDecoration _frame(Color color, {Color? border, double borderWidth = 1}) =>
       BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: border ?? const Color(0xFFE6E0D4),
           width: borderWidth,
@@ -765,94 +769,66 @@ class TableCard extends StatelessWidget {
 
   Widget _front() {
     final indexSize = _indexSize(width);
-    final iconSize = indexSize * 0.7;
-    return Container(
-      width: width,
-      height: _height,
-      decoration: _frame(
-        task.isFailed ? const Color(0xFFFBE9E7) : Palette.card,
-        border: task.isFailed ? Palette.lost : owner?.color,
-        borderWidth: owner == null && !task.isFailed ? 1 : 2.5,
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(_pad, _pad, _pad, _pad),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: indexSize * 1.05,
-                  child: Column(
-                    children: [
-                      Text('$points',
-                          style: TextStyle(
-                              fontFamily: displayFont,
-                              fontWeight: FontWeight.w900,
-                              fontSize: indexSize,
-                              height: 1,
-                              color: Palette.ink)),
-                      const SizedBox(height: 2),
-                      CrownIcon(size: indexSize * 0.5, color: Palette.goldDeep),
-                      // Conditions that don't fit on the card: tap it to
-                      // read them.
-                      if (task.kingCantTake)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Tooltip(
-                            message: "The King can't take this task",
-                            child: Icon(Icons.block,
-                                size: iconSize, color: Palette.inkSoft),
-                          ),
-                        ),
-                      if (task.hasNotes)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Tooltip(
-                            message: task.notes.join(' '),
-                            child: Icon(Icons.info_outline,
-                                size: iconSize, color: Palette.inkSoft),
-                          ),
-                        ),
-                      if (task.isFailed)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Icon(Icons.cancel,
-                              size: iconSize + 2, color: Palette.lost),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                        bottom: _badgeRoom,
-                        right: task.seal == null ? 0 : _sealRoom),
-                    child: LayoutBuilder(
-                      builder: (context, c) => FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.topLeft,
-                        child: SizedBox(
-                          width: c.maxWidth,
-                          child: SuitText(text ?? task.description,
-                              style: textStyle),
-                        ),
-                      ),
-                    ),
-                  ),
+    final iconSize = indexSize * 0.8;
+    final failed = task.isFailed;
+    final top = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text('$points',
+                  style: TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w900,
+                      fontSize: indexSize,
+                      height: 1,
+                      color: Palette.ink)),
+              const SizedBox(width: 2),
+              CrownIcon(size: indexSize * 0.7, color: Palette.goldDeep),
+              // Conditions that don't fit in words: tap the card to read.
+              if (task.kingCantTake) ...[
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: "The King can't take this task",
+                  child: Icon(Icons.block, size: iconSize, color: Palette.inkSoft),
                 ),
               ],
-            ),
+              if (task.hasNotes) ...[
+                const SizedBox(width: 3),
+                Tooltip(
+                  message: task.notes.join(' '),
+                  child: Icon(Icons.info_outline,
+                      size: iconSize, color: Palette.inkSoft),
+                ),
+              ],
+              if (task.seal != null) ...[
+                const SizedBox(width: 3),
+                WaxSeal(seal: task.seal!, size: indexSize + 3),
+              ],
+              if (charged) ...[
+                const SizedBox(width: 2),
+                Tooltip(
+                  message: 'A royal charge',
+                  child: Icon(Icons.workspace_premium,
+                      size: iconSize + 1, color: Palette.goldDeep),
+                ),
+              ],
+            ]),
           ),
-          if (progress != null && !task.isCompleted)
-            Positioned(
-              left: charged ? 20 : 4,
-              bottom: 4,
+        ),
+        if (failed)
+          Icon(Icons.cancel, size: iconSize + 2, color: Palette.lost)
+        else if (progress != null && !task.isCompleted)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: width * 0.55),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
               child: Container(
-                height: 16,
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
                   color: Palette.ink,
                   borderRadius: BorderRadius.circular(8),
@@ -862,27 +838,49 @@ class TableCard extends StatelessWidget {
                         fontFamily: bodyFont,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        height: 1,
+                        height: 1.1,
                         color: Palette.gold)),
               ),
             ),
-          // A royal charge: a gold ribbon in the corner by the owner badge.
-          if (charged)
-            const Positioned(
-              left: 3,
-              bottom: 2,
-              child: Tooltip(
-                message: 'A royal charge',
-                child: Icon(Icons.workspace_premium,
-                    size: 15, color: Palette.goldDeep),
-              ),
+          ),
+      ],
+    );
+    return Container(
+      width: width,
+      height: _height,
+      decoration: _frame(
+        failed ? const Color(0xFFFBE4E1) : Palette.card,
+        border: failed ? Palette.lost : owner?.color ?? Palette.inkSoft,
+        borderWidth: 2.5,
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(_pad, _pad - 2, _pad, _pad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                top,
+                const SizedBox(height: 3),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: owner == null ? 0 : _badgeRoom),
+                    child: LayoutBuilder(
+                      builder: (context, c) => FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          width: c.maxWidth,
+                          child: SuitText(text ?? task.description,
+                              style: textStyle.copyWith(fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          if (task.seal != null)
-            Positioned(
-              top: 3,
-              right: 3,
-              child: WaxSeal(seal: task.seal!, size: 20),
-            ),
+          ),
           _ownerBadge(),
         ],
       ),
