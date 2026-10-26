@@ -2489,11 +2489,13 @@ class _HomePageState extends State<HomePage>
         title: const Row(children: [
           CrownIcon(size: 26),
           SizedBox(width: 10),
-          Text('You’re ready',
-              style: TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 24)),
+          Flexible(
+            child: Text('You’re ready',
+                style: TextStyle(
+                    fontFamily: displayFont,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 24)),
+          ),
         ]),
         content: const Text(
             'That’s the heart of King’s Court. Real rounds have more tasks, and some bring seals and royal decrees: How to Play in the menu explains them all.\n\nFree play is a good place to start. Dynasty tells a story of kings.',
