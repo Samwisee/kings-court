@@ -2112,7 +2112,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 if (seat != null && _quips[seat] != null)
                   Positioned(
-                    top: (width > 600 ? 48 : 38) + 4,
+                    top: (width > 600 ? 48 : 38) + 22,
                     left: 0,
                     right: 0,
                     child: Center(
