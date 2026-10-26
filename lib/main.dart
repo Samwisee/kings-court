@@ -7743,7 +7743,10 @@ class _TaskChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = task.isCompleted, failed = task.isFailed;
-    // Along the top: points, conditions, and the tracker on the right.
+    // Along the top: points, conditions, and the tracker on the right. On
+    // a very narrow chip the small condition icons give way (they're in
+    // the task's close-up).
+    final narrow = width < 72;
     final top = Row(
       children: [
         Text('$points',
@@ -7755,13 +7758,13 @@ class _TaskChip extends StatelessWidget {
                 color: Palette.ink)),
         const SizedBox(width: 2),
         CrownIcon(size: fontSize * 0.85, color: Palette.goldDeep),
-        if (task.kingCantTake) ...[
+        if (task.kingCantTake && !narrow) ...[
           const SizedBox(width: 4),
           Tooltip(
               message: "The King can't take this task",
               child: Icon(Icons.block, size: fontSize + 1, color: Palette.inkSoft)),
         ],
-        if (task.hasNotes) ...[
+        if (task.hasNotes && !narrow) ...[
           const SizedBox(width: 3),
           Tooltip(
               message: task.notes.join(' '),
@@ -7772,7 +7775,7 @@ class _TaskChip extends StatelessWidget {
           const SizedBox(width: 3),
           WaxSeal(seal: task.seal!, size: fontSize + 4),
         ],
-        if (charged) ...[
+        if (charged && !narrow) ...[
           const SizedBox(width: 2),
           Icon(Icons.workspace_premium, size: fontSize + 2, color: Palette.goldDeep),
         ],
