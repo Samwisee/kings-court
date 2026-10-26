@@ -1286,29 +1286,47 @@ class _HomePageState extends State<HomePage>
   bool _trackerMounted = false;
   Timer? _trackerTimer;
 
+  /// Moving up or down (it's hidden when neither open nor moving).
+  bool _trackerSliding = false;
+
   void _showCardTracker() {
     if (_trackerOpen) {
       _closeTracker();
       return;
     }
     _trackerTimer?.cancel();
-    // Built first, just off screen, then slid up.
+    if (!_trackerMounted) {
+      // Built the first time just off screen, then slid up. After that it
+      // stays built, so opening it again is only the slide.
+      setState(() => _trackerMounted = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _trackerMounted) {
+          setState(() {
+            _trackerOpen = true;
+            _trackerSliding = true;
+          });
+        }
+      });
+      return;
+    }
     setState(() {
-      _trackerMounted = true;
-      _trackerOpen = false;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _trackerMounted) setState(() => _trackerOpen = true);
+      _trackerOpen = true;
+      _trackerSliding = true;
     });
   }
 
   void _closeTracker() {
-    setState(() => _trackerOpen = false);
+    setState(() {
+      _trackerOpen = false;
+      _trackerSliding = true;
+    });
     _trackerTimer?.cancel();
-    _trackerTimer = Timer(const Duration(milliseconds: 260), () {
-      if (mounted && !_trackerOpen) setState(() => _trackerMounted = false);
+    _trackerTimer = Timer(_trackerSlide + const Duration(milliseconds: 40), () {
+      if (mounted && !_trackerOpen) setState(() => _trackerSliding = false);
     });
   }
+
+  static const _trackerSlide = Duration(milliseconds: 320);
 
   /// The cards [t] is about, and what's become of each this round.
   List<(PlayingCard, _CardFate)> _cardStates(Task t) {
@@ -2187,7 +2205,7 @@ class _HomePageState extends State<HomePage>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _MiniCard(card: card, width: height / 1.3, centred: true),
+        _MiniCard(card: card, width: height / 1.3),
         Text(c.revealHint[seat] ?? '',
             style: const TextStyle(
                 fontSize: 11, fontWeight: FontWeight.w700, color: Palette.gold)),
@@ -2261,10 +2279,8 @@ class _HomePageState extends State<HomePage>
       spacing: 6,
       children: [
         for (int i = 0; i < slots.length; i++)
-          SlideToPlace(
+          KeyedSubtree(
             key: ValueKey('slot-${slots[i].description}'),
-            hop: false,
-            within: _middleTasksKey,
             child: () {
             final t = slots[i];
             final taken = t.assignedPlayerIndex != null;
@@ -4295,10 +4311,12 @@ class _HomePageState extends State<HomePage>
           right: 0,
           bottom: 0,
           height: MediaQuery.sizeOf(context).height * 0.5,
-          child: AnimatedSlide(
+          child: Offstage(
+            offstage: !_trackerOpen && !_trackerSliding,
+            child: AnimatedSlide(
             offset: _trackerOpen ? Offset.zero : const Offset(0, 1.05),
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
+            duration: _trackerSlide,
+            curve: Curves.easeInOutCubic,
             child: RepaintBoundary(
               child: Material(
                 color: Palette.feltDeep,
@@ -4308,17 +4326,27 @@ class _HomePageState extends State<HomePage>
                   borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: SafeArea(
-                  top: false,
-                  child: _CardTracker(
-                    cards: _cards,
-                    you: _you,
-                    players: game.players,
-                    onClose: _closeTracker,
+                child: Stack(children: [
+                  Positioned.fill(
+                    child: SafeArea(
+                      top: false,
+                      child: _CardTracker(
+                        cards: _cards,
+                        you: _you,
+                        players: game.players,
+                        onClose: _closeTracker,
+                      ),
+                    ),
                   ),
-                ),
+                  // Its own brass inlay, like the table's.
+                  const Positioned.fill(
+                    child: IgnorePointer(
+                        child: SafeArea(top: false, child: TableTrim())),
+                  ),
+                ]),
               ),
             ),
+          ),
           ),
         ),
     ]);
@@ -8634,6 +8662,10 @@ class _CardTracker extends StatelessWidget {
             color: Palette.card,
             borderRadius: BorderRadius.circular(3),
             border: Border.all(color: p.color, width: 3),
+            // Ringed in black so the colour stands out on the felt.
+            boxShadow: const [
+              BoxShadow(color: Colors.black, spreadRadius: 1.2),
+            ],
           ),
         );
 
@@ -8728,7 +8760,7 @@ class _CardTracker extends StatelessWidget {
         final byWidth = (width - 8 * 4) / 9;
         final byHeight = ((box.maxHeight - header - 8) / 5 - 4) / 1.3;
         final w = math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
-        final small = clampD(w * 0.62, 16, 30);
+        final small = clampD(w * 0.7, 20, 34);
         return Column(
           children: [
             // The top: tap it to put the tracker away.
@@ -8821,12 +8853,9 @@ class _MiniCard extends StatelessWidget {
       this.dimmed = false,
       this.edge,
       this.trick,
-      this.centred = false});
+      this.centred = true});
   final PlayingCard card;
   final double width;
-
-  /// Rank and suit large in the middle, for a card shown on its own.
-  final bool centred;
 
   /// Played: greyed inside, but its outline stays bright.
   final bool dimmed;
@@ -8834,6 +8863,10 @@ class _MiniCard extends StatelessWidget {
 
   /// The trick it was played in, shown in its corner.
   final int? trick;
+
+  /// Rank over suit, large in the middle (the only layout now; kept so
+  /// callers can say so).
+  final bool centred;
 
   static const _cloth = [
     Color(0xFF4A2670),
@@ -8847,73 +8880,98 @@ class _MiniCard extends StatelessWidget {
     final court = card.isCourt;
     final ink = court ? Palette.gold : Palette.suitColour(card.suit);
     final face = court
-        ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.55 : 0)!
+        ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.5 : 0)!
         : dimmed
-            ? const Color(0xFFA8A398)
+            ? const Color(0xFFB4AFA4)
             : Palette.card;
-    final textInk = dimmed ? ink.withValues(alpha: court ? 0.6 : 0.9) : ink;
+    final r = width * 0.14;
+    final edgeW = edge != null ? math.max(2.5, width * 0.08) : 1.0;
+    final label = Center(
+      child: Padding(
+        padding: EdgeInsets.all(width * 0.06),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text.rich(
+            TextSpan(children: [
+              TextSpan(
+                  text: card.rankLabel,
+                  style: TextStyle(
+                      fontFamily: court ? displayFont : bodyFont,
+                      fontWeight: FontWeight.w900,
+                      fontSize: width * 0.5)),
+              if (!court)
+                TextSpan(
+                    text: '\n${card.suit.symbol}',
+                    style: TextStyle(fontSize: width * 0.46)),
+            ]),
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.0, color: ink),
+          ),
+        ),
+      ),
+    );
+    // A coloured outline is edged in black on both sides, so it stands out
+    // from the felt and from the card face alike.
     return Container(
       width: width,
       height: width * 1.3,
-      padding: EdgeInsets.fromLTRB(width * 0.1, width * 0.06, width * 0.08, width * 0.04),
       decoration: BoxDecoration(
-        color: face,
-        borderRadius: BorderRadius.circular(width * 0.12),
-        border: Border.all(
-            color: edge ?? (court ? Palette.gold : const Color(0xFFD9D2C3)),
-            width: edge != null ? 3 : 1),
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(r),
       ),
-      child: centred
-          ? Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text.rich(
-                  TextSpan(children: [
-                    TextSpan(
-                        text: card.rankLabel,
-                        style: TextStyle(
-                            fontFamily: court ? displayFont : bodyFont,
-                            fontWeight: FontWeight.w900,
-                            fontSize: width * 0.5)),
-                    if (!court)
-                      TextSpan(
-                          text: '\n${card.suit.symbol}',
-                          style: TextStyle(fontSize: width * 0.46)),
-                  ]),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(height: 1.0, color: textInk),
-                ),
-              ),
-            )
-          : Stack(children: [
-        Text.rich(
-          TextSpan(children: [
-            TextSpan(
-                text: card.rankLabel,
-                style: TextStyle(
-                    fontFamily: court ? displayFont : bodyFont,
-                    fontWeight: FontWeight.w900,
-                    fontSize: width * 0.36)),
-            if (!court)
-              TextSpan(text: '\n${card.suit.symbol}', style: TextStyle(fontSize: width * 0.32)),
-          ]),
-          style: TextStyle(height: 1.05, color: textInk),
-          maxLines: 2,
-          overflow: TextOverflow.clip,
-          softWrap: false,
+      padding: EdgeInsets.all(edge != null ? 1.2 : 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: face,
+          borderRadius: BorderRadius.circular(r - 1),
+          border: Border.all(
+              color: edge ?? (court ? Palette.gold : const Color(0xFFD9D2C3)),
+              width: edgeW),
         ),
-        if (trick != null)
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Text('$trick',
-                style: TextStyle(
-                    fontSize: width * 0.3,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                    color: edge ?? Colors.white)),
-          ),
-      ]),
+        child: Container(
+          decoration: edge != null
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(math.max(0, r - edgeW)),
+                  border: Border.all(color: Colors.black87, width: 1),
+                )
+              : null,
+          child: Stack(children: [
+            Positioned.fill(child: label),
+            if (trick != null)
+              Positioned(
+                right: width * 0.04,
+                bottom: 0,
+                child: _OutlinedNumber('$trick',
+                    size: width * 0.28, color: edge ?? Colors.white),
+              ),
+          ]),
+        ),
+      ),
     );
+  }
+}
+
+/// A small number in a colour, ringed in black so it reads on anything.
+class _OutlinedNumber extends StatelessWidget {
+  const _OutlinedNumber(this.text, {required this.size, required this.color});
+  final String text;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+        fontSize: size, fontWeight: FontWeight.w900, height: 1.05);
+    return Stack(children: [
+      Text(text,
+          style: style.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = math.max(2.5, size * 0.22)
+                ..strokeJoin = StrokeJoin.round
+                ..color = Colors.black)),
+      Text(text, style: style.copyWith(color: color)),
+    ]);
   }
 }
 

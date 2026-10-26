@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'chronicle.dart';
 import 'engine/cards.dart';
 import 'courtiers.dart';
@@ -2133,19 +2134,55 @@ class OrnateDivider extends StatelessWidget {
 
 /// Cards of one width laid out in columns, each going under the shortest
 /// column so far, so short and tall cards pack together with no gaps.
-/// The columns are centred in the space.
-class Masonry extends MultiChildRenderObjectWidget {
+/// The columns are centred in the space. When the cards change, those
+/// that stay glide to their new places (worked out during layout, so
+/// nothing is ever drawn a frame in the wrong place).
+class Masonry extends StatefulWidget {
   const Masonry(
       {super.key,
       required this.columnWidth,
       this.spacing = 6,
+      required this.children});
+  final double columnWidth;
+  final double spacing;
+  final List<Widget> children;
+
+  @override
+  State<Masonry> createState() => _MasonryState();
+}
+
+class _MasonryState extends State<Masonry> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 420), value: 1);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _MasonryLayout(
+        columnWidth: widget.columnWidth,
+        spacing: widget.spacing,
+        glide: _c,
+        children: widget.children,
+      );
+}
+
+class _MasonryLayout extends MultiChildRenderObjectWidget {
+  const _MasonryLayout(
+      {required this.columnWidth,
+      required this.spacing,
+      required this.glide,
       required super.children});
   final double columnWidth;
   final double spacing;
+  final AnimationController glide;
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderMasonry(columnWidth, spacing);
+      _RenderMasonry(columnWidth, spacing, glide);
 
   @override
   void updateRenderObject(BuildContext context, _RenderMasonry r) {
@@ -2155,14 +2192,23 @@ class Masonry extends MultiChildRenderObjectWidget {
   }
 }
 
-class _MasonryData extends ContainerBoxParentData<RenderBox> {}
+class _MasonryData extends ContainerBoxParentData<RenderBox> {
+  /// Where it was drawn when the latest glide began.
+  Offset? from;
+  bool placed = false;
+}
 
 class _RenderMasonry extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _MasonryData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _MasonryData> {
-  _RenderMasonry(this._columnWidth, this._spacing);
+  _RenderMasonry(this._columnWidth, this._spacing, this._glide);
   double _columnWidth, _spacing;
+  final AnimationController _glide;
+
+  /// Set when a glide was started in layout, until its first tick.
+  bool _starting = false;
+
   set columnWidth(double v) {
     if (v == _columnWidth) return;
     _columnWidth = v;
@@ -2173,6 +2219,32 @@ class _RenderMasonry extends RenderBox
     if (v == _spacing) return;
     _spacing = v;
     markNeedsLayout();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _glide.addListener(_tick);
+  }
+
+  @override
+  void detach() {
+    _glide.removeListener(_tick);
+    super.detach();
+  }
+
+  void _tick() {
+    if (_glide.value > 0) _starting = false;
+    markNeedsPaint();
+  }
+
+  double get _t =>
+      _starting ? 0 : Curves.easeInOutCubic.transform(_glide.value);
+
+  Offset _shown(_MasonryData d) {
+    final from = d.from;
+    if (from == null) return d.offset;
+    return Offset.lerp(from, d.offset, _t)!;
   }
 
   @override
@@ -2191,6 +2263,8 @@ class _RenderMasonry extends RenderBox
     final heights = List<double>.filled(cols, 0);
     final used = cols * colW + (cols - 1) * _spacing;
     final left = (maxW - used) / 2;
+    var moved = false;
+    final shownNow = <_MasonryData, Offset>{};
     var child = firstChild;
     while (child != null) {
       child.layout(BoxConstraints.tightFor(width: colW), parentUsesSize: true);
@@ -2199,19 +2273,58 @@ class _RenderMasonry extends RenderBox
         if (heights[i] < heights[c] - 0.5) c = i;
       }
       final data = child.parentData as _MasonryData;
-      data.offset = Offset(left + c * (colW + _spacing), heights[c]);
+      final next = Offset(left + c * (colW + _spacing), heights[c]);
+      // Wherever it shows now, mid-glide or not; new cards just appear.
+      shownNow[data] = data.placed ? _shown(data) : next;
+      if (data.placed && (next - data.offset).distance > 1) moved = true;
+      data.offset = next;
+      data.placed = true;
       heights[c] += child.size.height + _spacing;
       child = data.nextSibling;
+    }
+    if (moved) {
+      // Freeze everyone's starting point, then run the glide from the
+      // next frame.
+      for (final e in shownNow.entries) {
+        e.key.from = e.value;
+      }
+      _starting = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (attached) _glide.forward(from: 0);
+      });
     }
     final h = heights.fold<double>(0, math.max);
     size = constraints.constrain(Size(maxW, math.max(0, h - _spacing)));
   }
 
   @override
-  void paint(PaintingContext context, Offset offset) =>
-      defaultPaint(context, offset);
+  void paint(PaintingContext context, Offset offset) {
+    var child = firstChild;
+    while (child != null) {
+      final d = child.parentData as _MasonryData;
+      context.paintChild(child, offset + _shown(d));
+      child = d.nextSibling;
+    }
+  }
 
   @override
-  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
-      defaultHitTestChildren(result, position: position);
+  void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    final o = _shown(child.parentData as _MasonryData);
+    transform.translate(o.dx, o.dy);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    var child = lastChild;
+    while (child != null) {
+      final d = child.parentData as _MasonryData;
+      final hit = result.addWithPaintOffset(
+          offset: _shown(d),
+          position: position,
+          hitTest: (r, p) => child!.hitTest(r, position: p));
+      if (hit) return true;
+      child = d.previousSibling;
+    }
+    return false;
+  }
 }
