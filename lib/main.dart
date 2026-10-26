@@ -1277,16 +1277,32 @@ class _HomePageState extends State<HomePage>
   /// Every card in the deck, by suit: played (and in which trick, by
   /// whom), in your hand, shown by someone, or still to come.
   void _showCardTracker() {
+    // Half the screen to start, so the table stays in view; drag it up
+    // for more, or down (or tap the table) to put it away.
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Palette.feltDeep,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black26,
       isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, _) => _CardTracker(
-          cards: _cards,
-          you: _you,
-          players: game.players,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.5,
+        minChildSize: 0.2,
+        maxChildSize: 0.95,
+        snap: true,
+        snapSizes: const [0.5],
+        builder: (context, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Palette.feltDeep,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            border: Border(top: BorderSide(color: Color(0x88D4A63A))),
+          ),
+          child: _CardTracker(
+            cards: _cards,
+            you: _you,
+            players: game.players,
+            controller: controller,
+          ),
         ),
       ),
     );
@@ -1357,15 +1373,15 @@ class _HomePageState extends State<HomePage>
     }
     if (_choosingKing) return '';
     if (game.pickTurn != null) {
-      if (_speakPromptDue) return 'Before tasks are chosen: tap a card to show it, or save it';
+      if (_speakPromptDue) return 'Show a card first? Tap one';
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
             : game.canPass(_you)
-                ? 'Your pick: tap a task, or pass once a round'
+                ? 'Your pick: tap a task'
                 : 'Your pick: tap a task to take it';
       }
-      if (_speakPromptDue) return 'Before tasks are chosen: tap a card to show it, or save it';
+      if (_speakPromptDue) return 'Show a card first? Tap one';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
     if (!_tasksSettled) return 'Announcing numbers…';
@@ -1387,6 +1403,24 @@ class _HomePageState extends State<HomePage>
 
   /// Your hand along the bottom, fanned to fit: cards you may play stand
   /// up, the rest dim. Tap one to play it.
+  /// A small gold button in the hand's status line.
+  Widget _barAction(String label, IconData icon, VoidCallback onPressed) =>
+      Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 16),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Palette.gold,
+            side: const BorderSide(color: Palette.gold),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            minimumSize: const Size(0, 40),
+          ),
+        ),
+      );
+
   /// How wide the hand's cards may spread on a wide screen.
   double _handLimit = double.infinity;
 
@@ -1454,7 +1488,9 @@ class _HomePageState extends State<HomePage>
                           ? Palette.gold
                           : Colors.white70),
                   child: Text(
-                      _revealing
+                      _toast != null
+                          ? _toast!
+                          : _revealing
                           ? 'Tap a card to show it (highest, lowest or only of its suit)'
                           : _queued != null
                           ? 'You\u2019ll play the ${_queued!.label} on your turn (tap it again to change your mind)'
@@ -1466,6 +1502,13 @@ class _HomePageState extends State<HomePage>
                       textAlign: TextAlign.center),
                 ),
               ),
+              // The action of the moment, beside what's happening: save
+              // your card for later, or pass on picking.
+              if (_speakPromptDue)
+                _barAction('Save it', Icons.bookmark_added_outlined, _startChoosing)
+              else if (game.canPass(_you))
+                _barAction('Pass', Icons.redo_rounded,
+                    () => setState(() => game.pass(_you))),
               // Every card: which are played, which are still to come.
               if (_cards.dealId == game.dealId && !_storyActive)
                 IconButton(
@@ -2420,47 +2463,6 @@ class _HomePageState extends State<HomePage>
         Expanded(
           child: _storyActive
               ? const SizedBox.shrink()
-              : _speakPromptDue
-              // Before tasks are chosen: show a card (tap it in your hand)
-              // or keep it for later.
-              ? Row(children: [
-                  OutlinedButton.icon(
-                    onPressed: _startChoosing,
-                    icon: const Icon(Icons.bookmark_added_outlined, size: 18),
-                    label: const Text('Save it'),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: Palette.gold,
-                        side: const BorderSide(color: Palette.gold),
-                        minimumSize: const Size(0, 44)),
-                  ),
-                  const SizedBox(width: 10),
-                  const Flexible(
-                    child: Text('or tap a card to show it',
-                        style: TextStyle(fontSize: 13, color: Colors.white70)),
-                  ),
-                ])
-              : game.canPass(_you) && !_speakPromptDue
-              // Your pick: take a task from the middle, or pass it on.
-              ? SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                  for (final t in mine)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: _miniTask(
-                          t, math.min(width > 600 ? 190.0 : 140.0, width / 3),
-                          fontSize: width > 600 ? 15 : 13),
-                    ),
-                  OutlinedButton.icon(
-                    onPressed: () => setState(() => game.pass(_you)),
-                    icon: const Icon(Icons.redo_rounded, size: 18),
-                    label: const Text('Pass (once a round)'),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: Palette.gold,
-                        side: const BorderSide(color: Palette.gold),
-                        minimumSize: const Size(0, 44)),
-                  ),
-                ]))
               : mine.isEmpty
               ? Text(
                   game.pickTurn != null ? 'Your tasks will appear here' : 'No tasks for you this round',
@@ -3450,7 +3452,20 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  /// A short message shown in the hand's status line for a moment (on
+  /// screen; a pop-up bar there would cover your cards).
+  String? _toast;
+  Timer? _toastTimer;
+
   void _showSnack(String text, Color color) {
+    if (_digital && _inGame && !_storyActive) {
+      _toastTimer?.cancel();
+      setState(() => _toast = text);
+      _toastTimer = Timer(const Duration(milliseconds: 2600), () {
+        if (mounted && _toast == text) setState(() => _toast = null);
+      });
+      return;
+    }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -8571,7 +8586,11 @@ class _MoreAboutState extends State<_MoreAbout> {
 /// keeping count on the harder rounds.
 class _CardTracker extends StatelessWidget {
   const _CardTracker(
-      {required this.cards, required this.you, required this.players});
+      {required this.cards,
+      required this.you,
+      required this.players,
+      this.controller});
+  final ScrollController? controller;
   final MatchState cards;
   final int you;
   final List<Player> players;
@@ -8740,11 +8759,23 @@ class _CardTracker extends StatelessWidget {
           child: SizedBox(
             width: width,
             child: SingleChildScrollView(
+              controller: controller,
               padding: const EdgeInsets.only(bottom: 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // A handle to drag the panel up or down.
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: Colors.white38,
+                          borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
                   heading('The cards'),
                   Text(
                       '$toCome still to come in other hands'
@@ -8831,25 +8862,21 @@ class _MiniCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(width * 0.12))
           : null,
       alignment: Alignment.topLeft,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.topLeft,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(card.rankLabel,
-                style: TextStyle(
-                    fontFamily: court ? displayFont : bodyFont,
-                    fontWeight: FontWeight.w900,
-                    fontSize: width * 0.38,
-                    height: 1,
-                    color: ink)),
-            if (!court)
-              Text(card.suit.symbol,
-                  style: TextStyle(fontSize: width * 0.36, height: 1.05, color: ink)),
-          ],
-        ),
+      child: Text.rich(
+        TextSpan(children: [
+          TextSpan(
+              text: card.rankLabel,
+              style: TextStyle(
+                  fontFamily: court ? displayFont : bodyFont,
+                  fontWeight: FontWeight.w900,
+                  fontSize: width * 0.36)),
+          if (!court)
+            TextSpan(text: '\n${card.suit.symbol}', style: TextStyle(fontSize: width * 0.32)),
+        ]),
+        style: TextStyle(height: 1.05, color: ink),
+        maxLines: 2,
+        overflow: TextOverflow.clip,
+        softWrap: false,
       ),
     );
   }
