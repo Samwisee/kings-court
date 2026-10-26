@@ -12,6 +12,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/conflicts.dart';
+import 'package:kings_court/engine/deal_mix.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
@@ -77,20 +78,18 @@ class _Tally {
   return (s.won ?? false, failed, dealt);
 }
 
-/// Tasks that ask for an exact amount: too many and too few both fail.
-bool precise(String d) =>
-    d.contains('exactly') ||
-    d.startsWith("Don't win any tricks") ||
-    d.startsWith('Win only') ||
-    d.contains('same number') ||
-    d.contains('as many');
+bool precise(String d) => tierOf(d) == TaskTier.precise;
 
 void main() {
   test('Balance report', () {
     final seconds = int.tryParse(Platform.environment['BALANCE_SECONDS'] ?? '') ?? 60;
     final deadline = DateTime.now().add(Duration(seconds: seconds));
     final rand = Random(2026);
-    final bot = Bot(rand)..budget = 160;
+    // The same thinking time as the bots in the game.
+    final bot = Bot(rand)
+      ..budget = int.tryParse(Platform.environment['BALANCE_BUDGET'] ?? '') ?? 900;
+    // How often each task fails itself at four players, against its points.
+    final dealt4 = <String, int>{}, failed4 = <String, int>{};
     final configs = [
       for (final p in [3, 4, 5])
         for (final t in [6, 10, 14, 18, 22]) (p, t)
@@ -109,6 +108,14 @@ void main() {
       byConfig[(p, t)]!.add(won);
       for (final f in failed) {
         failedCount[f] = (failedCount[f] ?? 0) + 1;
+      }
+      if (p == 4) {
+        for (final d in tasks) {
+          dealt4[d] = (dealt4[d] ?? 0) + 1;
+        }
+        for (final f in failed) {
+          failed4[f] = (failed4[f] ?? 0) + 1;
+        }
       }
       byPrecise.putIfAbsent(tasks.where(precise).length.clamp(0, 2), _Tally.new).add(won);
       byTaskCount.putIfAbsent(tasks.length, _Tally.new).add(won);
@@ -134,7 +141,7 @@ void main() {
     }
     out
       ..writeln()
-      ..writeln('WIN RATE BY NUMBER OF "EXACT" TASKS (exactly / only / same / as many)');
+      ..writeln('WIN RATE BY NUMBER OF PRECISE TASKS (exactly / only / same / as many)');
     for (final k in byPrecise.keys.toList()..sort()) {
       out.writeln('${k == 2 ? '2+' : '$k '}  ${byPrecise[k]!.pct}  (${byPrecise[k]!.rounds} rounds)');
     }
@@ -153,10 +160,31 @@ void main() {
     for (final e in tasks) {
       out.writeln('${e.value.pct}  ${'${e.value.rounds}'.padLeft(4)}  fail ${'${failedCount[e.key] ?? 0}'.padLeft(3)}  ${e.key}');
     }
+    // Points from difficulty: rank the tasks by how often they fail
+    // themselves, and hand out the game's own spread of points in that
+    // order. Tasks far from their suggestion are mispriced.
+    final pool = {for (final t in GameState.taskPool) t.description: t.fourPlayerPoints};
+    final rated = [
+      for (final e in dealt4.entries)
+        if (e.value >= 20 && pool.containsKey(e.key))
+          (e.key, (failed4[e.key] ?? 0) / e.value)
+    ]..sort((a, b) => a.$2.compareTo(b.$2));
+    final spread = [for (final t in rated) pool[t.$1]!]..sort();
     out
       ..writeln()
-      ..writeln('WORST PAIRS (dealt together at least 5 times)');
-    final pairs = byPair.entries.where((e) => e.value.rounds >= 5).toList()
+      ..writeln('POINTS CHECK AT FOUR PLAYERS: how often a task fails itself, its points, and')
+      ..writeln('the points its difficulty suggests (! = 2 or more off)')
+      ..writeln('fails  dealt  pts  suggest');
+    for (int i = 0; i < rated.length; i++) {
+      final (d, rate) = rated[i];
+      final now = pool[d]!, want = spread[i];
+      out.writeln('${'${(rate * 100).round()}%'.padLeft(5)}  ${'${dealt4[d]}'.padLeft(5)}  '
+          '${'$now'.padLeft(3)}  ${'$want'.padLeft(3)} ${(now - want).abs() >= 2 ? '!' : ' '}  $d');
+    }
+    out
+      ..writeln()
+      ..writeln('WORST PAIRS (dealt together at least 30 times)');
+    final pairs = byPair.entries.where((e) => e.value.rounds >= 30).toList()
       ..sort((a, b) => a.value.rate.compareTo(b.value.rate));
     for (final e in pairs.take(25)) {
       out.writeln('${e.value.pct}  ${'${e.value.rounds}'.padLeft(3)}  ${e.key}');
