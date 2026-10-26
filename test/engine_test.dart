@@ -193,6 +193,7 @@ void main() {
 
   test('Clashing tasks are spotted', () {
     expect(clash('Win the 3♥', 'Win all four 3s'), isTrue);
+    expect(clash('Win a trick with a 3', 'Win all four 3s'), isTrue);
     expect(clash('Win the first trick', 'Win the first two tricks'), isTrue);
     expect(clash('Win more tricks than everyone else',
         'Win more tricks than everyone else together'), isTrue);

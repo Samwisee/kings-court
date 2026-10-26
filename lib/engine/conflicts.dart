@@ -148,6 +148,14 @@ final Map<String, TaskProfile> _profiles = {
       const TaskProfile(maxTricks: 3),
   "Win exactly two tricks, and they're in a row":
       const TaskProfile(maxTricks: 2),
+  // Winning with a number means winning that card too.
+  'Win a trick with a 2': const TaskProfile(ranks: {2: 1}),
+  'Win a trick with a 3': const TaskProfile(ranks: {3: 1}),
+  'Win a trick with a 5': const TaskProfile(ranks: {5: 1}),
+  'Win a trick with a 6': const TaskProfile(ranks: {6: 1}),
+  'Win a 5 with a 7': const TaskProfile(ranks: {5: 1, 7: 1}),
+  'Win an 8 with a 4': const TaskProfile(ranks: {4: 1, 8: 1}),
+  'Win any 6 with another 6': const TaskProfile(ranks: {6: 2}),
   'Win a trick with a 4': const TaskProfile(ranks: {4: 1}),
   'Win a trick with a 7': const TaskProfile(ranks: {7: 1}),
   'Win the 2♦': TaskProfile(cards: _cs(['2♦'])),

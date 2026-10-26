@@ -95,6 +95,7 @@ void main() {
         for (final t in [6, 10, 14, 18, 22]) (p, t)
     ];
     final byConfig = {for (final c in configs) c: _Tally()};
+    final tasksIn = {for (final c in configs) c: 0};
     final byPrecise = <int, _Tally>{};
     final byTaskCount = <int, _Tally>{};
     final byTask = <String, _Tally>{};
@@ -106,6 +107,7 @@ void main() {
       // Same draw as the game, then played out.
       final (won, failed, tasks) = playRound(p, t, rand, bot);
       byConfig[(p, t)]!.add(won);
+      tasksIn[(p, t)] = tasksIn[(p, t)]! + tasks.length;
       for (final f in failed) {
         failedCount[f] = (failedCount[f] ?? 0) + 1;
       }
@@ -134,10 +136,11 @@ void main() {
       ..writeln('$n rounds, bots see every card (best case), ${bot.budget} playouts per decision.')
       ..writeln()
       ..writeln('WIN RATE BY TABLE SIZE AND TARGET')
-      ..writeln('players  target  rounds  won');
+      ..writeln('players  target  rounds  won  tasks (average)');
     for (final c in configs) {
       final t = byConfig[c]!;
-      out.writeln('${'${c.$1}'.padLeft(7)}  ${'${c.$2}'.padLeft(6)}  ${'${t.rounds}'.padLeft(6)}  ${t.pct}');
+      out.writeln('${'${c.$1}'.padLeft(7)}  ${'${c.$2}'.padLeft(6)}  ${'${t.rounds}'.padLeft(6)}  ${t.pct}  '
+          '${(tasksIn[c]! / max(1, t.rounds)).toStringAsFixed(1)}');
     }
     out
       ..writeln()
