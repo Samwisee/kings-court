@@ -8873,3 +8873,70 @@ class _MiniCard extends StatelessWidget {
     );
   }
 }
+
+/// A button that softly pulses with a gold glow, to draw the eye.
+class _GlowButton extends StatefulWidget {
+  const _GlowButton({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  State<_GlowButton> createState() => _GlowButtonState();
+}
+
+class _GlowButtonState extends State<_GlowButton>
+    with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1200));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // No pulsing for reduced motion (or in tests, where it would never
+    // settle).
+    final still = MediaQuery.of(context).disableAnimations ||
+        !CharacterToken.alive;
+    if (still) {
+      _pulse.stop();
+      _pulse.value = 0.6;
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, child) => DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                  color: Palette.gold.withValues(alpha: 0.25 + 0.45 * _pulse.value),
+                  blurRadius: 8 + 10 * _pulse.value,
+                  spreadRadius: 1),
+            ],
+          ),
+          child: child,
+        ),
+        child: FilledButton(
+          onPressed: widget.onPressed,
+          style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 18)),
+          child: Text(widget.label),
+        ),
+      ),
+    );
+  }
+}
