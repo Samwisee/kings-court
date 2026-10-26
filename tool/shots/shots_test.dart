@@ -187,7 +187,7 @@ void main() {
         for (int i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
-        await tester.tap(find.text('Four-colour suits off'));
+        await tester.tap(find.text('Four-colour suits'));
         for (int i = 0; i < 30; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
@@ -293,7 +293,9 @@ void main() {
         await snap(tap.replaceAll(' ', '-').toLowerCase());
       }
       if (tap != null) {
-        await tester.tap(find.text(tap).hitTestable().first);
+        // It may have moved on by itself while the shot was taken.
+        final still = find.text(tap).hitTestable();
+        if (still.evaluate().isNotEmpty) await tester.tap(still.first);
         continue;
       }
       if (d != null && game.outcome != RoundOutcome.inProgress) {

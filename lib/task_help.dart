@@ -42,6 +42,7 @@ List<String> termsIn(String d) {
       !lower.startsWith('win a trick') &&
       RegExp(r'card|[a2-9][♥♦♠♣]|\ds\b|aces|queen|joker|jack').hasMatch(lower);
   if (aboutCards) {
+    if (!words.contains('Trick')) words.add('Trick');
     words.add('Win a card');
   } else if (lower.contains('trick')) {
     words.add('Win a trick');

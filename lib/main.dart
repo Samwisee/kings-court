@@ -3816,22 +3816,38 @@ class _HomePageState extends State<HomePage>
 
   /// The menu on the right: the rules, the Chronicle and sound.
   /// One line of the menu: a gold icon and a regal title.
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String title) =>
+  /// A menu entry; [on] adds a tick box for a setting.
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String title,
+          {bool? on}) =>
       PopupMenuItem(
         value: value,
         height: 52,
-        child: Row(
-          children: [
-            Icon(icon, color: Palette.gold, size: 22),
-            const SizedBox(width: 14),
-            Text(title,
-                style: const TextStyle(
-                    fontFamily: displayFont,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    letterSpacing: 0.3,
-                    color: Color(0xFFF3E7C6))),
-          ],
+        child: Semantics(
+          toggled: on,
+          child: Row(
+            children: [
+              Icon(icon, color: Palette.gold, size: 22),
+              const SizedBox(width: 14),
+              Flexible(
+                child: Text(title,
+                    style: const TextStyle(
+                        fontFamily: displayFont,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        letterSpacing: 0.3,
+                        color: Color(0xFFF3E7C6))),
+              ),
+              if (on != null) ...[
+                const SizedBox(width: 10),
+                Icon(
+                    on
+                        ? Icons.check_box_rounded
+                        : Icons.check_box_outline_blank_rounded,
+                    color: Palette.gold,
+                    size: 22),
+              ],
+            ],
+          ),
         ),
       );
 
@@ -3902,12 +3918,8 @@ class _HomePageState extends State<HomePage>
             Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
             Sfx.enabled ? 'Fanfares on' : 'Fanfares off'),
         // For colour-blind players: no two suits share a colour.
-        _menuItem(
-            'suits',
-            Icons.palette_outlined,
-            Palette.fourColourSuits
-                ? 'Four-colour suits on'
-                : 'Four-colour suits off'),
+        _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
+            on: Palette.fourColourSuits),
       ],
     );
   }
