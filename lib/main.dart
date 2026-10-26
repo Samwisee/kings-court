@@ -1211,6 +1211,24 @@ class _HomePageState extends State<HomePage>
     };
   }
 
+  /// Every card in the deck, by suit: played (and in which trick, by
+  /// whom), in your hand, shown by someone, or still to come.
+  void _showCardTracker() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Palette.feltDeep,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, _) => _CardTracker(
+          cards: _cards,
+          you: _you,
+          players: game.players,
+        ),
+      ),
+    );
+  }
+
   /// The cards [t] is about, and what's become of each this round.
   List<(PlayingCard, _CardFate)> _cardStates(Task t) {
     final cards = relevantCards(t.description);
@@ -1366,6 +1384,13 @@ class _HomePageState extends State<HomePage>
                       textAlign: TextAlign.center),
                 ),
               ),
+              // Every card: which are played, which are still to come.
+              if (_cards.dealId == game.dealId && !_storyActive)
+                IconButton(
+                  tooltip: 'Cards played and still to come',
+                  onPressed: _showCardTracker,
+                  icon: const Icon(Icons.grid_view_rounded, color: Palette.gold),
+                ),
               // Pass on picking, once a round.
               if (game.canPass(_you))
                 TextButton(
@@ -8334,6 +8359,138 @@ class _MoreAboutState extends State<_MoreAbout> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+
+/// Every card in the deck, row by suit, marked with what's become of it:
+/// played (with the trick and who played it), in your hand, shown by a
+/// courtier, or still to come. For keeping count on the harder rounds.
+class _CardTracker extends StatelessWidget {
+  const _CardTracker(
+      {required this.cards, required this.you, required this.players});
+  final MatchState cards;
+  final int you;
+  final List<Player> players;
+
+  @override
+  Widget build(BuildContext context) {
+    final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
+    for (int i = 0; i < cards.tricks.length; i++) {
+      final t = cards.tricks[i];
+      for (int k = 0; k < t.cards.length; k++) {
+        playedIn[t.cards[k]] = (i + 1, t.seats[k]);
+      }
+    }
+    for (int k = 0; k < cards.current.length; k++) {
+      playedIn[cards.current[k]] = (cards.tricks.length + 1, cards.currentSeats[k]);
+    }
+    final mine = cards.hands.length > you ? cards.hands[you].toSet() : <PlayingCard>{};
+    final shown = <PlayingCard, int>{
+      for (final e in cards.revealed.entries)
+        if (cards.hands[e.key].contains(e.value)) e.value: e.key
+    };
+    final deck = fullDeck();
+    final toCome = deck
+        .where((c) => !playedIn.containsKey(c) && !mine.contains(c))
+        .length;
+    final rows = [
+      for (final s in const [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs, Suit.court])
+        [for (final c in deck) if (c.suit == s) c]
+    ];
+
+    Widget cell(PlayingCard c, double w) {
+      final p = playedIn[c];
+      final isMine = mine.contains(c);
+      final shownBy = shown[c];
+      final label = p != null
+          ? 'T${p.$1}'
+          : isMine
+              ? 'yours'
+              : shownBy != null
+                  ? 'shown'
+                  : '';
+      final labelColour = p != null
+          ? players[p.$2].color
+          : shownBy != null
+              ? players[shownBy].color
+              : Palette.gold;
+      return Semantics(
+        label: '${c.spoken}: ${p != null ? 'played in trick ${p.$1} by ${players[p.$2].name}' : isMine ? 'in your hand' : shownBy != null ? 'shown by ${players[shownBy].name}' : 'still to come'}',
+        excludeSemantics: true,
+        child: SizedBox(
+          width: w,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            PlayingCardView(
+              card: c,
+              width: w,
+              dimmed: p != null,
+              edge: isMine ? Palette.gold : shownBy != null ? players[shownBy].color : null,
+            ),
+            const SizedBox(height: 2),
+            SizedBox(
+              height: 14,
+              child: Text(label,
+                  style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w800, color: labelColour)),
+            ),
+          ]),
+        ),
+      );
+    }
+
+    return SafeArea(
+      child: LayoutBuilder(builder: (context, box) {
+        final width = math.min(box.maxWidth, 620.0) - 32;
+        final w = clampD((width - 8 * 4) / 9, 22, 54);
+        return Center(
+          child: SizedBox(
+            width: width,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('The cards',
+                      style: TextStyle(
+                          fontFamily: displayFont,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 22,
+                          color: Palette.gold)),
+                  const SizedBox(height: 4),
+                  Text(
+                      '$toCome still to come in other hands'
+                      '${cards.setAside.isNotEmpty ? ' (one of them set aside, unseen)' : ''}. '
+                      'Played cards are shaded, marked with their trick in the colour of who played them.',
+                      style: const TextStyle(
+                          fontSize: 14, height: 1.35, color: Colors.white70)),
+                  const SizedBox(height: 12),
+                  for (final row in rows) ...[
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: [for (final c in row) cell(c, w)],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Wrap(spacing: 14, runSpacing: 6, children: [
+                    for (final p in players)
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        CircleAvatar(radius: 6, backgroundColor: p.color),
+                        const SizedBox(width: 5),
+                        Text(p.name,
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.white70)),
+                      ]),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

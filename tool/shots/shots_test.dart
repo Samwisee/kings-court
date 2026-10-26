@@ -185,6 +185,16 @@ void main() {
         }
       }
       if (onScreen) {
+        await tester.tap(find.byTooltip('Cards played and still to come'));
+        for (int i = 0; i < 25; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+        await expectLater(find.byType(MaterialApp),
+            matchesGoldenFile('goldens/wide-$name-5-cards.png'));
+        await tester.tapAt(const Offset(20, 20));
+        for (int i = 0; i < 25; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
         await tester.tap(find.byTooltip('Menu'));
         for (int i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));

@@ -157,6 +157,7 @@ const introPages = <IntroPage>[
     'Before the first trick, everyone takes tasks one at a time, starting with the King. Take the tasks your cards can do: high cards win tricks, low cards lose them.',
     'You can’t say what’s in your hand. Watch what the others play instead, and once a round you may show one card (next page).',
     'If no task suits your cards when it’s your turn to pick, you may pass once a round and let the next player choose.',
+    'Lost count? The grid button beside your hand shows every card: which have been played, in which trick and by whom, and which are still to come.',
     'Your courtiers on screen play with you, not against you. They’ll try to help you with your tasks, and you can help them with theirs.',
   ], IntroArt.together),
   IntroPage('Showing a card', [

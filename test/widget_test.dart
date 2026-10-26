@@ -1244,6 +1244,15 @@ void main() {
         }
       }
       expect(game.outcome, isNot(RoundOutcome.inProgress));
+      if (mode == 'Free play') {
+        // Every card, played and still to come.
+        final grid = find.byTooltip('Cards played and still to come');
+        if (grid.hitTestable().evaluate().isNotEmpty) {
+          await tester.tap(grid.hitTestable());
+          await tester.pump(const Duration(milliseconds: 500));
+          expect(find.text('The cards'), findsOneWidget);
+        }
+      }
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 2));
     });
