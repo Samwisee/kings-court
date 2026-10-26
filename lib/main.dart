@@ -23,6 +23,7 @@ import 'play/contest_table.dart';
 import 'play/throne_room.dart';
 import 'sfx.dart';
 import 'theme.dart';
+import 'tutorial.dart';
 import 'widgets.dart';
 
 void main() {
@@ -474,6 +475,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _save() async {
+    // The tutorial is never saved, so it can't replace a game in progress.
+    if (game.isTutorial) return;
     try {
       final data = {
         'game': game.toJson(),
@@ -704,9 +707,17 @@ class _HomePageState extends State<HomePage>
             playableWith(t.description, hands, inPlay) &&
             _possible(t, hands, inPlay)),
       );
+      // The tutorial deals the same cards every time, with you as King.
+      if (game.isTutorial) {
+        final d = lessons[game.lesson].deal();
+        c.hands = d.hands;
+        c.setAside = d.setAside;
+        c.king = _you;
+        c.leader = _you;
+      }
       // Any task the deal still makes impossible is swapped for one that
       // can be done.
-      for (int i = 0; i < game.tasks.length; i++) {
+      for (int i = 0; i < game.tasks.length && !game.isTutorial; i++) {
         final t = game.tasks[i];
         if (t.assignedPlayerIndex != null || _possible(t, c.hands, c.inPlay)) {
           continue;
@@ -782,7 +793,7 @@ class _HomePageState extends State<HomePage>
       return;
     }
     if (!_digital || _botTimer != null || _botBusy) return;
-    _botTimer = Timer(botDelay, () {
+    _botTimer = Timer(game.isTutorial ? botDelay * 2 : botDelay, () {
       _botTimer = null;
       if (mounted) _botStep();
     });
@@ -893,13 +904,22 @@ class _HomePageState extends State<HomePage>
       return true;
     }
     // Between tricks, any bot may show a card someone needs.
-    if (_cards.current.isEmpty) {
+    if (_cards.current.isEmpty && !game.isTutorial) {
       for (int s = 0; s < game.players.length; s++) {
         if (s != _you && _botReveals(s)) return true;
       }
     }
     final turn = _cards.turn;
     if (turn == _you) return false;
+    // The tutorial's courtiers follow the lesson's script while it holds.
+    if (game.isTutorial) {
+      final planned =
+          lessons[game.lesson].scripted(_cards.tricks.length, turn);
+      if (planned != null && _cards.legalFor(turn).contains(planned)) {
+        _playCard(turn, planned);
+        return true;
+      }
+    }
     final card = await _bot.choosePlayAsync(view, turn);
     if (!mounted || _moment != before) return true;
     _playCard(turn, card);
@@ -991,10 +1011,12 @@ class _HomePageState extends State<HomePage>
       _lastTrick = trick;
       _collecting = false;
     });
-    _trickTimers.add(Timer(trickPause * 0.6, () {
+    // The tutorial holds each trick longer, so the coach can explain it.
+    final pause = game.isTutorial ? trickPause * 3 : trickPause;
+    _trickTimers.add(Timer(pause * 0.6, () {
       if (mounted) setState(() => _collecting = true);
     }));
-    _trickTimers.add(Timer(trickPause, () {
+    _trickTimers.add(Timer(pause, () {
       if (!mounted || !_digital) return;
       setState(() {
         _lastTrick = null;
@@ -1294,6 +1316,7 @@ class _HomePageState extends State<HomePage>
                                 card: card,
                                 width: cardW,
                                 dimmed: yourTurn && !legal.contains(card),
+                                glow: yourTurn && card == _tutorialHint,
                                 marks: _marksFor(card),
                               ),
                             ),
@@ -2367,7 +2390,10 @@ class _HomePageState extends State<HomePage>
       return true;
     }
     if (_yourPlay) {
-      _playCard(_you, _cards.legalFor(_you).first);
+      // The tutorial follows its own advice.
+      final legal = _cards.legalFor(_you);
+      final hint = _tutorialHint;
+      _playCard(_you, hint != null && legal.contains(hint) ? hint : legal.first);
       return true;
     }
     return false;
@@ -2379,7 +2405,8 @@ class _HomePageState extends State<HomePage>
       {bool surprise = false,
       bool roles = true,
       bool digital = false,
-      int? chapter}) {
+      int? chapter,
+      int lesson = 0}) {
     if (chapter != null) {
       target = chronicle[chapter].points;
       _progress.startAttempt(chapter);
@@ -2390,6 +2417,7 @@ class _HomePageState extends State<HomePage>
       targetPoints = target;
       game = GameState()
         ..mode = mode
+        ..lesson = lesson
         ..chapter = chapter
         ..surprise = surprise
         ..roles = roles
@@ -2408,15 +2436,259 @@ class _HomePageState extends State<HomePage>
               ? 'You'
               : game.isDynasty
                   ? game.personAt(i)
-                  : game.hasRoles
-                      ? game.courtiers[i].title
-                      : 'Bot ${i + 1}';
+                  : mode == GameMode.tutorial
+                      ? tutorialCourtiers[i]
+                      : game.hasRoles
+                          ? game.courtiers[i].title
+                          : 'Bot ${i + 1}';
         }
       }
       _resetTable();
       _saved = null;
     });
     _keepAwake(true);
+  }
+
+  // ------------------------------------------------------------ tutorial
+
+  /// Starts tutorial lesson [i] (see tutorial.dart): three seats, you as
+  /// King, cards on screen.
+  void _beginLesson(int i) {
+    setState(() => _setupArgs = null);
+    _startGame(3, 1, tutorialCourtiers, GameMode.tutorial,
+        roles: false, digital: true, lesson: i);
+  }
+
+  void _nextLesson() {
+    if (game.lesson >= lessons.length - 1) {
+      _finishTutorial();
+      return;
+    }
+    setState(() => game.lesson++);
+    _shuffleTasks();
+  }
+
+  /// Leaves the tutorial for the welcome table, and offers a real game.
+  Future<void> _finishTutorial() async {
+    _botTimer?.cancel();
+    _botTimer = null;
+    setState(() {
+      game = GameState();
+      _resetTable();
+      _saved = null;
+    });
+    _keepAwake(false);
+    // Any game saved before the tutorial can be continued again.
+    await _loadSaved();
+    if (!mounted) return;
+    final play = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Palette.feltDeep,
+        surfaceTintColor: Colors.transparent,
+        title: const Row(children: [
+          CrownIcon(size: 26),
+          SizedBox(width: 10),
+          Text('You’re ready',
+              style: TextStyle(
+                  fontFamily: displayFont,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24)),
+        ]),
+        content: const Text(
+            'That’s the heart of King’s Court. Real rounds have more tasks, and some bring seals and royal decrees: How to Play in the menu explains them all.\n\nFree play is a good place to start. Dynasty tells a story of kings.',
+            style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Not now')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Play a game')),
+        ],
+      ),
+    );
+    if (play == true && mounted) _showSetupDialog();
+  }
+
+  /// The card the tutorial suggests on this trick, if it's your turn.
+  PlayingCard? get _tutorialHint => game.isTutorial &&
+          _digital &&
+          _cards.dealId == game.dealId &&
+          game.lesson < lessons.length
+      ? lessons[game.lesson].hint(_cards.tricks.length)
+      : null;
+
+  /// What the tutorial's coach says right now.
+  String? get _coachLine {
+    if (!game.isTutorial || !_inGame || game.lesson >= lessons.length) {
+      return null;
+    }
+    final l = lessons[game.lesson];
+    if (game.outcome != RoundOutcome.inProgress) return null;
+    if (_choosingKing || _crowning != null || _dealtFor != game.dealId) {
+      return l.intro;
+    }
+    if (game.pickTurn == _you) return l.pick;
+    if (game.pickTurn != null) {
+      return '${game.players[game.pickTurn!].name} is choosing a task.';
+    }
+    final c = _cards;
+    if (_lastTrick != null) {
+      final done = c.tricks.length - 1;
+      return l.afterTrick[done] ??
+          (_lastTrick!.winner == _you
+              ? 'You won the trick.'
+              : '${game.players[_lastTrick!.winner].name} won the trick, and leads the next one.');
+    }
+    if (_yourPlay) {
+      final led = c.led;
+      return l.yourTurn[c.tricks.length] ??
+          (led == null
+              ? 'Your lead: play any card.'
+              : 'Your turn: follow ${led.isCourt ? 'with a Court Card' : led.suit.symbol} if you can.');
+    }
+    return l.watch[c.tricks.length] ?? 'The courtiers are playing.';
+  }
+
+  /// The coach: a parchment note between the table and your hand.
+  Widget _buildCoach() {
+    final line = _coachLine;
+    final l = lessons[math.min(game.lesson, lessons.length - 1)];
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      child: line == null
+          ? const SizedBox(width: double.infinity)
+          : Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              padding: const EdgeInsets.fromLTRB(14, 6, 6, 12),
+              decoration: BoxDecoration(
+                color: Palette.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Palette.gold, width: 1.5),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Colors.black38, blurRadius: 10, offset: Offset(0, 3))
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const CrownIcon(size: 14, color: Palette.goldDeep),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                          'Lesson ${game.lesson + 1} of ${lessons.length} · ${l.title}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontFamily: displayFont,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: Palette.goldDeep)),
+                    ),
+                    TextButton(
+                      onPressed: _finishTutorial,
+                      style: TextButton.styleFrom(
+                          foregroundColor: Palette.goldDeep,
+                          visualDensity: VisualDensity.compact),
+                      child: const Text('Skip tutorial'),
+                    ),
+                  ]),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: SizedBox(
+                        key: ValueKey(line),
+                        width: double.infinity,
+                        child: SuitText(line,
+                            style: const TextStyle(
+                                fontSize: 15.5, height: 1.35, color: Palette.ink)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  /// The end of a lesson: what it taught, and on to the next.
+  Widget _buildLessonCard(bool won, Color fg) {
+    final l = lessons[math.min(game.lesson, lessons.length - 1)];
+    final last = game.lesson >= lessons.length - 1;
+    return Container(
+      margin: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 14),
+      constraints: const BoxConstraints(maxWidth: 380),
+      decoration: BoxDecoration(
+        color: won ? Palette.gold : Palette.feltDeep,
+        borderRadius: BorderRadius.circular(16),
+        border: won ? null : Border.all(color: Palette.lost, width: 2),
+        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CrownIcon(size: 44, color: won ? Palette.ink : Palette.lost),
+          const SizedBox(height: 6),
+          Text('Lesson ${game.lesson + 1}: ${l.title}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontFamily: displayFont,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: won ? Palette.ink : Palette.gold)),
+          Text(
+              won
+                  ? (last ? 'Tutorial complete' : 'Lesson complete')
+                  : 'Not quite',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontFamily: displayFont,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 30,
+                  color: fg)),
+          const SizedBox(height: 6),
+          SuitText(won ? l.won : l.lost,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, height: 1.35, color: fg)),
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton(
+                onPressed: _retryRound,
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: fg,
+                    side: BorderSide(color: won ? Palette.ink : Colors.white54)),
+                child: Text(won ? 'Replay lesson' : 'Try again'),
+              ),
+              FilledButton(
+                onPressed: _nextLesson,
+                style: won
+                    ? FilledButton.styleFrom(
+                        backgroundColor: Palette.ink,
+                        foregroundColor: Palette.gold)
+                    : null,
+                child: Text(last
+                    ? 'Finish'
+                    : won
+                        ? 'Next lesson'
+                        : 'Skip to the next lesson'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void _resetTable() {
@@ -3189,6 +3461,10 @@ class _HomePageState extends State<HomePage>
 
   void _startFromSetup(_SetupResult r) {
     setState(() => _setupArgs = null);
+    if (r.mode == GameMode.tutorial) {
+      _beginLesson(0);
+      return;
+    }
     _startGame(r.count, r.target, r.names, r.mode,
         surprise: r.surprise,
         roles: r.roles,
@@ -3290,6 +3566,7 @@ class _HomePageState extends State<HomePage>
                   ? _digital
                       ? Column(children: [
                           Expanded(child: _buildDigitalTable()),
+                          if (game.isTutorial) _buildCoach(),
                           // The story has the table: no hand to play.
                           AnimatedSize(
                             duration: const Duration(milliseconds: 350),
@@ -5536,6 +5813,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildOutcomeCard(bool won, Color fg) {
+    if (game.isTutorial) return _buildLessonCard(won, fg);
     final chapter = game.mode == GameMode.chronicle ? game.chapter : null;
     final hasNext = chapter != null && chapter < chronicle.length - 1;
     return StatefulBuilder(
@@ -5731,15 +6009,29 @@ class _HomePageState extends State<HomePage>
               crownSize: clampD(c.maxWidth * 0.42, 120, 200),
               button: SizedBox(
                 width: 240,
-                child: _saved == null
-                    ? FilledButton.icon(
-                        onPressed: _showSetupDialog,
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Play'))
-                    : FilledButton.icon(
-                        onPressed: _continueSaved,
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Continue')),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _saved == null
+                        ? FilledButton.icon(
+                            onPressed: _showSetupDialog,
+                            icon: const Icon(Icons.play_arrow_rounded),
+                            label: const Text('Play'))
+                        : FilledButton.icon(
+                            onPressed: _continueSaved,
+                            icon: const Icon(Icons.play_arrow_rounded),
+                            label: const Text('Continue')),
+                    const SizedBox(height: 6),
+                    // New here: four short guided rounds.
+                    TextButton.icon(
+                      onPressed: () => _beginLesson(0),
+                      icon: const Icon(Icons.school_rounded, size: 20),
+                      label: const Text('Learn to play'),
+                      style: TextButton.styleFrom(foregroundColor: Palette.gold),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -5976,6 +6268,7 @@ Future<void> showRulesDialog(BuildContext context) {
     (
       'Ways to play',
       [
+        'Tutorial: four short, guided rounds that teach the basics. Start it from Learn to play on the welcome screen, or pick Tutorial when you set up a game.',
         'Free play: you choose the points. Turn on Seals and decrees for surprises.',
         'Courtly roles (any mode): everyone plays a courtier of a great house, with a token shape and a power to use once per round. Tap your seat to read your house and power and to mark it used.',
         'Dynasty: a King who reigns until they fall, with courtiers, powers and dilemmas (see below).',
@@ -6339,6 +6632,10 @@ const _modeInfo = {
     'Dynasty',
     'A story of kings. The King rules until wounds bring them down. Face dilemmas, keep your courtiers loyal, and watch for traitors.'
   ),
+  GameMode.tutorial: (
+    'Tutorial',
+    'New to the court? Four short, guided rounds teach you to lead, follow, use Court Cards and help each other.'
+  ),
 };
 
 class _SetupPanelState extends State<_SetupPanel> {
@@ -6395,7 +6692,9 @@ class _SetupPanelState extends State<_SetupPanel> {
     if (chosen != null && mounted) setState(() => chapter = chosen);
   }
 
-  void _next() => step == _steps - 1 ? _start() : setState(() => step++);
+  void _next() => step == _steps - 1 || mode == GameMode.tutorial
+      ? _start()
+      : setState(() => step++);
   void _back() => step == 0 ? widget.onCancel() : setState(() => step--);
 
   static const _heading = TextStyle(
@@ -6576,6 +6875,8 @@ class _SetupPanelState extends State<_SetupPanel> {
             ),
           ],
         );
+      case GameMode.tutorial:
+        return const SizedBox.shrink();
       case GameMode.free:
       case GameMode.endless:
         return Column(
@@ -6704,11 +7005,13 @@ class _SetupPanelState extends State<_SetupPanel> {
                     child: Text(
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        !last
-                            ? 'Next'
-                            : mode == GameMode.dynasty
-                                ? 'Begin the reign'
-                                : 'Deal tasks'),
+                        mode == GameMode.tutorial
+                            ? 'Start the tutorial'
+                            : !last
+                                ? 'Next'
+                                : mode == GameMode.dynasty
+                                    ? 'Begin the reign'
+                                    : 'Deal tasks'),
                       ),
                     ),
                   ),

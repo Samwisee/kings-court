@@ -7,15 +7,18 @@ import 'engine/match.dart';
 import 'engine/conflicts.dart';
 import 'engine/rules.dart';
 import 'tasks.dart';
+import 'tutorial.dart';
 import 'theme.dart';
 
 enum TaskStatus { pending, completed, failed }
 
 enum RoundOutcome { inProgress, won, lost }
 
-/// Free play; Endless (each win adds a point); the Chronicle chapters; or
-/// Dynasty, where the King reigns until they fall.
-enum GameMode { free, endless, chronicle, dynasty }
+/// Free play; Endless (each win adds a point); the Chronicle chapters;
+/// Dynasty, where the King reigns until they fall; or the Tutorial, short
+/// set-up rounds that teach the game (see tutorial.dart). New modes go on
+/// the end: saved games store the index.
+enum GameMode { free, endless, chronicle, dynasty, tutorial }
 
 const minPlayers = 2;
 const maxPlayers = 6;
@@ -136,6 +139,10 @@ class GameState {
 
   /// The Chronicle chapter being played, if any.
   int? chapter;
+
+  /// The tutorial lesson being played (see [lessons]).
+  int lesson = 0;
+  bool get isTutorial => mode == GameMode.tutorial;
 
   /// Free play and Endless: add random seals and decrees to each round.
   bool surprise = false;
@@ -1358,6 +1365,17 @@ class GameState {
     _resultRecorded = false;
     _resetRoundCounters();
     final rand = Random();
+    // The tutorial sets its own tasks, with no seals or decrees.
+    if (isTutorial) {
+      sealCount = 0;
+      decree = null;
+      final lessonTasks = lessons[max(0, min(lesson, lessons.length - 1))].tasks;
+      tasks.addAll([
+        for (final d in lessonTasks)
+          taskPool.firstWhere((t) => t.description == d).freshCopy()..seal = null
+      ]);
+      return;
+    }
     if (newRound) {
       if (mode == GameMode.chronicle && chapter != null) {
         sealCount = chronicle[chapter!].seals;
@@ -1459,6 +1477,7 @@ class GameState {
         'pickTurn': pickTurn,
         'mode': mode.index,
         'chapter': chapter,
+        'lesson': lesson,
         'surprise': surprise,
         'roles': roles,
         'cards': cards?.toJson(),
@@ -1534,6 +1553,7 @@ class GameState {
         ..pickTurn = j['pickTurn'] as int?
         ..mode = GameMode.values[(j['mode'] as int?) ?? 0]
         ..chapter = j['chapter'] as int?
+        ..lesson = (j['lesson'] as int?) ?? 0
         ..surprise = (j['surprise'] as bool?) ?? false
         ..roles = (j['roles'] as bool?) ?? true
         ..cards = j['cards'] == null

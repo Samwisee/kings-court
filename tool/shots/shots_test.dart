@@ -42,6 +42,50 @@ void main() {
     await loadFonts();
   });
 
+  testWidgets('Tutorial', (tester) async {
+    tester.view.physicalSize = const Size(780, 1688);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await expectLater(
+        find.byType(MaterialApp), matchesGoldenFile('goldens/tut-0-welcome.png'));
+    await tester.tap(find.text('Learn to play'));
+    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final game = state.game as GameState;
+    Future<void> frames(int n) async {
+      for (int i = 0; i < n; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+    }
+
+    Future<void> snap(String name) => expectLater(
+        find.byType(MaterialApp), matchesGoldenFile('goldens/tut-$name.png'));
+    for (int lesson = 0; lesson < 4; lesson++) {
+      for (int i = 0; i < 300 && game.pickTurn != 0; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await frames(40);
+      await snap('${lesson + 1}a-pick');
+      state.debugYourMove();
+      await frames(80);
+      await snap('${lesson + 1}b-play');
+      for (int i = 0; i < 2000 && game.outcome == RoundOutcome.inProgress; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+        state.debugYourMove();
+      }
+      await frames(40);
+      await snap('${lesson + 1}c-done');
+      final next = find.text(lesson == 3 ? 'Finish' : 'Next lesson');
+      if (next.evaluate().isEmpty) break;
+      await tester.tap(next);
+      await tester.pump();
+    }
+    await frames(30);
+    await snap('5-ready');
+  });
+
   testWidgets('A throne room on its own', (tester) async {
     tester.view.physicalSize = const Size(780, 1688);
     tester.view.devicePixelRatio = 2;

@@ -10,6 +10,7 @@ import 'package:kings_court/main.dart';
 import 'package:kings_court/sfx.dart';
 import 'package:kings_court/story.dart';
 import 'package:kings_court/models.dart';
+import 'package:kings_court/tutorial.dart';
 import 'package:kings_court/widgets.dart';
 import 'dart:math';
 import 'package:kings_court/engine/cards.dart';
@@ -105,7 +106,8 @@ void main() {
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pump();
     expect(find.text("The King's Court"), findsOneWidget);
-    expect(find.text('Play'), findsOneWidget); // the only button
+    expect(find.text('Play'), findsOneWidget);
+    expect(find.text('Learn to play'), findsOneWidget); // the tutorial
     expect(find.text('New Game'), findsNothing);
     expect(find.text('Continue'), findsNothing); // nothing saved yet
   });
@@ -1215,6 +1217,43 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     });
   }
+
+  testWidgets('The tutorial plays through every lesson, following the coach',
+      (tester) async {
+    setPhoneSize(tester);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Learn to play'));
+    await tester.pump();
+    final state = tester.state(find.byType(HomePage)) as dynamic;
+    for (int lesson = 0; lesson < lessons.length; lesson++) {
+      final game = state.game as GameState;
+      expect(game.isTutorial, isTrue);
+      expect(game.lesson, lesson);
+      expect(game.players.map((p) => p.name), tutorialCourtiers);
+      for (int i = 0;
+          i < 2000 && game.outcome == RoundOutcome.inProgress;
+          i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+        state.debugYourMove();
+      }
+      expect(game.outcome, RoundOutcome.won,
+          reason: 'lesson ${lesson + 1}: ${lessons[lesson].title}');
+      expect(game.kingIndex, 0, reason: 'you are the King');
+      await tester.pump(const Duration(milliseconds: 600));
+      final last = lesson == lessons.length - 1;
+      expect(find.text(last ? 'Tutorial complete' : 'Lesson complete'),
+          findsOneWidget);
+      await tester.tap(find.text(last ? 'Finish' : 'Next lesson'));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('You\u2019re ready'), findsOneWidget);
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(find.text('Learn to play'), findsOneWidget); // back at the welcome
+  });
 
   test('Roman numerals for reigns', () {
     expect([1, 2, 4, 9, 14].map(roman), ['I', 'II', 'IV', 'IX', 'XIV']);
