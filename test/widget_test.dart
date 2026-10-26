@@ -395,7 +395,7 @@ void main() {
         of: find.byType(Center), matching: find.byType(Slider)).first,
         const Offset(200, 0));
     await tester.pumpAndSettle();
-    final deal = find.textContaining(RegExp(r'^Deal \d+ points$'));
+    final deal = find.text('Deal');
     expect(deal, findsOneWidget);
     await tester.tap(deal);
     await tester.pumpAndSettle();
@@ -490,9 +490,11 @@ void main() {
     await tester.tap(find.byType(SeatToken).at(2));
     await tester.pumpAndSettle();
     expect(find.text(game.courtiers[2].house), findsOneWidget);
-    await tester.tap(find.text('Use power'));
-    await tester.pumpAndSettle();
-    expect(game.powerUsed[2], isTrue);
+    if (!powersComingSoon) {
+      await tester.tap(find.text('Use power'));
+      await tester.pumpAndSettle();
+      expect(game.powerUsed[2], isTrue);
+    }
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
     expect(game.spoke[2], isTrue);
