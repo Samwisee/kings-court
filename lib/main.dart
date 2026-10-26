@@ -1740,7 +1740,11 @@ class _HomePageState extends State<HomePage>
             Row(children: [
               const Icon(Icons.dangerous_rounded, size: 14, color: Palette.lost),
               const SizedBox(width: 4),
-              Text(
+              Flexible(
+                child: Text(
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
                   result == null
                       ? 'Scheme'
                       : result
@@ -1751,6 +1755,7 @@ class _HomePageState extends State<HomePage>
                       fontWeight: FontWeight.w700,
                       fontSize: fontSize,
                       color: result == false ? Palette.won : Palette.lost)),
+              ),
             ]),
             const SizedBox(height: 2),
             SuitText(schemes[game.schemeOf[seat]!],
