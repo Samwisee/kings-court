@@ -13,6 +13,7 @@ import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/play/throne_room.dart';
 import 'package:kings_court/tutorial.dart';
 import 'package:kings_court/play/card_view.dart';
+import 'package:kings_court/engine/cards.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -302,6 +303,26 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
   }
+
+  testWidgets('The Court Cards', (tester) async {
+    tester.view.physicalSize = const Size(1400, 560);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        backgroundColor: const Color(0xFF0E4A2E),
+        body: Center(
+          child: Wrap(spacing: 16, runSpacing: 16, children: [
+            for (final w in [150.0, 60.0])
+              for (final c in [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king])
+                PlayingCardView(card: c, width: w),
+          ]),
+        ),
+      ),
+    ));
+    await tester.pump();
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/court-cards.png'));
+  });
 
   testWidgets('A throne room on its own', (tester) async {
     tester.view.physicalSize = const Size(780, 1688);
