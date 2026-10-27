@@ -22,6 +22,8 @@ import sys
 
 import segno
 
+import emblems
+
 from art import Renderer
 from brand import (CARD, CROWN, FELT, GILT, GOLD_DARK, GOLD_LIGHT, GOLD_MID,
                    INK, JOKER_CLOTH, OUTLINE, SUIT_CLOTH, SUIT_INK, brass_inlay,
@@ -148,8 +150,10 @@ def court_index(letter: str, name: str | None) -> str:
 def face_card(rank: str, name: str) -> str:
     top, bottom = SUIT_CLOTH[name]
     pattern = {"J": stripes, "Q": lattice, "K": sunburst}[rank](W, H)
-    emblem = {"J": sword_and_shield(top), "Q": tiara(), "K": crown()}[rank]
-    width = {"J": 30, "Q": 38, "K": 38}[rank]
+    # One family of emblems for the Court Cards (see emblems.py), gems in
+    # the cloth's colour.
+    emblem = (emblems.svg({"J": "jack", "Q": "queen", "K": "king"}[rank], top, OUTLINE), 100, 100)
+    width = 38
     footer = text(CX, 82.4, NAMES[rank].upper(), 3.3, family=DISPLAY, weight=900,
                   fill=GILT, cls="foil", spacing=0.6, stroke=OUTLINE, stroke_w=0.5)
     return cloth_card(f"cloth-{name}-{rank}", top, bottom, pattern, emblem,
@@ -164,7 +168,8 @@ def joker(colour: str) -> str:
                            fill=GILT, cls="foil", stroke=OUTLINE, stroke_w=0.45)
                       for k, ch in enumerate("JOKER"))
     return cloth_card(f"joker-{colour}", top, bottom, harlequin(W, H, dark=dark),
-                      jester_cap(), star_idx + letters, emblem_w=38)
+                      (emblems.svg("joker", top, OUTLINE), 100, 100), star_idx + letters,
+                      emblem_w=38)
 
 
 # --- cards about the game ------------------------------------------------------
