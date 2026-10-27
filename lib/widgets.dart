@@ -9,6 +9,7 @@ import 'chronicle.dart';
 import 'engine/cards.dart';
 import 'courtiers.dart';
 import 'models.dart';
+import 'play/suits.g.dart';
 import 'theme.dart';
 
 /// Clamps [v] to [lo]..[hi] as a double. Unlike num.clamp it never throws
@@ -58,23 +59,45 @@ class _CrownPainter extends CustomPainter {
 /// little bolder, so it reads as a game term.
 class SuitText extends StatelessWidget {
   const SuitText(this.text,
-      {super.key, required this.style, this.textAlign, this.struck = const {}});
+      {super.key,
+      required this.style,
+      this.textAlign,
+      this.struck = const {},
+      this.maxLines,
+      this.overflow});
   final String text;
   final TextStyle style;
   final TextAlign? textAlign;
+  final int? maxLines;
+  final TextOverflow? overflow;
 
   /// Cards named in the text that are already won ("A♥"), crossed out.
   final Set<String> struck;
 
-  static final _marked =
-      RegExp(r'([A2-9])([♥♦♠♣])|[♥♦♠♣]|\bcourt cards?\b', caseSensitive: false);
+  static final _marked = RegExp(r'([A2-9])([♥♦♠♣])|[♥♦♠♣]|\uE000|\uE001|\bcourt cards?\b',
+      caseSensitive: false);
+
+  /// Markers [Task.boardText] uses: no Court Cards, and a Court Card.
+  static const noCourt = '\uE000';
+  static const court = '\uE001';
+
+  InlineSpan _suit(String symbol, Color colour) {
+    final size = (style.fontSize ?? 14) * 0.8;
+    return WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: size * 0.04),
+          child: SuitIcon(Suit.values.firstWhere((s) => s.symbol == symbol),
+              size: size, color: colour),
+        ));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final spans = <TextSpan>[];
+    final spans = <InlineSpan>[];
     // On a dark background, suits are printed in lighter colours so they
     // keep their contrast.
-    final dark = (style.color?.computeLuminance() ?? 0) > 0.5;
+    final dark = (style.color?.computeLuminance() ?? 0) > 0.3;
     Color suitColour(String symbol) {
       final suit = Suit.values.firstWhere((s) => s.symbol == symbol);
       return dark
@@ -101,14 +124,21 @@ class SuitText extends StatelessWidget {
             text: m.group(1),
             style: mark.copyWith(
                 color: done ? (style.color ?? Palette.ink).withValues(alpha: 0.5) : null)));
-        spans.add(TextSpan(
-            text: '${m.group(2)}\uFE0E',
-            style: mark.copyWith(
-                color: done
-                    ? suitColour(m.group(2)!).withValues(alpha: 0.5)
-                    : suitColour(m.group(2)!))));
+        spans.add(_suit(m.group(2)!,
+            done ? suitColour(m.group(2)!).withValues(alpha: 0.5) : suitColour(m.group(2)!)));
       } else if (token.length == 1) {
-        spans.add(TextSpan(text: '$token\uFE0E', style: TextStyle(color: suitColour(token))));
+        spans.add(_suit(token, suitColour(token)));
+      } else if (token == noCourt || token == court) {
+        final size = (style.fontSize ?? 14) * 0.95;
+        final c = style.color ?? Palette.ink;
+        spans.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: size * 0.08),
+              child: token == noCourt
+                  ? NoCourtIcon(size: size, color: c)
+                  : CrownIcon(size: size * 1.1, color: c),
+            )));
       } else {
         final plural = token.toLowerCase().endsWith('s');
         spans.add(TextSpan(
@@ -119,7 +149,7 @@ class SuitText extends StatelessWidget {
     }
     if (last < text.length) spans.add(TextSpan(text: text.substring(last)));
     return Text.rich(TextSpan(style: style, children: spans),
-        textAlign: textAlign);
+        textAlign: textAlign, maxLines: maxLines, overflow: overflow);
   }
 }
 
@@ -2736,4 +2766,75 @@ class _ShowCardPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ShowCardPainter old) => old.color != color || old.used != used;
+}
+
+
+/// A suit drawn as a shape, not a font glyph: the same chunky suits as the
+/// printed deck, in exactly the colour asked for (a browser's emoji font
+/// can never take over).
+class SuitIcon extends StatelessWidget {
+  const SuitIcon(this.suit, {super.key, required this.size, required this.color});
+  final Suit suit;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => suit == Suit.court
+      ? CrownIcon(size: size, color: color)
+      : CustomPaint(size: Size.square(size), painter: _SuitPainter(suit, color));
+}
+
+class _SuitPainter extends CustomPainter {
+  _SuitPainter(this.suit, this.color);
+  final Suit suit;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = suitPaths[suit.name];
+    if (path == null) return;
+    canvas.save();
+    canvas.scale(size.width / 100, size.height / 100);
+    canvas.drawPath(path, Paint()..color = color);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_SuitPainter old) => old.suit != suit || old.color != color;
+}
+
+/// A Court Card struck out: a crown with a slash, for "no Court Cards".
+class NoCourtIcon extends StatelessWidget {
+  const NoCourtIcon({super.key, required this.size, required this.color});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: size * 1.15,
+        height: size,
+        child: Stack(alignment: Alignment.center, children: [
+          CrownIcon(size: size * 0.86, color: color.withValues(alpha: 0.75)),
+          CustomPaint(size: Size(size * 1.15, size), painter: _SlashPainter(color)),
+        ]),
+      );
+}
+
+class _SlashPainter extends CustomPainter {
+  _SlashPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawLine(
+        Offset(size.width * 0.1, size.height * 0.92),
+        Offset(size.width * 0.9, size.height * 0.08),
+        Paint()
+          ..color = Palette.lost
+          ..strokeWidth = size.height * 0.14
+          ..strokeCap = StrokeCap.round);
+  }
+
+  @override
+  bool shouldRepaint(_SlashPainter old) => old.color != color;
 }

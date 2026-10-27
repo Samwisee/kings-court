@@ -88,6 +88,49 @@ class Task {
     return text.replaceAll(_bracketed, '');
   }
 
+  /// The task as short as it can go, for the card on the table: the same
+  /// meaning in fewer words, with Court Cards as a crown (\uE001) and "with no
+  /// Court Cards" as a struck-out crown (\uE000). The close-up keeps the full
+  /// wording.
+  String boardText(int playerCount) {
+    var t = cardText(playerCount).trim();
+    for (final (from, to) in _shorter) {
+      t = t.replaceAllMapped(
+          from,
+          (m) => to.replaceAllMapped(
+              RegExp(r'\$(\d)'), (g) => m.group(int.parse(g[1]!)) ?? ''));
+    }
+    return t.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  static final List<(Pattern, String)> _shorter = [
+    (RegExp(r',? with no Court Cards'), ' \uE000'),
+    ('Win more tricks than anyone else', 'Win the most tricks'),
+    ('Win fewer tricks than anyone else', 'Win the fewest tricks'),
+    ('than the rest of the court put together', 'than everyone else combined'),
+    ('Win the same number of tricks as', 'Win as many tricks as'),
+    (RegExp(r'Win a trick where every card is lower than (\d)'), r'Win a trick of cards below $1'),
+    ('Win a trick where every card is higher than 5', 'Win a trick of cards above 5'),
+    ('totalling more than', 'worth over'),
+    ('totalling less than', 'worth under'),
+    ('totalling exactly', 'worth'),
+    (RegExp(r'only (even|odd) cards:.*$'), r'only $1 cards'),
+    ('Win all nine cards of any one suit', 'Win a whole suit'),
+    ('Win a card of every suit', 'Win one of every suit'),
+    ("Don't win any of the first", 'Win none of the first'),
+    ("Don't win any", 'Win no'),
+    ("Don't win two tricks in a row", 'Never win two in a row'),
+    ("Don't lead a trick with a", 'Never lead'),
+    ('said out loud before the first trick', 'said aloud'),
+    ('written down in secret before the first trick', 'in secret'),
+    (", and they're in a row", ', in a row'),
+    ('a trick containing an Ace and a 9', 'an Ace and a 9 in one trick'),
+    (RegExp(r'as many ([♥♦♠♣]) cards as ([♥♦♠♣]) cards'), r'equal $1 and $2'),
+    (RegExp(r'([♥♦♠♣]) cards?\b'), r'$1'),
+    ('Win no Court Cards', 'Win no \uE001'),
+    (RegExp(r'Court Cards?'), '\uE001'),
+  ];
+
   /// The bracketed conditions, as sentences, for the close-up view.
   List<String> get notes {
     final text = description.replaceAll(_perPlayerCount, '');

@@ -735,7 +735,7 @@ class _HomePageState extends State<HomePage>
   int _points(Task t) => t.getPointsForPlayerCount(playerCount);
 
   _TableGeometry get _geo => _TableGeometry(
-      _tableSize, game.players.length, (t) => t.cardText(playerCount),
+      _tableSize, game.players.length, (t) => t.boardText(playerCount),
       fixedCardWidth: _dealtFor == game.dealId ? _cardWidth : null,
       upright: _upright || game.digital);
 
@@ -1519,7 +1519,7 @@ class _HomePageState extends State<HomePage>
 
   /// A task's wording, with the announced number filled in.
   String _cardText(Task t) {
-    final text = t.cardText(playerCount);
+    final text = t.boardText(playerCount);
     final x = _digital ? _cards.announced[t.description] : null;
     if (x == null) return text;
     final secret = t.description.contains('secret') && t.assignedPlayerIndex != _you;
@@ -1655,7 +1655,7 @@ class _HomePageState extends State<HomePage>
                       color: yourTurn || _yourPick || _revealing
                           ? Palette.gold
                           : Colors.white70),
-                  child: Text(
+                  child: SuitText(
                       _toast != null
                           ? _toast!
                           : _revealing
@@ -1665,6 +1665,10 @@ class _HomePageState extends State<HomePage>
                           : _wantsToSpeak && _playing
                               ? 'You\u2019ll show a card after this trick'
                               : _cardStatus,
+                      style: TextStyle(
+                          color: yourTurn || _yourPick || _revealing
+                              ? Palette.gold
+                              : Colors.white70),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center),
@@ -8779,11 +8783,15 @@ class _HouseBanner extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 14, color: Colors.white70)),
+                      // A player's own name, only when it says something the
+                      // title doesn't ("The Jester" once is enough).
+                      if (!name.toLowerCase().contains(
+                          courtier.title.toLowerCase().replaceFirst('the ', '')))
+                        Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.white70)),
                       Text(courtier.title,
                           style: const TextStyle(
                               fontFamily: displayFont,
@@ -9790,10 +9798,15 @@ class _MiniCard extends StatelessWidget {
                       fontFamily: court ? displayFont : bodyFont,
                       fontWeight: FontWeight.w900,
                       fontSize: width * 0.5)),
-              if (!court)
-                TextSpan(
-                    text: '\n${card.suit.glyph}',
-                    style: TextStyle(fontSize: width * 0.46)),
+              if (!court) ...[
+                const TextSpan(text: '\n'),
+                WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: width * 0.06),
+                      child: SuitIcon(card.suit, size: width * 0.38, color: ink),
+                    )),
+              ],
             ]),
             textAlign: TextAlign.center,
             style: TextStyle(height: 1.0, color: ink),

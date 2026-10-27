@@ -137,9 +137,21 @@ bool _applies(_Section s, RulesContext? c) {
 }
 
 Future<void> showRulesPage(BuildContext context, {RulesContext? game}) =>
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => RulesPage(game: game), fullscreenDialog: true));
+    Navigator.of(context).push(PageRouteBuilder(
+        fullscreenDialog: true,
+        transitionDuration: const Duration(milliseconds: 260),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
+        pageBuilder: (c, a, b) => RulesPage(game: game),
+        transitionsBuilder: (c, a, b, child) => FadeTransition(
+            opacity: CurvedAnimation(parent: a, curve: Curves.easeOut),
+            child: child)));
 
+const _shadow = [Shadow(color: Colors.black54, blurRadius: 10)];
+const _ruleStyle = TextStyle(
+    fontSize: 16, height: 1.45, color: Colors.white, shadows: [Shadow(color: Colors.black38, blurRadius: 6)]);
+
+/// The rules, on the felt like the rest of the court: gold headings, each
+/// section on its own dark panel, and an index of gold tabs to jump about.
 class RulesPage extends StatefulWidget {
   const RulesPage({super.key, this.game});
   final RulesContext? game;
@@ -168,91 +180,120 @@ class _RulesPageState extends State<RulesPage> {
         if (_all || _applies(_sections[i], g)) i
     ];
     return Scaffold(
-      backgroundColor: Palette.card,
-      appBar: AppBar(
-        backgroundColor: Palette.feltDeep,
-        title: const Text('How to Play'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (g != null) _thisGame(g),
-                // The index: tap a section to jump to it.
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+      backgroundColor: Palette.feltDeep,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.4),
+            radius: 1.2,
+            colors: [Palette.felt, Palette.feltDeep],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // The top bar: a gold arrow back, and the title.
+              SizedBox(
+                height: 60,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    for (final i in shown)
-                      ActionChip(
-                        label: Text(_sections[i].title),
-                        onPressed: () => _jump(i),
-                        backgroundColor: const Color(0xFFF3ECDD),
-                        side: const BorderSide(color: Color(0xFFD9C9A3)),
-                        labelStyle: const TextStyle(
-                            fontWeight: FontWeight.w700, color: Palette.ink),
+                    Positioned(
+                      left: 8,
+                      child: IconButton(
+                        tooltip: 'Back',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_rounded,
+                            color: Palette.gold, size: 28, shadows: _shadow),
                       ),
+                    ),
+                    const Text('How to Play',
+                        style: TextStyle(
+                            fontFamily: displayFont,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 26,
+                            color: Palette.gold,
+                            shadows: [Shadow(color: Colors.black54, blurRadius: 12)])),
                   ],
                 ),
-                if (g != null)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => setState(() => _all = !_all),
-                      style: TextButton.styleFrom(foregroundColor: Palette.goldDeep),
-                      child: Text(_all
-                          ? 'Only the rules for this game'
-                          : 'Show every rule'),
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                for (final i in shown) ...[
-                  Padding(
-                    key: _keys.putIfAbsent(i, GlobalKey.new),
-                    padding: const EdgeInsets.only(top: 10, bottom: 6),
-                    child: Semantics(
-                      header: true,
-                      child: Text(_sections[i].title,
-                          style: const TextStyle(
-                              fontFamily: displayFont,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 20,
-                              color: Palette.goldDeep)),
-                    ),
-                  ),
-                  for (final rule in _sections[i].rules)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 620),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.only(top: 5, right: 10),
-                            child: CrownIcon(size: 11, color: Palette.goldDeep),
+                          if (g != null) _thisGame(g),
+                          // The index: tap a section to jump to it.
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final i in shown)
+                                _Tab(_sections[i].title, () => _jump(i)),
+                            ],
                           ),
-                          Expanded(
-                            child: SuitText(rule,
-                                style: const TextStyle(
-                                    fontSize: 16, height: 1.4, color: Palette.ink)),
+                          if (g != null)
+                            Center(
+                              child: TextButton(
+                                onPressed: () => setState(() => _all = !_all),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Palette.gold,
+                                    overlayColor: Colors.transparent),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    GoldPip(on: _all, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text('Show every rule',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 15,
+                                            shadows: _shadow)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 10),
+                          for (final i in shown)
+                            _Panel(
+                              key: _keys.putIfAbsent(i, GlobalKey.new),
+                              title: _sections[i].title,
+                              children: [
+                                for (final rule in _sections[i].rules)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 6, right: 10),
+                                          child: CrownIcon(size: 12, color: Palette.gold),
+                                        ),
+                                        Expanded(child: SuitText(rule, style: _ruleStyle)),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          const SizedBox(height: 10),
+                          Center(
+                            child: FilledButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Got it'),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                ],
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Got it'),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -269,29 +310,104 @@ class _RulesPageState extends State<RulesPage> {
       if (g.decree != null) 'Decree in force: ${g.decree} (see Royal decrees)',
       if (g.roles) 'Courtly roles are on: tap a seat to read its power.',
     ];
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3ECDD),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Palette.gold, width: 1.5),
-      ),
+    return OrnateCard(
+      won: false,
+      court: true,
+      maxWidth: 620,
+      margin: const EdgeInsets.fromLTRB(0, 34, 0, 18),
+      padding: const EdgeInsets.fromLTRB(22, 36, 22, 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('This game',
               style: TextStyle(
                   fontFamily: displayFont,
                   fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                  color: Palette.goldDeep)),
-          const SizedBox(height: 4),
+                  fontSize: 19,
+                  color: Palette.gold,
+                  shadows: _shadow)),
+          const SizedBox(height: 6),
           for (final l in lines)
-            Text(l, style: const TextStyle(fontSize: 15, height: 1.4, color: Palette.ink)),
+            Text(l, textAlign: TextAlign.center, style: _ruleStyle.copyWith(fontSize: 15)),
         ],
       ),
     );
   }
+}
+
+/// A gold tab in the index.
+class _Tab extends StatelessWidget {
+  const _Tab(this.label, this.onTap);
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: const Color(0x33000000),
+        shape: StadiumBorder(
+            side: BorderSide(color: Palette.gold.withValues(alpha: 0.7), width: 1.4)),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onTap,
+          splashColor: Palette.gold.withValues(alpha: 0.2),
+          highlightColor: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(label,
+                style: const TextStyle(
+                    fontFamily: displayFont,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Palette.gold,
+                    shadows: _shadow)),
+          ),
+        ),
+      );
+}
+
+/// One section of the rules: a dark panel with a gold rule and heading.
+class _Panel extends StatelessWidget {
+  const _Panel({super.key, required this.title, required this.children});
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0x40000000), Color(0x26000000)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Palette.gold.withValues(alpha: 0.45), width: 1.4),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              header: true,
+              child: Text(title,
+                  style: const TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 21,
+                      color: Palette.gold,
+                      shadows: _shadow)),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 6, bottom: 12),
+              height: 1.4,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  Palette.gold.withValues(alpha: 0.8),
+                  Palette.gold.withValues(alpha: 0),
+                ]),
+              ),
+            ),
+            ...children,
+          ],
+        ),
+      );
 }

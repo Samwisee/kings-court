@@ -182,8 +182,11 @@ class PlayingCardView extends StatelessWidget {
                   Text(card.rankLabel, style: corner),
                   // Court Cards are their own suit: no pip in the corner.
                   if (!card.isCourt)
-                    Text(card.suit.glyph,
-                        style: corner.copyWith(fontSize: width * 0.22)),
+                    Padding(
+                      padding: EdgeInsets.only(top: width * 0.02),
+                      child: SuitIcon(card.suit,
+                          size: width * 0.18, color: corner.color ?? _inkColour),
+                    ),
                 ],
               ),
             ),
@@ -219,13 +222,7 @@ class PlayingCardView extends StatelessWidget {
     );
   }
 
-  Widget _face() => Text(card.suit.glyph,
-      style: TextStyle(
-          fontFamily: bodyFont,
-          fontWeight: FontWeight.w900,
-          fontSize: width * 0.52,
-          height: 1,
-          color: _inkColour));
+  Widget _face() => SuitIcon(card.suit, size: width * 0.44, color: _inkColour);
 }
 
 const _goldLight = Color(0xFFF9E08C);

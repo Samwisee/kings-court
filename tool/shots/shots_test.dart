@@ -279,7 +279,7 @@ void main() {
       }
       // A task's close-up: what it means, its words, how it's going.
       final cards = find
-          .textContaining(RegExp(r"^(Win|Don't)"), findRichText: true)
+          .textContaining(RegExp(r"^(Win|Don't|Never)"), findRichText: true)
           .hitTestable();
       if (cards.evaluate().isNotEmpty) {
         await tester.tap(cards.first);
