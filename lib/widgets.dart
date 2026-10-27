@@ -1057,9 +1057,9 @@ class DeckStack extends StatelessWidget {
   }
 }
 
-/// The felt set into a royal-blue table: round the edge of the screen the
-/// table shows, patterned with the Queen's lattice, then a thin double
-/// brass rule where the felt begins, like the inlay on a card table.
+/// The felt set into a royal-red table: round the edge of the screen the
+/// table shows, then a thin double brass rule where the felt begins, like
+/// the inlay on a card table.
 class TableTrim extends StatelessWidget {
   const TableTrim({super.key, this.table = true});
 
@@ -1116,20 +1116,8 @@ class _TablePainter extends CustomPainter {
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
     canvas.restore();
 
-    // The table: royal blue with a fine gold lattice.
-    canvas.save();
-    canvas.clipPath(table);
-    canvas.drawRect(all, Paint()..color = Palette.table);
-    final lattice = Paint()
-      ..color = const Color(0x33D4A63A)
-      ..strokeWidth = 0.8;
-    const step = 9.0;
-    final reach = size.width + size.height;
-    for (double d = -size.height; d < reach; d += step) {
-      canvas.drawLine(Offset(d, 0), Offset(d + size.height, size.height), lattice);
-      canvas.drawLine(Offset(d + size.height, 0), Offset(d, size.height), lattice);
-    }
-    canvas.restore();
+    // The table: plain royal red.
+    canvas.drawPath(table, Paint()..color = Palette.table);
 
     canvas.drawRRect(
         felt,

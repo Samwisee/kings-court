@@ -4649,7 +4649,9 @@ class _HomePageState extends State<HomePage>
     // height too.
     final screen = MediaQuery.sizeOf(context);
     // The setup panel uses it too, so every choice fits on a phone.
+    // The front page too, so it doesn't jump as the menus open over it.
     final useTopBar = _setupArgs != null ||
+        !_inGame ||
         _inGame &&
             _digital &&
             screen.width - math.max(480.0, screen.height) >= 560;
@@ -7342,31 +7344,22 @@ class _HomePageState extends State<HomePage>
             width: math.max(0.0, clampD(c.maxWidth, 0, 640) - 48),
             child: _WelcomeIntro(
               crownSize: clampD(c.maxWidth * 0.42, 120, 270),
-              button: SizedBox(
-                width: 260,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Games in progress first: carry on where you left off.
-                    if (_saves.isNotEmpty) ...[
-                      FilledButton(
-                        onPressed: _showContinue,
-                        child: const Text('Continue'),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (_saves.isEmpty)
-                      FilledButton(
-                          onPressed: () => _showSetupDialog(),
-                          child: const Text('New game'))
-                    else
-                      OutlinedButton(
-                          onPressed: () => _showSetupDialog(),
-                          child: const Text('New game')),
-                  ],
-                ),
-              ),
+              buttons: [
+                // Games in progress first: carry on where you left off.
+                if (_saves.isNotEmpty)
+                  FilledButton(
+                    onPressed: _showContinue,
+                    child: const Text('Continue'),
+                  ),
+                if (_saves.isEmpty)
+                  FilledButton(
+                      onPressed: () => _showSetupDialog(),
+                      child: const Text('New game'))
+                else
+                  OutlinedButton(
+                      onPressed: () => _showSetupDialog(),
+                      child: const Text('New game')),
+              ],
             ),
           ),
         ),
@@ -7380,9 +7373,11 @@ class _HomePageState extends State<HomePage>
 /// fan out wide, with a burst of sparks. It plays once (about two seconds)
 /// and then holds still.
 class _WelcomeIntro extends StatelessWidget {
-  const _WelcomeIntro({required this.crownSize, required this.button});
+  const _WelcomeIntro({required this.crownSize, required this.buttons});
   final double crownSize;
-  final Widget button;
+
+  /// The front page's buttons, which fade in one after another.
+  final List<Widget> buttons;
 
   /// The four Court Cards, lowest to highest.
   static const _cards = [
@@ -7407,14 +7402,15 @@ class _WelcomeIntro extends StatelessWidget {
     final still = MediaQuery.of(context).disableAnimations;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: still ? 1 : 0, end: 1),
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2400),
       builder: (context, t, _) {
         final rise = _iv(t, 0.0, 0.3, Curves.easeOutCubic);
         final fan = _iv(t, 0.1, 0.5, Curves.easeOutBack);
         final spark = _iv(t, 0.35, 0.75);
         final title = _iv(t, 0.5, 0.75, Curves.easeOutCubic);
         final sub = _iv(t, 0.62, 0.85, Curves.easeOutCubic);
-        final btn = _iv(t, 0.75, 1.0, Curves.easeOutCubic);
+        // Each button a beat after the one above it.
+        double btn(int i) => _iv(t, 0.7 + 0.15 * i, 0.85 + 0.15 * i, Curves.easeOutCubic);
         final mid = (_cards.length - 1) / 2;
         // On a phone the fan closes up a little, clear of the screen's edges.
         final narrow = crownSize < 200;
@@ -7475,11 +7471,24 @@ class _WelcomeIntro extends StatelessWidget {
                   style: TextStyle(fontSize: 18, color: Colors.white70, shadows: _feltShadow)),
             ),
             const SizedBox(height: 36),
-            IgnorePointer(
-              ignoring: btn < 0.5,
-              child: Opacity(
-                opacity: btn,
-                child: Transform.scale(scale: 0.9 + 0.1 * btn, child: button),
+            SizedBox(
+              width: 260,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (i, b) in buttons.indexed) ...[
+                    if (i > 0) const SizedBox(height: 12),
+                    IgnorePointer(
+                      ignoring: btn(i) < 0.5,
+                      child: Opacity(
+                        opacity: btn(i),
+                        child: Transform.translate(
+                            offset: Offset(0, 12 * (1 - btn(i))), child: b),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
@@ -9080,6 +9089,13 @@ class _TaskChip extends StatelessWidget {
           Tooltip(
               message: "The King can't take this task",
               child: Icon(Icons.block, size: fontSize + 1, color: Palette.inkSoft)),
+        ],
+        // Always shown: the words leave "with no Court Cards" to it.
+        if (task.noCourtCards) ...[
+          const SizedBox(width: 4),
+          Tooltip(
+              message: 'No Court Cards in the trick',
+              child: NoCourtIcon(size: fontSize + 2)),
         ],
         if (task.hasNotes && !narrow) ...[
           const SizedBox(width: 3),

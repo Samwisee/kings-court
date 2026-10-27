@@ -29,18 +29,70 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png"/>
-  <meta name="theme-color" content="#1B3478">
+  <meta name="theme-color" content="#7A1428">
 
   <title>The King's Court</title>
   <link rel="manifest" href="manifest.json">
-  <!-- The royal-blue table behind everything, so the browser bars and the edges of the
+  <!-- The royal-red table behind everything, so the browser bars and the edges of the
        screen match the table round the felt, and nothing flashes white while
        the game loads. -->
   <style>
-    html, body { margin: 0; background: #1B3478; }
+    html, body { margin: 0; background: #7A1428; }
+    /* While the game loads: a gold crown on the felt, rising and glowing,
+       which fades away as the first frame appears. */
+    #loading {
+      position: fixed; inset: 7px; border-radius: 16px;
+      background: radial-gradient(circle at 50% 45%, #176141, #0A3622 70%);
+      box-shadow: inset 0 0 0 1.5px rgba(212,166,58,.8);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 10; transition: opacity .6s ease;
+    }
+    #loading.done { opacity: 0; pointer-events: none; }
+    #loading svg {
+      width: 96px; filter: drop-shadow(0 0 14px rgba(212,166,58,.55));
+      animation: rise 1.6s ease-in-out infinite;
+    }
+    #loading .dots { margin-top: 22px; display: flex; gap: 9px; }
+    #loading .dots i {
+      width: 8px; height: 8px; border-radius: 50%; background: #D4A63A;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    #loading .dots i:nth-child(2) { animation-delay: .2s; }
+    #loading .dots i:nth-child(3) { animation-delay: .4s; }
+    @keyframes rise {
+      0%, 100% { transform: translateY(4px) scale(.96); opacity: .85; }
+      50% { transform: translateY(-6px) scale(1.04); opacity: 1; }
+    }
+    @keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      #loading svg, #loading .dots i { animation: none; }
+    }
   </style>
 </head>
 <body>
+  <div id="loading" aria-label="Loading The King's Court" role="status">
+    <svg viewBox="0 0 100 75" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#F9E08C"/><stop offset=".5" stop-color="#D4A63A"/>
+          <stop offset="1" stop-color="#A57C1B"/>
+        </linearGradient>
+      </defs>
+      <path fill="url(#g)" d="M0 18.75 L27 41.25 L50 0 L73 41.25 L100 18.75 L88 61.5 L12 61.5 Z M12 66 H88 V75 H12 Z"/>
+    </svg>
+    <div class="dots"><i></i><i></i><i></i></div>
+  </div>
+  <script>
+    function loaded() {
+      var l = document.getElementById('loading');
+      if (!l) return;
+      l.classList.add('done');
+      setTimeout(function () { l.remove(); }, 700);
+    }
+    window.addEventListener('flutter-first-frame', loaded);
+    // Never left covering the game, whatever happens.
+    setTimeout(loaded, 15000);
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
