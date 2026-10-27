@@ -202,6 +202,26 @@ void main() {
     expect(clash('Win the 3♥', 'Win the 4♠'), isFalse);
     expect(selfClash('Win no ♠ cards', 'Win the 9♠'), isTrue);
     expect(selfClash("Don't win any tricks", 'Win the last trick'), isTrue);
+    // Every task that needs a win, profiled or not.
+    for (final d in [
+      'Win a trick with as many ♦ cards as ♠ cards (at least one of each)',
+      'Win two tricks in a row',
+      'Win more tricks than the King',
+      'Win a mixed-suit trick with no Court Cards',
+      'Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)',
+    ]) {
+      expect(selfClash("Don't win any tricks", d), isTrue, reason: d);
+      expect(selfClash(d, "Don't win any tricks"), isTrue, reason: d);
+    }
+    for (final d in [
+      'Win no ♠ cards',
+      'Win fewer tricks than anyone else',
+      "Don't win two tricks in a row",
+      "Don't lead a trick with a ♦ or ♠ card",
+      'Win exactly X tricks, said out loud before the first trick',
+    ]) {
+      expect(selfClash("Don't win any tricks", d), isFalse, reason: d);
+    }
     expect(selfClash('Win exactly one trick', 'Win exactly two tricks'), isTrue);
     expect(selfClash('Win the 3♥', 'Win the 4♠'), isFalse);
   });

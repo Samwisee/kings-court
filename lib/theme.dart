@@ -124,3 +124,8 @@ ThemeData buildTheme() {
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
   );
 }
+
+/// A crisp dark line round every card and task card, so they stand out
+/// from the felt and number cards sit as boldly as the Court Cards (the
+/// same dark as the cartoon outline round the gold emblems).
+const cardOutline = BoxShadow(color: Color(0xFF1D1408), spreadRadius: 1.5);

@@ -739,6 +739,7 @@ class TableCard extends StatelessWidget {
           width: borderWidth,
         ),
         boxShadow: [
+          cardOutline,
           BoxShadow(
             color: Colors.black45,
             blurRadius: lifted ? 14 : 4,

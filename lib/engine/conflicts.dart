@@ -223,6 +223,28 @@ bool overAvoided(List<String> drawn, String next, int players) {
   return none >= players;
 }
 
+/// Whether a task can only be done by winning at least one trick: every
+/// "Win …" task, except those that can be met with no tricks at all.
+bool needsAWin(String d) {
+  final p = profileOf(d);
+  if (p.minTricks > 0 ||
+      p.cards.isNotEmpty ||
+      p.ranks.isNotEmpty ||
+      p.suits.isNotEmpty ||
+      p.courts > 0 ||
+      p.mostTricks) {
+    return true;
+  }
+  if (!d.startsWith('Win ')) return false;
+  const noneIsFine = [
+    'Win no ',
+    'Win fewer tricks',
+    'Win the same number of tricks',
+    'Win exactly X tricks',
+  ];
+  return !noneIsFine.any(d.startsWith);
+}
+
 /// Whether one player can't do both tasks, at a table of [players]
 /// (the 2-player game deals three hands).
 bool selfClash(String a, String b, {int players = 4}) {
@@ -267,11 +289,12 @@ bool selfClash(String a, String b, {int players = 4}) {
     }
     if (f.maxTricks != null && n.minTricks > f.maxTricks!) return true;
     if (f.forbidTricks.intersection(n.tricks).isNotEmpty) return true;
-    if (f.maxTricks == 0 && (n.cards.isNotEmpty || n.mostTricks)) return true;
     return false;
   }
 
   if (forbids(p, q) || forbids(q, p)) return true;
+  // Winning no tricks rules out every task that needs a win.
+  if (p.maxTricks == 0 && needsAWin(b) || q.maxTricks == 0 && needsAWin(a)) return true;
   // Two different exact trick counts.
   if (p.maxTricks != null &&
       q.maxTricks != null &&

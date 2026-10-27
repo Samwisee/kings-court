@@ -1488,7 +1488,28 @@ class _HomePageState extends State<HomePage>
           Row(
             children: [
               Expanded(
-                child: AnimatedDefaultTextStyle(
+                child: _speakPromptDue && _toast == null
+                    // Before tasks are chosen: share a card, or skip. Both
+                    // right in the middle, where you're looking.
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Flexible(
+                            child: Text('Share a card? Tap one in your hand, or',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                    fontFamily: bodyFont,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Palette.gold)),
+                          ),
+                          const SizedBox(width: 10),
+                          _GlowButton(label: 'Skip', onPressed: _startChoosing, big: true),
+                        ],
+                      )
+                    : AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
                       fontFamily: bodyFont,
@@ -1514,9 +1535,7 @@ class _HomePageState extends State<HomePage>
               ),
               // The action of the moment, beside what's happening: save
               // your card for later, or pass on picking.
-              if (_speakPromptDue)
-                _GlowButton(label: 'Skip', onPressed: _startChoosing)
-              else if (game.canPass(_you))
+              if (!_speakPromptDue && game.canPass(_you))
                 _barAction('Pass', Icons.redo_rounded,
                     () => setState(() => game.pass(_you))),
               // Every card: which are played, which are still to come.
@@ -6804,9 +6823,9 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  /// The front of the table before a game: a hand of cards fans out, the
-  /// crown drops onto it in a burst of sparks, then the name and one
-  /// button, Play, which offers saved games, a new game and the tutorial.
+  /// The front of the table before a game: the four Court Cards fan out
+  /// in a burst of sparks, then the name and one button, Play, which offers
+  /// saved games, a new game and the tutorial.
   Widget _buildWelcome() {
     return LayoutBuilder(
       builder: (context, c) => Padding(
@@ -6818,17 +6837,9 @@ class _HomePageState extends State<HomePage>
             child: _WelcomeIntro(
               crownSize: clampD(c.maxWidth * 0.42, 120, 200),
               button: SizedBox(
-                width: 240,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FilledButton.icon(
-                        onPressed: _showPlayMenu,
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Play')),
-                  ],
-                ),
+                width: 160,
+                child: FilledButton(
+                    onPressed: _showPlayMenu, child: const Text('Play')),
               ),
             ),
           ),
@@ -6839,8 +6850,9 @@ class _HomePageState extends State<HomePage>
 
 }
 
-/// The opening flourish on the front page. It plays once (about two and a
-/// half seconds) and then holds still.
+/// The opening flourish on the front page: the four Court Cards rise and
+/// fan out wide, with a burst of sparks. It plays once (about two seconds)
+/// and then holds still.
 class _WelcomeIntro extends StatelessWidget {
   const _WelcomeIntro({required this.crownSize, required this.button});
   final double crownSize;
@@ -6859,73 +6871,62 @@ class _WelcomeIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardW = crownSize * 0.4;
+    final stageW = crownSize * 2;
+    final cardW = crownSize * 0.6;
     final cardH = PlayingCardView.heightFor(cardW);
-    // The crown sits above the hand, its band just touching the cards.
-    final handTop = crownSize * 0.8;
-    final stageH = handTop + cardH + 8;
+    // Room above the cards for the outer ones to tilt up.
+    final handTop = cardH * 0.12;
+    final stageH = handTop + cardH + 10;
     // With reduced motion asked for, the flourish is skipped.
     final still = MediaQuery.of(context).disableAnimations;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: still ? 1 : 0, end: 1),
-      duration: const Duration(milliseconds: 2600),
+      duration: const Duration(milliseconds: 2200),
       builder: (context, t, _) {
-        final fan = _iv(t, 0.05, 0.4, Curves.easeOutBack);
-        final rise = _iv(t, 0.0, 0.25, Curves.easeOutCubic);
-        final drop = _iv(t, 0.3, 0.62, Curves.bounceOut);
-        final crownIn = _iv(t, 0.3, 0.4);
-        final spark = _iv(t, 0.5, 0.85);
-        final title = _iv(t, 0.6, 0.8, Curves.easeOutCubic);
-        final sub = _iv(t, 0.7, 0.88, Curves.easeOutCubic);
-        final btn = _iv(t, 0.8, 1.0, Curves.easeOutCubic);
+        final rise = _iv(t, 0.0, 0.3, Curves.easeOutCubic);
+        final fan = _iv(t, 0.1, 0.5, Curves.easeOutBack);
+        final spark = _iv(t, 0.35, 0.75);
+        final title = _iv(t, 0.5, 0.75, Curves.easeOutCubic);
+        final sub = _iv(t, 0.62, 0.85, Curves.easeOutCubic);
+        final btn = _iv(t, 0.75, 1.0, Curves.easeOutCubic);
+        final mid = (_cards.length - 1) / 2;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: crownSize * 2,
+              width: stageW,
               height: stageH,
               child: Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
-                  // The hand, fanning out behind the crown.
-                  for (int i = 0; i < _cards.length; i++)
-                    Positioned(
-                      left: crownSize - cardW / 2,
-                      top: handTop + (1 - rise) * 40,
-                      child: Opacity(
-                        opacity: rise,
-                        child: Transform.rotate(
-                          // Fanned from a point below the hand, like cards
-                          // held in a hand.
-                          angle: (i - (_cards.length - 1) / 2) * 0.24 * fan,
-                          alignment: const Alignment(0, 2.6),
-                          child: PlayingCardView(card: _cards[i], width: cardW),
-                        ),
-                      ),
-                    ),
-                  // Sparks where the crown lands.
+                  // Sparks behind the cards as they fan out.
                   Positioned.fill(
                     child: IgnorePointer(
                       child: CustomPaint(
                         painter: spark > 0 && spark < 1
                             ? _IntroSparks(
-                                origin: Offset(crownSize, handTop),
+                                origin: Offset(stageW / 2, handTop + cardH * 0.45),
                                 progress: spark,
-                                scale: crownSize / 120)
+                                scale: crownSize / 100)
                             : null,
                       ),
                     ),
                   ),
-                  // The crown, dropping onto the hand.
-                  Positioned(
-                    left: crownSize / 2,
-                    top: handTop - crownSize * 0.75 - 6 - (1 - drop) * stageH,
-                    child: Opacity(
-                      opacity: crownIn,
-                      child: CrownIcon(size: crownSize, color: Palette.gold),
+                  // The four Court Cards, fanned wide so each one's art shows.
+                  for (int i = 0; i < _cards.length; i++)
+                    Positioned(
+                      left: stageW / 2 - cardW / 2 + (i - mid) * cardW * 0.62 * fan,
+                      top: handTop + (1 - rise) * 40 + ((i - mid).abs() * cardH * 0.05) * fan,
+                      child: Opacity(
+                        opacity: rise,
+                        child: Transform.rotate(
+                          angle: (i - mid) * 0.13 * fan,
+                          alignment: const Alignment(0, 1.6),
+                          child: PlayingCardView(card: _cards[i], width: cardW),
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -6951,7 +6952,7 @@ class _WelcomeIntro extends StatelessWidget {
             Opacity(
               opacity: sub,
               child: const Text(
-                  'A cooperative trick-taking game for 2 to 6 players. Inspired by The Crew.',
+                  'A cooperative trick-taking game for 2 to 6 players.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.white70)),
             ),
@@ -8211,6 +8212,7 @@ class _TaskChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: failed ? Palette.lost : color, width: 2.5),
         boxShadow: const [
+          cardOutline,
           BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
         ],
       ),
@@ -8249,6 +8251,7 @@ class _TaskChip extends StatelessWidget {
                   color: Palette.feltDeep,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: color, width: 2.5),
+                  boxShadow: const [cardOutline],
                 ),
                 alignment: Alignment.center,
                 child: Row(
@@ -9111,9 +9114,10 @@ class _OutlinedNumber extends StatelessWidget {
 
 /// A button that softly pulses with a gold glow, to draw the eye.
 class _GlowButton extends StatefulWidget {
-  const _GlowButton({required this.label, required this.onPressed});
+  const _GlowButton({required this.label, required this.onPressed, this.big = false});
   final String label;
   final VoidCallback onPressed;
+  final bool big;
 
   @override
   State<_GlowButton> createState() => _GlowButtonState();
@@ -9167,8 +9171,11 @@ class _GlowButtonState extends State<_GlowButton>
           onPressed: widget.onPressed,
           style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 18)),
+              minimumSize: Size(widget.big ? 120 : 0, widget.big ? 48 : 40),
+              textStyle: widget.big
+                  ? const TextStyle(fontFamily: displayFont, fontWeight: FontWeight.w900, fontSize: 20)
+                  : null,
+              padding: EdgeInsets.symmetric(horizontal: widget.big ? 26 : 18)),
           child: Text(widget.label),
         ),
       ),

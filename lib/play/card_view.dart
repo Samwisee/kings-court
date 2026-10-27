@@ -92,6 +92,7 @@ class PlayingCardView extends StatelessWidget {
           border: Border.all(
               color: borderColour, width: thick ? 3 : card.isCourt ? 2 : 1),
           boxShadow: [
+            cardOutline,
             if (glow)
               const BoxShadow(color: Palette.gold, blurRadius: 14)
             else if (marks.isNotEmpty)
@@ -395,6 +396,7 @@ class CardBack extends StatelessWidget {
         borderRadius: BorderRadius.circular(width * 0.1),
         border: Border.all(color: Palette.gold, width: 1.5),
         boxShadow: const [
+          cardOutline,
           BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
