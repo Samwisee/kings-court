@@ -13,7 +13,7 @@ Every task falls into a tier by *how it can go wrong*
 | --- | --- | --- | --- |
 | capture | Win the 3♥, Win at least two Aces | Only by competing for the same cards | Never two that need more of a card/rank/suit than exists (`clash`) |
 | trick | Win a trick with a 6, Win the first trick | Same, plus timing | Same; two tasks can't both need the same trick |
-| avoid | Don't win any 9s, Win no ♥ cards | Someone else must take what you avoid | No card may be avoided by every player (`overAvoided`) |
+| avoid | Don't win any 6s, Win no ♠ cards | Someone else must take what you avoid | No card may be avoided by every player (`overAvoided`) |
 | race | Win more tricks than the King | Measured against other players | At most 2 a round |
 | precise | Win exactly two tricks, Win only the last trick | Too many *and* too few both fail, so it fights everything | At most 1 a round, drawn half as often |
 
@@ -93,11 +93,31 @@ The bots see every card, so these are **best-case** numbers. Rough guide:
   targets winnable needs something besides more tasks: a cap on the target,
   harder seals or decrees instead of extra points, or new mid-value tasks
   that are worth more without being harder.
-* Repriced from the data: Win no Court Cards, Win more ♦ than ♠, Win more ♥
-  than ♣ and Win more tricks than the King went up a point; the odd, even,
-  totalling 22 or 23, and every card lower than 7 tricks went down one.
-  Two-numbered "win a trick with" tasks now count the cards they need, so
-  they no longer get dealt beside "Win all four" of the same number.
+* "Win a trick with" a number now counts the card it needs, so it is no
+  longer dealt beside "Win all four" of the same number.
+* The targets are capped at 20.
+
+## The library is the game's own (Oct 2026)
+
+The task list began as an adaptation of The Crew's, and has since been
+made the King's Court's own:
+
+* **New picks.** Every multi-card task names different cards (Win the 4♥ and
+  the 9♠, Win the 7♣, 8♣ and 9♣…), the rank and suit tasks count different
+  numbers and suits, the "win an X with a Y" pairs are new, and the trick
+  totals use new thresholds. Eleven tasks are new outright.
+* **New wording** where the old phrasing was distinctive (the race tasks,
+  the X tasks, the redeal notes).
+* **Points from the game's own data.** Every task's points, at each table
+  size, come from the balance report: points are proportional to
+  -ln(chance the task succeeds), scaled so the average task keeps the same
+  average points (so targets mean what they did). Rerun the report and
+  paste its SUGGESTED POINTS whenever the library changes.
+* `renamedTasks` in lib/tasks.dart maps old wording to new so saved games
+  still load.
+
+Plain ones like "Win the first trick" or "Win the Queen" stay as they are:
+they are how anyone would say it.
 
 ## 5. Ideas that fit the system
 
