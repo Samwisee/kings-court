@@ -190,7 +190,11 @@ class _RulesPageState extends State<RulesPage> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(children: [
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.all(TableTrim.rim + 4),
+              child: Column(
             children: [
               // The top bar: the title, and a gold cross to close.
               SizedBox(
@@ -297,6 +301,10 @@ class _RulesPageState extends State<RulesPage> {
               ),
             ],
           ),
+            ),
+          ),
+          const Positioned.fill(child: IgnorePointer(child: TableTrim())),
+          ]),
         ),
       ),
     );

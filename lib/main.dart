@@ -4898,7 +4898,7 @@ class _HomePageState extends State<HomePage>
                     right: 0,
                     top: 0,
                     bottom: -40,
-                    child: IgnorePointer(child: TableTrim()),
+                    child: IgnorePointer(child: TableTrim(table: false)),
                   ),
                 ]),
               ),

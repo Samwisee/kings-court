@@ -6,7 +6,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0A3622",
-    "theme_color": "#0A3622",
+    "theme_color": "#1B3478",
     "description": "A cooperative trick-taking card game.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,

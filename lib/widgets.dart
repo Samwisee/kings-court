@@ -1057,15 +1057,22 @@ class DeckStack extends StatelessWidget {
   }
 }
 
-/// A thin double brass rule set into the felt, like the inlay on a card
-/// table.
+/// The felt set into a royal-blue table: round the edge of the screen the
+/// table shows, patterned with the Queen's lattice, then a thin double
+/// brass rule where the felt begins, like the inlay on a card table.
 class TableTrim extends StatelessWidget {
-  const TableTrim({super.key});
+  const TableTrim({super.key, this.table = true});
+
+  /// The table round the felt as well as the brass; without it, just the
+  /// brass rules (for a panel set on the felt, like the card tracker).
+  final bool table;
+
+  /// How much of the table shows round the felt.
+  static const rim = 7.0;
 
   @override
   Widget build(BuildContext context) {
-    // Two rules 3px apart, 4px in from the edge: the seats and cards sit
-    // inside them (see _TableGeometry.trimInset).
+    if (table) return const CustomPaint(painter: _TablePainter(), size: Size.infinite);
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -1081,6 +1088,65 @@ class TableTrim extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TablePainter extends CustomPainter {
+  const _TablePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final all = Offset.zero & size;
+    // The brass rules sit where the felt meets the wood, and 3px inside.
+    final felt = RRect.fromRectAndRadius(all.deflate(TableTrim.rim), const Radius.circular(16));
+    final table = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(all)
+      ..addRRect(felt);
+
+    // The felt is sunk a little into the table: a soft shadow just inside
+    // its edge.
+    canvas.save();
+    canvas.clipRRect(felt);
+    canvas.drawRRect(
+        felt.inflate(6),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 12
+          ..color = const Color(0x66000000)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+    canvas.restore();
+
+    // The table: royal blue with a fine gold lattice.
+    canvas.save();
+    canvas.clipPath(table);
+    canvas.drawRect(all, Paint()..color = Palette.table);
+    final lattice = Paint()
+      ..color = const Color(0x33D4A63A)
+      ..strokeWidth = 0.8;
+    const step = 9.0;
+    final reach = size.width + size.height;
+    for (double d = -size.height; d < reach; d += step) {
+      canvas.drawLine(Offset(d, 0), Offset(d + size.height, size.height), lattice);
+      canvas.drawLine(Offset(d + size.height, 0), Offset(d, size.height), lattice);
+    }
+    canvas.restore();
+
+    canvas.drawRRect(
+        felt,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = const Color(0xCCD4A63A));
+    canvas.drawRRect(
+        felt.deflate(3.5),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = const Color(0x55D4A63A));
+  }
+
+  @override
+  bool shouldRepaint(_TablePainter old) => false;
 }
 
 /// A ring of gold and white sparks flying out from [origin] and fading as
