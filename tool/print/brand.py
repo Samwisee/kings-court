@@ -163,42 +163,66 @@ def text(x, y, s, size, family="Alegreya Sans", weight=700, fill=INK, anchor="mi
     return out + f'<text {common} fill="{fill}"{c}>{s}</text>'
 
 
-# --- the Court Card emblems (ported from lib/play/card_view.dart) -------------
+# --- the Court Card emblems (the app's, from lib/play/card_view.dart) -------
+#
+# Drawn as in the app, then evened out so they read as one set: every
+# emblem fits the same box, its gold is one gradient from top to bottom of
+# the emblem (not per piece), and its outline is the same weight in
+# millimetres whatever its scale. The King is drawn a little larger and
+# wears jewels on his band, so he outranks the Joker at a glance.
+
+OUTLINE_MM = 0.75     # the cartoon outline, as printed
 
 
-def jester_cap() -> tuple[str, float, float]:
-    """The Joker's three-pointed cap with bells. Box 100 x 90."""
+def _gilt_for(gid: str, y0: float, y1: float) -> str:
+    return (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="0" y1="{y0}" '
+            f'x2="0" y2="{y1}"><stop offset="0" stop-color="{GOLD_LIGHT}"/>'
+            f'<stop offset="0.5" stop-color="{GOLD_MID}"/><stop offset="1" stop-color="{GOLD_DARK}"/>'
+            f'</linearGradient>')
+
+
+def _solid(paths: list[str], fill: str, ow: float) -> str:
+    """Pieces of gold: an outline behind (ink), the gilt on top (foil)."""
+    back = "".join(f'<path d="{d}" fill="{OUTLINE}" stroke="{OUTLINE}" stroke-width="{ow:.3f}" '
+                   f'stroke-linejoin="round"/>' for d in paths)
+    front = "".join(f'<path d="{d}" fill="{fill}"/>' for d in paths)
+    return f'<g>{back}</g><g class="foil">{front}</g>'
+
+
+def _circle(x, y, r) -> str:
+    return f"M{x - r} {y} a{r} {r} 0 1 0 {2 * r} 0 a{r} {r} 0 1 0 {-2 * r} 0 Z"
+
+
+def _jester(ow: float, gilt: str):
+    """The Joker's three-pointed cap with bells."""
     cap = ("M18 73.8 Q10 40.5 2 27 Q30 34.2 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
            "Q70 34.2 98 27 Q90 40.5 82 73.8 Z")
     band = "M19 70 H81 A4 4 0 0 1 85 74 V79 A4 4 0 0 1 81 83 H19 A4 4 0 0 1 15 79 V74 A4 4 0 0 1 19 70 Z"
-    bells = " ".join(f"M{x - 6} {y} a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0"
-                     for x, y in [(4, 27), (50, 4.5), (96, 27)])
-    art = (outlined(cap + " " + band + " " + bells)
-           + f'<g class="foilknock"><path d="M38 49.5 L36 72 M62 49.5 L64 72" stroke="{GOLD_DARK}" '
-             f'stroke-width="2" fill="none"/><path d="{band}" fill="{GOLD_DARK}"/></g>')
-    return art, 100, 90
+    bells = [_circle(x, y, 6) for x, y in [(4, 27), (50, 4.5), (96, 27)]]
+    art = (_solid([cap, band, *bells], gilt, ow)
+           + f'<g class="foilknock"><path d="M38 49.5 L36.4 70 M62 49.5 L63.6 70" stroke="{OUTLINE}" '
+             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
+    return art, (-2, -1.5, 102, 83)
 
 
-def sword_and_shield(cloth: str) -> tuple[str, float, float]:
+def _jack(ow: float, gilt: str, cloth: str):
     """The Jack's sword behind a shield, a chevron in the cloth's colour."""
-    sword = ("M45.5 0 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 "
-             "M46.5 1.8 H53.5 V22.5 H46.5 Z "
-             "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
-             "A3 3 0 0 1 29 20.7 Z "
-             "M45 26.1 L55 26.1 L55 82.8 L50 91.8 L45 82.8 Z")
-    shield = "M24 30.6 L76 30.6 L76 48.6 Q74 66.6 50 75.6 Q26 66.6 24 48.6 Z"
+    pieces = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
+              "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
+              "A3 3 0 0 1 29 20.7 Z",
+              "M45 26.1 L55 26.1 L55 82.8 L50 91.8 L45 82.8 Z",
+              "M24 30.6 L76 30.6 L76 48.6 Q74 66.6 50 75.6 Q26 66.6 24 48.6 Z"]
     chevron = "M32 43.2 L50 54.9 L68 43.2 L68 52.2 L50 63.9 L32 52.2 Z"
-    art = (outlined(sword + " " + shield)
-           + f'<g class="foilknock"><path d="M50 27 L50 29" stroke="{GOLD_DARK}" stroke-width="1.2"/>'
-             f'<path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" stroke-width="1.2"/></g>')
-    # The app draws it a third larger than its space.
-    return (f'<g transform="translate(50 45) scale(1.32) translate(-50 -45)">{art}</g>',
-            100, 90)
+    art = (_solid(pieces, gilt, ow)
+           + f'<g class="foilknock"><path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
+             f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
+    return art, (24, -4.5, 76, 91.8)
 
 
-def tiara() -> tuple[str, float, float]:
+def _tiara(ow: float, gilt: str):
     """The Queen's filigree tiara: band, pointed oval with a gem, scrolls.
-    Box 100 x 80."""
+    Its lines are drawn a little bolder than the app's, to match the
+    weight of the others."""
     band = "M4 64 C30 70 70 70 96 64 C72 79 28 79 4 64 Z"
     gem = "M50 58 C42 50 43 30 50 20 C57 30 58 50 50 58 Z"
     oval = "M50 66 C36 56 38 24 50 8 C62 24 64 56 50 66"
@@ -221,24 +245,61 @@ def tiara() -> tuple[str, float, float]:
                  math.pi * 1.83, 0.035)
     small = scroll((0.2, 0.66), (0.16, 0.5, 0.09, 0.45, 0.05, 0.53), (0.09, 0.58),
                    math.pi * 1.67, 0.02)
+    lines = [(oval, 5.2), (big, 5.4), (small, 4.4)]
 
     def strokes(colour, extra):
-        out = (f'<path d="{oval}" fill="none" stroke="{colour}" stroke-width="{4 + extra}" '
-               f'stroke-linecap="round" stroke-linejoin="round"/>')
-        for d, w in ((big, 4.2), (small, 3.4)):
-            for t in ("", ' transform="translate(100 0) scale(-1 1)"'):
-                out += (f'<path d="{d}" fill="none" stroke="{colour}" stroke-width="{w + extra}" '
+        out = ""
+        for d, w in lines:
+            for t in ("",) if d == oval else ("", ' transform="translate(100 0) scale(-1 1)"'):
+                out += (f'<path d="{d}" fill="none" stroke="{colour}" stroke-width="{w + extra:.3f}" '
                         f'stroke-linecap="round" stroke-linejoin="round"{t}/>')
         return out
 
-    outline = (f'<g filter="url(#drop)"><path d="{band} {gem}" fill="{OUTLINE}" '
-               f'stroke="{OUTLINE}" stroke-width="4" stroke-linejoin="round"/>'
-               f'{strokes(OUTLINE, 3.6)}</g>')
-    gold = f'<g class="foil"><path d="{band}" fill="{GILT}"/><path d="{gem}" fill="{GILT}"/>{strokes(GILT, 0)}</g>'
-    return outline + gold, 100, 80
+    outline = (f'<g><path d="{band}" fill="{OUTLINE}" stroke="{OUTLINE}" stroke-width="{ow:.3f}" '
+               f'stroke-linejoin="round"/><path d="{gem}" fill="{OUTLINE}" stroke="{OUTLINE}" '
+               f'stroke-width="{ow:.3f}" stroke-linejoin="round"/>{strokes(OUTLINE, ow)}</g>')
+    gold = (f'<g class="foil"><path d="{band}" fill="{gilt}"/><path d="{gem}" fill="{gilt}"/>'
+            f'{strokes(gilt, 0)}</g>')
+    return outline + gold, (1, 5, 99, 78)
+
+
+def _king(ow: float, gilt: str, cloth: str):
+    """The King's crown (the app's), with three jewels in the cloth's
+    colour on its band."""
+    body = "M0 18.75 L27 41.25 L50 0 L73 41.25 L100 18.75 L88 61.5 L12 61.5 Z"
+    band = "M12 66 H88 V75 H12 Z"
+    jewels = "".join(
+        f'<path d="{_circle(x, 70.5, 2.6)}" fill="{cloth}" stroke="{OUTLINE}" '
+        f'stroke-width="{ow * 0.4:.3f}"/>' for x in (31, 50, 69))
+    return _solid([body, band], gilt, ow) + f'<g class="foilknock">{jewels}</g>', (0, 0, 100, 75)
+
+
+# Every emblem fits this box (mm) on the card; the King's is larger.
+EMBLEM_BOX = (34.0, 29.0)
+KING_BOX = (40.0, 32.0)
+
+
+def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
+    """A Court Card emblem centred at cx, cy (mm), evened out with the rest."""
+    box_w, box_h = KING_BOX if kind == "king" else EMBLEM_BOX
+    # Work out the scale from the emblem's own bounds.
+    probe = {"joker": lambda: _jester(1, GILT), "jack": lambda: _jack(1, GILT, cloth),
+             "queen": lambda: _tiara(1, GILT), "king": lambda: _king(1, GILT, cloth)}[kind]
+    x0, y0, x1, y1 = probe()[1]
+    w, h = x1 - x0, y1 - y0
+    s = min(box_w / w, box_h / h)
+    ow = 2 * OUTLINE_MM / s          # half of the stroke shows outside the gold
+    gid = f"gilt-{kind}-{cloth[1:]}"
+    gilt = f"url(#{gid})"
+    art = {"joker": lambda: _jester(ow, gilt), "jack": lambda: _jack(ow, gilt, cloth),
+           "queen": lambda: _tiara(ow, gilt), "king": lambda: _king(ow, gilt, cloth)}[kind]()[0]
+    return (f'<defs>{_gilt_for(gid, y0, y1)}</defs>'
+            f'<g filter="url(#drop)"><g transform="translate({cx:.3f} {cy:.3f}) scale({s:.5f}) '
+            f'translate({-(x0 + x1) / 2:.3f} {-(y0 + y1) / 2:.3f})">{art}</g></g>')
 
 
 def crown() -> tuple[str, float, float]:
+    """The app's crown (CrownIcon) for decoration: logos, marks, medallions."""
     return outlined(CROWN, outline=5), 100, 75
 
 

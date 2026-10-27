@@ -22,14 +22,11 @@ import sys
 
 import segno
 
-import emblems
-
 from art import Renderer
 from brand import (CARD, CROWN, FELT, GILT, GOLD_DARK, GOLD_LIGHT, GOLD_MID,
                    INK, JOKER_CLOTH, OUTLINE, SUIT_CLOTH, SUIT_INK, brass_inlay,
-                   cloth_gradient, crown, defs, harlequin, jester_cap, lattice,
-                   outlined, place, star, stripes, suit, sunburst,
-                   sword_and_shield, text, tiara)
+                   cloth_gradient, crown, defs, emblem, harlequin, lattice,
+                   outlined, place, star, stripes, suit, sunburst, text)
 
 W, H = 69.0, 94.0          # with bleed
 BLEED = 3.0
@@ -128,13 +125,13 @@ def ace(name: str) -> str:
 # --- face cards: the Court Cards in every suit's colour ---------------------------------
 
 
-def cloth_card(gid: str, top: str, bottom: str, pattern: str, emblem: tuple[str, float, float],
-               index: str, emblem_w: float = 36, emblem_y: float = CY + 1.5,
-               footer: str = "") -> str:
-    art, bw, bh = emblem
+EMBLEM_Y = CY + 1.5
+
+
+def cloth_card(gid: str, top: str, bottom: str, pattern: str, art: str,
+               index: str, footer: str = "") -> str:
     bg = f'<rect width="{W}" height="{H}" fill="url(#{gid})" class="foilbg"/>'
-    return svg(bg + pattern + rim() + both_ends(index)
-               + place(art, CX, emblem_y, emblem_w, bw, bh) + footer,
+    return svg(bg + pattern + rim() + both_ends(index) + art + footer,
                cloth_gradient(gid, top, bottom))
 
 
@@ -150,14 +147,11 @@ def court_index(letter: str, name: str | None) -> str:
 def face_card(rank: str, name: str) -> str:
     top, bottom = SUIT_CLOTH[name]
     pattern = {"J": stripes, "Q": lattice, "K": sunburst}[rank](W, H)
-    # One family of emblems for the Court Cards (see emblems.py), gems in
-    # the cloth's colour.
-    emblem = (emblems.svg({"J": "jack", "Q": "queen", "K": "king"}[rank], top, OUTLINE), 100, 100)
-    width = 38
+    art = emblem({"J": "jack", "Q": "queen", "K": "king"}[rank], top, CX, EMBLEM_Y)
     footer = text(CX, 82.4, NAMES[rank].upper(), 3.3, family=DISPLAY, weight=900,
                   fill=GILT, cls="foil", spacing=0.6, stroke=OUTLINE, stroke_w=0.5)
-    return cloth_card(f"cloth-{name}-{rank}", top, bottom, pattern, emblem,
-                      court_index(rank, name), emblem_w=width, footer=footer)
+    return cloth_card(f"cloth-{name}-{rank}", top, bottom, pattern, art,
+                      court_index(rank, name), footer=footer)
 
 
 def joker(colour: str) -> str:
@@ -168,8 +162,7 @@ def joker(colour: str) -> str:
                            fill=GILT, cls="foil", stroke=OUTLINE, stroke_w=0.45)
                       for k, ch in enumerate("JOKER"))
     return cloth_card(f"joker-{colour}", top, bottom, harlequin(W, H, dark=dark),
-                      (emblems.svg("joker", top, OUTLINE), 100, 100), star_idx + letters,
-                      emblem_w=38)
+                      emblem("joker", top, CX, EMBLEM_Y), star_idx + letters)
 
 
 # --- cards about the game ------------------------------------------------------
