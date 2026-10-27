@@ -7846,9 +7846,10 @@ class _SetupPanelState extends State<_SetupPanel> {
                 ),
               ),
             ),
-            if (!choosing || step > 0) const SizedBox(height: 12),
+            if (!choosing || step > 0 || widget.canCancel) const SizedBox(height: 12),
             // Kept near the step on a wide screen, not out in the corners.
-            if (!choosing || step > 0)
+            // The first step has a way back to where you came from.
+            if (!choosing || step > 0 || widget.canCancel)
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Row(
@@ -7856,7 +7857,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                 if (step > 0 || widget.canCancel)
                   TextButton(
                     onPressed: _back,
-                    child: Text(step == 0 ? 'Cancel' : 'Back'),
+                    child: const Text('Back'),
                   ),
                 const SizedBox(width: 8),
                 if (!choosing)
