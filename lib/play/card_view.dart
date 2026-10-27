@@ -128,10 +128,12 @@ class PlayingCardView extends StatelessWidget {
                   }),
                 ),
               ),
+            // (The Stack already sits inside the coloured border, so the
+            // line goes right at its edge, touching the colour.)
             if (coloured)
               Positioned.fill(
                 child: Padding(
-                  padding: EdgeInsets.all(borderWidth),
+                  padding: EdgeInsets.zero,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(

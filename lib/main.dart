@@ -15,6 +15,7 @@ import 'story.dart';
 import 'models.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
+import 'engine/certainty.dart';
 import 'engine/conflicts.dart';
 import 'engine/deal_mix.dart';
 import 'engine/contest.dart';
@@ -57,6 +58,7 @@ class HomePageTestHooks {
   static void fast() {
     _HomePageState.botDelay = const Duration(milliseconds: 1);
     _HomePageState.trickPause = const Duration(milliseconds: 4);
+    _HomePageState.autoPlayStep = const Duration(milliseconds: 2);
     _HomePageState.botBudget = 30;
     CharacterToken.alive = false;
   }
@@ -764,7 +766,81 @@ class _HomePageState extends State<HomePage>
       game.outcome == RoundOutcome.inProgress &&
       _tasksSettled;
 
-  bool get _yourPlay => _playing && _lastTrick == null && _cards.turn == _you;
+  bool get _yourPlay =>
+      _playing && !_autoPlaying && _lastTrick == null && _cards.turn == _you;
+
+  /// Every task is already safe, whatever is played: the table plays the
+  /// rest of the round out by itself, quickly, like a won game of FreeCell
+  /// sending its cards home.
+  bool _autoPlaying = false;
+  int _autoDeal = -1;
+  static Duration autoPlayStep = const Duration(milliseconds: 140);
+
+  /// After a trick: if no way of playing on could spoil a task, play the
+  /// round out.
+  void _maybeAutoFinish() {
+    if (_autoPlaying || !_playing || game.isTutorial) return;
+    final c = _cards;
+    if (c.current.isNotEmpty || c.tricks.length >= c.totalTricks) return;
+    final open = [
+      for (final t in game.tasks)
+        if (t.status == TaskStatus.pending && t.assignedPlayerIndex != null) t
+    ];
+    // Sealed tasks hang on their order, and traitors on their schemes:
+    // those rounds play on by hand.
+    if (open.isEmpty || open.any((t) => t.seal != null)) return;
+    if (game.isDynasty && game.antagonists.isNotEmpty) return;
+    final certain = roundCertain(
+      hands: [for (final h in c.hands) [...h]],
+      tricks: c.tricks,
+      leader: c.leader,
+      players: c.players,
+      king: game.kingIndex ?? c.king,
+      totalTricks: c.totalTricks,
+      inPlay: c.inPlay,
+      open: [
+        for (final t in open)
+          (
+            description: t.description,
+            owner: t.assignedPlayerIndex!,
+            x: c.announced[t.description],
+          )
+      ],
+      budget: 20000,
+    );
+    if (!certain) return;
+    _botTimer?.cancel();
+    _botTimer = null;
+    setState(() {
+      _autoPlaying = true;
+      _autoDeal = game.dealId;
+      _queued = null;
+    });
+    Sfx.fanfare();
+    _trickTimers.add(Timer(const Duration(milliseconds: 700), _autoStep));
+  }
+
+  void _autoStep() {
+    if (!mounted || !_autoPlaying) return;
+    final c = _cards;
+    if (game.dealId != _autoDeal) {
+      // A new round or game began meanwhile: hand play back.
+      setState(() => _autoPlaying = false);
+      _scheduleBot();
+      return;
+    }
+    if (game.outcome != RoundOutcome.inProgress ||
+        c.tricks.length >= c.totalTricks) {
+      setState(() => _autoPlaying = false);
+      return;
+    }
+    if (_lastTrick == null) {
+      final seat = c.turn;
+      final legal = c.legalFor(seat);
+      if (legal.isNotEmpty) _playCard(seat, legal.first);
+    }
+    _trickTimers.add(Timer(autoPlayStep, _autoStep));
+  }
 
   bool get _yourPick =>
       _digital &&
@@ -975,7 +1051,8 @@ class _HomePageState extends State<HomePage>
       for (final seat in game.antagonists)
         if (game.schemeOf[seat] != null) seat: game.schemeOf[seat]!
     };
-    if (_revealing ||
+    if (_autoPlaying ||
+        _revealing ||
         _speakPromptDue ||
         (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
       return false;
@@ -1176,8 +1253,13 @@ class _HomePageState extends State<HomePage>
       _lastTrick = trick;
       _collecting = false;
     });
-    // The tutorial holds each trick longer, so the coach can explain it.
-    final pause = game.isTutorial ? trickPause * 3 : trickPause;
+    // The tutorial holds each trick longer, so the coach can explain it;
+    // a round playing itself out moves briskly.
+    final pause = game.isTutorial
+        ? trickPause * 3
+        : _autoPlaying
+            ? trickPause * 0.4
+            : trickPause;
     _trickTimers.add(Timer(pause * 0.6, () {
       if (mounted) setState(() => _collecting = true);
     }));
@@ -1187,7 +1269,14 @@ class _HomePageState extends State<HomePage>
         _lastTrick = null;
         _collecting = false;
       });
-      _judgeTasks();
+      _judgeTasks().then((_) {
+        if (!mounted) return;
+        if (game.outcome != RoundOutcome.inProgress) {
+          if (_autoPlaying) setState(() => _autoPlaying = false);
+        } else {
+          _maybeAutoFinish();
+        }
+      });
       if (_wantsToSpeak && game.outcome == RoundOutcome.inProgress) {
         _wantsToSpeak = false;
         _speak();
@@ -1331,11 +1420,14 @@ class _HomePageState extends State<HomePage>
 
   static const _trackerSlide = Duration(milliseconds: 320);
 
-  /// Space either side of the card tracker: none on a phone, and enough
-  /// on a wider screen to keep it at most [_trackerMaxWidth] wide.
-  static const _trackerMaxWidth = 720.0;
-  double _trackerInset(BuildContext context) =>
-      math.max(0.0, (MediaQuery.sizeOf(context).width - _trackerMaxWidth) / 2);
+  /// Space either side of the card tracker: it's as wide as its grid of
+  /// cards (and its inlay), so on a wide screen the table shows either side.
+  double _trackerInset(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final cell = _CardTracker.cellFor(size);
+    final dock = _CardTracker.gridWidth(cell) + 2 * _CardTracker.sidePad;
+    return math.max(0.0, (size.width - dock) / 2);
+  }
 
   /// The cards [t] is about, and what's become of each this round.
   List<(PlayingCard, _CardFate)> _cardStates(Task t) {
@@ -1433,23 +1525,6 @@ class _HomePageState extends State<HomePage>
   /// Your hand along the bottom, fanned to fit: cards you may play stand
   /// up, the rest dim. Tap one to play it.
   /// A small gold button in the hand's status line.
-  Widget _barAction(String label, IconData icon, VoidCallback onPressed) =>
-      Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: OutlinedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, size: 16),
-          label: Text(label),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Palette.gold,
-            side: const BorderSide(color: Palette.gold),
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            minimumSize: const Size(0, 40),
-          ),
-        ),
-      );
-
   /// How wide the hand's cards may spread on a wide screen.
   double _handLimit = double.infinity;
 
@@ -1543,8 +1618,8 @@ class _HomePageState extends State<HomePage>
               // The action of the moment, beside what's happening: save
               // your card for later, or pass on picking.
               if (!_speakPromptDue && game.canPass(_you))
-                _barAction('Pass', Icons.redo_rounded,
-                    () => setState(() => game.pass(_you))),
+                _GlowButton(
+                    label: 'Pass', onPressed: () => setState(() => game.pass(_you))),
               // Every card: which are played, which are still to come.
               if (_cards.dealId == game.dealId && !_storyActive)
                 IconButton(
@@ -4347,6 +4422,14 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
+      // A round playing itself out: say why, in gold, over the table.
+      if (_autoPlaying)
+        const Positioned(
+          left: 0,
+          right: 0,
+          top: 110,
+          child: IgnorePointer(child: Center(child: _AutoFinishBanner())),
+        ),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       const Positioned.fill(
@@ -4383,8 +4466,9 @@ class _HomePageState extends State<HomePage>
             offstage: !_trackerOpen && !_trackerSliding,
             child: AnimatedSlide(
             offset: _trackerOpen ? Offset.zero : const Offset(0, 1.05),
-            duration: _trackerSlide,
-            curve: Curves.easeInOutCubic,
+            // Up at an easy pace; away briskly.
+            duration: _trackerOpen ? _trackerSlide : const Duration(milliseconds: 200),
+            curve: _trackerOpen ? Curves.easeOutCubic : Curves.easeInCubic,
             child: RepaintBoundary(
               // No shadow or rounded clipping: both are slow to draw on
               // the web on every frame of the slide.
@@ -4393,7 +4477,12 @@ class _HomePageState extends State<HomePage>
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                 child: Stack(children: [
                   Positioned.fill(
-                    child: SafeArea(
+                    // Inside the inlay, so nothing scrolls over the brass.
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          _CardTracker.sidePad - 10, 12, _CardTracker.sidePad - 10, 0),
+                      child: ClipRect(
+                      child: SafeArea(
                       top: false,
                       child: _CardTracker(
                         cards: _cards,
@@ -4401,6 +4490,8 @@ class _HomePageState extends State<HomePage>
                         players: game.players,
                         onClose: _closeTracker,
                       ),
+                    ),
+                    ),
                     ),
                   ),
                   // Its own brass inlay, like the table's, down the sides and
@@ -5363,13 +5454,10 @@ class _HomePageState extends State<HomePage>
           );
         } else {
           final drop = Curves.bounceOut.transform(clampD(t / 0.45, 0, 1));
-          final shake = t > 0.4 && t < 0.75
-              ? math.sin((t - 0.4) * 60) * 10 * (0.75 - t) / 0.35
-              : 0.0;
           card = Opacity(
             opacity: appear,
             child: Transform.translate(
-              offset: Offset(shake, -80 * (1 - drop)),
+              offset: Offset(0, -80 * (1 - drop)),
               child: child,
             ),
           );
@@ -6972,6 +7060,58 @@ class _WelcomeIntro extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Every task is safe": shown while a won round plays itself out. It
+/// springs in, then a glint runs across it.
+class _AutoFinishBanner extends StatelessWidget {
+  const _AutoFinishBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 1400),
+      builder: (context, t, child) {
+        final pop = Curves.elasticOut.transform((t / 0.5).clamp(0.0, 1.0));
+        final glint = ((t - 0.4) / 0.6).clamp(0.0, 1.0);
+        return Opacity(
+          opacity: (t / 0.15).clamp(0.0, 1.0),
+          child: Transform.scale(
+            scale: 0.6 + 0.4 * pop,
+            child: ShaderMask(
+              blendMode: BlendMode.srcATop,
+              shaderCallback: (r) => LinearGradient(
+                begin: Alignment(-2.2 + 4.4 * glint, -1),
+                end: Alignment(-1.2 + 4.4 * glint, 1),
+                colors: const [Color(0x00FFFFFF), Color(0xCCFFF6D8), Color(0x00FFFFFF)],
+              ).createShader(r),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+        decoration: BoxDecoration(
+          color: Palette.feltDeep.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Palette.gold, width: 2),
+          boxShadow: const [BoxShadow(color: Color(0x88D4A63A), blurRadius: 18)],
+        ),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          CrownIcon(size: 22),
+          SizedBox(width: 10),
+          Text('Every task is safe!',
+              style: TextStyle(
+                  fontFamily: displayFont,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  color: Palette.gold)),
+        ]),
+      ),
     );
   }
 }
@@ -8792,20 +8932,21 @@ class _CardTracker extends StatelessWidget {
 
     return RepaintBoundary(
       child: LayoutBuilder(builder: (context, box) {
-        final width = math.min(box.maxWidth, 720.0) - 24;
-        const header = 40.0; // the legend above the grid
-        // The whole deck fits in view at once: five rows across the full
-        // width, as tall as the panel allows.
-        final byWidth = (width - 8 * 4) / 9;
-        final byHeight = ((box.maxHeight - header - 8) / 5 - 4) / 1.3;
-        final w = math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
+        // The same size the dock was made for, so the two line up.
+        final w = math.min(cellFor(MediaQuery.sizeOf(context)),
+            (box.maxWidth - 8 * 4 - 1) / 9);
+        // Everything lines up with the grid, which sets the dock's width.
+        final width = gridWidth(w);
         final small = clampD(w * 0.7, 20, 34);
         Widget centred(Widget child) =>
             Center(child: SizedBox(width: width, child: child));
         // A list, so only what's in view is built and drawn, and the legend
         // scrolls away with the rest.
-        return ListView(
-          padding: const EdgeInsets.only(top: 14, bottom: 16),
+        return ScrollConfiguration(
+          // No scrollbar: it scrolls by touch, and a bar would crowd the grid.
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: ListView(
+          padding: const EdgeInsets.only(top: 6, bottom: 16),
           children: [
             centred(Row(children: [
               for (final p in players) ...[
@@ -8843,10 +8984,31 @@ class _CardTracker extends StatelessWidget {
                     fontSize: 14, height: 1.35, color: Colors.white70))),
             for (final g in guesses) centred(guessBox(g, small)),
           ],
+        ),
         );
       }),
     );
   }
+
+  /// Width of a card in the grid, for a tracker [width] x [height]: the
+  /// whole deck fits in view at once, five rows, as big as the space allows.
+  static double cellWidth(double width, double height) {
+    final across = math.min(width, 720.0) - 24;
+    const header = 40.0; // the legend above the grid
+    final byWidth = (across - 8 * 4) / 9;
+    final byHeight = ((height - header - 8) / 5 - 4) / 1.3;
+    return math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
+  }
+
+  /// The grid's card width on a screen of [screen] size.
+  static double cellFor(Size screen) =>
+      cellWidth(screen.width - 2 * sidePad, screen.height * 0.5 - 18);
+
+  /// The grid's width: nine cards and the gaps between them.
+  static double gridWidth(double cell) => 9 * cell + 8 * 4 + 1;
+
+  /// Room the tracker needs round its grid: the inlay and a little air.
+  static const sidePad = 22.0;
 }
 
 /// Courtiers' powers and Dynasty are being reworked; until then they're
