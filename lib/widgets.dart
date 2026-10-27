@@ -126,8 +126,6 @@ class SuitText extends StatelessWidget {
                 color: done ? (style.color ?? Palette.ink).withValues(alpha: 0.5) : null)));
         spans.add(_suit(m.group(2)!,
             done ? suitColour(m.group(2)!).withValues(alpha: 0.5) : suitColour(m.group(2)!)));
-      } else if (token.length == 1) {
-        spans.add(_suit(token, suitColour(token)));
       } else if (token == noCourt || token == court) {
         final size = (style.fontSize ?? 14) * 0.95;
         final c = style.color ?? Palette.ink;
@@ -139,6 +137,8 @@ class SuitText extends StatelessWidget {
                   ? NoCourtIcon(size: size, color: c)
                   : CrownIcon(size: size * 1.1, color: c),
             )));
+      } else if (token.length == 1) {
+        spans.add(_suit(token, suitColour(token)));
       } else {
         final plural = token.toLowerCase().endsWith('s');
         spans.add(TextSpan(
