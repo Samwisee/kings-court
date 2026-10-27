@@ -156,7 +156,7 @@ def face_card(rank: str, name: str) -> str:
 
 def joker(colour: str) -> str:
     top, bottom = JOKER_CLOTH[colour]
-    dark = "#1A0C2A" if colour == "purple" else "#7A4A00"
+    dark = "#1A0C2A" if colour == "purple" else "#5A1E00"
     star_idx = place(outlined(star(), outline=7, shadow=False), 12.9, 15.6, 6.6, 100, 100)
     letters = "".join(text(12.9, 24.6 + k * 3.6, ch, 3.2, family=DISPLAY, weight=900,
                            fill=GILT, cls="foil", stroke=OUTLINE, stroke_w=0.45)
@@ -303,7 +303,7 @@ def cards() -> list[tuple[str, str]]:
                 s = number_card(int(rank), name)
             out.append((f"{n:02d}-{name}-{rank}", s))
             n += 1
-    for colour in ("purple", "yellow"):
+    for colour in ("purple", "orange"):
         out.append((f"{n:02d}-joker-{colour}", joker(colour)))
         n += 1
     out.append((f"{n:02d}-how-to-play", rules_card()))

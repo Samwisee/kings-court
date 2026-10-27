@@ -37,7 +37,7 @@ SUIT_CLOTH = {
 }
 JOKER_CLOTH = {
     "purple": ("#5A2F87", "#241238"),
-    "yellow": ("#F5CF55", "#B8800F"),
+    "orange": ("#F28A2E", "#A3410C"),
 }
 
 GILT = "url(#gilt)"
@@ -194,26 +194,29 @@ def _circle(x, y, r) -> str:
 
 
 def _jester(ow: float, gilt: str, cloth: str):
-    """The Joker's three-pointed cap with bells, and harlequin diamonds of
-    its cloth on the band."""
+    """The Joker's three-pointed cap with bells; its two side liripipes are
+    dyed in the cloth's colour, like a motley cap."""
     cap = ("M18 73.8 Q16 52 9 42 Q3 33 2 27 Q12 28 20 33 Q32 40 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
            "Q70 34.2 98 27 Q90 40.5 82 73.8 Z")
     band = "M19 70 H81 A4 4 0 0 1 85 74 V79 A4 4 0 0 1 81 83 H19 A4 4 0 0 1 15 79 V74 A4 4 0 0 1 19 70 Z"
     bells = [_circle(x, y, 6) for x, y in [(4, 27), (50, 4.5), (96, 27)]]
-    art = (_solid([cap, band, *bells], gilt, ow)
+    cid = f"liripipe-{cloth[1:]}"
+    left = "M-10 -10 L25 -10 L38 49.5 L36.4 70 L-10 70 Z"
+    dye = (f'<defs><clipPath id="{cid}"><path d="{cap}"/></clipPath></defs>'
+           f'<g class="foilknock" clip-path="url(#{cid})"><path d="{left}" fill="{cloth}"/>'
+           f'<path d="{left}" fill="{cloth}" transform="translate(100 0) scale(-1 1)"/></g>')
+    # the dye goes under the seams and the bells
+    art = (_solid([cap, band, *bells], gilt, ow) + dye
+           + _solid(bells, gilt, ow)
            + f'<g class="foilknock"><path d="M38 49.5 L36.4 70 M62 49.5 L63.6 70" stroke="{OUTLINE}" '
-             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/>'
-             + "".join(f'<path d="M{x} 70.8 L{x + 6} 76.5 L{x} 82.2 L{x - 6} 76.5 Z" fill="{cloth}" '
-                       f'stroke="{OUTLINE}" stroke-width="{ow * 0.4:.3f}" stroke-linejoin="round"/>'
-                       for x in (29, 50, 71))
-             + '</g>')
+             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
     return art, (-2, -1.5, 102, 83)
 
 
 def _jack(ow: float, gilt: str, cloth: str):
     """The Jack's sword with a shield hung low on it, a chevron in the
     cloth's colour. The sword is drawn first and the shield over it, with
-    a fuller down the blade, a wrapped grip and a rim inside the shield, so
+    a fuller down the blade and a wrapped grip, so
     the two read apart."""
     dy = 12                      # how far down the blade the shield sits
     sword = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
@@ -221,13 +224,12 @@ def _jack(ow: float, gilt: str, cloth: str):
              "A3 3 0 0 1 29 20.7 Z",
              "M45 26.1 L55 26.1 L55 111 L50 120 L45 111 Z"]
     shield = f"M24 {30.6 + dy} L76 {30.6 + dy} L76 {51.6 + dy} Q74 {71.6 + dy} 50 {81.6 + dy} Q26 {71.6 + dy} 24 {51.6 + dy} Z"
-    rim = f"M28.5 {35 + dy} L71.5 {35 + dy} L71.5 {51.4 + dy} Q69.8 {68.6 + dy} 50 {76.8 + dy} Q30.2 {68.6 + dy} 28.5 {51.4 + dy} Z"
     chevron = f"M32 {45.2 + dy} L50 {56.9 + dy} L68 {45.2 + dy} L68 {54.2 + dy} L50 {65.9 + dy} L32 {54.2 + dy} Z"
     line = f'stroke="{OUTLINE}" stroke-width="{ow * 0.35:.3f}" stroke-linecap="round" fill="none"'
     sword_detail = (f'<g class="foilknock"><path d="M50 29 L50 108" {line}/>'
                     + "".join(f'<path d="M46.5 {y} L53.5 {y + 2.4}" {line}/>' for y in (5.5, 10.5, 15.5))
                     + '</g>')
-    shield_detail = (f'<g class="foilknock"><path d="{rim}" {line} stroke-linejoin="round"/>'
+    shield_detail = (f'<g class="foilknock">'
                      f'<path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
                      f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
     art = _solid(sword, gilt, ow) + sword_detail + _solid([shield], gilt, ow) + shield_detail
@@ -278,18 +280,18 @@ def _tiara(ow: float, gilt: str, cloth: str):
     # King's jewels.
     cid = f"gemclip-{cloth[1:]}"
     table = "M50 24 L55 38 L50 52 L45 38 Z"
-    facet = f'stroke="{OUTLINE}" stroke-opacity="0.55" stroke-width="{ow * 0.22:.3f}"'
+    facet = f'stroke="{OUTLINE}" stroke-opacity="0.28" stroke-width="{ow * 0.18:.3f}"'
     jewel = (f'<defs><clipPath id="{cid}"><path d="{gem}"/></clipPath></defs>'
              f'<g class="foilknock"><path d="{gem}" fill="{cloth}"/>'
              f'<g clip-path="url(#{cid})">'
-             f'<path d="M30 14 L50 14 L50 38 L30 38 Z" fill="#FFFFFF" fill-opacity="0.32"/>'
-             f'<path d="M50 14 L70 14 L70 38 L50 38 Z" fill="#FFFFFF" fill-opacity="0.12"/>'
-             f'<path d="M30 38 L50 38 L50 62 L30 62 Z" fill="#000000" fill-opacity="0.12"/>'
-             f'<path d="M50 38 L70 38 L70 62 L50 62 Z" fill="#000000" fill-opacity="0.32"/>'
+             f'<path d="M30 14 L50 14 L50 38 L30 38 Z" fill="#FFFFFF" fill-opacity="0.14"/>'
+             f'<path d="M50 14 L70 14 L70 38 L50 38 Z" fill="#FFFFFF" fill-opacity="0.05"/>'
+             f'<path d="M30 38 L50 38 L50 62 L30 62 Z" fill="#000000" fill-opacity="0.05"/>'
+             f'<path d="M50 38 L70 38 L70 62 L50 62 Z" fill="#000000" fill-opacity="0.14"/>'
              f'<path d="M50 14 L50 62 M38 38 L62 38 M50 14 L45 38 L50 62 M50 14 L55 38 L50 62" {facet} fill="none"/>'
              f'</g>'
              f'<path d="{table}" fill="{cloth}" {facet} stroke-linejoin="round"/>'
-             f'<path d="{table}" fill="#FFFFFF" fill-opacity="0.14"/>'
+             f'<path d="{table}" fill="#FFFFFF" fill-opacity="0.07"/>'
              f'<path d="M47.6 31 L49.2 27.4" stroke="#FFFFFF" stroke-opacity="0.85" '
              f'stroke-width="{ow * 0.4:.3f}" stroke-linecap="round"/>'
              f'<path d="{gem}" fill="none" stroke="{OUTLINE}" stroke-width="{ow * 0.45:.3f}" '
@@ -308,7 +310,7 @@ def _king(ow: float, gilt: str, cloth: str):
         f'stroke-width="{ow * 0.4:.3f}"/>' for x in (31, 50, 69))
     # Two points at the back of the crown, peeking up between the front
     # ones, a shade darker for depth.
-    back = ["M14 46 L25 9 L38 46 Z", "M62 46 L75 9 L86 46 Z"]
+    back = ["M18.5 46 L25 24 L32.5 46 Z", "M67.5 46 L75 24 L81.5 46 Z"]
     shade = "".join(f'<path d="{d}" fill="#000000" fill-opacity="0.22"/>' for d in back)
     return (_solid(back, gilt, ow) + shade + _solid([body, band], gilt, ow)
             + f'<g class="foilknock">{jewels}</g>', (0, 0, 100, 75))
