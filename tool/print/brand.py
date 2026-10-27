@@ -210,21 +210,21 @@ def _jack(ow: float, gilt: str, cloth: str):
     pieces = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
               "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
               "A3 3 0 0 1 29 20.7 Z",
-              "M45 26.1 L55 26.1 L55 88.8 L50 97.8 L45 88.8 Z",
+              "M45 26.1 L55 26.1 L55 106.8 L50 115.8 L45 106.8 Z",
               "M24 30.6 L76 30.6 L76 51.6 Q74 71.6 50 81.6 Q26 71.6 24 51.6 Z"]
     chevron = "M32 45.2 L50 56.9 L68 45.2 L68 54.2 L50 65.9 L32 54.2 Z"
     art = (_solid(pieces, gilt, ow)
            + f'<g class="foilknock"><path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
              f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
-    return art, (24, -4.5, 76, 97.8)
+    return art, (24, -4.5, 76, 115.8)
 
 
-def _tiara(ow: float, gilt: str):
+def _tiara(ow: float, gilt: str, cloth: str):
     """The Queen's filigree tiara: band, pointed oval with a gem, scrolls.
     Its lines are drawn a little bolder than the app's, to match the
     weight of the others."""
     band = "M4 64 C30 70 70 70 96 64 C72 79 28 79 4 64 Z"
-    gem = "M50 58 C42 50 43 30 50 20 C57 30 58 50 50 58 Z"
+    gem = "M50 62 C38.5 52 39.5 28 50 14 C60.5 28 61.5 52 50 62 Z"
     oval = "M50 66 C36 56 38 24 50 8 C62 24 64 56 50 66"
 
     def scroll(start, curve, centre, turn, end_r):
@@ -256,11 +256,16 @@ def _tiara(ow: float, gilt: str):
         return out
 
     outline = (f'<g><path d="{band}" fill="{OUTLINE}" stroke="{OUTLINE}" stroke-width="{ow:.3f}" '
-               f'stroke-linejoin="round"/><path d="{gem}" fill="{OUTLINE}" stroke="{OUTLINE}" '
-               f'stroke-width="{ow:.3f}" stroke-linejoin="round"/>{strokes(OUTLINE, ow)}</g>')
-    gold = (f'<g class="foil"><path d="{band}" fill="{gilt}"/><path d="{gem}" fill="{gilt}"/>'
-            f'{strokes(gilt, 0)}</g>')
-    return outline + gold, (1, 5, 99, 78)
+               f'stroke-linejoin="round"/>{strokes(OUTLINE, ow)}</g>')
+    gold = f'<g class="foil"><path d="{band}" fill="{gilt}"/>{strokes(gilt, 0)}</g>'
+    # The gem: a cut stone in the cloth's colour, outlined like the King's
+    # jewels, with a facet line and a glint.
+    jewel = (f'<g class="foilknock"><path d="{gem}" fill="{cloth}" stroke="{OUTLINE}" '
+             f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/>'
+             f'<path d="M50 19 L50 58" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="{ow * 0.3:.3f}"/>'
+             f'<path d="M46.4 26 C43.6 33 43.6 42 45.2 49" stroke="#FFFFFF" stroke-opacity="0.55" '
+             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
+    return outline + gold + jewel, (1, 5, 99, 78)
 
 
 def _king(ow: float, gilt: str, cloth: str):
@@ -277,7 +282,7 @@ def _king(ow: float, gilt: str, cloth: str):
 
 # Every emblem fits this box (mm) on the card; the King's is larger.
 EMBLEM_BOX = (34.0, 29.0)
-JACK_BOX = (34.0, 33.0)
+JACK_BOX = (34.0, 52.0)
 KING_BOX = (37.5, 30.0)
 
 
@@ -286,7 +291,7 @@ def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
     box_w, box_h = {"king": KING_BOX, "jack": JACK_BOX}.get(kind, EMBLEM_BOX)
     # Work out the scale from the emblem's own bounds.
     probe = {"joker": lambda: _jester(1, GILT), "jack": lambda: _jack(1, GILT, cloth),
-             "queen": lambda: _tiara(1, GILT), "king": lambda: _king(1, GILT, cloth)}[kind]
+             "queen": lambda: _tiara(1, GILT, cloth), "king": lambda: _king(1, GILT, cloth)}[kind]
     x0, y0, x1, y1 = probe()[1]
     w, h = x1 - x0, y1 - y0
     s = min(box_w / w, box_h / h)
@@ -294,7 +299,7 @@ def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
     gid = f"gilt-{kind}-{cloth[1:]}"
     gilt = f"url(#{gid})"
     art = {"joker": lambda: _jester(ow, gilt), "jack": lambda: _jack(ow, gilt, cloth),
-           "queen": lambda: _tiara(ow, gilt), "king": lambda: _king(ow, gilt, cloth)}[kind]()[0]
+           "queen": lambda: _tiara(ow, gilt, cloth), "king": lambda: _king(ow, gilt, cloth)}[kind]()[0]
     return (f'<defs>{_gilt_for(gid, y0, y1)}</defs>'
             f'<g filter="url(#drop)"><g transform="translate({cx:.3f} {cy:.3f}) scale({s:.5f}) '
             f'translate({-(x0 + x1) / 2:.3f} {-(y0 + y1) / 2:.3f})">{art}</g></g>')
