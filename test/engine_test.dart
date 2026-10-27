@@ -329,4 +329,23 @@ void main() {
     g.setKing(0);
     expect(g.pickTurn, 1);
   });
+
+  test('A bot who may win only the last trick never leads the King', () {
+    for (int seed = 0; seed < 6; seed++) {
+      final rand = Random(seed);
+      final s = MatchState(players: 4, target: 6)..newRound(rand);
+      // Seat 1 holds the King card and must win only the last trick.
+      final holder = [for (int i = 0; i < 4; i++) i]
+          .firstWhere((i) => s.hands[i].contains(PlayingCard.king));
+      final task = GameState.taskPool
+          .firstWhere((t) => t.description == 'Win only the last trick');
+      s.tasks = [MatchTask(task, owner: holder)];
+      s.phase = Phase.playing;
+      s.leader = holder;
+      s.current = [];
+      s.currentSeats = [];
+      final bot = Bot(rand)..budget = 300;
+      expect(bot.choosePlay(s, holder), isNot(PlayingCard.king), reason: 'seed $seed');
+    }
+  });
 }

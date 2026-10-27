@@ -113,7 +113,24 @@ class Bot {
   double _playout(MatchState s, Map<int, int> assigned,
       Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX) {
     final sim = _Sim.from(s);
-    if (first != null) sim.play(first.$1, first.$2);
+    var lostNow = false;
+    if (first != null) {
+      sim.play(first.$1, first.$2);
+      // Finish this trick first: a card that loses a task in the trick it's
+      // played in (the King led by someone who may win only the last trick)
+      // is a blunder, whatever might happen later.
+      sim.playOut(rand, until: s.tricks.length + 1);
+      final now = sim.view(s, inPlay);
+      for (final e in assigned.entries) {
+        final t = s.tasks[e.key];
+        if (needsX(t.description) && (freeX || t.x == null)) continue;
+        if (t.verdict == Verdict.pending &&
+            taskRules[t.description]!(now, e.value, t.x) == Verdict.failed) {
+          lostNow = true;
+          break;
+        }
+      }
+    }
     sim.playOut(rand);
     final v = sim.view(s, inPlay);
     int done = 0;
@@ -129,7 +146,8 @@ class Bot {
     // lost even with every task done.
     if (done == assigned.length && !_sealsKept(s, assigned, v)) done--;
     final value =
-        done == assigned.length ? 1.0 : 0.2 * done / max(1, assigned.length);
+        (done == assigned.length ? 1.0 : 0.2 * done / max(1, assigned.length)) -
+            (lostNow ? 0.6 : 0);
     if (s.schemes.isEmpty) return value;
     // A traitor wants only their scheme; everyone else wants it stopped.
     final me = first?.$1;
@@ -334,8 +352,10 @@ class _Sim {
     }
   }
 
-  void playOut(Random rand) {
-    while (tricks.length < totalTricks) {
+  /// Plays on at random to the end of the round, or until [until] tricks
+  /// have been played.
+  void playOut(Random rand, {int? until}) {
+    while (tricks.length < (until ?? totalTricks)) {
       final seat = turn;
       final legal = legalPlays(hands[seat], cards.isEmpty ? null : cards.first);
       if (legal.isEmpty) break;

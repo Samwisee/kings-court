@@ -232,7 +232,15 @@ class SeatToken extends StatelessWidget {
                       offset: Offset(0, 2)),
               ],
             ),
-            child: labelText,
+            // A thin dark line inside the ring.
+            child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: outlineColour, width: 1.3),
+              ),
+              child: labelText,
+            ),
           )
         : ShapedToken(
             shape: shape!,
@@ -1401,6 +1409,19 @@ class _TokenPainter extends CustomPainter {
       );
     }
     canvas.drawPath(path, Paint()..color = color);
+    // A thin dark line just inside the ring, between it and the token's
+    // colour, so a gold (or white) ring stands out from both.
+    canvas.save();
+    canvas.clipPath(path);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ringWidth + 2.6
+        ..strokeJoin = StrokeJoin.round
+        ..color = outlineColour,
+    );
+    canvas.restore();
     canvas.drawPath(
       path,
       Paint()

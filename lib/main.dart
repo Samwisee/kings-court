@@ -488,9 +488,12 @@ class _HomePageState extends State<HomePage>
     HardwareKeyboard.instance.addHandler(_onKey);
   }
 
-  /// The space bar brings the card tracker up, and puts it away again.
+  /// Keys: the space bar brings the card tracker up and puts it away; S
+  /// starts (or cancels) showing a card.
   bool _onKey(KeyEvent e) {
-    if (e is! KeyDownEvent || e.logicalKey != LogicalKeyboardKey.space) return false;
+    if (e is! KeyDownEvent) return false;
+    final key = e.logicalKey;
+    if (key != LogicalKeyboardKey.space && key != LogicalKeyboardKey.keyS) return false;
     // Not while typing (player names), or off the on-screen game.
     if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) return false;
     if (!mounted ||
@@ -499,6 +502,11 @@ class _HomePageState extends State<HomePage>
         !_digital ||
         _cards.dealId != game.dealId) {
       return false;
+    }
+    if (key == LogicalKeyboardKey.keyS) {
+      if (!(_mayAskToSpeak || _revealing)) return false;
+      _speak();
+      return true;
     }
     _showCardTracker();
     return true;
@@ -4322,7 +4330,27 @@ class _HomePageState extends State<HomePage>
 
   void _closeSetup() => setState(() => _setupArgs = null);
 
+  /// A gold veil over the screen, for passing from the menus into a game:
+  /// the last menu fades out to gold, the table fades in from it.
+  bool _veil = false;
+
   void _startFromSetup(_SetupResult r) {
+    if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
+      _beginFromSetup(r);
+      return;
+    }
+    setState(() => _veil = true);
+    Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      _beginFromSetup(r);
+      // Give the table a frame to settle, then lift the veil.
+      Timer(const Duration(milliseconds: 120), () {
+        if (mounted) setState(() => _veil = false);
+      });
+    });
+  }
+
+  void _beginFromSetup(_SetupResult r) {
     setState(() => _setupArgs = null);
     if (r.mode == GameMode.tutorial) {
       _startTutorial();
@@ -4481,7 +4509,12 @@ class _HomePageState extends State<HomePage>
       extendBodyBehindAppBar: useTopBar,
       appBar: _inGame && _setupArgs == null
           ? _buildAppBar()
-          : AppBar(actions: [_buildMenu(), const SizedBox(width: 4)]),
+          : AppBar(
+              toolbarHeight: 60,
+              actions: [
+                Padding(padding: const EdgeInsets.only(top: 8), child: _buildMenu()),
+                const SizedBox(width: 18),
+              ]),
       body: SafeArea(
         top: !useTopBar,
         child: Stack(
@@ -4619,6 +4652,25 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
+      // The gold veil between the menus and a game.
+      Positioned.fill(
+        child: IgnorePointer(
+          ignoring: !_veil,
+          child: AnimatedOpacity(
+            opacity: _veil ? 1 : 0,
+            duration: Duration(milliseconds: _veil ? 300 : 520),
+            curve: Curves.easeInOut,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  radius: 1.1,
+                  colors: [Color(0xFF6E5A20), Color(0xFF2E3A16), Color(0xFF0A2A18)],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       const Positioned.fill(
@@ -4710,10 +4762,13 @@ class _HomePageState extends State<HomePage>
   bool _menuOpen = false;
 
   /// The menu button: its bars fold into a cross while the menu is open.
-  Widget _buildMenu() => IconButton(
-        tooltip: 'Menu',
-        onPressed: _openMenu,
-        icon: _OrnateMenuIcon(size: 30, open: _menuOpen),
+  Widget _buildMenu() => Tooltip(
+        message: 'Menu',
+        child: _GoldBar(
+          onTap: _openMenu,
+          semanticLabel: 'Menu',
+          child: _OrnateMenuIcon(size: 26, open: _menuOpen),
+        ),
       );
 
   /// The menu: an ornate panel that drops down from the corner.
@@ -4825,11 +4880,11 @@ class _HomePageState extends State<HomePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      toolbarHeight: 46,
-      titleSpacing: 22,
+      toolbarHeight: 60,
+      titleSpacing: 28,
       backgroundColor: Colors.transparent,
       title: Padding(
-        padding: const EdgeInsets.only(top: 2),
+        padding: const EdgeInsets.only(top: 8),
         // The round's name, with anything in force this round beside it.
         child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -4852,7 +4907,8 @@ class _HomePageState extends State<HomePage>
                   fontFamily: displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 22,
-                  color: Palette.gold)),
+                  color: Palette.gold,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 10)])),
           ),
               if (_choosingKing) ...[
                 const SizedBox(width: 12),
@@ -4931,29 +4987,35 @@ class _HomePageState extends State<HomePage>
           ),
         // Dynasty is about the story: the points grow on their own.
         if (!game.isDynasty)
-        Tooltip(
-          message: 'Points target',
-          child: TextButton(
-            onPressed: _showPointsDialog,
-            style: TextButton.styleFrom(foregroundColor: Palette.gold),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$targetPoints',
-                    style: const TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        height: 1,
-                        color: Palette.gold)),
-                const SizedBox(width: 4),
-                const CrownIcon(size: 18, color: Palette.gold),
-              ],
+        Padding(
+          padding: const EdgeInsets.only(top: 8, right: 10),
+          child: Tooltip(
+            message: 'Points target',
+            child: _GoldBar(
+              onTap: _showPointsDialog,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('$targetPoints',
+                      style: const TextStyle(
+                          fontFamily: displayFont,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          height: 1,
+                          color: Palette.gold,
+                          shadows: [Shadow(color: Colors.black, blurRadius: 6)])),
+                  const SizedBox(width: 5),
+                  const CrownIcon(size: 18, color: Palette.gold),
+                ],
+              ),
             ),
           ),
         ),
-        _buildMenu(),
-        const SizedBox(width: 4),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: _buildMenu(),
+        ),
+        const SizedBox(width: 18),
       ],
     );
   }
@@ -7267,6 +7329,75 @@ class _WelcomeIntro extends StatelessWidget {
   }
 }
 
+/// A raised plaque in the top corner, like a bar of gold set into the
+/// table's rim: felt inside a bevelled gold edge, standing off the table on
+/// a shadow, and pressing in when tapped.
+class _GoldBar extends StatefulWidget {
+  const _GoldBar({required this.onTap, required this.child, this.semanticLabel});
+  final VoidCallback onTap;
+  final Widget child;
+  final String? semanticLabel;
+
+  @override
+  State<_GoldBar> createState() => _GoldBarState();
+}
+
+class _GoldBarState extends State<_GoldBar> {
+  bool _down = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: widget.semanticLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _down = true),
+        onTapCancel: () => setState(() => _down = false),
+        onTapUp: (_) => setState(() => _down = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _down ? 0.94 : 1,
+          duration: const Duration(milliseconds: 90),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 90),
+            constraints: const BoxConstraints(minHeight: 44, minWidth: 48),
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(11),
+              // The gold rim, bright above and deep below, like a bevel.
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFF9E08C), Palette.gold, Color(0xFF8A6418)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: _down ? 0.3 : 0.55),
+                    blurRadius: _down ? 3 : 8,
+                    offset: Offset(0, _down ? 1 : 3)),
+              ],
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1C5A3B), Color(0xFF0A3622)],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: widget.child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A gold double rule with a jewel at each corner, for menus and dialogs.
 class OrnateBorder extends ShapeBorder {
   const OrnateBorder({this.radius = 16, this.gems = true});
@@ -7354,7 +7485,7 @@ class _OrnateMenuState extends State<_OrnateMenu> {
           child: OrnateCard(
             won: false,
             court: true,
-            margin: const EdgeInsets.fromLTRB(16, 76, 10, 16),
+            margin: const EdgeInsets.fromLTRB(16, 86, 14, 16),
             // Clear of the scrollwork in the corners.
             padding: const EdgeInsets.fromLTRB(22, 34, 26, 26),
             maxWidth: 310,
