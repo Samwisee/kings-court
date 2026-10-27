@@ -418,6 +418,13 @@ class _HomePageState extends State<HomePage>
   /// Seat being crowned while the crown animation plays.
   int? _crowning;
 
+  /// The crown from the walk into the game is waiting in the middle of the
+  /// screen to be the King's crown (so there is only ever one crown).
+  bool _crownWaiting = false;
+
+  /// This crowning's crown starts as that waiting crown.
+  bool _crownFromCentre = false;
+
   /// The deal whose decree has been read out (see [_decreePending]).
   int _decreeReadFor = -1;
 
@@ -2125,8 +2132,18 @@ class _HomePageState extends State<HomePage>
     final middle = _rectOn(_middleKey);
     final seat = _rectOn(_seatKey(king));
     if (middle == null || seat == null) return const SizedBox.shrink();
+    // From the walk-in's crown: the middle of the screen, in the table's
+    // own coordinates, at that crown's size.
+    final table = _digiKey.currentContext?.findRenderObject() as RenderBox?;
+    final screen = MediaQuery.sizeOf(context);
+    final centre = table == null || !table.attached
+        ? middle.center
+        : screen.center(Offset.zero) - table.localToGlobal(Offset.zero);
     return _crowningScene(
-      from: middle.center,
+      from: _crownFromCentre ? centre : middle.center,
+      startSize: _crownFromCentre
+          ? math.min(screen.width, screen.height) * 0.28
+          : null,
       // The crown sits in the slot above the token.
       to: seat.topCenter + const Offset(0, 8),
       spinTo: 0,
@@ -3600,14 +3617,22 @@ class _HomePageState extends State<HomePage>
       _showSnack('A traitor to the crown cannot be crowned', Palette.lost);
       return;
     }
-    setState(() => _crowning = index);
-    Sfx.fanfare();
+    final fromCentre = _crownWaiting;
+    setState(() {
+      _crowning = index;
+      // The waiting crown becomes this one, in the same place.
+      _crownFromCentre = fromCentre;
+      _crownWaiting = false;
+    });
+    // The walk-in already sounded the fanfare.
+    if (!fromCentre) Sfx.fanfare();
     _crown.forward(from: 0).whenComplete(() {
       if (!mounted) return;
       _haptic(HapticFeedback.heavyImpact);
       setState(() {
         game.setKing(index);
         _crowning = null;
+        _crownFromCentre = false;
       });
     });
   }
@@ -4397,7 +4422,16 @@ class _HomePageState extends State<HomePage>
       return;
     }
     Sfx.fanfare();
-    _coronation.forward(from: 0);
+    // On screen, the crown stays to crown the King at the table.
+    _crownWaiting = r.digital &&
+        r.mode != GameMode.tutorial &&
+        r.mode != GameMode.dynasty;
+    _coronation.forward(from: 0).whenComplete(() {
+      // In case no crowning follows after all: let it go.
+      Timer(const Duration(milliseconds: 1500), () {
+        if (mounted && _crownWaiting) setState(() => _crownWaiting = false);
+      });
+    });
     // The game is set out while the crown hides the change.
     Timer(const Duration(milliseconds: 560), () {
       if (mounted) _beginFromSetup(r);
@@ -4408,12 +4442,14 @@ class _HomePageState extends State<HomePage>
         animation: _coronation,
         builder: (context, _) {
           final t = _coronation.value;
-          if (t == 0 || t == 1) return const SizedBox.shrink();
+          final waiting = _crownWaiting;
+          if (t == 0 || (t == 1 && !waiting)) return const SizedBox.shrink();
           double iv(double a, double b, [Curve c = Curves.linear]) =>
               c.transform(((t - a) / (b - a)).clamp(0.0, 1.0));
           final cover = iv(0, 0.3, Curves.easeOut) * (1 - iv(0.6, 1, Curves.easeIn));
           final grow = iv(0.08, 0.42, Curves.easeOutBack);
-          final lift = iv(0.58, 1, Curves.easeInCubic);
+          // A crown waiting for the King holds still, full size.
+          final lift = waiting ? 0.0 : iv(0.58, 1, Curves.easeInCubic);
           final spark = iv(0.32, 0.85);
           final size = MediaQuery.sizeOf(context);
           final crown = math.min(size.width, size.height) * 0.28;
@@ -4445,7 +4481,7 @@ class _HomePageState extends State<HomePage>
                 child: Opacity(
                   opacity: iv(0.05, 0.2) * (1 - lift),
                   child: Transform.scale(
-                    scale: 0.55 + 0.45 * grow + 0.15 * lift,
+                    scale: waiting && t > 0.42 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
                     child: DecoratedBox(
                       decoration: BoxDecoration(boxShadow: [
                         BoxShadow(
@@ -5276,6 +5312,7 @@ class _HomePageState extends State<HomePage>
     required double seatSize,
     required int king,
     required Map<int, Offset> seats,
+    double? startSize,
   }) {
     final seat = king;
     final a = spinTo;
@@ -5287,10 +5324,13 @@ class _HomePageState extends State<HomePage>
             .transform(clampD(t / 0.6, 0, 1));
         final land = clampD((t - 0.6) / 0.4, 0, 1);
         // Arc: lift the crown off the straight line mid-flight.
-        final lift = math.sin(fly * math.pi) * 70;
+        final lift = math.sin(fly * math.pi) * (startSize == null ? 70 : 30);
         final p = Offset.lerp(from, to, fly)! - Offset(0, lift);
         final size = t < 0.6
-            ? 30 + 40 * math.sin(fly * math.pi) // swells mid-air
+            ? startSize != null
+                // Shrinks from the walk-in's crown down onto the head.
+                ? startSize + (28 - startSize) * fly
+                : 30 + 40 * math.sin(fly * math.pi) // swells mid-air
             : 18 + 10 * (1 - Curves.elasticOut.transform(land));
         final spin = a * fly;
         final glow = math.sin(clampD(t / 0.9, 0, 1) * math.pi);
@@ -8523,15 +8563,19 @@ class _SetupPanelState extends State<_SetupPanel> {
               children: [
                 SizedBox(
                   width: 48,
-                  child: choosing && step == 0 && widget.canCancel
-                      ? IconButton(
-                          tooltip: step == 0 ? 'Cancel' : 'Back',
-                          onPressed: _back,
-                          icon: Icon(step == 0
-                              ? Icons.close_rounded
-                              : Icons.arrow_back_rounded),
-                        )
-                      : null,
+                  height: 48,
+                  child: AnimatedOpacity(
+                    opacity: choosing && step == 0 && widget.canCancel ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: IgnorePointer(
+                      ignoring: !(choosing && step == 0 && widget.canCancel),
+                      child: IconButton(
+                        tooltip: 'Cancel',
+                        onPressed: _back,
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: Row(
@@ -8544,11 +8588,15 @@ class _SetupPanelState extends State<_SetupPanel> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: AnimatedScale(
                             scale: i == step ? 1.5 : 1,
-                            duration: const Duration(milliseconds: 420),
-                            curve: Curves.elasticOut,
-                            child: CrownIcon(
-                                size: 14,
-                                color: i <= step ? Palette.gold : Colors.white24),
+                            duration: const Duration(milliseconds: 360),
+                            curve: Curves.easeOutCubic,
+                            child: TweenAnimationBuilder<Color?>(
+                              tween: ColorTween(
+                                  end: i <= step ? Palette.gold : Colors.white24),
+                              duration: const Duration(milliseconds: 360),
+                              builder: (context, c, _) =>
+                                  CrownIcon(size: 14, color: c ?? Colors.white24),
+                            ),
                           ),
                         ),
                     ],
@@ -8595,24 +8643,33 @@ class _SetupPanelState extends State<_SetupPanel> {
                 ),
               ),
             ),
-            if (!choosing || step > 0 || widget.canCancel) const SizedBox(height: 12),
+            // Always there, so the step above never shifts: the buttons
+            // fade in and out instead.
+            const SizedBox(height: 12),
             // Kept near the step on a wide screen, not out in the corners.
             // The first step has a way back to where you came from.
-            if (!choosing || step > 0 || widget.canCancel)
-            // One height whether or not a Next button shows, so the page
-            // above never shifts as you go from step to step.
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560, minHeight: 56, maxHeight: 56),
               child: Row(
               children: [
-                if (step > 0 || widget.canCancel)
-                  TextButton(
-                    onPressed: _back,
-                    child: const Text('Back'),
+                AnimatedOpacity(
+                  opacity: step > 0 || widget.canCancel ? 1 : 0,
+                  duration: const Duration(milliseconds: 250),
+                  child: IgnorePointer(
+                    ignoring: !(step > 0 || widget.canCancel),
+                    child: TextButton(
+                      onPressed: _back,
+                      child: const Text('Back'),
+                    ),
                   ),
+                ),
                 const SizedBox(width: 8),
-                if (!choosing)
                 Expanded(
+                  child: AnimatedOpacity(
+                  opacity: choosing ? 0 : 1,
+                  duration: const Duration(milliseconds: 250),
+                  child: IgnorePointer(
+                  ignoring: choosing,
                   child: Align(
                     alignment: Alignment.centerRight,
                     // Shrinks rather than cutting the words off.
@@ -8632,6 +8689,8 @@ class _SetupPanelState extends State<_SetupPanel> {
                                     : 'Start'),
                       ),
                     ),
+                  ),
+                  ),
                   ),
                 ),
               ],
