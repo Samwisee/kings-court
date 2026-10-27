@@ -244,6 +244,30 @@ void main() {
       }
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/wide-$name-1.png'));
+      // The menu and the points target.
+      await tester.tap(find.byTooltip('Menu'));
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await expectLater(find.byType(MaterialApp),
+          matchesGoldenFile('goldens/wide-$name-menu.png'));
+      await tester.tapAt(const Offset(40, 900));
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      final points = find.byTooltip('Points target');
+      if (points.evaluate().isNotEmpty) {
+        await tester.tap(points.first);
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+        await expectLater(find.byType(MaterialApp),
+            matchesGoldenFile('goldens/wide-$name-points.png'));
+        await tester.tap(find.text('Cancel'));
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+      }
       // A task's close-up: what it means, its words, how it's going.
       final cards = find
           .textContaining(RegExp(r"^(Win|Don't)"), findRichText: true)
