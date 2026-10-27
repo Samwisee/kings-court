@@ -194,20 +194,27 @@ def _circle(x, y, r) -> str:
 
 
 def _jester(ow: float, gilt: str, cloth: str):
-    """The Joker's three-pointed cap with bells; its two side liripipes are
-    dyed in the cloth's colour, like a motley cap."""
+    """The Joker's three-pointed cap with bells; harlequin checks of the
+    cloth's colour on its gold liripipes."""
     cap = ("M18 73.8 Q16 52 9 42 Q3 33 2 27 Q12 28 20 33 Q32 40 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
            "Q70 34.2 98 27 Q90 40.5 82 73.8 Z")
     band = "M19 70 H81 A4 4 0 0 1 85 74 V79 A4 4 0 0 1 81 83 H19 A4 4 0 0 1 15 79 V74 A4 4 0 0 1 19 70 Z"
     bells = [_circle(x, y, 6) for x, y in [(4, 27), (50, 4.5), (96, 27)]]
-    cid = f"liripipe-{cloth[1:]}"
-    left = "M-10 -10 L25 -10 L38 49.5 L36.4 70 L-10 70 Z"
-    dye = (f'<defs><clipPath id="{cid}"><path d="{cap}"/></clipPath></defs>'
-           f'<g class="foilknock" clip-path="url(#{cid})"><path d="{left}" fill="{cloth}"/>'
-           f'<path d="{left}" fill="{cloth}" transform="translate(100 0) scale(-1 1)"/></g>')
-    # the dye goes under the seams and the bells
-    art = (_solid([cap, band, *bells], gilt, ow) + dye
-           + _solid(bells, gilt, ow)
+    # Harlequin checks of the cloth's colour on the gold liripipes.
+    cid = f"motley-{cloth[1:]}"
+    dw, dh = 17.0, 21.0
+    checks = []
+    for row in range(-1, 11):
+        for col in range(-1, 10):
+            if row % 2:
+                continue
+            x, y = col * dw + (dw / 2 if row % 2 else 0), row * dh / 2
+            checks.append(f"M{x:.2f} {y - dh / 2:.2f} L{x + dw / 2:.2f} {y:.2f} L{x:.2f} {y + dh / 2:.2f} "
+                          f"L{x - dw / 2:.2f} {y:.2f} Z")
+    motley = (f'<defs><clipPath id="{cid}"><path d="{cap}"/></clipPath></defs>'
+              f'<g class="foilknock" clip-path="url(#{cid})"><path d="{" ".join(checks)}" fill="{cloth}" '
+              f'stroke="{OUTLINE}" stroke-width="{ow * 0.3:.3f}" stroke-linejoin="round"/></g>')
+    art = (_solid([cap], gilt, ow) + motley + _solid([band, *bells], gilt, ow)
            + f'<g class="foilknock"><path d="M38 49.5 L36.4 70 M62 49.5 L63.6 70" stroke="{OUTLINE}" '
              f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
     return art, (-2, -1.5, 102, 83)
@@ -310,7 +317,7 @@ def _king(ow: float, gilt: str, cloth: str):
         f'stroke-width="{ow * 0.4:.3f}"/>' for x in (31, 50, 69))
     # Two points at the back of the crown, peeking up between the front
     # ones, a shade darker for depth.
-    back = ["M18.5 46 L25 24 L32.5 46 Z", "M67.5 46 L75 24 L81.5 46 Z"]
+    back = ["M21 46 L17 21 L36 46 Z", "M64 46 L83 21 L79 46 Z"]
     shade = "".join(f'<path d="{d}" fill="#000000" fill-opacity="0.22"/>' for d in back)
     return (_solid(back, gilt, ow) + shade + _solid([body, band], gilt, ow)
             + f'<g class="foilknock">{jewels}</g>', (0, 0, 100, 75))
@@ -375,8 +382,8 @@ def lattice(w, h) -> str:
             x += step
         y += step / 2
         row += 1
-    return (f'<g stroke="{GOLD_LIGHT}" stroke-opacity="0.16" stroke-width="0.3">{"".join(lines)}</g>'
-            f'<g fill="#FFF8E8" fill-opacity="0.22">{"".join(pearls)}</g>')
+    return (f'<g stroke="{GOLD_LIGHT}" stroke-opacity="0.55" stroke-width="0.18" class="foil">{"".join(lines)}</g>'
+            f'<g fill="{GOLD_LIGHT}" fill-opacity="0.7" class="foil">{"".join(pearls)}</g>')
 
 
 def sunburst(w, h, cy_frac=0.56, alpha=1.0) -> str:

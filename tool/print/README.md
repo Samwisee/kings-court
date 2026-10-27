@@ -19,7 +19,7 @@ felt and the card-back red, with a cartoon outline and gold foil.
 | --- | --- | --- |
 | A–10 in four-colour suits | 40 | ♥ red, ♦ blue, ♣ green, ♠ black, as in the app's colour setting; plain, large pips (the Aces too: the Court Cards are the stars). A–9 carry a small gold crown: they're in the King's Court deck. |
 | Jack, Queen, King in every suit | 12 | Court Cards on cloth in the suit's colour: red, blue, green and black, each with the app's emblem (sword and shield, tiara, crown) and pattern (stripes, lattice, sunburst). Players choose which Jack, Queen and King make their court; the app's are the green Jack, blue Queen and red King. |
-| Jokers | 2 | Purple (the app's) and orange, with the jester's cap, its liripipes dyed in the card's colour. |
+| Jokers | 2 | Purple (the app's) and orange, with the jester's cap, harlequin checks of the card's colour on its liripipes. |
 | Back | – | The table's felt inside an ivory border, with a field of little crowns and a medallion that reads either way up: never mistaken for a face. |
 | How to play | 1 | On the felt: choosing a court, the rules in brief, a QR code to the app. |
 | Your court awaits | 1 | Unlock code, QR code and the NFC table note. **The code shown is a sample**: each deck needs its own (see below). |
