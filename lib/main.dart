@@ -1941,7 +1941,9 @@ class _HomePageState extends State<HomePage>
           children: [
             Padding(
               // Room above the tokens so a King's crown clears the edge.
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              // On a phone the courtiers sit higher, leaving more room for
+              // tasks and cards.
+              padding: EdgeInsets.fromLTRB(16, width < 600 ? 2 : 16, 16, 4),
               child: Column(
                 children: [
                   // Solo Dynasty: what this hand is for, in the story.
@@ -1966,7 +1968,19 @@ class _HomePageState extends State<HomePage>
                       child: _storyStage() ?? _digiMiddle(width),
                     ),
                   ),
-                  KeyedSubtree(key: _yourRowKey, child: _digiYou(width)),
+                  // Your tasks run on to the brass edge, under the margin.
+                  KeyedSubtree(
+                    key: _yourRowKey,
+                    child: SizedBox(
+                      width: width,
+                      child: OverflowBox(
+                        alignment: Alignment.centerLeft,
+                        minWidth: width + 8,
+                        maxWidth: width + 8,
+                        child: _digiYou(width + 8),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -2718,33 +2732,9 @@ class _HomePageState extends State<HomePage>
         // You, at your full size, over the start of the row.
         Positioned(
           left: 0,
-          // Only once your tasks have scrolled under you does the felt
-          // fade over them; at rest every task shows in full.
-          child: ValueListenableBuilder<bool>(
-            valueListenable: _youScrolled,
-            builder: (context, scrolled, child) => Stack(clipBehavior: Clip.none, children: [
-              Positioned.fill(
-                right: -16,
-                child: IgnorePointer(
-                  child: AnimatedOpacity(
-                    opacity: scrolled && mine.isNotEmpty ? 1 : 0,
-                    duration: const Duration(milliseconds: 150),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [
-                          Palette.felt,
-                          Palette.felt,
-                          Palette.felt.withValues(alpha: 0),
-                        ], stops: const [0, 0.82, 1]),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              child!,
-            ]),
-            child: you,
-          ),
+          // Nothing behind you: tasks scrolled under your token and shown
+          // card stay in sight, with your glow over them.
+          child: you,
         ),
       ],
       ),
@@ -4810,7 +4800,7 @@ class _HomePageState extends State<HomePage>
         child: _GoldBar(
           onTap: _openMenu,
           semanticLabel: 'Menu',
-          child: _OrnateMenuIcon(size: 26, open: _menuOpen),
+          child: _OrnateMenuIcon(size: 30, open: _menuOpen),
         ),
       );
 
@@ -7372,8 +7362,8 @@ class _WelcomeIntro extends StatelessWidget {
   }
 }
 
-/// A raised plaque in the top corner: a block of felt standing off the
-/// table on a shadow, pressing in when tapped.
+/// A button in the top corner, flat on the felt: just its gold, pressing
+/// in when tapped.
 class _GoldBar extends StatefulWidget {
   const _GoldBar({required this.onTap, required this.child, this.semanticLabel});
   final VoidCallback onTap;
@@ -7401,32 +7391,12 @@ class _GoldBarState extends State<_GoldBar> {
         child: AnimatedScale(
           scale: _down ? 0.94 : 1,
           duration: const Duration(milliseconds: 90),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 90),
+          child: Container(
             constraints: const BoxConstraints(minHeight: 44, minWidth: 48),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(11),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: _down ? 0.3 : 0.55),
-                    blurRadius: _down ? 3 : 8,
-                    offset: Offset(0, _down ? 1 : 3)),
-              ],
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(11),
-                // Raised felt: lit along the top, deeper below.
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF1F6442), Color(0xFF0C3D26)],
-                ),
-              ),
-              alignment: Alignment.center,
-              child: widget.child,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            alignment: Alignment.center,
+            // Flat on the felt: just the gold, with its soft shadow.
+            child: widget.child,
           ),
         ),
       ),
