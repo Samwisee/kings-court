@@ -162,7 +162,7 @@ def joker(colour: str) -> str:
                            fill=GILT, cls="foil", stroke=OUTLINE, stroke_w=0.45)
                       for k, ch in enumerate("JOKER"))
     return cloth_card(f"joker-{colour}", top, bottom, harlequin(W, H, dark=dark),
-                      emblem("joker", top, CX, EMBLEM_Y), star_idx + letters)
+                      emblem("joker", top if colour == "purple" else bottom, CX, EMBLEM_Y), star_idx + letters)
 
 
 # --- cards about the game ------------------------------------------------------

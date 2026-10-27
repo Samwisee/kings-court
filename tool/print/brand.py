@@ -193,30 +193,45 @@ def _circle(x, y, r) -> str:
     return f"M{x - r} {y} a{r} {r} 0 1 0 {2 * r} 0 a{r} {r} 0 1 0 {-2 * r} 0 Z"
 
 
-def _jester(ow: float, gilt: str):
-    """The Joker's three-pointed cap with bells."""
+def _jester(ow: float, gilt: str, cloth: str):
+    """The Joker's three-pointed cap with bells, and harlequin diamonds of
+    its cloth on the band."""
     cap = ("M18 73.8 Q16 52 9 42 Q3 33 2 27 Q12 28 20 33 Q32 40 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
            "Q70 34.2 98 27 Q90 40.5 82 73.8 Z")
     band = "M19 70 H81 A4 4 0 0 1 85 74 V79 A4 4 0 0 1 81 83 H19 A4 4 0 0 1 15 79 V74 A4 4 0 0 1 19 70 Z"
     bells = [_circle(x, y, 6) for x, y in [(4, 27), (50, 4.5), (96, 27)]]
     art = (_solid([cap, band, *bells], gilt, ow)
            + f'<g class="foilknock"><path d="M38 49.5 L36.4 70 M62 49.5 L63.6 70" stroke="{OUTLINE}" '
-             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
+             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/>'
+             + "".join(f'<path d="M{x} 70.8 L{x + 6} 76.5 L{x} 82.2 L{x - 6} 76.5 Z" fill="{cloth}" '
+                       f'stroke="{OUTLINE}" stroke-width="{ow * 0.4:.3f}" stroke-linejoin="round"/>'
+                       for x in (29, 50, 71))
+             + '</g>')
     return art, (-2, -1.5, 102, 83)
 
 
 def _jack(ow: float, gilt: str, cloth: str):
-    """The Jack's sword behind a shield, a chevron in the cloth's colour."""
-    pieces = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
-              "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
-              "A3 3 0 0 1 29 20.7 Z",
-              "M45 26.1 L55 26.1 L55 106.8 L50 115.8 L45 106.8 Z",
-              "M24 30.6 L76 30.6 L76 51.6 Q74 71.6 50 81.6 Q26 71.6 24 51.6 Z"]
-    chevron = "M32 45.2 L50 56.9 L68 45.2 L68 54.2 L50 65.9 L32 54.2 Z"
-    art = (_solid(pieces, gilt, ow)
-           + f'<g class="foilknock"><path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
-             f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
-    return art, (24, -4.5, 76, 115.8)
+    """The Jack's sword with a shield hung low on it, a chevron in the
+    cloth's colour. The sword is drawn first and the shield over it, with
+    a fuller down the blade, a wrapped grip and a rim inside the shield, so
+    the two read apart."""
+    dy = 12                      # how far down the blade the shield sits
+    sword = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
+             "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
+             "A3 3 0 0 1 29 20.7 Z",
+             "M45 26.1 L55 26.1 L55 111 L50 120 L45 111 Z"]
+    shield = f"M24 {30.6 + dy} L76 {30.6 + dy} L76 {51.6 + dy} Q74 {71.6 + dy} 50 {81.6 + dy} Q26 {71.6 + dy} 24 {51.6 + dy} Z"
+    rim = f"M28.5 {35 + dy} L71.5 {35 + dy} L71.5 {51.4 + dy} Q69.8 {68.6 + dy} 50 {76.8 + dy} Q30.2 {68.6 + dy} 28.5 {51.4 + dy} Z"
+    chevron = f"M32 {45.2 + dy} L50 {56.9 + dy} L68 {45.2 + dy} L68 {54.2 + dy} L50 {65.9 + dy} L32 {54.2 + dy} Z"
+    line = f'stroke="{OUTLINE}" stroke-width="{ow * 0.35:.3f}" stroke-linecap="round" fill="none"'
+    sword_detail = (f'<g class="foilknock"><path d="M50 29 L50 108" {line}/>'
+                    + "".join(f'<path d="M46.5 {y} L53.5 {y + 2.4}" {line}/>' for y in (5.5, 10.5, 15.5))
+                    + '</g>')
+    shield_detail = (f'<g class="foilknock"><path d="{rim}" {line} stroke-linejoin="round"/>'
+                     f'<path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
+                     f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
+    art = _solid(sword, gilt, ow) + sword_detail + _solid([shield], gilt, ow) + shield_detail
+    return art, (24, -4.5, 76, 120)
 
 
 def _tiara(ow: float, gilt: str, cloth: str):
@@ -258,13 +273,27 @@ def _tiara(ow: float, gilt: str, cloth: str):
     outline = (f'<g><path d="{band}" fill="{OUTLINE}" stroke="{OUTLINE}" stroke-width="{ow:.3f}" '
                f'stroke-linejoin="round"/>{strokes(OUTLINE, ow)}</g>')
     gold = f'<g class="foil"><path d="{band}" fill="{gilt}"/>{strokes(gilt, 0)}</g>'
-    # The gem: a cut stone in the cloth's colour, outlined like the King's
-    # jewels, with a facet line and a glint.
-    jewel = (f'<g class="foilknock"><path d="{gem}" fill="{cloth}" stroke="{OUTLINE}" '
-             f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/>'
-             f'<path d="M50 19 L50 58" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="{ow * 0.3:.3f}"/>'
-             f'<path d="M46.4 26 C43.6 33 43.6 42 45.2 49" stroke="#FFFFFF" stroke-opacity="0.55" '
-             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
+    # The gem: a marquise-cut stone in the cloth's colour: a table in the
+    # middle, facets around it lit from the top left, outlined like the
+    # King's jewels.
+    cid = f"gemclip-{cloth[1:]}"
+    table = "M50 24 L55 38 L50 52 L45 38 Z"
+    facet = f'stroke="{OUTLINE}" stroke-opacity="0.55" stroke-width="{ow * 0.22:.3f}"'
+    jewel = (f'<defs><clipPath id="{cid}"><path d="{gem}"/></clipPath></defs>'
+             f'<g class="foilknock"><path d="{gem}" fill="{cloth}"/>'
+             f'<g clip-path="url(#{cid})">'
+             f'<path d="M30 14 L50 14 L50 38 L30 38 Z" fill="#FFFFFF" fill-opacity="0.32"/>'
+             f'<path d="M50 14 L70 14 L70 38 L50 38 Z" fill="#FFFFFF" fill-opacity="0.12"/>'
+             f'<path d="M30 38 L50 38 L50 62 L30 62 Z" fill="#000000" fill-opacity="0.12"/>'
+             f'<path d="M50 38 L70 38 L70 62 L50 62 Z" fill="#000000" fill-opacity="0.32"/>'
+             f'<path d="M50 14 L50 62 M38 38 L62 38 M50 14 L45 38 L50 62 M50 14 L55 38 L50 62" {facet} fill="none"/>'
+             f'</g>'
+             f'<path d="{table}" fill="{cloth}" {facet} stroke-linejoin="round"/>'
+             f'<path d="{table}" fill="#FFFFFF" fill-opacity="0.14"/>'
+             f'<path d="M47.6 31 L49.2 27.4" stroke="#FFFFFF" stroke-opacity="0.85" '
+             f'stroke-width="{ow * 0.4:.3f}" stroke-linecap="round"/>'
+             f'<path d="{gem}" fill="none" stroke="{OUTLINE}" stroke-width="{ow * 0.45:.3f}" '
+             f'stroke-linejoin="round"/></g>')
     return outline + gold + jewel, (1, 5, 99, 78)
 
 
@@ -277,12 +306,17 @@ def _king(ow: float, gilt: str, cloth: str):
     jewels = "".join(
         f'<path d="{_circle(x, 70.5, 2.6)}" fill="{cloth}" stroke="{OUTLINE}" '
         f'stroke-width="{ow * 0.4:.3f}"/>' for x in (31, 50, 69))
-    return _solid([body, band], gilt, ow) + f'<g class="foilknock">{jewels}</g>', (0, 0, 100, 75)
+    # Two points at the back of the crown, peeking up between the front
+    # ones, a shade darker for depth.
+    back = ["M14 46 L25 9 L38 46 Z", "M62 46 L75 9 L86 46 Z"]
+    shade = "".join(f'<path d="{d}" fill="#000000" fill-opacity="0.22"/>' for d in back)
+    return (_solid(back, gilt, ow) + shade + _solid([body, band], gilt, ow)
+            + f'<g class="foilknock">{jewels}</g>', (0, 0, 100, 75))
 
 
 # Every emblem fits this box (mm) on the card; the King's is larger.
 EMBLEM_BOX = (34.0, 29.0)
-JACK_BOX = (34.0, 52.0)
+JACK_BOX = (34.0, 54.0)
 KING_BOX = (37.5, 30.0)
 
 
@@ -290,7 +324,7 @@ def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
     """A Court Card emblem centred at cx, cy (mm), evened out with the rest."""
     box_w, box_h = {"king": KING_BOX, "jack": JACK_BOX}.get(kind, EMBLEM_BOX)
     # Work out the scale from the emblem's own bounds.
-    probe = {"joker": lambda: _jester(1, GILT), "jack": lambda: _jack(1, GILT, cloth),
+    probe = {"joker": lambda: _jester(1, GILT, cloth), "jack": lambda: _jack(1, GILT, cloth),
              "queen": lambda: _tiara(1, GILT, cloth), "king": lambda: _king(1, GILT, cloth)}[kind]
     x0, y0, x1, y1 = probe()[1]
     w, h = x1 - x0, y1 - y0
@@ -298,7 +332,7 @@ def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
     ow = 2 * OUTLINE_MM / s          # half of the stroke shows outside the gold
     gid = f"gilt-{kind}-{cloth[1:]}"
     gilt = f"url(#{gid})"
-    art = {"joker": lambda: _jester(ow, gilt), "jack": lambda: _jack(ow, gilt, cloth),
+    art = {"joker": lambda: _jester(ow, gilt, cloth), "jack": lambda: _jack(ow, gilt, cloth),
            "queen": lambda: _tiara(ow, gilt, cloth), "king": lambda: _king(ow, gilt, cloth)}[kind]()[0]
     return (f'<defs>{_gilt_for(gid, y0, y1)}</defs>'
             f'<g filter="url(#drop)"><g transform="translate({cx:.3f} {cy:.3f}) scale({s:.5f}) '
