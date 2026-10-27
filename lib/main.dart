@@ -6833,9 +6833,9 @@ class _HomePageState extends State<HomePage>
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: SizedBox(
-            width: math.max(0.0, clampD(c.maxWidth, 0, 520) - 48),
+            width: math.max(0.0, clampD(c.maxWidth, 0, 640) - 48),
             child: _WelcomeIntro(
-              crownSize: clampD(c.maxWidth * 0.42, 120, 200),
+              crownSize: clampD(c.maxWidth * 0.42, 120, 270),
               button: SizedBox(
                 width: 160,
                 child: FilledButton(
@@ -6916,7 +6916,7 @@ class _WelcomeIntro extends StatelessWidget {
                   // The four Court Cards, fanned wide so each one's art shows.
                   for (int i = 0; i < _cards.length; i++)
                     Positioned(
-                      left: stageW / 2 - cardW / 2 + (i - mid) * cardW * 0.62 * fan,
+                      left: stageW / 2 - cardW / 2 + (i - mid) * cardW * 0.7 * fan,
                       top: handTop + (1 - rise) * 40 + ((i - mid).abs() * cardH * 0.05) * fan,
                       child: Opacity(
                         opacity: rise,
