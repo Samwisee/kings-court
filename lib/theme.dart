@@ -126,6 +126,28 @@ ThemeData buildTheme() {
 }
 
 /// A crisp dark line round every card and task card, so they stand out
-/// from the felt and number cards sit as boldly as the Court Cards (the
-/// same dark as the cartoon outline round the gold emblems).
-const cardOutline = BoxShadow(color: Color(0xFF1D1408), spreadRadius: 1.5);
+/// from the felt and number cards sit as boldly as the Court Cards. A deep
+/// brown rather than black (the cartoon outline's family): 13.5:1 against
+/// the card stock and 6:1 against gold, well over the 3:1 an edge needs.
+const outlineColour = Color(0xFF3B2A12);
+const outlineWidth = 1.25;
+
+/// Draws [child] inside a dark outline [outlineWidth] thick, the same all
+/// the way round (a shadow's spread would thicken the corners). The child
+/// should round its corners to [radius] - [outlineWidth].
+class InkOutline extends StatelessWidget {
+  const InkOutline(
+      {super.key, required this.radius, required this.child, this.shadows = const []});
+  final double radius;
+  final List<BoxShadow> shadows;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(
+            color: outlineColour,
+            borderRadius: BorderRadius.circular(radius),
+            boxShadow: shadows),
+        child: Padding(padding: const EdgeInsets.all(outlineWidth), child: child),
+      );
+}

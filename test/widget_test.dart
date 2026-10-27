@@ -115,7 +115,7 @@ void main() {
     setPhoneSize(tester);
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pump();
-    expect(find.text("The King's Court"), findsOneWidget);
+    expect(find.textContaining("ng's Court", findRichText: true), findsOneWidget);
     expect(find.text('Play'), findsOneWidget);
     expect(find.text('New Game'), findsNothing);
     await tester.pumpAndSettle();

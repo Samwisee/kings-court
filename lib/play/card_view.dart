@@ -56,7 +56,8 @@ class PlayingCardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = heightFor(width);
-    final r = BorderRadius.circular(width * 0.1);
+    final outer = width * 0.1;
+    final r = BorderRadius.circular(outer - outlineWidth);
     final corner = TextStyle(
         fontFamily: card.isCourt ? displayFont : bodyFont,
         fontWeight: FontWeight.w900,
@@ -77,9 +78,22 @@ class PlayingCardView extends StatelessWidget {
       label: card.spoken,
       value: dimmed ? 'can’t be played now' : glow ? 'suggested' : null,
       excludeSemantics: true,
-      child: Container(
+      child: SizedBox(
         width: width,
         height: h,
+        child: InkOutline(
+        radius: outer,
+        shadows: [
+          if (glow)
+            const BoxShadow(color: Palette.gold, blurRadius: 14)
+          else if (marks.isNotEmpty)
+            BoxShadow(color: marks.first.withValues(alpha: 0.85), blurRadius: 10)
+          else if (_isKing)
+            const BoxShadow(color: Color(0x88D4A63A), blurRadius: 8)
+          else
+            const BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+        child: Container(
         decoration: BoxDecoration(
           color: card.isCourt ? null : Palette.card,
           gradient: card.isCourt
@@ -91,18 +105,6 @@ class PlayingCardView extends StatelessWidget {
           borderRadius: r,
           border: Border.all(
               color: borderColour, width: thick ? 3 : card.isCourt ? 2 : 1),
-          boxShadow: [
-            cardOutline,
-            if (glow)
-              const BoxShadow(color: Palette.gold, blurRadius: 14)
-            else if (marks.isNotEmpty)
-              BoxShadow(color: marks.first.withValues(alpha: 0.85), blurRadius: 10)
-            else if (_isKing)
-              const BoxShadow(color: Color(0x88D4A63A), blurRadius: 8)
-            else
-              const BoxShadow(
-                  color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-          ],
         ),
         foregroundDecoration: dimmed
             ? BoxDecoration(color: const Color(0x66000000), borderRadius: r)
@@ -123,17 +125,21 @@ class PlayingCardView extends StatelessWidget {
                   }),
                 ),
               ),
-            // Every Court Card has an inner gold frame.
-            if (card.isCourt)
-              Positioned.fill(
-                child: Container(
-                  margin: EdgeInsets.all(width * 0.06),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(width * 0.06),
-                    border: Border.all(color: const Color(0x99D4A63A), width: 1),
-                  ),
+            // Every card has an inner frame, as on the printed deck: gold
+            // on the Court Cards, a fine dark rule on the rest.
+            Positioned.fill(
+              child: Container(
+                margin: EdgeInsets.all(width * 0.06),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(width * 0.06),
+                  border: Border.all(
+                      color: card.isCourt
+                          ? const Color(0x99D4A63A)
+                          : outlineColour.withValues(alpha: 0.45),
+                      width: 1),
                 ),
               ),
+            ),
             if (card.isCourt)
               Positioned.fill(
                 child: CustomPaint(painter: _Emblem(card.rank, _cloth[card.rank - 1][0])),
@@ -185,6 +191,8 @@ class PlayingCardView extends StatelessWidget {
               ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }
@@ -394,11 +402,14 @@ class CardBack extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF5A1620),
         borderRadius: BorderRadius.circular(width * 0.1),
-        border: Border.all(color: Palette.gold, width: 1.5),
+        border: Border.all(color: Palette.gold, width: 1.5 + outlineWidth),
         boxShadow: const [
-          cardOutline,
           BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
         ],
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(width * 0.1),
+        border: Border.all(color: outlineColour, width: outlineWidth),
       ),
       alignment: Alignment.center,
       child: CrownIcon(size: width * 0.5, color: Palette.gold),

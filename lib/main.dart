@@ -6890,6 +6890,8 @@ class _WelcomeIntro extends StatelessWidget {
         final sub = _iv(t, 0.62, 0.85, Curves.easeOutCubic);
         final btn = _iv(t, 0.75, 1.0, Curves.easeOutCubic);
         final mid = (_cards.length - 1) / 2;
+        // On a phone the fan closes up a little, clear of the screen's edges.
+        final narrow = crownSize < 200;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -6916,7 +6918,7 @@ class _WelcomeIntro extends StatelessWidget {
                   // The four Court Cards, fanned wide so each one's art shows.
                   for (int i = 0; i < _cards.length; i++)
                     Positioned(
-                      left: stageW / 2 - cardW / 2 + (i - mid) * cardW * 0.7 * fan,
+                      left: stageW / 2 - cardW / 2 + (i - mid) * cardW * (narrow ? 0.6 : 0.7) * fan,
                       top: handTop + (1 - rise) * 40 + ((i - mid).abs() * cardH * 0.05) * fan,
                       child: Opacity(
                         opacity: rise,
@@ -6930,25 +6932,15 @@ class _WelcomeIntro extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 34),
             Opacity(
               opacity: title,
               child: Transform.translate(
                 offset: Offset(0, 16 * (1 - title)),
-                child: const Text("The King's Court",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 44,
-                        height: 1.05,
-                        color: Palette.gold,
-                        shadows: [
-                          Shadow(color: Colors.black54, blurRadius: 12)
-                        ])),
+                child: const _CrownedTitle(),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             Opacity(
               opacity: sub,
               child: const Text(
@@ -6956,7 +6948,7 @@ class _WelcomeIntro extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.white70)),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 36),
             IgnorePointer(
               ignoring: btn < 0.5,
               child: Opacity(
@@ -6967,6 +6959,46 @@ class _WelcomeIntro extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// The game's name, with a little crown over the I of King's.
+class _CrownedTitle extends StatelessWidget {
+  const _CrownedTitle();
+
+  static const _style = TextStyle(
+      fontFamily: displayFont,
+      fontWeight: FontWeight.w900,
+      fontSize: 44,
+      height: 1.05,
+      color: Palette.gold,
+      shadows: [Shadow(color: Colors.black54, blurRadius: 12)]);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(style: _style, children: [
+        const TextSpan(text: 'The K'),
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              const Text('i', style: _style),
+              Positioned(
+                top: -_style.fontSize! * 0.42,
+                child: CrownIcon(size: _style.fontSize! * 0.5, color: Palette.gold),
+              ),
+            ],
+          ),
+        ),
+        const TextSpan(text: "ng's Court"),
+      ]),
+      semanticsLabel: "The King's Court",
+      textAlign: TextAlign.center,
     );
   }
 }
@@ -8210,11 +8242,14 @@ class _TaskChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: failed ? const Color(0xFFFBE4E1) : Palette.card,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: failed ? Palette.lost : color, width: 2.5),
+        border: Border.all(color: failed ? Palette.lost : color, width: 2.5 + outlineWidth),
         boxShadow: const [
-          cardOutline,
           BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
         ],
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: outlineColour, width: outlineWidth),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -8250,8 +8285,11 @@ class _TaskChip extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Palette.feltDeep,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: color, width: 2.5),
-                  boxShadow: const [cardOutline],
+                  border: Border.all(color: color, width: 2.5 + outlineWidth),
+                ),
+                foregroundDecoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: outlineColour, width: outlineWidth),
                 ),
                 alignment: Alignment.center,
                 child: Row(

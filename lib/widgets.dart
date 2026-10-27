@@ -736,10 +736,9 @@ class TableCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: border ?? const Color(0xFFE6E0D4),
-          width: borderWidth,
+          width: borderWidth + outlineWidth,
         ),
         boxShadow: [
-          cardOutline,
           BoxShadow(
             color: Colors.black45,
             blurRadius: lifted ? 14 : 4,
@@ -747,6 +746,13 @@ class TableCard extends StatelessWidget {
           ),
         ],
       );
+
+  /// The dark outline, drawn over the outer edge of the frame so it's the
+  /// same width all the way round.
+  static final _edge = BoxDecoration(
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(color: outlineColour, width: outlineWidth),
+  );
 
   Widget _ownerBadge() {
     final o = owner;
@@ -849,6 +855,7 @@ class TableCard extends StatelessWidget {
     return Container(
       width: width,
       height: _height,
+      foregroundDecoration: _edge,
       decoration: _frame(
         failed ? const Color(0xFFFBE4E1) : Palette.card,
         border: failed ? Palette.lost : owner?.color ?? Palette.inkSoft,
@@ -893,6 +900,7 @@ class TableCard extends StatelessWidget {
     return Container(
       width: width,
       height: _height,
+      foregroundDecoration: _edge,
       decoration: _frame(Palette.feltDeep, border: Palette.gold, borderWidth: 1.5),
       child: Container(
         margin: const EdgeInsets.all(4),
@@ -913,6 +921,7 @@ class TableCard extends StatelessWidget {
     return Container(
       width: width,
       height: _height,
+      foregroundDecoration: _edge,
       decoration: _frame(Palette.feltDeep,
           border: owner?.color ?? Palette.gold, borderWidth: 2.5),
       child: Stack(
