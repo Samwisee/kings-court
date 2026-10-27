@@ -1,4 +1,6 @@
 {
+    "id": "/kings-court/",
+    "scope": ".",
     "name": "The King's Court",
     "short_name": "King's Court",
     "start_url": ".",

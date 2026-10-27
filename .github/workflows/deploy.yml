@@ -54,7 +54,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build web --release --base-href /kings-court/
+      - run: flutter build web --release --wasm --base-href /kings-court/
       # Give each build's files a version so browsers fetch the new ones
       # instead of a cached copy.
       - name: Bust caches
