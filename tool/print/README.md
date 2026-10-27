@@ -45,7 +45,7 @@ Two pieces, pulled apart from the top like a slide box:
   66.2 × 20.3 × 80 mm.
 * **Sleeve** (outer): the app's welcome screen: felt green with the brass
   inlay, the crown, the four Court Cards fanned and the title. Open at the
-  top, glued bottom, thumb notches front and back to draw the tray out. Outside about 67 × 22.1 × 90 mm. It covers the
+  top, glued bottom, thumb notches front and back to draw the tray out. Outside about 67 × 21.1 × 90 mm. It covers the
   cards completely when closed.
 
 Board assumed: about 400 gsm (0.55 mm). These dielines are a starting point:
