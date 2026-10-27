@@ -232,26 +232,33 @@ def _jester(ow: float, gilt: str, cloth: str):
 
 
 def _jack(ow: float, gilt: str, cloth: str):
-    """The Jack's sword with a shield hung low on it, a chevron in the
-    cloth's colour. The sword is drawn first and the shield over it, with
-    a fuller down the blade and a wrapped grip, so
-    the two read apart."""
+    """The Jack's sword with a shield hung low on it. The shield's face is
+    an inset panel showing the card's own cloth and stripes (BACKDROP,
+    filled in by emblem() so it lines up exactly with the card). The sword
+    is drawn first and the shield over it, with a fuller down the blade and
+    a wrapped grip, so the two read apart."""
     dy = 12                      # how far down the blade the shield sits
-    sword = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
-             "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
-             "A3 3 0 0 1 29 20.7 Z",
-             "M45 26.1 L55 26.1 L55 111 L50 120 L45 111 Z"]
+    sword = [_circle(50, 8, 4.5), "M46.5 9.8 H53.5 V30.5 H46.5 Z",
+             "M29 28.7 H71 A3 3 0 0 1 74 31.7 A3 3 0 0 1 71 34.7 H29 A3 3 0 0 1 26 31.7 "
+             "A3 3 0 0 1 29 28.7 Z",
+             "M45 34.1 L55 34.1 L55 119 L50 128 L45 119 Z"]
     shield = f"M24 {30.6 + dy} L76 {30.6 + dy} L76 {51.6 + dy} Q74 {71.6 + dy} 50 {81.6 + dy} Q26 {71.6 + dy} 24 {51.6 + dy} Z"
-    chevron = f"M32 {45.2 + dy} L50 {56.9 + dy} L68 {45.2 + dy} L68 {54.2 + dy} L50 {65.9 + dy} L32 {54.2 + dy} Z"
+    inset = (f"M30 {36.6 + dy} L70 {36.6 + dy} L70 {51.8 + dy} Q68.4 {67.4 + dy} 50 {75 + dy} "
+             f"Q31.6 {67.4 + dy} 30 {51.8 + dy} Z")
     line = f'stroke="{OUTLINE}" stroke-width="{ow * 0.35:.3f}" stroke-linecap="round" fill="none"'
-    sword_detail = (f'<g class="foilknock"><path d="M50 29 L50 108" {line}/>'
-                    + "".join(f'<path d="M46.5 {y} L53.5 {y + 2.4}" {line}/>' for y in (5.5, 10.5, 15.5))
+    sword_detail = (f'<g class="foilknock"><path d="M50 37 L50 116" {line}/>'
+                    + "".join(f'<path d="M46.5 {y} L53.5 {y + 2.4}" {line}/>' for y in (13.5, 18.5, 23.5))
                     + '</g>')
-    shield_detail = (f'<g class="foilknock">'
-                     f'<path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
-                     f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
-    art = _solid(sword, gilt, ow) + sword_detail + _solid([shield], gilt, ow) + shield_detail
-    return art, (24, -4.5, 76, 120)
+    shield_detail = (f'<defs><clipPath id="JACKINSET"><path d="{inset}"/></clipPath></defs>'
+                     f'<g class="foilknock"><g clip-path="url(#JACKINSET)">BACKDROP</g>'
+                     f'<path d="{inset}" fill="none" stroke="{OUTLINE}" stroke-width="{ow * 0.6:.3f}" '
+                     f'stroke-linejoin="round"/></g>')
+    # blade first, then the hilt over it, so the cross-guard's outline runs
+    # straight across where the blade meets it
+    blade, hilt = sword[3:], sword[:3]
+    art = (_solid(blade, gilt, ow) + _solid(hilt, gilt, ow) + sword_detail
+           + _solid([shield], gilt, ow) + shield_detail)
+    return art, (24, 3.5, 76, 128)
 
 
 def _tiara(ow: float, gilt: str, cloth: str):
@@ -313,7 +320,7 @@ def _tiara(ow: float, gilt: str, cloth: str):
              f'<path d="M50 14 L70 14 L70 38 L50 38 Z" fill="#FFFFFF" fill-opacity="0.05"/>'
              f'<path d="M30 38 L50 38 L50 62 L30 62 Z" fill="#000000" fill-opacity="0.05"/>'
              f'<path d="M50 38 L70 38 L70 62 L50 62 Z" fill="#000000" fill-opacity="0.14"/>'
-             f'<path d="M50 14 L50 62 M38 38 L62 38 M50 14 L45 38 L50 62 M50 14 L55 38 L50 62" {facet} fill="none"/>'
+             f'<path d="M50 14 L50 62 M38 38 L62 38" {facet} fill="none"/>'
              f'</g>'
              f'<path d="{table}" fill="{cloth}" {facet} stroke-linejoin="round"/>'
              f'<path d="{table}" fill="#FFFFFF" fill-opacity="0.07"/>'
@@ -343,12 +350,21 @@ def _king(ow: float, gilt: str, cloth: str):
 
 # Every emblem fits this box (mm) on the card; the King's is larger.
 EMBLEM_BOX = (34.0, 29.0)
-JACK_BOX = (34.0, 54.0)
+JACK_BOX = (34.0, 52.0)
 KING_BOX = (37.5, 30.0)
 
 
-def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
-    """A Court Card emblem centred at cx, cy (mm), evened out with the rest."""
+# The point of each emblem that sits at the centre of the card: halfway
+# between the middle of its bounds and the middle of its gold (measured),
+# so heavy bases (the band, the shield) don't make it look low.
+ANCHOR = {"joker": (50.0, 45.6), "jack": (50.0, 63.3), "queen": (50.0, 45.3),
+          "king": (50.0, 41.9)}
+
+
+def emblem(kind: str, cloth: str, cx: float, cy: float, backdrop: str = "") -> str:
+    """A Court Card emblem centred at cx, cy (mm), evened out with the rest.
+    [backdrop] is the card's background (in card millimetres), shown through
+    the Jack's inset shield."""
     box_w, box_h = {"king": KING_BOX, "jack": JACK_BOX}.get(kind, EMBLEM_BOX)
     # Work out the scale from the emblem's own bounds.
     probe = {"joker": lambda: _jester(1, GILT, cloth), "jack": lambda: _jack(1, GILT, cloth),
@@ -361,9 +377,15 @@ def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
     gilt = f"url(#{gid})"
     art = {"joker": lambda: _jester(ow, gilt, cloth), "jack": lambda: _jack(ow, gilt, cloth),
            "queen": lambda: _tiara(ow, gilt, cloth), "king": lambda: _king(ow, gilt, cloth)}[kind]()[0]
+    ax, ay = ANCHOR.get(kind, ((x0 + x1) / 2, (y0 + y1) / 2))
+    if "BACKDROP" in art:
+        cid = f"inset-{kind}-{cloth[1:]}"
+        art = art.replace("JACKINSET", cid).replace(
+            "BACKDROP", f'<g transform="translate({ax:.3f} {ay:.3f}) scale({1 / s:.5f}) '
+                        f'translate({-cx:.3f} {-cy:.3f})">{backdrop}</g>')
     return (f'<defs>{_gilt_for(gid, y0, y1)}</defs>'
             f'<g filter="url(#drop)"><g transform="translate({cx:.3f} {cy:.3f}) scale({s:.5f}) '
-            f'translate({-(x0 + x1) / 2:.3f} {-(y0 + y1) / 2:.3f})">{art}</g></g>')
+            f'translate({-ax:.3f} {-ay:.3f})">{art}</g></g>')
 
 
 def crown() -> tuple[str, float, float]:

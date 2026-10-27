@@ -125,7 +125,7 @@ def ace(name: str) -> str:
 # --- face cards: the Court Cards in every suit's colour ---------------------------------
 
 
-EMBLEM_Y = CY + 1.5
+EMBLEM_Y = CY - 1.0     # a touch high: the name sits below
 
 
 def cloth_card(gid: str, top: str, bottom: str, pattern: str, art: str,
@@ -146,8 +146,10 @@ def court_index(letter: str, name: str | None) -> str:
 
 def face_card(rank: str, name: str) -> str:
     top, bottom = SUIT_CLOTH[name]
-    pattern = {"J": stripes, "Q": lattice, "K": sunburst}[rank](W, H)
-    art = emblem({"J": "jack", "Q": "queen", "K": "king"}[rank], top, CX, EMBLEM_Y)
+    pattern = {"J": stripes, "Q": lattice,
+               "K": lambda w, h: sunburst(w, h, cy_frac=0.53)}[rank](W, H)
+    backdrop = f'<rect width="{W}" height="{H}" fill="url(#cloth-{name}-{rank})"/>' + pattern
+    art = emblem({"J": "jack", "Q": "queen", "K": "king"}[rank], top, CX, EMBLEM_Y, backdrop)
     footer = text(CX, 82.4, NAMES[rank].upper(), 3.3, family=DISPLAY, weight=900,
                   fill=GILT, cls="foil", spacing=0.6, stroke=OUTLINE, stroke_w=0.5)
     return cloth_card(f"cloth-{name}-{rank}", top, bottom, pattern, art,
