@@ -101,13 +101,13 @@ class SuitText extends StatelessWidget {
             style: mark.copyWith(
                 color: done ? (style.color ?? Palette.ink).withValues(alpha: 0.5) : null)));
         spans.add(TextSpan(
-            text: m.group(2),
+            text: '${m.group(2)}\uFE0E',
             style: mark.copyWith(
                 color: done
                     ? suitColour(m.group(2)!).withValues(alpha: 0.5)
                     : suitColour(m.group(2)!))));
       } else if (token.length == 1) {
-        spans.add(TextSpan(text: token, style: TextStyle(color: suitColour(token))));
+        spans.add(TextSpan(text: '$token\uFE0E', style: TextStyle(color: suitColour(token))));
       } else {
         final plural = token.toLowerCase().endsWith('s');
         spans.add(TextSpan(
@@ -2000,6 +2000,16 @@ class OrnateCard extends StatelessWidget {
           Positioned.fill(
             child: CustomPaint(painter: _Filigree(ink.withValues(alpha: 0.8))),
           ),
+          // A win glitters: a sheen sweeps the gold and stars twinkle.
+          if (won && !court)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: const _Glitter(),
+                ),
+              ),
+            ),
           Padding(padding: padding, child: child),
           // A medallion over the top edge.
           Positioned(
@@ -2452,6 +2462,10 @@ class PipTile extends StatelessWidget {
       enabled: enabled,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
+        // A faint gold wash when pressed, never a white flash.
+        highlightColor: Palette.gold.withValues(alpha: 0.08),
+        splashColor: Palette.gold.withValues(alpha: 0.12),
+        hoverColor: Palette.gold.withValues(alpha: 0.06),
         onTap: enabled ? () => onChanged!(!value) : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -2479,4 +2493,209 @@ class PipTile extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// A sheen that sweeps across a gold panel every few seconds, and small
+/// four-pointed stars twinkling over it.
+class _Glitter extends StatefulWidget {
+  const _Glitter();
+
+  @override
+  State<_Glitter> createState() => _GlitterState();
+}
+
+class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Still for reduced motion (and in tests, where it would never settle).
+    if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
+      _c.stop();
+      _c.value = 0.62;
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) => CustomPaint(painter: _GlitterPainter(_c.value)),
+      );
+}
+
+class _GlitterPainter extends CustomPainter {
+  _GlitterPainter(this.t);
+  final double t;
+
+  static const _stars = [
+    (0.12, 0.18, 0.0), (0.86, 0.14, 0.35), (0.22, 0.78, 0.6), (0.78, 0.7, 0.15),
+    (0.5, 0.08, 0.8), (0.93, 0.48, 0.5), (0.06, 0.5, 0.9), (0.62, 0.9, 0.25),
+    (0.38, 0.3, 0.7), (0.7, 0.36, 0.05),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // The sheen: crosses in the first 40% of each cycle.
+    final sweep = (t / 0.4).clamp(0.0, 1.0);
+    if (sweep < 1) {
+      final x = -0.4 + 1.8 * sweep;
+      final rect = Offset.zero & size;
+      canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment(-1 + 2 * (x - 0.25), -1),
+              end: Alignment(-1 + 2 * (x + 0.05), 1),
+              colors: const [Color(0x00FFFFFF), Color(0x88FFFBE6), Color(0x00FFFFFF)],
+            ).createShader(rect));
+    }
+    // The stars, each twinkling in its own moment.
+    final star = Paint()..color = const Color(0xFFFFFBEA);
+    for (final (sx, sy, phase) in _stars) {
+      final k = math.sin(((t + phase) % 1) * math.pi * 2);
+      if (k <= 0) continue;
+      final r = 5.0 * k;
+      final c = Offset(size.width * sx, size.height * sy);
+      final path = Path()
+        ..moveTo(c.dx, c.dy - r)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx + r, c.dy)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy + r)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx - r, c.dy)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy - r)
+        ..close();
+      canvas.drawPath(path, star..color = Color.fromRGBO(255, 251, 234, k));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GlitterPainter old) => old.t != t;
+}
+
+/// The card tracker's icon: three cards fanned out, the front one gold.
+class CardFanIcon extends StatelessWidget {
+  const CardFanIcon({super.key, this.size = 26, this.color = Palette.gold});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: _CardFanPainter(color));
+}
+
+class _CardFanPainter extends CustomPainter {
+  _CardFanPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    final card = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(0, -s * 0.12), width: s * 0.42, height: s * 0.58),
+        Radius.circular(s * 0.07));
+    final edge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = s * 0.07
+      ..color = color;
+    final back = Paint()..color = const Color(0xFF0A3622);
+    for (final (i, a) in [(-1, -0.42), (0, 0.0), (1, 0.42)].map((e) => (e.$1, e.$2))) {
+      canvas.save();
+      canvas.translate(s / 2, s * 0.88);
+      canvas.rotate(a);
+      canvas.translate(0, -s * 0.36);
+      canvas.drawRRect(card, i == 1 ? (Paint()..color = color) : back);
+      canvas.drawRRect(card, edge);
+      if (i == 1) {
+        // A small crown on the front card.
+        final c = card.center;
+        final w = s * 0.2;
+        final crown = Path()
+          ..moveTo(c.dx - w / 2, c.dy + w * 0.25)
+          ..lineTo(c.dx - w / 2, c.dy - w * 0.25)
+          ..lineTo(c.dx - w / 4, c.dy)
+          ..lineTo(c.dx, c.dy - w * 0.4)
+          ..lineTo(c.dx + w / 4, c.dy)
+          ..lineTo(c.dx + w / 2, c.dy - w * 0.25)
+          ..lineTo(c.dx + w / 2, c.dy + w * 0.25)
+          ..close();
+        canvas.drawPath(crown, back);
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CardFanPainter old) => old.color != color;
+}
+
+/// The icon for showing a card: a card held up, with rays around it. Once
+/// used, the rays are gone and a line crosses it out.
+class ShowCardIcon extends StatelessWidget {
+  const ShowCardIcon(
+      {super.key, this.size = 26, this.color = Palette.gold, this.used = false});
+  final double size;
+  final Color color;
+  final bool used;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: _ShowCardPainter(color, used));
+}
+
+class _ShowCardPainter extends CustomPainter {
+  _ShowCardPainter(this.color, this.used);
+  final Color color;
+  final bool used;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    final c = Offset(s / 2, s / 2);
+    final card = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: c, width: s * 0.44, height: s * 0.6),
+        Radius.circular(s * 0.07));
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = s * 0.07
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    canvas.drawRRect(card, line);
+    // A heart on the card.
+    final h = s * 0.16;
+    final heart = Path()
+      ..moveTo(c.dx, c.dy + h * 0.6)
+      ..cubicTo(c.dx - h * 1.2, c.dy - h * 0.1, c.dx - h * 0.5, c.dy - h * 0.9, c.dx, c.dy - h * 0.3)
+      ..cubicTo(c.dx + h * 0.5, c.dy - h * 0.9, c.dx + h * 1.2, c.dy - h * 0.1, c.dx, c.dy + h * 0.6)
+      ..close();
+    canvas.drawPath(heart, Paint()..color = color);
+    if (used) {
+      canvas.drawLine(Offset(s * 0.18, s * 0.82), Offset(s * 0.82, s * 0.18), line);
+      return;
+    }
+    // Rays: it's being shown.
+    final ray = Paint()
+      ..strokeWidth = s * 0.06
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    for (final a in [-2.4, -1.57, -0.74]) {
+      final d = Offset(math.cos(a), math.sin(a));
+      canvas.drawLine(c + d * s * 0.4, c + d * s * 0.5, ray);
+    }
+    for (final a in [0.0, math.pi]) {
+      final d = Offset(math.cos(a), math.sin(a));
+      canvas.drawLine(c + d * s * 0.33, c + d * s * 0.45, ray);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ShowCardPainter old) => old.color != color || old.used != used;
 }

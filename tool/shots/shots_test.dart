@@ -209,6 +209,15 @@ void main() {
       await tester.tap(find.text('New game'));
       await tester.pumpAndSettle();
       await tester.tap(find.text(onScreen ? 'Single player' : 'In person'));
+      if (onScreen) {
+        // Frames through the page change, to check nothing jumps.
+        await tester.pump();
+        for (int f = 0; f < 6; f++) {
+          await expectLater(find.byType(MaterialApp),
+              matchesGoldenFile('goldens/zz-turn-$f.png'));
+          await tester.pump(const Duration(milliseconds: 80));
+        }
+      }
       await tester.pumpAndSettle();
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/wide-0-modes.png'));

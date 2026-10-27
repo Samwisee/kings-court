@@ -829,7 +829,9 @@ class _HomePageState extends State<HomePage>
       _autoDeal = game.dealId;
       _queued = null;
     });
-    Sfx.fanfare();
+    // The round is won now: its card comes up, and the rest of the cards
+    // play out behind it.
+    _judgeTasks();
     _trickTimers.add(Timer(const Duration(milliseconds: 700), _autoStep));
     return true;
   }
@@ -843,8 +845,7 @@ class _HomePageState extends State<HomePage>
       _scheduleBot();
       return;
     }
-    if (game.outcome != RoundOutcome.inProgress ||
-        c.tricks.length >= c.totalTricks) {
+    if (c.tricks.length >= c.totalTricks) {
       setState(() => _autoPlaying = false);
       return;
     }
@@ -1517,8 +1518,8 @@ class _HomePageState extends State<HomePage>
         return game.decree == Decree.kingsCommand
             ? "King's Command: tap a task to hand it out"
             : game.canPass(_you)
-                ? 'Your pick: tap a task'
-                : 'Your pick: tap a task to take it';
+                ? 'Pick a task, or'
+                : 'Pick a task';
       }
       if (_speakPromptDue) return 'Share a card?';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
@@ -1588,14 +1589,17 @@ class _HomePageState extends State<HomePage>
           Row(
             children: [
               Expanded(
-                child: _speakPromptDue && _toast == null
-                    // Before tasks are chosen: share a card, or skip. Both
-                    // right in the middle, where you're looking.
+                child: (_speakPromptDue || (game.pickTurn == _you && game.canPass(_you))) &&
+                        _toast == null
+                    // A choice with a way out: show a card or skip, pick a
+                    // task or pass. Both right in the middle, where you're
+                    // looking, the button always in the same place.
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Flexible(
-                            child: Text('Share a card? Tap one in your hand, or',
+                          Flexible(
+                            child: Text(
+                                _speakPromptDue ? 'Show a card, or' : 'Pick a task, or',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.right,
@@ -1606,7 +1610,15 @@ class _HomePageState extends State<HomePage>
                                     color: Palette.gold)),
                           ),
                           const SizedBox(width: 8),
-                          _GlowButton(label: 'Skip', onPressed: _startChoosing),
+                          _speakPromptDue
+                              ? _GlowButton(
+                                  key: const ValueKey('skip'),
+                                  label: 'Skip',
+                                  onPressed: _startChoosing)
+                              : _GlowButton(
+                                  key: const ValueKey('pass'),
+                                  label: 'Pass',
+                                  onPressed: () => setState(() => game.pass(_you))),
                         ],
                       )
                     : AnimatedDefaultTextStyle(
@@ -1635,15 +1647,13 @@ class _HomePageState extends State<HomePage>
               ),
               // The action of the moment, beside what's happening: save
               // your card for later, or pass on picking.
-              if (!_speakPromptDue && game.canPass(_you))
-                _GlowButton(
-                    label: 'Pass', onPressed: () => setState(() => game.pass(_you))),
+
               // Every card: which are played, which are still to come.
               if (_cards.dealId == game.dealId && !_storyActive)
                 IconButton(
                   tooltip: 'Cards played and still to come',
                   onPressed: _showCardTracker,
-                  icon: const Icon(Icons.grid_view_rounded, color: Palette.gold),
+                  icon: const CardFanIcon(size: 28),
                 ),
 
               // The speech token: show one card, once a round.
@@ -1652,17 +1662,16 @@ class _HomePageState extends State<HomePage>
                 child: IconButton(
                   tooltip: 'Show a card (once a round)',
                   onPressed: _mayAskToSpeak || _revealing ? _speak : null,
-                  icon: Icon(
-                      _revealing
-                          ? Icons.close_rounded
-                          : game.spoke.length > _you && game.spoke[_you]
-                              ? Icons.voice_over_off
-                              : Icons.record_voice_over,
-                      color: _wantsToSpeak
-                          ? Colors.white
-                          : _mayAskToSpeak || _revealing
-                              ? Palette.gold
-                              : Colors.white24),
+                  icon: _revealing
+                      ? const Icon(Icons.close_rounded, color: Palette.gold)
+                      : ShowCardIcon(
+                          size: 28,
+                          used: game.spoke.length > _you && game.spoke[_you],
+                          color: _wantsToSpeak
+                              ? Colors.white
+                              : _mayAskToSpeak
+                                  ? Palette.gold
+                                  : Colors.white24),
                 ),
               ),
             ],
@@ -4610,14 +4619,6 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
-      // A round playing itself out: say why, in gold, over the table.
-      if (_autoPlaying)
-        const Positioned(
-          left: 0,
-          right: 0,
-          top: 110,
-          child: IgnorePointer(child: Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: _AutoFinishBanner()))),
-        ),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       const Positioned.fill(
@@ -4717,7 +4718,6 @@ class _HomePageState extends State<HomePage>
 
   /// The menu: an ornate panel that drops down from the corner.
   Future<void> _openMenu() async {
-    final entries = _menuEntries();
     setState(() => _menuOpen = true);
     final choice = await showGeneralDialog<String>(
       context: context,
@@ -4725,7 +4725,12 @@ class _HomePageState extends State<HomePage>
       barrierLabel: 'Close the menu',
       barrierColor: Colors.black26,
       transitionDuration: const Duration(milliseconds: 260),
-      pageBuilder: (context, _, __) => _OrnateMenu(entries: entries),
+      // Settings switch in place and the menu stays open; anything that
+      // goes somewhere closes it.
+      pageBuilder: (context, _, __) => _OrnateMenu(
+        entries: _menuEntries,
+        onToggle: (v) => _onMenuChoice(v),
+      ),
       transitionBuilder: (context, a, _, child) {
         final t = Curves.easeOutCubic.transform(a.value);
         return Opacity(
@@ -7262,66 +7267,13 @@ class _WelcomeIntro extends StatelessWidget {
   }
 }
 
-/// "Every task is safe": shown while a won round plays itself out. It
-/// springs in, then a glint runs across it.
-class _AutoFinishBanner extends StatelessWidget {
-  const _AutoFinishBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 1400),
-      builder: (context, t, child) {
-        final pop = Curves.elasticOut.transform((t / 0.5).clamp(0.0, 1.0));
-        final glint = ((t - 0.4) / 0.6).clamp(0.0, 1.0);
-        return Opacity(
-          opacity: (t / 0.15).clamp(0.0, 1.0),
-          child: Transform.scale(
-            scale: 0.6 + 0.4 * pop,
-            child: ShaderMask(
-              blendMode: BlendMode.srcATop,
-              shaderCallback: (r) => LinearGradient(
-                begin: Alignment(-2.2 + 4.4 * glint, -1),
-                end: Alignment(-1.2 + 4.4 * glint, 1),
-                colors: const [Color(0x00FFFFFF), Color(0xCCFFF6D8), Color(0x00FFFFFF)],
-              ).createShader(r),
-              child: child,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-        decoration: BoxDecoration(
-          color: Palette.feltDeep.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Palette.gold, width: 2),
-          boxShadow: const [BoxShadow(color: Color(0x88D4A63A), blurRadius: 18)],
-        ),
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-          CrownIcon(size: 22),
-          SizedBox(width: 10),
-          Flexible(
-            child: Text('Every task is done!',
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  color: Palette.gold)),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
 /// A gold double rule with a jewel at each corner, for menus and dialogs.
 class OrnateBorder extends ShapeBorder {
-  const OrnateBorder({this.radius = 16});
+  const OrnateBorder({this.radius = 16, this.gems = true});
   final double radius;
+
+  /// The small diamonds at the inner rule's corners.
+  final bool gems;
 
   @override
   EdgeInsetsGeometry get dimensions => const EdgeInsets.all(2);
@@ -7349,6 +7301,7 @@ class OrnateBorder extends ShapeBorder {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1
           ..color = Palette.gold.withValues(alpha: 0.55));
+    if (!gems) return;
     // A small diamond at each corner of the inner rule.
     final gem = Paint()..color = Palette.gold;
     final o = radius * 0.3 + 6;
@@ -7370,19 +7323,29 @@ class OrnateBorder extends ShapeBorder {
   }
 
   @override
-  ShapeBorder scale(double t) => OrnateBorder(radius: radius * t);
+  ShapeBorder scale(double t) => OrnateBorder(radius: radius * t, gems: gems);
 }
 
 typedef _MenuEntry = ({String value, IconData icon, String title, bool? on});
 
 /// The menu, on the court's ornate panel: a medallion over the top, each
 /// line with a gold icon, divided by fine gold rules.
-class _OrnateMenu extends StatelessWidget {
-  const _OrnateMenu({required this.entries});
-  final List<_MenuEntry> entries;
+class _OrnateMenu extends StatefulWidget {
+  const _OrnateMenu({required this.entries, required this.onToggle});
+  final List<_MenuEntry> Function() entries;
+  final Future<void> Function(String) onToggle;
+
+  @override
+  State<_OrnateMenu> createState() => _OrnateMenuState();
+}
+
+class _OrnateMenuState extends State<_OrnateMenu> {
+  /// Settings, which change in place without closing the menu.
+  static const _toggles = {'sound', 'suits', 'upright'};
 
   @override
   Widget build(BuildContext context) {
+    final entries = widget.entries();
     return SafeArea(
       child: Align(
         alignment: Alignment.topRight,
@@ -7408,7 +7371,17 @@ class _OrnateMenu extends StatelessWidget {
                           color: Palette.gold.withValues(alpha: 0.22)),
                     InkWell(
                       borderRadius: BorderRadius.circular(10),
-                      onTap: () => Navigator.pop(context, e.value),
+                      highlightColor: Palette.gold.withValues(alpha: 0.08),
+                      splashColor: Palette.gold.withValues(alpha: 0.12),
+                      hoverColor: Palette.gold.withValues(alpha: 0.06),
+                      onTap: () async {
+                        if (_toggles.contains(e.value)) {
+                          await widget.onToggle(e.value);
+                          if (mounted) setState(() {});
+                        } else {
+                          Navigator.pop(context, e.value);
+                        }
+                      },
                       child: Semantics(
                         button: true,
                         toggled: e.on,
@@ -7929,7 +7902,9 @@ class _SetupPanelState extends State<_SetupPanel> {
       fontFamily: displayFont,
       fontWeight: FontWeight.w700,
       fontSize: 26,
-      color: Palette.gold);
+      color: Palette.gold,
+      // The same soft shadow as the title on the front page.
+      shadows: [Shadow(color: Colors.black54, blurRadius: 12)]);
 
   Widget _modeStep() {
     return Column(
@@ -8459,7 +8434,7 @@ class _ModeTile extends StatelessWidget {
       child: Material(
       color: selected ? const Color(0x33D4A63A) : const Color(0x22000000),
       // Gold double rule with a jewel in each corner, like the menus.
-      shape: const OrnateBorder(radius: 12),
+      shape: const OrnateBorder(radius: 12, gems: false),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -8501,7 +8476,7 @@ class _ModeTile extends StatelessWidget {
             ],
           ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+            const Icon(Icons.chevron_right_rounded, color: Palette.gold),
           ]),
         ),
       ),
@@ -8527,34 +8502,44 @@ class _CountChip extends StatelessWidget {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
+        // A large gold pip: a gold ring, filled with a glowing jewel
+        // when chosen, the number in its middle.
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: 58,
           height: 58,
-          alignment: Alignment.center,
+          padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: selected ? Palette.gold : const Color(0x22000000),
-            border: Border.all(color: Palette.gold, width: 2),
+            color: const Color(0x22000000),
+            border: Border.all(color: Palette.gold, width: 2.5),
+            boxShadow: selected
+                ? [BoxShadow(color: Palette.gold.withValues(alpha: 0.45), blurRadius: 12)]
+                : null,
           ),
-          // A fine inner ring, like the menus' double rule.
-          child: Container(
-            margin: const EdgeInsets.all(3),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                  color: selected
-                      ? Palette.feltDeep.withValues(alpha: 0.6)
-                      : Palette.gold.withValues(alpha: 0.5),
-                  width: 1),
+              gradient: selected
+                  ? const RadialGradient(
+                      center: Alignment(-0.3, -0.4),
+                      colors: [Color(0xFFFFF1B8), Palette.gold])
+                  : null,
             ),
             child: Text('$n',
-              style: TextStyle(
-                  fontFamily: bodyFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 26,
-                  color: selected ? Palette.ink : Colors.white)),
+                textHeightBehavior: const TextHeightBehavior(
+                    applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
+                style: TextStyle(
+                    fontFamily: displayFont,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    height: 1,
+                    color: selected ? Palette.ink : Colors.white,
+                    shadows: selected
+                        ? null
+                        : const [Shadow(color: Colors.black54, blurRadius: 8)])),
           ),
         ),
       ),
@@ -9632,7 +9617,7 @@ class _MiniCard extends StatelessWidget {
                       fontSize: width * 0.5)),
               if (!court)
                 TextSpan(
-                    text: '\n${card.suit.symbol}',
+                    text: '\n${card.suit.glyph}',
                     style: TextStyle(fontSize: width * 0.46)),
             ]),
             textAlign: TextAlign.center,
@@ -9710,7 +9695,7 @@ class _OutlinedNumber extends StatelessWidget {
 
 /// A button that softly pulses with a gold glow, to draw the eye.
 class _GlowButton extends StatefulWidget {
-  const _GlowButton({required this.label, required this.onPressed});
+  const _GlowButton({super.key, required this.label, required this.onPressed});
   final String label;
   final VoidCallback onPressed;
 

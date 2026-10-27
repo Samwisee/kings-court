@@ -182,7 +182,7 @@ class PlayingCardView extends StatelessWidget {
                   Text(card.rankLabel, style: corner),
                   // Court Cards are their own suit: no pip in the corner.
                   if (!card.isCourt)
-                    Text(card.suit.symbol,
+                    Text(card.suit.glyph,
                         style: corner.copyWith(fontSize: width * 0.22)),
                 ],
               ),
@@ -219,7 +219,7 @@ class PlayingCardView extends StatelessWidget {
     );
   }
 
-  Widget _face() => Text(card.suit.symbol,
+  Widget _face() => Text(card.suit.glyph,
       style: TextStyle(
           fontFamily: bodyFont,
           fontWeight: FontWeight.w900,

@@ -15,6 +15,11 @@ enum Suit {
   const Suit(this.symbol);
   final String symbol;
 
+  /// The symbol as drawn: with the text-style selector, so it's always the
+  /// font's plain glyph in our colours, never a colour emoji (on the web an
+  /// emoji font, once loaded for another page, would otherwise take over).
+  String get glyph => '$symbol\uFE0E';
+
   bool get isRed => this == hearts || this == diamonds;
 }
 

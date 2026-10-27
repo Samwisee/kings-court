@@ -104,6 +104,21 @@ ThemeData buildTheme() {
             letterSpacing: 0.6),
         side: const BorderSide(color: Color(0xFF7A5A12), width: 1.5),
         shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ).copyWith(
+        // A satisfying press: the button sinks (its shadow goes), darkens,
+        // and its rim thickens, then springs back.
+        elevation: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.disabled) ? 0 : s.contains(WidgetState.pressed) ? 0 : 4),
+        overlayColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.pressed)
+                ? const Color(0x33000000)
+                : s.contains(WidgetState.hovered)
+                    ? const Color(0x1AFFFFFF)
+                    : null),
+        side: WidgetStateProperty.resolveWith((s) => BorderSide(
+            color: const Color(0xFF7A5A12),
+            width: s.contains(WidgetState.pressed) ? 3 : 1.5)),
+        animationDuration: const Duration(milliseconds: 90),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
