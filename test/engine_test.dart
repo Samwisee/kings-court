@@ -352,17 +352,18 @@ void main() {
       return (tricks, hands);
     }
 
-    bool certain(bool spadeLeft, String task) {
+    bool certain(bool spadeLeft, String task, {int owner = 0}) {
       final (tricks, hands) = setUp(spadeLeft);
       return roundCertain(
           hands: hands,
           tricks: tricks,
-          leader: 1,
+          // Seat 0 leads next, so a spade they hold could come back to them.
+          leader: 0,
           players: 4,
           king: 0,
           totalTricks: 10,
           inPlay: fullDeck().toSet(),
-          open: [(description: task, owner: 0, x: null)]);
+          open: [(description: task, owner: owner, x: null)]);
     }
 
     test('Win no ♠ cards with every spade gone is certain', () {
@@ -372,7 +373,9 @@ void main() {
       expect(certain(true, 'Win no ♠ cards'), isFalse);
     });
     test('A task that still needs a win is not certain', () {
-      expect(certain(false, 'Win the last trick'), isFalse);
+      // (Seat 0 holds the King here, so for them it is certain.)
+      expect(certain(false, 'Win the last trick', owner: 0), isTrue);
+      expect(certain(false, 'Win the last trick', owner: 2), isFalse);
     });
   });
 }
