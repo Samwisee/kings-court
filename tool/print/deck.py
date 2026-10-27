@@ -25,7 +25,7 @@ import segno
 from art import Renderer
 from brand import (CARD, CROWN, FELT, GILT, GOLD_DARK, GOLD_LIGHT, GOLD_MID,
                    INK, JOKER_CLOTH, OUTLINE, SUIT_CLOTH, SUIT_INK, brass_inlay,
-                   cloth_gradient, crown, defs, emblem, harlequin, lattice,
+                   cloth_gradient, crown, defs, emblem, halo, harlequin, lattice,
                    outlined, place, star, stripes, suit, sunburst, text)
 
 W, H = 69.0, 94.0          # with bleed
@@ -144,13 +144,17 @@ def court_index(letter: str, name: str | None) -> str:
     return out
 
 
+NAME_Y = 82.4            # baseline of the Court Card's name
+
+
 def face_card(rank: str, name: str) -> str:
     top, bottom = SUIT_CLOTH[name]
-    pattern = {"J": stripes, "Q": lattice,
+    pattern = {"J": stripes, "Q": lambda w, h: halo(w, h) + lattice(w, h, cell=(CX, NAME_Y - 1.15),
+                                                               step=(NAME_Y - 1.15 - CY) / 1.5),
                "K": lambda w, h: sunburst(w, h, cy_frac=0.53)}[rank](W, H)
     backdrop = f'<rect width="{W}" height="{H}" fill="url(#cloth-{name}-{rank})"/>' + pattern
     art = emblem({"J": "jack", "Q": "queen", "K": "king"}[rank], top, CX, EMBLEM_Y, backdrop)
-    footer = text(CX, 82.4, NAMES[rank].upper(), 3.3, family=DISPLAY, weight=900,
+    footer = text(CX, NAME_Y, NAMES[rank].upper(), 3.3, family=DISPLAY, weight=900,
                   fill=GILT, cls="foil", spacing=0.6, stroke=OUTLINE, stroke_w=0.5)
     return cloth_card(f"cloth-{name}-{rank}", top, bottom, pattern, art,
                       court_index(rank, name), footer=footer)

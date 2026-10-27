@@ -404,22 +404,33 @@ def stripes(w, h) -> str:
     return f'<g stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="{sw:.2f}">{lines}</g>'
 
 
-def lattice(w, h) -> str:
-    """The Queen's gold lattice with a gold pearl on every crossing."""
-    step = w / 4
-    starts = []
-    a = -h
-    while a < w + h:
-        starts.append(a)
-        a += step
+def lattice(w, h, cell=None, step=None) -> str:
+    """The Queen's gold lattice with a gold pearl on every crossing.
+    [cell] is a point (x, y) the lattice centres one of its diamonds on
+    (the Queen's name), [step] the diamonds' width."""
+    step = step or w / 4
+    if cell:
+        # lines are x - y = a and x + y = b; a diamond's centre sits
+        # halfway between two of each
+        a0 = (cell[0] - cell[1]) - step / 2
+        b0 = (cell[0] + cell[1]) - step / 2
+    else:
+        a0 = b0 = 0.0
+    lo, hi = -h - step, w + h + step
+    def family(c0):
+        k0 = math.floor((lo - c0) / step)
+        return [c0 + k * step for k in range(k0, k0 + int((hi - lo) / step) + 3)]
+    A = family(a0)               # y = x - a
+    B = family(b0)               # y = b - x
     lines = []
-    for a in starts:
-        lines.append(f'<line x1="{a:.2f}" y1="0" x2="{a + h:.2f}" y2="{h}"/>')
-        lines.append(f'<line x1="{a:.2f}" y1="{h}" x2="{a + h:.2f}" y2="0"/>')
+    for a in A:
+        lines.append(f'<line x1="{a - 1:.2f}" y1="-1" x2="{a + h + 1:.2f}" y2="{h + 1}"/>')
+    for b in B:
+        lines.append(f'<line x1="{b + 1:.2f}" y1="-1" x2="{b - h - 1:.2f}" y2="{h + 1}"/>')
     pearls = []
-    for a in starts:           # y = x - a
-        for b in starts:       # y = h + b - x
-            x, y = (a + b + h) / 2, (b + h - a) / 2
+    for a in A:
+        for b in B:
+            x, y = (a + b) / 2, (b - a) / 2
             if -1 <= x <= w + 1 and -1 <= y <= h + 1:
                 pearls.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="0.5"/>')
     return (f'<g stroke="{GOLD_LIGHT}" stroke-opacity="0.5" stroke-width="0.18" class="foil">{"".join(lines)}</g>'
@@ -433,21 +444,44 @@ def sunburst(w, h, cy_frac=0.56, alpha=1.0) -> str:
     cx, cy = w / 2, h * cy_frac
     r = max(w, h) * 1.2
     k = f"{int(cy_frac * 100)}-{int(alpha * 100)}"
-    half = math.pi / 24          # rays and gaps equally wide
+    # Ten rays, the dark ones wider than the lit, set so a dark ray runs
+    # straight down under the King's name.
+    n = 10
+    step = 2 * math.pi / n
+    half = step * 0.3 / 2        # lit rays take 30% of each step
     rays, edges = [], []
-    for i in range(12):
-        a = i * math.pi / 6
+    for i in range(n):
+        a = i * step + math.pi / 2 + step / 2
         p1 = (cx + r * math.cos(a - half), cy + r * math.sin(a - half))
         p2 = (cx + r * math.cos(a + half), cy + r * math.sin(a + half))
         rays.append(f'<path d="M{cx:.2f} {cy:.2f} L{p1[0]:.2f} {p1[1]:.2f} L{p2[0]:.2f} {p2[1]:.2f} Z"/>')
         for p in (p1, p2):
             edges.append(f'<line x1="{cx:.2f}" y1="{cy:.2f}" x2="{p[0]:.2f}" y2="{p[1]:.2f}"/>')
-    grad = (f'<defs><radialGradient id="rayFade{k}" gradientUnits="userSpaceOnUse" cx="{cx}" cy="{cy}" r="{r * 0.7:.2f}">'
-            f'<stop offset="0" stop-color="{GOLD_LIGHT}"/><stop offset="1" stop-color="{GOLD_LIGHT}" stop-opacity="0.15"/>'
-            f'</radialGradient></defs>')
-    return (grad + f'<g fill="url(#rayFade{k})" fill-opacity="{0.2 * alpha:.2f}">{"".join(rays)}</g>'
-            f'<g stroke="{GOLD_LIGHT}" stroke-opacity="{0.55 * alpha:.2f}" stroke-width="0.18" class="foil">'
+    # The lit rays are the same faint white as the Jack's stripes at the
+    # edges of the card, brightening towards the crown, with a soft halo
+    # behind it: the King's card shines a little more without changing
+    # colour.
+    grad = (f'<defs><radialGradient id="rayFade{k}" gradientUnits="userSpaceOnUse" cx="{cx}" cy="{cy}" r="{r * 0.45:.2f}">'
+            f'<stop offset="0" stop-color="#FFFFFF" stop-opacity="{0.26 * alpha:.3f}"/>'
+            f'<stop offset="0.5" stop-color="#FFFFFF" stop-opacity="{0.07 * alpha:.3f}"/>'
+            f'<stop offset="1" stop-color="#FFFFFF" stop-opacity="{0.07 * alpha:.3f}"/></radialGradient>'
+            f'<radialGradient id="halo{k}" gradientUnits="userSpaceOnUse" cx="{cx}" cy="{cy - h * 0.05:.2f}" r="{w * 0.34:.2f}">'
+            f'<stop offset="0" stop-color="#FFFFFF" stop-opacity="{0.22 * alpha:.3f}"/>'
+            f'<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>')
+    return (grad + f'<g fill="url(#rayFade{k})">{"".join(rays)}</g>'
+            f'<rect width="{w}" height="{h}" fill="url(#halo{k})"/>'
+            f'<g stroke="{GOLD_LIGHT}" stroke-opacity="{0.7 * alpha:.2f}" stroke-width="0.26" class="foil">'
             f'{"".join(edges)}</g>')
+
+
+def halo(w, h, cy_frac=0.49, radius=0.36, strength=0.13) -> str:
+    """A soft white glow behind an emblem (the Queen's, fainter than the
+    King's)."""
+    k = f"{int(cy_frac * 100)}-{int(strength * 100)}"
+    return (f'<defs><radialGradient id="halo-q{k}" gradientUnits="userSpaceOnUse" cx="{w / 2:.2f}" '
+            f'cy="{h * cy_frac:.2f}" r="{w * radius:.2f}"><stop offset="0" stop-color="#FFFFFF" '
+            f'stop-opacity="{strength}"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>'
+            f'</radialGradient></defs><rect width="{w}" height="{h}" fill="url(#halo-q{k})"/>')
 
 
 def harlequin(w, h, dark="#1A0C2A", light=GOLD_LIGHT) -> str:
