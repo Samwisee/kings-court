@@ -8,8 +8,9 @@ class Palette {
   static const felt = Color(0xFF0F4A2E);
   static const feltDeep = Color(0xFF0A3622);
 
-  /// The royal-red table the felt is set into (and the browser's bars).
-  static const table = Color(0xFF7A1428);
+  /// The dark red table the felt is set into, the King's cloth in shadow
+  /// (and the browser's bars).
+  static const table = Color(0xFF4E0B18);
   static const feltLine = Color(0xFF2A6B4B);
   static const card = Color(0xFFFFFDF8);
   static const ink = Color(0xFF1D1B18);

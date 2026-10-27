@@ -29,15 +29,15 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png"/>
-  <meta name="theme-color" content="#7A1428">
+  <meta name="theme-color" content="#4E0B18">
 
   <title>The King's Court</title>
   <link rel="manifest" href="manifest.json">
-  <!-- The royal-red table behind everything, so the browser bars and the edges of the
+  <!-- The dark red table behind everything, so the browser bars and the edges of the
        screen match the table round the felt, and nothing flashes white while
        the game loads. -->
   <style>
-    html, body { margin: 0; background: #7A1428; }
+    html, body { margin: 0; background: #4E0B18; }
     /* While the game loads: a gold crown on the felt, rising and glowing,
        which fades away as the first frame appears. */
     #loading {
@@ -45,12 +45,13 @@
       background: radial-gradient(circle at 50% 45%, #176141, #0A3622 70%);
       box-shadow: inset 0 0 0 1.5px rgba(212,166,58,.8);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 10; transition: opacity .6s ease;
+      z-index: 10; transition: opacity .7s ease; will-change: opacity;
     }
     #loading.done { opacity: 0; pointer-events: none; }
     #loading svg {
       width: 96px; filter: drop-shadow(0 0 14px rgba(212,166,58,.55));
       animation: rise 1.6s ease-in-out infinite;
+      will-change: transform;
     }
     #loading .dots { margin-top: 22px; display: flex; gap: 9px; }
     #loading .dots i {
@@ -83,11 +84,15 @@
     <div class="dots"><i></i><i></i><i></i></div>
   </div>
   <script>
+    // Held a moment past the first frame, while the game finds its feet
+    // (fonts, the first busy frames), so the fade itself runs smoothly.
     function loaded() {
-      var l = document.getElementById('loading');
-      if (!l) return;
-      l.classList.add('done');
-      setTimeout(function () { l.remove(); }, 700);
+      setTimeout(function () {
+        var l = document.getElementById('loading');
+        if (!l || l.classList.contains('done')) return;
+        l.classList.add('done');
+        setTimeout(function () { l.remove(); }, 800);
+      }, 450);
     }
     window.addEventListener('flutter-first-frame', loaded);
     // Never left covering the game, whatever happens.

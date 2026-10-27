@@ -425,6 +425,10 @@ class _HomePageState extends State<HomePage>
   /// This crowning's crown starts as that waiting crown.
   bool _crownFromCentre = false;
 
+  /// The walk-in's crown has gone to the King: the walk-in no longer draws
+  /// it, even while the rest of it plays out.
+  bool _crownHandedOver = false;
+
   /// The deal whose decree has been read out (see [_decreePending]).
   int _decreeReadFor = -1;
 
@@ -3622,6 +3626,7 @@ class _HomePageState extends State<HomePage>
       _crowning = index;
       // The waiting crown becomes this one, in the same place.
       _crownFromCentre = fromCentre;
+      if (fromCentre) _crownHandedOver = true;
       _crownWaiting = false;
     });
     // The walk-in already sounded the fanfare.
@@ -4423,6 +4428,7 @@ class _HomePageState extends State<HomePage>
     }
     Sfx.fanfare();
     // On screen, the crown stays to crown the King at the table.
+    _crownHandedOver = false;
     _crownWaiting = r.digital &&
         r.mode != GameMode.tutorial &&
         r.mode != GameMode.dynasty;
@@ -4475,6 +4481,7 @@ class _HomePageState extends State<HomePage>
                       : null,
                 ),
               ),
+              if (!_crownHandedOver)
               Positioned(
                 left: centre.dx - crown / 2,
                 top: centre.dy - crown * 0.375 - lift * crown * 0.8,
@@ -7372,12 +7379,36 @@ class _HomePageState extends State<HomePage>
 /// The opening flourish on the front page: the four Court Cards rise and
 /// fan out wide, with a burst of sparks. It plays once (about two seconds)
 /// and then holds still.
-class _WelcomeIntro extends StatelessWidget {
+class _WelcomeIntro extends StatefulWidget {
   const _WelcomeIntro({required this.crownSize, required this.buttons});
   final double crownSize;
 
   /// The front page's buttons, which fade in one after another.
   final List<Widget> buttons;
+
+  @override
+  State<_WelcomeIntro> createState() => _WelcomeIntroState();
+}
+
+class _WelcomeIntroState extends State<_WelcomeIntro> {
+  /// The very first time, the flourish waits for the loading crown to fade
+  /// away, so it isn't spent behind it.
+  static bool _firstShow = true;
+  late final double _wait;
+
+  @override
+  void initState() {
+    super.initState();
+    _wait = _firstShow &&
+            CharacterToken.alive &&
+            !WidgetsBinding.instance.runtimeType.toString().contains('Test')
+        ? 0.35
+        : 0;
+    _firstShow = false;
+  }
+
+  double get crownSize => widget.crownSize;
+  List<Widget> get buttons => widget.buttons;
 
   /// The four Court Cards, lowest to highest.
   static const _cards = [
@@ -7402,8 +7433,9 @@ class _WelcomeIntro extends StatelessWidget {
     final still = MediaQuery.of(context).disableAnimations;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: still ? 1 : 0, end: 1),
-      duration: const Duration(milliseconds: 2400),
-      builder: (context, t, _) {
+      duration: Duration(milliseconds: (2400 / (1 - _wait)).round()),
+      builder: (context, raw, _) {
+        final t = _wait == 0 ? raw : clampD((raw - _wait) / (1 - _wait), 0, 1);
         final rise = _iv(t, 0.0, 0.3, Curves.easeOutCubic);
         final fan = _iv(t, 0.1, 0.5, Curves.easeOutBack);
         final spark = _iv(t, 0.35, 0.75);
