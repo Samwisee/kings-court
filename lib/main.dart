@@ -1921,7 +1921,7 @@ class _HomePageState extends State<HomePage>
           children: [
             Padding(
               // Room above the tokens so a King's crown clears the edge.
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Column(
                 children: [
                   // Solo Dynasty: what this hand is for, in the story.
@@ -2609,6 +2609,9 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  /// Whether your tasks have been scrolled under your token.
+  final _youScrolled = ValueNotifier(false);
+
   /// You, with your tasks beside you.
   Widget _digiYou(double width) {
     final mine = [
@@ -2663,7 +2666,13 @@ class _HomePageState extends State<HomePage>
               )
             // Your tasks scroll sideways when they don't fit, slipping under
             // your token and shown card rather than stopping short of them.
-            : SingleChildScrollView(
+            : NotificationListener<ScrollUpdateNotification>(
+                onNotification: (n) {
+                  final scrolled = n.metrics.pixels > 2;
+                  if (scrolled != _youScrolled.value) _youScrolled.value = scrolled;
+                  return false;
+                },
+                child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(left: leadW),
                 child: Row(children: [
@@ -2675,6 +2684,7 @@ class _HomePageState extends State<HomePage>
                           fontSize: width > 600 ? 15 : 13),
                     ),
                 ]),
+              ),
               );
     // The whole width, so you sit at its left end.
     return SizedBox(
@@ -2689,22 +2699,32 @@ class _HomePageState extends State<HomePage>
         // You, at your full size, over the start of the row.
         Positioned(
           left: 0,
-          child: IgnorePointer(
-            ignoring: false,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  Palette.felt,
-                  Palette.felt,
-                  Palette.felt.withValues(alpha: 0),
-                ], stops: const [0, 0.82, 1]),
+          // Only once your tasks have scrolled under you does the felt
+          // fade over them; at rest every task shows in full.
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _youScrolled,
+            builder: (context, scrolled, child) => Stack(children: [
+              Positioned.fill(
+                right: -16,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: scrolled && mine.isNotEmpty ? 1 : 0,
+                    duration: const Duration(milliseconds: 150),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [
+                          Palette.felt,
+                          Palette.felt,
+                          Palette.felt.withValues(alpha: 0),
+                        ], stops: const [0, 0.82, 1]),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16),
-                // Shrinks rather than spills where the row is short.
-                child: you,
-              ),
-            ),
+              child!,
+            ]),
+            child: you,
           ),
         ),
       ],
@@ -3956,16 +3976,19 @@ class _HomePageState extends State<HomePage>
                                       style: const TextStyle(
                                           fontSize: 15, color: Palette.ink)),
                                 ),
-                                Switch(
-                                  value: spoke,
-                                  activeThumbColor: Palette.ink,
-                                  onChanged: !canSpeak
+                                GestureDetector(
+                                  onTap: !canSpeak
                                       ? null
-                                      : (_) {
+                                      : () {
                                           _haptic(
                                               HapticFeedback.selectionClick);
                                           update(() => game.toggleSpoke(seat));
                                         },
+                                  child: Semantics(
+                                    toggled: spoke,
+                                    label: 'Card reveal used',
+                                    child: GoldPip(on: spoke, enabled: canSpeak, size: 26),
+                                  ),
                                 ),
                               ]),
                             ],
@@ -4788,7 +4811,8 @@ class _HomePageState extends State<HomePage>
         _menuItem(
             'sound',
             Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-            Sfx.enabled ? 'Fanfares on' : 'Fanfares off'),
+            'Sounds',
+            on: Sfx.enabled),
         // For colour-blind players: no two suits share a colour.
         _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
             on: Palette.fourColourSuits),
@@ -7108,11 +7132,11 @@ class _HomePageState extends State<HomePage>
                     if (_saves.isEmpty)
                       FilledButton(
                           onPressed: () => _showSetupDialog(),
-                          child: const Text('Start new game'))
+                          child: const Text('New game'))
                     else
                       OutlinedButton(
                           onPressed: () => _showSetupDialog(),
-                          child: const Text('Start new game')),
+                          child: const Text('New game')),
                   ],
                 ),
               ),
@@ -7406,12 +7430,7 @@ class _OrnateMenu extends StatelessWidget {
                               ),
                               if (e.on != null) ...[
                                 const SizedBox(width: 10),
-                                Icon(
-                                    e.on!
-                                        ? Icons.check_box_rounded
-                                        : Icons.check_box_outline_blank_rounded,
-                                    color: Palette.gold,
-                                    size: 22),
+                                GoldPip(on: e.on!),
                               ],
                             ]),
                           ),
@@ -8143,8 +8162,7 @@ class _SetupPanelState extends State<_SetupPanel> {
   Widget _rolesSwitch() => powersComingSoon
       ? const Opacity(
           opacity: 0.55,
-          child: SwitchListTile(
-            contentPadding: EdgeInsets.zero,
+          child: PipTile(
             value: false,
             onChanged: null,
             title: Text.rich(TextSpan(children: [
@@ -8161,10 +8179,8 @@ class _SetupPanelState extends State<_SetupPanel> {
                 style: TextStyle(color: Colors.white70)),
           ),
         )
-      : SwitchListTile(
-          contentPadding: EdgeInsets.zero,
+      : PipTile(
           value: roles,
-          activeThumbColor: Palette.gold,
           onChanged: (v) => setState(() => roles = v),
           title: const Text('Powers', style: TextStyle(fontSize: 16)),
           subtitle: const Text(
@@ -8247,10 +8263,8 @@ class _SetupPanelState extends State<_SetupPanel> {
                 style: TextStyle(color: Colors.white70)),
             ...[
               const SizedBox(height: 8),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
+              PipTile(
                 value: surprise,
-                activeThumbColor: Palette.gold,
                 onChanged: (v) => setState(() => surprise = v),
                 title: const Text('Seals and decrees',
                     style: TextStyle(fontSize: 16)),
@@ -8371,8 +8385,10 @@ class _SetupPanelState extends State<_SetupPanel> {
             // Kept near the step on a wide screen, not out in the corners.
             // The first step has a way back to where you came from.
             if (!choosing || step > 0 || widget.canCancel)
+            // One height whether or not a Next button shows, so the page
+            // above never shifts as you go from step to step.
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
+              constraints: const BoxConstraints(maxWidth: 560, minHeight: 56, maxHeight: 56),
               child: Row(
               children: [
                 if (step > 0 || widget.canCancel)
@@ -8442,13 +8458,8 @@ class _ModeTile extends StatelessWidget {
       selected: selected,
       child: Material(
       color: selected ? const Color(0x33D4A63A) : const Color(0x22000000),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-            color: selected ? Palette.gold : Colors.white24,
-            // Selection shows in the border's weight as well as its colour.
-            width: selected ? 3 : 1.5),
-      ),
+      // Gold double rule with a jewel in each corner, like the menus.
+      shape: const OrnateBorder(radius: 12),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -8524,15 +8535,27 @@ class _CountChip extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: selected ? Palette.gold : const Color(0x22000000),
-            border: Border.all(
-                color: selected ? Palette.gold : Colors.white38, width: 2),
+            border: Border.all(color: Palette.gold, width: 2),
           ),
-          child: Text('$n',
+          // A fine inner ring, like the menus' double rule.
+          child: Container(
+            margin: const EdgeInsets.all(3),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: selected
+                      ? Palette.feltDeep.withValues(alpha: 0.6)
+                      : Palette.gold.withValues(alpha: 0.5),
+                  width: 1),
+            ),
+            child: Text('$n',
               style: TextStyle(
                   fontFamily: bodyFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 26,
                   color: selected ? Palette.ink : Colors.white)),
+          ),
         ),
       ),
     );

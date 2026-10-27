@@ -71,7 +71,7 @@ Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
 
 /// Taps Play on the welcome screen, which opens setup.
 Future<void> openSetup(WidgetTester tester) async {
-  await tester.tap(find.text('Start new game'));
+  await tester.tap(find.text('New game'));
   await tester.pumpAndSettle();
 }
 
@@ -114,12 +114,12 @@ void main() {
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pump();
     expect(find.textContaining("ng's Court", findRichText: true), findsOneWidget);
-    expect(find.text('Start new game'), findsOneWidget);
+    expect(find.text('New game'), findsOneWidget);
     expect(find.text('New Game'), findsNothing);
     await tester.pumpAndSettle();
     // Play opens setup: the ways to play, the tutorial among them; nothing
     // is saved yet, so nothing to continue.
-    await tester.tap(find.text('Start new game'));
+    await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
     expect(find.text('How will you play?'), findsOneWidget);
     expect(find.text('Tutorial'), findsOneWidget);
@@ -1286,7 +1286,7 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start new game'));
+    await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tutorial'));
     await tester.pumpAndSettle();
@@ -1326,7 +1326,7 @@ void main() {
     expect(find.text('You\u2019re ready'), findsOneWidget);
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
-    expect(find.text('Start new game'), findsOneWidget); // back at the welcome
+    expect(find.text('New game'), findsOneWidget); // back at the welcome
   });
 
   test('Each player may pass on picking once a round', () {

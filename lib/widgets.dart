@@ -2389,3 +2389,94 @@ class _RenderMasonry extends RenderBox
     return false;
   }
 }
+
+/// The court's on/off mark: a gold ring, filled with a gold jewel when on.
+/// Used for every setting in place of switches and tick boxes.
+class GoldPip extends StatelessWidget {
+  const GoldPip({super.key, required this.on, this.size = 22, this.enabled = true});
+  final bool on;
+  final double size;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = enabled ? Palette.gold : Palette.gold.withValues(alpha: 0.4);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: gold, width: 2),
+        boxShadow: on && enabled
+            ? [BoxShadow(color: Palette.gold.withValues(alpha: 0.45), blurRadius: 8)]
+            : null,
+      ),
+      padding: EdgeInsets.all(size * 0.17),
+      child: AnimatedScale(
+        scale: on ? 1 : 0,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutBack,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+                center: const Alignment(-0.3, -0.4),
+                colors: [const Color(0xFFFFF1B8), gold]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A setting with a title, a line about it, and a [GoldPip] to turn it on
+/// or off (the whole line is the tap target).
+class PipTile extends StatelessWidget {
+  const PipTile(
+      {super.key,
+      required this.title,
+      this.subtitle,
+      required this.value,
+      required this.onChanged});
+  final Widget title;
+  final Widget? subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onChanged != null;
+    return Semantics(
+      toggled: value,
+      enabled: enabled,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: enabled ? () => onChanged!(!value) : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DefaultTextStyle.merge(
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
+                      child: title),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    DefaultTextStyle.merge(
+                        style: const TextStyle(fontSize: 14, color: Colors.white70),
+                        child: subtitle!),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            GoldPip(on: value, enabled: enabled),
+          ]),
+        ),
+      ),
+    );
+  }
+}
