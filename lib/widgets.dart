@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -2535,15 +2536,18 @@ class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin 
     // Still for reduced motion (and in tests, where it would never settle).
     if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
       _c.stop();
-      _c.value = 0.62;
+      _done = true;
     } else if (!_c.isAnimating && !_started) {
-      // A few glitters as it arrives, then it rests.
+      // A few glitters as it arrives, then it rests, clear of stars.
       _started = true;
-      _c.repeat(count: 4);
+      _c.repeat(count: 3).whenComplete(() {
+        if (mounted) setState(() => _done = true);
+      });
     }
   }
 
   bool _started = false;
+  bool _done = false;
 
   @override
   void dispose() {
@@ -2552,7 +2556,9 @@ class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin 
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
+  Widget build(BuildContext context) => _done
+      ? const SizedBox.shrink()
+      : AnimatedBuilder(
         animation: _c,
         builder: (context, _) => CustomPaint(painter: _GlitterPainter(_c.value)),
       );
@@ -2573,21 +2579,27 @@ class _GlitterPainter extends CustomPainter {
     // The sheen: crosses in the first 40% of each cycle.
     final sweep = (t / 0.4).clamp(0.0, 1.0);
     if (sweep < 1) {
-      final x = -0.4 + 1.8 * sweep;
+      // A soft diagonal band crossing from left to right.
       final rect = Offset.zero & size;
+      final cx = -0.3 * size.width + 1.6 * size.width * Curves.easeInOut.transform(sweep);
+      final band = size.width * 0.18;
       canvas.drawRect(
           rect,
           Paint()
-            ..shader = LinearGradient(
-              begin: Alignment(-1 + 2 * (x - 0.25), -1),
-              end: Alignment(-1 + 2 * (x + 0.05), 1),
-              colors: const [Color(0x00FFFFFF), Color(0x88FFFBE6), Color(0x00FFFFFF)],
-            ).createShader(rect));
+            ..shader = ui.Gradient.linear(
+              Offset(cx - band, 0),
+              Offset(cx + band, size.height * 0.35),
+              const [Color(0x00FFFFFF), Color(0x66FFFBE6), Color(0x00FFFFFF)],
+              const [0, 0.5, 1],
+            ));
     }
     // The stars, each twinkling in its own moment.
     final star = Paint()..color = const Color(0xFFFFFBEA);
     for (final (sx, sy, phase) in _stars) {
-      final k = math.sin(((t + phase) % 1) * math.pi * 2);
+      // Each star twinkles once a cycle, in its own short moment.
+      final local = ((t - phase * 0.7) % 1) / 0.3;
+      if (local < 0 || local > 1) continue;
+      final k = math.sin(local * math.pi);
       if (k <= 0) continue;
       final r = 5.0 * k;
       final c = Offset(size.width * sx, size.height * sy);

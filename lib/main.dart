@@ -4629,7 +4629,8 @@ class _HomePageState extends State<HomePage>
           _setupArgs == null &&
           !_onFelt &&
           game.outcome != RoundOutcome.inProgress &&
-          _lastTrick == null)
+          // (A round won early stays up while its last cards play out.)
+          (_lastTrick == null || _autoPlaying))
         Positioned.fill(
             child: Material(
                 type: MaterialType.transparency,
