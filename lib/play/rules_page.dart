@@ -164,6 +164,9 @@ class _RulesPageState extends State<RulesPage> {
   bool _all = false;
   final _keys = <int, GlobalKey>{};
 
+  /// Sections just brought in by "Show every rule", to open up as they come.
+  Set<int> _revealing = {};
+
   void _jump(int i) {
     final ctx = _keys[i]?.currentContext;
     if (ctx != null) {
@@ -197,13 +200,34 @@ class _RulesPageState extends State<RulesPage> {
               child: Column(
             children: [
               // The top bar: the title, and a gold cross to close.
-              SizedBox(
-                height: 60,
-                child: Stack(
-                  alignment: Alignment.center,
+              // The title in the middle with room either side, so the
+              // cross never sits on it; a brass rule underneath.
+              Container(
+                height: 64,
+                decoration: BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                          color: Palette.gold.withValues(alpha: 0.8), width: 1.5)),
+                ),
+                child: Row(
                   children: [
-                    Positioned(
-                      right: 10,
+                    const SizedBox(width: 56),
+                    const Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('How to Play',
+                            style: TextStyle(
+                                fontFamily: displayFont,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 26,
+                                color: Palette.gold,
+                                shadows: [
+                                  Shadow(color: Colors.black54, blurRadius: 12)
+                                ])),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 56,
                       child: IconButton(
                         tooltip: 'Close',
                         onPressed: () => Navigator.pop(context),
@@ -213,19 +237,12 @@ class _RulesPageState extends State<RulesPage> {
                             color: Palette.gold, size: 30, shadows: _shadow),
                       ),
                     ),
-                    const Text('How to Play',
-                        style: TextStyle(
-                            fontFamily: displayFont,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 26,
-                            color: Palette.gold,
-                            shadows: [Shadow(color: Colors.black54, blurRadius: 12)])),
                   ],
                 ),
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 620),
@@ -246,7 +263,19 @@ class _RulesPageState extends State<RulesPage> {
                           if (g != null)
                             Center(
                               child: TextButton(
-                                onPressed: () => setState(() => _all = !_all),
+                                onPressed: () => setState(() {
+                                  final before = {
+                                    for (int i = 0; i < _sections.length; i++)
+                                      if (_all || _applies(_sections[i], g)) i
+                                  };
+                                  _all = !_all;
+                                  _revealing = _all
+                                      ? {
+                                          for (int i = 0; i < _sections.length; i++)
+                                            if (!before.contains(i)) i
+                                        }
+                                      : {};
+                                }),
                                 style: TextButton.styleFrom(
                                     foregroundColor: Palette.gold,
                                     overlayColor: Colors.transparent),
@@ -266,7 +295,12 @@ class _RulesPageState extends State<RulesPage> {
                             ),
                           const SizedBox(height: 10),
                           for (final i in shown)
-                            _Panel(
+                            _Reveal(
+                              // Rules brought in by "Show every rule" open
+                              // up and fade in; the rest are simply there.
+                              key: ValueKey('reveal-$i'),
+                              animate: _revealing.contains(i),
+                              child: _Panel(
                               key: _keys.putIfAbsent(i, GlobalKey.new),
                               title: _sections[i].title,
                               children: [
@@ -285,6 +319,7 @@ class _RulesPageState extends State<RulesPage> {
                                     ),
                                   ),
                               ],
+                            ),
                             ),
                           const SizedBox(height: 10),
                           Center(
@@ -325,7 +360,7 @@ class _RulesPageState extends State<RulesPage> {
       court: true,
       maxWidth: 620,
       margin: const EdgeInsets.fromLTRB(0, 34, 0, 18),
-      padding: const EdgeInsets.fromLTRB(22, 36, 22, 16),
+      padding: const EdgeInsets.fromLTRB(34, 38, 34, 20),
       child: Column(
         children: [
           const Text('This game',
@@ -418,6 +453,48 @@ class _Panel extends StatelessWidget {
             ),
             ...children,
           ],
+        ),
+      );
+}
+
+/// A section that opens up and fades in as it arrives (when [animate]).
+class _Reveal extends StatefulWidget {
+  const _Reveal({super.key, required this.animate, required this.child});
+  final bool animate;
+  final Widget child;
+
+  @override
+  State<_Reveal> createState() => _RevealState();
+}
+
+class _RevealState extends State<_Reveal> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 420), value: widget.animate ? 0 : 1);
+  late final Animation<double> _ease =
+      CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SizeTransition(
+        sizeFactor: _ease,
+        axisAlignment: -1,
+        child: FadeTransition(
+          opacity: _ease,
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0, 0.06), end: Offset.zero).animate(_ease),
+            child: widget.child,
+          ),
         ),
       );
 }

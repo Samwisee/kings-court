@@ -4541,6 +4541,10 @@ class _HomePageState extends State<HomePage>
       },
       // On-screen cards unless the game being replaced used a real deck.
       digital: _inGame ? game.digital : true,
+      onSound: (on) {
+        setState(() => Sfx.enabled = on);
+        _saveSettings();
+      },
     );
   }
 
@@ -8092,7 +8096,12 @@ class _SetupPanel extends StatefulWidget {
     required this.digital,
     this.saves = const [],
     this.onContinue,
+    this.onSound,
   });
+
+  /// Sounds switched on or off on the last step (the same setting as in
+  /// the menu).
+  final ValueChanged<bool>? onSound;
 
   final List<_SavedGame> saves;
   final ValueChanged<_SavedGame>? onContinue;
@@ -8451,6 +8460,43 @@ class _SetupPanelState extends State<_SetupPanel> {
 
   /// Courtly roles: houses, shapes and powers. Always on in Dynasty.
   /// Courtiers keep their houses; their powers are still to come.
+  /// Sounds, asked every time before a game starts, set as last time.
+  Widget _soundSwitch() => PipTile(
+        value: Sfx.enabled,
+        onChanged: (v) {
+          widget.onSound?.call(v);
+          setState(() {});
+        },
+        title: const Text('Sounds', style: TextStyle(fontSize: 16)),
+        subtitle: const Text('Fanfares and the sounds of the cards.',
+            style: TextStyle(color: Colors.white70)),
+      );
+
+  /// The last step's choices, on a dark panel edged in gold like the
+  /// rules, with a faint rule between them.
+  Widget _settingsPanel(List<Widget> rows) => Container(
+        margin: const EdgeInsets.only(top: 18),
+        padding: const EdgeInsets.fromLTRB(18, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: const Color(0x30000000),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Palette.gold.withValues(alpha: 0.45), width: 1.4),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, r) in rows.indexed) ...[
+              if (i > 0)
+                Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    color: Palette.gold.withValues(alpha: 0.18)),
+              r,
+            ],
+          ],
+        ),
+      );
+
   Widget _rolesSwitch() => powersComingSoon
       ? const Opacity(
           opacity: 0.55,
@@ -8500,23 +8546,24 @@ class _SetupPanelState extends State<_SetupPanel> {
               label: Text('All chapters (${widget.progress.totalCrowns} crowns)'),
               style: TextButton.styleFrom(foregroundColor: Palette.gold),
             ),
-            _rolesSwitch(),
+            _settingsPanel([_rolesSwitch(), _soundSwitch()]),
           ],
         );
       case GameMode.dynasty:
-        return const Column(
-          key: ValueKey('story'),
+        return Column(
+          key: const ValueKey('story'),
           mainAxisSize: MainAxisSize.min,
           children: [
-            CrownIcon(size: 48),
-            SizedBox(height: 10),
-            Text('A crown awaits', style: _heading),
-            SizedBox(height: 10),
-            Text(
+            const CrownIcon(size: 48),
+            const SizedBox(height: 10),
+            const Text('A crown awaits', style: _heading),
+            const SizedBox(height: 10),
+            const Text(
               'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nYou will wear the crown, and your courtiers play their own cards beside you. How long you keep it is up to you. Win glory together, keep the houses loyal, and watch for the knife in the dark.\n\nDynasty is still taking shape (alpha), so expect rough edges.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70),
             ),
+            _settingsPanel([_soundSwitch()]),
           ],
         );
       case GameMode.tutorial:
@@ -8529,7 +8576,9 @@ class _SetupPanelState extends State<_SetupPanel> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Center(child: Text('Setup', style: _heading)),
-            const SizedBox(height: 14),
+            const SizedBox(height: 4),
+            _settingsPanel([
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(
               children: [
                 const Text('Points target', style: TextStyle(fontSize: 16)),
@@ -8553,8 +8602,8 @@ class _SetupPanelState extends State<_SetupPanel> {
             ),
             const Text('Higher targets mean more or harder tasks.',
                 style: TextStyle(color: Colors.white70)),
-            ...[
-              const SizedBox(height: 8),
+            const SizedBox(height: 6),
+            ]),
               PipTile(
                 value: surprise,
                 onChanged: (v) => setState(() => surprise = v),
@@ -8565,7 +8614,8 @@ class _SetupPanelState extends State<_SetupPanel> {
                     style: TextStyle(color: Colors.white70)),
               ),
               _rolesSwitch(),
-            ],
+              _soundSwitch(),
+            ]),
           ],
         );
     }
@@ -8595,7 +8645,8 @@ class _SetupPanelState extends State<_SetupPanel> {
       style: const TextStyle(shadows: _feltShadow),
       child: SizedBox.expand(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
+        // Clear of the table's edge and brass inlay all round.
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
         child: Column(
           children: [
             // Progress: one pip per step, with a way back on the first
