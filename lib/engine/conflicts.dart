@@ -57,76 +57,76 @@ Set<PlayingCard> _rank(int r) => {
     };
 
 final Map<String, TaskProfile> _profiles = {
-  'Win more tricks than everyone else': const TaskProfile(mostTricks: true),
-  'Win more tricks than everyone else together':
+  'Win more tricks than anyone else': const TaskProfile(mostTricks: true),
+  'Win more tricks than the rest of the court put together':
       const TaskProfile(mostTricks: true),
   'Win the 3♥': TaskProfile(cards: _cs(['3♥'])),
   'Win the A♦': TaskProfile(cards: _cs(['A♦'])),
   'Win the 4♠': TaskProfile(cards: _cs(['4♠'])),
   'Win the 6♣': TaskProfile(cards: _cs(['6♣'])),
-  'Win all four 3s': TaskProfile(cards: _rank(3)),
-  'Win all four 9s': TaskProfile(cards: _rank(9)),
-  'Win at least three 5s': const TaskProfile(ranks: {5: 3}),
-  'Win at least three 9s': const TaskProfile(ranks: {9: 3}),
-  'Win at least two 7s': const TaskProfile(ranks: {7: 2}),
-  'Win exactly three 6s': const TaskProfile(ranks: {6: 3}),
-  'Win exactly two 9s': const TaskProfile(ranks: {9: 2}),
-  'Win the A♠, 2♠ and 3♠': TaskProfile(cards: _cs(['A♠', '2♠', '3♠'])),
-  'Win the 6♠ and the 7♦': TaskProfile(cards: _cs(['6♠', '7♦'])),
-  'Win the 5♥ and the 6♦': TaskProfile(cards: _cs(['5♥', '6♦'])),
-  'Win the 5♣ and the 8♠': TaskProfile(cards: _cs(['5♣', '8♠'])),
-  'Win the 5♠ and the 8♥': TaskProfile(cards: _cs(['5♠', '8♥'])),
-  'Win the 9♥ and the 8♦': TaskProfile(cards: _cs(['9♥', '8♦'])),
-  'Win the A♥ and the 7♣': TaskProfile(cards: _cs(['A♥', '7♣'])),
-  'Win the 9♦ and the 7♠': TaskProfile(cards: _cs(['9♦', '7♠'])),
-  'Win the 3♣, 4♦ and 5♦': TaskProfile(cards: _cs(['3♣', '4♦', '5♦'])),
-  'Win the 2♣ in the last trick':
-      TaskProfile(cards: _cs(['2♣']), tricks: const {-1}),
-  'Win exactly one ♥ and one ♣ card':
-      const TaskProfile(suits: {Suit.hearts: 1, Suit.clubs: 1}),
-  'Win at least seven ♦ cards': const TaskProfile(suits: {Suit.diamonds: 7}),
-  'Win at least five ♥ cards': const TaskProfile(suits: {Suit.hearts: 5}),
-  'Win exactly two ♣ cards': const TaskProfile(suits: {Suit.clubs: 2}),
-  'Win exactly two ♠ cards': const TaskProfile(suits: {Suit.spades: 2}),
-  'Win exactly one ♥ card': const TaskProfile(suits: {Suit.hearts: 1}),
-  'Win no ♥ cards':
-      TaskProfile(forbidCard: (c) => c.suit == Suit.hearts),
-  'Win exactly one Court Card (redeal if one player holds all four)':
+  'Win all four 2s': TaskProfile(cards: _rank(2)),
+  'Win all four 8s': TaskProfile(cards: _rank(8)),
+  'Win at least three 4s': const TaskProfile(ranks: {4: 3}),
+  'Win at least three 7s': const TaskProfile(ranks: {7: 3}),
+  'Win at least two 9s': const TaskProfile(ranks: {9: 2}),
+  'Win exactly three 5s': const TaskProfile(ranks: {5: 3}),
+  'Win exactly two 3s': const TaskProfile(ranks: {3: 2}),
+  'Win the 7♣, 8♣ and 9♣': TaskProfile(cards: _cs(['7♣', '8♣', '9♣'])),
+  'Win the 4♥ and the 9♠': TaskProfile(cards: _cs(['4♥', '9♠'])),
+  'Win the 2♠ and the 8♦': TaskProfile(cards: _cs(['2♠', '8♦'])),
+  'Win the 6♥ and the 3♠': TaskProfile(cards: _cs(['6♥', '3♠'])),
+  'Win the 7♦ and the 4♣': TaskProfile(cards: _cs(['7♦', '4♣'])),
+  'Win the A♣ and the 5♥': TaskProfile(cards: _cs(['A♣', '5♥'])),
+  'Win the 9♥ and the 2♣': TaskProfile(cards: _cs(['9♥', '2♣'])),
+  'Win the 3♦ and the 6♠': TaskProfile(cards: _cs(['3♦', '6♠'])),
+  'Win the 2♦, 4♣ and 6♥': TaskProfile(cards: _cs(['2♦', '4♣', '6♥'])),
+  'Win the A♥ in the last trick':
+      TaskProfile(cards: _cs(['A♥']), tricks: const {-1}),
+  'Win exactly one ♦ and one ♠ card':
+      const TaskProfile(suits: {Suit.diamonds: 1, Suit.spades: 1}),
+  'Win at least six ♣ cards': const TaskProfile(suits: {Suit.clubs: 6}),
+  'Win at least five ♦ cards': const TaskProfile(suits: {Suit.diamonds: 5}),
+  'Win exactly three ♥ cards': const TaskProfile(suits: {Suit.hearts: 3}),
+  'Win exactly two ♦ cards': const TaskProfile(suits: {Suit.diamonds: 2}),
+  'Win exactly one ♠ card': const TaskProfile(suits: {Suit.spades: 1}),
+  'Win no ♠ cards':
+      TaskProfile(forbidCard: (c) => c.suit == Suit.spades),
+  'Win exactly one Court Card (redeal if one player has all four)':
       const TaskProfile(courts: 1),
-  'Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)':
+  'Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)':
       TaskProfile(
           cards: {PlayingCard.joker},
           courts: 1,
           forbidCard: (c) => c.isCourt && c != PlayingCard.joker),
-  'Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)':
+  'Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)':
       TaskProfile(
           cards: {PlayingCard.jack},
           courts: 1,
           forbidCard: (c) => c.isCourt && c != PlayingCard.jack),
   'Win the Queen': TaskProfile(cards: {PlayingCard.queen}, courts: 1),
-  'Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)':
+  'Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)':
       const TaskProfile(courts: 2),
-  'Win exactly three Court Cards (redeal if one player holds all four)':
+  'Win exactly three Court Cards (redeal if one player has all four)':
       const TaskProfile(courts: 3),
   'Win no Court Cards': TaskProfile(forbidCard: (c) => c.isCourt),
   'Win the 7♥ with a Court Card': TaskProfile(cards: _cs(['7♥']), courts: 1),
-  'Win the 9♣ with a Court Card': TaskProfile(cards: _cs(['9♣']), courts: 1),
-  "Don't win any ♣ cards":
-      TaskProfile(forbidCard: (c) => c.suit == Suit.clubs),
+  'Win the 8♦ with a Court Card': TaskProfile(cards: _cs(['8♦']), courts: 1),
+  "Don't win any ♥ cards":
+      TaskProfile(forbidCard: (c) => c.suit == Suit.hearts),
   "Don't win any ♦ cards":
       TaskProfile(forbidCard: (c) => c.suit == Suit.diamonds),
-  "Don't win any ♥ or ♠ cards": TaskProfile(
-      forbidCard: (c) => c.suit == Suit.hearts || c.suit == Suit.spades),
-  "Don't win any ♦ or ♣ cards": TaskProfile(
-      forbidCard: (c) => c.suit == Suit.diamonds || c.suit == Suit.clubs),
-  "Don't win any 8s or 9s":
-      TaskProfile(forbidCard: (c) => !c.isCourt && c.rank >= 8),
-  "Don't win any 9s": TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 9),
-  "Don't win any 5s": TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 5),
+  "Don't win any ♥ or ♣ cards": TaskProfile(
+      forbidCard: (c) => c.suit == Suit.hearts || c.suit == Suit.clubs),
+  "Don't win any ♦ or ♠ cards": TaskProfile(
+      forbidCard: (c) => c.suit == Suit.diamonds || c.suit == Suit.spades),
+  "Don't win any 7s or 8s":
+      TaskProfile(forbidCard: (c) => !c.isCourt && (c.rank == 7 || c.rank == 8)),
+  "Don't win any 6s": TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 6),
+  "Don't win any 4s": TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 4),
   "Don't win any Aces":
       TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 1),
-  "Don't win any Aces, 2s or 3s":
-      TaskProfile(forbidCard: (c) => !c.isCourt && c.rank <= 3),
+  "Don't win any Aces or 2s":
+      TaskProfile(forbidCard: (c) => !c.isCourt && c.rank <= 2),
   "Don't win any of the first four tricks":
       const TaskProfile(forbidTricks: {0, 1, 2, 3}),
   "Don't win any of the first three tricks":
@@ -153,9 +153,9 @@ final Map<String, TaskProfile> _profiles = {
   'Win a trick with a 3': const TaskProfile(ranks: {3: 1}),
   'Win a trick with a 5': const TaskProfile(ranks: {5: 1}),
   'Win a trick with a 6': const TaskProfile(ranks: {6: 1}),
-  'Win a 5 with a 7': const TaskProfile(ranks: {5: 1, 7: 1}),
-  'Win an 8 with a 4': const TaskProfile(ranks: {4: 1, 8: 1}),
-  'Win any 6 with another 6': const TaskProfile(ranks: {6: 2}),
+  'Win a 2 with a 6': const TaskProfile(ranks: {2: 1, 6: 1}),
+  'Win a 9 with a 5': const TaskProfile(ranks: {5: 1, 9: 1}),
+  'Win any 7 with another 7': const TaskProfile(ranks: {7: 2}),
   'Win a trick with a 4': const TaskProfile(ranks: {4: 1}),
   'Win a trick with a 7': const TaskProfile(ranks: {7: 1}),
   'Win the 2♦': TaskProfile(cards: _cs(['2♦'])),
@@ -234,10 +234,10 @@ bool selfClash(String a, String b, {int players = 4}) {
   bool tooFew(String most, TaskProfile capped) {
     final n = capped.maxTricks;
     if (n == null) return false;
-    if (most == 'Win more tricks than everyone else together') {
+    if (most == 'Win more tricks than the rest of the court put together') {
       return n * 2 <= total;
     }
-    if (most == 'Win more tricks than everyone else') {
+    if (most == 'Win more tricks than anyone else') {
       return n + (hands - 1) * (n - 1) < total;
     }
     return false;
@@ -248,7 +248,7 @@ bool selfClash(String a, String b, {int players = 4}) {
     final bad = f.forbidCard;
     if (bad != null && n.cards.any(bad)) return true;
     // Counting tasks: not enough of what's counted is left once the other
-    // task rules some of it out ("Don't win any 9s" with "Win at least
+    // task rules some of it out ("Don't win any 6s" with "Win at least
     // three 9s").
     if (bad != null) {
       final deck = fullDeck();

@@ -7,7 +7,7 @@
 ///   has at most one.
 /// * race: measured against other players ("more tricks than everyone
 ///   else", "fewer tricks than the King"). At most two a round.
-/// * avoid: something not to win or do ("Don't win any 9s"). Someone else
+/// * avoid: something not to win or do ("Don't win any 6s"). Someone else
 ///   must take what they avoid, so no card is avoided by every player.
 /// * capture and trick: win particular cards, or a particular kind of
 ///   trick. Getting more never hurts, so they mix safely.
@@ -31,7 +31,9 @@ TaskTier tierOf(String d) {
       d == "Don't win any tricks") {
     return TaskTier.precise;
   }
-  if (d.contains('than everyone') || d.contains('than the King')) {
+  if (d.contains('than anyone') ||
+      d.contains('rest of the court') ||
+      d.contains('than the King')) {
     return TaskTier.race;
   }
   if (d.startsWith("Don't") || d.startsWith('Win no ')) return TaskTier.avoid;

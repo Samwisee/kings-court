@@ -1590,7 +1590,8 @@ class GameState {
         ]
         ..tasks = [
           for (final t in j['tasks'] as List)
-            byDescription[t['description']]!.freshCopy()
+            byDescription[renamedTasks[t['description']] ?? t['description']]!
+                .freshCopy()
               ..status = TaskStatus.values[t['status'] as int]
               ..assignedPlayerIndex = t['owner'] as int?
               ..seal = t['seal'] as int?,

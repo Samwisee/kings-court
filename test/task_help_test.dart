@@ -61,22 +61,22 @@ void main() {
         failReason("Don't win any of the first three tricks", view([mine]), 0,
             null, names),
         'You won trick 1.');
-    expect(failReason("Don't win any ♣ cards", view([Trick(0, const [0, 1, 2], [c('9♣'), c('2♣'), c('3♠')], 0)]), 0, null, names),
+    expect(failReason("Don't win any ♥ cards", view([Trick(0, const [0, 1, 2], [c('9♥'), c('2♥'), c('3♠')], 0)]), 0, null, names),
         contains('trick 1'));
   });
 
   test('Number tasks track which cards are still to come', () {
     PlayingCard c(String l) => PlayingCard.parse(l)!;
-    final v = view([Trick(0, const [0, 1, 2], [c('6♥'), c('2♥'), c('3♥')], 0)]);
-    expect(taskProgress('Win any 6 with another 6', v, 1, null), '6s: 3 left');
-    final s = taskStatus('Win any 6 with another 6', v, 1, null);
-    expect(s, contains('6♥ (trick 1)'));
-    expect(s, contains('6♦'));
+    final v = view([Trick(0, const [0, 1, 2], [c('7♥'), c('2♥'), c('3♥')], 0)]);
+    expect(taskProgress('Win any 7 with another 7', v, 1, null), '7s: 3 left');
+    final s = taskStatus('Win any 7 with another 7', v, 1, null);
+    expect(s, contains('7♥ (trick 1)'));
+    expect(s, contains('7♦'));
     expect(s, isNot(contains('Not yet')));
   });
 
   test('Some pairs of trick tasks are impossible at a bigger table', () {
-    const most = 'Win more tricks than everyone else';
+    const most = 'Win more tricks than anyone else';
     const two = "Win exactly two tricks, and they're in a row";
     expect(selfClash(most, two, players: 4), isTrue);
     expect(selfClash(two, most, players: 5), isTrue);
@@ -89,16 +89,16 @@ void main() {
     expect(handBlocks('Win the 7♥ with a Court Card', [c('2♣')]), isNotNull);
     expect(handBlocks('Win the 7♥ with a Court Card', [c('2♣'), PlayingCard.jack]),
         isNull);
-    expect(handBlocks('Win any 6 with another 6', [c('2♣')]), isNotNull);
+    expect(handBlocks('Win any 7 with another 7', [c('2♣')]), isNotNull);
     expect(handBlocks('Win a trick with a 3', [c('3♣')]), isNull);
   });
 
   test('A task close-up shows the cards it is about', () {
     PlayingCard c(String l) => PlayingCard.parse(l)!;
-    expect(relevantCards('Win the A♥ and the 7♣'), [c('A♥'), c('7♣')]);
-    expect(relevantCards('Win any 6 with another 6'), hasLength(4));
+    expect(relevantCards('Win the 9♥ and the 2♣'), [c('9♥'), c('2♣')]);
+    expect(relevantCards('Win any 7 with another 7'), hasLength(4));
     expect(relevantCards('Win no Court Cards'), hasLength(4));
-    expect(relevantCards("Don't win any ♦ or ♣ cards"), hasLength(18));
+    expect(relevantCards("Don't win any ♦ or ♠ cards"), hasLength(18));
     expect(relevantCards('Win the first trick'), isEmpty);
   });
 }

@@ -1340,12 +1340,12 @@ void main() {
 
   testWidgets('Cards a task needs are crossed out once won', (tester) async {
     await tester.pumpWidget(const MaterialApp(
-        home: SuitText('Win the A♥ and the 7♣',
-            struck: {'A♥'}, style: TextStyle(color: Colors.black))));
+        home: SuitText('Win the 9♥ and the 2♣',
+            struck: {'9♥'}, style: TextStyle(color: Colors.black))));
     final rich = tester.widget<Text>(find.byType(Text)).textSpan! as TextSpan;
     final spans = rich.children!.cast<TextSpan>();
-    final ace = spans.firstWhere((t) => t.text == 'A');
-    final seven = spans.firstWhere((t) => t.text == '7');
+    final ace = spans.firstWhere((t) => t.text == '9');
+    final seven = spans.firstWhere((t) => t.text == '2');
     expect(ace.style!.decoration, TextDecoration.lineThrough);
     expect(seven.style!.decoration, TextDecoration.none);
   });

@@ -175,13 +175,13 @@ int _byCount(int players, List<int> values) =>
 // ---------------------------------------------------------------- the rules
 
 final Map<String, TaskRule> taskRules = {
-  'Win more tricks than everyone else': atEnd((v, o) => [
+  'Win more tricks than anyone else': atEnd((v, o) => [
         for (int s = 0; s < v.players; s++)
           if (s != o) s
       ].every((s) => v.tricksWon(o) > v.tricksWon(s))),
-  'Win more tricks than everyone else together': atEnd((v, o) =>
+  'Win more tricks than the rest of the court put together': atEnd((v, o) =>
       v.tricksWon(o) > v.tricks.length - v.tricksWon(o)),
-  'Win fewer tricks than everyone else': atEnd((v, o) => [
+  'Win fewer tricks than anyone else': atEnd((v, o) => [
         for (int s = 0; s < v.players; s++)
           if (s != o) s
       ].every((s) => v.tricksWon(o) < v.tricksWon(s))),
@@ -198,57 +198,57 @@ final Map<String, TaskRule> taskRules = {
   'Win a trick with a 6': winWith(6),
   'Win a trick with a 5': winWith(5),
   'Win a trick with a 3': winWith(3),
-  'Win a 5 with a 7':
-      winWith(7, also: (t) => t.cards.any(_rank(5))),
-  'Win an 8 with a 4':
-      winWith(4, also: (t) => t.cards.any(_rank(8))),
-  'Win any 6 with another 6':
-      winWith(6, also: (t) => t.cards.where(_rank(6)).length >= 2),
+  'Win a 2 with a 6':
+      winWith(6, also: (t) => t.cards.any(_rank(2))),
+  'Win a 9 with a 5':
+      winWith(5, also: (t) => t.cards.any(_rank(9))),
+  'Win any 7 with another 7':
+      winWith(7, also: (t) => t.cards.where(_rank(7)).length >= 2),
   'Win a trick with a 2': winWith(2),
   'Win the 3♥': winAll(_cs(['3♥'])),
   'Win the A♦': winAll(_cs(['A♦'])),
   'Win the 4♠': winAll(_cs(['4♠'])),
   'Win the 6♣': winAll(_cs(['6♣'])),
-  'Win all four 3s': winAll(_cs(['3♥', '3♦', '3♠', '3♣'])),
-  'Win at least three 5s': atLeast(3, _rank(5)),
-  'Win at least three 9s': atLeast(3, _rank(9)),
-  'Win at least two 7s': atLeast(2, _rank(7)),
-  'Win all four 9s': winAll(_cs(['9♥', '9♦', '9♠', '9♣'])),
-  'Win exactly three 6s': exactly(3, _rank(6)),
-  'Win exactly two 9s': exactly(2, _rank(9)),
-  'Win the A♠, 2♠ and 3♠': winAll(_cs(['A♠', '2♠', '3♠'])),
-  'Win the 6♠ and the 7♦': winAll(_cs(['6♠', '7♦'])),
-  'Win the 5♥ and the 6♦': winAll(_cs(['5♥', '6♦'])),
-  'Win the 5♣ and the 8♠': winAll(_cs(['5♣', '8♠'])),
-  'Win the 5♠ and the 8♥': winAll(_cs(['5♠', '8♥'])),
-  'Win the 9♥ and the 8♦': winAll(_cs(['9♥', '8♦'])),
-  'Win the A♥ and the 7♣': winAll(_cs(['A♥', '7♣'])),
-  'Win the 9♦ and the 7♠': winAll(_cs(['9♦', '7♠'])),
-  'Win the 3♣, 4♦ and 5♦': winAll(_cs(['3♣', '4♦', '5♦'])),
-  'Win the 2♣ in the last trick': (v, o, _) {
-    final two = _c('2♣');
+  'Win all four 2s': winAll(_cs(['2♥', '2♦', '2♠', '2♣'])),
+  'Win at least three 4s': atLeast(3, _rank(4)),
+  'Win at least three 7s': atLeast(3, _rank(7)),
+  'Win at least two 9s': atLeast(2, _rank(9)),
+  'Win all four 8s': winAll(_cs(['8♥', '8♦', '8♠', '8♣'])),
+  'Win exactly three 5s': exactly(3, _rank(5)),
+  'Win exactly two 3s': exactly(2, _rank(3)),
+  'Win the 7♣, 8♣ and 9♣': winAll(_cs(['7♣', '8♣', '9♣'])),
+  'Win the 4♥ and the 9♠': winAll(_cs(['4♥', '9♠'])),
+  'Win the 2♠ and the 8♦': winAll(_cs(['2♠', '8♦'])),
+  'Win the 6♥ and the 3♠': winAll(_cs(['6♥', '3♠'])),
+  'Win the 7♦ and the 4♣': winAll(_cs(['7♦', '4♣'])),
+  'Win the A♣ and the 5♥': winAll(_cs(['A♣', '5♥'])),
+  'Win the 9♥ and the 2♣': winAll(_cs(['9♥', '2♣'])),
+  'Win the 3♦ and the 6♠': winAll(_cs(['3♦', '6♠'])),
+  'Win the 2♦, 4♣ and 6♥': winAll(_cs(['2♦', '4♣', '6♥'])),
+  'Win the A♥ in the last trick': (v, o, _) {
+    final card = _c('A♥');
     for (int i = 0; i < v.tricks.length; i++) {
-      if (!v.tricks[i].cards.contains(two)) continue;
+      if (!v.tricks[i].cards.contains(card)) continue;
       return i == v.totalTricks - 1 && v.tricks[i].winner == o
           ? Verdict.done
           : Verdict.failed;
     }
     return _end(v, false);
   },
-  'Win exactly one ♥ and one ♣ card': (v, o, x) {
-    final h = exactly(1, _suit(Suit.hearts))(v, o, x);
-    final c = exactly(1, _suit(Suit.clubs))(v, o, x);
+  'Win exactly one ♦ and one ♠ card': (v, o, x) {
+    final h = exactly(1, _suit(Suit.diamonds))(v, o, x);
+    final c = exactly(1, _suit(Suit.spades))(v, o, x);
     if (h == Verdict.failed || c == Verdict.failed) return Verdict.failed;
     if (h == Verdict.done && c == Verdict.done) return Verdict.done;
     return Verdict.pending;
   },
-  'Win at least seven ♦ cards': atLeast(7, _suit(Suit.diamonds)),
-  'Win at least five ♥ cards': atLeast(5, _suit(Suit.hearts)),
-  'Win exactly two ♣ cards': exactly(2, _suit(Suit.clubs)),
-  'Win exactly two ♠ cards': exactly(2, _suit(Suit.spades)),
-  'Win exactly one ♥ card': exactly(1, _suit(Suit.hearts)),
-  'Win no ♥ cards': winNone(_suit(Suit.hearts)),
-  "Win at least one card of each suit (Court Cards don't count)": (v, o, _) {
+  'Win at least six ♣ cards': atLeast(6, _suit(Suit.clubs)),
+  'Win at least five ♦ cards': atLeast(5, _suit(Suit.diamonds)),
+  'Win exactly three ♥ cards': exactly(3, _suit(Suit.hearts)),
+  'Win exactly two ♦ cards': exactly(2, _suit(Suit.diamonds)),
+  'Win exactly one ♠ card': exactly(1, _suit(Suit.spades)),
+  'Win no ♠ cards': winNone(_suit(Suit.spades)),
+  "Win a card of every suit (Court Cards don't count)": (v, o, _) {
     const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs];
     final mine = v.won(o);
     if (suits.every((s) => mine.any(_suit(s)))) return Verdict.done;
@@ -256,7 +256,7 @@ final Map<String, TaskRule> taskRules = {
         !mine.any(_suit(s)) && v.countLeft(_suit(s)) == 0);
     return lost ? Verdict.failed : _end(v, false);
   },
-  "Win every card of at least one suit (Court Cards don't count)": (v, o, _) {
+  "Win all nine cards of any one suit": (v, o, _) {
     const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs];
     final others = v.wonByOthers(o);
     final open = suits.where((s) => !others.any(_suit(s)));
@@ -264,27 +264,27 @@ final Map<String, TaskRule> taskRules = {
     if (open.any((s) => v.countLeft(_suit(s)) == 0)) return Verdict.done;
     return _end(v, false);
   },
-  'Win a trick of only even numbers (that means only 2s, 4s, 6s and 8s)':
+  'Win a trick of only even cards: 2s, 4s, 6s and 8s':
       anyTrick((t) => _plainTrick(t, (c) => c.rank.isEven)),
-  'Win a trick of only odd numbers (that means only Aces, 3s, 5s, 7s and 9s)':
+  'Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s':
       anyTrick((t) => _plainTrick(t, (c) => c.rank.isOdd)),
-  'Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
+  'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
       (v, o, x) => anyTrick((t) {
             final total = _total(t);
-            return total != null && total > _byCount(v.players, [23, 28, 31, 34]);
+            return total != null && total > _byCount(v.players, [21, 26, 30, 34]);
           })(v, o, x),
-  'Win a trick totalling less than 8 / 12 / 16 / 20 (2–3 / 4 / 5 / 6 players), with no Court Cards':
+  'Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards':
       (v, o, x) => anyTrick((t) {
             final total = _total(t);
-            return total != null && total < _byCount(v.players, [8, 12, 16, 20]);
+            return total != null && total < _byCount(v.players, [9, 13, 17, 21]);
           })(v, o, x),
-  'Win a trick totalling exactly 22 or 23': anyTrick((t) {
+  'Win a trick totalling exactly 20 or 21': anyTrick((t) {
     final total = _total(t);
-    return total == 22 || total == 23;
+    return total == 20 || total == 21;
   }),
-  'Win exactly one Court Card (redeal if one player holds all four)':
+  'Win exactly one Court Card (redeal if one player has all four)':
       exactly(1, _court),
-  'Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)':
+  'Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)':
       (v, o, _) {
     final others = v.wonByOthers(o);
     final mine = v.won(o);
@@ -296,7 +296,7 @@ final Map<String, TaskRule> taskRules = {
     if (mine.contains(PlayingCard.joker) && rest == 0) return Verdict.done;
     return _end(v, mine.contains(PlayingCard.joker));
   },
-  'Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)':
+  'Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)':
       (v, o, _) {
     final others = v.wonByOthers(o);
     final mine = v.won(o);
@@ -309,31 +309,31 @@ final Map<String, TaskRule> taskRules = {
     return _end(v, mine.contains(PlayingCard.jack));
   },
   'Win the Queen': winAll(const [PlayingCard.queen]),
-  'Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)':
+  'Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)':
       exactly(2, _court),
-  'Win exactly three Court Cards (redeal if one player holds all four)':
+  'Win exactly three Court Cards (redeal if one player has all four)':
       exactly(3, _court),
   'Win no Court Cards': winNone(_court),
   'Win the 7♥ with a Court Card': winWithCourt(_c('7♥')),
-  'Win the 9♣ with a Court Card': winWithCourt(_c('9♣')),
-  "Don't lead a trick with a ♥, ♦ or ♠ card": never((v, o) => v.tricks.any(
+  'Win the 8♦ with a Court Card': winWithCourt(_c('8♦')),
+  "Don't lead a trick with a ♦, ♠ or ♣ card": never((v, o) => v.tricks.any(
       (t) => t.leader == o &&
-          const [Suit.hearts, Suit.diamonds, Suit.spades].contains(t.led.suit))),
-  "Don't lead a trick with a ♥ or ♣ card": never((v, o) => v.tricks.any(
+          const [Suit.diamonds, Suit.spades, Suit.clubs].contains(t.led.suit))),
+  "Don't lead a trick with a ♦ or ♠ card": never((v, o) => v.tricks.any(
       (t) => t.leader == o &&
-          const [Suit.hearts, Suit.clubs].contains(t.led.suit))),
-  "Don't win any ♣ cards": winNone(_suit(Suit.clubs)),
+          const [Suit.diamonds, Suit.spades].contains(t.led.suit))),
+  "Don't win any ♥ cards": winNone(_suit(Suit.hearts)),
   "Don't win any ♦ cards": winNone(_suit(Suit.diamonds)),
-  "Don't win any ♥ or ♠ cards":
-      winNone((c) => c.suit == Suit.hearts || c.suit == Suit.spades),
-  "Don't win any ♦ or ♣ cards":
-      winNone((c) => c.suit == Suit.diamonds || c.suit == Suit.clubs),
-  "Don't win any 8s or 9s":
-      winNone((c) => !c.isCourt && (c.rank == 8 || c.rank == 9)),
-  "Don't win any 9s": winNone(_rank(9)),
-  "Don't win any 5s": winNone(_rank(5)),
+  "Don't win any ♥ or ♣ cards":
+      winNone((c) => c.suit == Suit.hearts || c.suit == Suit.clubs),
+  "Don't win any ♦ or ♠ cards":
+      winNone((c) => c.suit == Suit.diamonds || c.suit == Suit.spades),
+  "Don't win any 7s or 8s":
+      winNone((c) => !c.isCourt && (c.rank == 7 || c.rank == 8)),
+  "Don't win any 6s": winNone(_rank(6)),
+  "Don't win any 4s": winNone(_rank(4)),
   "Don't win any Aces": winNone(_rank(1)),
-  "Don't win any Aces, 2s or 3s": winNone((c) => !c.isCourt && c.rank <= 3),
+  "Don't win any Aces or 2s": winNone((c) => !c.isCourt && c.rank <= 2),
   "Don't win any of the first four tricks": notFirst(4),
   "Don't win any of the first three tricks": notFirst(3),
   "Don't win any of the first five tricks": notFirst(5),
@@ -379,32 +379,32 @@ final Map<String, TaskRule> taskRules = {
     if (e == Verdict.failed) return e;
     return _end(v, v.tricksWon(o) == 2 && v.longestRun(o) == 2);
   },
-  'Win exactly X tricks, announced to everyone': (v, o, x) =>
+  'Win exactly X tricks, said out loud before the first trick': (v, o, x) =>
       exactTricks(x ?? 0)(v, o, x),
-  'Win exactly X tricks, kept secret (write X down and keep it hidden)':
+  'Win exactly X tricks, written down in secret before the first trick':
       (v, o, x) => exactTricks(x ?? 0)(v, o, x),
-  'Win as many ♥ cards as ♦ cards (you must win at least one of each)':
+  'Win as many ♠ cards as ♣ cards (at least one of each)':
       atEnd((v, o) {
-    final h = v.countWon(o, _suit(Suit.hearts));
-    final d = v.countWon(o, _suit(Suit.diamonds));
+    final h = v.countWon(o, _suit(Suit.spades));
+    final d = v.countWon(o, _suit(Suit.clubs));
     return h == d && h > 0;
   }),
-  'Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)':
+  'Win a trick with as many ♥ cards as ♣ cards (at least one of each)':
       anyTrick((t) {
     final c = t.cards.where(_suit(Suit.clubs)).length;
-    final d = t.cards.where(_suit(Suit.diamonds)).length;
+    final d = t.cards.where(_suit(Suit.hearts)).length;
     return c == d && c > 0;
   }),
-  'Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)':
+  'Win a trick with as many ♦ cards as ♠ cards (at least one of each)':
       anyTrick((t) {
-    final h = t.cards.where(_suit(Suit.hearts)).length;
+    final h = t.cards.where(_suit(Suit.diamonds)).length;
     final s = t.cards.where(_suit(Suit.spades)).length;
     return h == s && h > 0;
   }),
-  'Win more ♦ cards than ♠ cards (winning no ♠ cards is fine)': atEnd((v, o) =>
-      v.countWon(o, _suit(Suit.diamonds)) > v.countWon(o, _suit(Suit.spades))),
-  'Win more ♥ cards than ♣ cards (winning no ♣ cards is fine)': atEnd((v, o) =>
-      v.countWon(o, _suit(Suit.hearts)) > v.countWon(o, _suit(Suit.clubs))),
+  'Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)': atEnd((v, o) =>
+      v.countWon(o, _suit(Suit.spades)) > v.countWon(o, _suit(Suit.hearts))),
+  'Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)': atEnd((v, o) =>
+      v.countWon(o, _suit(Suit.clubs)) > v.countWon(o, _suit(Suit.diamonds))),
   'Win a trick with a 4': winWith(4),
   'Win a trick with a 7': winWith(7),
   'Win the 2♦': winAll(_cs(['2♦'])),
@@ -444,43 +444,43 @@ const _anyTrickTasks = {
   'Win a trick with a 6',
   'Win a trick with a 5',
   'Win a trick with a 3',
-  'Win a 5 with a 7',
-  'Win an 8 with a 4',
-  'Win any 6 with another 6',
+  'Win a 2 with a 6',
+  'Win a 9 with a 5',
+  'Win any 7 with another 7',
   'Win a trick with a 2',
   'Win the 3♥',
   'Win the A♦',
   'Win the 4♠',
   'Win the 6♣',
-  'Win all four 3s',
-  'Win at least three 5s',
-  'Win at least three 9s',
-  'Win at least two 7s',
-  'Win all four 9s',
-  'Win the A♠, 2♠ and 3♠',
-  'Win the 6♠ and the 7♦',
-  'Win the 5♥ and the 6♦',
-  'Win the 5♣ and the 8♠',
-  'Win the 5♠ and the 8♥',
-  'Win the 9♥ and the 8♦',
-  'Win the A♥ and the 7♣',
-  'Win the 9♦ and the 7♠',
-  'Win the 3♣, 4♦ and 5♦',
-  'Win at least seven ♦ cards',
-  'Win at least five ♥ cards',
-  "Win at least one card of each suit (Court Cards don't count)",
-  'Win a trick of only even numbers (that means only 2s, 4s, 6s and 8s)',
-  'Win a trick of only odd numbers (that means only Aces, 3s, 5s, 7s and 9s)',
-  'Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards',
-  'Win a trick totalling less than 8 / 12 / 16 / 20 (2–3 / 4 / 5 / 6 players), with no Court Cards',
-  'Win a trick totalling exactly 22 or 23',
+  'Win all four 2s',
+  'Win at least three 4s',
+  'Win at least three 7s',
+  'Win at least two 9s',
+  'Win all four 8s',
+  'Win the 7♣, 8♣ and 9♣',
+  'Win the 4♥ and the 9♠',
+  'Win the 2♠ and the 8♦',
+  'Win the 6♥ and the 3♠',
+  'Win the 7♦ and the 4♣',
+  'Win the A♣ and the 5♥',
+  'Win the 9♥ and the 2♣',
+  'Win the 3♦ and the 6♠',
+  'Win the 2♦, 4♣ and 6♥',
+  'Win at least six ♣ cards',
+  'Win at least five ♦ cards',
+  "Win a card of every suit (Court Cards don't count)",
+  'Win a trick of only even cards: 2s, 4s, 6s and 8s',
+  'Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s',
+  'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards',
+  'Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards',
+  'Win a trick totalling exactly 20 or 21',
   'Win the Queen',
   'Win the 7♥ with a Court Card',
-  'Win the 9♣ with a Court Card',
+  'Win the 8♦ with a Court Card',
   'Win two tricks in a row',
   'Win three tricks in a row',
-  'Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)',
-  'Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)',
+  'Win a trick with as many ♥ cards as ♣ cards (at least one of each)',
+  'Win a trick with as many ♦ cards as ♠ cards (at least one of each)',
   'Win a mixed-suit trick with no Court Cards',
   'Win a trick with a 4',
   'Win a trick with a 7',
@@ -528,7 +528,7 @@ bool playableWith(String description, List<List<PlayingCard>> hands,
       hands.any((h) => cards.every(h.contains));
   const j = PlayingCard.joker, q = PlayingCard.queen;
   const jack = PlayingCard.jack, k = PlayingCard.king;
-  if (description.contains('redeal if one player holds all four')) {
+  if (description.contains('redeal if one player has all four')) {
     return !someoneHolds([j, jack, q, k]);
   }
   if (description.startsWith('Win the Joker and no other')) {
@@ -537,7 +537,7 @@ bool playableWith(String description, List<List<PlayingCard>> hands,
   if (description.startsWith('Win the Jack and no other')) {
     return !someoneHolds([jack, k]) && !someoneHolds([j, jack, q]);
   }
-  if (description.contains('redeal if one player holds the Jack, Queen and King')) {
+  if (description.contains('redeal if one player has the Jack, Queen and King')) {
     return !someoneHolds([jack, q, k]);
   }
   return true;
@@ -604,14 +604,20 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
     final r = int.parse(ranks.group(3)!);
     return of(won((c) => rank(c, r)), n);
   }
-  const words = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'seven': 7};
+  const words = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7};
   final suits = RegExp(r'^Win (at least|exactly) (\w+) ([♥♦♠♣]) cards?$').firstMatch(d);
   if (suits != null) {
     final suit = Suit.values.firstWhere((s) => s.symbol == suits.group(3));
     return of(won((c) => c.suit == suit), words[suits.group(2)] ?? 0);
   }
-  if (d == 'Win exactly one ♥ and one ♣ card') {
-    return '♥${won((c) => c.suit == Suit.hearts)} ♣${won((c) => c.suit == Suit.clubs)}';
+  // Two suits counted side by side: "exactly one ♦ and one ♠", "as many
+  // ♠ as ♣", "more ♠ than ♥".
+  final pair = RegExp(r'^Win (?:exactly one|as many|more) ([♥♦♠♣]) (?:and one|cards as|cards than) ([♥♦♠♣])')
+      .firstMatch(d);
+  if (pair != null) {
+    Suit suit(String sym) => Suit.values.firstWhere((s) => s.symbol == sym);
+    final a = pair.group(1)!, b = pair.group(2)!;
+    return '$a${won((c) => c.suit == suit(a))} $b${won((c) => c.suit == suit(b))}';
   }
   final courts = RegExp(r'^Win exactly (\w+) Court Cards?').firstMatch(d);
   if (courts != null) return of(won((c) => c.isCourt), words[courts.group(1)] ?? 0);
@@ -627,26 +633,17 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
     final n = words[firstN.group(1)]!;
     return of(v.tricks.take(n).where((t) => t.winner == owner).length, n);
   }
-  if (d.contains('as many ♥ cards as ♦')) {
-    return '♥${won((c) => c.suit == Suit.hearts)} ♦${won((c) => c.suit == Suit.diamonds)}';
-  }
-  if (d.startsWith('Win more ♦ cards than ♠')) {
-    return '♦${won((c) => c.suit == Suit.diamonds)} ♠${won((c) => c.suit == Suit.spades)}';
-  }
-  if (d.startsWith('Win more ♥ cards than ♣')) {
-    return '♥${won((c) => c.suit == Suit.hearts)} ♣${won((c) => c.suit == Suit.clubs)}';
-  }
   if (d.contains('than the King') || d.contains('as the King')) {
     return '${v.tricksWon(owner)} v ${v.tricksWon(v.king)}';
   }
-  if (d.startsWith('Win more tricks than everyone') ||
-      d.startsWith('Win fewer tricks than everyone')) {
+  if (d.startsWith('Win more tricks than') && !d.contains('King') ||
+      d.startsWith('Win fewer tricks than anyone')) {
     return '${v.tricksWon(owner)} tricks';
   }
   if (d.contains('in a row') && !d.startsWith("Don't")) {
     return 'run ${v.longestRun(owner)}';
   }
-  if (d == 'Win at least one card of each suit (Court Cards don\'t count)') {
+  if (d.startsWith('Win a card of every suit')) {
     final have = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs]
         .where((s) => v.won(owner).any((c) => c.suit == s))
         .length;

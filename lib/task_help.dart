@@ -79,7 +79,7 @@ String explainTask(String d) {
   final special = _special[d];
   if (special != null) return special;
 
-  // "Win the 3♥", "Win the 6♠ and the 7♦", "Win the A♠, 2♠ and 3♠".
+  // "Win the 3♥", "Win the 4♥ and the 9♠", "Win the 7♣, 8♣ and 9♣".
   final named = RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d).toList();
   if (d.startsWith('Win the ') &&
       named.isNotEmpty &&
@@ -164,11 +164,11 @@ String explainTask(String d) {
 }
 
 const _special = <String, String>{
-  'Win more tricks than everyone else':
+  'Win more tricks than anyone else':
       'At the end of the round, count everyone’s tricks: you must have more than any other single player. A tie doesn’t count.',
-  'Win more tricks than everyone else together':
-      'You must win more tricks than all the other players put together: more than half of all the tricks.',
-  'Win fewer tricks than everyone else':
+  'Win more tricks than the rest of the court put together':
+      'Win more tricks than all the other players put together: more than half of all the tricks in the round.',
+  'Win fewer tricks than anyone else':
       'At the end of the round, every other player must have won more tricks than you. A tie fails.',
   'Win more tricks than the King':
       'By the end of the round you must have won more tricks than the King (whoever holds the King card). The King can’t take this task.',
@@ -180,48 +180,48 @@ const _special = <String, String>{
       'Win one trick in which every card is a 6 or lower (Aces to 6s), and nobody played a Court Card.',
   'Win a trick where every card is higher than 5':
       'Win one trick in which every plain card is a 6 or higher. Court Cards are allowed in it.',
-  'Win a 5 with a 7':
-      'Win a trick with a 7 as your winning card, in a trick that also has a 5 in it (any suit).',
-  'Win an 8 with a 4':
-      'Win a trick with a 4 as your winning card, in a trick that also has an 8 in it. The 8 must be of another suit, or your 4 couldn’t win.',
-  'Win any 6 with another 6':
-      'Win a trick with a 6 as your winning card, in a trick that holds at least one other 6.',
+  'Win a 2 with a 6':
+      'Win a trick with a 6 as your winning card, in a trick that also has a 2 in it (any suit).',
+  'Win a 9 with a 5':
+      'Win a trick with a 5 as your winning card, in a trick that also has a 9 in it. The 9 must be of another suit, or your 5 couldn’t win.',
+  'Win any 7 with another 7':
+      'Win a trick with a 7 as your winning card, in a trick that holds at least one other 7.',
   'Win a trick with a 2':
       'Win a trick where your winning card is a 2. Everyone else must play a card of another suit (and no Court Cards), so the 2 is the highest of the suit led.',
-  'Win the 2♣ in the last trick':
-      'The 2♣ must be played in the very last trick of the round, and you must win that trick. If the 2♣ comes out earlier, or someone else wins it, the task fails.',
-  'Win exactly one ♥ and one ♣ card':
-      'By the end of the round, your tricks must hold exactly one ♥ card and exactly one ♣ card.',
-  'Win no ♥ cards':
-      'None of the tricks you win may contain a ♥ card, whoever played it.',
-  "Win at least one card of each suit (Court Cards don't count)":
+  'Win the A♥ in the last trick':
+      'The A♥ must be played in the very last trick of the round, and you must win that trick. If the A♥ comes out earlier, or someone else wins it, the task fails.',
+  'Win exactly one ♦ and one ♠ card':
+      'By the end of the round, your tricks must hold exactly one ♦ card and exactly one ♠ card.',
+  'Win no ♠ cards':
+      'None of the tricks you win may contain a ♠ card, whoever played it.',
+  "Win a card of every suit (Court Cards don't count)":
       'Your tricks must include at least one ♥, one ♦, one ♠ and one ♣ card by the end of the round.',
-  "Win every card of at least one suit (Court Cards don't count)":
-      'Pick a suit and win all of it: every card of that suit dealt this round must end up in your tricks.',
-  'Win a trick of only even numbers (that means only 2s, 4s, 6s and 8s)':
+  "Win all nine cards of any one suit":
+      'Pick a suit and win all of it: every card of that suit dealt this round must end up in your tricks. Court Cards aren’t a suit for this.',
+  'Win a trick of only even cards:
       'Win one trick in which every card is a 2, 4, 6 or 8, with no Court Cards.',
-  'Win a trick of only odd numbers (that means only Aces, 3s, 5s, 7s and 9s)':
+  'Win a trick of only odd cards:
       'Win one trick in which every card is an Ace, 3, 5, 7 or 9, with no Court Cards.',
-  'Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
-      'Win one trick whose cards add up to more than the target for your table size (23 for two or three players, 28 for four, 31 for five, 34 for six). Aces count as 1. No Court Cards may be in it.',
-  'Win a trick totalling less than 8 / 12 / 16 / 20 (2–3 / 4 / 5 / 6 players), with no Court Cards':
-      'Win one trick whose cards add up to less than the target for your table size (8 for two or three players, 12 for four, 16 for five, 20 for six). Aces count as 1. No Court Cards may be in it.',
-  'Win a trick totalling exactly 22 or 23':
-      'Win one trick whose cards add up to exactly 22 or 23. Aces count as 1, and a trick with a Court Card in it doesn’t count.',
-  'Win exactly one Court Card (redeal if one player holds all four)':
+  'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
+      'Win one trick whose cards add up to more than the target for your table size (21 for two or three players, 26 for four, 30 for five, 34 for six). Aces count as 1. No Court Cards may be in it.',
+  'Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards':
+      'Win one trick whose cards add up to less than the target for your table size (9 for two or three players, 13 for four, 17 for five, 21 for six). Aces count as 1. No Court Cards may be in it.',
+  'Win a trick totalling exactly 20 or 21':
+      'Win one trick whose cards add up to exactly 20 or 21. Aces count as 1, and a trick with a Court Card in it doesn’t count.',
+  'Win exactly one Court Card (redeal if one player has all four)':
       'Your tricks must hold exactly one Court Card (Joker, Jack, Queen or King) by the end of the round.',
-  'Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)':
+  'Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)':
       'Win the Joker, and make sure the Jack, Queen and King all end up in other players’ tricks.',
-  'Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)':
+  'Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)':
       'Win the Jack, and make sure the Joker, Queen and King all end up in other players’ tricks.',
   'Win the Queen':
       'The Queen must end up in a trick you win. Only the King card beats her, so whoever holds the King card matters.',
   'Win no Court Cards':
       'None of the tricks you win may contain a Court Card (Joker, Jack, Queen or King), whoever played it.',
-  "Don't lead a trick with a ♥, ♦ or ♠ card":
-      'Whenever you lead a trick (play its first card), it must be a ♣ card or a Court Card. Following someone else’s lead is fine with any card.',
-  "Don't lead a trick with a ♥ or ♣ card":
-      'Whenever you lead a trick, it must be a ♦ or ♠ card, or a Court Card. Following someone else’s lead is fine with any card.',
+  "Don't lead a trick with a ♦, ♠ or ♣ card":
+      'Whenever you lead a trick (play its first card), it must be a ♥ card or a Court Card. Following someone else’s lead is fine with any card.',
+  "Don't lead a trick with a ♦ or ♠ card":
+      'Whenever you lead a trick, it must be a ♥ or ♣ card, or a Court Card. Following someone else’s lead is fine with any card.',
   "Don't win any tricks":
       'Get through the whole round without winning a single trick. Play low, and keep your Court Cards for when you can’t follow suit and someone else is sure to win anyway.',
   "Don't win two tricks in a row":
@@ -243,20 +243,20 @@ const _special = <String, String>{
       'Win three tricks in the round, no more and no fewer, and they must come one straight after another.',
   "Win exactly two tricks, and they're in a row":
       'Win two tricks in the round, no more and no fewer, one straight after the other.',
-  'Win exactly X tricks, announced to everyone':
+  'Win exactly X tricks, said out loud before the first trick':
       'Before the first trick, choose a number (X) and tell everyone. You must then win exactly that many tricks.',
-  'Win exactly X tricks, kept secret (write X down and keep it hidden)':
-      'Before the first trick, choose a number (X) and keep it to yourself. You must then win exactly that many tricks.',
-  'Win as many ♥ cards as ♦ cards (you must win at least one of each)':
-      'By the end of the round, your tricks must hold the same number of ♥ cards as ♦ cards, and at least one of each.',
-  'Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)':
-      'Win one trick that has the same number of ♣ cards as ♦ cards in it, with at least one of each.',
-  'Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)':
-      'Win one trick that has the same number of ♥ cards as ♠ cards in it, with at least one of each.',
-  'Win more ♦ cards than ♠ cards (winning no ♠ cards is fine)':
-      'By the end of the round, your tricks must hold more ♦ cards than ♠ cards.',
-  'Win more ♥ cards than ♣ cards (winning no ♣ cards is fine)':
-      'By the end of the round, your tricks must hold more ♥ cards than ♣ cards.',
+  'Win exactly X tricks, written down in secret before the first trick':
+      'Before the first trick, choose a number (X) and keep it to yourself (write it down at a real table). You must then win exactly that many tricks.',
+  'Win as many ♠ cards as ♣ cards (at least one of each)':
+      'By the end of the round, your tricks must hold the same number of ♠ cards as ♣ cards, and at least one of each.',
+  'Win a trick with as many ♥ cards as ♣ cards (at least one of each)':
+      'Win one trick that has the same number of ♥ cards as ♣ cards in it, with at least one of each.',
+  'Win a trick with as many ♦ cards as ♠ cards (at least one of each)':
+      'Win one trick that has the same number of ♦ cards as ♠ cards in it, with at least one of each.',
+  'Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)':
+      'By the end of the round, your tricks must hold more ♠ cards than ♥ cards.',
+  'Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)':
+      'By the end of the round, your tricks must hold more ♣ cards than ♦ cards.',
   'Win at least two Aces':
       'Win two or more Aces, of any suit, in the tricks you win. Aces are the lowest card of each suit, so they usually fall to whoever wins the trick they’re played in.',
   'Win a trick containing an Ace and a 9':
@@ -337,8 +337,8 @@ String taskStatus(String d, RoundView v, int owner, int? x,
     final need = [for (final c in named) if (!mine.contains(c)) c.label];
     return 'Won ${named.length - need.length} of ${named.length}. Still to win: ${need.join(', ')}.';
   }
-  if (d == 'Win the 2♣ in the last trick') {
-    return 'The 2♣ is still in someone’s hand. Keep it back for trick ${v.totalTricks}; $toGo.';
+  if (d == 'Win the A♥ in the last trick') {
+    return 'The A♥ is still in someone’s hand. Keep it back for trick ${v.totalTricks}; $toGo.';
   }
   final withRank = RegExp(r'^Win a trick with a (\d)$').firstMatch(d);
   if (withRank != null) {
@@ -351,7 +351,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
     final target = int.parse(pair.group(1)!), by = int.parse(pair.group(2)!);
     return '${by}s still to come: ${unplayed((c) => rank(c, by))}. ${target}s still to come: ${unplayed((c) => rank(c, target))}. $toGo.';
   }
-  if (d == 'Win any 6 with another 6') {
+  if (d == 'Win any 7 with another 7') {
     return '6s played: ${playedOf((c) => rank(c, 6))}. Still to come: ${unplayed((c) => rank(c, 6))}. Two of them must fall in one trick, won with a 6.';
   }
   if (d == 'Win the Queen') {
@@ -368,7 +368,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
     ];
     return '${mine.contains(card) ? 'The $name is won.' : 'The $name isn’t won yet.'} Court Cards still to come, which must go to others: ${others.isEmpty ? 'none' : others.join(', ')}.';
   }
-  if (d.startsWith('Win at least one card of each suit')) {
+  if (d.startsWith('Win a card of every suit')) {
     final mine = v.won(owner);
     final need = [
       for (final s in const [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs])
@@ -376,7 +376,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
     ];
     return 'Still to win: ${need.join(' ')}. $toGo.';
   }
-  if (d.startsWith('Win every card of at least one suit')) {
+  if (d.startsWith('Win all nine cards of any one suit')) {
     final others = v.wonByOthers(owner);
     final mine = v.won(owner);
     final open = [
@@ -396,7 +396,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
         ? 'No trick won without a Court Card yet. $toGo.'
         : 'Totals of the tricks won so far: ${best.join(', ')}. $toGo.';
   }
-  if (d.contains('than everyone') || d.contains('fewer tricks than everyone')) {
+  if (d.contains('than anyone') || d.contains('rest of the court')) {
     if (names.isNotEmpty) {
       return 'Tricks so far: ${[for (int s = 0; s < v.players; s++) '${who(s)} ${v.tricksWon(s)}'].join(', ')}. $toGo.';
     }
@@ -532,7 +532,7 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
   if (d.contains('than the King') || d.contains('as the King')) {
     return '$me won ${_tricks(won)}; the King won ${_tricks(v.tricksWon(v.king))}.';
   }
-  if (d.contains('than everyone')) {
+  if (d.contains('than anyone') || d.contains('rest of the court')) {
     final counts = [
       for (int s = 0; s < v.players; s++) '${who(s)} ${v.tricksWon(s)}'
     ];

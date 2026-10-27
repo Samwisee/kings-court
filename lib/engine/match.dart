@@ -13,6 +13,7 @@ import 'dart:math';
 import '../models.dart';
 import 'cards.dart';
 import 'deal_mix.dart';
+import '../tasks.dart';
 import 'rules.dart';
 
 enum Phase { picking, announcing, playing, roundOver }
@@ -405,7 +406,7 @@ class MatchState {
       ..king = j['king'] as int
       ..tasks = [
         for (final t in j['tasks'] as List)
-          MatchTask(byDescription[t['d']]!.freshCopy(),
+          MatchTask(byDescription[renamedTasks[t['d']] ?? t['d']]!.freshCopy(),
               owner: t['owner'] as int?,
               x: t['x'] as int?,
               verdict: Verdict.values[t['verdict'] as int])
