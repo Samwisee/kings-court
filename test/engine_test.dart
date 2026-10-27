@@ -221,8 +221,8 @@ void main() {
   });
 
   test('Avoiding something clashes with needing enough of it', () {
-    expect(selfClash("Don't win any 6s", 'Win at least three 7s'), isTrue);
-    expect(selfClash("Don't win any ♦ or ♠ cards", 'Win at least six ♣ cards'), isTrue);
+    expect(selfClash("Don't win any 7s or 8s", 'Win at least three 7s'), isTrue);
+    expect(selfClash("Don't win any ♥ or ♣ cards", 'Win at least six ♣ cards'), isTrue);
     expect(selfClash('Win no Court Cards', 'Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)'), isTrue);
     expect(selfClash("Don't win any 6s", 'Win at least three 4s'), isFalse);
   });

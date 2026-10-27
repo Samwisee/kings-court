@@ -198,9 +198,9 @@ const _special = <String, String>{
       'Your tricks must include at least one ♥, one ♦, one ♠ and one ♣ card by the end of the round.',
   "Win all nine cards of any one suit":
       'Pick a suit and win all of it: every card of that suit dealt this round must end up in your tricks. Court Cards aren’t a suit for this.',
-  'Win a trick of only even cards:
+  'Win a trick of only even cards: 2s, 4s, 6s and 8s':
       'Win one trick in which every card is a 2, 4, 6 or 8, with no Court Cards.',
-  'Win a trick of only odd cards:
+  'Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s':
       'Win one trick in which every card is an Ace, 3, 5, 7 or 9, with no Court Cards.',
   'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
       'Win one trick whose cards add up to more than the target for your table size (21 for two or three players, 26 for four, 30 for five, 34 for six). Aces count as 1. No Court Cards may be in it.',

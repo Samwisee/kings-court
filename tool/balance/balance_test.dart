@@ -88,11 +88,12 @@ void main() {
     // The same thinking time as the bots in the game.
     final bot = Bot(rand)
       ..budget = int.tryParse(Platform.environment['BALANCE_BUDGET'] ?? '') ?? 900;
-    // How often each task fails itself at four players, against its points.
-    final dealt4 = <String, int>{}, failed4 = <String, int>{};
+    // How often each task fails itself at each table size.
+    final dealtAt = {for (final p in [3, 4, 5, 6]) p: <String, int>{}};
+    final failedAt = {for (final p in [3, 4, 5, 6]) p: <String, int>{}};
     final configs = [
-      for (final p in [3, 4, 5])
-        for (final t in [6, 10, 14, 17, 20]) (p, t)
+      for (final p in [3, 4, 5, 6])
+        for (final t in [5, 8, 11, 14, 17, 20]) (p, t)
     ];
     final byConfig = {for (final c in configs) c: _Tally()};
     final tasksIn = {for (final c in configs) c: 0};
@@ -111,13 +112,11 @@ void main() {
       for (final f in failed) {
         failedCount[f] = (failedCount[f] ?? 0) + 1;
       }
-      if (p == 4) {
-        for (final d in tasks) {
-          dealt4[d] = (dealt4[d] ?? 0) + 1;
-        }
-        for (final f in failed) {
-          failed4[f] = (failed4[f] ?? 0) + 1;
-        }
+      for (final d in tasks) {
+        dealtAt[p]![d] = (dealtAt[p]![d] ?? 0) + 1;
+      }
+      for (final f in failed) {
+        failedAt[p]![f] = (failedAt[p]![f] ?? 0) + 1;
       }
       byPrecise.putIfAbsent(tasks.where(precise).length.clamp(0, 2), _Tally.new).add(won);
       byTaskCount.putIfAbsent(tasks.length, _Tally.new).add(won);
@@ -163,26 +162,48 @@ void main() {
     for (final e in tasks) {
       out.writeln('${e.value.pct}  ${'${e.value.rounds}'.padLeft(4)}  fail ${'${failedCount[e.key] ?? 0}'.padLeft(3)}  ${e.key}');
     }
-    // Points from difficulty: rank the tasks by how often they fail
-    // themselves, and hand out the game's own spread of points in that
-    // order. Tasks far from their suggestion are mispriced.
-    final pool = {for (final t in GameState.taskPool) t.description: t.fourPlayerPoints};
-    final rated = [
-      for (final e in dealt4.entries)
-        if (e.value >= 20 && pool.containsKey(e.key))
-          (e.key, (failed4[e.key] ?? 0) / e.value)
-    ]..sort((a, b) => a.$2.compareTo(b.$2));
-    final spread = [for (final t in rated) pool[t.$1]!]..sort();
+    // Points from difficulty. A task's points are its share of how hard
+    // the round is: -ln(chance it succeeds), scaled, so tasks that each
+    // succeed half the time add up the same however they're combined.
+    // Each table size is pulled toward the task's overall rate when it was
+    // dealt only a few times there.
+    final pool = {for (final t in GameState.taskPool) t.description: t};
+    const k = 2.4, prior = 25;
+    int pointsFor(double fail) =>
+        (k * -log(max(0.02, 1 - fail))).round().clamp(1, 7);
+    double overall(String d) {
+      var n = 0, f = 0;
+      for (final p in [3, 4, 5, 6]) {
+        n += dealtAt[p]![d] ?? 0;
+        f += failedAt[p]![d] ?? 0;
+      }
+      return n == 0 ? 0.5 : f / n;
+    }
+
+    double rateAt(String d, int p) {
+      final n = dealtAt[p]![d] ?? 0, f = failedAt[p]![d] ?? 0;
+      return (f + prior * overall(d)) / (n + prior);
+    }
+
     out
       ..writeln()
-      ..writeln('POINTS CHECK AT FOUR PLAYERS: how often a task fails itself, its points, and')
-      ..writeln('the points its difficulty suggests (! = 2 or more off)')
-      ..writeln('fails  dealt  pts  suggest');
-    for (int i = 0; i < rated.length; i++) {
-      final (d, rate) = rated[i];
-      final now = pool[d]!, want = spread[i];
-      out.writeln('${'${(rate * 100).round()}%'.padLeft(5)}  ${'${dealt4[d]}'.padLeft(5)}  '
-          '${'$now'.padLeft(3)}  ${'$want'.padLeft(3)} ${(now - want).abs() >= 2 ? '!' : ' '}  $d');
+      ..writeln('POINTS FROM DIFFICULTY (3 / 4 / 5 / 6 players): fail rate, points now, points suggested')
+      ..writeln('(! = 2 or more off at some table size)');
+    final names = pool.keys.toList()
+      ..sort((a, b) => overall(a).compareTo(overall(b)));
+    for (final d in names) {
+      final t = pool[d]!;
+      final now = [t.threePlayerPoints, t.fourPlayerPoints, t.fivePlayerPoints, t.sixPlayerPoints];
+      final want = [for (final p in [3, 4, 5, 6]) pointsFor(rateAt(d, p))];
+      final off = [for (int i = 0; i < 4; i++) (now[i] - want[i]).abs()].reduce(max) >= 2;
+      out.writeln('${'${(overall(d) * 100).round()}%'.padLeft(4)}  ${now.join('/')}  ->  ${want.join('/')} ${off ? '!' : ' '} $d');
+    }
+    out
+      ..writeln()
+      ..writeln('SUGGESTED POINTS, ready to paste: description | three | four | five | six');
+    for (final d in pool.keys) {
+      final want = [for (final p in [3, 4, 5, 6]) pointsFor(rateAt(d, p))];
+      out.writeln('POINTS|$d|${want.join('|')}');
     }
     out
       ..writeln()
