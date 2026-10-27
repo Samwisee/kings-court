@@ -50,6 +50,11 @@ def defs(extra: str = "") -> str:
     <stop offset="0.5" stop-color="{GOLD_MID}"/>
     <stop offset="1" stop-color="{GOLD_DARK}"/>
   </linearGradient>
+  <linearGradient id="giltPip" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">
+    <stop offset="0" stop-color="{GOLD_LIGHT}"/>
+    <stop offset="0.5" stop-color="{GOLD_MID}"/>
+    <stop offset="1" stop-color="{GOLD_DARK}"/>
+  </linearGradient>
   <linearGradient id="giltRim" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="{GOLD_LIGHT}"/>
     <stop offset="0.35" stop-color="{GOLD_MID}"/>
@@ -146,6 +151,10 @@ def suit(name: str, cx: float, cy: float, size: float, fill: str,
     if outline:
         o = "".join(f'<path d="{p}" fill="{OUTLINE}" stroke="{OUTLINE}" '
                     f'stroke-width="{outline}" stroke-linejoin="round"/>' for p in parts)
+    # One gradient over the whole pip (not one per piece), so the gold
+    # has no seams where the pieces overlap.
+    if fill == GILT:
+        fill = "url(#giltPip)"
     body = "".join(f'<path d="{p}" fill="{fill}"/>' for p in parts)
     return place(f"{o}<g{c}>{body}</g>", cx, cy, size, 100, 100, rotate)
 
@@ -254,14 +263,21 @@ def _tiara(ow: float, gilt: str, cloth: str):
     oval = "M50 66 C36 56 38 24 50 8 C62 24 64 56 50 66"
 
     def scroll(start, curve, centre, turn, end_r):
-        pts = [f"M{start[0] * 100:.2f} {start[1] * 100:.2f}",
-               "C" + " ".join(f"{v * 100:.2f}" for v in curve)]
         fx, fy = curve[4] * 100, curve[5] * 100
         cx, cy = centre[0] * 100, centre[1] * 100
         a0 = math.atan2(fy - cy, fx - cx)
         r0 = math.hypot(fx - cx, fy - cy)
-        for k in range(1, 49):
-            f = k / 48
+        # The curve's last handle runs along the spiral, so the line turns
+        # into it smoothly, with no kink.
+        tx = (end_r * 100 - r0) * math.cos(a0) + r0 * turn * math.sin(a0)
+        ty = (end_r * 100 - r0) * math.sin(a0) - r0 * turn * math.cos(a0)
+        tl = math.hypot(tx, ty)
+        k = math.hypot(curve[2] * 100 - fx, curve[3] * 100 - fy) * 0.45
+        h2 = (fx - tx / tl * k, fy - ty / tl * k)
+        pts = [f"M{start[0] * 100:.2f} {start[1] * 100:.2f}",
+               f"C{curve[0] * 100:.2f} {curve[1] * 100:.2f} {h2[0]:.2f} {h2[1]:.2f} {fx:.2f} {fy:.2f}"]
+        for k in range(1, 161):
+            f = k / 160
             a = a0 - turn * f
             rr = r0 + (end_r * 100 - r0) * f
             pts.append(f"L{cx + rr * math.cos(a):.2f} {cy + rr * math.sin(a):.2f}")
@@ -283,7 +299,7 @@ def _tiara(ow: float, gilt: str, cloth: str):
 
     outline = (f'<g><path d="{band}" fill="{OUTLINE}" stroke="{OUTLINE}" stroke-width="{ow:.3f}" '
                f'stroke-linejoin="round"/>{strokes(OUTLINE, ow)}</g>')
-    gold = f'<g class="foil"><path d="{band}" fill="{gilt}"/>{strokes(gilt, 0)}</g>'
+    gold = (f'<g class="foil"><path d="{band}" fill="{gilt}"/>{strokes(gilt, 0)}</g>')
     # The gem: a marquise-cut stone in the cloth's colour: a table in the
     # middle, facets around it lit from the top left, outlined like the
     # King's jewels.
@@ -319,7 +335,7 @@ def _king(ow: float, gilt: str, cloth: str):
         f'stroke-width="{ow * 0.4:.3f}"/>' for x in (31, 50, 69))
     # Two points at the back of the crown, peeking up between the front
     # ones, a shade darker for depth.
-    back = ["M21 46 L17 21 L36 46 Z", "M64 46 L83 21 L79 46 Z"]
+    back = ["M24 46 L20 21 L39 46 Z", "M61 46 L80 21 L76 46 Z"]
     shade = "".join(f'<path d="{d}" fill="#000000" fill-opacity="0.22"/>' for d in back)
     return (_solid(back, gilt, ow) + shade + _solid([body, band], gilt, ow)
             + f'<g class="foilknock">{jewels}</g>', (0, 0, 100, 75))
@@ -367,25 +383,25 @@ def stripes(w, h) -> str:
 
 
 def lattice(w, h) -> str:
-    """The Queen's gold lattice with pearls where the lines cross."""
+    """The Queen's gold lattice with a gold pearl on every crossing."""
     step = w / 4
+    starts = []
+    a = -h
+    while a < w + h:
+        starts.append(a)
+        a += step
     lines = []
-    x = -h
-    while x < w + h:
-        lines.append(f'<line x1="{x:.2f}" y1="0" x2="{x + h:.2f}" y2="{h}"/>')
-        lines.append(f'<line x1="{x:.2f}" y1="{h}" x2="{x + h:.2f}" y2="0"/>')
-        x += step
+    for a in starts:
+        lines.append(f'<line x1="{a:.2f}" y1="0" x2="{a + h:.2f}" y2="{h}"/>')
+        lines.append(f'<line x1="{a:.2f}" y1="{h}" x2="{a + h:.2f}" y2="0"/>')
     pearls = []
-    y, row = 0.0, 0
-    while y <= h + 0.1:
-        x = step / 2 if row % 2 else 0.0
-        while x <= w + 0.1:
-            pearls.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="0.55"/>')
-            x += step
-        y += step / 2
-        row += 1
-    return (f'<g stroke="{GOLD_LIGHT}" stroke-opacity="0.55" stroke-width="0.18" class="foil">{"".join(lines)}</g>'
-            f'<g fill="{GOLD_LIGHT}" fill-opacity="0.7" class="foil">{"".join(pearls)}</g>')
+    for a in starts:           # y = x - a
+        for b in starts:       # y = h + b - x
+            x, y = (a + b + h) / 2, (b + h - a) / 2
+            if -1 <= x <= w + 1 and -1 <= y <= h + 1:
+                pearls.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="0.5"/>')
+    return (f'<g stroke="{GOLD_LIGHT}" stroke-opacity="0.5" stroke-width="0.18" class="foil">{"".join(lines)}</g>'
+            f'<g fill="{GOLD_MID}" class="foil">{"".join(pearls)}</g>')
 
 
 def sunburst(w, h, cy_frac=0.56, alpha=1.0) -> str:
