@@ -58,6 +58,7 @@ class HomePageTestHooks {
     _HomePageState.botDelay = const Duration(milliseconds: 1);
     _HomePageState.trickPause = const Duration(milliseconds: 4);
     _HomePageState.autoPlayStep = const Duration(milliseconds: 2);
+    _HomePageState.flipStagger = const Duration(milliseconds: 2);
     _HomePageState.botBudget = 30;
     CharacterToken.alive = false;
   }
@@ -407,6 +408,13 @@ class _HomePageState extends State<HomePage>
     duration: const Duration(milliseconds: 1800),
   );
 
+  /// A pause before the round's result comes up, while the last tasks
+  /// turn over.
+  late final AnimationController _outcomeHold = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  );
+
   /// Seat being crowned while the crown animation plays.
   int? _crowning;
 
@@ -481,7 +489,7 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     // Create the animation controllers now, so dispose never makes one.
-    for (final c in [_deal, _crown, _play, _outcome, _coronation]) {
+    for (final c in [_deal, _crown, _play, _outcome, _outcomeHold, _coronation]) {
       c.value;
     }
     _loadSaved();
@@ -689,6 +697,7 @@ class _HomePageState extends State<HomePage>
     _deal.dispose();
     _crown.dispose();
     _coronation.dispose();
+    _outcomeHold.dispose();
     _play.dispose();
     _outcome.dispose();
     _keepAwake(false);
@@ -755,6 +764,7 @@ class _HomePageState extends State<HomePage>
   static Duration botDelay = const Duration(milliseconds: 700);
   @visibleForTesting
   static Duration trickPause = const Duration(milliseconds: 1300);
+  static Duration flipStagger = const Duration(milliseconds: 280);
 
   /// Playouts per bot decision.
   static int botBudget = 900;
@@ -854,10 +864,8 @@ class _HomePageState extends State<HomePage>
       _scheduleBot();
       return;
     }
-    if (c.tricks.length >= c.totalTricks) {
-      setState(() => _autoPlaying = false);
-      return;
-    }
+    // Every card played: the last trick's pause ends the play-out.
+    if (c.tricks.length >= c.totalTricks) return;
     if (_lastTrick == null) {
       final seat = c.turn;
       final legal = c.legalFor(seat);
@@ -1322,6 +1330,7 @@ class _HomePageState extends State<HomePage>
         .where((t) => t.status == TaskStatus.pending && t.assignedPlayerIndex != null)
         .toList()
       ..sort((a, b) => order(a).compareTo(order(b)));
+    var flipped = 0;
     for (final t in pending) {
       if (game.outcome != RoundOutcome.inProgress) break;
       final verdict = taskRules[t.description]!(
@@ -1338,6 +1347,11 @@ class _HomePageState extends State<HomePage>
       }
       if (status == TaskStatus.failed && await _offerAbsolution(t)) continue;
       if (!mounted || !game.tasks.contains(t)) continue;
+      // Several done at once turn over one after another.
+      if (status == TaskStatus.completed && flipped++ > 0) {
+        await Future.delayed(flipStagger);
+        if (!mounted || !game.tasks.contains(t)) continue;
+      }
       _setTaskStatus(t, status);
     }
     // Traitors' schemes are judged by the cards too.
@@ -1943,7 +1957,7 @@ class _HomePageState extends State<HomePage>
               // Room above the tokens so a King's crown clears the edge.
               // On a phone the courtiers sit higher, leaving more room for
               // tasks and cards.
-              padding: EdgeInsets.fromLTRB(16, width < 600 ? 2 : 16, 16, 4),
+              padding: EdgeInsets.fromLTRB(16, width < 600 ? 8 : 16, 16, 4),
               child: Column(
                 children: [
                   // Solo Dynasty: what this hand is for, in the story.
@@ -2080,8 +2094,16 @@ class _HomePageState extends State<HomePage>
 
   /// The crowning on the on-screen table: from the middle of the table to
   /// the new King's token, with a trumpet from everyone else.
-  Widget _digiCrowning() {
-    final king = _crowning!;
+  Widget _digiCrowning() => AnimatedBuilder(
+        // Measured afresh every frame, so the crown lands where the token
+        // is even if the table is still settling.
+        animation: _crown,
+        builder: (context, _) => _digiCrowningNow(),
+      );
+
+  Widget _digiCrowningNow() {
+    final king = _crowning;
+    if (king == null) return const SizedBox.shrink();
     final middle = _rectOn(_middleKey);
     final seat = _rectOn(_seatKey(king));
     if (middle == null || seat == null) return const SizedBox.shrink();
@@ -2678,13 +2700,7 @@ class _HomePageState extends State<HomePage>
     final Widget tasks = _storyActive
         ? const SizedBox.shrink()
         : mine.isEmpty
-            ? game.pickTurn != null
-                ? const Padding(
-                    padding: EdgeInsets.only(left: leadW),
-                    child: Text('Your tasks will appear here',
-                        style: TextStyle(color: Colors.white54)),
-                  )
-                : const SizedBox.shrink()
+            ? const SizedBox.shrink()
             // Your tasks scroll sideways when they don't fit, slipping under
             // your token and shown card rather than stopping short of them.
             : NotificationListener<ScrollUpdateNotification>(
@@ -3745,7 +3761,14 @@ class _HomePageState extends State<HomePage>
             : targetPoints;
         if (game.bestStreak > _bestStreak) _bestStreak = game.bestStreak;
         _step = _DynastyStep.result;
-        _outcome.forward(from: 0);
+        // The last tasks turn over first, then the result comes up.
+        _outcome.value = 0;
+        _outcomeHold.duration = Duration(milliseconds: won ? 800 : 450);
+        _outcomeHold.forward(from: 0).whenComplete(() {
+          if (!mounted) return;
+          setState(() {});
+          _outcome.forward(from: 0);
+        });
       }
     });
   }
@@ -4629,8 +4652,9 @@ class _HomePageState extends State<HomePage>
           _setupArgs == null &&
           !_onFelt &&
           game.outcome != RoundOutcome.inProgress &&
-          // (A round won early stays up while its last cards play out.)
-          (_lastTrick == null || _autoPlaying))
+          !_outcomeHold.isAnimating &&
+          // Once up it stays up, while a round won early plays out.
+          (_lastTrick == null || _autoPlaying || _outcome.value > 0))
         Positioned.fill(
             child: Material(
                 type: MaterialType.transparency,
@@ -9861,7 +9885,7 @@ class _GlowButtonState extends State<_GlowButton>
 
   /// A glint of light that sweeps across the gold every couple of seconds.
   late final _sheen = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 2400));
+      vsync: this, duration: const Duration(milliseconds: 6000));
 
   @override
   void didChangeDependencies() {
@@ -9898,7 +9922,7 @@ class _GlowButtonState extends State<_GlowButton>
         animation: Listenable.merge([_pulse, _sheen]),
         builder: (context, child) {
           // The sweep crosses in the first half of each cycle, then rests.
-          final x = -1.8 + 3.6 * (_sheen.value * 2).clamp(0.0, 1.0);
+          final x = -1.8 + 3.6 * (_sheen.value * 5).clamp(0.0, 1.0);
           return DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),

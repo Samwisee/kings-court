@@ -37,7 +37,7 @@ SUIT_CLOTH = {
 }
 JOKER_CLOTH = {
     "purple": ("#5A2F87", "#241238"),
-    "orange": ("#F28A2E", "#A3410C"),
+    "pink": ("#E25A9E", "#8A1F55"),
 }
 
 GILT = "url(#gilt)"

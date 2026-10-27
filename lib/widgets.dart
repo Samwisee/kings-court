@@ -2528,26 +2528,26 @@ class _Glitter extends StatefulWidget {
 }
 
 class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin {
-  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+  // One long cycle: a sheen sweeps the gold at its start, then rests,
+  // while stars twinkle all the way through.
+  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 6500));
+
+  /// Under the test runner nothing loops (a test waits for stillness).
+  static bool get _underTest =>
+      WidgetsBinding.instance.runtimeType.toString().contains('Test');
+
+  bool _still = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Still for reduced motion (and in tests, where it would never settle).
-    if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
+    _still = MediaQuery.of(context).disableAnimations || !CharacterToken.alive || _underTest;
+    if (_still) {
       _c.stop();
-      _done = true;
-    } else if (!_c.isAnimating && !_started) {
-      // A few glitters as it arrives, then it rests, clear of stars.
-      _started = true;
-      _c.repeat(count: 3).whenComplete(() {
-        if (mounted) setState(() => _done = true);
-      });
+    } else if (!_c.isAnimating) {
+      _c.repeat();
     }
   }
-
-  bool _started = false;
-  bool _done = false;
 
   @override
   void dispose() {
@@ -2556,12 +2556,12 @@ class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin 
   }
 
   @override
-  Widget build(BuildContext context) => _done
+  Widget build(BuildContext context) => _still
       ? const SizedBox.shrink()
       : AnimatedBuilder(
-        animation: _c,
-        builder: (context, _) => CustomPaint(painter: _GlitterPainter(_c.value)),
-      );
+          animation: _c,
+          builder: (context, _) => CustomPaint(painter: _GlitterPainter(_c.value)),
+        );
 }
 
 class _GlitterPainter extends CustomPainter {
@@ -2576,8 +2576,8 @@ class _GlitterPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // The sheen: crosses in the first 40% of each cycle.
-    final sweep = (t / 0.4).clamp(0.0, 1.0);
+    // The sheen: crosses in the first fifth of each cycle, then rests.
+    final sweep = (t / 0.2).clamp(0.0, 1.0);
     if (sweep < 1) {
       // A soft diagonal band crossing from left to right.
       final rect = Offset.zero & size;
@@ -2596,8 +2596,9 @@ class _GlitterPainter extends CustomPainter {
     // The stars, each twinkling in its own moment.
     final star = Paint()..color = const Color(0xFFFFFBEA);
     for (final (sx, sy, phase) in _stars) {
-      // Each star twinkles once a cycle, in its own short moment.
-      final local = ((t - phase * 0.7) % 1) / 0.3;
+      // Each star twinkles three times a cycle, each in its own moment,
+      // so there are always a few catching the light.
+      final local = (((t * 3) - phase) % 1) / 0.35;
       if (local < 0 || local > 1) continue;
       final k = math.sin(local * math.pi);
       if (k <= 0) continue;
