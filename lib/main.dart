@@ -4343,6 +4343,7 @@ class _HomePageState extends State<HomePage>
             won: false,
             court: true,
             margin: const EdgeInsets.only(top: 34),
+            padding: const EdgeInsets.fromLTRB(32, 30, 32, 28),
             maxWidth: 380,
             child: Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -7367,8 +7368,9 @@ class _OrnateMenu extends StatelessWidget {
             won: false,
             court: true,
             margin: const EdgeInsets.fromLTRB(16, 76, 10, 16),
-            padding: const EdgeInsets.fromLTRB(14, 34, 14, 14),
-            maxWidth: 300,
+            // Clear of the scrollwork in the corners.
+            padding: const EdgeInsets.fromLTRB(22, 34, 26, 26),
+            maxWidth: 310,
             child: IntrinsicWidth(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
