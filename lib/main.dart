@@ -4723,7 +4723,6 @@ class _HomePageState extends State<HomePage>
       elevation: 12,
       offset: const Offset(0, 48),
       shape: const OrnateBorder(radius: 16),
-      ),
       onSelected: (choice) async {
         switch (choice) {
           case 'new':
