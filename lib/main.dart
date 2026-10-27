@@ -1968,19 +1968,7 @@ class _HomePageState extends State<HomePage>
                       child: _storyStage() ?? _digiMiddle(width),
                     ),
                   ),
-                  // Your tasks run on to the brass edge, under the margin.
-                  KeyedSubtree(
-                    key: _yourRowKey,
-                    child: SizedBox(
-                      width: width,
-                      child: OverflowBox(
-                        alignment: Alignment.centerLeft,
-                        minWidth: width + 8,
-                        maxWidth: width + 8,
-                        child: _digiYou(width + 8),
-                      ),
-                    ),
-                  ),
+                  KeyedSubtree(key: _yourRowKey, child: _digiYou(width)),
                 ],
               ),
             ),
@@ -2705,8 +2693,13 @@ class _HomePageState extends State<HomePage>
                   if (scrolled != _youScrolled.value) _youScrolled.value = scrolled;
                   return false;
                 },
+                // Shown on past the row's end, through the margin to the
+                // brass edge.
+                child: ClipRect(
+                clipper: const _ReachRight(10),
                 child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
                 padding: const EdgeInsets.only(left: leadW),
                 child: Row(children: [
                   for (final t in mine)
@@ -2717,6 +2710,7 @@ class _HomePageState extends State<HomePage>
                           fontSize: width > 600 ? 15 : 13),
                     ),
                 ]),
+              ),
               ),
               );
     // The whole width, so you sit at its left end.
@@ -7360,6 +7354,18 @@ class _WelcomeIntro extends StatelessWidget {
       },
     );
   }
+}
+
+/// A clip [extra] wider on the right than the box it wraps.
+class _ReachRight extends CustomClipper<Rect> {
+  const _ReachRight(this.extra);
+  final double extra;
+
+  @override
+  Rect getClip(Size size) => Rect.fromLTRB(0, -40, size.width + extra, size.height + 40);
+
+  @override
+  bool shouldReclip(_ReachRight old) => old.extra != extra;
 }
 
 /// A button in the top corner, flat on the felt: just its gold, pressing
