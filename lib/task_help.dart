@@ -352,7 +352,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
     return '${by}s still to come: ${unplayed((c) => rank(c, by))}. ${target}s still to come: ${unplayed((c) => rank(c, target))}. $toGo.';
   }
   if (d == 'Win any 7 with another 7') {
-    return '6s played: ${playedOf((c) => rank(c, 6))}. Still to come: ${unplayed((c) => rank(c, 6))}. Two of them must fall in one trick, won with a 6.';
+    return '7s played: ${playedOf((c) => rank(c, 7))}. Still to come: ${unplayed((c) => rank(c, 7))}. Two of them must fall in one trick, won with a 7.';
   }
   if (d == 'Win the Queen') {
     return 'The Queen hasn’t been played yet. Only the King card beats her. $toGo.';

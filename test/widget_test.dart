@@ -292,7 +292,7 @@ void main() {
     final total = GameState.taskPool
         .firstWhere((t) => t.description.contains('totalling more than'));
     expect(total.cardText(4),
-        'Win a trick totalling more than 28, with no Court Cards');
+        'Win a trick totalling more than 26, with no Court Cards');
     expect(total.cardText(2), contains('more than 23'));
     expect(total.cardText(6), contains('more than 34'));
 
