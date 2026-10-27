@@ -91,27 +91,26 @@ def sleeve_front(w, h) -> str:
                    stroke=OUTLINE, stroke_w=0.6, spacing=0.4)
             + text(cx, 74.2, "KING’S COURT", 6.6, family=DISPLAY, weight=900, fill=GILT,
                    cls="foil", stroke=OUTLINE, stroke_w=0.8)
-            + text(cx, 79.8, "LUXURY PLAYING CARDS", 2.5, family=BODY, weight=700,
-                   fill=GOLD_LIGHT, spacing=0.8)
-            + "".join(suit(s, cx + (i - 1.5) * 5.4, 84.2, 3.0, c, outline=10)
-                      for i, (s, c) in enumerate([("spades", "#1D1B18"), ("hearts", "#B3122B"),
-                                                  ("clubs", "#13793A"), ("diamonds", "#1A5BC8")])))
+            + text(cx, 79.6, "A COOPERATIVE TRICK-TAKING GAME", 2.35, family=BODY, weight=700,
+                   fill=GOLD_LIGHT, spacing=0.45)
+            + text(cx, 83.6, "with a full deck of playing cards", 2.2, family=BODY, weight=500,
+                   fill="#CFE3D6", spacing=0.2))
 
 
 def sleeve_back(w, h) -> str:
     cx = w / 2
     light = "#E9F2EC"
     blurb = [
-        "A deck for the whole court. Play any classic",
-        "game with all fifty-four cards, or choose a",
-        "Jack, Queen, King and Joker in the colours",
-        "you like for The King’s Court: cooperative",
-        "trick-taking for 2 to 6. Win or lose together.",
+        "Take your tasks, play your tricks, and serve",
+        "the crown together. The King’s Court is a",
+        "cooperative trick-taking game for 2 to 6:",
+        "every round, the court wins or loses as one.",
+        "Choose your court’s colours and play.",
     ]
     contents = [
-        "52 cards in four colours and two Jokers",
-        "Court Cards in red, green, blue and black",
-        "How-to-play card and your unlock code",
+        "The King’s Court: 40 crowned cards and",
+        "Court Cards in four colours to choose from",
+        "Also a full deck: 52 cards and two Jokers",
     ]
     return (brass_inlay(3, 3, w - 6, h - 6)
             + place(crown()[0], cx, 13.6, 9, 100, 75)

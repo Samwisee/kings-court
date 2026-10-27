@@ -117,26 +117,10 @@ def number_card(n: int, name: str) -> str:
 
 
 def ace(name: str) -> str:
+    """A plain, large pip: the Court Cards are the stars of this deck."""
     colour = SUIT_INK[name]
-    ring = (f'<circle cx="{CX}" cy="{CY}" r="20" fill="none" stroke="{OUTLINE}" stroke-width="1.6"/>'
-            f'<circle cx="{CX}" cy="{CY}" r="20" fill="none" stroke="url(#gilt)" '
-            f'stroke-width="1.0" class="foil"/>'
-            f'<circle cx="{CX}" cy="{CY}" r="18.2" fill="none" stroke="{GOLD_MID}" '
-            f'stroke-width="0.25" class="foil"/>')
-    rays = "".join(
-        f'<line x1="{CX + 21.6 * math.cos(a):.2f}" y1="{CY + 21.6 * math.sin(a):.2f}" '
-        f'x2="{CX + (24.4 if i % 2 == 0 else 23) * math.cos(a):.2f}" '
-        f'y2="{CY + (24.4 if i % 2 == 0 else 23) * math.sin(a):.2f}" stroke="url(#gilt)" '
-        f'stroke-width="0.7" stroke-linecap="round" class="foil"/>'
-        for i, a in enumerate([k * math.pi / 12 for k in range(24)]))
-    big = suit(name, CX, CY, 25, colour)
-    if name == "spades":
-        extra = (place(crown()[0], CX, 16.0, 14, 100, 75)
-                 + text(CX, 81.6, "THE KING’S COURT", 3.0, family=DISPLAY, weight=900,
-                        fill=GILT, cls="foil", stroke=OUTLINE, stroke_w=0.45))
-        return svg(face_bg() + rim() + both_ends(number_index("A", name, True)) + ring
-                   + big + extra)
-    return svg(face_bg() + rim() + both_ends(number_index("A", name, True)) + ring + rays + big)
+    return svg(face_bg() + rim() + both_ends(number_index("A", name, True))
+               + suit(name, CX, CY, 26, colour))
 
 
 # --- face cards: the Court Cards in every suit's colour ---------------------------------
@@ -260,19 +244,49 @@ def awaits_card() -> str:
 
 
 def back() -> str:
-    bg = f'<rect width="{W}" height="{H}" fill="url(#backCloth)" class="foilbg"/>'
-    rays = sunburst(W, H, cy_frac=0.5, alpha=0.9)
-    medal = (f'<circle cx="{CX}" cy="{CY}" r="16.5" fill="{OUTLINE}"/>'
-             f'<circle cx="{CX}" cy="{CY}" r="15.6" fill="#5A1620" class="foilbg"/>'
-             f'<circle cx="{CX}" cy="{CY}" r="15.6" fill="none" stroke="url(#giltRim)" '
-             f'stroke-width="1.1" class="foil"/>'
-             f'<circle cx="{CX}" cy="{CY}" r="13.6" fill="none" stroke="{GOLD_MID}" '
-             f'stroke-width="0.25" class="foil"/>'
-             + place(crown()[0], CX, CY - 0.6, 19, 100, 75))
-    ends = both_ends(place(outlined(CROWN, outline=6, shadow=False), CX, 13.4, 6, 100, 75)
-                     + "".join(suit(s, CX + (i - 1.5) * 4.4, 18.6, 2.4, GILT, cls="foil")
-                               for i, s in enumerate(["spades", "hearts", "clubs", "diamonds"])))
-    return svg(bg + rays + rim() + ends + medal)
+    """The table's green felt inside an ivory border, so a back can never be
+    mistaken for a face: a field of little crowns, the brass rim, and a
+    medallion that reads the same either way up."""
+    bg = f'<rect width="{W}" height="{H}" fill="url(#cardFace)" class="foilbg"/>'
+    x = BLEED + 3.2
+    w, h = W - 2 * x, H - 2 * x
+    panel = (f'<rect x="{x}" y="{x}" width="{w}" height="{h}" rx="3" fill="{OUTLINE}" '
+             f'stroke="{OUTLINE}" stroke-width="1.6"/>'
+             f'<rect x="{x}" y="{x}" width="{w}" height="{h}" rx="3" fill="url(#felt)"/>')
+    # Little crowns in rows, every other row turned, in a lighter green.
+    tiles = []
+    step_x, step_y = 7.0, 7.2
+    row = 0
+    y = x + 2.4
+    while y < x + h + 3:
+        off = 0 if row % 2 == 0 else step_x / 2
+        cx = x + 1.2 + off
+        while cx < x + w + 3:
+            tiles.append(place(f'<path d="{CROWN}" fill="#1F7A4F"/>', cx, y, 3.4, 100, 75,
+                               rotate=180 if row % 2 else 0))
+            cx += step_x
+        y += step_y
+        row += 1
+    clip = (f'<clipPath id="backPanel"><rect x="{x}" y="{x}" width="{w}" height="{h}" rx="3"/>'
+            f'</clipPath>')
+    field = f'<g clip-path="url(#backPanel)">{"".join(tiles)}</g>'
+    rim_ = (f'<rect x="{x}" y="{x}" width="{w}" height="{h}" rx="3" fill="none" '
+            f'stroke="url(#giltRim)" stroke-width="1.1" class="foil"/>'
+            f'<rect x="{x + 2.2}" y="{x + 2.2}" width="{w - 4.4}" height="{h - 4.4}" rx="2" '
+            f'fill="none" stroke="{GOLD_MID}" stroke-opacity="0.8" stroke-width="0.25" class="foil"/>')
+    rx, ry = 15.5, 22.5
+    medal = (f'<ellipse cx="{CX}" cy="{CY}" rx="{rx + 0.9}" ry="{ry + 0.9}" fill="{OUTLINE}"/>'
+             f'<ellipse cx="{CX}" cy="{CY}" rx="{rx}" ry="{ry}" fill="{FELT}" class="foilbg"/>'
+             f'<ellipse cx="{CX}" cy="{CY}" rx="{rx}" ry="{ry}" fill="none" '
+             f'stroke="url(#giltRim)" stroke-width="1.1" class="foil"/>'
+             f'<ellipse cx="{CX}" cy="{CY}" rx="{rx - 2}" ry="{ry - 2}" fill="none" '
+             f'stroke="{GOLD_MID}" stroke-width="0.25" class="foil"/>'
+             + place(crown()[0], CX, CY - 9.4, 15, 100, 75)
+             + place(crown()[0], CX, CY + 9.4, 15, 100, 75, rotate=180)
+             + "".join(suit(s_, CX + (i - 1.5) * 5.2, CY, 3.4, c, outline=9)
+                       for i, (s_, c) in enumerate([("spades", "#1D1B18"), ("hearts", "#B3122B"),
+                                                    ("clubs", "#13793A"), ("diamonds", "#1A5BC8")])))
+    return svg(bg + panel + f"<defs>{clip}</defs>" + field + rim_ + medal)
 
 
 # --- the deck ------------------------------------------------------------------
