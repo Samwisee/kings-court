@@ -302,9 +302,9 @@ void main() {
     expect(redeal.notes.single, startsWith('Redeal if'));
 
     final more = GameState.taskPool
-        .firstWhere((t) => t.description.startsWith('Win more ♥ cards than ♣'));
-    expect(more.cardText(4), 'Win more ♥ cards than ♣ cards');
-    expect(more.notes.single, 'Winning no ♣ cards is fine.');
+        .firstWhere((t) => t.description.startsWith('Win more ♣ cards than ♦'));
+    expect(more.cardText(4), 'Win more ♣ cards than ♦ cards');
+    expect(more.notes.single, 'Winning no ♦ cards is fine.');
     expect(total.notes, isEmpty); // the player-count numbers aren't a note
 
     for (final t in GameState.taskPool) {
