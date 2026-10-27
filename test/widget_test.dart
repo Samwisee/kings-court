@@ -215,12 +215,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Slider), const Offset(200, 0));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Re-deal tasks'));
+    await tester.tap(find.text('Deal'));
     await tester.pumpAndSettle();
 
+    // A fresh deal for the new target: same players and round, and the
+    // King card is dealt again, so the table asks who has it.
     expect(state.targetPoints, isNot(5));
     expect((state.game as GameState).players, same(players));
-    expect((state.game as GameState).kingIndex, 0);
+    expect((state.game as GameState).kingIndex, isNull);
+    expect(find.text('Who holds the King card?'), findsOneWidget);
     expect(find.text('Round 1'), findsOneWidget);
   });
 
@@ -248,7 +251,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Slider), const Offset(300, 0));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Re-deal tasks'));
+    await tester.tap(find.text('Deal'));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(SeatToken).at(3)); // King at the top
     await tester.pumpAndSettle();

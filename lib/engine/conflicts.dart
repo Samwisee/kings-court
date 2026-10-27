@@ -200,7 +200,22 @@ bool clash(String a, String b) {
     if (need(p) + need(q) > 9) return true;
   }
   if (p.courts + q.courts > 4) return true;
+  // One player takes a whole suit; the other needs a card of every suit.
+  if (_wholeSuit(a) && _everySuit(b) || _wholeSuit(b) && _everySuit(a)) return true;
   return false;
+}
+
+bool _wholeSuit(String d) => d == 'Win all nine cards of any one suit';
+
+/// Whether [d] can only be done by winning a card of each of the four
+/// suits: by name, or because the cards it names span all four.
+bool _everySuit(String d) {
+  if (d.startsWith('Win a card of every suit')) return true;
+  final p = profileOf(d);
+  final suits = {for (final c in p.cards) if (!c.isCourt) c.suit};
+  if (suits.length == 4) return true;
+  // Four of one number is one of each suit.
+  return p.ranks.values.any((n) => n >= 4);
 }
 
 /// Whether adding [next] to the tasks already [drawn] would leave a card

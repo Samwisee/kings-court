@@ -203,6 +203,10 @@ void main() {
     expect(clash('Win the 3♥', 'Win the 4♠'), isFalse);
     expect(selfClash('Win no ♠ cards', 'Win the 9♠'), isTrue);
     expect(selfClash("Don't win any tricks", 'Win the last trick'), isTrue);
+    // A whole suit to one player leaves none of it for a task needing all four.
+    expect(clash('Win all nine cards of any one suit', 'Win a card of every suit (Court Cards don\'t count)'), isTrue);
+    expect(clash('Win all four 8s', 'Win all nine cards of any one suit'), isTrue);
+    expect(clash('Win all nine cards of any one suit', 'Win the 3♥'), isFalse);
     // Every task that needs a win, profiled or not.
     for (final d in [
       'Win a trick with as many ♦ cards as ♠ cards (at least one of each)',

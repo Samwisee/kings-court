@@ -486,6 +486,23 @@ class _HomePageState extends State<HomePage>
       c.value;
     }
     _loadSaved();
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  /// The space bar brings the card tracker up, and puts it away again.
+  bool _onKey(KeyEvent e) {
+    if (e is! KeyDownEvent || e.logicalKey != LogicalKeyboardKey.space) return false;
+    // Not while typing (player names), or off the on-screen game.
+    if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) return false;
+    if (!mounted ||
+        !_inGame ||
+        _setupArgs != null ||
+        !_digital ||
+        _cards.dealId != game.dealId) {
+      return false;
+    }
+    _showCardTracker();
+    return true;
   }
 
   Future<void> _loadSaved() async {
@@ -659,6 +676,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
     _toastTimer?.cancel();
     _trackerTimer?.cancel();
     _deal.dispose();
@@ -779,21 +797,29 @@ class _HomePageState extends State<HomePage>
   int _autoDeal = -1;
   static Duration autoPlayStep = const Duration(milliseconds: 140);
 
-  /// After a trick: if no way of playing on could spoil a task, play the
-  /// round out.
-  void _maybeAutoFinish() {
-    if (_autoPlaying || !_playing || game.isTutorial) return;
+  /// After a trick: if every task is done already, or no way of playing
+  /// on could spoil one, play the round out (and judge the tasks at the
+  /// end). True when it starts.
+  bool _maybeAutoFinish() {
+    if (_autoPlaying || !_playing || game.isTutorial) return false;
     final c = _cards;
-    if (c.current.isNotEmpty || c.tricks.length >= c.totalTricks) return;
+    if (c.current.isNotEmpty || c.tricks.length >= c.totalTricks) return false;
     final open = [
       for (final t in game.tasks)
         if (t.status == TaskStatus.pending && t.assignedPlayerIndex != null) t
     ];
     // Sealed tasks hang on their order, and traitors on their schemes:
     // those rounds play on by hand.
-    if (open.isEmpty || open.any((t) => t.seal != null)) return;
-    if (game.isDynasty && game.antagonists.isNotEmpty) return;
-    final certain = roundCertain(
+    if (open.isEmpty || open.any((t) => t.seal != null)) return false;
+    if (game.isDynasty && game.antagonists.isNotEmpty) return false;
+    final v = _roundView;
+    final verdicts = [
+      for (final t in open)
+        taskRules[t.description]!(
+            v, t.assignedPlayerIndex!, c.announced[t.description])
+    ];
+    if (verdicts.contains(Verdict.failed)) return false;
+    final certain = verdicts.every((x) => x == Verdict.done) || roundCertain(
       hands: [for (final h in c.hands) [...h]],
       tricks: c.tricks,
       leader: c.leader,
@@ -811,7 +837,7 @@ class _HomePageState extends State<HomePage>
       ],
       budget: 20000,
     );
-    if (!certain) return;
+    if (!certain) return false;
     _botTimer?.cancel();
     _botTimer = null;
     setState(() {
@@ -821,6 +847,7 @@ class _HomePageState extends State<HomePage>
     });
     Sfx.fanfare();
     _trickTimers.add(Timer(const Duration(milliseconds: 700), _autoStep));
+    return true;
   }
 
   void _autoStep() {
@@ -1272,14 +1299,18 @@ class _HomePageState extends State<HomePage>
         _lastTrick = null;
         _collecting = false;
       });
-      _judgeTasks().then((_) {
-        if (!mounted) return;
-        if (game.outcome != RoundOutcome.inProgress) {
-          if (_autoPlaying) setState(() => _autoPlaying = false);
-        } else {
-          _maybeAutoFinish();
-        }
-      });
+      final c = _cards;
+      final more = c.tricks.length < c.totalTricks;
+      // A round playing itself out is judged once, at the end. And when
+      // the round is won already with cards to spare, it plays out first.
+      if (!(_autoPlaying && more) && !(more && _maybeAutoFinish())) {
+        _judgeTasks().then((_) {
+          if (!mounted) return;
+          if (game.outcome != RoundOutcome.inProgress) {
+            if (_autoPlaying) setState(() => _autoPlaying = false);
+          }
+        });
+      }
       if (_wantsToSpeak && game.outcome == RoundOutcome.inProgress) {
         _wantsToSpeak = false;
         _speak();
@@ -1995,7 +2026,14 @@ class _HomePageState extends State<HomePage>
         wounds: game.isDynasty && game.kingIndex == seat ? game.kingWounds : null,
         // Loyalty and powers are in each courtier's card (tap the token),
         // keeping the table clear.
-        onTap: game.hasRoles && !_choosingKing ? () => _showCourtier(seat) : null,
+        // Tap a courtier to ask them to show a card (once a round).
+        onTap: _choosingKing
+            ? null
+            : game.hasRoles
+                ? () => _showCourtier(seat)
+                : _digital && seat != _you
+                    ? () => _askToSpeak(seat)
+                    : null,
         tight: tight,
       ),
       ),
@@ -2312,13 +2350,24 @@ class _HomePageState extends State<HomePage>
     if (card == null || c.dealId != game.dealId || !c.hands[seat].contains(card)) {
       return null;
     }
+    // High contrast: framed in the player's colour with dark lines, and
+    // what was said about it on a dark tag.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _MiniCard(card: card, width: height / 1.3),
-        Text(c.revealHint[seat] ?? '',
-            style: const TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700, color: Palette.gold)),
+        _MiniCard(card: card, width: height / 1.3, edge: game.players[seat].color),
+        const SizedBox(height: 3),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+          decoration: BoxDecoration(
+            color: const Color(0xFF14100A),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Palette.gold, width: 1),
+          ),
+          child: Text(c.revealHint[seat] ?? '',
+              style: const TextStyle(
+                  fontSize: 11.5, fontWeight: FontWeight.w800, color: Palette.gold)),
+        ),
       ],
     );
   }
@@ -2575,51 +2624,92 @@ class _HomePageState extends State<HomePage>
         if (t.assignedPlayerIndex == _you) t
     ];
     final c = _cards;
-    return Row(
+    const tokenW = 58.0;
+    // A place kept for the card you show, as tall as your token.
+    const revealW = 40 / 1.3 + 12;
+    const leadW = tokenW + revealW;
+    final you = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _digiToken(_you, 40),
-            // Room kept from the start, so nothing shifts when it appears.
-            Opacity(
-              opacity:
-                  c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty)
-                      ? 1
-                      : 0,
-              child: Text(
-                  c.dealId == game.dealId
-                      ? '${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}'
-                      : '0 tricks',
-                  style: const TextStyle(fontSize: 11, color: Colors.white54)),
-            ),
-          ],
-        ),
-        // A place kept for the card you show, as tall as your token, so it
-        // never covers your tasks.
         SizedBox(
-          width: 40 / 1.3 + 12,
+          width: tokenW,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _digiToken(_you, 40),
+              // Room kept from the start, so nothing shifts when it appears.
+              Opacity(
+                opacity:
+                    c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty)
+                        ? 1
+                        : 0,
+                child: Text(
+                    c.dealId == game.dealId
+                        ? '${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}'
+                        : '0 tricks',
+                    style: const TextStyle(fontSize: 11, color: Colors.white54)),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          width: revealW,
           child: Center(child: _revealedView(_you, height: 40)),
         ),
-        Expanded(
-          child: _storyActive
-              ? const SizedBox.shrink()
-              : mine.isEmpty
-              ? Text(
-                  game.pickTurn != null ? 'Your tasks will appear here' : 'No tasks for you this round',
-                  style: const TextStyle(color: Colors.white54))
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                    for (final t in mine)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: _miniTask(
-                            t, math.min(width > 600 ? 190.0 : 140.0, width / 3),
-                            fontSize: width > 600 ? 15 : 13),
-                      ),
-                  ]),
-                ),
+      ],
+    );
+    final Widget tasks = _storyActive
+        ? const SizedBox.shrink()
+        : mine.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.only(left: leadW),
+                child: Text(
+                    game.pickTurn != null
+                        ? 'Your tasks will appear here'
+                        : 'No tasks for you this round',
+                    style: const TextStyle(color: Colors.white54)),
+              )
+            // Your tasks scroll sideways when they don't fit, slipping under
+            // your token and shown card rather than stopping short of them.
+            : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(left: leadW),
+                child: Row(children: [
+                  for (final t in mine)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: _miniTask(
+                          t, math.min(width > 600 ? 190.0 : 140.0, width / 3),
+                          fontSize: width > 600 ? 15 : 13),
+                    ),
+                ]),
+              );
+    return Stack(
+      alignment: Alignment.centerLeft,
+      children: [
+        // Keeps the row at least as tall as you.
+        const SizedBox(width: leadW, height: 80),
+        tasks,
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            ignoring: false,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  Palette.felt,
+                  Palette.felt,
+                  Palette.felt.withValues(alpha: 0),
+                ], stops: const [0, 0.82, 1]),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(child: you),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -2775,6 +2865,42 @@ class _HomePageState extends State<HomePage>
       if (!game.spoke[seat]) game.toggleSpoke(seat);
       if (seat == _you) _revealing = false;
     });
+  }
+
+  /// You ask a courtier to show a card. They show one a task needs if they
+  /// can, else one that says the most (the only card of its suit, or the
+  /// highest of their longest suit).
+  void _askToSpeak(int seat) {
+    final c = _cards;
+    final name = game.players[seat].name;
+    if (c.dealId != game.dealId || game.outcome != RoundOutcome.inProgress) return;
+    String? no;
+    if (game.spoke[seat]) {
+      no = '$name has already shown a card this round';
+    } else if (!game.canSpeak(seat)) {
+      no = 'Silence is decreed: no cards may be shown';
+    } else if (c.current.isNotEmpty) {
+      no = '$name can show a card once this trick is over';
+    }
+    if (no != null) {
+      _showSnack(no, Palette.feltDeep);
+      return;
+    }
+    final showable = [for (final card in c.hands[seat]) if (c.revealFor(seat, card) != null) card];
+    if (showable.isEmpty) {
+      _showSnack('$name has no card they may show', Palette.feltDeep);
+      return;
+    }
+    int score(PlayingCard card) {
+      final needed = game.tasks.any((t) =>
+          t.status == TaskStatus.pending && neededCards(t.description).contains(card));
+      final hint = c.revealFor(seat, card);
+      final suitCount = c.hands[seat].where((x) => x.suit == card.suit).length;
+      return (needed ? 100 : 0) + (hint == 'only' ? 20 : 0) + suitCount;
+    }
+    showable.sort((a, b) => score(b).compareTo(score(a)));
+    _haptic(HapticFeedback.selectionClick);
+    _reveal(seat, showable.first);
   }
 
   /// A bot shows a card someone's task needs, if it may, once a round.
@@ -4212,53 +4338,86 @@ class _HomePageState extends State<HomePage>
     final apply = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => Dialog(
           backgroundColor: Palette.feltDeep,
           surfaceTintColor: Colors.transparent,
-          title: const Text('Points target',
-              style: TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 26)),
-          content: SizedBox(
-            width: 340,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$target points',
-                    style: const TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 40,
-                        color: Palette.gold)),
-                Slider(
-                  value: target.clamp(1, maxTarget).toDouble(),
-                  min: 1,
-                  max: maxTarget.toDouble(),
-                  divisions: maxTarget - 1,
-                  onChanged: (v) => setDialogState(() => target = v.round()),
-                ),
-                const Text(
-                    'The tasks are re-dealt to add up to the new target. Players and the King stay the same.',
-                    style: TextStyle(color: Colors.white70, height: 1.35)),
-              ],
+          shape: const OrnateBorder(radius: 22),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(26, 22, 26, 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CrownIcon(size: 26),
+                  const SizedBox(height: 6),
+                  const Text('Points target',
+                      style: TextStyle(
+                          fontFamily: displayFont,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 24,
+                          color: Color(0xFFF3E7C6))),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text('$target',
+                          style: const TextStyle(
+                              fontFamily: displayFont,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 52,
+                              height: 1.1,
+                              color: Palette.gold)),
+                      const SizedBox(width: 8),
+                      const CrownIcon(size: 32),
+                    ],
+                  ),
+                  Slider(
+                    value: target.clamp(1, maxTarget).toDouble(),
+                    min: 1,
+                    max: maxTarget.toDouble(),
+                    divisions: maxTarget - 1,
+                    onChanged: (v) => setDialogState(() => target = v.round()),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel')),
+                      FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Deal')),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
-            FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Re-deal tasks')),
-          ],
         ),
       ),
     );
-    if (apply != true) return;
+    if (apply != true || !mounted) return;
     targetPoints = target;
-    _shuffleTasks();
+    _redeal();
+  }
+
+  /// Deals the round again from the start, cards, tasks and all, for a new
+  /// points target: whoever's dealt the King card is King.
+  void _redeal() {
+    if (game.isDynasty) {
+      _shuffleTasks();
+      return;
+    }
+    setState(() {
+      final keepDecree = game.decree;
+      game.addTasksUntilTarget(playerCount, targetPoints,
+          newRound: false, countRound: false);
+      game.decree = keepDecree;
+      _resetTable();
+    });
   }
 
   // ------------------------------------------------------------------ views
@@ -4559,13 +4718,11 @@ class _HomePageState extends State<HomePage>
   Widget _buildMenu() {
     return PopupMenuButton<String>(
       tooltip: 'Menu',
-      icon: const Icon(Icons.menu_rounded, color: Palette.gold, size: 30),
+      icon: const _OrnateMenuIcon(size: 30),
       color: Palette.feltDeep,
       elevation: 12,
       offset: const Offset(0, 48),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Palette.gold, width: 1.5),
+      shape: const OrnateBorder(radius: 16),
       ),
       onSelected: (choice) async {
         switch (choice) {
@@ -4635,10 +4792,12 @@ class _HomePageState extends State<HomePage>
         _menuItem('rules', Icons.menu_book_outlined, 'How to Play'),
         if (_inGame && game.currentTiding != null)
           _menuItem('tidings', Icons.history_edu_outlined, 'This round\u2019s tidings'),
-        _menuItem(
-            'upright',
-            _upright ? Icons.laptop_rounded : Icons.table_restaurant_outlined,
-            _upright ? 'Laptop view' : 'Table view'),
+        // Only round a real table does the view need turning.
+        if (_inGame && !_digital)
+          _menuItem(
+              'upright',
+              _upright ? Icons.laptop_rounded : Icons.table_restaurant_outlined,
+              _upright ? 'Laptop view' : 'Table view'),
         _menuItem(
             'sound',
             Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
@@ -7169,6 +7328,101 @@ class _AutoFinishBanner extends StatelessWidget {
   }
 }
 
+/// A gold double rule with a jewel at each corner, for menus and dialogs.
+class OrnateBorder extends ShapeBorder {
+  const OrnateBorder({this.radius = 16});
+  final double radius;
+
+  @override
+  EdgeInsetsGeometry get dimensions => const EdgeInsets.all(2);
+
+  RRect _r(Rect rect) => RRect.fromRectAndRadius(rect, Radius.circular(radius));
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) =>
+      Path()..addRRect(_r(rect.deflate(2)));
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) =>
+      Path()..addRRect(_r(rect));
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    final gold = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Palette.gold;
+    canvas.drawRRect(_r(rect.deflate(1)), gold..strokeWidth = 2);
+    final inner = rect.deflate(7);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(inner, Radius.circular(math.max(0, radius - 6))),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = Palette.gold.withValues(alpha: 0.55));
+    // A small diamond at each corner of the inner rule.
+    final gem = Paint()..color = Palette.gold;
+    final o = radius * 0.3 + 6;
+    for (final c in [
+      inner.topLeft + Offset(o, o),
+      inner.topRight + Offset(-o, o),
+      inner.bottomLeft + Offset(o, -o),
+      inner.bottomRight + Offset(-o, -o),
+    ]) {
+      canvas.drawPath(
+          Path()
+            ..moveTo(c.dx, c.dy - 4)
+            ..lineTo(c.dx + 4, c.dy)
+            ..lineTo(c.dx, c.dy + 4)
+            ..lineTo(c.dx - 4, c.dy)
+            ..close(),
+          gem);
+    }
+  }
+
+  @override
+  ShapeBorder scale(double t) => OrnateBorder(radius: radius * t);
+}
+
+/// The menu button: three gold bars, the middle one shorter, each tipped
+/// with a small diamond.
+class _OrnateMenuIcon extends StatelessWidget {
+  const _OrnateMenuIcon({this.size = 30});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: _OrnateMenuPainter());
+}
+
+class _OrnateMenuPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    final bar = Paint()
+      ..color = Palette.gold
+      ..strokeWidth = h * 0.09
+      ..strokeCap = StrokeCap.round;
+    final gem = Paint()..color = Palette.gold;
+    void diamond(Offset c, double r) => canvas.drawPath(
+        Path()
+          ..moveTo(c.dx, c.dy - r)
+          ..lineTo(c.dx + r, c.dy)
+          ..lineTo(c.dx, c.dy + r)
+          ..lineTo(c.dx - r, c.dy)
+          ..close(),
+        gem);
+    for (final (y, inset) in [(0.25, 0.2), (0.5, 0.3), (0.75, 0.2)]) {
+      final a = Offset(w * inset, h * y), b = Offset(w * (1 - inset), h * y);
+      canvas.drawLine(a, b, bar);
+      diamond(a - Offset(h * 0.07, 0), h * 0.07);
+      diamond(b + Offset(h * 0.07, 0), h * 0.07);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_OrnateMenuPainter old) => false;
+}
+
 /// The game's name, with a little crown over the I of King's.
 class _CrownedTitle extends StatelessWidget {
   const _CrownedTitle();
@@ -7198,8 +7452,8 @@ class _CrownedTitle extends StatelessWidget {
               // its stroke, with the same soft shadow as the letters.
               Positioned(
                 top: -_style.fontSize! * 0.36,
-                left: -_style.fontSize! * 0.3,
-                right: -_style.fontSize! * 0.3 + _style.fontSize! * 0.05,
+                left: -_style.fontSize! * 0.3 + _style.fontSize! * 0.07,
+                right: -_style.fontSize! * 0.3,
                 child: Center(
                   child: Stack(clipBehavior: Clip.none, children: [
                     ImageFiltered(
@@ -9299,7 +9553,7 @@ class _MiniCard extends StatelessWidget {
       width: width,
       height: width * 1.3,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: outlineColour,
         borderRadius: BorderRadius.circular(r),
       ),
       padding: EdgeInsets.all(edge != null ? 1.2 : 0),
@@ -9317,7 +9571,7 @@ class _MiniCard extends StatelessWidget {
           decoration: edge != null
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(math.max(0, r - edgeW)),
-                  border: Border.all(color: Colors.black87, width: 1),
+                  border: Border.all(color: outlineColour, width: 1),
                 )
               : null,
           child: Stack(children: [

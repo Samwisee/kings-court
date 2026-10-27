@@ -110,9 +110,13 @@ TaskRule exactly(int n, bool Function(PlayingCard) test) => (v, owner, _) {
       return _end(v, mine == n);
     };
 
-/// Win no cards passing [test].
-TaskRule winNone(bool Function(PlayingCard) test) =>
-    never((v, owner) => v.won(owner).any(test));
+/// Win no cards passing [test]: done as soon as the last of them has been
+/// played without coming to [owner].
+TaskRule winNone(bool Function(PlayingCard) test) => (v, owner, _) {
+      if (v.won(owner).any(test)) return Verdict.failed;
+      if (v.countLeft(test) == 0) return Verdict.done;
+      return _end(v, true);
+    };
 
 bool Function(PlayingCard) _suit(Suit s) => (c) => c.suit == s;
 bool Function(PlayingCard) _rank(int r) => (c) => !c.isCourt && c.rank == r;

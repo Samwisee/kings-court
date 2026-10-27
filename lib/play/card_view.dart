@@ -71,12 +71,14 @@ class PlayingCardView extends StatelessWidget {
                 ? Palette.gold
                 : card.isCourt
                     ? Palette.gold
-                    : const Color(0xFFD9D2C3));
+                    // Number cards keep the same band in their own white,
+                    // so their lines sit where a player's colour would.
+                    : Palette.card);
     final thick = glow || edge != null || marks.isNotEmpty || card.isCourt;
     // A player's colour (or the gold of a suggested card) round the edge:
     // dark lines touch it on both sides, so it reads against anything.
     final coloured = glow || edge != null || marks.isNotEmpty;
-    final borderWidth = thick ? 3.0 : card.isCourt ? 2.0 : 1.0;
+    final borderWidth = thick || !card.isCourt ? 3.0 : 2.0;
 
     return Semantics(
       label: card.spoken,
@@ -130,7 +132,7 @@ class PlayingCardView extends StatelessWidget {
               ),
             // (The Stack already sits inside the coloured border, so the
             // line goes right at its edge, touching the colour.)
-            if (coloured)
+            if (coloured || !card.isCourt)
               Positioned.fill(
                 child: Padding(
                   padding: EdgeInsets.zero,
@@ -146,7 +148,7 @@ class PlayingCardView extends StatelessWidget {
             // Every card has an inner frame, as on the printed deck: gold
             // on the Court Cards, a fine dark rule on the rest (unless a
             // player's colour is already framed in dark).
-            if (card.isCourt || !coloured)
+            if (card.isCourt)
             Positioned.fill(
               child: Container(
                 margin: EdgeInsets.all(width * 0.06),
