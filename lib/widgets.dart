@@ -2649,7 +2649,47 @@ class _GlitterPainter extends CustomPainter {
   bool shouldRepaint(_GlitterPainter old) => old.t != t;
 }
 
-/// The card tracker's icon: three cards fanned out, the front one gold.
+/// The card tracker's icon: a small grid of cards, like the tracker's own
+/// rows of the deck, some of them played (filled) and some still to come.
+class TrackerIcon extends StatelessWidget {
+  const TrackerIcon({super.key, this.size = 26, this.color = Palette.gold});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: _TrackerPainter(color));
+}
+
+class _TrackerPainter extends CustomPainter {
+  _TrackerPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    final w = s * 0.24, h = s * 0.32, gap = s * 0.08;
+    final left = (s - 3 * w - 2 * gap) / 2, top = (s - 2 * h - gap) / 2;
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = s * 0.065
+      ..color = color;
+    final fill = Paint()..color = color;
+    const filled = [true, true, false, true, false, false];
+    for (int i = 0; i < 6; i++) {
+      final r = RRect.fromRectAndRadius(
+          Rect.fromLTWH(left + (i % 3) * (w + gap), top + (i ~/ 3) * (h + gap), w, h),
+          Radius.circular(s * 0.05));
+      canvas.drawRRect(r, filled[i] ? fill : line);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TrackerPainter old) => old.color != color;
+}
+
+/// Court Cards fanned out, the front one gold with a crown; struck out by
+/// [NoCourtIcon] for "no Court Cards".
 class CardFanIcon extends StatelessWidget {
   const CardFanIcon({super.key, this.size = 26, this.color = Palette.gold});
   final double size;
@@ -2791,11 +2831,14 @@ class _SuitPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = suitPaths[suit.name];
-    if (path == null) return;
+    final parts = suitPaths[suit.name];
+    if (parts == null) return;
     canvas.save();
     canvas.scale(size.width / 100, size.height / 100);
-    canvas.drawPath(path, Paint()..color = color);
+    final paint = Paint()..color = color;
+    for (final p in parts) {
+      canvas.drawPath(p, paint);
+    }
     canvas.restore();
   }
 
@@ -2803,7 +2846,8 @@ class _SuitPainter extends CustomPainter {
   bool shouldRepaint(_SuitPainter old) => old.suit != suit || old.color != color;
 }
 
-/// A Court Card struck out: a crown with a slash, for "no Court Cards".
+/// Court Cards struck out: the fanned Court Cards with a slash, for "no
+/// Court Cards".
 class NoCourtIcon extends StatelessWidget {
   const NoCourtIcon({super.key, required this.size, required this.color});
   final double size;
@@ -2811,11 +2855,11 @@ class NoCourtIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: size * 1.15,
-        height: size,
+        width: size * 1.1,
+        height: size * 1.1,
         child: Stack(alignment: Alignment.center, children: [
-          CrownIcon(size: size * 0.86, color: color.withValues(alpha: 0.75)),
-          CustomPaint(size: Size(size * 1.15, size), painter: _SlashPainter(color)),
+          CardFanIcon(size: size * 1.1, color: Palette.goldDeep),
+          CustomPaint(size: Size.square(size * 1.1), painter: _SlashPainter(color)),
         ]),
       );
 }
@@ -2831,7 +2875,7 @@ class _SlashPainter extends CustomPainter {
         Offset(size.width * 0.9, size.height * 0.08),
         Paint()
           ..color = Palette.lost
-          ..strokeWidth = size.height * 0.14
+          ..strokeWidth = size.height * 0.11
           ..strokeCap = StrokeCap.round);
   }
 

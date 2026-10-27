@@ -1472,29 +1472,43 @@ class _HomePageState extends State<HomePage>
   }
 
   /// The cards [t] is about, and what's become of each this round.
-  List<(PlayingCard, _CardFate)> _cardStates(Task t) {
+  /// The cards a task is about, marked the way the card tracker marks
+  /// them: outlined in the colour of whoever played each one (with the
+  /// trick it fell in), or of whoever is known to hold it.
+  List<_TaskCard> _cardStates(Task t) {
     final cards = relevantCards(t.description);
     if (!_digital || _cards.dealId != game.dealId) {
-      return [for (final c in cards) (c, _CardFate.unknown)];
+      return [for (final c in cards) (card: c, edge: null, trick: null, played: false)];
     }
-    final owner = t.assignedPlayerIndex;
-    final wants = wantsToWin(t.description);
-    final named = RegExp(r'[A2-9][♥♦♠♣]|Queen|Joker|Jack').hasMatch(t.description);
-    _CardFate fate(PlayingCard c) {
-      for (final trick in _cards.tricks) {
-        if (!trick.cards.contains(c)) continue;
-        if (owner == null) return _CardFate.played;
-        if (trick.winner == owner) return wants ? _CardFate.good : _CardFate.bad;
-        return wants && named ? _CardFate.bad : _CardFate.played;
+    final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
+    for (int i = 0; i < _cards.tricks.length; i++) {
+      final tr = _cards.tricks[i];
+      for (int k = 0; k < tr.cards.length; k++) {
+        playedIn[tr.cards[k]] = (i + 1, tr.seats[k]);
       }
-      if (_cards.current.contains(c)) return _CardFate.onTable;
-      if (_cards.hands.length > _you && _cards.hands[_you].contains(c)) {
-        return _CardFate.yours;
-      }
-      return _CardFate.unknown;
     }
-
-    return [for (final c in cards) (c, fate(c))];
+    for (int k = 0; k < _cards.current.length; k++) {
+      playedIn[_cards.current[k]] = (_cards.tricks.length + 1, _cards.currentSeats[k]);
+    }
+    final holder = <PlayingCard, int>{
+      if (_cards.hands.length > _you)
+        for (final c in _cards.hands[_you]) c: _you,
+      for (final g in guessHands(_cards, _you))
+        for (final c in g.certain) c: g.seat,
+    };
+    return [
+      for (final c in cards)
+        (
+          card: c,
+          edge: playedIn[c] != null
+              ? game.players[playedIn[c]!.$2].color
+              : holder[c] != null
+                  ? game.players[holder[c]!].color
+                  : null,
+          trick: playedIn[c]?.$1,
+          played: playedIn[c] != null,
+        ),
+    ];
   }
 
   String? _progressOf(Task t) {
@@ -1682,7 +1696,7 @@ class _HomePageState extends State<HomePage>
                 IconButton(
                   tooltip: 'Cards played and still to come',
                   onPressed: _showCardTracker,
-                  icon: const CardFanIcon(size: 28),
+                  icon: const TrackerIcon(size: 26),
                 ),
 
               // The speech token: show one card, once a round.
@@ -3847,6 +3861,7 @@ class _HomePageState extends State<HomePage>
                                 : '${player.name}, the King'
                             : player.name,
                         antagonist: game.isAntagonist(seat),
+                        king: isKing,
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
@@ -4163,8 +4178,10 @@ class _HomePageState extends State<HomePage>
       builder: (context) => RotatedBox(
         quarterTurns: quarterTurns,
         child: AlertDialog(
-        backgroundColor: Palette.card,
+        backgroundColor: task.isFailed ? const Color(0xFFFBE4E1) : Palette.card,
         surfaceTintColor: Colors.transparent,
+        // Whose it is shows as on the table: their colour, edged in dark.
+        shape: _HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
         scrollable: true,
         content: SizedBox(
           width: 360,
@@ -4172,43 +4189,49 @@ class _HomePageState extends State<HomePage>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Laid out as the card on the table: points and crown, then
+              // the words.
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Column(children: [
-                    Text('${_points(task)}',
-                        style: const TextStyle(
-                            fontFamily: displayFont,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 36,
-                            height: 1,
-                            color: Palette.ink)),
-                    const SizedBox(height: 4),
-                    const CrownIcon(size: 18, color: Palette.goldDeep),
-                  ]),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: SuitText(task.cardText(playerCount),
-                        struck: _wonNamed(task),
-                        style: const TextStyle(
-                            fontSize: 21,
-                            height: 1.3,
-                            fontWeight: FontWeight.w500,
-                            color: Palette.ink)),
-                  ),
+                  Text('${_points(task)}',
+                      style: const TextStyle(
+                          fontFamily: displayFont,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 32,
+                          height: 1,
+                          color: Palette.ink)),
+                  const SizedBox(width: 4),
+                  const CrownIcon(size: 22, color: Palette.goldDeep),
+                  if (task.seal != null) ...[
+                    const SizedBox(width: 6),
+                    WaxSeal(seal: task.seal!, size: 30),
+                  ],
+                  const Spacer(),
+                  if (_progressOf(task) case final p? when !task.isCompleted && !task.isFailed)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Palette.ink,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(p,
+                          style: const TextStyle(
+                              fontFamily: bodyFont,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: Palette.gold)),
+                    ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                owner == null
-                    ? 'Not taken yet. Drag the card onto a seat to give it to a player.'
-                    : _digital && task.assignedPlayerIndex == _you
-                        ? 'Your task.'
-                        : game.hasRoles
-                            ? '${game.courtiers[task.assignedPlayerIndex!].title}\u2019s task.'
-                            : '${owner.name} has this task.',
-                style: const TextStyle(fontSize: 15, color: Palette.inkSoft),
-              ),
+              const SizedBox(height: 8),
+              SuitText(task.cardText(playerCount),
+                  struck: _wonNamed(task),
+                  style: const TextStyle(
+                      fontSize: 22,
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                      color: Palette.ink)),
               // How it's going, for every task, once the cards are dealt.
               if (_statusOf(task) case final status?)
                 Container(
@@ -4578,14 +4601,27 @@ class _HomePageState extends State<HomePage>
     return Stack(children: [
     Scaffold(
       extendBodyBehindAppBar: useTopBar,
-      appBar: _inGame && _setupArgs == null
-          ? _buildAppBar()
-          : AppBar(
-              toolbarHeight: 60,
-              actions: [
-                Padding(padding: const EdgeInsets.only(top: 8), child: _buildMenu()),
-                const SizedBox(width: 18),
-              ]),
+      // The game's bar and the plain one cross-fade, so the round and
+      // points don't pop in and out with the setup.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          layoutBuilder: (current, previous) => Stack(
+              fit: StackFit.expand,
+              children: [...previous, if (current != null) current]),
+          child: _inGame && _setupArgs == null
+              ? KeyedSubtree(key: const ValueKey('game-bar'), child: _buildAppBar())
+              : AppBar(
+                  key: const ValueKey('plain-bar'),
+                  toolbarHeight: 60,
+                  actions: [
+                    Padding(
+                        padding: const EdgeInsets.only(top: 8), child: _buildMenu()),
+                    const SizedBox(width: 18),
+                  ]),
+        ),
+      ),
       body: SafeArea(
         top: !useTopBar,
         child: Stack(
@@ -4628,20 +4664,29 @@ class _HomePageState extends State<HomePage>
                       ],
                     ),
             ),
-            if (_setupArgs != null)
-              Positioned.fill(
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
+            // The setup fades in over the table, and fades away again
+            // rather than vanishing.
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: _setupArgs == null,
+                child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
-                  builder: (context, t, child) =>
-                      Opacity(opacity: t, child: child),
-                  child: ColoredBox(
-                    // In a game, wash the table out so the setup reads.
-                    color: _inGame ? Palette.felt : Colors.transparent,
-                    child: Center(child: _buildSetupPanel()),
-                  ),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  layoutBuilder: (current, previous) => Stack(
+                      fit: StackFit.expand,
+                      children: [...previous, if (current != null) current]),
+                  child: _setupArgs == null
+                      ? const SizedBox.shrink(key: ValueKey('no-setup'))
+                      : ColoredBox(
+                          key: const ValueKey('setup'),
+                          // In a game, wash the table out so the setup reads.
+                          color: _inGame ? Palette.felt : Colors.transparent,
+                          child: Center(child: _buildSetupPanel()),
+                        ),
                 ),
               ),
+            ),
           ],
         ),
       ),
@@ -8731,11 +8776,15 @@ class _HouseBanner extends StatelessWidget {
       {required this.courtier,
       required this.color,
       required this.name,
-      required this.antagonist});
+      required this.antagonist,
+      this.king = false});
   final Courtier courtier;
   final Color color;
   final String name;
   final bool antagonist;
+
+  /// The King's seat: their token wears the crown, as at the table.
+  final bool king;
 
   @override
   Widget build(BuildContext context) {
@@ -8753,6 +8802,8 @@ class _HouseBanner extends StatelessWidget {
       ),
       child: Stack(
         clipBehavior: Clip.hardEdge,
+        // The token and words sit in the middle of the band, top to bottom.
+        alignment: AlignmentDirectional.centerStart,
         children: [
           // The sigil, big and faint, like a banner on the wall.
           Positioned(
@@ -8771,12 +8822,19 @@ class _HouseBanner extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
             child: Row(
               children: [
-                ShapedToken(
-                    shape: courtier.shape,
-                    size: 52,
-                    color: antagonist ? const Color(0xFF3A0610) : color,
-                    ring: Palette.gold,
-                    ringWidth: 2.5),
+                Column(mainAxisSize: MainAxisSize.min, children: [
+                  if (king)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 2),
+                      child: CrownIcon(size: 26, color: Palette.gold),
+                    ),
+                  ShapedToken(
+                      shape: courtier.shape,
+                      size: 52,
+                      color: antagonist ? const Color(0xFF3A0610) : color,
+                      ring: Palette.gold,
+                      ringWidth: 2.5),
+                ]),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -9199,82 +9257,33 @@ class _TermsListState extends State<_TermsList> {
 }
 
 
-/// What has become of a card a task is about.
-enum _CardFate {
-  /// Not played yet, and not in your hand.
-  unknown,
+/// A card a task is about, marked as in the card tracker.
+typedef _TaskCard = ({PlayingCard card, Color? edge, int? trick, bool played});
 
-  /// In your hand.
-  yours,
-
-  /// In the trick being played now.
-  onTable,
-
-  /// Played, and went the way the task wants.
-  good,
-
-  /// Played, and went the way the task doesn't want.
-  bad,
-
-  /// Played, and doesn't decide anything by itself.
-  played,
-}
-
-/// The cards a task is about, each marked with what's become of it.
+/// The cards a task is about, each marked the way the card tracker marks
+/// it: who played it and in which trick, or who holds it.
 class _TaskCardsRow extends StatelessWidget {
   const _TaskCardsRow({required this.cards});
-  final List<(PlayingCard, _CardFate)> cards;
+  final List<_TaskCard> cards;
 
   @override
   Widget build(BuildContext context) {
-    Widget mark(_CardFate f) => switch (f) {
-          _CardFate.good => const Icon(Icons.check_circle, size: 16, color: Palette.won),
-          _CardFate.bad => const Icon(Icons.cancel, size: 16, color: Palette.lost),
-          _CardFate.played => const Icon(Icons.remove_circle, size: 16, color: Palette.inkSoft),
-          _CardFate.onTable => const Icon(Icons.play_circle, size: 16, color: Palette.goldDeep),
-          _CardFate.yours => const Icon(Icons.pan_tool_alt_rounded, size: 15, color: Palette.goldDeep),
-          _CardFate.unknown => const SizedBox(width: 16, height: 16),
-        };
-    final tracked = cards.any((c) => c.$2 != _CardFate.unknown);
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(top: 12),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
         children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final (card, fate) in cards)
-                Semantics(
-                  label: '${card.spoken}: ${switch (fate) {
-                    _CardFate.good => 'won as needed',
-                    _CardFate.bad => 'went the wrong way',
-                    _CardFate.played => 'played',
-                    _CardFate.onTable => 'on the table now',
-                    _CardFate.yours => 'in your hand',
-                    _CardFate.unknown => 'not played yet',
-                  }}',
-                  excludeSemantics: true,
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    _MiniCard(
-                        card: card,
-                        width: 30,
-                        dimmed: fate == _CardFate.good ||
-                            fate == _CardFate.bad ||
-                            fate == _CardFate.played),
-                    const SizedBox(height: 2),
-                    mark(fate),
-                  ]),
-                ),
-            ],
-          ),
-          if (tracked)
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text(
-                  '✓ won as needed   ✗ went the wrong way   – played   ✋ in your hand',
-                  style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+          for (final c in cards)
+            Semantics(
+              label: '${c.card.spoken}: ${c.played ? 'played in trick ${c.trick}' : c.edge != null ? 'held' : 'still to come'}',
+              excludeSemantics: true,
+              child: _MiniCard(
+                  card: c.card,
+                  width: 32,
+                  dimmed: c.played,
+                  edge: c.edge,
+                  trick: c.trick),
             ),
         ],
       ),
@@ -9310,7 +9319,7 @@ class _MoreAboutState extends State<_MoreAbout> {
               padding: const EdgeInsets.symmetric(horizontal: 4)),
           icon: Icon(_open ? Icons.expand_less_rounded : Icons.info_outline_rounded,
               size: 20),
-          label: Text(_open ? 'Less' : 'What this task means'),
+          label: Text(_open ? 'Less' : 'What does this task mean?'),
         ),
         AnimatedSize(
           duration: const Duration(milliseconds: 220),
@@ -9982,5 +9991,33 @@ class _GlowButtonState extends State<_GlowButton>
         ),
       ),
     );
+  }
+}
+
+
+/// A dialog's edge in a player's colour with a dark line either side, like
+/// a task card's outline on the table; just the dark line for nobody's.
+class _HighVisBorder extends RoundedRectangleBorder {
+  const _HighVisBorder(this.colour)
+      : super(borderRadius: const BorderRadius.all(Radius.circular(24)));
+  final Color? colour;
+
+  @override
+  ShapeBorder scale(double t) => this;
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    final r = borderRadius.resolve(textDirection).toRRect(rect);
+    Paint line(Color c, double w) => Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w
+      ..color = c;
+    if (colour == null) {
+      canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
+      return;
+    }
+    canvas.drawRRect(r.deflate(4.5), line(colour!, 6));
+    canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
+    canvas.drawRRect(r.deflate(8.5), line(outlineColour, 1.5));
   }
 }

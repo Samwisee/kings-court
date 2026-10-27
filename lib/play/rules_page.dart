@@ -192,19 +192,21 @@ class _RulesPageState extends State<RulesPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // The top bar: a gold arrow back, and the title.
+              // The top bar: the title, and a gold cross to close.
               SizedBox(
                 height: 60,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     Positioned(
-                      left: 8,
+                      right: 10,
                       child: IconButton(
-                        tooltip: 'Back',
+                        tooltip: 'Close',
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_rounded,
-                            color: Palette.gold, size: 28, shadows: _shadow),
+                        style: IconButton.styleFrom(
+                            overlayColor: Colors.transparent),
+                        icon: const Icon(Icons.close_rounded,
+                            color: Palette.gold, size: 30, shadows: _shadow),
                       ),
                     ),
                     const Text('How to Play',
