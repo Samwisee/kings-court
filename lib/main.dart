@@ -2706,7 +2706,8 @@ class _HomePageState extends State<HomePage>
               ),
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
-                child: Center(child: you),
+                // Shrinks rather than spills where the row is short.
+                child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: you)),
               ),
             ),
           ),
@@ -4594,7 +4595,7 @@ class _HomePageState extends State<HomePage>
           left: 0,
           right: 0,
           top: 110,
-          child: IgnorePointer(child: Center(child: _AutoFinishBanner())),
+          child: IgnorePointer(child: Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: _AutoFinishBanner()))),
         ),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
@@ -7315,12 +7316,16 @@ class _AutoFinishBanner extends StatelessWidget {
         child: const Row(mainAxisSize: MainAxisSize.min, children: [
           CrownIcon(size: 22),
           SizedBox(width: 10),
-          Text('Every task is safe!',
+          Flexible(
+            child: Text('Every task is safe!',
+              maxLines: 2,
+              textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: displayFont,
                   fontWeight: FontWeight.w900,
                   fontSize: 22,
                   color: Palette.gold)),
+          ),
         ]),
       ),
     );
