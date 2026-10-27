@@ -2686,14 +2686,14 @@ class _HomePageState extends State<HomePage>
               );
     return Stack(
       alignment: Alignment.centerLeft,
+      clipBehavior: Clip.none,
       children: [
         // Keeps the row at least as tall as you.
         const SizedBox(width: leadW, height: 80),
         tasks,
+        // You, at your full size, over the start of the row.
         Positioned(
           left: 0,
-          top: 0,
-          bottom: 0,
           child: IgnorePointer(
             ignoring: false,
             child: DecoratedBox(
@@ -2707,7 +2707,7 @@ class _HomePageState extends State<HomePage>
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
                 // Shrinks rather than spills where the row is short.
-                child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: you)),
+                child: you,
               ),
             ),
           ),
