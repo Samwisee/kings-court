@@ -45,6 +45,20 @@ Finder freeCard(WidgetTester tester, bool Function(TableCard w) ok) {
 }
 
 
+/// Drags the table card [card] onto [to]. The harness sometimes misses a
+/// drag on the round table (something else under the finger), so if the
+/// task isn't taken it tries again from other parts of the card.
+Future<void> dragCardTo(WidgetTester tester, Finder card, Offset to) async {
+  final task = (tester.widget(card) as TableCard).task;
+  final rect = tester.getRect(card);
+  for (final f in const [Offset(0.5, 0.5), Offset(0.3, 0.7), Offset(0.7, 0.3)]) {
+    await dragFromTo(tester,
+        Offset(rect.left + rect.width * f.dx, rect.top + rect.height * f.dy), to);
+    await tester.pump();
+    if (task.assignedPlayerIndex != null) return;
+  }
+}
+
 /// Drags from [from] to [to] in small steps, as a finger would.
 Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
   final g = await tester.startGesture(from);
@@ -249,7 +263,7 @@ void main() {
     for (int n = 0; n < count; n++) {
       final card = freeCard(tester, (_) => true);
       final seat = tester.getCenter(find.byType(SeatToken).at(n.isEven ? 0 : 1));
-      await dragFromTo(tester, tester.getCenter(card), seat);
+      await dragCardTo(tester, card, seat);
       await tester.pumpAndSettle();
     }
 
@@ -446,18 +460,8 @@ void main() {
       final picker = game.pickTurn!;
       final target = tester.getCenter(find.byType(SeatToken).at(picker));
       final task = (tester.widget(card) as TableCard).task;
-      var start = tester.getCenter(card);
-      await dragFromTo(tester, start, target);
-      await tester.pump();
-      // The harness sometimes misses a drag on the round table (something
-      // else under the finger); try again from another part of the card.
-      final rect = tester.getRect(card);
-      for (final f in const [Offset(0.3, 0.7), Offset(0.7, 0.3)]) {
-        if (task.assignedPlayerIndex != null) break;
-        start = Offset(rect.left + rect.width * f.dx, rect.top + rect.height * f.dy);
-        await dragFromTo(tester, start, target);
-        await tester.pump();
-      }
+      final start = tester.getCenter(card);
+      await dragCardTo(tester, card, target);
       // Next clockwise who can take one of the tasks left (anyone who
       // can't is skipped).
       seat = picker;
