@@ -304,6 +304,16 @@ void main() {
     });
   }
 
+  testWidgets('The front page, wide', (tester) async {
+    tester.view.physicalSize = const Size(3840, 2160);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/wide-welcome.png'));
+  });
+
   testWidgets('The Court Cards', (tester) async {
     tester.view.physicalSize = const Size(1400, 560);
     tester.view.devicePixelRatio = 2;
