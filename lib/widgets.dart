@@ -1865,8 +1865,11 @@ class _BubbleTail extends CustomPainter {
 /// a key that follows the courtier.
 class SlideToPlace extends StatefulWidget {
   const SlideToPlace(
-      {super.key, required this.child, this.hop = true, this.within});
+      {super.key, required this.child, this.hop = true, this.within, this.enabled = true});
   final Widget child;
+
+  /// Off: stays put, however the layout moves.
+  final bool enabled;
 
   /// A little hop in each step, for walking courtiers.
   final bool hop;
@@ -1901,7 +1904,7 @@ class _SlideToPlaceState extends State<SlideToPlace>
         ancestor: anchor is RenderBox && anchor.attached ? anchor : null);
     final last = _last;
     _last = now;
-    if (last == null) return;
+    if (last == null || !widget.enabled) return;
     final moved = last - now;
     if (moved.distance > 2) {
       // Start from where it appeared to be, mid-glide or not.

@@ -1331,6 +1331,12 @@ class _HomePageState extends State<HomePage>
 
   static const _trackerSlide = Duration(milliseconds: 320);
 
+  /// Space either side of the card tracker: none on a phone, and enough
+  /// on a wider screen to keep it at most [_trackerMaxWidth] wide.
+  static const _trackerMaxWidth = 720.0;
+  double _trackerInset(BuildContext context) =>
+      math.max(0.0, (MediaQuery.sizeOf(context).width - _trackerMaxWidth) / 2);
+
   /// The cards [t] is about, and what's become of each this round.
   List<(PlayingCard, _CardFate)> _cardStates(Task t) {
     final cards = relevantCards(t.description);
@@ -2076,6 +2082,10 @@ class _HomePageState extends State<HomePage>
           width: colWidth,
           child: SlideToPlace(
             key: ValueKey('slide-${role?.name ?? seat}'),
+            // Courtiers walk between places only in the Dynasty story; in
+            // any other game everyone sits in their place from the start,
+            // so the crown lands where they are.
+            enabled: game.solo,
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -4345,6 +4355,10 @@ class _HomePageState extends State<HomePage>
       // away.
       if (_trackerOpen)
         Positioned.fill(
+          // Keyed, as is the tracker: without keys, adding this layer
+          // would be mistaken for the tracker, which would then be built
+          // afresh, already open, and pop up instead of sliding.
+          key: const ValueKey('tracker-dismiss'),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: _closeTracker,
@@ -4358,8 +4372,11 @@ class _HomePageState extends State<HomePage>
           _digital &&
           _cards.dealId == game.dealId)
         Positioned(
-          left: 0,
-          right: 0,
+          key: const ValueKey('tracker'),
+          // On a tablet or wider it's a dock in the middle, with the table
+          // showing either side: tap there to put it away.
+          left: _trackerInset(context),
+          right: _trackerInset(context),
           bottom: 0,
           height: MediaQuery.sizeOf(context).height * 0.5,
           child: Offstage(
