@@ -2515,10 +2515,14 @@ class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin 
     if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
       _c.stop();
       _c.value = 0.62;
-    } else if (!_c.isAnimating) {
-      _c.repeat();
+    } else if (!_c.isAnimating && !_started) {
+      // A few glitters as it arrives, then it rests.
+      _started = true;
+      _c.repeat(count: 4);
     }
   }
+
+  bool _started = false;
 
   @override
   void dispose() {
