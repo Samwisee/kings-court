@@ -195,7 +195,7 @@ def _circle(x, y, r) -> str:
 
 def _jester(ow: float, gilt: str):
     """The Joker's three-pointed cap with bells."""
-    cap = ("M18 73.8 Q10 40.5 2 27 Q30 34.2 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
+    cap = ("M18 73.8 Q16 52 9 42 Q3 33 2 27 Q12 28 20 33 Q32 40 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
            "Q70 34.2 98 27 Q90 40.5 82 73.8 Z")
     band = "M19 70 H81 A4 4 0 0 1 85 74 V79 A4 4 0 0 1 81 83 H19 A4 4 0 0 1 15 79 V74 A4 4 0 0 1 19 70 Z"
     bells = [_circle(x, y, 6) for x, y in [(4, 27), (50, 4.5), (96, 27)]]
@@ -210,13 +210,13 @@ def _jack(ow: float, gilt: str, cloth: str):
     pieces = [_circle(50, 0, 4.5), "M46.5 1.8 H53.5 V22.5 H46.5 Z",
               "M29 20.7 H71 A3 3 0 0 1 74 23.7 A3 3 0 0 1 71 26.7 H29 A3 3 0 0 1 26 23.7 "
               "A3 3 0 0 1 29 20.7 Z",
-              "M45 26.1 L55 26.1 L55 82.8 L50 91.8 L45 82.8 Z",
-              "M24 30.6 L76 30.6 L76 48.6 Q74 66.6 50 75.6 Q26 66.6 24 48.6 Z"]
-    chevron = "M32 43.2 L50 54.9 L68 43.2 L68 52.2 L50 63.9 L32 52.2 Z"
+              "M45 26.1 L55 26.1 L55 88.8 L50 97.8 L45 88.8 Z",
+              "M24 30.6 L76 30.6 L76 51.6 Q74 71.6 50 81.6 Q26 71.6 24 51.6 Z"]
+    chevron = "M32 45.2 L50 56.9 L68 45.2 L68 54.2 L50 65.9 L32 54.2 Z"
     art = (_solid(pieces, gilt, ow)
            + f'<g class="foilknock"><path d="{chevron}" fill="{cloth}" stroke="{OUTLINE}" '
              f'stroke-width="{ow * 0.45:.3f}" stroke-linejoin="round"/></g>')
-    return art, (24, -4.5, 76, 91.8)
+    return art, (24, -4.5, 76, 97.8)
 
 
 def _tiara(ow: float, gilt: str):
@@ -266,7 +266,8 @@ def _tiara(ow: float, gilt: str):
 def _king(ow: float, gilt: str, cloth: str):
     """The King's crown (the app's), with three jewels in the cloth's
     colour on its band."""
-    body = "M0 18.75 L27 41.25 L50 0 L73 41.25 L100 18.75 L88 61.5 L12 61.5 Z"
+    body = ("M0 18.75 L27 41.25 L50 0 L73 41.25 L100 18.75 L89.6 55.8 Q88 61.5 82 61.5 "
+            "L18 61.5 Q12 61.5 10.4 55.8 Z")
     band = "M12 66 H88 V75 H12 Z"
     jewels = "".join(
         f'<path d="{_circle(x, 70.5, 2.6)}" fill="{cloth}" stroke="{OUTLINE}" '
@@ -276,12 +277,13 @@ def _king(ow: float, gilt: str, cloth: str):
 
 # Every emblem fits this box (mm) on the card; the King's is larger.
 EMBLEM_BOX = (34.0, 29.0)
-KING_BOX = (40.0, 32.0)
+JACK_BOX = (34.0, 33.0)
+KING_BOX = (37.5, 30.0)
 
 
 def emblem(kind: str, cloth: str, cx: float, cy: float) -> str:
     """A Court Card emblem centred at cx, cy (mm), evened out with the rest."""
-    box_w, box_h = KING_BOX if kind == "king" else EMBLEM_BOX
+    box_w, box_h = {"king": KING_BOX, "jack": JACK_BOX}.get(kind, EMBLEM_BOX)
     # Work out the scale from the emblem's own bounds.
     probe = {"joker": lambda: _jester(1, GILT), "jack": lambda: _jack(1, GILT, cloth),
              "queen": lambda: _tiara(1, GILT), "king": lambda: _king(1, GILT, cloth)}[kind]
@@ -337,24 +339,27 @@ def lattice(w, h) -> str:
 
 
 def sunburst(w, h, cy_frac=0.56, alpha=1.0) -> str:
-    """The King's gold rays from the crown out to the edges."""
+    """The King's gold rays from the crown out to the edges: lit rays, each
+    edged with a fine gold line, and between them the bare cloth, so the
+    dark rays are the same colour as every other Court Card."""
     cx, cy = w / 2, h * cy_frac
     r = max(w, h) * 1.2
     k = f"{int(cy_frac * 100)}-{int(alpha * 100)}"
-    rays = []
-    for i in range(24):
-        a = i * math.pi / 12
-        p1 = (cx + r * math.cos(a - 0.06), cy + r * math.sin(a - 0.06))
-        p2 = (cx + r * math.cos(a + 0.06), cy + r * math.sin(a + 0.06))
-        op = (0.25 if i % 2 == 0 else 0.15) * alpha
-        rays.append(f'<path d="M{cx:.2f} {cy:.2f} L{p1[0]:.2f} {p1[1]:.2f} L{p2[0]:.2f} {p2[1]:.2f} Z" '
-                    f'fill="url(#rayFade{k})" fill-opacity="{op:.2f}"/>')
-    glow = (f'<circle cx="{cx}" cy="{cy}" r="{w * 0.42:.2f}" fill="url(#glow{k})"/>')
+    half = math.pi / 24          # rays and gaps equally wide
+    rays, edges = [], []
+    for i in range(12):
+        a = i * math.pi / 6
+        p1 = (cx + r * math.cos(a - half), cy + r * math.sin(a - half))
+        p2 = (cx + r * math.cos(a + half), cy + r * math.sin(a + half))
+        rays.append(f'<path d="M{cx:.2f} {cy:.2f} L{p1[0]:.2f} {p1[1]:.2f} L{p2[0]:.2f} {p2[1]:.2f} Z"/>')
+        for p in (p1, p2):
+            edges.append(f'<line x1="{cx:.2f}" y1="{cy:.2f}" x2="{p[0]:.2f}" y2="{p[1]:.2f}"/>')
     grad = (f'<defs><radialGradient id="rayFade{k}" gradientUnits="userSpaceOnUse" cx="{cx}" cy="{cy}" r="{r * 0.7:.2f}">'
-            f'<stop offset="0" stop-color="{GOLD_LIGHT}"/><stop offset="1" stop-color="{GOLD_LIGHT}" stop-opacity="0.05"/>'
-            f'</radialGradient><radialGradient id="glow{k}"><stop offset="0" stop-color="{GOLD_LIGHT}" stop-opacity="{0.3 * alpha:.2f}"/>'
-            f'<stop offset="1" stop-color="{GOLD_LIGHT}" stop-opacity="0"/></radialGradient></defs>')
-    return grad + "".join(rays) + glow
+            f'<stop offset="0" stop-color="{GOLD_LIGHT}"/><stop offset="1" stop-color="{GOLD_LIGHT}" stop-opacity="0.15"/>'
+            f'</radialGradient></defs>')
+    return (grad + f'<g fill="url(#rayFade{k})" fill-opacity="{0.2 * alpha:.2f}">{"".join(rays)}</g>'
+            f'<g stroke="{GOLD_LIGHT}" stroke-opacity="{0.55 * alpha:.2f}" stroke-width="0.18" class="foil">'
+            f'{"".join(edges)}</g>')
 
 
 def harlequin(w, h, dark="#1A0C2A", light=GOLD_LIGHT) -> str:
