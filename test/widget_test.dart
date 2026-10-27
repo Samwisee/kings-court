@@ -1315,6 +1315,8 @@ void main() {
       expect(game.outcome, RoundOutcome.won,
           reason: 'lesson ${lesson + 1}: ${lessons[lesson].title}');
       expect(game.kingIndex, 0, reason: 'you are the King');
+      // The tasks turn over, then the result comes up.
+      await tester.pump(const Duration(milliseconds: 900));
       await tester.pump(const Duration(milliseconds: 600));
       final last = lesson == lessons.length - 1;
       expect(find.text(last ? 'Tutorial complete' : 'Lesson complete'),
