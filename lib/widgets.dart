@@ -858,14 +858,17 @@ class TableCard extends StatelessWidget {
           ),
       ],
     );
-    return _innerEdged(Container(
+    // Nobody's yet: just the card and its dark outline. A player's (or a
+    // failed task's) colour gets dark lines on both sides.
+    final neutral = !failed && owner == null;
+    final card = Container(
       width: width,
       height: _height,
       foregroundDecoration: _edge,
       decoration: _frame(
         failed ? const Color(0xFFFBE4E1) : Palette.card,
-        border: failed ? Palette.lost : owner?.color ?? Palette.inkSoft,
-        borderWidth: 2.5,
+        border: failed ? Palette.lost : owner?.color ?? Palette.card,
+        borderWidth: neutral ? 0.5 : 2.5,
       ),
       child: Stack(
         children: [
@@ -898,7 +901,8 @@ class TableCard extends StatelessWidget {
           _ownerBadge(),
         ],
       ),
-    ));
+    );
+    return neutral ? card : _innerEdged(card);
   }
 
   /// The plain deck back, as dealt.
