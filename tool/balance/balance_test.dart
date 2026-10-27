@@ -168,9 +168,8 @@ void main() {
     // Each table size is pulled toward the task's overall rate when it was
     // dealt only a few times there.
     final pool = {for (final t in GameState.taskPool) t.description: t};
-    const k = 2.4, prior = 25;
-    int pointsFor(double fail) =>
-        (k * -log(max(0.02, 1 - fail))).round().clamp(1, 7);
+    const prior = 25;
+    double hardness(double fail) => -log(max(0.02, 1 - fail));
     double overall(String d) {
       var n = 0, f = 0;
       for (final p in [3, 4, 5, 6]) {
@@ -185,6 +184,26 @@ void main() {
       return (f + prior * overall(d)) / (n + prior);
     }
 
+    // The scale: at each table size, the average task keeps the average
+    // points it has now, so the points targets mean what they did.
+    List<int> nowOf(String d) {
+      final t = pool[d]!;
+      return [t.threePlayerPoints, t.fourPlayerPoints, t.fivePlayerPoints, t.sixPlayerPoints];
+    }
+
+    final scale = <int, double>{};
+    for (final (i, p) in [3, 4, 5, 6].indexed) {
+      final pts = pool.keys.map((d) => nowOf(d)[i]).reduce((a, b) => a + b);
+      final hard = pool.keys.map((d) => hardness(rateAt(d, p))).reduce((a, b) => a + b);
+      scale[p] = pts / hard;
+    }
+    int pointsFor(String d, int p) =>
+        (scale[p]! * hardness(rateAt(d, p))).round().clamp(1, 7);
+    out
+      ..writeln()
+      ..writeln('POINTS SCALE (points per unit of hardness, -ln(chance of success)): '
+          '${[for (final p in [3, 4, 5, 6]) '$p: ${scale[p]!.toStringAsFixed(2)}'].join(', ')}');
+
     out
       ..writeln()
       ..writeln('POINTS FROM DIFFICULTY (3 / 4 / 5 / 6 players): fail rate, points now, points suggested')
@@ -192,17 +211,17 @@ void main() {
     final names = pool.keys.toList()
       ..sort((a, b) => overall(a).compareTo(overall(b)));
     for (final d in names) {
-      final t = pool[d]!;
-      final now = [t.threePlayerPoints, t.fourPlayerPoints, t.fivePlayerPoints, t.sixPlayerPoints];
-      final want = [for (final p in [3, 4, 5, 6]) pointsFor(rateAt(d, p))];
+      final now = nowOf(d);
+      final want = [for (final p in [3, 4, 5, 6]) pointsFor(d, p)];
       final off = [for (int i = 0; i < 4; i++) (now[i] - want[i]).abs()].reduce(max) >= 2;
-      out.writeln('${'${(overall(d) * 100).round()}%'.padLeft(4)}  ${now.join('/')}  ->  ${want.join('/')} ${off ? '!' : ' '} $d');
+      final rates = [for (final p in [3, 4, 5, 6]) '${(rateAt(d, p) * 100).round()}'].join('/');
+      out.writeln('${rates.padLeft(11)}%  ${now.join('/')}  ->  ${want.join('/')} ${off ? '!' : ' '} $d');
     }
     out
       ..writeln()
       ..writeln('SUGGESTED POINTS, ready to paste: description | three | four | five | six');
     for (final d in pool.keys) {
-      final want = [for (final p in [3, 4, 5, 6]) pointsFor(rateAt(d, p))];
+      final want = [for (final p in [3, 4, 5, 6]) pointsFor(d, p)];
       out.writeln('POINTS|$d|${want.join('|')}');
     }
     out
