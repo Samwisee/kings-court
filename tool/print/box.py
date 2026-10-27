@@ -19,15 +19,19 @@ import math
 import pathlib
 import sys
 
-from art import (CROWN, G, INK, IVORY, Renderer, SUIT_PATHS, defs,
-                 filigree_corner, laurel, shape, text)
-from deck import APP_URL, NFC, qr_path
+from art import Renderer
+import deck
+from brand import (CROWN, FELT, GILT, GOLD_LIGHT, GOLD_MID, INK, OUTLINE,
+                   brass_inlay, crown, defs, lattice, outlined, place, suit,
+                   sunburst, text)
+
+DISPLAY, BODY = "Cinzel Decorative", "Alegreya Sans"
 
 # --- sizes (mm) ---------------------------------------------------------
 
 BOARD = 0.55
 CARD_W, CARD_H = 63.0, 88.0
-STACK = 19.0                     # 60 cards at about 0.31 mm
+STACK = 18.0                     # 56 cards at about 0.31 mm
 TRAY_W = CARD_W + 1.6 + 2 * BOARD    # outside
 TRAY_D = STACK + 1.2 + 2 * BOARD
 TRAY_H = 80.0                    # cards stand 8 mm proud of the tray
@@ -39,138 +43,149 @@ NOTCH_TRAY = 8.0
 BLEED = 3.0
 GLUE = 12.0
 
-MAROON_BG = "url(#maroon)"
+FELT_BG = "url(#felt)"
+CLOTH_BG = "url(#backCloth)"
 CUT, FOLD = "#E4002B", "#0072CE"
 
 # --- panel art (each drawn upright in its own w x h box) -------------------
 
 
-def lattice(w, h, step=5.0, colour=G) -> str:
-    lines = []
-    for k in range(-40, 60):
-        o = k * step
-        lines.append(f'<line x1="{o}" y1="0" x2="{o + h}" y2="{h}"/>')
-        lines.append(f'<line x1="{o}" y1="{h}" x2="{o + h}" y2="0"/>')
-    return (f'<g class="foil" stroke="{colour}" stroke-width="0.18" fill="none" '
-            f'opacity="0.55">{"".join(lines)}</g>')
+def card_art(svg_doc: str, cx, cy, w, angle=0.0) -> str:
+    """A whole card from the deck, trimmed and rounded, at cx, cy, w wide."""
+    h = w * 88 / 63
+    inner = svg_doc.replace('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 69.0 94.0">',
+                            '', 1)
+    inner = inner[: inner.rfind("</svg>")]
+    k = abs(hash((cx, cy, w, angle))) % 100000
+    return (f'<g transform="translate({cx:.2f} {cy:.2f}) rotate({angle:.2f})">'
+            f'<clipPath id="cc{k}"><rect x="{-w / 2}" y="{-h / 2}" width="{w}" height="{h}" '
+            f'rx="{w * 0.06:.2f}"/></clipPath>'
+            f'<rect x="{-w / 2 + 0.5}" y="{-h / 2 + 0.9}" width="{w}" height="{h}" rx="{w * 0.06:.2f}" '
+            f'fill="#000" fill-opacity="0.45" filter="url(#drop)"/>'
+            f'<g clip-path="url(#cc{k})"><svg x="{-w / 2}" y="{-h / 2}" width="{w}" height="{h}" '
+            f'viewBox="3 3 63 88">{inner}</svg></g></g>')
 
 
-def panel_frame(w, h, inset=3.0, colour=G) -> str:
-    i = 0.9
-    out = (f'<rect x="{inset}" y="{inset}" width="{w - 2 * inset}" height="{h - 2 * inset}" '
-           f'rx="1.6" fill="none" stroke="{colour}" stroke-width="0.4" class="foil"/>'
-           f'<rect x="{inset + i}" y="{inset + i}" width="{w - 2 * inset - 2 * i}" '
-           f'height="{h - 2 * inset - 2 * i}" rx="1" fill="none" stroke="{colour}" '
-           f'stroke-width="0.18" class="foil"/>')
-    k = 1.7
-    for (x, y, sx, sy) in [(inset + k, inset + k, 1, 1), (w - inset - k, inset + k, -1, 1),
-                           (inset + k, h - inset - k, 1, -1), (w - inset - k, h - inset - k, -1, -1)]:
-        out += filigree_corner(x, y, sx * 0.6, sy * 0.6, colour)
+def fan(cx, cy, w) -> str:
+    """The welcome screen's fan: Joker, Jack, Queen and King."""
+    cards = [deck.joker("purple"), deck.face_card("J", "clubs"),
+             deck.face_card("Q", "diamonds"), deck.face_card("K", "hearts")]
+    out = ""
+    for i, c in enumerate(cards):
+        t = i - 1.5
+        a = t * 14
+        # Fanned from a point below the cards, like a hand.
+        px = cx + math.sin(math.radians(a)) * w * 1.6
+        py = cy - math.cos(math.radians(a)) * w * 1.6 + w * 1.6
+        out += card_art(c, px, py, w, a)
     return out
 
 
 def sleeve_front(w, h) -> str:
     cx = w / 2
-    clip = f'<clipPath id="sf"><rect x="5" y="5" width="{w - 10}" height="{h - 10}"/></clipPath>'
-    return (f'<defs>{clip}</defs>'
-            f'<g clip-path="url(#sf)">{lattice(w, h)}</g>'
-            f'<rect x="10" y="{h * 0.26}" width="{w - 20}" height="{h * 0.5}" rx="2" '
-            f'fill="url(#maroon)" class="foilbg"/>'
-            f'<rect x="10" y="{h * 0.26}" width="{w - 20}" height="{h * 0.5}" rx="2" '
-            f'fill="none" stroke="{G}" stroke-width="0.35" class="foil"/>'
-            f'<rect x="11" y="{h * 0.26 + 1}" width="{w - 22}" height="{h * 0.5 - 2}" rx="1.4" '
-            f'fill="none" stroke="{G}" stroke-width="0.18" class="foil"/>'
-            + panel_frame(w, h)
-            + laurel(cx, h * 0.355, 8.2, G, leaves=8, size=2.0)
-            + shape(CROWN, cx, h * 0.345, 8.6, G, cls="foil")
-            + text(cx, h * 0.515, "THE", 2.8, fill=G, weight=600, spacing=1.4, cls="foil")
-            + text(cx, h * 0.58, "KING’S COURT", 5.4, fill=G, weight=700, spacing=0.3, cls="foil")
-            + f'<line x1="{cx - 14}" y1="{h * 0.62}" x2="{cx + 14}" y2="{h * 0.62}" '
-              f'stroke="{G}" stroke-width="0.18" class="foil"/>'
-            + shape(SUIT_PATHS["diamonds"], cx, h * 0.62, 1.8, G, cls="foil")
-            + text(cx, h * 0.672, "LUXURY PLAYING CARDS", 2.2, fill=G, weight=600,
-                   spacing=0.7, cls="foil")
-            + "".join(shape(SUIT_PATHS[s], cx + (i - 1.5) * 5.2, h * 0.718, 2.4, G, cls="foil")
-                      for i, s in enumerate(["spades", "hearts", "clubs", "diamonds"])))
+    return (sunburst(w, h, cy_frac=0.42, alpha=0.75)
+            + brass_inlay(3, 3, w - 6, h - 6)
+            + place(crown()[0], cx, 24.5, 32, 100, 75)
+            + fan(cx, 47.5, 16)
+            + text(cx, 66.6, "THE", 4.2, family=DISPLAY, weight=900, fill=GILT, cls="foil",
+                   stroke=OUTLINE, stroke_w=0.6, spacing=0.4)
+            + text(cx, 74.2, "KING’S COURT", 6.6, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.8)
+            + text(cx, 79.8, "LUXURY PLAYING CARDS", 2.5, family=BODY, weight=700,
+                   fill=GOLD_LIGHT, spacing=0.8)
+            + "".join(suit(s, cx + (i - 1.5) * 5.4, 84.2, 3.0, c, outline=10)
+                      for i, (s, c) in enumerate([("spades", "#1D1B18"), ("hearts", "#B3122B"),
+                                                  ("clubs", "#13793A"), ("diamonds", "#1A5BC8")])))
 
 
 def sleeve_back(w, h) -> str:
     cx = w / 2
-    ivory = "#F1E6CD"
+    light = "#E9F2EC"
     blurb = [
         "A deck for the whole court. Play any classic",
-        "game with all fifty-four cards, or keep the",
-        "crowned forty for The King’s Court: a",
-        "cooperative trick-taking game for 2 to 6,",
-        "where the table wins or loses together.",
+        "game with all fifty-four cards, or choose a",
+        "Jack, Queen, King and Joker in the colours",
+        "you like for The King’s Court: cooperative",
+        "trick-taking for 2 to 6. Win or lose together.",
     ]
     contents = [
-        "52 cards and two Jokers",
-        "Four Court Cards: Joker, Jack, Queen, King",
+        "52 cards in four colours and two Jokers",
+        "Court Cards in red, green, blue and black",
         "How-to-play card and your unlock code",
     ]
-    out = (panel_frame(w, h)
-           + shape(CROWN, cx, 12.4, 6, G, cls="foil")
-           + text(cx, 19.4, "THE KING’S COURT", 3.4, fill=G, weight=700, spacing=0.4, cls="foil")
-           + "".join(text(cx, 25.6 + i * 3.5, s, 2.75, family="Cormorant", weight=500,
-                          fill=ivory) for i, s in enumerate(blurb))
-           + f'<line x1="{cx - 12}" y1="44.6" x2="{cx + 12}" y2="44.6" stroke="{G}" '
-             f'stroke-width="0.18" class="foil"/>'
-           + "".join(text(cx, 49.4 + i * 3.4, s, 2.5, family="Cormorant", weight=500,
-                          fill=ivory, style="italic") for i, s in enumerate(contents))
-           + qr_path(APP_URL, 10, h - 29.5, 13)
-           + text(26.8, h - 25.0, "Scan to play,", 2.3, family="Cormorant", fill=ivory,
-                  anchor="start")
-           + text(26.8, h - 22.1, "or tap the box", 2.3, family="Cormorant", fill=ivory,
-                  anchor="start")
-           + text(26.8, h - 19.2, "for a table.", 2.3, family="Cormorant", fill=ivory,
-                  anchor="start")
-           + NFC(30.4, h - 14.2, 4.2, G)
-           # Space for the barcode a retailer will ask for.
-           + f'<rect x="{w - 21}" y="{h - 29.5}" width="12.5" height="13" fill="#FFFFFF"/>'
-           + text(w - 14.75, h - 22.4, "BARCODE", 1.6, fill=INK, weight=600)
-           + text(cx, h - 6.4, "Inspired by The Crew  ·  © 2026 The King’s Court", 1.8,
-                  family="Cormorant", fill=ivory, style="italic"))
-    return out
+    return (brass_inlay(3, 3, w - 6, h - 6)
+            + place(crown()[0], cx, 13.6, 9, 100, 75)
+            + text(cx, 21.6, "THE KING’S COURT", 3.9, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.5)
+            + "".join(text(cx, 27.6 + i * 3.5, s, 2.7, family=BODY, weight=500, fill=light)
+                      for i, s in enumerate(blurb))
+            + "".join(suit(s, cx + (i - 1.5) * 4, 46.4, 2.2, GILT, cls="foil")
+                      for i, s in enumerate(["spades", "hearts", "clubs", "diamonds"]))
+            + "".join(text(cx, 51.6 + i * 3.4, s, 2.5, family=BODY, weight=500,
+                           fill=GOLD_LIGHT) for i, s in enumerate(contents))
+            + deck.qr(deck.APP_URL, 10, h - 29.5, 13)
+            + text(26.8, h - 25.0, "Scan to play,", 2.4, family=BODY, weight=500, fill=light,
+                   anchor="start")
+            + text(26.8, h - 22.0, "or tap the box", 2.4, family=BODY, weight=500, fill=light,
+                   anchor="start")
+            + text(26.8, h - 19.0, "for a table.", 2.4, family=BODY, weight=500, fill=light,
+                   anchor="start")
+            + deck.nfc(30.6, h - 13.8, 4.4, GOLD_LIGHT)
+            + f'<rect x="{w - 21}" y="{h - 29.5}" width="12.5" height="13" fill="#FFFFFF"/>'
+            + text(w - 14.75, h - 22.4, "BARCODE", 1.6, family=BODY, weight=700, fill=INK)
+            + text(cx, h - 6.6, "Inspired by The Crew  ·  © 2026 The King’s Court", 1.9,
+                   family=BODY, weight=500, fill=light))
 
 
 def sleeve_side(w, h) -> str:
     """The spine, read bottom to top."""
     cx, cy = w / 2, h / 2
-    return (f'<line x1="{cx - 6}" y1="6" x2="{cx + 6}" y2="6" stroke="{G}" stroke-width="0.25" class="foil"/>'
-            f'<line x1="{cx - 6}" y1="{h - 6}" x2="{cx + 6}" y2="{h - 6}" stroke="{G}" '
+    return (brass_inlay(2.2, 3, w - 4.4, h - 6, r=2)
+            + place(crown()[0], cx, h - 14.5, 8.6, 100, 75)
+            + text(cx, cy, "THE KING’S COURT", 4.0, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.5, rotate=-90)
+            + suit("diamonds", cx, 14, 3.0, GILT, cls="foil", outline=10))
+
+
+def medallion(cx, cy, r) -> str:
+    return (f'<circle cx="{cx}" cy="{cy}" r="{r + 0.9}" fill="{OUTLINE}"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#5A1620" class="foilbg"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="url(#giltRim)" '
+            f'stroke-width="1.1" class="foil"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="{r - 2}" fill="none" stroke="{GOLD_MID}" '
             f'stroke-width="0.25" class="foil"/>'
-            + shape(CROWN, cx, h - 14, 6.4, G, cls="foil")
-            + text(cx, cy, "THE KING’S COURT", 3.6, fill=G, weight=700, spacing=0.6,
-                   rotate=-90, cls="foil")
-            + shape(SUIT_PATHS["diamonds"], cx, 14, 2.4, G, cls="foil"))
+            + place(crown()[0], cx, cy - 0.6, r * 1.2, 100, 75))
 
 
 def tray_front(w, h) -> str:
+    """Shows above the sleeve when the box opens: the card back's look."""
     cx = w / 2
-    return (panel_frame(w, h, inset=2.6)
-            + laurel(cx, 30, 10.5, G, leaves=10, size=2.3)
-            + shape(CROWN, cx, 29, 11, G, cls="foil")
-            + text(cx, 50, "LONG LIVE", 2.8, fill=G, weight=600, spacing=1.0, cls="foil")
-            + text(cx, 55, "THE COURT", 4.2, fill=G, weight=700, spacing=0.6, cls="foil")
-            + shape(SUIT_PATHS["diamonds"], cx, 60, 1.8, G, cls="foil"))
+    return (sunburst(w, h, cy_frac=0.36, alpha=0.9)
+            + brass_inlay(2.6, 2.6, w - 5.2, h - 5.2)
+            + medallion(cx, 28.6, 12.5)
+            + text(cx, 52.4, "LONG LIVE", 3.2, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.45, spacing=0.5)
+            + text(cx, 59.4, "THE COURT", 5.0, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.6))
 
 
 def tray_back(w, h) -> str:
     cx = w / 2
-    return (panel_frame(w, h, inset=2.6)
-            + text(cx, h / 2 - 4, "A TABLE", 2.6, fill=G, weight=600, spacing=1, cls="foil")
-            + text(cx, h / 2 + 1.2, "OF EQUALS", 3.4, fill=G, weight=700, spacing=0.6, cls="foil")
-            + shape(SUIT_PATHS["diamonds"], cx, h / 2 + 6, 1.8, G, cls="foil"))
+    return (sunburst(w, h, cy_frac=0.5, alpha=0.7)
+            + brass_inlay(2.6, 2.6, w - 5.2, h - 5.2)
+            + text(cx, h / 2 - 3, "A TABLE", 3.2, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.45)
+            + text(cx, h / 2 + 3.6, "OF EQUALS", 4.4, family=DISPLAY, weight=900, fill=GILT,
+                   cls="foil", stroke=OUTLINE, stroke_w=0.55))
 
 
 def tray_side(w, h) -> str:
-    return shape(SUIT_PATHS["diamonds"], w / 2, h / 2, 3, G, cls="foil")
+    return place(outlined(CROWN, outline=6, shadow=False), w / 2, h / 2, 9, 100, 75)
 
 
 def liner(w, h) -> str:
-    """The inside of the tray walls: the deep red of the card backs."""
-    return lattice(w, h, step=4.6)
+    """The inside of the tray: the table's felt, with a faint lattice."""
+    return f'<rect width="{w}" height="{h}" fill="url(#felt)"/>' + lattice(w, h)
 
 
 # --- nets -----------------------------------------------------------------
@@ -252,7 +267,7 @@ def sleeve() -> Net:
     n = Net()
     W, D, H = SLEEVE_W, SLEEVE_D, SLEEVE_H
     xs = [0, GLUE, GLUE + D, GLUE + D + W, GLUE + 2 * D + W, GLUE + 2 * D + 2 * W]
-    m = MAROON_BG
+    m = FELT_BG
     n.panel(xs[1], 0, D, H, m, sleeve_side)
     n.panel(xs[2], 0, W, H, m, sleeve_front)
     n.panel(xs[3], 0, D, H, m, sleeve_side)
@@ -289,8 +304,8 @@ def sleeve() -> Net:
 def tray() -> Net:
     n = Net()
     W, D, H = TRAY_W, TRAY_D, TRAY_H
-    iv = "url(#ivory)"
-    red = MAROON_BG
+    iv = CLOTH_BG
+    red = FELT_BG
     L, T = H, 2 * H - 1          # top-left of the bottom panel
     lin = H - 1.2                # liners fold down inside the walls
     n.panel(L, T, W, D, iv)                                   # bottom
@@ -399,13 +414,13 @@ def main(out: pathlib.Path):
             r.pdf([s], w, h, out / "box" / f"{name}-foil.pdf", foil=True)
             r.png(s, w, h, out / "box" / f"{name}-foil.png", foil=True)
         # Faces for the mock-up.
-        from art import defs as _defs
+        _defs = defs
         faces = {}
         for key, fn, w, h, bg in [
-            ("sleeve_front", sleeve_front, SLEEVE_W, SLEEVE_H, MAROON_BG),
-            ("sleeve_side", sleeve_side, SLEEVE_D, SLEEVE_H, MAROON_BG),
-            ("tray_front", tray_front, TRAY_W, TRAY_H, "url(#ivory)"),
-            ("tray_side", tray_side, TRAY_D, TRAY_H, "url(#ivory)"),
+            ("sleeve_front", sleeve_front, SLEEVE_W, SLEEVE_H, FELT_BG),
+            ("sleeve_side", sleeve_side, SLEEVE_D, SLEEVE_H, FELT_BG),
+            ("tray_front", tray_front, TRAY_W, TRAY_H, CLOTH_BG),
+            ("tray_side", tray_side, TRAY_D, TRAY_H, CLOTH_BG),
         ]:
             s = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}">{_defs()}'
                  f'<rect width="{w}" height="{h}" fill="{bg}"/>{fn(w, h)}</svg>')

@@ -13,6 +13,7 @@ import re
 
 HERE = pathlib.Path(__file__).resolve().parent
 FONTS = HERE / "fonts"
+APP_FONTS = HERE.parent.parent / "assets" / "fonts"
 
 # --- palette -----------------------------------------------------------
 
@@ -50,21 +51,31 @@ def font_css() -> str:
         ("Cormorant", 700, "normal", "cormorant-garamond-latin-700-normal.woff2"),
         ("Cormorant", 500, "italic", "cormorant-garamond-latin-500-italic.woff2"),
     ]
+    # The app's own fonts, from the game's assets.
+    app = [
+        ("Cinzel Decorative", 700, "normal", "CinzelDecorative-Bold.ttf"),
+        ("Cinzel Decorative", 900, "normal", "CinzelDecorative-Black.ttf"),
+        ("Alegreya Sans", 400, "normal", "AlegreyaSans-Regular.ttf"),
+        ("Alegreya Sans", 500, "normal", "AlegreyaSans-Medium.ttf"),
+        ("Alegreya Sans", 700, "normal", "AlegreyaSans-Bold.ttf"),
+    ]
     # Embedded, since a page set from a string can't load local files.
     return "\n".join(
-        f"@font-face{{font-family:'{f}';font-weight:{w};font-style:{s};"
-        f"src:url(data:font/woff2;base64,{_b64(file)}) format('woff2');}}"
-        for f, w, s, file in faces
-    )
+        [f"@font-face{{font-family:'{f}';font-weight:{w};font-style:{s};"
+         f"src:url(data:font/woff2;base64,{_b64(file)}) format('woff2');}}"
+         for f, w, s, file in faces]
+        + [f"@font-face{{font-family:'{f}';font-weight:{w};font-style:{s};"
+           f"src:url(data:font/ttf;base64,{_b64(file, APP_FONTS)}) format('truetype');}}"
+           for f, w, s, file in app])
 
 
 _cache: dict[str, str] = {}
 
 
-def _b64(file: str) -> str:
+def _b64(file: str, folder: pathlib.Path = FONTS) -> str:
     if file not in _cache:
         import base64
-        _cache[file] = base64.b64encode((FONTS / file).read_bytes()).decode()
+        _cache[file] = base64.b64encode((folder / file).read_bytes()).decode()
     return _cache[file]
 
 
@@ -246,6 +257,7 @@ svg * { visibility: hidden; }
 .foil [fill]:not([fill="none"]), .foil[fill]:not([fill="none"]) { fill: #000 !important; }
 .foil [stroke]:not([stroke="none"]), .foil[stroke]:not([stroke="none"]) { stroke: #000 !important; }
 .foilbg { visibility: visible !important; fill: #fff !important; stroke: #fff !important; }
+.foilknock, .foilknock * { visibility: visible !important; fill: #fff !important; stroke: #fff !important; }
 clipPath, clipPath * { visibility: visible !important; }
 """
 

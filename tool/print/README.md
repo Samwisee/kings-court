@@ -9,14 +9,18 @@ python3 tool/print/deck.py OUT    # cards
 python3 tool/print/box.py OUT     # box
 ```
 
-## The deck (60 cards)
+## The deck (56 cards)
+
+Drawn in the game's own look: the app's fonts (Cinzel Decorative, Alegreya
+Sans), its Court Card cloths, patterns and gold emblems, its crown, the
+felt and the card-back red, with a cartoon outline and gold foil.
 
 | Cards | Count | Notes |
 | --- | --- | --- |
-| A–10, J, Q, K in ♠ ♥ ♦ ♣ | 52 | A–9 carry a small gold crown under the index: the King's Court's 40-card deck (with the Court Cards). |
-| Court Cards: Joker, Jack, Queen, King | 4 | Their own suit, on coloured cloth, with 1–4 diamonds showing their order. |
-| Jokers | 2 | For standard games. |
-| How to play | 1 | Rules in brief and a QR code to the app. |
+| A–10 in four-colour suits | 40 | ♥ red, ♦ blue, ♣ green, ♠ black, as in the app's colour setting. A–9 carry a small gold crown: they're in the King's Court deck. |
+| Jack, Queen, King in every suit | 12 | Court Cards on cloth in the suit's colour: red, blue, green and black, each with the app's emblem (sword and shield, tiara, crown) and pattern (stripes, lattice, sunburst). Players choose which Jack, Queen and King make their court; the app's are the green Jack, blue Queen and red King. |
+| Jokers | 2 | Purple (the app's) and yellow, with the jester's cap. |
+| How to play | 1 | On the felt: choosing a court, the rules in brief, a QR code to the app. |
 | Your court awaits | 1 | Unlock code, QR code and the NFC table note. **The code shown is a sample**: each deck needs its own (see below). |
 
 **Size:** poker, 63 × 88 mm, rounded corners (3.5 mm). Files are 69 × 94 mm
@@ -34,12 +38,14 @@ or re-run with the size changed in `deck.py`.
 ## The box
 
 Two pieces, pulled apart from the top like a slide box:
-* **Tray** (inner): holds the cards upright; front wall has a thumb notch so
-  you can pinch the cards out. Walls are doubled with a fold-over liner in
-  the card-back red, so the inside is finished too. Outside about
-  66.2 × 21.3 × 80 mm.
-* **Sleeve** (outer): open at the top, glued bottom, thumb notches front and
-  back to draw the tray out. Outside about 67 × 22.1 × 90 mm. It covers the
+* **Tray** (inner): in the card-back red, with the crown medallion that
+  shows when the box opens; holds the cards upright; front wall has a thumb
+  notch so you can pinch the cards out. Walls are doubled with a fold-over
+  liner in the table's felt, so the inside is finished too. Outside about
+  66.2 × 20.3 × 80 mm.
+* **Sleeve** (outer): the app's welcome screen: felt green with the brass
+  inlay, the crown, the four Court Cards fanned and the title. Open at the
+  top, glued bottom, thumb notches front and back to draw the tray out. Outside about 67 × 22.1 × 90 mm. It covers the
   cards completely when closed.
 
 Board assumed: about 400 gsm (0.55 mm). These dielines are a starting point:
