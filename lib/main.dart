@@ -9086,7 +9086,7 @@ class _GlowButtonState extends State<_GlowButton>
       _pulse.stop();
       _pulse.value = 0.6;
       _sheen.stop();
-      _sheen.value = 0.3;
+      _sheen.value = 0.75; // at rest, past the button
     } else if (!_pulse.isAnimating) {
       _pulse.repeat(reverse: true);
       _sheen.repeat();
