@@ -196,13 +196,13 @@ def _circle(x, y, r) -> str:
 def _jester(ow: float, gilt: str, cloth: str):
     """The Joker's three-pointed cap with bells; harlequin checks of the
     cloth's colour on its gold liripipes."""
-    cap = ("M18 73.8 Q16 52 9 42 Q3 33 2 27 Q12 28 20 33 Q32 40 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
+    cap = ("M18 73.8 Q15.5 60 14 55 Q10 49.5 4 53 Q4 37 15 33 Q29 34 38 49.5 Q42 18 50 3.6 Q58 18 62 49.5 "
            "Q70 34.2 98 27 Q90 40.5 82 73.8 Z")
     band = "M19 70 H81 A4 4 0 0 1 85 74 V79 A4 4 0 0 1 81 83 H19 A4 4 0 0 1 15 79 V74 A4 4 0 0 1 19 70 Z"
-    bells = [_circle(x, y, 6) for x, y in [(4, 27), (50, 4.5), (96, 27)]]
+    bells = [_circle(x, y, 6) for x, y in [(4, 53), (50, 4.5), (96, 27)]]
     # Harlequin checks of the cloth's colour on the gold liripipes.
     cid = f"motley-{cloth[1:]}"
-    dw, dh = 17.0, 21.0
+    dw, dh = 9.5, 12.0
     checks = []
     for row in range(-1, 11):
         for col in range(-1, 10):
@@ -212,11 +212,13 @@ def _jester(ow: float, gilt: str, cloth: str):
             checks.append(f"M{x:.2f} {y - dh / 2:.2f} L{x + dw / 2:.2f} {y:.2f} L{x:.2f} {y + dh / 2:.2f} "
                           f"L{x - dw / 2:.2f} {y:.2f} Z")
     motley = (f'<defs><clipPath id="{cid}"><path d="{cap}"/></clipPath></defs>'
-              f'<g class="foilknock" clip-path="url(#{cid})"><path d="{" ".join(checks)}" fill="{cloth}" '
-              f'stroke="{OUTLINE}" stroke-width="{ow * 0.3:.3f}" stroke-linejoin="round"/></g>')
-    art = (_solid([cap], gilt, ow) + motley + _solid([band, *bells], gilt, ow)
-           + f'<g class="foilknock"><path d="M38 49.5 L36.4 70 M62 49.5 L63.6 70" stroke="{OUTLINE}" '
-             f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
+              f'<g class="foilknock" clip-path="url(#{cid})"><path d="{" ".join(checks)}" fill="{cloth}"/></g>')
+    # The seams and a clean edge over the checks, then the band and bells.
+    edge = (f'<g class="foilknock"><path d="{cap}" fill="none" stroke="{OUTLINE}" '
+            f'stroke-width="{ow * 0.5:.3f}" stroke-linejoin="round"/>'
+            f'<path d="M38 49.5 L36.4 72 M62 49.5 L63.6 72" stroke="{OUTLINE}" '
+            f'stroke-width="{ow * 0.45:.3f}" stroke-linecap="round" fill="none"/></g>')
+    art = _solid([cap], gilt, ow) + motley + edge + _solid([band, *bells], gilt, ow)
     return art, (-2, -1.5, 102, 83)
 
 
