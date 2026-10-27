@@ -1238,9 +1238,22 @@ class GameState {
   }
 
   /// Whether [seat] may reveal a card right now, given the decree.
+  /// Late Counsel holds every card back until three tricks have been
+  /// played (on screen, where the app sees the tricks; at a real table the
+  /// players keep to it themselves).
   bool canSpeak(int seat) => switch (decree) {
         Decree.silence => false,
+        Decree.lateCounsel =>
+          !digital || (cards != null && cards!.dealId == dealId && cards!.tricks.length >= 3),
         _ => true,
+      };
+
+  /// Why no card may be shown now, or null if one may.
+  String? whyCantSpeak() => switch (decree) {
+        Decree.silence => 'Silence is decreed: no cards may be shown this round',
+        Decree.lateCounsel when !canSpeak(0) =>
+          'Late Counsel: no cards may be shown until three tricks have been played',
+        _ => null,
       };
 
   /// Why completing [task] now would break the seal order, or null if it's

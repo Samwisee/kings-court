@@ -4,7 +4,6 @@ import 'dart:ui' show Color;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
-import 'package:kings_court/engine/certainty.dart';
 import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/deal_mix.dart';
 import 'package:kings_court/engine/match.dart';
@@ -329,57 +328,5 @@ void main() {
       ];
     g.setKing(0);
     expect(g.pickTurn, 1);
-  });
-
-  group('A round already won plays itself out', () {
-    // Four players, eight tricks gone (seat 1 won every one), two to go.
-    (List<Trick>, List<List<PlayingCard>>) setUp(bool spadeLeft) {
-      final deck = fullDeck();
-      final spades = deck.where((x) => x.suit == Suit.spades).toList();
-      final rest = deck.where((x) => x.suit != Suit.spades).toList();
-      // Keep one spade back for the hands if asked.
-      final early = [...spades.skip(spadeLeft ? 1 : 0), ...rest];
-      final hands = [
-        for (int s = 0; s < 4; s++) <PlayingCard>[]
-      ];
-      final late = spadeLeft ? [spades.first] : <PlayingCard>[];
-      while (late.length < 8) {
-        late.add(early.removeLast());
-      }
-      for (int i = 0; i < 8; i++) {
-        hands[i % 4].add(late[i]);
-      }
-      final tricks = [
-        for (int t = 0; t < 8; t++)
-          Trick(1, const [1, 2, 3, 0], early.sublist(t * 4, t * 4 + 4), 1)
-      ];
-      return (tricks, hands);
-    }
-
-    bool certain(bool spadeLeft, String task, {int owner = 0}) {
-      final (tricks, hands) = setUp(spadeLeft);
-      return roundCertain(
-          hands: hands,
-          tricks: tricks,
-          // Seat 0 leads next, so a spade they hold could come back to them.
-          leader: 0,
-          players: 4,
-          king: 0,
-          totalTricks: 10,
-          inPlay: fullDeck().toSet(),
-          open: [(description: task, owner: owner, x: null)]);
-    }
-
-    test('Win no ♠ cards with every spade gone is certain', () {
-      expect(certain(false, 'Win no ♠ cards'), isTrue);
-    });
-    test('Not while a spade could still come to its holder', () {
-      expect(certain(true, 'Win no ♠ cards'), isFalse);
-    });
-    test('A task that still needs a win is not certain', () {
-      // (Seat 0 holds the King here, so for them it is certain.)
-      expect(certain(false, 'Win the last trick', owner: 0), isTrue);
-      expect(certain(false, 'Win the last trick', owner: 2), isFalse);
-    });
   });
 }

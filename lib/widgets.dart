@@ -1941,22 +1941,37 @@ class _SlideToPlaceState extends State<SlideToPlace>
 /// rule, gem corners and a soft sheen. Gold for a win; dark wine edged in
 /// red and gold for a loss.
 class OrnateCard extends StatelessWidget {
-  const OrnateCard({super.key, required this.won, required this.child});
+  const OrnateCard(
+      {super.key,
+      required this.won,
+      required this.child,
+      this.court = false,
+      this.margin = const EdgeInsets.fromLTRB(24, 46, 24, 24),
+      this.padding = const EdgeInsets.fromLTRB(28, 30, 28, 18),
+      this.maxWidth = 400});
   final bool won;
+
+  /// The court's own colours, for menus and settings: deep felt, gold.
+  final bool court;
+  final EdgeInsets margin;
+  final EdgeInsets padding;
+  final double maxWidth;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final edge = won ? const Color(0xFF6E4E0E) : Palette.lost;
-    final ink = won ? const Color(0xFF6E4E0E) : Palette.gold;
+    final edge = court ? Palette.gold : won ? const Color(0xFF6E4E0E) : Palette.lost;
+    final ink = won && !court ? const Color(0xFF6E4E0E) : Palette.gold;
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 46, 24, 24),
-      constraints: const BoxConstraints(maxWidth: 400),
+      margin: margin,
+      constraints: BoxConstraints(maxWidth: maxWidth),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: won
+          colors: court
+              ? const [Color(0xFF15583A), Color(0xFF0C3A25), Color(0xFF07291A)]
+              : won
               ? const [Color(0xFFF9E08C), Color(0xFFD4A63A), Color(0xFFB98A24)]
               : const [Color(0xFF3A1218), Color(0xFF1C0A0E), Color(0xFF12080A)],
         ),
@@ -1965,7 +1980,8 @@ class OrnateCard extends StatelessWidget {
         boxShadow: [
           const BoxShadow(color: Colors.black54, blurRadius: 28, offset: Offset(0, 8)),
           BoxShadow(
-              color: (won ? Palette.gold : Palette.lost).withValues(alpha: 0.35),
+              color: (won || court ? Palette.gold : Palette.lost)
+                  .withValues(alpha: court ? 0.2 : 0.35),
               blurRadius: 40,
               spreadRadius: 2),
         ],
@@ -1984,10 +2000,7 @@ class OrnateCard extends StatelessWidget {
           Positioned.fill(
             child: CustomPaint(painter: _Filigree(ink.withValues(alpha: 0.8))),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 30, 28, 18),
-            child: child,
-          ),
+          Padding(padding: padding, child: child),
           // A medallion over the top edge.
           Positioned(
             top: -30,
@@ -2000,7 +2013,9 @@ class OrnateCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: won
+                    colors: court
+                        ? const [Color(0xFF1E6B47), Color(0xFF0A3622)]
+                        : won
                         ? const [Color(0xFFFFF1B8), Color(0xFFD4A63A)]
                         : const [Color(0xFF5A1A22), Color(0xFF2A0E12)],
                   ),
@@ -2008,7 +2023,7 @@ class OrnateCard extends StatelessWidget {
                   boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],
                 ),
                 alignment: Alignment.center,
-                child: CrownIcon(size: 30, color: won ? Palette.ink : Palette.gold),
+                child: CrownIcon(size: 30, color: won && !court ? Palette.ink : Palette.gold),
               ),
             ),
           ),

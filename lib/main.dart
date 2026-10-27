@@ -15,7 +15,6 @@ import 'story.dart';
 import 'models.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
-import 'engine/certainty.dart';
 import 'engine/conflicts.dart';
 import 'engine/deal_mix.dart';
 import 'engine/contest.dart';
@@ -790,16 +789,16 @@ class _HomePageState extends State<HomePage>
   bool get _yourPlay =>
       _playing && !_autoPlaying && _lastTrick == null && _cards.turn == _you;
 
-  /// Every task is already safe, whatever is played: the table plays the
-  /// rest of the round out by itself, quickly, like a won game of FreeCell
+  /// Every task is done with cards still in hand: the table plays the rest
+  /// of the round out by itself, quickly, like a won game of FreeCell
   /// sending its cards home.
   bool _autoPlaying = false;
   int _autoDeal = -1;
   static Duration autoPlayStep = const Duration(milliseconds: 140);
 
-  /// After a trick: if every task is done already, or no way of playing
-  /// on could spoil one, play the round out (and judge the tasks at the
-  /// end). True when it starts.
+  /// After a trick: if every task is done already with cards still in
+  /// hand, play the round out (and judge the tasks at the end). True when
+  /// it starts.
   bool _maybeAutoFinish() {
     if (_autoPlaying || !_playing || game.isTutorial) return false;
     final c = _cards;
@@ -819,24 +818,9 @@ class _HomePageState extends State<HomePage>
             v, t.assignedPlayerIndex!, c.announced[t.description])
     ];
     if (verdicts.contains(Verdict.failed)) return false;
-    final certain = verdicts.every((x) => x == Verdict.done) || roundCertain(
-      hands: [for (final h in c.hands) [...h]],
-      tricks: c.tricks,
-      leader: c.leader,
-      players: c.players,
-      king: game.kingIndex ?? c.king,
-      totalTricks: c.totalTricks,
-      inPlay: c.inPlay,
-      open: [
-        for (final t in open)
-          (
-            description: t.description,
-            owner: t.assignedPlayerIndex!,
-            x: c.announced[t.description],
-          )
-      ],
-      budget: 20000,
-    );
+    // Only once every task has actually been done: a round that merely
+    // can't be lost is still played to the end by hand.
+    final certain = verdicts.every((x) => x == Verdict.done);
     if (!certain) return false;
     _botTimer?.cancel();
     _botTimer = null;
@@ -2364,7 +2348,15 @@ class _HomePageState extends State<HomePage>
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: Palette.gold, width: 1),
           ),
-          child: Text(c.revealHint[seat] ?? '',
+          // One short word: high, low or only.
+          child: Text(
+              switch (c.revealHint[seat]) {
+                'highest' => 'high',
+                'lowest' => 'low',
+                final h => h ?? '',
+              },
+              maxLines: 1,
+              softWrap: false,
               style: const TextStyle(
                   fontSize: 11.5, fontWeight: FontWeight.w800, color: Palette.gold)),
         ),
@@ -2684,7 +2676,10 @@ class _HomePageState extends State<HomePage>
                     ),
                 ]),
               );
-    return Stack(
+    // The whole width, so you sit at its left end.
+    return SizedBox(
+      width: width,
+      child: Stack(
       alignment: Alignment.centerLeft,
       clipBehavior: Clip.none,
       children: [
@@ -2713,6 +2708,7 @@ class _HomePageState extends State<HomePage>
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -2879,7 +2875,7 @@ class _HomePageState extends State<HomePage>
     if (game.spoke[seat]) {
       no = '$name has already shown a card this round';
     } else if (!game.canSpeak(seat)) {
-      no = 'Silence is decreed: no cards may be shown';
+      no = game.whyCantSpeak() ?? 'No cards may be shown now';
     } else if (c.current.isNotEmpty) {
       no = '$name can show a card once this trick is over';
     }
@@ -3532,7 +3528,7 @@ class _HomePageState extends State<HomePage>
 
   void _toggleSpoke(int seat) {
     if (!game.canSpeak(seat) && !game.spoke[seat]) {
-      _showSnack('Silence: no card reveals this round', Palette.feltDeep);
+      _showSnack(game.whyCantSpeak() ?? 'No cards may be shown now', Palette.feltDeep);
       return;
     }
     _haptic(HapticFeedback.selectionClick);
@@ -4340,18 +4336,19 @@ class _HomePageState extends State<HomePage>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
-          backgroundColor: Palette.feltDeep,
+          backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
-          shape: const OrnateBorder(radius: 22),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
+          elevation: 0,
+          child: OrnateCard(
+            won: false,
+            court: true,
+            margin: const EdgeInsets.only(top: 34),
+            maxWidth: 380,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(26, 22, 26, 18),
+              padding: const EdgeInsets.only(top: 6),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CrownIcon(size: 26),
-                  const SizedBox(height: 6),
                   const Text('Points target',
                       style: TextStyle(
                           fontFamily: displayFont,
@@ -4682,49 +4679,43 @@ class _HomePageState extends State<HomePage>
   /// The menu on the right: the rules, the Chronicle and sound.
   /// One line of the menu: a gold icon and a regal title.
   /// A menu entry; [on] adds a tick box for a setting.
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String title,
-          {bool? on}) =>
-      PopupMenuItem(
-        value: value,
-        height: 52,
-        child: Semantics(
-          toggled: on,
-          child: Row(
-            children: [
-              Icon(icon, color: Palette.gold, size: 22),
-              const SizedBox(width: 14),
-              Flexible(
-                child: Text(title,
-                    style: const TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        letterSpacing: 0.3,
-                        color: Color(0xFFF3E7C6))),
-              ),
-              if (on != null) ...[
-                const SizedBox(width: 10),
-                Icon(
-                    on
-                        ? Icons.check_box_rounded
-                        : Icons.check_box_outline_blank_rounded,
-                    color: Palette.gold,
-                    size: 22),
-              ],
-            ],
-          ),
-        ),
+  _MenuEntry _menuItem(String value, IconData icon, String title, {bool? on}) =>
+      (value: value, icon: icon, title: title, on: on);
+
+  bool _menuOpen = false;
+
+  /// The menu button: its bars fold into a cross while the menu is open.
+  Widget _buildMenu() => IconButton(
+        tooltip: 'Menu',
+        onPressed: _openMenu,
+        icon: _OrnateMenuIcon(size: 30, open: _menuOpen),
       );
 
-  Widget _buildMenu() {
-    return PopupMenuButton<String>(
-      tooltip: 'Menu',
-      icon: const _OrnateMenuIcon(size: 30),
-      color: Palette.feltDeep,
-      elevation: 12,
-      offset: const Offset(0, 48),
-      shape: const OrnateBorder(radius: 16),
-      onSelected: (choice) async {
+  /// The menu: an ornate panel that drops down from the corner.
+  Future<void> _openMenu() async {
+    final entries = _menuEntries();
+    setState(() => _menuOpen = true);
+    final choice = await showGeneralDialog<String>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close the menu',
+      barrierColor: Colors.black26,
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (context, _, __) => _OrnateMenu(entries: entries),
+      transitionBuilder: (context, a, _, child) {
+        final t = Curves.easeOutCubic.transform(a.value);
+        return Opacity(
+          opacity: a.value,
+          child: Transform.translate(offset: Offset(0, -14 * (1 - t)), child: child),
+        );
+      },
+    );
+    if (mounted) setState(() => _menuOpen = false);
+    if (choice == null || !mounted) return;
+    await _onMenuChoice(choice);
+  }
+
+  Future<void> _onMenuChoice(String choice) async {
         switch (choice) {
           case 'new':
             _showSetupDialog();
@@ -4775,14 +4766,9 @@ class _HomePageState extends State<HomePage>
             (context as Element).visitChildren(rebuild);
             _saveSettings();
         }
-      },
-      itemBuilder: (context) => [
-        // A crest at the top of the menu.
-        const PopupMenuItem<String>(
-          enabled: false,
-          height: 40,
-          child: Center(child: CrownIcon(size: 26, color: Palette.gold)),
-        ),
+  }
+
+  List<_MenuEntry> _menuEntries() => [
         if ((_inGame || _saves.isNotEmpty) && _setupArgs == null)
           _menuItem('new', Icons.group_add_outlined, 'New game'),
         if (_inGame &&
@@ -4805,9 +4791,7 @@ class _HomePageState extends State<HomePage>
         // For colour-blind players: no two suits share a colour.
         _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
             on: Palette.fourColourSuits),
-      ],
-    );
-  }
+      ];
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
@@ -7116,30 +7100,7 @@ class _HomePageState extends State<HomePage>
                     if (_saves.isNotEmpty) ...[
                       FilledButton(
                         onPressed: _showContinue,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('Continue'),
-                            if (_saves.length > 1) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: Palette.feltDeep,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text('${_saves.length}',
-                                    semanticsLabel: '${_saves.length} games',
-                                    style: const TextStyle(
-                                        fontFamily: bodyFont,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w800,
-                                        color: Palette.gold)),
-                              ),
-                            ],
-                          ],
-                        ),
+                        child: const Text('Continue'),
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -7317,7 +7278,7 @@ class _AutoFinishBanner extends StatelessWidget {
           CrownIcon(size: 22),
           SizedBox(width: 10),
           Flexible(
-            child: Text('Every task is safe!',
+            child: Text('Every task is done!',
               maxLines: 2,
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -7387,18 +7348,109 @@ class OrnateBorder extends ShapeBorder {
   ShapeBorder scale(double t) => OrnateBorder(radius: radius * t);
 }
 
-/// The menu button: three gold bars, the middle one shorter, each tipped
-/// with a small diamond.
-class _OrnateMenuIcon extends StatelessWidget {
-  const _OrnateMenuIcon({this.size = 30});
-  final double size;
+typedef _MenuEntry = ({String value, IconData icon, String title, bool? on});
+
+/// The menu, on the court's ornate panel: a medallion over the top, each
+/// line with a gold icon, divided by fine gold rules.
+class _OrnateMenu extends StatelessWidget {
+  const _OrnateMenu({required this.entries});
+  final List<_MenuEntry> entries;
 
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _OrnateMenuPainter());
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topRight,
+        child: Material(
+          type: MaterialType.transparency,
+          child: OrnateCard(
+            won: false,
+            court: true,
+            margin: const EdgeInsets.fromLTRB(16, 76, 10, 16),
+            padding: const EdgeInsets.fromLTRB(14, 34, 14, 14),
+            maxWidth: 300,
+            child: IntrinsicWidth(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (i, e) in entries.indexed) ...[
+                    if (i > 0)
+                      Container(
+                          height: 1,
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          color: Palette.gold.withValues(alpha: 0.22)),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => Navigator.pop(context, e.value),
+                      child: Semantics(
+                        button: true,
+                        toggled: e.on,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 50),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(children: [
+                              Icon(e.icon, color: Palette.gold, size: 22),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(e.title,
+                                    style: const TextStyle(
+                                        fontFamily: displayFont,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                        letterSpacing: 0.3,
+                                        color: Color(0xFFF3E7C6))),
+                              ),
+                              if (e.on != null) ...[
+                                const SizedBox(width: 10),
+                                Icon(
+                                    e.on!
+                                        ? Icons.check_box_rounded
+                                        : Icons.check_box_outline_blank_rounded,
+                                    color: Palette.gold,
+                                    size: 22),
+                              ],
+                            ]),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The menu button: three gold bars, the middle one shorter, each tipped
+/// with a small diamond. While the menu is open the outer bars cross and
+/// the middle one draws in to a single jewel.
+class _OrnateMenuIcon extends StatelessWidget {
+  const _OrnateMenuIcon({this.size = 30, this.open = false});
+  final double size;
+  final bool open;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        tween: Tween(end: open ? 1 : 0),
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOutCubic,
+        builder: (context, t, _) =>
+            CustomPaint(size: Size.square(size), painter: _OrnateMenuPainter(t)),
+      );
 }
 
 class _OrnateMenuPainter extends CustomPainter {
+  _OrnateMenuPainter(this.t);
+
+  /// 0: three bars; 1: a cross with a jewel at its heart.
+  final double t;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
@@ -7415,16 +7467,30 @@ class _OrnateMenuPainter extends CustomPainter {
           ..lineTo(c.dx - r, c.dy)
           ..close(),
         gem);
-    for (final (y, inset) in [(0.25, 0.2), (0.5, 0.3), (0.75, 0.2)]) {
-      final a = Offset(w * inset, h * y), b = Offset(w * (1 - inset), h * y);
-      canvas.drawLine(a, b, bar);
-      diamond(a - Offset(h * 0.07, 0), h * 0.07);
-      diamond(b + Offset(h * 0.07, 0), h * 0.07);
+    final c = Offset(w / 2, h / 2);
+    // The outer bars: from level, they swing to cross through the middle.
+    for (final (y, sign) in [(0.25, 1.0), (0.75, -1.0)]) {
+      final level = Offset(0, h * y - h / 2);
+      final half = w * 0.3 * (1 - 0.1 * t);
+      final angle = sign * math.pi / 4 * t;
+      final dir = Offset(math.cos(angle), math.sin(angle)) * half;
+      final mid = c + level * (1 - t);
+      canvas.drawLine(mid - dir, mid + dir, bar);
+      diamond(mid - dir * 1.25, h * 0.07 * (1 - t * 0.4));
+      diamond(mid + dir * 1.25, h * 0.07 * (1 - t * 0.4));
     }
+    // The middle bar draws in to a jewel.
+    final half = w * 0.2 * (1 - t);
+    if (half > 0.5) canvas.drawLine(c - Offset(half, 0), c + Offset(half, 0), bar);
+    if (t < 0.95) {
+      diamond(c - Offset(half + h * 0.07, 0), h * 0.07);
+      diamond(c + Offset(half + h * 0.07, 0), h * 0.07);
+    }
+    if (t > 0.05) diamond(c, h * 0.11 * t);
   }
 
   @override
-  bool shouldRepaint(_OrnateMenuPainter old) => false;
+  bool shouldRepaint(_OrnateMenuPainter old) => old.t != t;
 }
 
 /// The game's name, with a little crown over the I of King's.
@@ -7456,7 +7522,7 @@ class _CrownedTitle extends StatelessWidget {
               // its stroke, with the same soft shadow as the letters.
               Positioned(
                 top: -_style.fontSize! * 0.36,
-                left: -_style.fontSize! * 0.3 + _style.fontSize! * 0.07,
+                left: -_style.fontSize! * 0.3 + _style.fontSize! * 0.045,
                 right: -_style.fontSize! * 0.3,
                 child: Center(
                   child: Stack(clipBehavior: Clip.none, children: [
@@ -8266,12 +8332,13 @@ class _SetupPanelState extends State<_SetupPanel> {
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: still ? 200 : 460),
                 // The old step goes first, then the new one is dealt in.
+                // Fade out, then fade in.
                 switchInCurve: still
                     ? Curves.easeOut
-                    : const Interval(0.35, 1, curve: Curves.easeOutCubic),
+                    : const Interval(0.5, 1, curve: Curves.easeOut),
                 switchOutCurve: still
                     ? Curves.easeIn
-                    : const Interval(0.5, 1, curve: Curves.easeInCubic),
+                    : const Interval(0.5, 1, curve: Curves.easeIn),
                 layoutBuilder: (current, previous) => Stack(
                   alignment: Alignment.center,
                   children: [...previous, if (current != null) current],
@@ -8282,15 +8349,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                         animation: a,
                         incoming: child.key == ValueKey(step),
                         forward: _forward,
-                        // Trying out a different turn on each page, to pick
-                        // one (see _TurnStyle).
-                        style: switch (_flow[step]) {
-                          'how' => _TurnStyle.sealPress,
-                          'mode' => _TurnStyle.deal,
-                          'count' => _TurnStyle.fadeThrough,
-                          'names' => _TurnStyle.slide,
-                          _ => _TurnStyle.curtain,
-                        },
+                        style: _TurnStyle.fade,
                         child: child),
                 child: Center(
                   key: ValueKey(step),
@@ -9336,7 +9395,9 @@ class _CardTracker extends StatelessWidget {
 const powersComingSoon = true;
 const dynastyComingSoon = true;
 
-/// The ways a setup page can turn to the next, on trial:
+/// The ways a setup page can turn to the next. [fade] is the one in use:
+/// the old page fades out, then the new one fades in. The others were
+/// tried:
 /// * [deal]: slides in with a slight tilt that settles flat, like a card
 ///   dealt onto the table, with a faint glint of gold.
 /// * [fadeThrough]: the old page fades away, then the new one fades in,
@@ -9346,7 +9407,7 @@ const dynastyComingSoon = true;
 ///   gold edge, like a curtain drawn aside.
 /// * [sealPress]: the new page settles down onto the table from just above,
 ///   like a wax seal being pressed.
-enum _TurnStyle { deal, fadeThrough, slide, curtain, sealPress }
+enum _TurnStyle { fade, deal, fadeThrough, slide, curtain, sealPress }
 
 class _PageTurn extends StatelessWidget {
   const _PageTurn(
@@ -9373,6 +9434,8 @@ class _PageTurn extends StatelessWidget {
         final side = (incoming ? 1 : -1) * (forward ? 1 : -1);
         final away = 1 - t;
         switch (style) {
+          case _TurnStyle.fade:
+            return Opacity(opacity: t, child: child);
           case _TurnStyle.fadeThrough:
             return Opacity(
               opacity: t,
@@ -9527,9 +9590,11 @@ class _MiniCard extends StatelessWidget {
         fade)!;
     final r = width * 0.14;
     final edgeW = edge != null ? math.max(2.5, width * 0.08) : 1.0;
+    // Nudged up a little: the suit's glyph sits low in its line.
     final label = Center(
       child: Padding(
-        padding: EdgeInsets.all(width * 0.06),
+        padding: EdgeInsets.fromLTRB(
+            width * 0.06, width * 0.02, width * 0.06, width * 0.14),
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text.rich(
