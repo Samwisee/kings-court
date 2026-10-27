@@ -446,9 +446,18 @@ void main() {
       final picker = game.pickTurn!;
       final target = tester.getCenter(find.byType(SeatToken).at(picker));
       final task = (tester.widget(card) as TableCard).task;
-      final start = tester.getCenter(card);
+      var start = tester.getCenter(card);
       await dragFromTo(tester, start, target);
       await tester.pump();
+      // The harness sometimes misses a drag on the round table (something
+      // else under the finger); try again from another part of the card.
+      final rect = tester.getRect(card);
+      for (final f in const [Offset(0.3, 0.7), Offset(0.7, 0.3)]) {
+        if (task.assignedPlayerIndex != null) break;
+        start = Offset(rect.left + rect.width * f.dx, rect.top + rect.height * f.dy);
+        await dragFromTo(tester, start, target);
+        await tester.pump();
+      }
       // Next clockwise who can take one of the tasks left (anyone who
       // can't is skipped).
       seat = picker;
