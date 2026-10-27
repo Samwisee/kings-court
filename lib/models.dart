@@ -1296,6 +1296,7 @@ class GameState {
   /// the last task to be taken, so play can begin.
   bool assign(Task task, int? seat) {
     final wasLoose = task.assignedPlayerIndex == null;
+    if (seat != null && wasLoose) picksMade++;
     task.assignedPlayerIndex = seat;
     if (seat != null) assignForced();
     final allTaken = tasks.every((t) => t.assignedPlayerIndex != null);
@@ -1314,6 +1315,10 @@ class GameState {
     }
     return false;
   }
+
+  /// Tasks taken by a pick this round (not counting ones that went
+  /// straight to the only player who could take them).
+  int picksMade = 0;
 
   /// A task only one player can take goes straight to them.
   void assignForced() {
@@ -1339,6 +1344,7 @@ class GameState {
   void toggleSpoke(int seat) => spoke[seat] = !spoke[seat];
 
   void _resetRoundCounters() {
+    picksMade = 0;
     roundLoyalty = [];
     spoke = List.filled(players.length, false);
     powerUsed = List.filled(players.length, false);

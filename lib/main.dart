@@ -903,7 +903,9 @@ class _HomePageState extends State<HomePage>
       _digital &&
       game.pickTurn != null &&
       _cards.dealId == game.dealId &&
-      game.tasks.every((t) => t.assignedPlayerIndex == null || game.isCharged(t));
+      // Nobody has picked yet (tasks that went straight to the only player
+      // who could take them, or royal charges, don't count).
+      game.picksMade == 0;
 
   /// Where each open task starts from in the deal (the middle of the
   /// table), measured once per deal.
