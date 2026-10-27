@@ -69,11 +69,9 @@ Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
   await g.up();
 }
 
-/// Taps Play on the welcome screen, then New game.
+/// Taps Play on the welcome screen, which opens setup.
 Future<void> openSetup(WidgetTester tester) async {
   await tester.tap(find.text('Play'));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('New game'));
   await tester.pumpAndSettle();
 }
 
@@ -119,12 +117,13 @@ void main() {
     expect(find.text('Play'), findsOneWidget);
     expect(find.text('New Game'), findsNothing);
     await tester.pumpAndSettle();
-    // Play offers a new game and the tutorial; nothing is saved yet.
+    // Play opens setup: the ways to play, the tutorial among them; nothing
+    // is saved yet, so nothing to continue.
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
-    expect(find.text('New game'), findsOneWidget);
+    expect(find.text('How will you play?'), findsOneWidget);
     expect(find.text('Tutorial'), findsOneWidget);
-    expect(find.text('CONTINUE'), findsNothing);
+    expect(find.text('Continue'), findsNothing);
   });
 
   testWidgets('How to play opens as a dialog with the 2-player rules',
@@ -219,7 +218,7 @@ void main() {
     await tester.tap(find.text('Re-deal tasks'));
     await tester.pumpAndSettle();
 
-    expect(state.targetPoints, isNot(10));
+    expect(state.targetPoints, isNot(5));
     expect((state.game as GameState).players, same(players));
     expect((state.game as GameState).kingIndex, 0);
     expect(find.text('Round 1'), findsOneWidget);
@@ -415,7 +414,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final state = tester.state(find.byType(HomePage)) as dynamic;
-    expect(state.targetPoints, isNot(10));
+    expect(state.targetPoints, isNot(5));
     expect(find.text('Round 2'), findsOneWidget);
     expect(find.text('Who holds the King card?'), findsOneWidget);
   });
@@ -565,7 +564,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
-    expect(find.text('CONTINUE'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
     await tester.tap(find.text('Free play'));
     await tester.pumpAndSettle();
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -362,7 +363,7 @@ class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin {
   GameState game = GameState();
   int playerCount = 4;
-  int targetPoints = 10;
+  int targetPoints = 5;
 
   /// Card centres as fractions of the table size, so they survive rotation
   /// and window resizes.
@@ -1501,12 +1502,12 @@ class _HomePageState extends State<HomePage>
                                 textAlign: TextAlign.right,
                                 style: TextStyle(
                                     fontFamily: bodyFont,
-                                    fontSize: 17,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                     color: Palette.gold)),
                           ),
-                          const SizedBox(width: 10),
-                          _GlowButton(label: 'Skip', onPressed: _startChoosing, big: true),
+                          const SizedBox(width: 8),
+                          _GlowButton(label: 'Skip', onPressed: _startChoosing),
                         ],
                       )
                     : AnimatedDefaultTextStyle(
@@ -4101,6 +4102,12 @@ class _HomePageState extends State<HomePage>
       canCancel: true,
       onCancel: _closeSetup,
       onStart: _startFromSetup,
+      // From the front page, saved games to carry on with.
+      saves: _inGame ? const [] : _saves,
+      onContinue: (save) {
+        _closeSetup();
+        _continueSaved(save);
+      },
       // On-screen cards unless the game being replaced used a real deck.
       digital: _inGame ? game.digital : true,
     );
@@ -6801,26 +6808,15 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  /// Play on the welcome screen: carry on with a saved game, start a new
-  /// one, or learn with the tutorial.
+  /// Play on the welcome screen: straight into setup, whose first step
+  /// also offers any saved games to carry on with.
   Future<void> _showPlayMenu() async {
     try {
       final saves = await _readSaves(await SharedPreferences.getInstance());
       if (mounted) setState(() => _saves = saves);
     } catch (_) {}
     if (!mounted) return;
-    final choice = await showDialog<Object>(
-      context: context,
-      builder: (context) => _PlayMenu(saves: _saves),
-    );
-    if (!mounted || choice == null) return;
-    if (choice is _SavedGame) {
-      _continueSaved(choice);
-    } else if (choice == 'new') {
-      _showSetupDialog();
-    } else if (choice == 'tutorial') {
-      _startTutorial();
-    }
+    _showSetupDialog();
   }
 
   /// The front of the table before a game: the four Court Cards fan out
@@ -6988,9 +6984,22 @@ class _CrownedTitle extends StatelessWidget {
             alignment: Alignment.topCenter,
             children: [
               const Text('i', style: _style),
+              // Just over the I, a hair left of the glyph's box to sit on
+              // its stroke, with the same soft shadow as the letters.
               Positioned(
-                top: -_style.fontSize! * 0.42,
-                child: CrownIcon(size: _style.fontSize! * 0.5, color: Palette.gold),
+                top: -_style.fontSize! * 0.36,
+                left: -_style.fontSize! * 0.3,
+                right: -_style.fontSize! * 0.3 + _style.fontSize! * 0.05,
+                child: Center(
+                  child: Stack(clipBehavior: Clip.none, children: [
+                    ImageFiltered(
+                      imageFilter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                      child: CrownIcon(
+                          size: _style.fontSize! * 0.5, color: Colors.black54),
+                    ),
+                    CrownIcon(size: _style.fontSize! * 0.5, color: Palette.gold),
+                  ]),
+                ),
               ),
             ],
           ),
@@ -7236,8 +7245,12 @@ class _SetupPanel extends StatefulWidget {
     required this.onCancel,
     required this.onStart,
     required this.digital,
+    this.saves = const [],
+    this.onContinue,
   });
 
+  final List<_SavedGame> saves;
+  final ValueChanged<_SavedGame>? onContinue;
   final List<Player> players;
   final int playerCount;
   final int targetPoints;
@@ -7424,7 +7437,23 @@ class _SetupPanelState extends State<_SetupPanel> {
       key: const ValueKey('how'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('How will you play?',
+        if (widget.saves.isNotEmpty) ...[
+          const Text('Continue', textAlign: TextAlign.center, style: _heading),
+          const SizedBox(height: 12),
+          for (final s in widget.saves)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _ModeTile(
+                title: s.title,
+                icon: Icons.play_arrow_rounded,
+                description: [s.detail, if (s.ago.isNotEmpty) s.ago].join(' · '),
+                selected: false,
+                onTap: () => widget.onContinue?.call(s),
+              ),
+            ),
+          const SizedBox(height: 14),
+        ],
+        Text(widget.saves.isEmpty ? 'How will you play?' : 'Or start a new game',
             textAlign: TextAlign.center, style: _heading),
         const SizedBox(height: 12),
         tile('Tutorial', 'New to the court? Learn the rules step by step.',
@@ -7464,7 +7493,7 @@ class _SetupPanelState extends State<_SetupPanel> {
         Text(
             mode == GameMode.dynasty && digital
                 ? 'You will be King'
-                : 'How many at the table?',
+                : 'How many players?',
             textAlign: TextAlign.center,
             style: _heading),
         const SizedBox(height: 18),
@@ -7767,14 +7796,14 @@ class _SetupPanelState extends State<_SetupPanel> {
             const SizedBox(height: 4),
             Expanded(
               child: AnimatedSwitcher(
-                duration: Duration(milliseconds: still ? 200 : 620),
-                // The old page turns away first, then the new one turns in.
+                duration: Duration(milliseconds: still ? 200 : 460),
+                // The old step goes first, then the new one is dealt in.
                 switchInCurve: still
                     ? Curves.easeOut
-                    : const Interval(0.45, 1, curve: Curves.easeOutBack),
+                    : const Interval(0.35, 1, curve: Curves.easeOutCubic),
                 switchOutCurve: still
                     ? Curves.easeIn
-                    : const Interval(0.45, 1, curve: Curves.easeInCubic),
+                    : const Interval(0.5, 1, curve: Curves.easeInCubic),
                 layoutBuilder: (current, previous) => Stack(
                   alignment: Alignment.center,
                   children: [...previous, if (current != null) current],
@@ -8235,14 +8264,16 @@ class _TaskChip extends StatelessWidget {
           ),
       ],
     );
-    final front = AnimatedContainer(
+    final front = CustomPaint(
+      foregroundPainter: const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
+      child: AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: width,
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
       decoration: BoxDecoration(
         color: failed ? const Color(0xFFFBE4E1) : Palette.card,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: failed ? Palette.lost : color, width: 2.5 + outlineWidth),
+        border: Border.all(color: failed ? Palette.lost : color, width: 2.5 + 2 * outlineWidth),
         boxShadow: const [
           BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
         ],
@@ -8266,6 +8297,7 @@ class _TaskChip extends StatelessWidget {
                   color: Palette.ink)),
         ],
       ),
+    ),
     );
     // Done: the chip turns over to show a seal of completion.
     return GestureDetector(
@@ -8281,11 +8313,13 @@ class _TaskChip extends StatelessWidget {
           back: Stack(children: [
             Opacity(opacity: 0, child: front),
             Positioned.fill(
+              child: CustomPaint(
+              foregroundPainter: const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
               child: Container(
                 decoration: BoxDecoration(
                   color: Palette.feltDeep,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: color, width: 2.5 + outlineWidth),
+                  border: Border.all(color: color, width: 2.5 + 2 * outlineWidth),
                 ),
                 foregroundDecoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
@@ -8306,6 +8340,7 @@ class _TaskChip extends StatelessWidget {
                     CrownIcon(size: fontSize * 1.5, color: Palette.gold),
                   ],
                 ),
+              ),
               ),
             ),
           ]),
@@ -8360,152 +8395,6 @@ class _SavedGame {
     return '${d.inDays} days ago';
   }
 }
-
-/// What Play offers: every saved game to continue, then a new game and the
-/// tutorial. Pops with the chosen [_SavedGame], 'new' or 'tutorial'.
-class _PlayMenu extends StatelessWidget {
-  const _PlayMenu({required this.saves});
-  final List<_SavedGame> saves;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget option({
-      required Widget icon,
-      required String title,
-      required String subtitle,
-      required Object result,
-      bool primary = false,
-    }) =>
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Material(
-            color: primary ? const Color(0x33D4A63A) : const Color(0x22000000),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                  color: primary ? Palette.gold : Colors.white24,
-                  width: primary ? 2 : 1.5),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => Navigator.pop(context, result),
-              child: ConstrainedBox(
-                // Comfortably above the 48 pt minimum tap target.
-                constraints: const BoxConstraints(minHeight: 64),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
-                  child: Row(
-                    children: [
-                      IconTheme(
-                          data: const IconThemeData(
-                              color: Palette.gold, size: 28),
-                          child: icon),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(title,
-                                style: const TextStyle(
-                                    fontFamily: displayFont,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 17,
-                                    color: Colors.white)),
-                            const SizedBox(height: 2),
-                            Text(subtitle,
-                                style: const TextStyle(
-                                    fontSize: 14.5,
-                                    height: 1.3,
-                                    color: Colors.white70)),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Colors.white54),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-
-    return Dialog(
-      backgroundColor: Palette.feltDeep,
-      surfaceTintColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 20, 18, 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Center(child: CrownIcon(size: 30)),
-              const SizedBox(height: 6),
-              const Text('Play',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontFamily: displayFont,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 26,
-                      color: Palette.gold)),
-              const SizedBox(height: 14),
-              if (saves.isNotEmpty) ...[
-                Semantics(
-                  header: true,
-                  child: const Padding(
-                    padding: EdgeInsets.only(left: 4, bottom: 8),
-                    child: Text('CONTINUE',
-                        style: TextStyle(
-                            fontSize: 13,
-                            letterSpacing: 1.4,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70)),
-                  ),
-                ),
-                for (final (i, s) in saves.indexed)
-                  option(
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    title: s.title,
-                    subtitle: [s.detail, if (s.ago.isNotEmpty) s.ago].join(' · '),
-                    result: s,
-                    primary: i == 0,
-                  ),
-                const SizedBox(height: 6),
-              ],
-              option(
-                icon: const Icon(Icons.add_rounded),
-                title: 'New game',
-                subtitle: saves.isEmpty
-                    ? 'Choose how to play: Free play, Endless, the Chronicle or Dynasty.'
-                    : 'Starting one keeps your other saves; only a save of the same kind is replaced.',
-                result: 'new',
-                primary: saves.isEmpty,
-              ),
-              option(
-                icon: const Icon(Icons.school_rounded),
-                title: 'Tutorial',
-                subtitle:
-                    'New to the court, or to card games? Learn to play, step by step.',
-                result: 'tutorial',
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 
 /// The game words a task uses, each opening to say what it means: for
 /// anyone new to trick-taking games.
@@ -8940,9 +8829,9 @@ class _CardTracker extends StatelessWidget {
 const powersComingSoon = true;
 const dynastyComingSoon = true;
 
-/// A setup page turning like a card on the King's table: it swings on its
-/// edge (away to one side, in from the other), and a glint of gold runs
-/// across it as it lands face up.
+/// Turns from one setup step to the next like a card being dealt onto the
+/// table: the old step slides away and fades, the new one slides in with a
+/// slight tilt that settles flat, and a faint glint of gold passes over it.
 class _PageTurn extends StatelessWidget {
   const _PageTurn(
       {required this.animation,
@@ -8960,41 +8849,40 @@ class _PageTurn extends StatelessWidget {
       animation: animation,
       child: child,
       builder: (context, child) {
-        final t = animation.value; // 0 hidden, 1 face up
-        // Forward: the old page turns off to the left, the new one comes
-        // in from the right; back is the other way round.
+        final t = animation.value.clamp(0.0, 1.0); // 0 hidden, 1 in place
+        // Forward: the old step leaves to the left and the new one comes
+        // from the right; back is the other way round.
         final side = (incoming ? 1 : -1) * (forward ? 1 : -1);
-        final angle = (1 - t) * side * math.pi / 2;
-        final glint = incoming ? math.sin(t.clamp(0.0, 1.0) * math.pi) : 0.0;
+        final away = 1 - t;
+        final glint = incoming ? math.sin(t * math.pi) : 0.0;
         return Opacity(
-          opacity: t.clamp(0.0, 1.0) < 0.02 ? 0 : 1,
-          child: Transform(
-            alignment: side > 0 ? Alignment.centerRight : Alignment.centerLeft,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0012)
-              ..rotateY(angle)
-              ..multiply(Matrix4.diagonal3Values(0.9 + 0.1 * t, 0.9 + 0.1 * t, 1)),
-            child: Stack(children: [
-              child!,
-              if (glint > 0.01)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment(-1.6 + 3.2 * t, -1),
-                          end: Alignment(-0.6 + 3.2 * t, 1),
-                          colors: [
-                            Palette.gold.withValues(alpha: 0),
-                            Palette.gold.withValues(alpha: 0.28 * glint),
-                            Palette.gold.withValues(alpha: 0),
-                          ],
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(side * 36 * away, 6 * away),
+            child: Transform.rotate(
+              angle: side * 0.035 * away,
+              child: Stack(children: [
+                child!,
+                if (glint > 0.01)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment(-1.6 + 3.2 * t, -1),
+                            end: Alignment(-0.9 + 3.2 * t, 1),
+                            colors: [
+                              Palette.gold.withValues(alpha: 0),
+                              Palette.gold.withValues(alpha: 0.12 * glint),
+                              Palette.gold.withValues(alpha: 0),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ]),
+              ]),
+            ),
           ),
         );
       },
@@ -9152,68 +9040,101 @@ class _OutlinedNumber extends StatelessWidget {
 
 /// A button that softly pulses with a gold glow, to draw the eye.
 class _GlowButton extends StatefulWidget {
-  const _GlowButton({required this.label, required this.onPressed, this.big = false});
+  const _GlowButton({required this.label, required this.onPressed});
   final String label;
   final VoidCallback onPressed;
-  final bool big;
 
   @override
   State<_GlowButton> createState() => _GlowButtonState();
 }
 
 class _GlowButtonState extends State<_GlowButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final _pulse = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1200));
+
+  /// A glint of light that sweeps across the gold every couple of seconds.
+  late final _sheen = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 2400));
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // No pulsing for reduced motion (or in tests, where it would never
+    // No movement for reduced motion (or in tests, where it would never
     // settle).
     final still = MediaQuery.of(context).disableAnimations ||
         !CharacterToken.alive;
     if (still) {
       _pulse.stop();
       _pulse.value = 0.6;
+      _sheen.stop();
+      _sheen.value = 0.3;
     } else if (!_pulse.isAnimating) {
       _pulse.repeat(reverse: true);
+      _sheen.repeat();
     }
   }
 
   @override
   void dispose() {
     _pulse.dispose();
+    _sheen.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final shape = Theme.of(context).filledButtonTheme.style?.shape?.resolve({}) ??
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: AnimatedBuilder(
-        animation: _pulse,
-        builder: (context, child) => DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: Palette.gold.withValues(alpha: 0.25 + 0.45 * _pulse.value),
-                  blurRadius: 8 + 10 * _pulse.value,
-                  spreadRadius: 1),
-            ],
-          ),
-          child: child,
-        ),
+        animation: Listenable.merge([_pulse, _sheen]),
+        builder: (context, child) {
+          // The sweep crosses in the first half of each cycle, then rests.
+          final x = -1.8 + 3.6 * (_sheen.value * 2).clamp(0.0, 1.0);
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                    color: Palette.gold.withValues(alpha: 0.3 + 0.5 * _pulse.value),
+                    blurRadius: 10 + 12 * _pulse.value,
+                    spreadRadius: 1.5),
+              ],
+            ),
+            child: Stack(children: [
+              child!,
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: ClipPath(
+                    clipper: ShapeBorderClipper(shape: shape),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment(x - 0.5, -1),
+                          end: Alignment(x + 0.5, 1),
+                          colors: const [
+                            Color(0x00FFFFFF),
+                            Color(0xAAFFF6D8),
+                            Color(0x00FFFFFF),
+                          ],
+                          stops: const [0.3, 0.5, 0.7],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+          );
+        },
         child: FilledButton(
           onPressed: widget.onPressed,
           style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
-              minimumSize: Size(widget.big ? 120 : 0, widget.big ? 48 : 40),
-              textStyle: widget.big
-                  ? const TextStyle(fontFamily: displayFont, fontWeight: FontWeight.w900, fontSize: 20)
-                  : null,
-              padding: EdgeInsets.symmetric(horizontal: widget.big ? 26 : 18)),
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 18)),
           child: Text(widget.label),
         ),
       ),

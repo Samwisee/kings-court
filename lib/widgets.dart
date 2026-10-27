@@ -736,7 +736,7 @@ class TableCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: border ?? const Color(0xFFE6E0D4),
-          width: borderWidth + outlineWidth,
+          width: borderWidth + 2 * outlineWidth,
         ),
         boxShadow: [
           BoxShadow(
@@ -753,6 +753,12 @@ class TableCard extends StatelessWidget {
     borderRadius: BorderRadius.circular(8),
     border: Border.all(color: outlineColour, width: outlineWidth),
   );
+
+  /// A dark line just inside the coloured border, so the colour has dark
+  /// on both sides.
+  static Widget _innerEdged(Widget child) => CustomPaint(
+      foregroundPainter: const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
+      child: child);
 
   Widget _ownerBadge() {
     final o = owner;
@@ -852,7 +858,7 @@ class TableCard extends StatelessWidget {
           ),
       ],
     );
-    return Container(
+    return _innerEdged(Container(
       width: width,
       height: _height,
       foregroundDecoration: _edge,
@@ -892,7 +898,7 @@ class TableCard extends StatelessWidget {
           _ownerBadge(),
         ],
       ),
-    );
+    ));
   }
 
   /// The plain deck back, as dealt.
@@ -918,7 +924,7 @@ class TableCard extends StatelessWidget {
   /// with a check.
   Widget _back() {
     final seal = clampD(width * 0.3, 22, 34);
-    return Container(
+    return _innerEdged(Container(
       width: width,
       height: _height,
       foregroundDecoration: _edge,
@@ -958,7 +964,7 @@ class TableCard extends StatelessWidget {
           _ownerBadge(),
         ],
       ),
-    );
+    ));
   }
 }
 

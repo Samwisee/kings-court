@@ -73,6 +73,10 @@ class PlayingCardView extends StatelessWidget {
                     ? Palette.gold
                     : const Color(0xFFD9D2C3));
     final thick = glow || edge != null || marks.isNotEmpty || card.isCourt;
+    // A player's colour (or the gold of a suggested card) round the edge:
+    // dark lines touch it on both sides, so it reads against anything.
+    final coloured = glow || edge != null || marks.isNotEmpty;
+    final borderWidth = thick ? 3.0 : card.isCourt ? 2.0 : 1.0;
 
     return Semantics(
       label: card.spoken,
@@ -103,8 +107,7 @@ class PlayingCardView extends StatelessWidget {
                   colors: _cloth[card.rank - 1])
               : null,
           borderRadius: r,
-          border: Border.all(
-              color: borderColour, width: thick ? 3 : card.isCourt ? 2 : 1),
+          border: Border.all(color: borderColour, width: borderWidth),
         ),
         foregroundDecoration: dimmed
             ? BoxDecoration(color: const Color(0x66000000), borderRadius: r)
@@ -125,8 +128,23 @@ class PlayingCardView extends StatelessWidget {
                   }),
                 ),
               ),
+            if (coloured)
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.all(borderWidth),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                          math.max(0.0, outer - outlineWidth - borderWidth)),
+                      border: Border.all(color: outlineColour, width: outlineWidth),
+                    ),
+                  ),
+                ),
+              ),
             // Every card has an inner frame, as on the printed deck: gold
-            // on the Court Cards, a fine dark rule on the rest.
+            // on the Court Cards, a fine dark rule on the rest (unless a
+            // player's colour is already framed in dark).
+            if (card.isCourt || !coloured)
             Positioned.fill(
               child: Container(
                 margin: EdgeInsets.all(width * 0.06),

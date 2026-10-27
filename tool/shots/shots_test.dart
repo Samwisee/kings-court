@@ -115,8 +115,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('New game'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Single player'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Free play'));
@@ -160,8 +158,6 @@ void main() {
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
     await expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/laptop-how.png'));
@@ -211,8 +207,6 @@ void main() {
       await tester.pumpWidget(const TheKingsCourtApp());
       await tester.pumpAndSettle();
       await tester.tap(find.text('Play'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('New game'));
       await tester.pumpAndSettle();
       await tester.tap(find.text(onScreen ? 'Single player' : 'In person'));
       await tester.pumpAndSettle();
@@ -380,8 +374,6 @@ void main() {
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Single player'));
     await tester.pumpAndSettle();

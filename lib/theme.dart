@@ -151,3 +151,27 @@ class InkOutline extends StatelessWidget {
         child: Padding(padding: const EdgeInsets.all(outlineWidth), child: child),
       );
 }
+
+/// The dark line just inside a coloured border [inset] wide, so the colour
+/// has dark on both sides (the outer line is the card's own outline).
+class InnerEdge extends CustomPainter {
+  const InnerEdge({required this.radius, required this.inset});
+  final double radius;
+  final double inset;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final d = inset + outlineWidth / 2;
+    final r = (Offset.zero & size).deflate(d);
+    if (r.isEmpty) return;
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(r, Radius.circular(radius - d < 0 ? 0 : radius - d)),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = outlineWidth
+          ..color = outlineColour);
+  }
+
+  @override
+  bool shouldRepaint(InnerEdge old) => old.radius != radius || old.inset != inset;
+}
