@@ -88,6 +88,18 @@ class Task {
     return text.replaceAll(_bracketed, '');
   }
 
+  /// The trick it's about can't have any Court Cards in it: shown as an
+  /// icon beside the points.
+  bool get noCourtCards =>
+      description.contains('with no Court Cards') ||
+      description.contains('only even cards') ||
+      description.contains('only odd cards');
+
+  /// The full wording for the close-up, less "with no Court Cards", which
+  /// its icon says.
+  String fullText(int playerCount) =>
+      cardText(playerCount).replaceAll(RegExp(r',? with no Court Cards'), '').trim();
+
   /// The task as short as it can go, for the card on the table: the same
   /// meaning in fewer words, with Court Cards as a crown (\uE001) and "with no
   /// Court Cards" as a struck-out crown (\uE000). The close-up keeps the full
@@ -104,7 +116,8 @@ class Task {
   }
 
   static final List<(Pattern, String)> _shorter = [
-    (RegExp(r',? with no Court Cards'), ' \uE000'),
+    // Shown as an icon beside the points instead.
+    (RegExp(r',? with no Court Cards'), ''),
     ('Win more tricks than anyone else', 'Win the most tricks'),
     ('Win fewer tricks than anyone else', 'Win the fewest tricks'),
     ('than the rest of the court put together', 'than everyone else combined'),

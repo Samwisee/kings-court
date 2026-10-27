@@ -4163,6 +4163,23 @@ class _HomePageState extends State<HomePage>
   }
 
   /// The close-up of a task, turned to face the player who holds it.
+  /// The marks a task card carries beside its points (the same as on the
+  /// table), each with what it means.
+  List<(Widget, String)> _taskMarks(Task task, double size) => [
+        if (task.noCourtCards)
+          (NoCourtIcon(size: size), 'The trick can\u2019t have any Court Cards in it.'),
+        if (task.kingCantTake)
+          (Icon(Icons.block, size: size, color: Palette.inkSoft),
+              'The King can\u2019t take this task.'),
+        for (final n in task.notes)
+          (Icon(Icons.info_outline, size: size, color: Palette.inkSoft), n),
+        if (task.seal != null)
+          (WaxSeal(seal: task.seal!, size: size + 3), Seals.describe(task.seal!)),
+        if (game.isCharged(task))
+          (Icon(Icons.workspace_premium, size: size + 1, color: Palette.goldDeep),
+              'A royal charge: this house has been charged with this task.'),
+      ];
+
   Future<void> _showTaskDetail(Task task, Offset tapGlobal) async {
     final owner = task.assignedPlayerIndex == null
         ? null
@@ -4183,6 +4200,8 @@ class _HomePageState extends State<HomePage>
         // Whose it is shows as on the table: their colour, edged in dark.
         shape: _HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
         scrollable: true,
+        contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         content: SizedBox(
           width: 360,
           child: Column(
@@ -4198,14 +4217,16 @@ class _HomePageState extends State<HomePage>
                       style: const TextStyle(
                           fontFamily: displayFont,
                           fontWeight: FontWeight.w900,
-                          fontSize: 32,
+                          fontSize: 28,
                           height: 1,
                           color: Palette.ink)),
-                  const SizedBox(width: 4),
-                  const CrownIcon(size: 22, color: Palette.goldDeep),
-                  if (task.seal != null) ...[
-                    const SizedBox(width: 6),
-                    WaxSeal(seal: task.seal!, size: 30),
+                  const SizedBox(width: 3),
+                  const CrownIcon(size: 19, color: Palette.goldDeep),
+                  // The same marks as the card on the table, each
+                  // explained under the words.
+                  for (final (icon, _) in _taskMarks(task, 21)) ...[
+                    const SizedBox(width: 7),
+                    icon,
                   ],
                   const Spacer(),
                   if (_progressOf(task) case final p? when !task.isCompleted && !task.isFailed)
@@ -4224,19 +4245,40 @@ class _HomePageState extends State<HomePage>
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
-              SuitText(task.cardText(playerCount),
+              const SizedBox(height: 6),
+              SuitText(task.fullText(playerCount),
                   struck: _wonNamed(task),
                   style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 19,
                       height: 1.3,
                       fontWeight: FontWeight.w600,
                       color: Palette.ink)),
+              // What each mark by the points means.
+              for (final (icon, words) in _taskMarks(task, 16))
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                          width: 26,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 1),
+                            child: Align(alignment: Alignment.topLeft, child: icon),
+                          )),
+                      Expanded(
+                        child: SuitText(words,
+                            style: const TextStyle(
+                                fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
+                      ),
+                    ],
+                  ),
+                ),
               // How it's going, for every task, once the cards are dealt.
               if (_statusOf(task) case final status?)
                 Container(
                   margin: const EdgeInsets.only(top: 10),
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3ECDD),
                     borderRadius: BorderRadius.circular(10),
@@ -4282,31 +4324,8 @@ class _HomePageState extends State<HomePage>
               _MoreAbout(
                 explanation: explainTask(task.description),
                 terms: termsIn(task.description),
-                notes: [
-                  ...task.notes,
-                  if (task.kingCantTake) "The King can't take this task.",
-                ],
+                notes: const [],
               ),
-              if (task.seal != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: WaxSeal(seal: task.seal!, size: 18),
-                      ),
-                      Expanded(
-                        child: Text(Seals.describe(task.seal!),
-                            style: const TextStyle(
-                                fontSize: 15,
-                                height: 1.35,
-                                color: Palette.ink)),
-                      ),
-                    ],
-                  ),
-                ),
             ],
           ),
         ),

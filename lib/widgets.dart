@@ -128,14 +128,13 @@ class SuitText extends StatelessWidget {
             done ? suitColour(m.group(2)!).withValues(alpha: 0.5) : suitColour(m.group(2)!)));
       } else if (token == noCourt || token == court) {
         final size = (style.fontSize ?? 14) * 0.95;
-        final c = style.color ?? Palette.ink;
         spans.add(WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: size * 0.08),
               child: token == noCourt
-                  ? NoCourtIcon(size: size, color: c)
-                  : CrownIcon(size: size * 1.1, color: c),
+                  ? NoCourtIcon(size: size)
+                  : CourtCardIcon(size: size * 1.05),
             )));
       } else if (token.length == 1) {
         spans.add(_suit(token, suitColour(token)));
@@ -846,6 +845,13 @@ class TableCard extends StatelessWidget {
                 Tooltip(
                   message: "The King can't take this task",
                   child: Icon(Icons.block, size: iconSize, color: Palette.inkSoft),
+                ),
+              ],
+              if (task.noCourtCards) ...[
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: 'No Court Cards in the trick',
+                  child: NoCourtIcon(size: iconSize * 1.05),
                 ),
               ],
               if (task.hasNotes) ...[
@@ -2846,20 +2852,66 @@ class _SuitPainter extends CustomPainter {
   bool shouldRepaint(_SuitPainter old) => old.suit != suit || old.color != color;
 }
 
-/// Court Cards struck out: the fanned Court Cards with a slash, for "no
-/// Court Cards".
+/// A Court Card: a card with a crown on it.
+class CourtCardIcon extends StatelessWidget {
+  const CourtCardIcon({super.key, required this.size, this.color = Palette.goldDeep});
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+      size: Size(size * 0.78, size), painter: _CourtCardPainter(color));
+}
+
+class _CourtCardPainter extends CustomPainter {
+  _CourtCardPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    final line = w * 0.11;
+    final card = RRect.fromRectAndRadius(
+        Rect.fromLTWH(line / 2, line / 2, w - line, h - line), Radius.circular(w * 0.16));
+    canvas.drawRRect(
+        card,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = line
+          ..color = color);
+    // The crown, as [CrownIcon] draws it, in the middle of the card.
+    final cw = w * 0.62, ch = cw * 0.75;
+    final x = (w - cw) / 2, y = (h - ch) / 2;
+    final crown = Path()
+      ..moveTo(x, y + ch * 0.25)
+      ..lineTo(x + cw * 0.27, y + ch * 0.55)
+      ..lineTo(x + cw * 0.5, y)
+      ..lineTo(x + cw * 0.73, y + ch * 0.55)
+      ..lineTo(x + cw, y + ch * 0.25)
+      ..lineTo(x + cw * 0.88, y + ch * 0.82)
+      ..lineTo(x + cw * 0.12, y + ch * 0.82)
+      ..close()
+      ..addRect(Rect.fromLTRB(x + cw * 0.12, y + ch * 0.88, x + cw * 0.88, y + ch));
+    canvas.drawPath(crown, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_CourtCardPainter old) => old.color != color;
+}
+
+/// No Court Cards: the Court Card icon, struck through.
 class NoCourtIcon extends StatelessWidget {
-  const NoCourtIcon({super.key, required this.size, required this.color});
+  const NoCourtIcon({super.key, required this.size, this.color = Palette.goldDeep});
   final double size;
   final Color color;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: size * 1.1,
-        height: size * 1.1,
+        width: size,
+        height: size,
         child: Stack(alignment: Alignment.center, children: [
-          CardFanIcon(size: size * 1.1, color: Palette.goldDeep),
-          CustomPaint(size: Size.square(size * 1.1), painter: _SlashPainter(color)),
+          CourtCardIcon(size: size, color: color),
+          CustomPaint(size: Size.square(size), painter: _SlashPainter(color)),
         ]),
       );
 }
@@ -2875,7 +2927,7 @@ class _SlashPainter extends CustomPainter {
         Offset(size.width * 0.9, size.height * 0.08),
         Paint()
           ..color = Palette.lost
-          ..strokeWidth = size.height * 0.11
+          ..strokeWidth = size.height * 0.1
           ..strokeCap = StrokeCap.round);
   }
 

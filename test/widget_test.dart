@@ -332,7 +332,8 @@ void main() {
   test('The board wording is shorter, with Court Cards as crowns', () {
     final total = GameState.taskPool
         .firstWhere((t) => t.description.contains('totalling more than'));
-    expect(total.boardText(4), 'Win a trick worth over 26 \uE000');
+    expect(total.boardText(4), 'Win a trick worth over 26');
+    expect(total.noCourtCards, isTrue);
     final none = GameState.taskPool.firstWhere((t) => t.description == "Don't win any ♥ cards");
     expect(none.boardText(4), 'Win no ♥');
     for (final t in GameState.taskPool) {
