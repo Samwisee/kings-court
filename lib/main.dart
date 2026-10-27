@@ -8282,8 +8282,13 @@ class _TaskChip extends StatelessWidget {
           ),
       ],
     );
+    // Nobody's yet: just the card in its dark outline (the band is there,
+    // in the card's own colour, so nothing shifts once it's taken). A
+    // player's colour gets dark lines on both sides.
+    final neutral = !failed && color == Palette.inkSoft;
     final front = CustomPaint(
-      foregroundPainter: const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
+      foregroundPainter:
+          neutral ? null : const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
       child: AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: width,
@@ -8291,7 +8296,9 @@ class _TaskChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: failed ? const Color(0xFFFBE4E1) : Palette.card,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: failed ? Palette.lost : color, width: 2.5 + 2 * outlineWidth),
+        border: Border.all(
+            color: failed ? Palette.lost : neutral ? Palette.card : color,
+            width: 2.5 + 2 * outlineWidth),
         boxShadow: const [
           BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
         ],

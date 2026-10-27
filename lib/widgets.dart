@@ -868,7 +868,7 @@ class TableCard extends StatelessWidget {
       decoration: _frame(
         failed ? const Color(0xFFFBE4E1) : Palette.card,
         border: failed ? Palette.lost : owner?.color ?? Palette.card,
-        borderWidth: neutral ? 0.5 : 2.5,
+        borderWidth: 2.5,
       ),
       child: Stack(
         children: [
