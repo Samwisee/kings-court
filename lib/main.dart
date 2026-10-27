@@ -481,7 +481,7 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     // Create the animation controllers now, so dispose never makes one.
-    for (final c in [_deal, _crown, _play, _outcome]) {
+    for (final c in [_deal, _crown, _play, _outcome, _coronation]) {
       c.value;
     }
     _loadSaved();
@@ -688,6 +688,7 @@ class _HomePageState extends State<HomePage>
     _trackerTimer?.cancel();
     _deal.dispose();
     _crown.dispose();
+    _coronation.dispose();
     _play.dispose();
     _outcome.dispose();
     _keepAwake(false);
@@ -1611,10 +1612,11 @@ class _HomePageState extends State<HomePage>
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.right,
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontFamily: bodyFont,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
+                                    shadows: _feltShadow,
                                     color: Palette.gold)),
                           ),
                           const SizedBox(width: 8),
@@ -1635,6 +1637,7 @@ class _HomePageState extends State<HomePage>
                       fontFamily: bodyFont,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
+                      shadows: _feltShadow,
                       color: yourTurn || _yourPick || _revealing
                           ? Palette.gold
                           : Colors.white70),
@@ -2236,7 +2239,7 @@ class _HomePageState extends State<HomePage>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 13, color: Colors.white70)),
+                            fontSize: 13, color: Colors.white70, shadows: _feltShadow)),
                     // Trick counts once the tricks begin (and not in the
                     // story, where the tasks keep count). Their room is
                     // kept from the start, so nothing shifts when they
@@ -2673,14 +2676,13 @@ class _HomePageState extends State<HomePage>
     final Widget tasks = _storyActive
         ? const SizedBox.shrink()
         : mine.isEmpty
-            ? Padding(
-                padding: const EdgeInsets.only(left: leadW),
-                child: Text(
-                    game.pickTurn != null
-                        ? 'Your tasks will appear here'
-                        : 'No tasks for you this round',
-                    style: const TextStyle(color: Colors.white54)),
-              )
+            ? game.pickTurn != null
+                ? const Padding(
+                    padding: EdgeInsets.only(left: leadW),
+                    child: Text('Your tasks will appear here',
+                        style: TextStyle(color: Colors.white54)),
+                  )
+                : const SizedBox.shrink()
             // Your tasks scroll sideways when they don't fit, slipping under
             // your token and shown card rather than stopping short of them.
             : NotificationListener<ScrollUpdateNotification>(
@@ -2720,7 +2722,7 @@ class _HomePageState extends State<HomePage>
           // fade over them; at rest every task shows in full.
           child: ValueListenableBuilder<bool>(
             valueListenable: _youScrolled,
-            builder: (context, scrolled, child) => Stack(children: [
+            builder: (context, scrolled, child) => Stack(clipBehavior: Clip.none, children: [
               Positioned.fill(
                 right: -16,
                 child: IgnorePointer(
@@ -4330,25 +4332,83 @@ class _HomePageState extends State<HomePage>
 
   void _closeSetup() => setState(() => _setupArgs = null);
 
-  /// A gold veil over the screen, for passing from the menus into a game:
-  /// the last menu fades out to gold, the table fades in from it.
-  bool _veil = false;
+  /// From the menus into a game: the menu fades to the felt, the crown
+  /// rises up in the middle in a burst of sparks, and as it lifts away the
+  /// table is revealed beneath it.
+  late final AnimationController _coronation = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1500));
 
   void _startFromSetup(_SetupResult r) {
     if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
       _beginFromSetup(r);
       return;
     }
-    setState(() => _veil = true);
-    Timer(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      _beginFromSetup(r);
-      // Give the table a frame to settle, then lift the veil.
-      Timer(const Duration(milliseconds: 120), () {
-        if (mounted) setState(() => _veil = false);
-      });
+    Sfx.fanfare();
+    _coronation.forward(from: 0);
+    // The game is set out while the crown hides the change.
+    Timer(const Duration(milliseconds: 560), () {
+      if (mounted) _beginFromSetup(r);
     });
   }
+
+  Widget _coronationOverlay() => AnimatedBuilder(
+        animation: _coronation,
+        builder: (context, _) {
+          final t = _coronation.value;
+          if (t == 0 || t == 1) return const SizedBox.shrink();
+          double iv(double a, double b, [Curve c = Curves.linear]) =>
+              c.transform(((t - a) / (b - a)).clamp(0.0, 1.0));
+          final cover = iv(0, 0.3, Curves.easeOut) * (1 - iv(0.6, 1, Curves.easeIn));
+          final grow = iv(0.08, 0.42, Curves.easeOutBack);
+          final lift = iv(0.58, 1, Curves.easeInCubic);
+          final spark = iv(0.32, 0.85);
+          final size = MediaQuery.sizeOf(context);
+          final crown = math.min(size.width, size.height) * 0.28;
+          final centre = Offset(size.width / 2, size.height / 2);
+          return IgnorePointer(
+            child: Stack(children: [
+              Positioned.fill(
+                child: Opacity(
+                  opacity: cover,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                          radius: 0.9, colors: [Color(0xFF176141), Palette.feltDeep]),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: spark > 0 && spark < 1
+                      ? _IntroSparks(
+                          origin: centre, progress: spark, scale: crown / 70)
+                      : null,
+                ),
+              ),
+              Positioned(
+                left: centre.dx - crown / 2,
+                top: centre.dy - crown * 0.375 - lift * crown * 0.8,
+                child: Opacity(
+                  opacity: iv(0.05, 0.2) * (1 - lift),
+                  child: Transform.scale(
+                    scale: 0.55 + 0.45 * grow + 0.15 * lift,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(boxShadow: [
+                        BoxShadow(
+                            color: Palette.gold.withValues(alpha: 0.35 * grow),
+                            blurRadius: crown * 0.5,
+                            spreadRadius: crown * 0.05),
+                      ]),
+                      child: CrownIcon(size: crown, color: Palette.gold),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+          );
+        },
+      );
 
   void _beginFromSetup(_SetupResult r) {
     setState(() => _setupArgs = null);
@@ -4652,25 +4712,8 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
-      // The gold veil between the menus and a game.
-      Positioned.fill(
-        child: IgnorePointer(
-          ignoring: !_veil,
-          child: AnimatedOpacity(
-            opacity: _veil ? 1 : 0,
-            duration: Duration(milliseconds: _veil ? 300 : 520),
-            curve: Curves.easeInOut,
-            child: const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  radius: 1.1,
-                  colors: [Color(0xFF6E5A20), Color(0xFF2E3A16), Color(0xFF0A2A18)],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      // The crowning between the menus and a game.
+      Positioned.fill(child: _coronationOverlay()),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       const Positioned.fill(
@@ -7312,7 +7355,7 @@ class _WelcomeIntro extends StatelessWidget {
               child: const Text(
                   'A cooperative trick-taking game for 2 to 6 players.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.white70)),
+                  style: TextStyle(fontSize: 18, color: Colors.white70, shadows: _feltShadow)),
             ),
             const SizedBox(height: 36),
             IgnorePointer(
@@ -7329,9 +7372,8 @@ class _WelcomeIntro extends StatelessWidget {
   }
 }
 
-/// A raised plaque in the top corner, like a bar of gold set into the
-/// table's rim: felt inside a bevelled gold edge, standing off the table on
-/// a shadow, and pressing in when tapped.
+/// A raised plaque in the top corner: a block of felt standing off the
+/// table on a shadow, pressing in when tapped.
 class _GoldBar extends StatefulWidget {
   const _GoldBar({required this.onTap, required this.child, this.semanticLabel});
   final VoidCallback onTap;
@@ -7362,15 +7404,8 @@ class _GoldBarState extends State<_GoldBar> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 90),
             constraints: const BoxConstraints(minHeight: 44, minWidth: 48),
-            padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(11),
-              // The gold rim, bright above and deep below, like a bevel.
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFF9E08C), Palette.gold, Color(0xFF8A6418)],
-              ),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: _down ? 0.3 : 0.55),
@@ -7381,11 +7416,12 @@ class _GoldBarState extends State<_GoldBar> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(11),
+                // Raised felt: lit along the top, deeper below.
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFF1C5A3B), Color(0xFF0A3622)],
+                  colors: [Color(0xFF1F6442), Color(0xFF0C3D26)],
                 ),
               ),
               alignment: Alignment.center,
@@ -8403,8 +8439,11 @@ class _SetupPanelState extends State<_SetupPanel> {
     final still = MediaQuery.of(context).disableAnimations;
 
     // Fills the screen: progress at the top, the step in the middle, and
-    // the buttons fixed in the bottom corners so they never move.
-    return SizedBox.expand(
+    // the buttons fixed in the bottom corners so they never move. Every
+    // word on the felt has the front page's soft shadow.
+    return DefaultTextStyle.merge(
+      style: const TextStyle(shadows: _feltShadow),
+      child: SizedBox.expand(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
         child: Column(
@@ -8532,6 +8571,7 @@ class _SetupPanelState extends State<_SetupPanel> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -9530,6 +9570,9 @@ class _CardTracker extends StatelessWidget {
   /// Room the tracker needs round its grid: the inlay and a little air.
   static const sidePad = 22.0;
 }
+
+/// The soft shadow under words on the felt, as on the front page.
+const _feltShadow = [Shadow(color: Colors.black54, blurRadius: 10)];
 
 /// Courtiers' powers and Dynasty are being reworked; until then they're
 /// shown as coming soon.
