@@ -71,7 +71,7 @@ Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
 
 /// Taps Play on the welcome screen, which opens setup.
 Future<void> openSetup(WidgetTester tester) async {
-  await tester.tap(find.text('Play'));
+  await tester.tap(find.text('Start new game'));
   await tester.pumpAndSettle();
 }
 
@@ -114,12 +114,12 @@ void main() {
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pump();
     expect(find.textContaining("ng's Court", findRichText: true), findsOneWidget);
-    expect(find.text('Play'), findsOneWidget);
+    expect(find.text('Start new game'), findsOneWidget);
     expect(find.text('New Game'), findsNothing);
     await tester.pumpAndSettle();
     // Play opens setup: the ways to play, the tutorial among them; nothing
     // is saved yet, so nothing to continue.
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Start new game'));
     await tester.pumpAndSettle();
     expect(find.text('How will you play?'), findsOneWidget);
     expect(find.text('Tutorial'), findsOneWidget);
@@ -562,10 +562,8 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
-    expect(find.text('Continue'), findsOneWidget);
-    await tester.tap(find.text('Free play'));
+    // One game saved: Continue goes straight back into it.
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
     final state = tester.state(find.byType(HomePage)) as dynamic;
@@ -1066,7 +1064,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(find.text('Free play'), findsOneWidget);
     expect(find.text('Endless'), findsOneWidget);
@@ -1099,9 +1097,7 @@ void main() {
     });
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
-    await tester.pumpAndSettle();
-    expect(find.text('Endless'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('kingsCourt.game'), isNull);
     expect(prefs.getString('kingsCourt.game.endless'), isNotNull);
@@ -1287,7 +1283,7 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Start new game'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tutorial'));
     await tester.pumpAndSettle();
@@ -1327,7 +1323,7 @@ void main() {
     expect(find.text('You\u2019re ready'), findsOneWidget);
     await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
-    expect(find.text('Play'), findsOneWidget); // back at the welcome
+    expect(find.text('Start new game'), findsOneWidget); // back at the welcome
   });
 
   test('Each player may pass on picking once a round', () {

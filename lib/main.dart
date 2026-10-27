@@ -472,6 +472,9 @@ class _HomePageState extends State<HomePage>
   /// The New Game panel, while it's open.
   _SetupArgs? _setupArgs;
 
+  /// Setup opened from Continue: it lists the saved games instead.
+  bool _setupContinuing = false;
+
   /// Chronicle progress on this device.
   ChronicleProgress _progress = ChronicleProgress();
 
@@ -4154,8 +4157,12 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Opens the New Game panel on the table.
-  Future<void> _showSetupDialog({GameMode? startMode, int? startChapter}) async {
-    setState(() => _setupArgs = (mode: startMode, chapter: startChapter));
+  Future<void> _showSetupDialog(
+      {GameMode? startMode, int? startChapter, bool continuing = false}) async {
+    setState(() {
+      _setupArgs = (mode: startMode, chapter: startChapter);
+      _setupContinuing = continuing;
+    });
   }
 
   void _closeSetup() => setState(() => _setupArgs = null);
@@ -4188,7 +4195,7 @@ class _HomePageState extends State<HomePage>
       onCancel: _closeSetup,
       onStart: _startFromSetup,
       // From the front page, saved games to carry on with.
-      saves: _inGame ? const [] : _saves,
+      saves: _setupContinuing ? _saves : const [],
       onContinue: (save) {
         _closeSetup();
         _continueSaved(save);
@@ -6913,15 +6920,18 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  /// Play on the welcome screen: straight into setup, whose first step
-  /// also offers any saved games to carry on with.
-  Future<void> _showPlayMenu() async {
+  /// Continue on the welcome screen: the saved games, to pick one up.
+  Future<void> _showContinue() async {
     try {
       final saves = await _readSaves(await SharedPreferences.getInstance());
       if (mounted) setState(() => _saves = saves);
     } catch (_) {}
     if (!mounted) return;
-    _showSetupDialog();
+    if (_saves.length == 1) {
+      _continueSaved(_saves.first);
+    } else if (_saves.isNotEmpty) {
+      _showSetupDialog(continuing: true);
+    }
   }
 
   /// The front of the table before a game: the four Court Cards fan out
@@ -6938,9 +6948,52 @@ class _HomePageState extends State<HomePage>
             child: _WelcomeIntro(
               crownSize: clampD(c.maxWidth * 0.42, 120, 270),
               button: SizedBox(
-                width: 160,
-                child: FilledButton(
-                    onPressed: _showPlayMenu, child: const Text('Play')),
+                width: 260,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Games in progress first: carry on where you left off.
+                    if (_saves.isNotEmpty) ...[
+                      FilledButton(
+                        onPressed: _showContinue,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Continue'),
+                            if (_saves.length > 1) ...[
+                              const SizedBox(width: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Palette.feltDeep,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text('${_saves.length}',
+                                    semanticsLabel: '${_saves.length} games',
+                                    style: const TextStyle(
+                                        fontFamily: bodyFont,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: Palette.gold)),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (_saves.isEmpty)
+                      FilledButton(
+                          onPressed: () => _showSetupDialog(),
+                          child: const Text('Start new game'))
+                    else
+                      OutlinedButton(
+                          onPressed: () => _showSetupDialog(),
+                          child: const Text('Start new game')),
+                  ],
+                ),
               ),
             ),
           ),
@@ -7595,7 +7648,7 @@ class _SetupPanelState extends State<_SetupPanel> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.saves.isNotEmpty) ...[
-          const Text('Continue', textAlign: TextAlign.center, style: _heading),
+          const Text('Your games', textAlign: TextAlign.center, style: _heading),
           const SizedBox(height: 12),
           for (final s in widget.saves)
             Padding(
@@ -7608,9 +7661,8 @@ class _SetupPanelState extends State<_SetupPanel> {
                 onTap: () => widget.onContinue?.call(s),
               ),
             ),
-          const SizedBox(height: 14),
-        ],
-        Text(widget.saves.isEmpty ? 'How will you play?' : 'Or start a new game',
+        ] else ...[
+        const Text('How will you play?',
             textAlign: TextAlign.center, style: _heading),
         const SizedBox(height: 12),
         tile('Tutorial', 'New to the court? Learn the rules step by step.',
@@ -7638,6 +7690,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                   }
                   step++;
                 })),
+        ],
       ],
     );
   }
@@ -7971,6 +8024,15 @@ class _SetupPanelState extends State<_SetupPanel> {
                         animation: a,
                         incoming: child.key == ValueKey(step),
                         forward: _forward,
+                        // Trying out a different turn on each page, to pick
+                        // one (see _TurnStyle).
+                        style: switch (_flow[step]) {
+                          'how' => _TurnStyle.sealPress,
+                          'mode' => _TurnStyle.deal,
+                          'count' => _TurnStyle.fadeThrough,
+                          'names' => _TurnStyle.slide,
+                          _ => _TurnStyle.curtain,
+                        },
                         child: child),
                 child: Center(
                   key: ValueKey(step),
@@ -9016,18 +9078,29 @@ class _CardTracker extends StatelessWidget {
 const powersComingSoon = true;
 const dynastyComingSoon = true;
 
-/// Turns from one setup step to the next like a card being dealt onto the
-/// table: the old step slides away and fades, the new one slides in with a
-/// slight tilt that settles flat, and a faint glint of gold passes over it.
+/// The ways a setup page can turn to the next, on trial:
+/// * [deal]: slides in with a slight tilt that settles flat, like a card
+///   dealt onto the table, with a faint glint of gold.
+/// * [fadeThrough]: the old page fades away, then the new one fades in,
+///   growing very slightly into place.
+/// * [slide]: old and new glide sideways together, crossfading.
+/// * [curtain]: the new page is uncovered from left to right behind a thin
+///   gold edge, like a curtain drawn aside.
+/// * [sealPress]: the new page settles down onto the table from just above,
+///   like a wax seal being pressed.
+enum _TurnStyle { deal, fadeThrough, slide, curtain, sealPress }
+
 class _PageTurn extends StatelessWidget {
   const _PageTurn(
       {required this.animation,
       required this.incoming,
       required this.forward,
+      this.style = _TurnStyle.deal,
       required this.child});
   final Animation<double> animation;
   final bool incoming;
   final bool forward;
+  final _TurnStyle style;
   final Widget child;
 
   @override
@@ -9037,44 +9110,106 @@ class _PageTurn extends StatelessWidget {
       child: child,
       builder: (context, child) {
         final t = animation.value.clamp(0.0, 1.0); // 0 hidden, 1 in place
-        // Forward: the old step leaves to the left and the new one comes
+        // Forward: the old page leaves to the left and the new one comes
         // from the right; back is the other way round.
         final side = (incoming ? 1 : -1) * (forward ? 1 : -1);
         final away = 1 - t;
-        final glint = incoming ? math.sin(t * math.pi) : 0.0;
-        return Opacity(
-          opacity: t,
-          child: Transform.translate(
-            offset: Offset(side * 36 * away, 6 * away),
-            child: Transform.rotate(
-              angle: side * 0.035 * away,
-              child: Stack(children: [
-                child!,
-                if (glint > 0.01)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment(-1.6 + 3.2 * t, -1),
-                            end: Alignment(-0.9 + 3.2 * t, 1),
-                            colors: [
-                              Palette.gold.withValues(alpha: 0),
-                              Palette.gold.withValues(alpha: 0.12 * glint),
-                              Palette.gold.withValues(alpha: 0),
-                            ],
-                          ),
-                        ),
+        switch (style) {
+          case _TurnStyle.fadeThrough:
+            return Opacity(
+              opacity: t,
+              child: Transform.scale(
+                  scale: incoming ? 0.94 + 0.06 * t : 1, child: child),
+            );
+          case _TurnStyle.slide:
+            return Opacity(
+              opacity: t,
+              child: Transform.translate(
+                  offset: Offset(side * 60 * away, 0), child: child),
+            );
+          case _TurnStyle.sealPress:
+            return Opacity(
+              opacity: t,
+              child: Transform.scale(
+                  scale: incoming ? 1 + 0.07 * away : 1 - 0.03 * away,
+                  child: child),
+            );
+          case _TurnStyle.curtain:
+            if (!incoming) return Opacity(opacity: t, child: child);
+            final dir = forward ? 1.0 : -1.0;
+            return LayoutBuilder(builder: (context, box) {
+              final edge = box.maxWidth * t;
+              return Stack(clipBehavior: Clip.none, children: [
+                ClipRect(
+                  clipper: _RevealClipper(t, fromLeft: dir > 0),
+                  child: child,
+                ),
+                if (t > 0.01 && t < 0.99)
+                  Positioned(
+                    top: 0,
+                    bottom: 0,
+                    left: dir > 0 ? edge - 1 : box.maxWidth - edge - 1,
+                    width: 2,
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Palette.gold,
+                        boxShadow: [BoxShadow(color: Color(0xAAD4A63A), blurRadius: 10)],
                       ),
                     ),
                   ),
-              ]),
-            ),
-          ),
-        );
+              ]);
+            });
+          case _TurnStyle.deal:
+            final glint = incoming ? math.sin(t * math.pi) : 0.0;
+            return Opacity(
+              opacity: t,
+              child: Transform.translate(
+                offset: Offset(side * 36 * away, 6 * away),
+                child: Transform.rotate(
+                  angle: side * 0.035 * away,
+                  child: Stack(children: [
+                    child!,
+                    if (glint > 0.01)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment(-1.6 + 3.2 * t, -1),
+                                end: Alignment(-0.9 + 3.2 * t, 1),
+                                colors: [
+                                  Palette.gold.withValues(alpha: 0),
+                                  Palette.gold.withValues(alpha: 0.12 * glint),
+                                  Palette.gold.withValues(alpha: 0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ]),
+                ),
+              ),
+            );
+        }
       },
     );
   }
+}
+
+/// Shows the part of a page uncovered so far, [t] of the way across.
+class _RevealClipper extends CustomClipper<Rect> {
+  _RevealClipper(this.t, {required this.fromLeft});
+  final double t;
+  final bool fromLeft;
+
+  @override
+  Rect getClip(Size size) => fromLeft
+      ? Rect.fromLTWH(0, -40, size.width * t, size.height + 80)
+      : Rect.fromLTWH(size.width * (1 - t), -40, size.width * t, size.height + 80);
+
+  @override
+  bool shouldReclip(_RevealClipper old) => old.t != t || old.fromLeft != fromLeft;
 }
 
 /// The highest points target a round can have. The balance report shows

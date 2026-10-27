@@ -54,7 +54,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
         find.byType(MaterialApp), matchesGoldenFile('goldens/tut-0-welcome.png'));
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Start new game'));
     await tester.pumpAndSettle();
     await expectLater(
         find.byType(MaterialApp), matchesGoldenFile('goldens/tut-0-play.png'));
@@ -113,7 +113,7 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Start new game'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Single player'));
     await tester.pumpAndSettle();
@@ -157,7 +157,7 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Start new game'));
     await tester.pumpAndSettle();
     await expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/laptop-how.png'));
@@ -206,7 +206,7 @@ void main() {
       HomePageTestHooks.fast();
       await tester.pumpWidget(const TheKingsCourtApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Play'));
+      await tester.tap(find.text('Start new game'));
       await tester.pumpAndSettle();
       await tester.tap(find.text(onScreen ? 'Single player' : 'In person'));
       await tester.pumpAndSettle();
@@ -373,7 +373,7 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Play'));
+    await tester.tap(find.text('Start new game'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Single player'));
     await tester.pumpAndSettle();
