@@ -154,8 +154,18 @@ class MatchState {
 
   int get totalTricks => handSize(players);
 
-  Set<PlayingCard> get inPlay =>
-      fullDeck().where((c) => !setAside.contains(c)).toSet();
+  /// The cards dealt this round: the deck less any set aside. Worked out
+  /// once per deal (it's asked for in every playout and every deal check).
+  Set<PlayingCard> get inPlay {
+    if (!identical(_inPlayFor, setAside)) {
+      _inPlayFor = setAside;
+      _inPlay = fullDeck().where((c) => !setAside.contains(c)).toSet();
+    }
+    return _inPlay!;
+  }
+
+  Set<PlayingCard>? _inPlay;
+  List<PlayingCard>? _inPlayFor;
 
   /// Whose turn it is to play a card.
   int get turn =>

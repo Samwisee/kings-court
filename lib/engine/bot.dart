@@ -418,13 +418,15 @@ class _Sim {
     }
   }
 
-  /// Whether [card], played now by the next player, would be winning the
-  /// trick so far.
-  bool wins(PlayingCard card) {
-    if (cards.isEmpty) return true;
-    final b = cards[winningPlay(cards)];
-    if (card.isCourt) return !b.isCourt || card.rank > b.rank;
-    return !b.isCourt && card.suit == cards.first.suit && card.rank > b.rank;
+  /// The card winning the trick so far, or null when nothing's been led.
+  PlayingCard? get ahead => cards.isEmpty ? null : cards[winningPlay(cards)];
+
+  /// Whether [card], played now, would beat [best] (the card winning the
+  /// trick so far; null when leading, which always "wins").
+  bool beats(PlayingCard card, PlayingCard? best) {
+    if (best == null) return true;
+    if (card.isCourt) return !best.isCourt || card.rank > best.rank;
+    return !best.isCourt && card.suit == cards.first.suit && card.rank > best.rank;
   }
 
   RoundView view(MatchState s, Set<PlayingCard> inPlay) => RoundView(
@@ -495,8 +497,9 @@ class _Guide {
         cs.reduce((a, b) => _value(a) <= _value(b) ? a : b);
     PlayingCard highest(Iterable<PlayingCard> cs) =>
         cs.reduce((a, b) => _value(a) >= _value(b) ? a : b);
-    final winners = [for (final c in legal) if (sim.wins(c)) c];
-    final losers = [for (final c in legal) if (!sim.wins(c)) c];
+    final best = sim.ahead;
+    final winners = [for (final c in legal) if (sim.beats(c, best)) c];
+    final losers = [for (final c in legal) if (!sim.beats(c, best)) c];
     final onTable = sim.cards;
     // A card they need is on the table: take the trick as cheaply as it
     // can be taken.
@@ -510,7 +513,7 @@ class _Guide {
       final ahead = sim.seats[winningPlay(onTable)];
       if (ahead != seat) {
         final gift = [for (final c in legal) if (need[ahead].contains(c)) c];
-        if (gift.isNotEmpty && !sim.wins(gift.first)) return gift.first;
+        if (gift.isNotEmpty && !sim.beats(gift.first, best)) return gift.first;
         final theirs = onTable.any(need[ahead].contains);
         if (theirs && losers.isNotEmpty) return highest(losers);
       }
