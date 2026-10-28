@@ -1306,18 +1306,23 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tutorial'));
     await tester.pumpAndSettle();
-    // The opening pages wait for Continue, one at a time.
-    for (final page in introPages.take(introPages.length - 1)) {
-      expect(find.text(page.title), findsOneWidget);
-      await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
+    // Each lesson's pages wait for Continue, one at a time; the last one
+    // plays the lesson.
+    Future<void> readPages(List<IntroPage> pages, String finish) async {
+      for (final page in pages.take(pages.length - 1)) {
+        expect(find.text(page.title), findsOneWidget);
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+      }
+      expect(find.text(pages.last.title), findsOneWidget);
+      await tester.tap(find.text(finish).last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
     }
-    expect(find.text(introPages.last.title), findsOneWidget);
-    await tester.tap(find.text('Start lesson 1'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+
     final state = tester.state(find.byType(HomePage)) as dynamic;
     for (int lesson = 0; lesson < lessons.length; lesson++) {
+      await readPages(lessons[lesson].pages, 'Play lesson ${lesson + 1}');
       final game = state.game as GameState;
       expect(game.isTutorial, isTrue);
       expect(game.lesson, lesson);
@@ -1338,8 +1343,9 @@ void main() {
       expect(find.text(last ? 'Tutorial complete' : 'Lesson complete'),
           findsOneWidget);
       await tester.tap(find.text(last ? 'Finish' : 'Next lesson'));
-      await tester.pump();
+      await tester.pumpAndSettle();
     }
+    await readPages(outroPages, 'Finish');
     await tester.pumpAndSettle();
     expect(find.text('You\u2019re ready'), findsOneWidget);
     await tester.tap(find.text('Not now'));

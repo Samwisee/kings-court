@@ -2988,3 +2988,30 @@ class _SlashPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SlashPainter old) => old.color != color;
 }
+
+/// A dialog's edge in a player's colour with a dark line either side, like
+/// a task card's outline on the table; just the dark line for nobody's.
+class HighVisBorder extends RoundedRectangleBorder {
+  const HighVisBorder(this.colour)
+      : super(borderRadius: const BorderRadius.all(Radius.circular(24)));
+  final Color? colour;
+
+  @override
+  ShapeBorder scale(double t) => this;
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    final r = borderRadius.resolve(textDirection).toRRect(rect);
+    Paint line(Color c, double w) => Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w
+      ..color = c;
+    if (colour == null) {
+      canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
+      return;
+    }
+    canvas.drawRRect(r.deflate(4.5), line(colour!, 6));
+    canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
+    canvas.drawRRect(r.deflate(8.5), line(outlineColour, 1.5));
+  }
+}

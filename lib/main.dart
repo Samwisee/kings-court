@@ -2492,7 +2492,7 @@ class _HomePageState extends State<HomePage>
           t
     ];
     // The deal: first laid out unseen to find each task's place, then
-    // shuffled as a pile in the middle and dealt out to those places.
+    // dealt from a pile in the middle out to those places.
     final measured = _dealMeasuredFor == game.dealId;
     if (!measured) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2509,7 +2509,8 @@ class _HomePageState extends State<HomePage>
         });
       });
     }
-    const shuffleMs = 1000;
+    // A moment as a pile before the first card goes.
+    const pileMs = 300;
     // Packed in columns so short and tall cards fill the space; when one
     // is taken the rest glide to their new places.
     final taskChips = <Widget>[
@@ -2573,22 +2574,17 @@ class _HomePageState extends State<HomePage>
             );
             if (!measured) return Opacity(opacity: 0, child: chip);
             final from = _dealFrom[t] ?? Offset.zero;
-            // Halves of the pile alternate, so the riffle interleaves.
+            // Cards lean alternately left and right as they fly.
             final side = i.isEven ? -1.0 : 1.0;
-            final startMs = shuffleMs + i * 120;
-            final total = startMs + 620;
+            final startMs = pileMs + i * 170;
+            final total = startMs + 820;
             return TweenAnimationBuilder<double>(
               key: ValueKey('deal-${game.dealId}-${t.description}'),
               tween: Tween(begin: 0, end: 1),
               duration: Duration(milliseconds: total),
               builder: (context, raw, child) {
                 final ms = raw * total;
-                // The shuffle: the pile splits into two halves that swing
-                // apart and riffle back together, twice.
-                final p = clampD(ms / shuffleMs, 0, 1);
-                final apart = ms < shuffleMs
-                    ? math.sin(p * math.pi * 2).abs() * (1 - p * 0.3)
-                    : 0.0;
+                const apart = 0.0;
                 // Then each card is dealt: it arcs out to its place,
                 // straightening and turning face up as it lands.
                 final d = ms < startMs
@@ -3328,13 +3324,18 @@ class _HomePageState extends State<HomePage>
 
   // ------------------------------------------------------------ tutorial
 
-  /// The tutorial: its opening pages (the story, the goal, tricks and
-  /// tasks), then the first lesson.
+  /// The tutorial: a few pages of rules before each lesson, then the
+  /// lesson that plays them out (see tutorial.dart).
   Future<void> _startTutorial() async {
-    final go = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => const TutorialIntro()));
-    if (go == true && mounted) _beginLesson(0);
+    final r = await _lessonPages(0);
+    if (r == 'go' && mounted) _beginLesson(0);
   }
+
+  /// The pages read before lesson [i].
+  Future<String?> _lessonPages(int i) => showTutorialPages(context,
+      pages: lessons[i].pages,
+      heading: 'Part ${i + 1} of ${lessons.length + 1}',
+      finishLabel: 'Play lesson ${i + 1}');
 
   /// Starts tutorial lesson [i] (see tutorial.dart): three seats, you as
   /// King, cards on screen.
@@ -3344,11 +3345,25 @@ class _HomePageState extends State<HomePage>
         roles: true, digital: true, lesson: i);
   }
 
-  void _nextLesson() {
+  Future<void> _nextLesson() async {
     if (game.lesson >= lessons.length - 1) {
+      // The last pages, then out into the court.
+      final r = await showTutorialPages(context,
+          pages: outroPages,
+          heading: 'Part ${lessons.length + 1} of ${lessons.length + 1}',
+          finishLabel: 'Finish');
+      if (!mounted || r == 'back') return;
       _finishTutorial();
       return;
     }
+    // Read the rules the next lesson plays out, then play it.
+    final r = await _lessonPages(game.lesson + 1);
+    if (!mounted) return;
+    if (r == 'quit') {
+      _finishTutorial();
+      return;
+    }
+    if (r != 'go') return;
     setState(() => game.lesson++);
     _shuffleTasks();
   }
@@ -3382,7 +3397,7 @@ class _HomePageState extends State<HomePage>
           ),
         ]),
         content: const Text(
-            'That’s the heart of King’s Court. Real rounds have more tasks, and some bring seals and royal decrees: How to Play in the menu explains them all.\n\nFree play is a good place to start. Dynasty tells a story of kings.',
+            'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
             style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70)),
         actions: [
           TextButton(
@@ -3450,13 +3465,14 @@ class _HomePageState extends State<HomePage>
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
               padding: const EdgeInsets.fromLTRB(14, 6, 6, 12),
+              // On the felt, edged in gold, like the rules.
               decoration: BoxDecoration(
-                color: Palette.card,
+                color: const Color(0xF20A3622),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Palette.gold, width: 1.5),
+                border: Border.all(color: Palette.gold.withValues(alpha: 0.7), width: 1.4),
                 boxShadow: const [
                   BoxShadow(
-                      color: Colors.black38, blurRadius: 10, offset: Offset(0, 3))
+                      color: Colors.black45, blurRadius: 10, offset: Offset(0, 3))
                 ],
               ),
               child: Column(
@@ -3464,7 +3480,7 @@ class _HomePageState extends State<HomePage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    const CrownIcon(size: 14, color: Palette.goldDeep),
+                    const CrownIcon(size: 14, color: Palette.gold),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -3475,12 +3491,14 @@ class _HomePageState extends State<HomePage>
                               fontFamily: displayFont,
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
-                              color: Palette.goldDeep)),
+                              color: Palette.gold,
+                              shadows: _feltShadow)),
                     ),
                     TextButton(
                       onPressed: _finishTutorial,
                       style: TextButton.styleFrom(
-                          foregroundColor: Palette.goldDeep,
+                          foregroundColor: Palette.gold,
+                          overlayColor: Colors.transparent,
                           visualDensity: VisualDensity.compact),
                       child: const Text('Skip tutorial'),
                     ),
@@ -3498,7 +3516,10 @@ class _HomePageState extends State<HomePage>
                         alignment: Alignment.topLeft,
                         child: SuitText(line,
                             style: const TextStyle(
-                                fontSize: 15.5, height: 1.35, color: Palette.ink)),
+                                fontSize: 15.5,
+                                height: 1.35,
+                                color: Colors.white,
+                                shadows: _feltShadow)),
                       ),
                     ),
                   ),
@@ -4233,7 +4254,7 @@ class _HomePageState extends State<HomePage>
         backgroundColor: task.isFailed ? const Color(0xFFFBE4E1) : Palette.card,
         surfaceTintColor: Colors.transparent,
         // Whose it is shows as on the table: their colour, edged in dark.
-        shape: _HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
+        shape: HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
         scrollable: true,
         contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -10167,29 +10188,3 @@ class _GlowButtonState extends State<_GlowButton>
 }
 
 
-/// A dialog's edge in a player's colour with a dark line either side, like
-/// a task card's outline on the table; just the dark line for nobody's.
-class _HighVisBorder extends RoundedRectangleBorder {
-  const _HighVisBorder(this.colour)
-      : super(borderRadius: const BorderRadius.all(Radius.circular(24)));
-  final Color? colour;
-
-  @override
-  ShapeBorder scale(double t) => this;
-
-  @override
-  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
-    final r = borderRadius.resolve(textDirection).toRRect(rect);
-    Paint line(Color c, double w) => Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w
-      ..color = c;
-    if (colour == null) {
-      canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
-      return;
-    }
-    canvas.drawRRect(r.deflate(4.5), line(colour!, 6));
-    canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
-    canvas.drawRRect(r.deflate(8.5), line(outlineColour, 1.5));
-  }
-}

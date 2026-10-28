@@ -3,6 +3,8 @@
 /// only the rules that apply to it (with every rule a tap away).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../chronicle.dart';
@@ -167,6 +169,17 @@ class _RulesPageState extends State<RulesPage> {
   /// Sections just brought in by "Show every rule", to open up as they come.
   Set<int> _revealing = {};
 
+  /// Sections on their way out after "Show every rule" is turned off: still
+  /// drawn while they close up and fade.
+  Set<int> _leaving = {};
+  Timer? _leaveTimer;
+
+  @override
+  void dispose() {
+    _leaveTimer?.cancel();
+    super.dispose();
+  }
+
   void _jump(int i) {
     final ctx = _keys[i]?.currentContext;
     if (ctx != null) {
@@ -180,7 +193,7 @@ class _RulesPageState extends State<RulesPage> {
     final g = widget.game;
     final shown = [
       for (int i = 0; i < _sections.length; i++)
-        if (_all || _applies(_sections[i], g)) i
+        if (_all || _applies(_sections[i], g) || _leaving.contains(i)) i
     ];
     return Scaffold(
       backgroundColor: Palette.feltDeep,
@@ -260,6 +273,7 @@ class _RulesPageState extends State<RulesPage> {
                                 _Reveal(
                                   key: ValueKey('tab-$i'),
                                   animate: _revealing.contains(i),
+                                  leaving: _leaving.contains(i),
                                   grow: false,
                                   child: _Tab(_sections[i].title, () => _jump(i)),
                                 ),
@@ -274,12 +288,27 @@ class _RulesPageState extends State<RulesPage> {
                                       if (_all || _applies(_sections[i], g)) i
                                   };
                                   _all = !_all;
-                                  _revealing = _all
-                                      ? {
-                                          for (int i = 0; i < _sections.length; i++)
-                                            if (!before.contains(i)) i
-                                        }
-                                      : {};
+                                  _leaveTimer?.cancel();
+                                  if (_all) {
+                                    _leaving = {};
+                                    _revealing = {
+                                      for (int i = 0; i < _sections.length; i++)
+                                        if (!before.contains(i)) i
+                                    };
+                                  } else {
+                                    // The extra rules close up and fade
+                                    // before they go.
+                                    _revealing = {};
+                                    _leaving = {
+                                      for (final i in before)
+                                        if (!_applies(_sections[i], g)) i
+                                    };
+                                    _leaveTimer = Timer(
+                                        const Duration(milliseconds: 450),
+                                        () => mounted
+                                            ? setState(() => _leaving = {})
+                                            : null);
+                                  }
                                 }),
                                 style: TextButton.styleFrom(
                                     foregroundColor: Palette.gold,
@@ -305,6 +334,7 @@ class _RulesPageState extends State<RulesPage> {
                               // up and fade in; the rest are simply there.
                               key: ValueKey('reveal-$i'),
                               animate: _revealing.contains(i),
+                              leaving: _leaving.contains(i),
                               child: _Panel(
                               key: _keys.putIfAbsent(i, GlobalKey.new),
                               title: _sections[i].title,
@@ -465,8 +495,15 @@ class _Panel extends StatelessWidget {
 /// A section that opens up and fades in as it arrives (when [animate]).
 class _Reveal extends StatefulWidget {
   const _Reveal(
-      {super.key, required this.animate, required this.child, this.grow = true});
+      {super.key,
+      required this.animate,
+      required this.child,
+      this.grow = true,
+      this.leaving = false});
   final bool animate;
+
+  /// On its way out: closes up and fades.
+  final bool leaving;
   final Widget child;
 
   /// Opens up from nothing (a section); otherwise pops softly into its
@@ -487,6 +524,13 @@ class _RevealState extends State<_Reveal> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     if (widget.animate) _c.forward();
+  }
+
+  @override
+  void didUpdateWidget(_Reveal old) {
+    super.didUpdateWidget(old);
+    if (widget.leaving && !old.leaving) _c.reverse();
+    if (!widget.leaving && old.leaving) _c.forward();
   }
 
   @override

@@ -60,18 +60,23 @@ void main() {
         find.byType(MaterialApp), matchesGoldenFile('goldens/tut-0-play.png'));
     await tester.tap(find.text('Tutorial'));
     await tester.pumpAndSettle();
-    for (int i = 0; i < introPages.length; i++) {
-      await expectLater(find.byType(MaterialApp),
-          matchesGoldenFile('goldens/tut-0-intro-$i.png'));
-      if (i == introPages.length - 1) {
-        await tester.tap(find.text('Start lesson 1'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 400));
-      } else {
-        await tester.tap(find.text('Continue'));
-        await tester.pumpAndSettle();
+    // Each lesson's pages, shot one by one, then the lesson.
+    Future<void> readPages(List<IntroPage> pages, String name, String finish) async {
+      for (int i = 0; i < pages.length; i++) {
+        await expectLater(find.byType(MaterialApp),
+            matchesGoldenFile('goldens/tut-$name-$i.png'));
+        if (i == pages.length - 1) {
+          await tester.tap(find.text(finish).last);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 400));
+        } else {
+          await tester.tap(find.text('Continue'));
+          await tester.pumpAndSettle();
+        }
       }
     }
+
+    await readPages(lessons[0].pages, '0-intro', 'Play lesson 1');
     final state = tester.state(find.byType(HomePage)) as dynamic;
     final game = state.game as GameState;
     Future<void> frames(int n) async {
@@ -100,7 +105,11 @@ void main() {
       final next = find.text(lesson == 3 ? 'Finish' : 'Next lesson');
       if (next.evaluate().isEmpty) break;
       await tester.tap(next);
-      await tester.pump();
+      await tester.pumpAndSettle();
+      await readPages(
+          lesson == 3 ? outroPages : lessons[lesson + 1].pages,
+          lesson == 3 ? 'outro' : '${lesson + 2}-intro',
+          lesson == 3 ? 'Finish' : 'Play lesson ${lesson + 2}');
     }
     await frames(30);
     await snap('5-ready');
