@@ -160,3 +160,10 @@ own where it has state or branches:
     own JSON, saves at version 3. Done after the page split because the
     page reads those fields in forty places and the split moves them
     anyway.
+
+Notes as the sequence runs:
+
+- The intro's spark painter (`_IntroSparks`, once private to the welcome
+  screen) is `IntroSparks` in `ui/overlays/crowning.dart`, shared by the
+  welcome screen and the walk-in's crown; the welcome screen will import
+  it from there when it moves out of the page (item 5).

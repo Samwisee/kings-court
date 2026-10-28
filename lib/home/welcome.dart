@@ -86,7 +86,7 @@ class _WelcomeIntroState extends State<_WelcomeIntro> {
                     child: IgnorePointer(
                       child: CustomPaint(
                         painter: spark > 0 && spark < 1
-                            ? _IntroSparks(
+                            ? IntroSparks(
                                 origin: Offset(stageW / 2, handTop + cardH * 0.45),
                                 progress: spark,
                                 scale: crownSize / 100)
@@ -218,29 +218,4 @@ class _CrownedTitle extends StatelessWidget {
       textAlign: TextAlign.center,
     );
   }
-}
-
-/// A ring of gold and white sparks, sized to the crown.
-class _IntroSparks extends CustomPainter {
-  _IntroSparks(
-      {required this.origin, required this.progress, required this.scale});
-  final Offset origin;
-  final double progress;
-  final double scale;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final ease = Curves.easeOutCubic.transform(progress);
-    final fade = (1 - progress).clamp(0.0, 1.0);
-    for (var k = 0; k < 18; k++) {
-      final a = k * 2 * math.pi / 18 + 0.2;
-      final r = (30 + 70 * ease * (k.isEven ? 1 : 0.65)) * scale;
-      final p = origin + Offset(math.cos(a), math.sin(a)) * r;
-      final color = (k.isEven ? Palette.gold : Colors.white).withValues(alpha: fade);
-      canvas.drawCircle(p, (k.isEven ? 3.2 : 2.2) * scale, Paint()..color = color);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_IntroSparks old) => old.progress != progress;
 }

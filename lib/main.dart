@@ -45,7 +45,10 @@ import 'play/tutorial_intro.dart';
 import 'sfx.dart';
 import 'task_help.dart';
 import 'theme.dart';
+import 'ui/overlays/crowning.dart';
+import 'ui/overlays/king_prompt.dart';
 import 'ui/overlays/outcome_card.dart';
+import 'ui/overlays/play_flourish.dart';
 import 'widgets.dart';
 
 part 'home/geometry.dart';
@@ -2082,7 +2085,7 @@ class HomePageState extends State<HomePage>
             for (final f in _flights) f.build(),
             if (_crowning != null)
               Positioned.fill(child: IgnorePointer(child: _digiCrowning())),
-            Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
+            Positioned.fill(child: IgnorePointer(child: PlayFlourish(animation: _play))),
           ],
         );
       }),
@@ -2200,7 +2203,8 @@ class HomePageState extends State<HomePage>
     final centre = table == null || !table.attached
         ? middle.center
         : screen.center(Offset.zero) - table.localToGlobal(Offset.zero);
-    return _crowningScene(
+    return CrowningScene(
+      animation: _crown,
       from: _crownFromCentre ? centre : middle.center,
       startSize: _crownFromCentre
           ? math.min(screen.width, screen.height) * 0.28
@@ -3883,68 +3887,6 @@ class HomePageState extends State<HomePage>
     });
   }
 
-  Widget _coronationOverlay() => AnimatedBuilder(
-        animation: _coronation,
-        builder: (context, _) {
-          final t = _coronation.value;
-          final waiting = _crownWaiting;
-          if (t == 0 || (t == 1 && !waiting)) return const SizedBox.shrink();
-          double iv(double a, double b, [Curve c = Curves.linear]) =>
-              c.transform(((t - a) / (b - a)).clamp(0.0, 1.0));
-          final cover = iv(0, 0.3, Curves.easeOut) * (1 - iv(0.6, 1, Curves.easeIn));
-          final grow = iv(0.08, 0.42, Curves.easeOutBack);
-          // A crown waiting for the King holds still, full size.
-          final lift = waiting ? 0.0 : iv(0.58, 1, Curves.easeInCubic);
-          final spark = iv(0.32, 0.85);
-          final size = MediaQuery.sizeOf(context);
-          final crown = math.min(size.width, size.height) * 0.28;
-          final centre = Offset(size.width / 2, size.height / 2);
-          return IgnorePointer(
-            child: Stack(children: [
-              Positioned.fill(
-                child: Opacity(
-                  opacity: cover,
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                          radius: 0.9, colors: [Color(0xFF176141), Palette.feltDeep]),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: spark > 0 && spark < 1
-                      ? _IntroSparks(
-                          origin: centre, progress: spark, scale: crown / 70)
-                      : null,
-                ),
-              ),
-              if (!_crownHandedOver)
-              Positioned(
-                left: centre.dx - crown / 2,
-                top: centre.dy - crown * 0.375 - lift * crown * 0.8,
-                child: Opacity(
-                  opacity: iv(0.05, 0.2) * (1 - lift),
-                  child: Transform.scale(
-                    scale: waiting && t > 0.42 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(boxShadow: [
-                        BoxShadow(
-                            color: Palette.gold.withValues(alpha: 0.35 * grow),
-                            blurRadius: crown * 0.5,
-                            spreadRadius: crown * 0.05),
-                      ]),
-                      child: CrownIcon(size: crown),
-                    ),
-                  ),
-                ),
-              ),
-            ]),
-          );
-        },
-      );
-
   void _beginFromSetup(_SetupResult r) {
     setState(() => _setupArgs = null);
     if (r.mode == GameMode.tutorial) {
@@ -4211,7 +4153,11 @@ class HomePageState extends State<HomePage>
                 type: MaterialType.transparency,
                 child: _buildOutcomeOverlay())),
       // The crowning between the menus and a game.
-      Positioned.fill(child: _coronationOverlay()),
+      Positioned.fill(
+          child: CoronationOverlay(
+              animation: _coronation,
+              waiting: _crownWaiting,
+              handedOver: _crownHandedOver)),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       // Its own layer: the trim (with its soft shadow) is painted once, not
@@ -4646,7 +4592,11 @@ class HomePageState extends State<HomePage>
               child: AnimatedOpacity(
                 opacity: _crowning == null ? 1 : 0,
                 duration: const Duration(milliseconds: 200),
-                child: _buildKingPrompt(geo),
+                child: KingPrompt(
+                    maxWidth: math.max(160, geo.size.width - 2 * geo.seatExtent),
+                    cardWidth: geo.cardWidth,
+                    onScreen: _digital,
+                    players: game.players.length),
               ),
             )
           else if (_dealtFor == game.dealId)
@@ -4656,7 +4606,7 @@ class HomePageState extends State<HomePage>
                 child: IgnorePointer(child: _buildCrowning(geo, _crowning!))),
 
           // "Play!" once every task has an owner.
-          Positioned.fill(child: IgnorePointer(child: _buildPlayFlourish())),
+          Positioned.fill(child: IgnorePointer(child: PlayFlourish(animation: _play))),
 
         ],
       );
@@ -4669,7 +4619,8 @@ class HomePageState extends State<HomePage>
   Widget _buildCrowning(_TableGeometry geo, int seat) {
     final a = geo.facing(seat);
     final up = Offset(math.sin(a), -math.cos(a));
-    return _crowningScene(
+    return CrowningScene(
+      animation: _crown,
       from: geo.center,
       to: geo.seatCenter(seat) + up * (geo.seatSize / 2 + 9),
       spinTo: a,
@@ -4679,142 +4630,6 @@ class HomePageState extends State<HomePage>
         for (int j = 0; j < game.players.length; j++) j: geo.seatCenter(j)
       },
     );
-  }
-
-  /// The crown flies from [from] to the new King at [to] and lands in a
-  /// burst of gold, "Long live the King" glows, and every other seat in
-  /// [seats] sounds a trumpet.
-  Widget _crowningScene({
-    required Offset from,
-    required Offset to,
-    required double spinTo,
-    required double seatSize,
-    required int king,
-    required Map<int, Offset> seats,
-    double? startSize,
-  }) {
-    final seat = king;
-    final a = spinTo;
-    return AnimatedBuilder(
-      animation: _crown,
-      builder: (context, _) {
-        final t = _crown.value;
-        final fly = Curves.easeInOutCubic
-            .transform(clampD(t / 0.6, 0, 1));
-        final land = clampD((t - 0.6) / 0.4, 0, 1);
-        // Arc: lift the crown off the straight line mid-flight.
-        final lift = math.sin(fly * math.pi) * (startSize == null ? 70 : 30);
-        final p = Offset.lerp(from, to, fly)! - Offset(0, lift);
-        final size = t < 0.6
-            ? startSize != null
-                // Shrinks from the walk-in's crown down onto the head.
-                ? startSize + (28 - startSize) * fly
-                : 30 + 40 * math.sin(fly * math.pi) // swells mid-air
-            : 18 + 10 * (1 - Curves.elasticOut.transform(land));
-        final spin = a * fly;
-        final glow = math.sin(clampD(t / 0.9, 0, 1) * math.pi);
-
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Center(
-              child: Opacity(
-                opacity: glow,
-                child: const Text('Long live the King',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontFamily: displayFont,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 30,
-                        color: Palette.gold,
-                        shadows: [
-                          Shadow(color: Colors.black54, blurRadius: 12),
-                        ])),
-              ),
-            ),
-            if (land > 0)
-              Positioned.fill(
-                child: CustomPaint(
-                    painter: SparkBurst(origin: to, progress: land)),
-              ),
-            // The rest of the court sounds a fanfare: a trumpet at every
-            // other seat, pointed at the new King, with notes floating out.
-            for (final e in seats.entries)
-              if (e.key != seat)
-                ..._trumpet(e.value, seatSize, e.key, to, t),
-            Positioned(
-              left: p.dx - size / 2,
-              top: p.dy - size * 0.375,
-              child: Transform.rotate(
-                angle: spin,
-                child: CrownIcon(size: size),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// One player's trumpet in the crowning fanfare. It pops up just before
-  /// the crown lands, toots (a little kick) and blows notes towards the King.
-  List<Widget> _trumpet(
-      Offset seat, double seatSize, int j, Offset king, double t) {
-    // Each trumpet starts a moment after the last, like a ragged fanfare.
-    final start = 0.45 + 0.04 * j;
-    final local = clampD((t - start) / (1 - start), 0, 1);
-    if (local <= 0) return const [];
-    final toKing = king - seat;
-    final dir = toKing / toKing.distance;
-    final pos = seat + dir * (seatSize * 0.75);
-    final angle = math.atan2(dir.dy, dir.dx);
-    final pop = Curves.elasticOut.transform(clampD(local / 0.35, 0, 1));
-    final toot = math.sin(local * math.pi * 6) * 0.12 * (1 - local);
-    final fade = local < 0.8 ? 1.0 : (1 - local) / 0.2;
-    final size = clampD(seatSize * 0.6, 22, 32);
-
-    return [
-      Positioned(
-        left: pos.dx - size / 2,
-        top: pos.dy - size / 2,
-        child: Opacity(
-          opacity: clampD(fade, 0, 1),
-          child: Transform.rotate(
-            angle: angle + toot,
-            child: Transform.scale(
-              // Keep the trumpet the right way up when it points left.
-              scaleY: dir.dx < 0 ? -pop : pop,
-              scaleX: pop,
-              child: Icon(Icons.campaign_rounded,
-                  size: size,
-                  color: Palette.gold,
-                  shadows: const [Shadow(color: Colors.black54, blurRadius: 6)]),
-            ),
-          ),
-        ),
-      ),
-      // Three notes drifting from the bell towards the King, rising as they go.
-      for (int k = 0; k < 3; k++)
-        () {
-          final nt = clampD((local - 0.15 - k * 0.12) / 0.6, 0, 1);
-          if (nt <= 0 || nt >= 1) return const SizedBox.shrink();
-          final p = pos +
-              dir * (size * 0.6 + nt * 60) +
-              Offset(math.sin(nt * 8 + k) * 6, -nt * 26);
-          return Positioned(
-            left: p.dx - 7,
-            top: p.dy - 10,
-            child: Opacity(
-              opacity: clampD(1 - nt, 0, 1),
-              child: Text(k.isEven ? '♪' : '♫',
-                  style: const TextStyle(
-                      fontSize: 18,
-                      color: Palette.gold,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
-            ),
-          );
-        }(),
-    ];
   }
 
   String? get _decreeDetail => _round.decree == Decree.exile &&
@@ -4836,65 +4651,6 @@ class HomePageState extends State<HomePage>
             onAccept: () => Navigator.pop(context),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPlayFlourish() {
-    return AnimatedBuilder(
-      animation: _play,
-      builder: (context, _) {
-        final t = _play.value;
-        if (t == 0 || t == 1) return const SizedBox.shrink();
-        final scale = 0.6 + 0.5 * Curves.elasticOut.transform(clampD(t / 0.5, 0, 1));
-        final opacity = t < 0.75 ? 1.0 : (1 - t) / 0.25;
-        return Center(
-          child: Opacity(
-            opacity: clampD(opacity, 0, 1),
-            child: Transform.scale(
-              scale: scale,
-              child: const Text('Play!',
-                  style: TextStyle(
-                      fontFamily: displayFont,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 56,
-                      color: Palette.gold,
-                      shadows: [Shadow(color: Colors.black87, blurRadius: 16)])),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildKingPrompt(_TableGeometry geo) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-          maxWidth: math.max(160, geo.size.width - 2 * geo.seatExtent)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DeckStack(width: geo.cardWidth * 0.75),
-          const SizedBox(height: 18),
-          const Text('Who holds the King card?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 26,
-                  color: Colors.white)),
-          const SizedBox(height: 6),
-          Text(
-            _digital
-                ? 'The cards are dealt. Whoever holds the King card will be crowned.'
-                : game.players.length == 2
-                ? 'Tap their seat to crown the King and deal the tasks. If the Dummy has it, choose a King together.'
-                : 'Tap their seat to crown the King and deal the tasks.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 16, height: 1.35, color: Colors.white70),
-          ),
-        ],
       ),
     );
   }
