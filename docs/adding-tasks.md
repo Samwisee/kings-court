@@ -71,7 +71,10 @@ It runs on GitHub Actions whenever tasks or rules change (and by hand from
 the Actions tab, "Balance", with a longer time). The report lands on the
 `balance` branch as `latest.txt`, plus one file per commit to compare.
 
-The bots see every card, so these are **best-case** numbers. Rough guide:
+The bots play fair, seeing only their own hands (as in the game), so the
+numbers are close to what a good table of people would manage
+(`BALANCE_OMNISCIENT=1` gives the old all-seeing, best-case numbers).
+Rough guide:
 
 * A task whose round win rate is well below others of its points is
   underpriced: raise its points or tighten its profile.

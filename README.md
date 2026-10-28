@@ -54,7 +54,10 @@ lib/
   play/              Whole screens and big pieces: cards, rules, tutorial pages,
                      the throne room, the Trial of Hearts.
   engine/            The rules, in plain Dart (no Flutter): cards, tasks,
-                     tricks, deals, bots. Runs anywhere, a server included.
+                     tricks, deals, bots. The bots play fair: inference.dart
+                     works out what's known about the hidden hands and
+                     sampling.dart deals them out plausibly, so a bot sees
+                     only its own cards. Runs anywhere, a server included.
   net/               Where moves go: the seam for online play.
   models.dart        GameState: players, tasks, modes, Dynasty, saving.
                      Plain Dart too (colours are numbers; theme.dart turns
@@ -275,6 +278,8 @@ The engine was built for this:
 - `test/net_test.dart`: moves to JSON and back, the local link, and the
   engine and game model staying free of Flutter.
 - `test/bot_turn_test.dart`: the courtiers' decisions, without widgets.
+- `test/fairness_test.dart`: the courtiers never act on a card they
+  can't see.
 - `tool/bench/`: not tests; timings of the bots and the page, published
   with the screenshots.
 - `tool/shots/shots_test.dart`: the screenshots.
