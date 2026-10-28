@@ -2,6 +2,8 @@
 /// decisions depend only on what it could see. Moving the cards it can't
 /// see between the other hands, in ways that keep every public fact,
 /// changes nothing it does.
+library;
+
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -38,7 +40,7 @@ MatchState table({int seed = 3}) {
     if (i < 0) break;
     s.apply(PickTask(seat, i));
   }
-  for (int i = 0; i < s.tasks.length; i++) {
+  for (var i = 0; i < s.tasks.length; i++) {
     if (s.phase == Phase.announcing && s.tasks[i].x == null) {
       s.apply(Announce(s.tasks[i].owner!, i, 2));
     }
@@ -66,7 +68,7 @@ void main() {
     expect(b.hands[1], a.hands[1]);
     expect(b.hands[0], isNot(a.hands[0]));
     final ga = guessHands(a, 1), gb = guessHands(b, 1);
-    for (int i = 0; i < ga.length; i++) {
+    for (var i = 0; i < ga.length; i++) {
       expect(gb[i].seat, ga[i].seat);
       expect(gb[i].size, ga[i].size);
       expect(gb[i].voids, ga[i].voids);
@@ -80,7 +82,7 @@ void main() {
     final b = hiddenCardsMoved(a, Random(12));
     final wa = sampleWorlds(a, 1, 6, Random(5));
     final wb = sampleWorlds(b, 1, 6, Random(5));
-    for (int k = 0; k < wa.length; k++) {
+    for (var k = 0; k < wa.length; k++) {
       expect(wb[k].hands, wa[k].hands);
       expect(wb[k].setAside, wa[k].setAside);
     }
@@ -126,11 +128,11 @@ void main() {
     final unseen = <PlayingCard>{...s.hands[0], ...s.hands[2], ...s.hands[3]};
     final rand = Random(2);
     final guesses = guessHands(s, 1);
-    for (int n = 0; n < 200; n++) {
+    for (var n = 0; n < 200; n++) {
       final hands = sampleHands(s, 1, guesses, rand);
       expect(hands[1], s.hands[1]);
       final dealt = <PlayingCard>[];
-      for (int k = 0; k < 4; k++) {
+      for (var k = 0; k < 4; k++) {
         if (k == 1) continue;
         expect(hands[k].length, s.hands[k].length, reason: 'seat $k size');
         dealt.addAll(hands[k]);
@@ -145,7 +147,7 @@ void main() {
     // And over many deals the unknown cards do move about.
     final firstHands = sampleHands(s, 1, guesses, Random(1))[0];
     var moved = false;
-    for (int n = 0; n < 20 && !moved; n++) {
+    for (var n = 0; n < 20 && !moved; n++) {
       moved = sampleHands(s, 1, guesses, Random(100 + n))[0].toString() != firstHands.toString();
     }
     expect(moved, isTrue);

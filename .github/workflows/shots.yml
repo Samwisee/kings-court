@@ -26,28 +26,25 @@ jobs:
       - run: flutter pub get
       - name: Take screenshots
         run: |
-          timeout 600 flutter test tool/shots/shots_test.dart --update-goldens --reporter expanded > shots.txt 2>&1 || true
+          timeout 600 flutter test test/tool/shots_test.dart --update-goldens --reporter expanded > shots.txt 2>&1 || true
           tail -30 shots.txt
           python3 tool/ci_annotate.py shots.txt || true
       # How fast the bots think (tool/bench): bench.txt beside the screenshots.
       - name: Time the bots
         run: |
           echo "== bots, on the Dart VM ==" > bench.txt
-          timeout 300 flutter test tool/bench/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
+          timeout 300 flutter test test/tool/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
           echo "== bots, in Chrome (as players see it) ==" >> bench.txt
-          # Chrome runs only take tests under test/, so the file goes there for the run.
-          cp tool/bench/bot_bench_test.dart test/zz_bot_bench_test.dart
-          timeout 600 flutter test --platform chrome test/zz_bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]|rror' | sed 's/^BENCH //' | head -20 >> bench.txt || true
-          rm test/zz_bot_bench_test.dart
+          timeout 600 flutter test --platform chrome test/tool/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]|rror' | sed 's/^BENCH //' | head -20 >> bench.txt || true
           echo "== bot strength: random vs guided playouts, same deals ==" >> bench.txt
-          STRENGTH_ROUNDS=60 timeout 900 flutter test tool/bench/bot_strength_test.dart --reporter expanded > strength.txt 2>&1 || true
+          STRENGTH_ROUNDS=60 timeout 900 flutter test test/tool/bot_strength_test.dart --reporter expanded > strength.txt 2>&1 || true
           grep -E '^BENCH|\[E\]|Error' strength.txt | sed 's/^BENCH //' | head -20 >> bench.txt
           echo "== the page, mid-round (phone size) ==" >> bench.txt
-          timeout 300 flutter test tool/bench/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
+          timeout 300 flutter test test/tool/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
           cat bench.txt
       - name: Publish to the shots branch
         run: |
-          mkdir -p /tmp/out && cp tool/shots/goldens/*.png /tmp/out/ 2>/dev/null || true
+          mkdir -p /tmp/out && cp test/tool/goldens/*.png /tmp/out/ 2>/dev/null || true
           cp shots.txt bench.txt /tmp/out/
           cd /tmp/out
           git init -q -b shots

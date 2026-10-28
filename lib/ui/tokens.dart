@@ -91,7 +91,7 @@ class SeatToken extends StatelessWidget {
     final fill = antagonist
         ? Color.lerp(player.color, Palette.traitor, 0.55)!
         : player.color;
-    final Widget token = shape == null
+    final token = shape == null
         ? AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: size,
@@ -714,7 +714,7 @@ class _CharacterTokenState extends State<CharacterToken>
         final s = widget.size;
         var dx = 0.0, dy = 0.0, scale = 1.0, angle = 0.0, opacity = 1.0;
         IconData? mark;
-        Color markColor = Palette.gold;
+        var markColor = Palette.gold;
         // A white wash for ghosts, a gold halo for holy arrivals.
         var wash = 0.0, halo = 0.0;
         final e = Curves.easeOutCubic.transform(t);
@@ -723,7 +723,7 @@ class _CharacterTokenState extends State<CharacterToken>
           switch (exit) {
             case Exit.dash:
               dx = t < 0.15 ? -s * 0.15 * (t / 0.15) : s * 3.5 * Curves.easeIn.transform((t - 0.15) / 0.85);
-              dy = -(math.sin(t * math.pi * 8)).abs() * s * 0.08;
+              dy = -math.sin(t * math.pi * 8).abs() * s * 0.08;
               opacity = 1 - clampD((t - 0.5) * 2, 0, 1);
             case Exit.ghost:
               dy = -s * 1.4 * Curves.easeIn.transform(t);
@@ -749,7 +749,7 @@ class _CharacterTokenState extends State<CharacterToken>
               } else {
                 final f = (t - 0.3) / 0.7;
                 dx = s * 2.6 * f;
-                dy = -(math.sin(f * math.pi * 6)).abs() * s * 0.08;
+                dy = -math.sin(f * math.pi * 6).abs() * s * 0.08;
                 opacity = 1 - clampD((f - 0.5) * 2, 0, 1);
               }
             case Exit.poof:
@@ -763,7 +763,7 @@ class _CharacterTokenState extends State<CharacterToken>
           switch (entrance) {
             case Entrance.march:
               dx = -s * 2.4 * (1 - e);
-              dy = -(math.sin(t * math.pi * 6)).abs() * s * 0.1 * (1 - t);
+              dy = -math.sin(t * math.pi * 6).abs() * s * 0.1 * (1 - t);
             case Entrance.descend:
               dy = -s * 2.2 * (1 - e);
               scale = 0.6 + 0.4 * e;
@@ -1078,7 +1078,7 @@ class _SlideToPlaceState extends State<SlideToPlace>
         final off = _c.isAnimating || _c.value < 1 ? _from * (1 - t) : Offset.zero;
         // A little hop in each step as they walk.
         final hop = widget.hop && _c.isAnimating
-            ? -(math.sin(t * math.pi * 4)).abs() * 4
+            ? -math.sin(t * math.pi * 4).abs() * 4
             : 0.0;
         return Transform.translate(offset: off + Offset(0, hop), child: child);
       },

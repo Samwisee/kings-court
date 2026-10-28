@@ -434,12 +434,12 @@ const tidings = <Tiding>[
 /// Spymaster the tasks about holding back, and so on.
 int houseAffinity(Courtier house, String task) {
   final patterns = switch (house) {
-    Courtier.duke => [r'King', r'more tricks than', r'King card'],
-    Courtier.bishop => [r'first trick', r'last trick', r'in a row', r'first five'],
-    Courtier.general => [r'Court Card', r'Joker', r'Jack', r'Queen', r'with a'],
-    Courtier.spymaster => [r"Don't", r'\bno\b', r'fewer', r'secret', r'exactly'],
-    Courtier.merchant => [r'totalling', r'at least', r'as many', r'9s', r'even'],
-    Courtier.jester => [r'mixed', r'odd', r'only', r'lower than', r'exactly one'],
+    Courtier.duke => ['King', 'more tricks than', 'King card'],
+    Courtier.bishop => ['first trick', 'last trick', 'in a row', 'first five'],
+    Courtier.general => ['Court Card', 'Joker', 'Jack', 'Queen', 'with a'],
+    Courtier.spymaster => ["Don't", r'\bno\b', 'fewer', 'secret', 'exactly'],
+    Courtier.merchant => ['totalling', 'at least', 'as many', '9s', 'even'],
+    Courtier.jester => ['mixed', 'odd', 'only', 'lower than', 'exactly one'],
     Courtier.king => const <String>[],
   };
   return patterns.where((p) => RegExp(p).hasMatch(task)).length;

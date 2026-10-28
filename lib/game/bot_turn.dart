@@ -10,8 +10,8 @@ library;
 import '../chronicle.dart';
 import '../engine/bot.dart';
 import '../engine/cards.dart';
-import '../engine/match.dart';
 import '../engine/conflicts.dart';
+import '../engine/match.dart';
 import '../engine/rules.dart';
 import '../engine/showing.dart';
 import '../models.dart';
@@ -85,8 +85,8 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
           if (game.canTake(game.tasks[i], s)) s
       ];
       if (seats.isEmpty) return null;
-      int best = seats.first;
-      double bestScore = -1;
+      var best = seats.first;
+      var bestScore = -1;
       for (final s in seats) {
         final assigned = {
           for (int t = 0; t < game.tasks.length; t++)
@@ -117,7 +117,7 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
   }
   if (game.tasks.any((t) => t.assignedPlayerIndex == null)) return null;
   // Numbers for the "exactly X tricks" tasks.
-  for (int i = 0; i < game.tasks.length; i++) {
+  for (var i = 0; i < game.tasks.length; i++) {
     final t = game.tasks[i];
     if (!needsX(t.description) || view.announced.containsKey(t.description)) {
       continue;
@@ -128,7 +128,7 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
   }
   // Between tricks, any courtier may show a card someone needs.
   if (view.current.isEmpty && !game.isTutorial) {
-    for (int s = 0; s < game.players.length; s++) {
+    for (var s = 0; s < game.players.length; s++) {
       if (s == you) continue;
       final shown = botShows(game, view, s);
       if (shown != null) return BotShows(s, shown);

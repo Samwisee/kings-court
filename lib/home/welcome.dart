@@ -44,7 +44,7 @@ class _WelcomeIntroState extends State<_WelcomeIntro> {
   ];
 
   static double _iv(double t, double a, double b, [Curve curve = Curves.linear]) =>
-      curve.transform(((t - a) / (b - a)).clamp(0.0, 1.0).toDouble());
+      curve.transform(((t - a) / (b - a)).clamp(0.0, 1.0));
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +205,7 @@ class _CrownedTitle extends StatelessWidget {
                       child: CrownIcon(
                           size: _style.fontSize! * 0.5, color: Colors.black54),
                     ),
-                    CrownIcon(size: _style.fontSize! * 0.5, color: Palette.gold),
+                    CrownIcon(size: _style.fontSize! * 0.5),
                   ]),
                 ),
               ),
@@ -231,8 +231,8 @@ class _IntroSparks extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final ease = Curves.easeOutCubic.transform(progress);
-    final fade = (1 - progress).clamp(0.0, 1.0).toDouble();
-    for (int k = 0; k < 18; k++) {
+    final fade = (1 - progress).clamp(0.0, 1.0);
+    for (var k = 0; k < 18; k++) {
       final a = k * 2 * math.pi / 18 + 0.2;
       final r = (30 + 70 * ease * (k.isEven ? 1 : 0.65)) * scale;
       final p = origin + Offset(math.cos(a), math.sin(a)) * r;

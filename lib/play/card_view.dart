@@ -160,8 +160,7 @@ class PlayingCardView extends StatelessWidget {
                   border: Border.all(
                       color: card.isCourt
                           ? const Color(0x99D4A63A)
-                          : outlineColour.withValues(alpha: 0.45),
-                      width: 1),
+                          : outlineColour.withValues(alpha: 0.45)),
                 ),
               ),
             ),
@@ -281,8 +280,8 @@ class _Harlequin extends CustomPainter {
     final dw = size.width / 4, dh = size.height / 5;
     final dark = Paint()..color = const Color(0x381A0C2A);
     final light = Paint()..color = const Color(0x14F9E08C);
-    for (int row = -1; row <= 5; row++) {
-      for (int col = -1; col <= 4; col++) {
+    for (var row = -1; row <= 5; row++) {
+      for (var col = -1; col <= 4; col++) {
         final cx = col * dw + (row.isOdd ? dw / 2 : 0);
         final cy = row * dh;
         final p = Path()
@@ -312,14 +311,14 @@ class _Sunburst extends CustomPainter {
     const n = 10;
     const step = 2 * math.pi / n;
     const half = step * 0.3 / 2;
-    final fade = RadialGradient(
-      colors: const [Color(0x42FFFFFF), Color(0x12FFFFFF), Color(0x12FFFFFF)],
-      stops: const [0, 0.5, 1],
+    final fade = const RadialGradient(
+      colors: [Color(0x42FFFFFF), Color(0x12FFFFFF), Color(0x12FFFFFF)],
+      stops: [0, 0.5, 1],
     ).createShader(Rect.fromCircle(center: c, radius: 50.8 * mm));
     final edge = Paint()
       ..color = _goldLight.withValues(alpha: 0.7)
       ..strokeWidth = math.max(0.6, 0.26 * mm);
-    for (int i = 0; i < n; i++) {
+    for (var i = 0; i < n; i++) {
       final a = i * step + math.pi / 2 + step / 2;
       final p1 = c + Offset(math.cos(a - half), math.sin(a - half)) * r;
       final p2 = c + Offset(math.cos(a + half), math.sin(a + half)) * r;
@@ -338,7 +337,7 @@ class _Sunburst extends CustomPainter {
         Paint()
           ..shader = const RadialGradient(colors: [Color(0x38FFFFFF), Color(0x00FFFFFF)])
               .createShader(Rect.fromCircle(center: glow, radius: 23.5 * mm)));
-    for (int i = 0; i < n; i++) {
+    for (var i = 0; i < n; i++) {
       final a = i * step + math.pi / 2 + step / 2;
       for (final e in [a - half, a + half]) {
         canvas.drawLine(c, c + Offset(math.cos(e), math.sin(e)) * r, edge);
@@ -357,7 +356,7 @@ class _Stripes extends CustomPainter {
     final paint = Paint()
       ..color = const Color(0x12FFFFFF)
       ..strokeWidth = size.width * 0.05;
-    for (double x = -size.height; x < size.width; x += size.width * 0.16) {
+    for (var x = -size.height; x < size.width; x += size.width * 0.16) {
       canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
     }
   }
@@ -388,15 +387,15 @@ class _Lattice extends CustomPainter {
     final pearl = Paint()..color = _goldMid;
     final reach = size.width + size.height;
     final k = (reach / step).ceil();
-    for (int i = -k; i <= k; i++) {
+    for (var i = -k; i <= k; i++) {
       // lines x - y = c.dx - c.dy + i step, and x + y = c.dx + c.dy + i step
       final a = c.dx - c.dy + i * step;
       final b = c.dx + c.dy + i * step;
       canvas.drawLine(Offset(a - 1, -1), Offset(a + size.height + 1, size.height + 1), line);
       canvas.drawLine(Offset(b + 1, -1), Offset(b - size.height - 1, size.height + 1), line);
     }
-    for (int i = -k; i <= k; i++) {
-      for (int j = -k; j <= k; j++) {
+    for (var i = -k; i <= k; i++) {
+      for (var j = -k; j <= k; j++) {
         final a = c.dx - c.dy + i * step;
         final b = c.dx + c.dy + j * step;
         final p = Offset((a + b) / 2, (b - a) / 2);
@@ -434,7 +433,7 @@ class CardBack extends StatelessWidget {
         border: Border.all(color: outlineColour, width: outlineWidth),
       ),
       alignment: Alignment.center,
-      child: CrownIcon(size: width * 0.5, color: Palette.gold),
+      child: CrownIcon(size: width * 0.5),
     );
   }
 }

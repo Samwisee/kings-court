@@ -6,7 +6,7 @@ import 'package:kings_court/models.dart';
 import 'package:kings_court/tutorial.dart';
 
 void main() {
-  for (int i = 0; i < lessons.length; i++) {
+  for (var i = 0; i < lessons.length; i++) {
     final lesson = lessons[i];
 
     test('Lesson ${i + 1} (${lesson.title}) deals a full, fair hand', () {
@@ -16,7 +16,7 @@ void main() {
       expect(all, hasLength(40));
       expect(d.hands.map((h) => h.length).toSet(), {handSize(3)});
       expect(d.hands[0], contains(PlayingCard.king), reason: 'you are the King');
-      for (int s = 0; s < 3; s++) {
+      for (var s = 0; s < 3; s++) {
         for (final label in lesson.cards[s]) {
           expect(d.hands[s], contains(PlayingCard.parse(label)), reason: label);
         }

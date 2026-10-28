@@ -10,8 +10,7 @@ class _MiniCard extends StatelessWidget {
       this.dimmed = false,
       this.edge,
       this.trick,
-      this.faint = false,
-      this.centred = true});
+      this.faint = false});
 
   /// Only possibly there: drawn in faded colours (cheaper than making it
   /// see-through).
@@ -25,10 +24,6 @@ class _MiniCard extends StatelessWidget {
 
   /// The trick it was played in, shown in its corner.
   final int? trick;
-
-  /// Rank over suit, large in the middle (the only layout now; kept so
-  /// callers can say so).
-  final bool centred;
 
   static const _cloth = [
     Color(0xFF4A2670),
@@ -95,7 +90,7 @@ class _MiniCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(r),
       ),
       padding: EdgeInsets.all(edge != null ? 1.2 : 0),
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: face,
           borderRadius: BorderRadius.circular(r - 1),
@@ -105,13 +100,13 @@ class _MiniCard extends StatelessWidget {
                       felt, fade)!,
               width: edgeW),
         ),
-        child: Container(
+        child: DecoratedBox(
           decoration: edge != null
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(math.max(0, r - edgeW)),
-                  border: Border.all(color: outlineColour, width: 1),
+                  border: Border.all(color: outlineColour),
                 )
-              : null,
+              : const BoxDecoration(),
           child: Stack(children: [
             Positioned.fill(child: label),
             if (trick != null)

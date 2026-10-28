@@ -33,7 +33,6 @@ class _HouseBanner extends StatelessWidget {
         ),
       ),
       child: Stack(
-        clipBehavior: Clip.hardEdge,
         // The token and words sit in the middle of the band, top to bottom.
         alignment: AlignmentDirectional.centerStart,
         children: [
@@ -58,7 +57,7 @@ class _HouseBanner extends StatelessWidget {
                   if (king)
                     const Padding(
                       padding: EdgeInsets.only(bottom: 2),
-                      child: CrownIcon(size: 26, color: Palette.gold),
+                      child: CrownIcon(size: 26),
                     ),
                   ShapedToken(
                       shape: courtier.shape,

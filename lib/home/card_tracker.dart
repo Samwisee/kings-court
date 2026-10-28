@@ -58,13 +58,13 @@ class _CardTrackerState extends State<_CardTracker> {
   @override
   Widget build(BuildContext context) {
     final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
-    for (int i = 0; i < cards.tricks.length; i++) {
+    for (var i = 0; i < cards.tricks.length; i++) {
       final t = cards.tricks[i];
-      for (int k = 0; k < t.cards.length; k++) {
+      for (var k = 0; k < t.cards.length; k++) {
         playedIn[t.cards[k]] = (i + 1, t.seats[k]);
       }
     }
-    for (int k = 0; k < cards.current.length; k++) {
+    for (var k = 0; k < cards.current.length; k++) {
       playedIn[cards.current[k]] = (cards.tricks.length + 1, cards.currentSeats[k]);
     }
     final mine = cards.hands.length > you ? cards.hands[you].toSet() : <PlayingCard>{};
@@ -110,7 +110,7 @@ class _CardTrackerState extends State<_CardTracker> {
             color: Palette.card,
             borderRadius: BorderRadius.circular(3),
             border: Border.all(color: p.color, width: 3),
-            boxShadow: const [BoxShadow(color: Colors.black, spreadRadius: 1.2)],
+            boxShadow: const [BoxShadow(spreadRadius: 1.2)],
           ),
         );
 
@@ -256,7 +256,6 @@ class _CardTrackerState extends State<_CardTracker> {
           won: false,
           court: true,
           edge: edge,
-          maxWidth: 400,
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
           child: child!,

@@ -4,41 +4,41 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+
 import 'analytics.dart';
 import 'bug_report.dart';
 import 'chronicle.dart';
-import 'crash_reports.dart';
 import 'courtiers.dart';
-import 'story.dart';
-import 'models.dart';
+import 'crash_reports.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
 import 'engine/conflicts.dart';
-import 'engine/deal_mix.dart';
 import 'engine/contest.dart';
+import 'engine/deal_mix.dart';
 import 'engine/inference.dart';
 import 'engine/match.dart';
 import 'engine/rules.dart';
 import 'game/bot_turn.dart';
 import 'game/controller.dart';
+import 'models.dart';
 import 'net/table_link.dart';
 import 'play/card_view.dart';
 import 'play/contest_table.dart';
+import 'play/rules_page.dart';
 import 'play/throne_room.dart';
 import 'play/tutorial_intro.dart';
-import 'play/rules_page.dart';
 import 'sfx.dart';
+import 'story.dart';
 import 'task_help.dart';
 import 'theme.dart';
 import 'tutorial.dart';
@@ -774,7 +774,7 @@ class HomePageState extends State<HomePage>
           pos.every((p) => p != null);
       if (restored) {
         _cardWidth = (data['cardWidth'] as num).toDouble();
-        for (int i = 0; i < g.tasks.length; i++) {
+        for (var i = 0; i < g.tasks.length; i++) {
           final p = pos[i] as List;
           _pos[g.tasks[i]] = Offset(
               (p[0] as num).toDouble(), (p[1] as num).toDouble());
@@ -1025,7 +1025,7 @@ class HomePageState extends State<HomePage>
       }
       // Any task the deal still makes impossible is swapped for one that
       // can be done.
-      for (int i = 0; i < game.tasks.length && !game.isTutorial; i++) {
+      for (var i = 0; i < game.tasks.length && !game.isTutorial; i++) {
         final t = game.tasks[i];
         if (t.assignedPlayerIndex != null || _possible(t, c.hands, c.inPlay)) {
           continue;
@@ -1160,7 +1160,7 @@ class HomePageState extends State<HomePage>
   void _startChoosing() {
     setState(() => _speakAskedFor = game.dealId);
     final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
-    for (int seat = 0; seat < game.players.length; seat++) {
+    for (var seat = 0; seat < game.players.length; seat++) {
       if (seat == _you || game.spoke[seat] || !game.canSpeak(seat)) continue;
       for (final card in _cards.hands[seat]) {
         if (_cards.revealFor(seat, card) == null) continue;
@@ -1230,7 +1230,7 @@ class HomePageState extends State<HomePage>
       case null:
         return false;
       case YourAnnouncement(:final task):
-        _askX(game.tasks[task]);
+        unawaited(_askX(game.tasks[task]));
         return false;
       case BotPicks(:final seat, :final task):
         _assignTask(game.tasks[task], seat);
@@ -1250,7 +1250,7 @@ class HomePageState extends State<HomePage>
   Future<void> _askX(Task task) async {
     if (_askingX) return;
     _askingX = true;
-    int x = 1;
+    var x = 1;
     // The King card always wins its trick, so whoever holds it wins at
     // least one.
     final least = _cards.hands[_you].contains(PlayingCard.king) ? 1 : 0;
@@ -1260,6 +1260,11 @@ class HomePageState extends State<HomePage>
       builder: (context) => StatefulBuilder(
         builder: (context, setDialog) => CourtDialog(
           title: 'How many tricks?',
+          actions: [
+            FilledButton(
+                onPressed: () => Navigator.pop(context, x),
+                child: const Text('Announce')),
+          ],
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1300,11 +1305,6 @@ class HomePageState extends State<HomePage>
                   style: const TextStyle(color: Colors.white60)),
             ],
           ),
-          actions: [
-            FilledButton(
-                onPressed: () => Navigator.pop(context, x),
-                child: const Text('Announce')),
-          ],
         ),
       ),
     );
@@ -1459,7 +1459,7 @@ class HomePageState extends State<HomePage>
       if (!mounted || !game.tasks.contains(t)) continue;
       // Several done at once turn over one after another.
       if (status == TaskStatus.completed && flipped++ > 0) {
-        await Future.delayed(flipStagger);
+        await Future<void>.delayed(flipStagger);
         if (!mounted || !game.tasks.contains(t)) continue;
       }
       _setTaskStatus(t, status);
@@ -1547,7 +1547,7 @@ class HomePageState extends State<HomePage>
     }
     final won = {for (final c in _shownView.won(owner)) c.label};
     return {
-      for (final m in RegExp(r'[A2-9][♥♦♠♣]').allMatches(t.description))
+      for (final m in RegExp('[A2-9][♥♦♠♣]').allMatches(t.description))
         if (won.contains(m.group(0))) m.group(0)!
     };
   }
@@ -1608,15 +1608,6 @@ class HomePageState extends State<HomePage>
 
   static const _trackerSlide = Duration(milliseconds: 320);
 
-  /// Space either side of the card tracker: it's as wide as its grid of
-  /// cards (and its inlay), so on a wide screen the table shows either side.
-  double _trackerInset(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final cell = _CardTracker.cellFor(size);
-    final dock = _CardTracker.gridWidth(cell) + 2 * _CardTracker.sidePad;
-    return math.max(0.0, (size.width - dock) / 2);
-  }
-
   /// The cards [t] is about, and what's become of each this round.
   /// The cards a task is about, marked the way the card tracker marks
   /// them: outlined in the colour of whoever played each one (with the
@@ -1627,13 +1618,13 @@ class HomePageState extends State<HomePage>
       return [for (final c in cards) (card: c, edge: null, trick: null, played: false)];
     }
     final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
-    for (int i = 0; i < _cards.tricks.length; i++) {
+    for (var i = 0; i < _cards.tricks.length; i++) {
       final tr = _cards.tricks[i];
-      for (int k = 0; k < tr.cards.length; k++) {
+      for (var k = 0; k < tr.cards.length; k++) {
         playedIn[tr.cards[k]] = (i + 1, tr.seats[k]);
       }
     }
-    for (int k = 0; k < _cards.current.length; k++) {
+    for (var k = 0; k < _cards.current.length; k++) {
       playedIn[_cards.current[k]] = (_cards.tricks.length + 1, _cards.currentSeats[k]);
     }
     final holder = <PlayingCard, int>{
@@ -2695,7 +2686,7 @@ class HomePageState extends State<HomePage>
           decoration: BoxDecoration(
             color: const Color(0xFF14100A),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Palette.gold, width: 1),
+            border: Border.all(color: Palette.gold),
           ),
           // One short word: high, low or only.
           child: Text(
@@ -2888,7 +2879,7 @@ class HomePageState extends State<HomePage>
                                 ],
                               ),
                               alignment: Alignment.center,
-                              child: const CrownIcon(size: 26, color: Palette.gold),
+                              child: const CrownIcon(size: 26),
                             ),
                           ),
                         ]),
@@ -2911,7 +2902,6 @@ class HomePageState extends State<HomePage>
         child: Masonry(
           key: _middleTasksKey,
           columnWidth: w,
-          spacing: 6,
           minHeight: box.maxHeight.isFinite ? box.maxHeight : 0,
           children: taskChips,
         ),
@@ -2919,9 +2909,8 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  bool _mayTake(Task t) => game.decree == Decree.kingsCommand
-      ? true
-      : game.canTake(t, _you);
+  bool _mayTake(Task t) =>
+      game.decree == Decree.kingsCommand || game.canTake(t, _you);
 
   /// Your pick: take a task. Under King's Command you're the King handing
   /// tasks out, so choose who gets it.
@@ -2996,11 +2985,11 @@ class HomePageState extends State<HomePage>
         ),
         SizedBox(
           width: revealW,
-          child: Center(child: _revealedView(_you, height: 40)),
+          child: Center(child: _revealedView(_you)),
         ),
       ],
     );
-    final Widget tasks = _storyActive
+    final tasks = _storyActive
         ? const SizedBox.shrink()
         : mine.isEmpty
             ? const SizedBox.shrink()
@@ -3080,7 +3069,7 @@ class HomePageState extends State<HomePage>
     final hand = _rectOn(_handKey);
     Offset? origin(int seat, PlayingCard card) {
       if (middle == null) return null;
-      final Offset? p = seat == _you
+      final p = seat == _you
           ? _launchFrom[card.id] ?? hand?.topCenter
           : _rectOn(_seatKey(seat))?.center;
       return p == null ? null : p - middle.topLeft;
@@ -3571,7 +3560,7 @@ class HomePageState extends State<HomePage>
       if (digital) {
         // You sit at the bottom; bots take the other seats.
         game.cards = MatchState(players: count, target: target);
-        for (int i = 0; i < count; i++) {
+        for (var i = 0; i < count; i++) {
           game.players[i].name = i == _you
               ? 'You'
               : game.isDynasty
@@ -3602,16 +3591,19 @@ class HomePageState extends State<HomePage>
   /// wherever you were.
   Future<void> _openSection(int i) async {
     final closing = i >= lessons.length;
-    final r = closing
-        ? await showTutorialPages(context,
-            pages: outroPages,
-            heading: 'Part ${lessons.length + 1} of ${lessons.length + 1}',
-            finishLabel: 'Finish')
-        : await _lessonPages(i);
+    final String? r;
+    if (closing) {
+      r = await showTutorialPages(context,
+          pages: outroPages,
+          heading: 'Part ${lessons.length + 1} of ${lessons.length + 1}',
+          finishLabel: 'Finish');
+    } else {
+      r = await _lessonPages(i);
+    }
     if (!mounted) return;
     // Leaving, or done: out of the tutorial (if a lesson was under way).
     if (r == 'quit' || (closing && r == 'go')) {
-      if (_inGame && game.isTutorial) _finishTutorial();
+      if (_inGame && game.isTutorial) await _finishTutorial();
       return;
     }
     if (r != 'go') return;
@@ -3634,7 +3626,7 @@ class HomePageState extends State<HomePage>
   void _beginLesson(int i) {
     setState(() => _setupArgs = null);
     _startGame(3, 1, tutorialCourtiers, GameMode.tutorial,
-        roles: true, digital: true, lesson: i);
+        digital: true, lesson: i);
   }
 
   /// On to the next section's reading, then its lesson.
@@ -3644,7 +3636,7 @@ class HomePageState extends State<HomePage>
   Future<void> _finishTutorial() async {
     Analytics.event(['tutorial', 'finished']);
     _tutorialDone = true;
-    _saveSettings();
+    unawaited(_saveSettings());
     _botTimer?.cancel();
     _botTimer = null;
     setState(() {
@@ -3674,7 +3666,9 @@ class HomePageState extends State<HomePage>
             style: DialogStyle.body),
       ),
     );
-    if (play == true && mounted) _showSetupDialog();
+    if (play ?? false) {
+      if (mounted) _showSetupDialog();
+    }
   }
 
   /// The card the tutorial suggests on this trick, if it's your turn.
@@ -3745,7 +3739,7 @@ class HomePageState extends State<HomePage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    const CrownIcon(size: 14, color: Palette.gold),
+                    const CrownIcon(size: 14),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -3950,7 +3944,7 @@ class HomePageState extends State<HomePage>
     _cardWidth = geo.cardWidth;
     final rand = math.Random(game.dealId);
     _order = List.of(game.tasks);
-    for (int i = 0; i < game.tasks.length; i++) {
+    for (var i = 0; i < game.tasks.length; i++) {
       final t = game.tasks[i];
       _pos[t] = _toFrac(targets[i]);
       _tilt[t] = (rand.nextDouble() - 0.5) * 0.08; // a few degrees
@@ -4226,7 +4220,7 @@ class HomePageState extends State<HomePage>
                             Palette.goldDeep,
                           ]),
                           border: Border(
-                              bottom: BorderSide(color: outlineColour, width: 1)),
+                              bottom: BorderSide(color: outlineColour)),
                         ),
                       ),
                       Padding(
@@ -4571,7 +4565,6 @@ class HomePageState extends State<HomePage>
               // Laid out as the card on the table: points and crown, then
               // the words.
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text('${_points(task)}',
                       style: const TextStyle(
@@ -4722,8 +4715,8 @@ class HomePageState extends State<HomePage>
   }
 
   /// Opens the New Game panel on the table.
-  Future<void> _showSetupDialog(
-      {GameMode? startMode, int? startChapter, bool continuing = false}) async {
+  void _showSetupDialog(
+      {GameMode? startMode, int? startChapter, bool continuing = false}) {
     setState(() {
       _setupArgs = (mode: startMode, chapter: startChapter);
       _setupContinuing = continuing;
@@ -4813,7 +4806,7 @@ class HomePageState extends State<HomePage>
                             blurRadius: crown * 0.5,
                             spreadRadius: crown * 0.05),
                       ]),
-                      child: CrownIcon(size: crown, color: Palette.gold),
+                      child: CrownIcon(size: crown),
                     ),
                   ),
                 ),
@@ -4857,7 +4850,7 @@ class HomePageState extends State<HomePage>
         _continueSaved(save);
       },
       // On-screen cards unless the game being replaced used a real deck.
-      digital: _inGame ? game.digital : true,
+      digital: !_inGame || game.digital,
       newPlayer: !_tutorialDone,
       onSound: (on) {
         setState(() => Sfx.enabled = on);
@@ -4869,7 +4862,7 @@ class HomePageState extends State<HomePage>
   /// Changes the points target mid-game. Players and the King stay; the
   /// tasks are re-dealt to match the new target.
   Future<void> _showPointsDialog() async {
-    int target = targetPoints;
+    var target = targetPoints;
     final apply = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -4898,7 +4891,6 @@ class HomePageState extends State<HomePage>
                   const SizedBox(height: 8),
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text('$target',
                           style: const TextStyle(
@@ -5271,7 +5263,7 @@ class HomePageState extends State<HomePage>
         child: _GoldBar(
           onTap: _openMenu,
           semanticLabel: 'Menu',
-          child: _OrnateMenuIcon(size: 30, open: _menuOpen),
+          child: _OrnateMenuIcon(open: _menuOpen),
         ),
       );
 
@@ -5288,7 +5280,7 @@ class HomePageState extends State<HomePage>
       // goes somewhere closes it.
       pageBuilder: (context, _, __) => _OrnateMenu(
         entries: _menuEntries,
-        onToggle: (v) => _onMenuChoice(v),
+        onToggle: _onMenuChoice,
       ),
       transitionBuilder: (context, a, _, child) {
         final t = Curves.easeOutCubic.transform(a.value);
@@ -5300,10 +5292,10 @@ class HomePageState extends State<HomePage>
     );
     if (mounted) _ui(() => _menuOpen = false);
     if (choice == null || !mounted) return;
-    await _onMenuChoice(choice);
+    _onMenuChoice(choice);
   }
 
-  Future<void> _onMenuChoice(String choice) async {
+  void _onMenuChoice(String choice) {
         Analytics.event([
           'menu',
           choice,
@@ -5551,9 +5543,9 @@ class HomePageState extends State<HomePage>
                           fontSize: 22,
                           height: 1,
                           color: Palette.gold,
-                          shadows: [Shadow(color: Colors.black, blurRadius: 6)])),
+                          shadows: [Shadow(blurRadius: 6)])),
                   const SizedBox(width: 5),
-                  const CrownIcon(size: 18, color: Palette.gold),
+                  const CrownIcon(size: 18),
                 ],
               ),
             ),
@@ -5760,7 +5752,7 @@ class HomePageState extends State<HomePage>
               top: p.dy - size * 0.375,
               child: Transform.rotate(
                 angle: spin,
-                child: CrownIcon(size: size, color: Palette.gold),
+                child: CrownIcon(size: size),
               ),
             ),
           ],
@@ -6015,7 +6007,7 @@ class HomePageState extends State<HomePage>
                   style: FilledButton.styleFrom(
                       backgroundColor: _btnBg,
                       foregroundColor: _btnFg),
-                  child: Text('So it begins'),
+                  child: const Text('So it begins'),
                 ),
               ],
             );
@@ -6613,7 +6605,7 @@ class HomePageState extends State<HomePage>
       // Buttons only for real decisions; otherwise a tap goes on.
       left: left,
       right: left == null ? null : right,
-      onContinue: left == null && right != null && right.enabled ? right.onTap : null,
+      onContinue: left == null && right.enabled ? right.onTap : null,
       fast: botDelay.inMilliseconds < 5,
     );
   }
@@ -6996,7 +6988,7 @@ class HomePageState extends State<HomePage>
     if (king != _you) _votes[king] ??= rand.nextBool();
     final kingA = _votes[king];
     if (kingA == null) return; // you're King: the court waits for you
-    for (int s = 0; s < game.players.length; s++) {
+    for (var s = 0; s < game.players.length; s++) {
       if (s == _you || s == king || _votes.containsKey(s)) continue;
       final la = _lean(d.a, s), lb = _lean(d.b, s);
       if (game.isAntagonist(s)) {
@@ -7023,7 +7015,7 @@ class HomePageState extends State<HomePage>
     final chosen = seats.every(_votes.containsKey);
     // Who chooses next: on screen only you; at the table, each in turn,
     // the King first.
-    final int? chooser = _digital
+    final chooser = _digital
         ? (_votes.containsKey(_you) ||
                 (king != null && king != _you && !_votes.containsKey(king))
             ? null
@@ -7262,11 +7254,6 @@ class HomePageState extends State<HomePage>
       child: KeyedSubtree(key: ValueKey(key), child: stage),
     );
   }
-
-  /// How the story names whoever sits in [seat]: their own name when
-  /// characters come and go, otherwise their courtier title.
-  String _who(int seat) =>
-      game.solo ? game.personAt(seat) : game.courtiers[seat].title;
 
   /// Someone from beyond the court: an envoy, a petitioner.
   Widget _visitorToken(double size) => Container(
@@ -7611,7 +7598,7 @@ class HomePageState extends State<HomePage>
                         fontSize: 22,
                         color: won ? Palette.ink : Palette.gold)),
                 const SizedBox(width: 4),
-                CrownIcon(size: 16, color: won ? Palette.ink : Palette.gold),
+                CrownIcon(color: won ? Palette.ink : Palette.gold),
               ],
             ),
             SliderTheme(
@@ -7751,11 +7738,11 @@ class HomePageState extends State<HomePage>
                   ),
                 if (_saves.isEmpty)
                   FilledButton(
-                      onPressed: () => _showSetupDialog(),
+                      onPressed: _showSetupDialog,
                       child: const Text('New game'))
                 else
                   OutlinedButton(
-                      onPressed: () => _showSetupDialog(),
+                      onPressed: _showSetupDialog,
                       child: const Text('New game')),
               ],
             ),

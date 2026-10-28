@@ -198,7 +198,6 @@ class TableCard extends StatelessWidget {
     final iconSize = indexSize * 0.8;
     final failed = task.isFailed;
     final top = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: FittedBox(
@@ -337,10 +336,10 @@ class TableCard extends StatelessWidget {
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0x99D4A63A), width: 1),
+          border: Border.all(color: const Color(0x99D4A63A)),
         ),
         alignment: Alignment.center,
-        child: CrownIcon(size: width * 0.28, color: Palette.gold),
+        child: CrownIcon(size: width * 0.28),
       ),
     );
   }
@@ -362,7 +361,7 @@ class TableCard extends StatelessWidget {
               margin: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0x99D4A63A), width: 1),
+                border: Border.all(color: const Color(0x99D4A63A)),
               ),
             ),
           ),
@@ -370,7 +369,7 @@ class TableCard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const CrownIcon(size: 14, color: Palette.gold),
+                const CrownIcon(size: 14),
                 const SizedBox(height: 2),
                 Container(
                   width: seal,
@@ -423,7 +422,7 @@ class DeckStack extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: i == 2
-                    ? const CrownIcon(size: 28, color: Palette.gold)
+                    ? const CrownIcon(size: 28)
                     : null,
               ),
             ),
@@ -455,7 +454,7 @@ class WaxSeal extends StatelessWidget {
             colors: [Color(0xFFD23A4C), Palette.cardRed, Color(0xFF7A0B1C)],
             stops: [0, 0.55, 1],
           ),
-          border: Border.all(color: const Color(0xFF7A0B1C), width: 1),
+          border: Border.all(color: const Color(0xFF7A0B1C)),
           boxShadow: const [
             BoxShadow(color: Colors.black38, blurRadius: 2, offset: Offset(0, 1)),
           ],
@@ -560,7 +559,7 @@ Path tokenPath(TokenShape shape, Size size) {
   final c = Offset(w / 2, h / 2);
   Path polygon(int sides, double rotation, [double scale = 0.5]) {
     final p = Path();
-    for (int i = 0; i < sides; i++) {
+    for (var i = 0; i < sides; i++) {
       final a = rotation + i * 2 * math.pi / sides;
       final pt = c + Offset(math.cos(a), math.sin(a)) * (w * scale);
       i == 0 ? p.moveTo(pt.dx, pt.dy) : p.lineTo(pt.dx, pt.dy);
@@ -593,7 +592,7 @@ Path tokenPath(TokenShape shape, Size size) {
       return polygon(8, math.pi / 8, 0.52);
     case TokenShape.star:
       final p = Path();
-      for (int i = 0; i < 10; i++) {
+      for (var i = 0; i < 10; i++) {
         final r = i.isEven ? w * 0.55 : w * 0.38;
         final a = -math.pi / 2 + i * math.pi / 5;
         final pt = c + Offset(math.cos(a), math.sin(a)) * r + Offset(0, h * 0.04);

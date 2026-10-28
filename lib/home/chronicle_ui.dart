@@ -48,7 +48,7 @@ class _ChapterPicker extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white70)),
                 const SizedBox(height: 6),
-                CrownRating(crowns: crowns, size: 16),
+                CrownRating(crowns: crowns),
               ],
             ),
           ),

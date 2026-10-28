@@ -28,7 +28,7 @@ There's no Flutter SDK in the cloud sessions, so CI is the build machine:
 2. **Test and deploy** (`.github/workflows/deploy.yml`) runs
    `flutter analyze` (errors fail it), `flutter test`, and deploys the web
    build to GitHub Pages. Test failures show as annotations on the run.
-3. **Screenshots** (`shots.yml`) runs `tool/shots/shots_test.dart` and
+3. **Screenshots** (`shots.yml`) runs `test/tool/shots_test.dart` and
    pushes every PNG to the `shots` branch, for checking what changed.
 4. **Balance** (`balance.yml`) has bots play thousands of rounds when the
    tasks or rules change; the report goes to the `balance` branch.
@@ -282,5 +282,5 @@ The engine was built for this:
   can't see.
 - `tool/bench/`: not tests; timings of the bots and the page, published
   with the screenshots.
-- `tool/shots/shots_test.dart`: the screenshots.
-- `tool/balance/balance_test.dart`: the balance report.
+- `test/tool/shots_test.dart`: the screenshots.
+- `test/tool/balance_test.dart`: the balance report.

@@ -18,7 +18,7 @@ class ContestState {
 
   /// Whoever holds the 2♣ leads (the King, if it was set aside).
   static int _opener(List<List<PlayingCard>> hands, int king) {
-    for (int s = 0; s < hands.length; s++) {
+    for (var s = 0; s < hands.length; s++) {
       if (hands[s].any((c) => c.suit == Suit.clubs && c.rank == 2)) return s;
     }
     return king;
@@ -77,7 +77,7 @@ class ContestState {
   static int winnerOf(List<PlayingCard> cards) {
     final led = cards.first.suit;
     var best = 0;
-    for (int i = 1; i < cards.length; i++) {
+    for (var i = 1; i < cards.length; i++) {
       if (cards[i].suit == led && cards[i].rank > cards[best].rank) best = i;
     }
     return best;

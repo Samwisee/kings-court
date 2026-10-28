@@ -1310,7 +1310,7 @@ String roman(int n) {
   const symbols = ['X', 'IX', 'V', 'IV', 'I'];
   final out = StringBuffer();
   var rest = n;
-  for (int i = 0; i < values.length; i++) {
+  for (var i = 0; i < values.length; i++) {
     while (rest >= values[i]) {
       out.write(symbols[i]);
       rest -= values[i];

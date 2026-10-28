@@ -1,26 +1,25 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kings_court/analytics.dart';
 import 'package:kings_court/chronicle.dart';
 import 'package:kings_court/courtiers.dart';
-import 'package:kings_court/main.dart';
-import 'package:kings_court/sfx.dart';
-import 'package:kings_court/story.dart';
-import 'package:kings_court/models.dart';
-import 'package:kings_court/tutorial.dart';
-import 'package:kings_court/widgets.dart';
-import 'dart:math';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/contest.dart';
-import 'package:kings_court/play/contest_table.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
-import 'package:kings_court/net/table_link.dart';
+import 'package:kings_court/main.dart';
+import 'package:kings_court/models.dart';
+import 'package:kings_court/play/contest_table.dart';
+import 'package:kings_court/sfx.dart';
+import 'package:kings_court/story.dart';
+import 'package:kings_court/tutorial.dart';
+import 'package:kings_court/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void setPhoneSize(WidgetTester tester) {
   tester.view.physicalSize = const Size(1170, 2532); // iPhone-sized
@@ -65,7 +64,7 @@ Future<void> dragCardTo(WidgetTester tester, Finder card, Offset to) async {
 /// Drags from [from] to [to] in small steps, as a finger would.
 Future<void> dragFromTo(WidgetTester tester, Offset from, Offset to) async {
   final g = await tester.startGesture(from);
-  for (int i = 1; i <= 10; i++) {
+  for (var i = 1; i <= 10; i++) {
     await g.moveTo(Offset.lerp(from, to, i / 10)!);
     await tester.pump(const Duration(milliseconds: 16));
   }
@@ -281,7 +280,7 @@ void main() {
     expect(find.text('Report copied'), findsOneWidget);
     final report = jsonDecode(copied!) as Map<String, dynamic>;
     expect(report['message'], 'The King vanished');
-    expect(report['where']['round'], 1);
+    expect((report['where'] as Map<String, dynamic>)['round'], 1);
     final back = GameState.fromJson(Map<String, dynamic>.from(report['state'] as Map));
     final game = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(back, isNotNull);
@@ -351,7 +350,7 @@ void main() {
     // Four is enough to stack up; the test font makes cards larger than
     // on a phone, so more can leave no room at all.
     final count = total < 4 ? total : 4;
-    for (int n = 0; n < count; n++) {
+    for (var n = 0; n < count; n++) {
       final card = freeCard(tester, (_) => true);
       final seat = tester.getCenter(find.byType(SeatToken).at(n.isEven ? 0 : 1));
       await dragCardTo(tester, card, seat);
@@ -369,7 +368,7 @@ void main() {
       for (final el in tester.elementList(cards))
         if ((el.widget as TableCard).owner != null)
           () {
-            final box = el.renderObject as RenderBox;
+            final box = el.renderObject! as RenderBox;
             final a = box.localToGlobal(Offset.zero);
             final b = box.localToGlobal(box.size.bottomRight(Offset.zero));
             return (
@@ -380,8 +379,8 @@ void main() {
     ];
     // One seat's stack may squeeze together on a crowded table; two
     // seats' stacks must never run into each other.
-    for (int i = 0; i < rects.length; i++) {
-      for (int j = i + 1; j < rects.length; j++) {
+    for (var i = 0; i < rects.length; i++) {
+      for (var j = i + 1; j < rects.length; j++) {
         if (rects[i].$1 == rects[j].$1) continue;
         expect(rects[i].$2.overlaps(rects[j].$2), isFalse,
             reason: 'cards $i and $j overlap: $rects, '
@@ -559,7 +558,7 @@ void main() {
       // Next clockwise who can take one of the tasks left (anyone who
       // can't is skipped).
       seat = picker;
-      for (int step = 1; step <= 3; step++) {
+      for (var step = 1; step <= 3; step++) {
         final s = (picker + step) % 3;
         if (game.tasks.any((t) => t.assignedPlayerIndex == null && game.canTake(t, s))) {
           seat = s;
@@ -760,7 +759,7 @@ void main() {
     p.startAttempt(0);
     expect(p.recordWin(0), 3);
     expect(p.nextChapter, 1);
-    for (int i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       p.startAttempt(1);
     }
     expect(p.recordWin(1), 2);
@@ -833,7 +832,7 @@ void main() {
     g.flags.add('mira_helped');
     g.flags.add('seen:Mira of Ashford');
     var grain = 0;
-    for (int i = 0; i < 40; i++) {
+    for (var i = 0; i < 40; i++) {
       g.flags.remove('seen:Grain from Ashford');
       final d = dilemmas[g.pickDilemma(Random(i))];
       if (d.title == 'Grain from Ashford') grain++;
@@ -841,7 +840,7 @@ void main() {
     expect(grain, greaterThan(20));
     // Once faced, a story matter never comes back.
     g.flags.add('seen:Grain from Ashford');
-    for (int i = 0; i < 40; i++) {
+    for (var i = 0; i < 40; i++) {
       expect(dilemmas[g.pickDilemma(Random(i))].title, isNot('Grain from Ashford'));
     }
     // Choices are remembered, and saved.
@@ -874,7 +873,7 @@ void main() {
     expect(g.court, contains(role));
     final rand = Random(5);
     final sizes = <int>{};
-    for (int i = 0; i < 80; i++) {
+    for (var i = 0; i < 80; i++) {
       if (rand.nextBool()) {
         final c = Courtier.houses[rand.nextInt(6)];
         g.applyChoice(Choice('x', 'y', [rand.nextBool() ? Depart(c) : Arrive(c)]));
@@ -902,7 +901,7 @@ void main() {
       ..cards = MatchState(players: 4, target: 8)
       ..setKing(0);
     final seen = <String>[];
-    for (int i = 0; i < 12; i++) {
+    for (var i = 0; i < 12; i++) {
       g.nextDynastyRound(g.players.length, 8);
       final t = g.currentTiding;
       if (t?.arc == GameState.mainArc) seen.add(t!.title);
@@ -963,7 +962,7 @@ void main() {
 
   test('Dilemmas only involve courtiers at the table', () {
     final g = dynasty(3);
-    for (int i = 0; i < 30; i++) {
+    for (var i = 0; i < 30; i++) {
       final d = dilemmas[g.pickDilemma()];
       for (final e in [...d.a.effects, ...d.b.effects].whereType<Loyalty>()) {
         expect(g.courtiers, contains(e.courtier));
@@ -973,7 +972,7 @@ void main() {
 
   test('A dynasty survives saving and loading', () {
     final g = dynasty(4)..setKing(3);
-    g.applyChoice(Choice('x', 'y', [Loyalty(g.courtiers[1], -5), Wound(1)]));
+    g.applyChoice(Choice('x', 'y', [Loyalty(g.courtiers[1], -5), const Wound(1)]));
     final copy = GameState.fromJson(
         jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)!;
     expect(copy.courtiers, g.courtiers);
@@ -1006,7 +1005,7 @@ void main() {
 
   test('The Trial of Hearts plays out fairly', () {
     final rand = Random(3);
-    for (int i = 0; i < 300; i++) {
+    for (var i = 0; i < 300; i++) {
       final players = 3 + i % 4;
       final sideA = [for (int s = 0; s < players; s++) rand.nextBool()];
       final c = ContestState.deal(
@@ -1057,7 +1056,7 @@ void main() {
         ),
       ),
     ));
-    for (int i = 0; i < 400 && !contest.over; i++) {
+    for (var i = 0; i < 400 && !contest.over; i++) {
       key.currentState!.debugYourMove();
       await tester.pump(const Duration(milliseconds: 20));
     }
@@ -1108,7 +1107,7 @@ void main() {
     expect(g.ending, DynastyEnding.usurped);
     expect(g.epithet, 'the Stern');
     final h = dynasty(4)..setKing(1);
-    for (int i = 0; i < GameState.maxFallenKings; i++) {
+    for (var i = 0; i < GameState.maxFallenKings; i++) {
       h.succession();
       h.setKing(1);
     }
@@ -1196,7 +1195,7 @@ void main() {
   });
 
   test('Seals come in twos or not at all', () {
-    for (int i = 0; i < 50; i++) {
+    for (var i = 0; i < 50; i++) {
       final g = GameState()
         ..surprise = true
         ..addTasksUntilTarget(4, 3 + i % 12);
@@ -1208,12 +1207,12 @@ void main() {
 
   test('Seals only sit where they can be kept', () {
     var omegas = 0, numbered = 0;
-    for (int i = 0; i < 400; i++) {
+    for (var i = 0; i < 400; i++) {
       final g = GameState()
         ..sealCount = const [2, 3, 4][i % 3]
         ..addTasksUntilTarget(3 + i % 3, 6 + i % 14, newRound: false);
       final sealed = g.tasks.where((t) => t.seal != null).toList();
-      expect(sealed.length == 0 || sealed.length >= 2, isTrue);
+      expect(sealed.isEmpty || sealed.length >= 2, isTrue);
       for (final t in sealed) {
         // A seal orders tasks by when they're done: no seal on a task only
         // settled at the end of the round, or by the first few tricks.
@@ -1248,7 +1247,7 @@ void main() {
     // the last trick.
     final rand = Random(7);
     final early = <String>{};
-    for (int r = 0; r < 600; r++) {
+    for (var r = 0; r < 600; r++) {
       final players = 3 + r % 3;
       final dealt = deal(players, rand);
       final hands = [for (final h in dealt.hands) List.of(h)];
@@ -1262,7 +1261,7 @@ void main() {
       final shownAt = {for (int s = 0; s < players; s++) s: 0};
       while (tricks.length < total - 1) {
         final seats = <int>[], cards = <PlayingCard>[];
-        for (int i = 0; i < players; i++) {
+        for (var i = 0; i < players; i++) {
           final s = (leader + i) % players;
           final legal =
               legalPlays(hands[s], cards.isEmpty ? null : cards.first);
@@ -1283,7 +1282,7 @@ void main() {
             shown: shown,
             shownAt: shownAt);
         for (final e in taskRules.entries) {
-          for (int o = 0; o < players; o++) {
+          for (var o = 0; o < players; o++) {
             if (e.value(v, o, 1) == Verdict.done) early.add(e.key);
           }
         }
@@ -1325,7 +1324,7 @@ void main() {
       expect(game.players.first.name, 'You');
       if (mode == 'Free play') {
         // Before anyone picks, the table asks about showing a card.
-        for (int i = 0;
+        for (var i = 0;
             i < 300 && find.text('Skip').evaluate().isEmpty;
             i++) {
           await tester.pump(const Duration(milliseconds: 30));
@@ -1339,7 +1338,7 @@ void main() {
         await tester.pump();
         expect(find.text('Skip'), findsNothing);
       }
-      for (int i = 0;
+      for (var i = 0;
           i < 3000 && game.outcome == RoundOutcome.inProgress;
           i++) {
         await tester.pump(const Duration(milliseconds: 30));
@@ -1366,7 +1365,7 @@ void main() {
         final grid = find.byTooltip('Cards played and still to come');
         if (grid.hitTestable().evaluate().isNotEmpty) {
           await tester.tap(grid.hitTestable());
-          for (int i = 0; i < 20; i++) {
+          for (var i = 0; i < 20; i++) {
             await tester.pump(const Duration(milliseconds: 30));
           }
           await tester.dragUntilVisible(find.text('What the others may hold'),
@@ -1399,7 +1398,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pump();
-      for (int i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
+      for (var i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 30));
         for (final go in ['So it begins', 'Got it', 'So be it']) {
           if (find.text(go).hitTestable().evaluate().isNotEmpty) {
@@ -1428,68 +1427,69 @@ void main() {
   });
   }
 
-  for (final mouse in [false, true])
-  testWidgets('A courtier can be ${mouse ? 'clicked' : 'tapped'} anywhere on their token', (tester) async {
-    if (mouse) {
-      tester.view.physicalSize = const Size(2192, 1518);
-      tester.view.devicePixelRatio = 1.6;
-      addTearDown(tester.view.reset);
-    } else {
-      setPhoneSize(tester);
-    }
-    HomePageTestHooks.fast();
-    await tester.pumpWidget(const TheKingsCourtApp());
-    await tester.pumpAndSettle();
-    await openSetup(tester);
-    await tester.tap(find.text('Single player'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Free play'));
-    await tester.tap(find.text('Free play'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('3').last);
-    await tester.pumpAndSettle();
-    if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Start'));
-    for (int i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
-      await tester.pump(const Duration(milliseconds: 30));
-    }
-    // Each courtier's token: its middle, and near its edges.
-    final shapes = find.descendant(
-        of: find.byType(SeatToken), matching: find.byType(ShapedToken));
-    expect(shapes, findsWidgets);
-    final n = shapes.evaluate().length;
-    for (int k = 0; k < n; k++) {
-      final r = tester.getRect(shapes.at(k));
-      for (final at in [r.center, r.center + Offset(0, r.height * 0.3),
-          r.center - Offset(r.width * 0.3, 0)]) {
-        final hit = HitTestResult();
-        tester.binding.hitTestInView(hit, at, tester.view.viewId);
-        if (mouse) {
-          // Moved there first, as a mouse is.
-          final g = await tester.createGesture(kind: PointerDeviceKind.mouse);
-          await g.addPointer(location: at - const Offset(40, 40));
-          await g.moveTo(at);
-          await tester.pump(const Duration(milliseconds: 50));
-          await g.down(at);
-          await tester.pump(const Duration(milliseconds: 30));
-          await g.up();
-          await g.removePointer();
-        } else {
-          await tester.tapAt(at);
-        }
-        await tester.pump(const Duration(milliseconds: 50));
-        final opened = find.byType(Dialog).evaluate().isNotEmpty;
-        expect(opened, isTrue,
-            reason: 'token $k at $at (rect $r) opened nothing. Hit: '
-                '${hit.path.take(14).map((e) => e.target.runtimeType).join(' > ')}');
-        Navigator.of(tester.element(find.byType(Dialog))).pop();
-        await tester.pump(const Duration(milliseconds: 400));
+  for (final mouse in [false, true]) {
+    testWidgets('A courtier can be ${mouse ? 'clicked' : 'tapped'} anywhere on their token', (tester) async {
+      if (mouse) {
+        tester.view.physicalSize = const Size(2192, 1518);
+        tester.view.devicePixelRatio = 1.6;
+        addTearDown(tester.view.reset);
+      } else {
+        setPhoneSize(tester);
       }
-    }
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 2));
-  });
+      HomePageTestHooks.fast();
+      await tester.pumpWidget(const TheKingsCourtApp());
+      await tester.pumpAndSettle();
+      await openSetup(tester);
+      await tester.tap(find.text('Single player'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Free play'));
+      await tester.tap(find.text('Free play'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3').last);
+      await tester.pumpAndSettle();
+      if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      for (var i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      // Each courtier's token: its middle, and near its edges.
+      final shapes = find.descendant(
+          of: find.byType(SeatToken), matching: find.byType(ShapedToken));
+      expect(shapes, findsWidgets);
+      final n = shapes.evaluate().length;
+      for (var k = 0; k < n; k++) {
+        final r = tester.getRect(shapes.at(k));
+        for (final at in [r.center, r.center + Offset(0, r.height * 0.3),
+            r.center - Offset(r.width * 0.3, 0)]) {
+          final hit = HitTestResult();
+          tester.binding.hitTestInView(hit, at, tester.view.viewId);
+          if (mouse) {
+            // Moved there first, as a mouse is.
+            final g = await tester.createGesture(kind: PointerDeviceKind.mouse);
+            await g.addPointer(location: at - const Offset(40, 40));
+            await g.moveTo(at);
+            await tester.pump(const Duration(milliseconds: 50));
+            await g.down(at);
+            await tester.pump(const Duration(milliseconds: 30));
+            await g.up();
+            await g.removePointer();
+          } else {
+            await tester.tapAt(at);
+          }
+          await tester.pump(const Duration(milliseconds: 50));
+          final opened = find.byType(Dialog).evaluate().isNotEmpty;
+          expect(opened, isTrue,
+              reason: 'token $k at $at (rect $r) opened nothing. Hit: '
+                  '${hit.path.take(14).map((e) => e.target.runtimeType).join(' > ')}');
+          Navigator.of(tester.element(find.byType(Dialog))).pop();
+          await tester.pump(const Duration(milliseconds: 400));
+        }
+      }
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
 
   testWidgets('The tutorial plays through every lesson, following the coach',
       (tester) async {
@@ -1518,13 +1518,13 @@ void main() {
     // The table sits under the pages, so look past them for it.
     final state =
         tester.state<HomePageState>(find.byType(HomePage, skipOffstage: false));
-    for (int lesson = 0; lesson < lessons.length; lesson++) {
+    for (var lesson = 0; lesson < lessons.length; lesson++) {
       await readPages(lessons[lesson].pages, 'Play lesson ${lesson + 1}');
       final game = state.game;
       expect(game.isTutorial, isTrue);
       expect(game.lesson, lesson);
       expect(game.players.map((p) => p.name), tutorialCourtiers);
-      for (int i = 0;
+      for (var i = 0;
           i < 2000 && game.outcome == RoundOutcome.inProgress;
           i++) {
         await tester.pump(const Duration(milliseconds: 30));
@@ -1560,7 +1560,7 @@ void main() {
     g.pass(first);
     expect(g.pickTurn, isNot(first));
     // Picking goes round; when it comes back, no second pass.
-    for (int i = 0; i < 6 && g.pickTurn != null && g.pickTurn != first; i++) {
+    for (var i = 0; i < 6 && g.pickTurn != null && g.pickTurn != first; i++) {
       final seat = g.pickTurn!;
       final t = g.tasks.firstWhere(
           (t) => t.assignedPlayerIndex == null && g.canTake(t, seat),

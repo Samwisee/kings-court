@@ -77,7 +77,7 @@ class RoundView {
 
   /// The longest run of tricks in a row won by [seat].
   int longestRun(int seat) {
-    int best = 0, run = 0;
+    var best = 0, run = 0;
     for (final t in tricks) {
       run = t.winner == seat ? run + 1 : 0;
       if (run > best) best = run;
@@ -166,10 +166,6 @@ TaskRule winWithCourt(PlayingCard card) => (v, owner, _) {
       return _end(v, false);
     };
 
-/// Total of a trick's card values, or null if it has a Court Card.
-int? _total(Trick t) =>
-    t.cards.any(_court) ? null : t.cards.fold<int>(0, (a, c) => a + c.rank);
-
 /// "Don't win any of the first [n] tricks."
 TaskRule notFirst(int n) => (v, owner, _) {
       final early = v.tricks.take(n);
@@ -191,15 +187,6 @@ TaskRule exactTricks(int n) => (v, owner, _) {
       if (mine + (v.totalTricks - v.tricks.length) < n) return Verdict.failed;
       return _end(v, mine == n);
     };
-
-/// A trick where every plain card passes [test] and there are no Court
-/// Cards.
-bool _plainTrick(Trick t, bool Function(PlayingCard) test) =>
-    t.cards.every((c) => !c.isCourt && test(c));
-
-/// Totals for the "more than" and "less than" tasks, by player count.
-int _byCount(int players, List<int> values) =>
-    values[players <= 3 ? 0 : players - 3];
 
 // ---------------------------------------------------------------- the rules
 
@@ -260,13 +247,13 @@ final Map<String, TaskRule> taskRules = {
       ? Verdict.done
       : _end(v, false),
   'Win the trick right after the King wins one': (v, o, _) {
-    for (int i = 1; i < v.tricks.length; i++) {
+    for (var i = 1; i < v.tricks.length; i++) {
       if (v.tricks[i - 1].winner == v.king && v.tricks[i].winner == o) return Verdict.done;
     }
     return _end(v, false);
   },
   'Win the trick after the Queen is played': (v, o, _) {
-    for (int i = 0; i < v.tricks.length; i++) {
+    for (var i = 0; i < v.tricks.length; i++) {
       if (!v.tricks[i].cards.contains(PlayingCard.queen)) continue;
       if (i + 1 >= v.totalTricks) return Verdict.failed;
       if (i + 1 < v.tricks.length) {
@@ -381,7 +368,7 @@ final Map<String, TaskRule> taskRules = {
   },
   "Don't win a trick before you've shown a card": (v, o, _) {
     final at = v.shownAt[o];
-    for (int i = 0; i < v.tricks.length; i++) {
+    for (var i = 0; i < v.tricks.length; i++) {
       if (at != null && i >= at) return Verdict.done;
       if (v.tricks[i].winner == o) return Verdict.failed;
     }
@@ -394,7 +381,7 @@ final Map<String, TaskRule> taskRules = {
     return _end(v, false);
   },
   'Win the trick before the King card is played': (v, o, _) {
-    for (int i = 0; i < v.tricks.length; i++) {
+    for (var i = 0; i < v.tricks.length; i++) {
       if (!v.tricks[i].cards.contains(PlayingCard.king)) continue;
       if (i == 0) return Verdict.failed;
       return v.tricks[i - 1].winner == o ? Verdict.done : Verdict.failed;
@@ -420,7 +407,7 @@ final Map<String, TaskRule> taskRules = {
     return !led.isCourt && t.cards.every((c) => c.suit == led.suit);
   }),
   'Win two tricks in a row led with the same suit': (v, o, _) {
-    for (int i = 1; i < v.tricks.length; i++) {
+    for (var i = 1; i < v.tricks.length; i++) {
       final a = v.tricks[i - 1], b = v.tricks[i];
       if (a.winner == o && b.winner == o && a.cards.first.suit == b.cards.first.suit) {
         return Verdict.done;
@@ -436,7 +423,7 @@ final Map<String, TaskRule> taskRules = {
     return suits.length >= 3 ? Verdict.done : _end(v, false);
   },
   'Win the trick right after you lose one with a Court Card': (v, o, _) {
-    for (int i = 0; i + 1 < v.tricks.length; i++) {
+    for (var i = 0; i + 1 < v.tricks.length; i++) {
       final t = v.tricks[i];
       final at = t.seats.indexOf(o);
       if (at < 0 || !t.cards[at].isCourt || t.winner == o) continue;
@@ -609,7 +596,7 @@ bool needsX(String description) => description.startsWith('Win exactly X');
 /// all dealt, and its redeal condition (if any) doesn't apply.
 bool playableWith(String description, List<List<PlayingCard>> hands,
     Set<PlayingCard> inPlay) {
-  for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(description)) {
+  for (final m in RegExp('([A2-9])([♥♦♠♣])').allMatches(description)) {
     final card = PlayingCard.parse(m.group(0)!);
     if (card != null && !inPlay.contains(card)) return false;
   }
@@ -668,7 +655,7 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
 
   // Named cards: how many of them are won.
   final named = [
-    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+    for (final m in RegExp('([A2-9])([♥♦♠♣])').allMatches(d))
       PlayingCard.parse(m.group(0)!)!
   ];
   if (d.startsWith('Win the ') &&

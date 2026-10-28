@@ -65,7 +65,7 @@ class _TrackerPainter extends CustomPainter {
       ..color = color;
     final fill = Paint()..color = color;
     const filled = [true, true, false, true, false, false];
-    for (int i = 0; i < 6; i++) {
+    for (var i = 0; i < 6; i++) {
       final r = RRect.fromRectAndRadius(
           Rect.fromLTWH(left + (i % 3) * (w + gap), top + (i ~/ 3) * (h + gap), w, h),
           Radius.circular(s * 0.05));

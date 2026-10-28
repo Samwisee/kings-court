@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       configs:
-        description: 'Bots to compare (see tool/bench/bot_strength_test.dart)'
+        description: 'Bots to compare (see test/tool/bot_strength_test.dart)'
         default: 'seeing:b900,fair:s8:b900,fair:s4:b900,fair:s8:b1800'
       rounds:
         description: 'Rounds per table'
@@ -33,7 +33,7 @@ jobs:
           STRENGTH_CONFIGS: ${{ github.event.inputs.configs }}
           STRENGTH_ROUNDS: ${{ github.event.inputs.rounds }}
         run: |
-          timeout 5000 flutter test tool/bench/bot_strength_test.dart --timeout none --reporter expanded > strength.raw 2>&1 || true
+          timeout 5000 flutter test test/tool/bot_strength_test.dart --timeout none --reporter expanded > strength.raw 2>&1 || true
           { echo "STRENGTH $(date -u +%FT%TZ) ${GITHUB_SHA::8} configs=$STRENGTH_CONFIGS rounds=$STRENGTH_ROUNDS"; grep -E '^BENCH|\[E\]|Error' strength.raw | sed 's/^BENCH //'; } > strength.txt
           cat strength.txt
       - name: Publish to the bench branch

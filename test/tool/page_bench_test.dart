@@ -1,6 +1,7 @@
 /// How long the page takes to rebuild in the middle of an on-screen round,
 /// where every change (a card played, a bot's turn, a drag) rebuilds the
 /// whole page. Printed as BENCH lines, published with the screenshots.
+@Tags(['tool'])
 library;
 
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ void main() {
     if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start'));
-    for (int i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
+    for (var i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
     final state = tester.state<HomePageState>(find.byType(HomePage));
@@ -39,19 +40,20 @@ void main() {
       change();
       await tester.pump();
       final sw = Stopwatch()..start();
-      for (int i = 0; i < times; i++) {
+      for (var i = 0; i < times; i++) {
         change();
         await tester.pump();
       }
       sw.stop();
       final ms = sw.elapsedMicroseconds / times / 1000;
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       print('BENCH $what: ${ms.toStringAsFixed(1)} ms a frame');
       return ms;
     }
 
     // Warm up first, so the first number isn't the slowest for being first.
-    for (int i = 0; i < 20; i++) {
+    for (var i = 0; i < 20; i++) {
       state.setState(() {});
       await tester.pump();
     }
@@ -67,7 +69,7 @@ void main() {
       final binding = tester.binding;
       double build = 0, layout = 0, paint = 0;
       const n = 20;
-      for (int i = 0; i < n; i++) {
+      for (var i = 0; i < n; i++) {
         state.debugUi(() {});
         final sw = Stopwatch()..start();
         binding.buildOwner!.buildScope(binding.rootElement!);
@@ -81,6 +83,7 @@ void main() {
         paint += sw.elapsedMicroseconds;
         await tester.pump();
       }
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       print('BENCH $what: build ${(build / n / 1000).toStringAsFixed(1)} ms, '
           'layout ${(layout / n / 1000).toStringAsFixed(1)} ms, '
@@ -94,6 +97,7 @@ void main() {
       state.debugUi(() {});
       await tester.pump();
       final without = await time('  without the $part', () => state.debugUi(() {}));
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       print('BENCH  so the $part costs about ${(whole - without).toStringAsFixed(1)} ms');
       await phases('  without the $part');
@@ -101,11 +105,12 @@ void main() {
     HomePageTestHooks.skip = {};
     // What a change to the game does besides the rebuild.
     final work = <String, double>{};
-    for (int i = 0; i < 20; i++) {
+    for (var i = 0; i < 20; i++) {
       final w = state.debugGameWork();
       w.forEach((k, v) => work[k] = (work[k] ?? 0) + v / 20);
     }
     work.forEach((k, v) {
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       print('BENCH  after a change, $k: ${v.toStringAsFixed(2)} ms');
     });

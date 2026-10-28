@@ -156,7 +156,7 @@ bool clash(String a, String b) {
   if (p.tricks.intersection(q.tricks).isNotEmpty) return true;
   if (p.mostTricks && q.mostTricks) return true;
   // Not enough of a rank, a suit or Court Cards to go round.
-  for (int r = 1; r <= 9; r++) {
+  for (var r = 1; r <= 9; r++) {
     int need(TaskProfile t) => [
           t.ranks[r] ?? 0,
           t.cards.where((c) => !c.isCourt && c.rank == r).length,

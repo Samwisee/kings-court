@@ -78,7 +78,7 @@ class Task {
   /// The full wording for the close-up, less "with no Court Cards", which
   /// its icon says.
   String fullText(int playerCount) =>
-      cardText(playerCount).replaceAll(RegExp(r',? with no Court Cards'), '').trim();
+      cardText(playerCount).replaceAll(RegExp(',? with no Court Cards'), '').trim();
 
   /// The task as short as it can go, for the card on the table: the same
   /// meaning in fewer words, with Court Cards as a crown (\uE001) and "with no
@@ -97,7 +97,7 @@ class Task {
 
   static final List<(Pattern, String)> _shorter = [
     // Shown as an icon beside the points instead.
-    (RegExp(r',? with no Court Cards'), ''),
+    (RegExp(',? with no Court Cards'), ''),
     ('Win more tricks than anyone else', 'Win the most tricks'),
     ('Win fewer tricks than anyone else', 'Win the fewest tricks'),
     ('than the rest of the court put together', 'than everyone else combined'),
@@ -133,7 +133,7 @@ class Task {
     ('at least one card of each suit', 'a card of every suit'),
     (RegExp(r'([♥♦♠♣]) cards?\b'), r'$1'),
     ('Win no Court Cards', 'Win no \uE001'),
-    (RegExp(r'Court Cards?'), '\uE001'),
+    (RegExp('Court Cards?'), '\uE001'),
   ];
 
   /// The bracketed conditions, as sentences, for the close-up view.

@@ -34,7 +34,7 @@ void main() {
     final picker = g.pickTurn!;
     final d = await botDecision(g, c, bot, you: picker == 0 ? 1 : 0);
     expect(d, isA<BotPicks>());
-    final pick = d as BotPicks;
+    final pick = d! as BotPicks;
     expect(pick.seat, picker);
     expect(g.canTake(g.tasks[pick.task], picker), isTrue);
     // With you to pick, nothing happens.

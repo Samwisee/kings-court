@@ -10,6 +10,7 @@
 /// shows a card all round, to see what showing is worth). STRENGTH_ROUNDS is
 /// the rounds per table. Printed as BENCH lines; the Screenshots workflow
 /// runs a short version, the Strength workflow a long one.
+@Tags(['tool'])
 library;
 
 import 'dart:io';
@@ -49,7 +50,7 @@ void main() {
         // The same deals for every bot: the seed fixes the tasks and cards.
         var wins = 0;
         final sw = Stopwatch()..start();
-        for (int i = 0; i < rounds; i++) {
+        for (var i = 0; i < rounds; i++) {
           final rand = Random(1000 + i);
           final bot = botFor(config, Random(7));
           // At some fair plays made after a card was shown: the same
@@ -82,8 +83,10 @@ void main() {
               '${(noise * 100 / afterShow).round()}% change on rethinking');
         }
       }
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       print('BENCH $line');
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       if (shown.isNotEmpty) print('BENCH   shown cards:$shown');
     }

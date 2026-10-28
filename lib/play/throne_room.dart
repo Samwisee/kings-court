@@ -575,7 +575,7 @@ class _HallPainter extends CustomPainter {
     canvas.drawPath(carpet, trim);
     // Banners down the walls.
     for (final x in [0.06, 0.94]) {
-      for (int i = 0; i < 2; i++) {
+      for (var i = 0; i < 2; i++) {
         final bx = w * x, by = h * (0.12 + i * 0.22);
         final banner = Path()
           ..moveTo(bx - 12, by)

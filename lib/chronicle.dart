@@ -109,7 +109,7 @@ class ChronicleProgress {
 
   /// The first chapter not yet beaten (or the last chapter when all are).
   int get nextChapter {
-    for (int i = 0; i < chronicle.length; i++) {
+    for (var i = 0; i < chronicle.length; i++) {
       if (!crowns.containsKey(i)) return i;
     }
     return chronicle.length - 1;

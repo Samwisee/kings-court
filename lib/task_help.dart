@@ -56,14 +56,14 @@ List<String> termsIn(String d) {
     words.add('Win a trick');
   }
   if (lower.contains('lead')) words.add('Lead');
-  if (RegExp(r'[♥♦♠♣]|suit').hasMatch(d)) words.add('Suit');
+  if (RegExp('[♥♦♠♣]|suit').hasMatch(d)) words.add('Suit');
   if (lower.contains('court card') ||
       lower.contains('queen') ||
       lower.contains('joker') ||
       lower.contains('jack')) {
     words.add('Court Cards');
   }
-  if (lower.contains('ace') || RegExp(r'A[♥♦♠♣]').hasMatch(d)) words.add('Ace');
+  if (lower.contains('ace') || RegExp('A[♥♦♠♣]').hasMatch(d)) words.add('Ace');
   if (d.contains('the King')) words.add('The King');
   if (lower.contains('show')) words.add('Show a card');
   if (lower.contains('in a row')) words.add('In a row');
@@ -81,8 +81,6 @@ const _numbers = {
   'seven': 7,
 };
 
-String _rankName(String r) => r == 'A' ? 'Ace' : r;
-
 /// What [d] asks for, in plain words, with anything easy to miss spelled
 /// out. Every task in the game has an explanation.
 String explainTask(String d) {
@@ -90,7 +88,7 @@ String explainTask(String d) {
   if (special != null) return special;
 
   // "Win the 3♥", "Win the 4♥ and the 9♠", "Win the 7♣, 8♣ and 9♣".
-  final named = RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d).toList();
+  final named = RegExp('([A2-9])([♥♦♠♣])').allMatches(d).toList();
   if (d.startsWith('Win the ') &&
       named.isNotEmpty &&
       !d.contains(' with ') &&
@@ -356,7 +354,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
 
   String playedOf(bool Function(PlayingCard) test) {
     final out = <String>[];
-    for (int i = 0; i < v.tricks.length; i++) {
+    for (var i = 0; i < v.tricks.length; i++) {
       for (final c in v.tricks[i].cards) {
         if (test(c)) out.add('${c.label} (trick ${i + 1})');
       }
@@ -367,7 +365,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
   bool rank(PlayingCard c, int r) => !c.isCourt && c.rank == r;
 
   final named = [
-    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+    for (final m in RegExp('([A2-9])([♥♦♠♣])').allMatches(d))
       PlayingCard.parse(m.group(0)!)!
   ];
   if (named.isNotEmpty && d.startsWith('Win the ') && !d.contains('last trick')) {
@@ -398,7 +396,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
   if (d == 'Win the Queen') {
     return 'The Queen hasn’t been played yet. Only the King card beats her. $toGo.';
   }
-  final courtOnly = RegExp(r'^Win the (Joker|Jack) and no other').firstMatch(d);
+  final courtOnly = RegExp('^Win the (Joker|Jack) and no other').firstMatch(d);
   if (courtOnly != null) {
     final name = courtOnly.group(1)!;
     final card = name == 'Joker' ? PlayingCard.joker : PlayingCard.jack;
@@ -445,7 +443,7 @@ String taskStatus(String d, RoundView v, int owner, int? x,
   if (progress != null) {
     return '${_describeProgress(d, progress, won, me)} $toGo.';
   }
-  if (RegExp(r'^Win (the|only the) first').hasMatch(d)) {
+  if (RegExp('^Win (the|only the) first').hasMatch(d)) {
     return played == 0
         ? 'Decided by the first trick, which the King leads.'
         : '$toGo.';
@@ -482,14 +480,14 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
   final me = who(owner);
   final over = v.over;
   int? trickOf(PlayingCard c) {
-    for (int i = 0; i < v.tricks.length; i++) {
+    for (var i = 0; i < v.tricks.length; i++) {
       if (v.tricks[i].cards.contains(c)) return i;
     }
     return null;
   }
 
   final named = [
-    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+    for (final m in RegExp('([A2-9])([♥♦♠♣])').allMatches(d))
       PlayingCard.parse(m.group(0)!)!
   ];
   // A named card went the wrong way.
@@ -509,8 +507,8 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
       }
     }
   }
-  if (RegExp(r"^(Don't win any|Win no)").hasMatch(d) && !d.contains('trick')) {
-    for (int i = 0; i < v.tricks.length; i++) {
+  if (RegExp("^(Don't win any|Win no)").hasMatch(d) && !d.contains('trick')) {
+    for (var i = 0; i < v.tricks.length; i++) {
       final t = v.tricks[i];
       if (t.winner != owner) continue;
       final rule = taskRules[d];
@@ -528,14 +526,14 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
   }
   if (d == 'Never win two tricks in a row') {
     final mine = v.wonIndexes(owner);
-    for (int k = 1; k < mine.length; k++) {
+    for (var k = 1; k < mine.length; k++) {
       if (mine[k] == mine[k - 1] + 1) {
         return '$me won tricks ${mine[k - 1] + 1} and ${mine[k] + 1}, one after the other.';
       }
     }
   }
   if (d.startsWith("Don't lead")) {
-    for (int i = 0; i < v.tricks.length; i++) {
+    for (var i = 0; i < v.tricks.length; i++) {
       final t = v.tricks[i];
       if (t.leader == owner) {
         if (taskRules[d]!(v.upTo(i + 1), owner, x) == Verdict.failed) {
@@ -544,8 +542,8 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
       }
     }
   }
-  if (RegExp(r'^Win the first|^Win only the first').hasMatch(d) && v.tricks.isNotEmpty) {
-    for (int i = 0; i < v.tricks.length; i++) {
+  if (RegExp('^Win the first|^Win only the first').hasMatch(d) && v.tricks.isNotEmpty) {
+    for (var i = 0; i < v.tricks.length; i++) {
       if (v.tricks[i].winner != owner) {
         return '${who(v.tricks[i].winner)} won trick ${i + 1}.';
       }
@@ -606,7 +604,7 @@ List<PlayingCard> relevantCards(String d) {
 
   final deck = fullDeck();
   add([
-    for (final m in RegExp(r'([A2-9])([♥♦♠♣])').allMatches(d))
+    for (final m in RegExp('([A2-9])([♥♦♠♣])').allMatches(d))
       PlayingCard.parse(m.group(0)!)!
   ]);
   final lower = d.toLowerCase();
@@ -629,11 +627,11 @@ List<PlayingCard> relevantCards(String d) {
     }
   }
   // Suits it counts: "five ♥ cards", "no ♥ cards", "any ♦ or ♣ cards".
-  if (RegExp(r'[♥♦♠♣] (or [♥♦♠♣] )?cards?').hasMatch(d) &&
+  if (RegExp('[♥♦♠♣] (or [♥♦♠♣] )?cards?').hasMatch(d) &&
       !d.startsWith("Don't lead") &&
       !d.contains('as many')) {
     final suits = {
-      for (final m in RegExp(r'([♥♦♠♣])(?! *[A2-9])').allMatches(d)) m.group(1)!
+      for (final m in RegExp('([♥♦♠♣])(?! *[A2-9])').allMatches(d)) m.group(1)!
     };
     add([for (final c in deck) if (suits.contains(c.suit.symbol)) c]);
   }

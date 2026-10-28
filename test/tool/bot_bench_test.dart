@@ -1,19 +1,19 @@
 /// How fast the bots think. Not a test of anything: it prints timings,
 /// which CI publishes to the `shots` branch as bench.txt (see
 /// .github/workflows/shots.yml). Run it by hand with
-/// `flutter test tool/bench/bot_bench_test.dart`.
+/// `flutter test test/tool/bot_bench_test.dart`.
 ///
 /// It plays the same seeded rounds every time, so one run compares with
 /// the last: playouts a second (the engine's speed), and how much longer
 /// the slice-at-a-time version takes than thinking straight through (the
 /// time given back to the screen, which should be small).
+@Tags(['tool'])
 library;
 
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
-import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/match.dart';
 
 void main() {
@@ -21,6 +21,7 @@ void main() {
     final out = StringBuffer();
     void say(String s) {
       out.writeln(s);
+      // The timings are the output: printed, for CI to collect.
       // ignore: avoid_print
       print('BENCH $s');
     }
@@ -36,7 +37,7 @@ void main() {
           final i = List.generate(s.tasks.length, (t) => t).firstWhere((t) => s.canTake(t, seat));
           s.apply(PickTask(seat, i));
         }
-        for (int i = 0; i < s.tasks.length; i++) {
+        for (var i = 0; i < s.tasks.length; i++) {
           if (s.tasks[i].x == null && s.phase == Phase.announcing) s.apply(Announce(s.tasks[i].owner!, i, 2));
         }
       }
@@ -49,7 +50,9 @@ void main() {
 
       // Straight through.
       final sw = Stopwatch()..start();
-      for (int i = 0; i < 3; i++) bot.choosePlay(s, s.turn);
+      for (var i = 0; i < 3; i++) {
+        bot.choosePlay(s, s.turn);
+      }
       sw.stop();
       final syncMs = sw.elapsedMilliseconds / 3;
 
@@ -57,7 +60,9 @@ void main() {
       sw
         ..reset()
         ..start();
-      for (int i = 0; i < 3; i++) await bot.choosePlayAsync(s, s.turn);
+      for (var i = 0; i < 3; i++) {
+        await bot.choosePlayAsync(s, s.turn);
+      }
       sw.stop();
       final asyncMs = sw.elapsedMilliseconds / 3;
 

@@ -156,8 +156,8 @@ List<PlayingCard> legalPlays(List<PlayingCard> hand, PlayingCard? led) {
 /// Which play wins: the highest Court Card if any was played, otherwise
 /// the highest card of the suit led. Returns an index into [cards].
 int winningPlay(List<PlayingCard> cards) {
-  int best = 0;
-  for (int i = 1; i < cards.length; i++) {
+  var best = 0;
+  for (var i = 1; i < cards.length; i++) {
     final c = cards[i], b = cards[best];
     if (c.isCourt && (!b.isCourt || c.rank > b.rank)) {
       best = i;

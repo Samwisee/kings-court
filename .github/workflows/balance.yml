@@ -10,7 +10,8 @@ on:
       - 'lib/tasks.dart'
       - 'lib/models.dart'
       - 'lib/engine/**'
-      - 'tool/balance/**'
+      - 'test/tool/balance_test.dart'
+      - 'test/tool/play_round.dart'
   workflow_dispatch:
     inputs:
       seconds:
@@ -40,7 +41,7 @@ jobs:
         env:
           BALANCE_SECONDS: ${{ github.event.inputs.seconds || '900' }}
         run: |
-          timeout 2100 flutter test tool/balance/balance_test.dart --timeout none --reporter expanded > balance.txt 2>&1 || true
+          timeout 2100 flutter test test/tool/balance_test.dart --timeout none --reporter expanded > balance.txt 2>&1 || true
           tail -20 balance.txt
           python3 tool/ci_annotate.py balance.txt || true
       - name: Publish to the balance branch
@@ -50,7 +51,7 @@ jobs:
           mkdir -p /tmp/old /tmp/out
           # Keep the earlier reports, then publish a fresh branch with them.
           git clone -q --depth 1 --branch balance "$url" /tmp/old 2>/dev/null && cp /tmp/old/*.txt /tmp/out/ 2>/dev/null || true
-          if [ -f tool/balance/out/report.txt ]; then cp tool/balance/out/report.txt /tmp/out/latest.txt; else cp balance.txt /tmp/out/latest.txt; fi
+          if [ -f test/tool/out/report.txt ]; then cp test/tool/out/report.txt /tmp/out/latest.txt; else cp balance.txt /tmp/out/latest.txt; fi
           cp /tmp/out/latest.txt /tmp/out/report-$v.txt
           cd /tmp/out
           git init -q -b balance

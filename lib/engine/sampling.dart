@@ -38,7 +38,7 @@ List<List<PlayingCard>> sampleHands(
   final mustAside = max(0, unseen.length - totalRoom);
   int holders(PlayingCard c) =>
       guesses.where((g) => g.possible.contains(c)).length;
-  for (int attempt = 0; attempt < 12; attempt++) {
+  for (var attempt = 0; attempt < 12; attempt++) {
     final room = {for (final g in guesses) g.seat: g.size};
     final dealt = {for (final g in guesses) g.seat: <PlayingCard>[]};
     final left = <PlayingCard>{...unseen};
@@ -95,7 +95,7 @@ List<List<PlayingCard>> sampleHands(
       if (left.remove(c)) hand.add(c);
     }
     while (hand.length < g.size && left.isNotEmpty) {
-      final i = left.indexWhere((c) => g.possible.contains(c));
+      final i = left.indexWhere(g.possible.contains);
       hand.add(left.removeAt(i < 0 ? 0 : i));
     }
     hands[g.seat] = hand..sort();

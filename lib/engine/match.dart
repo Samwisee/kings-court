@@ -10,11 +10,11 @@ library;
 
 import 'dart:math';
 
-import 'task.dart';
+import '../tasks.dart';
 import 'cards.dart';
 import 'deal_mix.dart';
-import '../tasks.dart';
 import 'rules.dart';
+import 'task.dart';
 
 enum Phase { picking, announcing, playing, roundOver }
 
@@ -220,7 +220,7 @@ class MatchState {
         points: (t) => t.getPointsForPlayerCount(players),
         target: target);
     final drawn = <MatchTask>[];
-    int total = 0;
+    var total = 0;
     for (final t in pool) {
       if (total >= target) break;
       final points = t.getPointsForPlayerCount(players);
@@ -246,7 +246,7 @@ class MatchState {
       bool Function(List<List<PlayingCard>> hands, Set<PlayingCard> inPlay)?
           accept}) {
     this.dealId = dealId;
-    for (int attempt = 0; attempt < 80; attempt++) {
+    for (var attempt = 0; attempt < 80; attempt++) {
       final d = deal(players, rand);
       hands = d.hands;
       setAside = d.setAside;
@@ -376,14 +376,13 @@ class MatchState {
         _check();
         return trick;
     }
-    return null;
   }
 
   /// Who picks after [seat]: clockwise, skipping anyone with nothing they
   /// may take.
   int _nextPicker(int seat) {
     var next = seat;
-    for (int i = 0; i < players; i++) {
+    for (var i = 0; i < players; i++) {
       next = (next + 1) % players;
       if (List.generate(tasks.length, (t) => t).any((t) => canTake(t, next))) {
         break;
@@ -448,7 +447,7 @@ class MatchState {
     final byDescription = {
       for (final t in allTasks) t.description: t
     };
-    List<PlayingCard> cards(List l) =>
+    List<PlayingCard> cards(List<dynamic> l) =>
         [for (final c in l) PlayingCard.fromId(c as int)];
     return MatchState(players: j['players'] as int, target: j['target'] as int)
       ..round = j['round'] as int
@@ -459,8 +458,10 @@ class MatchState {
       ..setAside = cards(j['setAside'] as List)
       ..king = j['king'] as int
       ..tasks = [
-        for (final t in j['tasks'] as List)
-          MatchTask(byDescription[renamedTasks[t['d']] ?? t['d']]!.freshCopy(),
+        for (final t in (j['tasks'] as List<dynamic>).cast<Map<String, dynamic>>())
+          MatchTask(
+              byDescription[renamedTasks[t['d'] as String] ?? t['d'] as String]!
+                  .freshCopy(),
               owner: t['owner'] as int?,
               x: t['x'] as int?,
               verdict: Verdict.values[t['verdict'] as int])

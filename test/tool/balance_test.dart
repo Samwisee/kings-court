@@ -5,17 +5,17 @@
 // for people too (BALANCE_OMNISCIENT=1 gives all-seeing bots, the old
 // best-case numbers).
 //
-// Run with: flutter test tool/balance/balance_test.dart
+// Run with: flutter test test/tool/balance_test.dart
 // BALANCE_SECONDS sets how long to play for (default 60).
+@Tags(['tool'])
+library;
+
 import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
-import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/deal_mix.dart';
-import 'package:kings_court/engine/match.dart';
-import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
 
 import 'play_round.dart';
@@ -78,8 +78,8 @@ void main() {
       for (final d in tasks) {
         byTask.putIfAbsent(d, _Tally.new).add(won);
       }
-      for (int i = 0; i < tasks.length; i++) {
-        for (int j = i + 1; j < tasks.length; j++) {
+      for (var i = 0; i < tasks.length; i++) {
+        for (var j = i + 1; j < tasks.length; j++) {
           final k = ([tasks[i], tasks[j]]..sort()).join('  +  ');
           byPair.putIfAbsent(k, _Tally.new).add(won);
         }
@@ -187,8 +187,9 @@ void main() {
     for (final e in pairs.take(25)) {
       out.writeln('${e.value.pct}  ${'${e.value.rounds}'.padLeft(3)}  ${e.key}');
     }
-    final dir = Directory('tool/balance/out')..createSync(recursive: true);
+    final dir = Directory('test/tool/out')..createSync(recursive: true);
     File('${dir.path}/report.txt').writeAsStringSync(out.toString());
+    // The timings are the output: printed, for CI to collect.
     // ignore: avoid_print
     print(out);
   }, timeout: const Timeout(Duration(minutes: 40)));

@@ -39,7 +39,7 @@ jobs:
         if: success() || failure()
         run: |
           set +e
-          timeout 900 flutter test --timeout 60s --reporter expanded > out/test.txt 2>&1
+          timeout 900 flutter test --exclude-tags tool --timeout 60s --reporter expanded > out/test.txt 2>&1
           code=$?
           tail -5 out/test.txt | tee -a out/summary.txt
           if [ $code -ne 0 ]; then python3 tool/ci_annotate.py out/test.txt; fi
@@ -70,10 +70,10 @@ jobs:
       - name: Take screenshots
         run: |
           mkdir -p out
-          timeout 900 flutter test tool/shots/shots_test.dart --update-goldens --reporter expanded > out/shots.txt 2>&1 || true
+          timeout 900 flutter test test/tool/shots_test.dart --update-goldens --reporter expanded > out/shots.txt 2>&1 || true
           tail -5 out/shots.txt
           python3 tool/ci_annotate.py out/shots.txt || true
-          cp tool/shots/goldens/*.png out/ 2>/dev/null || true
+          cp test/tool/goldens/*.png out/ 2>/dev/null || true
       - name: Compare with the baseline
         id: compare
         run: |
@@ -84,7 +84,7 @@ jobs:
             echo "no baseline branch" > out/compare.txt
           fi
           set +e
-          python3 tool/shots/compare.py /tmp/baseline tool/shots/goldens tool/shots/expected_changes.txt out >> out/compare.txt
+          python3 tool/shots/compare.py /tmp/baseline test/tool/goldens tool/shots/expected_changes.txt out >> out/compare.txt
           echo "code=$?" >> "$GITHUB_OUTPUT"
           grep -v '^same' out/compare.txt | head -80
       - name: Publish to shots-${{ github.ref_name }}
@@ -118,9 +118,9 @@ jobs:
           mkdir -p out
           bench() {
             echo "== $1: the page, mid-round (phone size) ==" >> out/bench-compare.txt
-            (cd $2 && timeout 300 flutter test tool/bench/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
+            (cd $2 && timeout 300 flutter test test/tool/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
             echo "== $1: bots, on the Dart VM ==" >> out/bench-compare.txt
-            (cd $2 && timeout 300 flutter test tool/bench/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
+            (cd $2 && timeout 300 flutter test test/tool/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
           }
           for round in 1 2; do
             bench "main (run $round)" base

@@ -16,9 +16,9 @@ final Map<String, List<Path>> suitPaths = {
     Path()..moveTo(50, 2)..cubicTo(62, 20, 98, 38, 98, 62)..cubicTo(98, 78, 86, 87, 73, 87)..cubicTo(64, 87, 57, 83, 54, 77)..cubicTo(55, 86, 60, 93, 69, 98)..lineTo(31, 98)..cubicTo(40, 93, 45, 86, 46, 77)..cubicTo(43, 83, 36, 87, 27, 87)..cubicTo(14, 87, 2, 78, 2, 62)..cubicTo(2, 38, 38, 20, 50, 2)..close(),
   ],
   'clubs': [
-    Path()..moveTo(28.5, 27)..arcToPoint(Offset(71.5, 27), radius: Radius.elliptical(21.5, 21.5), rotation: 0, largeArc: true, clockwise: false)..arcToPoint(Offset(28.5, 27), radius: Radius.elliptical(21.5, 21.5), rotation: 0, largeArc: true, clockwise: false),
-    Path()..moveTo(4, 59)..arcToPoint(Offset(47, 59), radius: Radius.elliptical(21.5, 21.5), rotation: 0, largeArc: true, clockwise: false)..arcToPoint(Offset(4, 59), radius: Radius.elliptical(21.5, 21.5), rotation: 0, largeArc: true, clockwise: false),
-    Path()..moveTo(53, 59)..arcToPoint(Offset(96, 59), radius: Radius.elliptical(21.5, 21.5), rotation: 0, largeArc: true, clockwise: false)..arcToPoint(Offset(53, 59), radius: Radius.elliptical(21.5, 21.5), rotation: 0, largeArc: true, clockwise: false),
+    Path()..moveTo(28.5, 27)..arcToPoint(Offset(71.5, 27), radius: Radius.elliptical(21.5, 21.5), largeArc: true, clockwise: false)..arcToPoint(Offset(28.5, 27), radius: Radius.elliptical(21.5, 21.5), largeArc: true, clockwise: false),
+    Path()..moveTo(4, 59)..arcToPoint(Offset(47, 59), radius: Radius.elliptical(21.5, 21.5), largeArc: true, clockwise: false)..arcToPoint(Offset(4, 59), radius: Radius.elliptical(21.5, 21.5), largeArc: true, clockwise: false),
+    Path()..moveTo(53, 59)..arcToPoint(Offset(96, 59), radius: Radius.elliptical(21.5, 21.5), largeArc: true, clockwise: false)..arcToPoint(Offset(53, 59), radius: Radius.elliptical(21.5, 21.5), largeArc: true, clockwise: false),
     Path()..moveTo(37, 36)..lineTo(63, 36)..lineTo(69, 66)..lineTo(31, 66)..close(),
     Path()..moveTo(50, 52)..cubicTo(52, 74, 58, 90, 71, 98)..lineTo(29, 98)..cubicTo(42, 90, 48, 74, 50, 52)..close(),
   ],

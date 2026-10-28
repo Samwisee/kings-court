@@ -196,7 +196,7 @@ class _KeyCap extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [Palette.goldLight, Palette.gold]),
           borderRadius: BorderRadius.circular(size * 0.22),
-          border: Border.all(color: Palette.goldRim, width: 1),
+          border: Border.all(color: Palette.goldRim),
           boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 1.5))],
         ),
         child: Text(label,

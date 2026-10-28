@@ -26,19 +26,19 @@ class SuitText extends StatelessWidget {
 
   /// The game words found in text, and the glossary entry each opens.
   static const _terms = <(String, String)>[
-    (r'follow(?:ing|s)? suit', 'Follow suit'),
-    (r'court cards?', 'Court Cards'),
-    (r'tricks?', 'Trick'),
-    (r'lead|leads|led|leading', 'Lead'),
-    (r'suits?', 'Suit'),
-    (r'aces?', 'Ace'),
-    (r'the king', 'The King'),
-    (r'in a row', 'In a row'),
-    (r'total|totalling', 'Total'),
-    (r'pass|passes', 'Pass'),
-    (r'show(?:s|ing)? (?:a|one) card', 'Show a card'),
-    (r'(?:wax )?seals?', 'Seal'),
-    (r'(?:royal )?decrees?', 'Royal decree'),
+    ('follow(?:ing|s)? suit', 'Follow suit'),
+    ('court cards?', 'Court Cards'),
+    ('tricks?', 'Trick'),
+    ('lead|leads|led|leading', 'Lead'),
+    ('suits?', 'Suit'),
+    ('aces?', 'Ace'),
+    ('the king', 'The King'),
+    ('in a row', 'In a row'),
+    ('total|totalling', 'Total'),
+    ('pass|passes', 'Pass'),
+    ('show(?:s|ing)? (?:a|one) card', 'Show a card'),
+    ('(?:wax )?seals?', 'Seal'),
+    ('(?:royal )?decrees?', 'Royal decree'),
   ];
   static final _termPattern = RegExp(
       [for (final (i, (p, _)) in _terms.indexed) '(?<k$i>\\b(?:$p)\\b)'].join('|'),
@@ -75,7 +75,7 @@ class SuitText extends StatelessWidget {
           decoration: BoxDecoration(
             color: Palette.card,
             borderRadius: BorderRadius.circular(fs * 0.22),
-            border: Border.all(color: outlineColour, width: 1),
+            border: Border.all(color: outlineColour),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (rank != null)
@@ -144,7 +144,7 @@ class SuitText extends StatelessWidget {
       var at = 0;
       for (final m in _termPattern.allMatches(part)) {
         var term = '';
-        for (int i = 0; i < _terms.length; i++) {
+        for (var i = 0; i < _terms.length; i++) {
           if (m.namedGroup('k$i') != null) term = _terms[i].$2;
         }
         if (!seen.add(term)) continue;

@@ -58,7 +58,7 @@ class _TablePainter extends CustomPainter {
     canvas.save();
     canvas.clipRRect(felt);
     const steps = 7;
-    for (int i = 0; i < steps; i++) {
+    for (var i = 0; i < steps; i++) {
       // Darkest at the edge, fading inwards over about 9px.
       final alpha = (0x3A * (1 - i / steps) * (1 - i / steps)).round();
       canvas.drawRRect(
@@ -101,8 +101,8 @@ class SparkBurst extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final ease = Curves.easeOutCubic.transform(progress);
-    final fade = (1 - progress).clamp(0.0, 1.0).toDouble();
-    for (int k = 0; k < 14; k++) {
+    final fade = (1 - progress).clamp(0.0, 1.0);
+    for (var k = 0; k < 14; k++) {
       final a = k * 2 * math.pi / 14;
       final r = 10 + 48 * ease * (k.isEven ? 1 : 0.7);
       final p = origin + Offset(math.cos(a), math.sin(a)) * r;
@@ -149,14 +149,14 @@ class CrownConfetti extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rand = math.Random(seed);
     final fade = progress < 0.75 ? 1.0 : (1 - progress) / 0.25;
-    for (int i = 0; i < 46; i++) {
+    for (var i = 0; i < 46; i++) {
       final x0 = rand.nextDouble() * size.width;
       final delay = rand.nextDouble() * 0.35;
       final speed = 0.8 + rand.nextDouble() * 0.6;
       final sway = 12 + rand.nextDouble() * 22;
       final spin = (rand.nextDouble() - 0.5) * 10;
       final isCrown = i % 3 == 0;
-      final t = ((progress - delay) / (1 - delay)).clamp(0.0, 1.0).toDouble();
+      final t = ((progress - delay) / (1 - delay)).clamp(0.0, 1.0);
       if (t <= 0) continue;
       final y = -30 + t * speed * (size.height + 60);
       final x = x0 + math.sin(t * 6 + i) * sway;
@@ -377,10 +377,10 @@ class _RenderMasonry extends RenderBox
     while (child != null) {
       child.layout(BoxConstraints.tightFor(width: colW), parentUsesSize: true);
       var c = 0;
-      for (int i = 1; i < cols; i++) {
+      for (var i = 1; i < cols; i++) {
         if (heights[i] < heights[c] - 0.5) c = i;
       }
-      final data = child.parentData as _MasonryData;
+      final data = child.parentData! as _MasonryData;
       places[data] = Offset(left + c * (colW + _spacing), heights[c]);
       heights[c] += child.size.height + _spacing;
       child = data.nextSibling;
@@ -390,7 +390,7 @@ class _RenderMasonry extends RenderBox
     final top = (tall - content) / 2;
     child = firstChild;
     while (child != null) {
-      final data = child.parentData as _MasonryData;
+      final data = child.parentData! as _MasonryData;
       final next = places[data]! + Offset(0, top);
       // Wherever it shows now, mid-glide or not; new cards just appear.
       shownNow[data] = data.placed ? _shown(data) : next;
@@ -417,7 +417,7 @@ class _RenderMasonry extends RenderBox
   void paint(PaintingContext context, Offset offset) {
     var child = firstChild;
     while (child != null) {
-      final d = child.parentData as _MasonryData;
+      final d = child.parentData! as _MasonryData;
       context.paintChild(child, offset + _shown(d));
       child = d.nextSibling;
     }
@@ -425,15 +425,15 @@ class _RenderMasonry extends RenderBox
 
   @override
   void applyPaintTransform(RenderBox child, Matrix4 transform) {
-    final o = _shown(child.parentData as _MasonryData);
-    transform.translate(o.dx, o.dy);
+    final o = _shown(child.parentData! as _MasonryData);
+    transform.translateByDouble(o.dx, o.dy, 0, 1);
   }
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     var child = lastChild;
     while (child != null) {
-      final d = child.parentData as _MasonryData;
+      final d = child.parentData! as _MasonryData;
       final hit = result.addWithPaintOffset(
           offset: _shown(d),
           position: position,

@@ -1,19 +1,22 @@
 // Screenshots of solo Dynasty's story scenes, for checking the look
 // without a phone. Run with --update-goldens; CI pushes them to the
 // "shots" branch.
+@Tags(['tool'])
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kings_court/courtiers.dart';
+import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
-import 'package:kings_court/sfx.dart';
-import 'package:kings_court/widgets.dart';
-import 'package:kings_court/courtiers.dart';
-import 'package:kings_court/play/throne_room.dart';
-import 'package:kings_court/tutorial.dart';
 import 'package:kings_court/play/card_view.dart';
-import 'package:kings_court/engine/cards.dart';
+import 'package:kings_court/play/throne_room.dart';
+import 'package:kings_court/sfx.dart';
+import 'package:kings_court/tutorial.dart';
+import 'package:kings_court/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -65,7 +68,7 @@ void main() {
     await tester.pumpAndSettle();
     // Each lesson's pages, shot one by one, then the lesson.
     Future<void> readPages(List<IntroPage> pages, String name, String finish) async {
-      for (int i = 0; i < pages.length; i++) {
+      for (var i = 0; i < pages.length; i++) {
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/tut-$name-$i.png'));
         if (i == pages.length - 1) {
@@ -83,15 +86,15 @@ void main() {
     final state = tester.state<HomePageState>(find.byType(HomePage));
     final game = state.game;
     Future<void> frames(int n) async {
-      for (int i = 0; i < n; i++) {
+      for (var i = 0; i < n; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
     }
 
     Future<void> snap(String name) => expectLater(
         find.byType(MaterialApp), matchesGoldenFile('goldens/tut-$name.png'));
-    for (int lesson = 0; lesson < 4; lesson++) {
-      for (int i = 0; i < 300 && game.pickTurn != 0; i++) {
+    for (var lesson = 0; lesson < 4; lesson++) {
+      for (var i = 0; i < 300 && game.pickTurn != 0; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       await frames(40);
@@ -99,7 +102,7 @@ void main() {
       state.debugYourMove();
       await frames(80);
       await snap('${lesson + 1}b-play');
-      for (int i = 0; i < 2000 && game.outcome == RoundOutcome.inProgress; i++) {
+      for (var i = 0; i < 2000 && game.outcome == RoundOutcome.inProgress; i++) {
         await tester.pump(const Duration(milliseconds: 30));
         state.debugYourMove();
       }
@@ -144,16 +147,16 @@ void main() {
     Future<void> snap() => expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/phone-${shot++}.png'));
     // Dealt, and waiting to hear whether you'll share a card.
-    for (int i = 0; i < 160; i++) {
+    for (var i = 0; i < 160; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await snap();
-    for (int i = 0; i < 400 && game.pickTurn != null; i++) {
+    for (var i = 0; i < 400 && game.pickTurn != null; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i == 3) await snap();
       if (i % 4 == 0) state.debugYourMove();
     }
-    for (int i = 0; i < 900 && shot < 5; i++) {
+    for (var i = 0; i < 900 && shot < 5; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i % 150 == 40) await snap();
       state.debugYourMove();
@@ -187,20 +190,20 @@ void main() {
     var shot = 0;
     Future<void> snap() async {
       for (final e in find.byType(PlayingCardView).evaluate().take(3)) {
-        final box = e.renderObject as RenderBox;
+        final box = e.renderObject! as RenderBox;
         debugPrint('LAPTOP card ${box.localToGlobal(Offset.zero)} ${box.size}');
       }
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/laptop-${shot++}.png'));
     }
 
-    for (int i = 0; i < 400 && game.pickTurn != null; i++) {
+    for (var i = 0; i < 400 && game.pickTurn != null; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i == 40) await snap();
       state.debugYourMove();
     }
     await snap();
-    for (int i = 0; i < 1500 && shot < 6; i++) {
+    for (var i = 0; i < 1500 && shot < 6; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i % 120 == 60) await snap();
       state.debugYourMove();
@@ -224,7 +227,7 @@ void main() {
       if (onScreen) {
         // Frames through the page change, to check nothing jumps.
         await tester.pump();
-        for (int f = 0; f < 6; f++) {
+        for (var f = 0; f < 6; f++) {
           await expectLater(find.byType(MaterialApp),
               matchesGoldenFile('goldens/zz-turn-$f.png'));
           await tester.pump(const Duration(milliseconds: 80));
@@ -248,18 +251,18 @@ void main() {
       final game = state.game;
       final name = onScreen ? 'screen' : 'table';
       if (onScreen) {
-        for (int i = 0; i < 400 && game.pickTurn != null; i++) {
+        for (var i = 0; i < 400 && game.pickTurn != null; i++) {
           await tester.pump(const Duration(milliseconds: 30));
           state.debugYourMove();
         }
-        for (int i = 0; i < 160; i++) {
+        for (var i = 0; i < 160; i++) {
           await tester.pump(const Duration(milliseconds: 30));
           if (i == 60) state.debugYourMove();
         }
       } else {
         await tester.pump(const Duration(milliseconds: 400));
         await tester.tap(find.byType(SeatToken).first);
-        for (int i = 0; i < 250; i++) {
+        for (var i = 0; i < 250; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
       }
@@ -267,22 +270,22 @@ void main() {
           matchesGoldenFile('goldens/wide-$name-1.png'));
       // The menu and the points target.
       await tester.tap(find.byTooltip('Menu'));
-      for (int i = 0; i < 20; i++) {
+      for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/wide-$name-menu.png'));
       await tester.tapAt(const Offset(40, 900));
-      for (int i = 0; i < 20; i++) {
+      for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       // Report a bug, from the menu.
       await tester.tap(find.byTooltip('Menu'));
-      for (int i = 0; i < 20; i++) {
+      for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       await tester.tap(find.text('Report a bug'));
-      for (int i = 0; i < 20; i++) {
+      for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       await tester.enterText(find.byKey(const ValueKey('bugMessage')),
@@ -291,29 +294,29 @@ void main() {
       await expectLater(find.byType(MaterialApp),
           matchesGoldenFile('goldens/wide-$name-bug.png'));
       await tester.tap(find.text('Cancel'));
-      for (int i = 0; i < 20; i++) {
+      for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       final points = find.byTooltip('Points target');
       if (points.evaluate().isNotEmpty) {
         await tester.tap(points.first);
-        for (int i = 0; i < 20; i++) {
+        for (var i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/wide-$name-points.png'));
         await tester.tap(find.text('Cancel'));
-        for (int i = 0; i < 20; i++) {
+        for (var i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
       }
       // A task's close-up: what it means, its words, how it's going.
       final cards = find
-          .textContaining(RegExp(r"^(Win|Don't|Never)"), findRichText: true)
+          .textContaining(RegExp("^(Win|Don't|Never)"), findRichText: true)
           .hitTestable();
       if (cards.evaluate().isNotEmpty) {
         await tester.tap(cards.first);
-        for (int i = 0; i < 20; i++) {
+        for (var i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await expectLater(find.byType(MaterialApp),
@@ -321,7 +324,7 @@ void main() {
         final chip = find.byType(ChoiceChip);
         if (chip.evaluate().isNotEmpty) {
           await tester.tap(chip.first);
-          for (int i = 0; i < 20; i++) {
+          for (var i = 0; i < 20; i++) {
             await tester.pump(const Duration(milliseconds: 30));
           }
           await expectLater(find.byType(MaterialApp),
@@ -329,13 +332,13 @@ void main() {
         }
         final close = find.text('Close');
         if (close.evaluate().isNotEmpty) await tester.tap(close);
-        for (int i = 0; i < 20; i++) {
+        for (var i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
       }
       if (onScreen) {
         await tester.tap(find.byTooltip('Card tracker'));
-        for (int i = 0; i < 25; i++) {
+        for (var i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await expectLater(find.byType(MaterialApp),
@@ -344,22 +347,22 @@ void main() {
         final who = find.bySemanticsLabel(RegExp('^What .* may hold'));
         if (who.evaluate().isNotEmpty) {
           await tester.tap(who.first);
-          for (int i = 0; i < 20; i++) {
+          for (var i = 0; i < 20; i++) {
             await tester.pump(const Duration(milliseconds: 30));
           }
           await expectLater(find.byType(MaterialApp),
               matchesGoldenFile('goldens/wide-$name-6-hand.png'));
         }
         await tester.tap(find.byTooltip('Close').last);
-        for (int i = 0; i < 25; i++) {
+        for (var i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await tester.tap(find.byTooltip('Menu'));
-        for (int i = 0; i < 20; i++) {
+        for (var i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await tester.tap(find.text('Four-colour suits'));
-        for (int i = 0; i < 30; i++) {
+        for (var i = 0; i < 30; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await expectLater(find.byType(MaterialApp),
@@ -422,11 +425,11 @@ void main() {
         right: HallChoice('Go', () {}),
       ),
     ));
-    for (int i = 0; i < 90; i++) {
+    for (var i = 0; i < 90; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
     for (final e in find.byType(AnimatedPositioned).evaluate()) {
-      final box = e.renderObject as RenderBox;
+      final box = e.renderObject! as RenderBox;
       debugPrint('POS ${box.localToGlobal(Offset.zero)} ${box.size}');
     }
     for (final e in find.byType(Opacity).evaluate()) {
@@ -463,12 +466,12 @@ void main() {
 
     // The coronation, part way through, then done.
     debugPrint('SHAPED ${find.byType(ShapedToken).evaluate().length}');
-    for (int i = 0; i < 40; i++) {
+    for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await snap('coronation');
     final seen = <String>{};
-    for (int i = 0; i < 6000 && shot < 14; i++) {
+    for (var i = 0; i < 6000 && shot < 14; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i % 300 == 0) {
         debugPrint('LOOP $i outcome=${game.outcome} pick=${game.pickTurn} '
@@ -481,13 +484,13 @@ void main() {
         if (find.text(t).hitTestable().evaluate().isNotEmpty) tap = t;
       }
       // A matter before the throne: take the first choice.
-      final d = state.debugDilemma as int?;
-      final key = '${game.dealId}-$tap-$d-${game.outcome}-${shot}';
+      final d = state.debugDilemma;
+      final key = '${game.dealId}-$tap-$d-${game.outcome}-$shot';
       if (tap != null && !seen.contains(key)) {
         seen.add(key);
         debugPrint('AT $tap shaped=${find.byType(ShapedToken).evaluate().length} '
             'court=${game.court} figures=${find.byType(CharacterToken).evaluate().length}');
-        for (int k = 0; k < 70; k++) {
+        for (var k = 0; k < 70; k++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await snap(tap.replaceAll(' ', '-').toLowerCase());
@@ -502,7 +505,7 @@ void main() {
         final choices = find.byType(InkWell).hitTestable();
         if (choices.evaluate().length >= 2 && !seen.contains('d$d-${game.dealId}')) {
           seen.add('d$d-${game.dealId}');
-          for (int k = 0; k < 70; k++) {
+          for (var k = 0; k < 70; k++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
           await snap('matter');

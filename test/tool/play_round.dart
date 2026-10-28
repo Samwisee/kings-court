@@ -40,7 +40,7 @@ import 'package:kings_court/models.dart';
   // A card someone's task needs, shown once a round, as a courtier would.
   void showCards() {
     if (!showing || s.current.isNotEmpty) return;
-    for (int seat = 0; seat < players; seat++) {
+    for (var seat = 0; seat < players; seat++) {
       if (s.revealed.containsKey(seat)) continue;
       // A task of its own that asks it to show a card comes first.
       final own = intendedShow(s, seat, [

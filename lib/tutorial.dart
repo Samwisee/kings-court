@@ -88,9 +88,9 @@ class Lesson {
     final rest = [for (final c in fullDeck()) if (!used.contains(c)) c];
     // Set aside a plain card nobody needs: the last of the deck.
     final setAside = [rest.removeLast()];
-    int seat = 0;
+    var seat = 0;
     for (final card in rest) {
-      for (int tries = 0; tries < players; tries++) {
+      for (var tries = 0; tries < players; tries++) {
         final s = (seat + tries) % players;
         if (hands[s].length < each && !(avoid[s]?.contains(card.suit) ?? false)) {
           hands[s].add(card);

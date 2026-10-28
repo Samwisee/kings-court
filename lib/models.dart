@@ -1,17 +1,18 @@
 import 'dart:math';
+
 import 'chronicle.dart';
 import 'courtiers.dart';
-import 'story.dart';
-import 'engine/match.dart';
 import 'engine/conflicts.dart';
 import 'engine/deal_mix.dart';
+import 'engine/match.dart';
 import 'engine/rules.dart';
 import 'engine/showing.dart';
-import 'tasks.dart';
 import 'engine/task.dart';
+import 'story.dart';
+import 'tasks.dart';
+import 'tutorial.dart';
 
 export 'engine/task.dart';
-import 'tutorial.dart';
 
 enum RoundOutcome { inProgress, won, lost }
 
@@ -243,7 +244,7 @@ class GameState {
   void _ensureCourt() {
     if (!solo || court.isNotEmpty) return;
     final king = kingIndex ?? 0;
-    for (int s = 0; s < courtiers.length; s++) {
+    for (var s = 0; s < courtiers.length; s++) {
       if (s == king) continue;
       court.add(courtiers[s]);
       standing[courtiers[s].name] = loyalty[s];
@@ -266,7 +267,7 @@ class GameState {
   /// Writes what the seated courtiers think back to the court.
   void _syncStanding() {
     if (!solo) return;
-    for (int s = 0; s < courtiers.length && s < loyalty.length; s++) {
+    for (var s = 0; s < courtiers.length && s < loyalty.length; s++) {
       if (s == kingIndex) continue;
       final c = courtiers[s];
       standing[c.name] = loyalty[s];
@@ -286,8 +287,7 @@ class GameState {
       _changeLoyalty(seat, delta);
     } else if (solo && court.contains(c)) {
       final v = ((standing[c.name] ?? startingLoyalty) + delta)
-          .clamp(0, maxLoyalty)
-          .toInt();
+          .clamp(0, maxLoyalty);
       standing[c.name] = v;
       if (v <= 0) {
         schemeBy[c.name] ??= Random().nextInt(schemes.length);
@@ -595,7 +595,7 @@ class GameState {
   /// climbing back above 0 redeems them.
   void _changeLoyalty(int seat, int delta) {
     if (seat == kingIndex) return;
-    loyalty[seat] = (loyalty[seat] + delta).clamp(0, maxLoyalty).toInt();
+    loyalty[seat] = (loyalty[seat] + delta).clamp(0, maxLoyalty);
     if (loyalty[seat] <= 0) {
       schemeOf[seat] ??= Random().nextInt(schemes.length);
     } else {
@@ -871,7 +871,7 @@ class GameState {
           _changeLoyaltyOf(courtier, delta);
           _trait(delta > 0 ? 'kind' : 'stern', delta.abs());
         case AllLoyalty(:final delta):
-          for (int i = 0; i < players.length; i++) {
+          for (var i = 0; i < players.length; i++) {
             _changeLoyalty(i, delta);
           }
           if (solo) {
@@ -972,7 +972,7 @@ class GameState {
   /// The next seat clockwise after [from] that may pick a task.
   int? _nextPicker(int from) {
     // Skip anyone who can't take any of the tasks left.
-    for (int step = 1; step <= players.length; step++) {
+    for (var step = 1; step <= players.length; step++) {
       final seat = (from + step) % players.length;
       if (seat != exiledSeat &&
           !isAntagonist(seat) &&
@@ -980,7 +980,7 @@ class GameState {
         return seat;
       }
     }
-    for (int step = 1; step <= players.length; step++) {
+    for (var step = 1; step <= players.length; step++) {
       final seat = (from + step) % players.length;
       if (seat != exiledSeat && !isAntagonist(seat)) return seat;
     }
@@ -1065,7 +1065,7 @@ class GameState {
       for (int i = 0; i < players.length; i++)
         if (counts(i)) done[i]
     ].fold(0, max);
-    for (int i = 0; i < players.length; i++) {
+    for (var i = 0; i < players.length; i++) {
       if (!counts(i)) continue;
       if (won && most > 0 && done[i] == most) _changeLoyalty(i, 1);
       // A failed task shakes faith, but only the King's choices make a
@@ -1099,7 +1099,7 @@ class GameState {
     }
     if (isDynasty) {
       if (outcome == RoundOutcome.won) reignWins = max(0, reignWins - 1);
-      for (int i = 0;
+      for (var i = 0;
           i < _loyaltyBeforeRound.length && i < loyalty.length;
           i++) {
         _changeLoyalty(i, _loyaltyBeforeRound[i] - loyalty[i]);
@@ -1376,9 +1376,9 @@ class GameState {
     }
     // Draw the tasks, and if the round has seals, try a few draws for
     // enough tasks a seal can sit on.
-    List<Task> best = const [];
-    int bestFree = -1;
-    for (int attempt = 0; attempt < 12; attempt++) {
+    var best = const <Task>[];
+    var bestFree = -1;
+    for (var attempt = 0; attempt < 12; attempt++) {
       final drawn = _drawTasks(playerCount, targetPoints, rand);
       final free = drawn.where(_sealable).length;
       if (free > bestFree) {
@@ -1396,7 +1396,7 @@ class GameState {
   void _swapShowingTasks() {
     final rand = dealRandom(3);
     final n = players.length;
-    for (int i = 0; i < tasks.length; i++) {
+    for (var i = 0; i < tasks.length; i++) {
       final t = tasks[i];
       if (!needsShowing(t.description) || t.assignedPlayerIndex != null) continue;
       final names = tasks.map((x) => x.description).toSet();
@@ -1418,7 +1418,7 @@ class GameState {
 
   List<Task> _drawTasks(int playerCount, int targetPoints, Random rand) {
     final drawn = <Task>[];
-    int currentTotal = 0;
+    var currentTotal = 0;
     final pool = drawOrder(taskPool, rand,
         description: (t) => t.description,
         points: (t) => t.getPointsForPlayerCount(playerCount),
@@ -1454,7 +1454,7 @@ class GameState {
     final seals = othersWait
         ? [for (int i = 1; i <= count; i++) i]
         : Seals.forCount(count);
-    for (int i = 0; i < seals.length; i++) {
+    for (var i = 0; i < seals.length; i++) {
       free[i].seal = seals[i];
     }
   }
@@ -1543,12 +1543,13 @@ class GameState {
       final byDescription = {for (final t in taskPool) t.description: t};
       final g = GameState()
         ..players = [
-          for (final p in j['players'] as List)
+          for (final p in (j['players'] as List<dynamic>).cast<Map<String, dynamic>>())
             Player(p['name'] as String, colorValue: p['color'] as int),
         ]
         ..tasks = [
-          for (final t in j['tasks'] as List)
-            byDescription[renamedTasks[t['description']] ?? t['description']]!
+          for (final t in (j['tasks'] as List<dynamic>).cast<Map<String, dynamic>>())
+            byDescription[renamedTasks[t['description'] as String] ??
+                    t['description'] as String]!
                 .freshCopy()
               ..status = TaskStatus.values[t['status'] as int]
               ..assignedPlayerIndex = t['owner'] as int?
@@ -1682,12 +1683,12 @@ List<String> seatLabels(List<Player> players) {
       }(),
   ];
 
-  for (int pass = 0; pass < 2; pass++) {
+  for (var pass = 0; pass < 2; pass++) {
     final counts = <String, int>{};
     for (final l in labels) {
       counts[l] = (counts[l] ?? 0) + 1;
     }
-    for (int i = 0; i < labels.length; i++) {
+    for (var i = 0; i < labels.length; i++) {
       if (counts[labels[i]]! < 2) continue;
       final name = players[i]
           .name

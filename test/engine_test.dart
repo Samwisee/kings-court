@@ -16,7 +16,7 @@ void main() {
       () {
     expect(fullDeck().toSet(), hasLength(40));
     for (final players in [3, 4, 5, 6]) {
-      for (int seed = 0; seed < 20; seed++) {
+      for (var seed = 0; seed < 20; seed++) {
         final d = deal(players, Random(seed));
         expect(d.hands.map((h) => h.length).toSet(), {40 ~/ players});
         expect(d.setAside, hasLength(40 % players));
@@ -112,7 +112,7 @@ void main() {
 
   test('Every rule reaches a verdict by the end of the round', () {
     final rand = Random(7);
-    for (int game = 0; game < 40; game++) {
+    for (var game = 0; game < 40; game++) {
       final players = 3 + game % 4;
       final s = MatchState(players: players, target: 0)..newRound(rand);
       s.phase = Phase.playing;
@@ -123,7 +123,7 @@ void main() {
       }
       final v = s.view;
       for (final e in taskRules.entries) {
-        for (int owner = 0; owner < players; owner++) {
+        for (var owner = 0; owner < players; owner++) {
           expect(e.value(v, owner, 2), isNot(Verdict.pending), reason: e.key);
         }
       }
@@ -158,12 +158,12 @@ void main() {
   test('A game in progress saves and loads', () {
     final rand = Random(5);
     final s = MatchState(players: 4, target: 5)..newRound(rand);
-    for (int i = 0; i < s.tasks.length; i++) {
+    for (var i = 0; i < s.tasks.length; i++) {
       s.apply(PickTask(s.pickTurn!, s.tasks.indexWhere((t) =>
           t.owner == null && !(t.task.kingCantTake && s.pickTurn == s.king))));
     }
     if (s.phase == Phase.announcing) {
-      for (int i = 0; i < s.tasks.length; i++) {
+      for (var i = 0; i < s.tasks.length; i++) {
         if (needsX(s.tasks[i].description)) {
           s.apply(Announce(s.tasks[i].owner!, i, 1));
         }
@@ -225,7 +225,7 @@ void main() {
   });
 
   test('Rounds never deal tasks that clash', () {
-    for (int i = 0; i < 300; i++) {
+    for (var i = 0; i < 300; i++) {
       final g = GameState()..addTasksUntilTarget(3 + i % 4, 10 + i % 21);
       for (final a in g.tasks) {
         for (final b in g.tasks) {
@@ -262,7 +262,7 @@ void main() {
     expect(tierOf('Win a trick the King leads'), TaskTier.trick);
     expect(tierOf('Win more tricks than the King'), TaskTier.race);
     expect(tierOf('Win exactly as many tricks as the player on your left'), TaskTier.precise);
-    for (int i = 0; i < 400; i++) {
+    for (var i = 0; i < 400; i++) {
       final players = 3 + i % 3;
       final g = GameState()..addTasksUntilTarget(players, 6 + i % 25);
       final ds = g.tasks.map((t) => t.description).toList();
@@ -270,7 +270,7 @@ void main() {
         expect(ds.where((d) => tierOf(d) == e.key).length,
             lessThanOrEqualTo(e.value), reason: ds.join(' / '));
       }
-      for (int k = 0; k < ds.length; k++) {
+      for (var k = 0; k < ds.length; k++) {
         expect(overAvoided(ds.sublist(0, k) + ds.sublist(k + 1), ds[k], players), isFalse,
             reason: ds.join(' / '));
       }

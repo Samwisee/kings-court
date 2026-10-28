@@ -53,7 +53,7 @@ List<HandGuess> guessHands(MatchState m, int viewer) {
   void voidsFrom(List<int> seats, List<PlayingCard> cards) {
     if (cards.isEmpty) return;
     final led = cards.first.suit;
-    for (int k = 1; k < cards.length; k++) {
+    for (var k = 1; k < cards.length; k++) {
       if (cards[k].suit != led) of(seats[k])?.voids.add(led);
     }
   }

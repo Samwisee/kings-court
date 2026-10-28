@@ -270,7 +270,7 @@ class _TaskChip extends StatelessWidget {
                             fontSize: fontSize * 2.2,
                             color: Palette.gold)),
                     const SizedBox(width: 4),
-                    CrownIcon(size: fontSize * 1.5, color: Palette.gold),
+                    CrownIcon(size: fontSize * 1.5),
                   ],
                 ),
               ),

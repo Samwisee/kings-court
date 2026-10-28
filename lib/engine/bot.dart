@@ -100,7 +100,7 @@ class Bot {
     };
     final worlds = _worldsFor(s, seat);
     final guide = _guideFor(s, assigned);
-    for (int n = 0; n < budget; n++) {
+    for (var n = 0; n < budget; n++) {
       final w = worlds[n % worlds.length];
       final sim = _Sim.from(w);
       sim.playOut(_randFor(n), guide: guide);
@@ -142,7 +142,7 @@ class Bot {
   T _focus<T>(List<T> options, int total, double Function(T option, int from, int n) score) {
     if (!focus) {
       final per = max(20, total ~/ options.length);
-      T best = options.first;
+      var best = options.first;
       var bestScore = -1.0;
       for (final o in options) {
         final v = score(o, 0, per) + rand.nextDouble() * 0.01;
@@ -164,7 +164,7 @@ class Bot {
       ..sort((a, b) => scores[b]!.$1.compareTo(scores[a]!.$1));
     final finalists = top.take(keep).toList();
     final more = max(16, (total - first * options.length) ~/ finalists.length);
-    T best = finalists.first;
+    var best = finalists.first;
     var bestScore = -1.0;
     for (final o in finalists) {
       final (s1, n1) = scores[o]!;
@@ -191,7 +191,7 @@ class Bot {
       {int from = 0, (int, PlayingCard)? first, bool freeX = false}) {
     double total = 0;
     final guide = _guideFor(worlds.first, assigned);
-    for (int n = from; n < from + playouts; n++) {
+    for (var n = from; n < from + playouts; n++) {
       final w = worlds[n % worlds.length];
       total += _playout(w, assigned, w.inPlay, first, freeX, guide, _randFor(n));
     }
@@ -256,7 +256,7 @@ class Bot {
     }
     sim.playOut(rand, guide: guide);
     final v = sim.view(s, inPlay, shown, shownAt);
-    int done = 0;
+    var done = 0;
     for (final e in assigned.entries) {
       final t = s.tasks[e.key];
       if (needsX(t.description) && (freeX || t.x == null)) {
@@ -293,7 +293,7 @@ class Bot {
     // The trick each task was done on (they're all done by now).
     int doneAt(int t) {
       final task = s.tasks[t];
-      for (int k = 1; k <= v.tricks.length; k++) {
+      for (var k = 1; k <= v.tricks.length; k++) {
         final upTo = v.upTo(k);
         if (taskRules[task.description]!(upTo, assigned[t]!, task.x) ==
             Verdict.done) {
@@ -309,7 +309,7 @@ class Bot {
     };
     final numbered = seals.entries.where((e) => e.value != omega).toList()
       ..sort((a, b) => a.value.compareTo(b.value));
-    for (int i = 1; i < numbered.length; i++) {
+    for (var i = 1; i < numbered.length; i++) {
       if (at[numbered[i].key]! < at[numbered[i - 1].key]!) return false;
     }
     if (hasOmega) {
@@ -327,7 +327,7 @@ class Bot {
     final least = s.hands[seat].contains(PlayingCard.king) ? 1 : 0;
     final useful = counts.any((c) => c > 0) ? counts : all;
     var best = least;
-    for (int x = least; x < useful.length; x++) {
+    for (var x = least; x < useful.length; x++) {
       if (useful[x] > useful[best]) best = x;
     }
     return best;
@@ -362,7 +362,7 @@ class Bot {
       int playouts, {int from = 0, (int, PlayingCard)? first, bool freeX = false}) async {
     double total = 0;
     final guide = _guideFor(worlds.first, assigned);
-    for (int n = from; n < from + playouts; n++) {
+    for (var n = from; n < from + playouts; n++) {
       final w = worlds[n % worlds.length];
       total += _playout(w, assigned, w.inPlay, first, freeX, guide, _randFor(n));
       final pause = _breathe();
@@ -427,7 +427,7 @@ class Bot {
       Future<double> Function(T option, int from, int n) score) async {
     if (!focus) {
       final per = max(20, total ~/ options.length);
-      T best = options.first;
+      var best = options.first;
       var bestScore = -1.0;
       for (final o in options) {
         final v = await score(o, 0, per) + rand.nextDouble() * 0.01;
@@ -448,7 +448,7 @@ class Bot {
       ..sort((a, b) => scores[b]!.$1.compareTo(scores[a]!.$1));
     final finalists = top.take(keep).toList();
     final more = max(16, (total - first * options.length) ~/ finalists.length);
-    T best = finalists.first;
+    var best = finalists.first;
     var bestScore = -1.0;
     for (final o in finalists) {
       final (s1, n1) = scores[o]!;
@@ -478,7 +478,7 @@ class Bot {
     final worlds = _worldsFor(s, seat);
     final guide = _guideFor(s, assigned);
     _begin();
-    for (int n = 0; n < budget; n++) {
+    for (var n = 0; n < budget; n++) {
       final w = worlds[n % worlds.length];
       final sim = _Sim.from(w);
       sim.playOut(_randFor(n), guide: guide);

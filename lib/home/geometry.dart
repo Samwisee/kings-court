@@ -122,7 +122,7 @@ class _TableGeometry {
     // a crowded stack may squeeze onto itself but never a neighbour's.
     final placedBy = <int?>[for (final _ in placed) null];
 
-    for (int i = 0; i < players; i++) {
+    for (var i = 0; i < players; i++) {
       final owned = order.where((t) => t.assignedPlayerIndex == i).toList();
       if (owned.isEmpty) continue;
       final a = _frame(i);
@@ -141,8 +141,8 @@ class _TableGeometry {
           .fold<double>(cardHeight, math.max);
       // Candidate spots in the owner's frame, nearest first.
       final spots = <Offset>[];
-      for (int row = 0; row < 6; row++) {
-        for (int col = -4; col <= 4; col++) {
+      for (var row = 0; row < 6; row++) {
+        for (var col = -4; col <= 4; col++) {
           final dx = col * (cardWidth + gap);
           final dy = row == 0
               ? 0.0
@@ -183,7 +183,7 @@ class _TableGeometry {
             final onTable = table.contains(rect.topLeft) &&
                 table.contains(rect.bottomRight - const Offset(1, 1));
             var clear = onTable;
-            for (int k = 0; clear && k < placed.length; k++) {
+            for (var k = 0; clear && k < placed.length; k++) {
               if (placedBy[k] != i && placed[k].deflate(1).overlaps(rect)) {
                 clear = false;
               }
@@ -224,8 +224,8 @@ class _TableGeometry {
     final innerH = math.max(size.height - 2 * (seatExtent + 6), cardHeight);
     const gap = 8.0;
 
-    int cols = 1;
-    List<double> rowHeights = [];
+    var cols = 1;
+    var rowHeights = <double>[];
     while (true) {
       cols = math.max(1, ((innerW + gap) / (cardWidth + gap)).floor());
       rowHeights = [
@@ -246,10 +246,10 @@ class _TableGeometry {
         rowHeights.fold(0.0, (a, h) => a + h) + gap * (rowHeights.length - 1);
     final result = <Offset>[];
     var top = center.dy - gridH / 2;
-    for (int r = 0; r < rowHeights.length; r++) {
+    for (var r = 0; r < rowHeights.length; r++) {
       final inRow = math.min(cols, count - r * cols);
       final rowW = inRow * (cardWidth + gap) - gap;
-      for (int c = 0; c < inRow; c++) {
+      for (var c = 0; c < inRow; c++) {
         result.add(Offset(
           center.dx - rowW / 2 + c * (cardWidth + gap) + cardWidth / 2,
           top + rowHeights[r] / 2,
@@ -263,7 +263,7 @@ class _TableGeometry {
   /// The seat closest to [p]: the side of the table someone is touching.
   int nearestSeat(Offset p) {
     var best = 0;
-    for (int i = 1; i < players; i++) {
+    for (var i = 1; i < players; i++) {
       if ((seatCenter(i) - p).distance < (seatCenter(best) - p).distance) {
         best = i;
       }
@@ -273,7 +273,7 @@ class _TableGeometry {
 
   /// The seat a card centred at [p] is being dropped on, if any.
   int? seatAt(Offset p) {
-    for (int i = 0; i < players; i++) {
+    for (var i = 0; i < players; i++) {
       if ((seatCenter(i) - p).distance < seatSize / 2 + 34) return i;
     }
     return null;

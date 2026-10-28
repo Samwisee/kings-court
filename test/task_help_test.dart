@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
-import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/engine/conflicts.dart';
+import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/task_help.dart';
 
 void main() {
@@ -36,7 +36,7 @@ void main() {
     }
   });
 
-  test("Tasks about what not to do have trackers too", () {
+  test('Tasks about what not to do have trackers too', () {
     final t = Trick(0, const [0, 1, 2],
         [PlayingCard.parse('9♠')!, PlayingCard.parse('2♠')!, PlayingCard.parse('3♠')!], 0);
     final v = view([t]);
@@ -76,7 +76,7 @@ void main() {
   test('Some pairs of trick tasks are impossible at a bigger table', () {
     const most = 'Win more tricks than anyone else';
     const two = 'Win exactly two tricks';
-    expect(selfClash(most, two, players: 4), isTrue);
+    expect(selfClash(most, two), isTrue);
     expect(selfClash(two, most, players: 5), isTrue);
   });
 

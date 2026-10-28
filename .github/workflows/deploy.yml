@@ -36,7 +36,7 @@ jobs:
       - name: Test
         run: |
           set +e
-          timeout 600 flutter test --timeout 60s --reporter expanded > test.txt 2>&1
+          timeout 600 flutter test --exclude-tags tool --timeout 60s --reporter expanded > test.txt 2>&1
           code=$?
           tail -5 test.txt
           if [ $code -ne 0 ]; then python3 tool/ci_annotate.py test.txt; fi

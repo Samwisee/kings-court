@@ -26,7 +26,6 @@ Future<String?> showTutorialPages(BuildContext context,
         required String heading,
         required String finishLabel}) =>
     Navigator.of(context).push<String>(PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
         reverseTransitionDuration: const Duration(milliseconds: 250),
         pageBuilder: (c, a, b) =>
             TutorialIntro(pages: pages, heading: heading, finishLabel: finishLabel),
@@ -458,10 +457,10 @@ class _TutorialIntroState extends State<TutorialIntro> {
           runSpacing: 10,
           alignment: WrapAlignment.center,
           children: [
-            _task('Win the 3♥', width: 150),
-            _task('Win fewer tricks than the King', width: 150),
-            _task("Don't win any ♥ cards", width: 150),
-            _task('Win the trick after the Queen is played', width: 150),
+            _task('Win the 3♥'),
+            _task('Win fewer tricks than the King'),
+            _task("Don't win any ♥ cards"),
+            _task('Win the trick after the Queen is played'),
           ],
         );
       case IntroArt.courtCards:
@@ -583,12 +582,12 @@ class _TutorialIntroState extends State<TutorialIntro> {
           ]),
         );
       case IntroArt.ready:
-        return Column(children: [
-          const CrownIcon(size: 64),
-          const SizedBox(height: 12),
+        return const Column(children: [
+          CrownIcon(size: 64),
+          SizedBox(height: 12),
           Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.center, children: [
-            const WaxSeal(seal: 1, size: 34),
-            const Icon(Icons.history_edu_rounded, size: 34, color: Palette.gold),
+            WaxSeal(seal: 1, size: 34),
+            Icon(Icons.history_edu_rounded, size: 34, color: Palette.gold),
           ]),
         ]);
     }

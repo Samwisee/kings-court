@@ -364,7 +364,7 @@ class _RulesPageState extends State<RulesPage> {
                                       children: [
                                         const Padding(
                                           padding: EdgeInsets.only(top: 6, right: 10),
-                                          child: CrownIcon(size: 12, color: Palette.gold),
+                                          child: CrownIcon(size: 12),
                                         ),
                                         Expanded(child: SuitText(rule, style: _ruleStyle)),
                                       ],
@@ -518,17 +518,12 @@ class _Reveal extends StatefulWidget {
       {super.key,
       required this.animate,
       required this.child,
-      this.grow = true,
       this.leaving = false});
   final bool animate;
 
   /// On its way out: closes up and fades.
   final bool leaving;
   final Widget child;
-
-  /// Opens up from nothing (a section); otherwise pops softly into its
-  /// place (an index tab).
-  final bool grow;
 
   @override
   State<_Reveal> createState() => _RevealState();
@@ -560,13 +555,7 @@ class _RevealState extends State<_Reveal> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => !widget.grow
-      ? FadeTransition(
-          opacity: _ease,
-          child: ScaleTransition(
-              scale: Tween(begin: 0.8, end: 1.0).animate(_ease), child: widget.child),
-        )
-      : SizeTransition(
+  Widget build(BuildContext context) => SizeTransition(
         sizeFactor: _ease,
         axisAlignment: -1,
         child: FadeTransition(
