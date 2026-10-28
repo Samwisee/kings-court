@@ -402,4 +402,3 @@ class _TokenPainter extends CustomPainter {
       old.ringWidth != ringWidth ||
       old.glow != glow;
 }
-

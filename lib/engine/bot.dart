@@ -490,4 +490,3 @@ class Bot {
     return _bestX(counts, all, s, seat);
   }
 }
-

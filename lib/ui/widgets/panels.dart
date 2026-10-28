@@ -285,4 +285,3 @@ Future<void> showTermDialog(BuildContext context, String term) => showDialog<voi
             keywords: false, textAlign: TextAlign.center, style: DialogStyle.body),
       ),
     );
-

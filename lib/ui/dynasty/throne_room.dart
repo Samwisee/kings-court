@@ -366,4 +366,3 @@ class _ThroneRoomState extends State<ThroneRoom> {
     );
   }
 }
-
