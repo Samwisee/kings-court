@@ -46,6 +46,7 @@ import 'sfx.dart';
 import 'task_help.dart';
 import 'theme.dart';
 import 'ui/overlays/crowning.dart';
+import 'ui/overlays/decree.dart';
 import 'ui/overlays/king_prompt.dart';
 import 'ui/overlays/outcome_card.dart';
 import 'ui/overlays/play_flourish.dart';
@@ -2092,17 +2093,6 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildDecreeOverlay() => ColoredBox(
-        color: Colors.black38,
-        child: Center(
-          child: DecreeScroll(
-            decree: _round.decree!,
-            detail: _decreeDetail,
-            onAccept: () => setState(() => _decreeReadFor = game.dealId),
-          ),
-        ),
-      );
-
   bool _seatActive(int seat) =>
       !_choosingKing &&
       (_round.pickTurn != null
@@ -4141,7 +4131,12 @@ class HomePageState extends State<HomePage>
         Positioned.fill(
             child: Material(
                 type: MaterialType.transparency,
-                child: SafeArea(child: _buildDecreeOverlay()))),
+                child: SafeArea(
+                    child: DecreeOverlay(
+                        round: _round,
+                        players: game.players,
+                        onAccept: () =>
+                            setState(() => _decreeReadFor = game.dealId))))),
       if (_inGame &&
           _setupArgs == null &&
           game.outcome != RoundOutcome.inProgress &&
@@ -4445,7 +4440,7 @@ class HomePageState extends State<HomePage>
                 const SizedBox(width: 8),
                 // The decree in force; tap to read it again.
                 Flexible(child: InkWell(
-                  onTap: _showDecree,
+                  onTap: () => showDecree(context, _round, game.players),
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     padding:
@@ -4629,29 +4624,6 @@ class HomePageState extends State<HomePage>
       seats: {
         for (int j = 0; j < game.players.length; j++) j: geo.seatCenter(j)
       },
-    );
-  }
-
-  String? get _decreeDetail => _round.decree == Decree.exile &&
-          _round.exiledSeat != null
-      ? 'Seat ${seatLabels(game.players)[_round.exiledSeat!]} is exiled this round.'
-      : null;
-
-  void _showDecree() {
-    final d = _round.decree;
-    if (d == null) return;
-    showDialog<void>(
-      context: context,
-      builder: (context) => Center(
-        child: Material(
-          type: MaterialType.transparency,
-          child: DecreeScroll(
-            decree: d,
-            detail: _decreeDetail,
-            onAccept: () => Navigator.pop(context),
-          ),
-        ),
-      ),
     );
   }
 
