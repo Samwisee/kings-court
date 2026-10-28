@@ -214,8 +214,8 @@ const _beforeHelp = <IntroPage>[
   ], IntroArt.speak),
   IntroPage('Keeping count', [
     'The card tracker button beside your hand shows every card in the deck in rows by suit. A card that’s been played is shaded and outlined in the colour of whoever played it, with the number of the trick it fell in. Cards in your hand are outlined in your colour.',
-    'Tap a player in the key at the top to see what they may still hold, worked out from what they’ve played and shown: bright cards they certainly hold, faint ones they may.',
-    'Hold the eye at the top (or the space bar) to see the table behind it for a moment.',
+    'Tap a player in the key at the top to see what they may still hold instead, worked out from what they’ve played and shown: bright cards they certainly hold, faint ones they may. Tap Deck to see every card again.',
+    'Hold the eye at the top, or the space bar, to see the table behind it for a moment. A tap of the space bar puts it away.',
   ], IntroArt.tracker),
   IntroPage('Lesson 4: help each other', [
     'Two tasks this time. You take “Win the A♦”; the Duke takes “Win the 6♣”.',

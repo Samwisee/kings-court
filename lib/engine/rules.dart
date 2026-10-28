@@ -577,8 +577,9 @@ bool schemeSucceeded(int scheme, RoundView v, int seat) {
 
 // ------------------------------------------------------------- progress
 
-/// How far along a task is, in a few characters for the corner of its
-/// card ("2/4", "1 trick"), or null when there's nothing to count.
+/// How far along a task is, as a plain count for the corner of its card
+/// ("2/4"), or null when there's nothing simple to count. Anything more is
+/// in the task's close-up.
 String? taskProgress(String d, RoundView v, int owner, int? x) {
   int won(bool Function(PlayingCard) test) => v.countWon(owner, test);
   String of(int a, int b) => '$a/$b';
@@ -614,15 +615,6 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
     final suit = Suit.values.firstWhere((s) => s.symbol == suits.group(3));
     return of(won((c) => c.suit == suit), words[suits.group(2)] ?? 0);
   }
-  // Two suits counted side by side: "exactly one ♦ and one ♠", "as many
-  // ♠ as ♣", "more ♠ than ♥".
-  final pair = RegExp(r'^Win (?:exactly one|as many|more) ([♥♦♠♣]) (?:and one|cards as|cards than) ([♥♦♠♣])')
-      .firstMatch(d);
-  if (pair != null) {
-    Suit suit(String sym) => Suit.values.firstWhere((s) => s.symbol == sym);
-    final a = pair.group(1)!, b = pair.group(2)!;
-    return '$a${won((c) => c.suit == suit(a))} $b${won((c) => c.suit == suit(b))}';
-  }
   final courts = RegExp(r'^Win exactly (\w+) Court Cards?').firstMatch(d);
   if (courts != null) return of(won((c) => c.isCourt), words[courts.group(1)] ?? 0);
   final tricks = RegExp(r'^Win exactly (\w+) tricks?').firstMatch(d);
@@ -630,22 +622,12 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
     final n = tricks.group(1) == 'X' ? x : words[tricks.group(1)];
     final secret = d.contains('secret');
     final mine = v.tricksWon(owner);
-    return n == null || secret ? '$mine' : of(mine, n);
+    return n == null || secret ? null : of(mine, n);
   }
   final firstN = RegExp(r'^Win the first (two|three) tricks$').firstMatch(d);
   if (firstN != null) {
     final n = words[firstN.group(1)]!;
     return of(v.tricks.take(n).where((t) => t.winner == owner).length, n);
-  }
-  if (d.contains('than the King') || d.contains('as the King')) {
-    return '${v.tricksWon(owner)} v ${v.tricksWon(v.king)}';
-  }
-  if (d.startsWith('Win more tricks than') && !d.contains('King') ||
-      d.startsWith('Win fewer tricks than anyone')) {
-    return '${v.tricksWon(owner)} tricks';
-  }
-  if (d.contains('in a row') && !d.startsWith("Don't")) {
-    return 'run ${v.longestRun(owner)}';
   }
   if (d.startsWith('Win a card of every suit')) {
     final have = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs]
@@ -653,24 +635,12 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
         .length;
     return of(have, 4);
   }
-  // Tasks won with a particular number: how many of it are still to come.
-  final withRank = RegExp(r'^Win (?:a trick|a \d|an \d|any \d) with (?:a|another) (\d)$').firstMatch(d);
-  if (withRank != null) {
-    final r = int.parse(withRank.group(1)!);
-    final played = v.tricks.expand((t) => t.cards).where((c) => rank(c, r)).length;
-    return '${r}s: ${4 - played} left';
-  }
-  // Tasks about what you mustn't do: how far you've got safely.
+  // Tasks about what you mustn't do in the first tricks: how far through
+  // them the round is.
   final notFirst = RegExp(r"^Don't win any of the first (\w+) tricks$").firstMatch(d);
   if (notFirst != null) {
     final n = words[notFirst.group(1)]!;
-    return 'safe ${of(v.tricks.length < n ? v.tricks.length : n, n)}';
-  }
-  if (d.startsWith("Don't") || d.startsWith('Win no ')) {
-    return 'safe ${of(v.tricks.length, v.totalTricks)}';
-  }
-  if (d.contains('last trick')) {
-    return '${v.totalTricks - v.tricks.length} to go';
+    return of(v.tricks.length < n ? v.tricks.length : n, n);
   }
   return null;
 }

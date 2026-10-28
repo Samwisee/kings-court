@@ -40,11 +40,10 @@ void main() {
     final t = Trick(0, const [0, 1, 2],
         [PlayingCard.parse('9♠')!, PlayingCard.parse('2♠')!, PlayingCard.parse('3♠')!], 0);
     final v = view([t]);
-    expect(taskProgress("Don't win any of the first three tricks", v, 1, null),
-        'safe 1/3');
-    expect(taskProgress("Don't win any tricks", v, 1, null), 'safe 1/13');
-    expect(taskProgress('Win no Court Cards', v, 1, null), 'safe 1/13');
-    expect(taskProgress('Win the last trick', v, 1, null), '12 to go');
+    expect(taskProgress("Don't win any of the first three tricks", v, 1, null), '1/3');
+    // Nothing simple to count: the close-up says how it's going.
+    expect(taskProgress("Don't win any tricks", v, 1, null), isNull);
+    expect(taskProgress('Win the last trick', v, 1, null), isNull);
     expect(taskStatus("Don't win any of the first three tricks", v, 1, null),
         contains('1 of the first 3'));
   });
@@ -68,7 +67,7 @@ void main() {
   test('Number tasks track which cards are still to come', () {
     PlayingCard c(String l) => PlayingCard.parse(l)!;
     final v = view([Trick(0, const [0, 1, 2], [c('7♥'), c('2♥'), c('3♥')], 0)]);
-    expect(taskProgress('Win any 7 with another 7', v, 1, null), '7s: 3 left');
+    expect(taskProgress('Win any 7 with another 7', v, 1, null), isNull);
     final s = taskStatus('Win any 7 with another 7', v, 1, null);
     expect(s, contains('7♥ (trick 1)'));
     expect(s, contains('7♦'));

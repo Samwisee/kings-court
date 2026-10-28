@@ -526,8 +526,15 @@ class _HomePageState extends State<HomePage>
   bool _onKey(KeyEvent e) {
     final key = e.logicalKey;
     if (e is KeyUpEvent) {
-      if (key == LogicalKeyboardKey.space && _trackerPeek) {
-        setState(() => _trackerPeek = false);
+      if (key == LogicalKeyboardKey.space && _spaceTimer != null) {
+        // A short tap puts the tracker away; a hold only hid it.
+        _spaceTimer!.cancel();
+        _spaceTimer = null;
+        if (_trackerPeek) {
+          setState(() => _trackerPeek = false);
+        } else if (_trackerOpen) {
+          _closeTracker();
+        }
         return true;
       }
       return false;
@@ -561,7 +568,11 @@ class _HomePageState extends State<HomePage>
       return true;
     }
     if (key == LogicalKeyboardKey.space && _trackerOpen) {
-      setState(() => _trackerPeek = true);
+      // Held past a moment: hide it to see the table, until let go.
+      _spaceTimer?.cancel();
+      _spaceTimer = Timer(const Duration(milliseconds: 220), () {
+        if (mounted && _trackerOpen) setState(() => _trackerPeek = true);
+      });
       return true;
     }
     if (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyT) {
@@ -594,6 +605,9 @@ class _HomePageState extends State<HomePage>
 
   /// The card chosen in your hand with the arrow keys.
   PlayingCard? _kbCard;
+
+  /// The space bar is down while the tracker is up: a tap or a hold?
+  Timer? _spaceTimer;
 
   /// What tapping each card in your hand does, for the Enter key.
   final Map<PlayingCard, VoidCallback> _handPlays = {};
@@ -1288,12 +1302,7 @@ class _HomePageState extends State<HomePage>
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialog) => AlertDialog(
-          backgroundColor: Palette.feltDeep,
-          title: const Text('How many tricks?',
-              style: TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 24)),
+          title: const Text('How many tricks?'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -2766,7 +2775,6 @@ class _HomePageState extends State<HomePage>
     final seat = await showDialog<int>(
       context: context,
       builder: (context) => SimpleDialog(
-        backgroundColor: Palette.feltDeep,
         title: const Text("King's Command: who takes it?"),
         children: [
           for (final s in seats)
@@ -3127,7 +3135,6 @@ class _HomePageState extends State<HomePage>
         showDialog<T>(
           context: context,
           builder: (context) => SimpleDialog(
-            backgroundColor: Palette.feltDeep,
             title: Text(title),
             children: [
               for (final (value, label) in options)
@@ -3182,7 +3189,6 @@ class _HomePageState extends State<HomePage>
         await showDialog<void>(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: Palette.feltDeep,
             title: const Text('Whisper'),
             content: SuitText(
                 '${names[seat]} ${has ? 'holds' : 'holds no'} ${suit.symbol} cards.',
@@ -3296,7 +3302,6 @@ class _HomePageState extends State<HomePage>
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Palette.feltDeep,
         title: const Text('Absolution?'),
         content: SuitText(
             '${t.assignedPlayerIndex == _you && _digital ? 'Your' : '${game.players[t.assignedPlayerIndex!].name}’s'} task is about to fail: '
@@ -3476,45 +3481,20 @@ class _HomePageState extends State<HomePage>
     if (!mounted) return;
     final play = await showDialog<bool>(
       context: context,
-      barrierColor: Colors.black54,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        child: OrnateCard(
-          won: false,
-          court: true,
-          margin: const EdgeInsets.only(top: 34),
-          padding: const EdgeInsets.fromLTRB(30, 38, 30, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('You’re ready',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontFamily: displayFont,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 26,
-                      color: Palette.gold,
-                      shadows: _feltShadow)),
-              const SizedBox(height: 12),
-              const SuitText(
-                  'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, height: 1.45, color: Colors.white)),
-              const SizedBox(height: 22),
-              FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Play a game')),
-              const SizedBox(height: 6),
-              TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  style: TextButton.styleFrom(
-                      foregroundColor: Palette.gold, overlayColor: Colors.transparent),
-                  child: const Text('Not now')),
-            ],
-          ),
-        ),
+      builder: (context) => CourtDialog(
+        title: 'You’re ready',
+        actions: [
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Play a game')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Not now')),
+        ],
+        child: const SuitText(
+            'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
+            textAlign: TextAlign.center,
+            style: DialogStyle.body),
       ),
     );
     if (play == true && mounted) _showSetupDialog();
@@ -4306,14 +4286,9 @@ class _HomePageState extends State<HomePage>
       builder: (context) => RotatedBox(
         quarterTurns: quarterTurns,
         child: AlertDialog(
-          backgroundColor: Palette.card,
-          surfaceTintColor: Colors.transparent,
-          title: const Text('A seal is broken',
-              style: TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 24,
-                  color: Palette.ink)),
+          backgroundColor: DialogStyle.paper,
+          shape: const HighVisBorder(null),
+          title: const Text('A seal is broken', style: DialogStyle.paperTitle),
           content: Text(
               '$problem\n\nIf this task really was done out of order, the round is lost.',
               style: const TextStyle(fontSize: 16, height: 1.4, color: Palette.ink)),
@@ -4368,8 +4343,7 @@ class _HomePageState extends State<HomePage>
       builder: (context) => RotatedBox(
         quarterTurns: quarterTurns,
         child: AlertDialog(
-        backgroundColor: task.isFailed ? const Color(0xFFFBE4E1) : Palette.card,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: task.isFailed ? const Color(0xFFFBE4E1) : DialogStyle.paper,
         // Whose it is shows as on the table: their colour, edged in dark.
         shape: HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
         scrollable: true,
@@ -4447,46 +4421,20 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                 ),
-              // How it's going, for every task, once the cards are dealt.
-              if (_statusOf(task) case final status?)
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3ECDD),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2D6BC)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1, right: 8),
-                        child: Icon(
-                            task.isCompleted
-                                ? Icons.check_circle_rounded
-                                : task.isFailed
-                                    ? Icons.cancel_rounded
-                                    : Icons.timelapse_rounded,
-                            size: 18,
-                            color: task.isCompleted
-                                ? Palette.won
-                                : task.isFailed
-                                    ? Palette.lost
-                                    : Palette.goldDeep),
-                      ),
-                      Expanded(
-                        child: Semantics(
-                          liveRegion: true,
-                          child: SuitText(status,
-                              style: const TextStyle(
-                                  fontSize: 15,
-                                  height: 1.35,
-                                  fontWeight: FontWeight.w700,
-                                  color: Palette.ink)),
-                        ),
-                      ),
-                    ],
+              // Once it's settled, why: a plain line (the badge by the
+              // points tells how it's going until then).
+              if (_statusOf(task) case final status?
+                  when task.isCompleted || task.isFailed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: SuitText(status,
+                        style: TextStyle(
+                            fontSize: 15,
+                            height: 1.35,
+                            fontWeight: FontWeight.w700,
+                            color: task.isCompleted ? Palette.won : Palette.lost)),
                   ),
                 ),
               // The cards it's about, and what's become of them.
@@ -5023,10 +4971,11 @@ class _HomePageState extends State<HomePage>
               curve: Curves.easeOut,
               child: Stack(children: [
                 Positioned.fill(
+                  // No dimming: the table stays in view behind it. A tap
+                  // anywhere else puts it away.
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: _closeTracker,
-                    child: const ColoredBox(color: Colors.black54),
                   ),
                 ),
                 SafeArea(
@@ -5039,16 +4988,16 @@ class _HomePageState extends State<HomePage>
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                              maxWidth: 660,
+                              maxWidth: 470,
                               maxHeight: MediaQuery.sizeOf(context).height * 0.88),
                           child: Material(
                             type: MaterialType.transparency,
                             child: OrnateCard(
                               won: false,
                               court: true,
-                              maxWidth: 660,
+                              maxWidth: 470,
                               margin: const EdgeInsets.only(top: 34),
-                              padding: const EdgeInsets.fromLTRB(18, 34, 18, 16),
+                              padding: const EdgeInsets.fromLTRB(16, 30, 16, 14),
                               child: _CardTracker(
                                 cards: _cards,
                                 you: _you,
@@ -8143,8 +8092,6 @@ Future<int?> showChronicleDialog(
   return showDialog<int>(
     context: context,
     builder: (context) => AlertDialog(
-      backgroundColor: Palette.feltDeep,
-      surfaceTintColor: Colors.transparent,
       title: Row(
         children: [
           const Expanded(
@@ -9511,73 +9458,6 @@ class _SavedGame {
   }
 }
 
-/// The game words a task uses, each opening to say what it means: for
-/// anyone new to trick-taking games.
-class _TermsList extends StatefulWidget {
-  const _TermsList({required this.terms});
-  final List<String> terms;
-
-  @override
-  State<_TermsList> createState() => _TermsListState();
-}
-
-class _TermsListState extends State<_TermsList> {
-  String? _open;
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.terms.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('New to these words? Tap one:',
-              style: TextStyle(fontSize: 13.5, color: Palette.inkSoft)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final t in widget.terms)
-                Semantics(
-                  button: true,
-                  expanded: _open == t,
-                  child: ChoiceChip(
-                    label: Text(t),
-                    selected: _open == t,
-                    showCheckmark: false,
-                    materialTapTargetSize: MaterialTapTargetSize.padded,
-                    labelStyle: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: _open == t ? Colors.white : Palette.ink),
-                    selectedColor: Palette.goldDeep,
-                    backgroundColor: const Color(0xFFF3ECDD),
-                    side: const BorderSide(color: Color(0xFFD9C9A3)),
-                    onSelected: (on) => setState(() => _open = on ? t : null),
-                  ),
-                ),
-            ],
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            child: _open == null
-                ? const SizedBox(width: double.infinity)
-                : Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: SuitText('$_open: ${glossary[_open]}',
-                          style: const TextStyle(
-                              fontSize: 15, height: 1.4, color: Palette.ink)),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 
 /// A card a task is about, marked as in the card tracker.
@@ -9662,7 +9542,6 @@ class _MoreAboutState extends State<_MoreAbout> {
                             style: const TextStyle(
                                 fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
                       ),
-                    _TermsList(terms: widget.terms),
                   ],
                 ),
         ),
@@ -9739,7 +9618,8 @@ class _CardTrackerState extends State<_CardTracker> {
         for (final c in g.certain) c: g.seat,
     };
     final deck = fullDeck();
-    const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs, Suit.court];
+    // The Court Cards first, then each suit.
+    const suits = [Suit.court, Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs];
 
     Widget cell(PlayingCard c, double w) {
       final p = playedIn[c];
@@ -9785,7 +9665,35 @@ class _CardTrackerState extends State<_CardTracker> {
         );
 
     // The key: everyone's colour. Tap someone else to see what they may
-    // hold.
+    // hold instead of the deck; tap the deck to come back.
+    Widget deckChip() {
+      final on = _seat == null;
+      return Semantics(
+        button: true,
+        selected: on,
+        label: 'Every card',
+        child: Material(
+          color: on ? Palette.gold : const Color(0x33000000),
+          shape: StadiumBorder(
+              side: BorderSide(color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            highlightColor: Colors.transparent,
+            onTap: () => setState(() => _seat = null),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Text('Deck',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: on ? Palette.ink : Colors.white,
+                      shadows: on ? null : _feltShadow)),
+            ),
+          ),
+        ),
+      );
+    }
+
     Widget key(int seat) {
       final p = players[seat];
       final picked = _seat == seat;
@@ -9798,11 +9706,6 @@ class _CardTrackerState extends State<_CardTracker> {
                 fontWeight: FontWeight.w700,
                 color: picked ? Palette.ink : Colors.white,
                 shadows: picked ? null : _feltShadow)),
-        if (seat != you) ...[
-          const SizedBox(width: 4),
-          Icon(picked ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-              size: 18, color: picked ? Palette.ink : Palette.gold),
-        ],
       ]);
       if (seat == you) {
         return Padding(
@@ -9821,7 +9724,7 @@ class _CardTrackerState extends State<_CardTracker> {
             customBorder: const StadiumBorder(),
             highlightColor: Colors.transparent,
             splashColor: Palette.gold.withValues(alpha: 0.2),
-            onTap: () => setState(() => _seat = picked ? null : seat),
+            onTap: () => setState(() => _seat = seat),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: label,
@@ -9861,7 +9764,6 @@ class _CardTrackerState extends State<_CardTracker> {
 
       return Container(
         key: ValueKey('guess-${g.seat}'),
-        margin: const EdgeInsets.only(top: 12),
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
         decoration: BoxDecoration(
           color: const Color(0x22000000),
@@ -9884,7 +9786,7 @@ class _CardTrackerState extends State<_CardTracker> {
 
     final picked = [for (final g in guesses) if (g.seat == _seat) g];
     return LayoutBuilder(builder: (context, box) {
-      final w = math.min(54.0, (box.maxWidth - 8 * 4 - 1) / 9);
+      final w = math.min(40.0, (box.maxWidth - 8 * 4 - 1) / 9);
       final small = clampD(w * 0.7, 20, 34);
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -9927,39 +9829,46 @@ class _CardTrackerState extends State<_CardTracker> {
             alignment: WrapAlignment.center,
             spacing: 6,
             runSpacing: 6,
-            children: [for (int s = 0; s < players.length; s++) key(s)],
+            children: [
+              deckChip(),
+              for (int s = 0; s < players.length; s++) key(s),
+            ],
           ),
           const SizedBox(height: 12),
+          // The deck, or the chosen player's possible hand in its place.
           Flexible(
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final suit in suits)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: [
-                          for (final c in deck)
-                            if (c.suit == suit) cell(c, w)
-                        ],
-                      ),
-                    ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.topCenter,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: picked.isEmpty
-                          ? const SizedBox(width: double.infinity)
-                          : guessBox(picked.single, small),
-                    ),
-                  ),
-                ],
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  layoutBuilder: (current, previous) => Stack(
+                      alignment: Alignment.topCenter,
+                      children: [...previous, if (current != null) current]),
+                  child: picked.isNotEmpty
+                      ? guessBox(picked.single, small)
+                      : Column(
+                          key: const ValueKey('deck'),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            for (final suit in suits)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: [
+                                    for (final c in deck)
+                                      if (c.suit == suit) cell(c, w)
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                ),
               ),
             ),
           ),
@@ -9979,7 +9888,7 @@ class _CardTrackerState extends State<_CardTracker> {
 }
 
 /// The soft shadow under words on the felt, as on the front page.
-const _feltShadow = [Shadow(color: Colors.black54, blurRadius: 10)];
+const _feltShadow = feltShadow;
 
 /// Courtiers' powers and Dynasty are being reworked; until then they're
 /// shown as coming soon.

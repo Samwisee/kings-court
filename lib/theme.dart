@@ -67,6 +67,53 @@ class Palette {
 const displayFont = 'CinzelDecorative';
 const bodyFont = 'AlegreyaSans';
 
+// ---------------------------------------------------------------- the skin
+//
+// Everything that decides how the court looks lives in this file: the
+// palette above, the type faces, the soft shadow under words on the felt,
+// and the look of every dialog and pop-up below. A new skin for the game
+// changes these, and every screen follows.
+
+/// The soft shadow under words and icons on the felt.
+const feltShadow = [Shadow(color: Colors.black54, blurRadius: 10)];
+
+/// Every dialog and pop-up's look, in one place.
+class DialogStyle {
+  /// The plain dialog: the felt, edged in gold.
+  static const background = Palette.feltDeep;
+  static const radius = 22.0;
+  static const edge = Color(0xB3D4A63A);
+  static const shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(radius)),
+      side: BorderSide(color: edge, width: 1.4));
+
+  /// What dims the screen behind a dialog.
+  static const barrier = Color(0x73000000);
+
+  /// Its title: the court's display face in gold.
+  static const title = TextStyle(
+      fontFamily: displayFont,
+      fontWeight: FontWeight.w700,
+      fontSize: 22,
+      height: 1.2,
+      color: Palette.gold,
+      shadows: feltShadow);
+
+  /// Its words.
+  static const body = TextStyle(fontSize: 16, height: 1.45, color: Colors.white);
+
+  /// Quieter words under them.
+  static const note = TextStyle(fontSize: 14, height: 1.4, color: Colors.white70);
+
+  /// A task's close-up is on card stock instead, like the task card itself.
+  static const paper = Palette.card;
+  static const paperTitle = TextStyle(
+      fontFamily: displayFont,
+      fontWeight: FontWeight.w700,
+      fontSize: 22,
+      color: Palette.ink);
+}
+
 ThemeData buildTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: Palette.felt,
@@ -141,6 +188,24 @@ ThemeData buildTheme() {
       ),
     ),
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
+    // Every dialog, unless it says otherwise (see [DialogStyle]).
+    dialogTheme: const DialogThemeData(
+      backgroundColor: DialogStyle.background,
+      surfaceTintColor: Colors.transparent,
+      shape: DialogStyle.shape,
+      barrierColor: DialogStyle.barrier,
+      titleTextStyle: DialogStyle.title,
+      contentTextStyle: DialogStyle.body,
+    ),
+    // Quiet text buttons in gold, with no grey wash when pressed.
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: Palette.gold,
+        overlayColor: Colors.transparent,
+        textStyle: const TextStyle(
+            fontFamily: bodyFont, fontSize: 16, fontWeight: FontWeight.w700),
+      ),
+    ),
   );
 }
 

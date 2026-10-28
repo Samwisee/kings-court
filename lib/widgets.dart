@@ -3092,44 +3092,74 @@ class HighVisBorder extends RoundedRectangleBorder {
 }
 
 
-/// What a game word means, in the court's colours.
-Future<void> showTermDialog(BuildContext context, String term) => showDialog<void>(
-      context: context,
-      barrierColor: Colors.black45,
-      builder: (context) => Dialog(
+/// The court's ornate pop-up: the felt, gold filigree and a crown
+/// medallion over the top. Every ornate dialog is one of these, so a skin
+/// restyles them all at once (see [DialogStyle] and [OrnateCard]).
+class CourtDialog extends StatelessWidget {
+  const CourtDialog(
+      {super.key,
+      this.title,
+      required this.child,
+      this.actions = const [],
+      this.maxWidth = 420});
+  final String? title;
+  final Widget child;
+
+  /// Buttons, centred under the words, the main one first.
+  final List<Widget> actions;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) => Dialog(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: OrnateCard(
           won: false,
           court: true,
+          maxWidth: maxWidth,
           margin: const EdgeInsets.only(top: 34),
-          padding: const EdgeInsets.fromLTRB(28, 34, 28, 14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(term,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontFamily: displayFont,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 22,
-                      color: Palette.gold,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 10)])),
-              const SizedBox(height: 10),
-              SuitText(glossary[term] ?? '',
-                  keywords: false,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, height: 1.45, color: Colors.white)),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                    foregroundColor: Palette.gold, overlayColor: Colors.transparent),
-                child: const Text('Got it'),
-              ),
-            ],
+          padding: const EdgeInsets.fromLTRB(28, 38, 28, 16),
+          child: DefaultTextStyle.merge(
+            style: DialogStyle.body,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (title != null) ...[
+                  Text(title!, textAlign: TextAlign.center, style: DialogStyle.title),
+                  const SizedBox(height: 12),
+                ],
+                child,
+                if (actions.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 10,
+                    runSpacing: 6,
+                    children: actions,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
+      );
+}
+
+/// What a game word means, in the court's colours.
+Future<void> showTermDialog(BuildContext context, String term) => showDialog<void>(
+      context: context,
+      builder: (context) => CourtDialog(
+        title: term,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+        child: SuitText(glossary[term] ?? '',
+            keywords: false, textAlign: TextAlign.center, style: DialogStyle.body),
       ),
     );

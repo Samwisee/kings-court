@@ -255,8 +255,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Palette.card,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: DialogStyle.paper,
         shape: const HighVisBorder(null),
         scrollable: true,
         contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
