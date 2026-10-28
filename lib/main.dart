@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'bug_report.dart';
 import 'chronicle.dart';
 import 'courtiers.dart';
 import 'story.dart';
@@ -5302,6 +5303,8 @@ class _HomePageState extends State<HomePage>
           case 'keys':
             _ui(() => _showKeys = !_showKeys);
             _saveSettings();
+          case 'bug':
+            showBugReport(context, details: _bugDetails);
           case 'suits':
             setState(() => Palette.fourColourSuits = !Palette.fourColourSuits);
             // Every card on screen repaints in the new colours, even ones
@@ -5343,7 +5346,35 @@ class _HomePageState extends State<HomePage>
         if (_desktop)
           _menuItem('keys', Icons.keyboard_outlined, 'Keyboard shortcuts',
               on: _showKeys),
+        _menuItem('bug', Icons.bug_report_outlined, 'Report a bug'),
       ];
+
+  /// What goes with a bug report: where the player is, their settings, and
+  /// the whole game as saved with the last moves, so it can be loaded
+  /// (GameState.fromJson) and seen exactly as they saw it.
+  Map<String, dynamic> _bugDetails() {
+    final moves = _inGame ? _link.history : const <MatchAction>[];
+    return {
+      'where': {
+        'inGame': _inGame,
+        if (_inGame) 'mode': game.mode.name,
+        if (_inGame) 'round': game.roundNumber,
+        'onScreen': _digital,
+        'settingUp': _setupArgs != null,
+        'contest': _contest != null,
+      },
+      'settings': {
+        'sound': Sfx.enabled,
+        'fourColourSuits': Palette.fourColourSuits,
+        'keyboard': _showKeys,
+      },
+      if (_inGame) 'state': game.toJson(),
+      if (moves.isNotEmpty)
+        'lastMoves': [
+          for (final m in moves.skip(math.max(0, moves.length - 40))) m.toJson()
+        ],
+    };
+  }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(

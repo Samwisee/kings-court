@@ -208,6 +208,45 @@ void main() {
     expect(find.byType(TableCard), findsWidgets);
   });
 
+  testWidgets('A bug report carries the game, and loads back', (tester) async {
+    setPhoneSize(tester);
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copied = (call.arguments as Map)['text'] as String;
+      }
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null));
+    await dealGame(tester, 4);
+    await tester.tap(find.byType(SeatToken).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Report a bug'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Report a bug'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('bugMessage')), 'The King vanished');
+    await tester.tap(find.text('Send'));
+    await tester.pumpAndSettle();
+    // No service in tests, so the report is copied instead.
+    expect(find.text('Report copied'), findsOneWidget);
+    final report = jsonDecode(copied!) as Map<String, dynamic>;
+    expect(report['message'], 'The King vanished');
+    expect(report['where']['round'], 1);
+    final back = GameState.fromJson(Map<String, dynamic>.from(report['state'] as Map));
+    final game = (tester.state(find.byType(HomePage)) as dynamic).game as GameState;
+    expect(back, isNotNull);
+    expect(back!.tasks.length, game.tasks.length);
+    expect(back.kingIndex, game.kingIndex);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Report copied'), findsNothing);
+  });
+
   testWidgets('Points target can change without a new game', (tester) async {
     setPhoneSize(tester);
     await dealGame(tester, 4);

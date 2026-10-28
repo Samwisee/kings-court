@@ -1,0 +1,34 @@
+name: Check a branch
+
+# Analyze and test on any branch but main (main runs them in deploy.yml),
+# so work in progress can be checked without publishing it.
+on:
+  push:
+    branches-ignore: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine 2>&1 | tee analyze.txt || true
+          awk -F'|' 'NF>=8 && ($1=="ERROR" || $1=="WARNING") {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' analyze.txt
+          ! grep -q '^ERROR|' analyze.txt
+      - name: Test
+        run: |
+          set +e
+          timeout 600 flutter test --timeout 60s --reporter expanded > test.txt 2>&1
+          code=$?
+          tail -5 test.txt
+          if [ $code -ne 0 ]; then python3 tool/ci_annotate.py test.txt; fi
+          exit $code
+      - run: flutter build web --release --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8}

@@ -41,6 +41,8 @@ dependencies:
   shared_preferences: ^2.3.2
   # Fanfares for the crowning and the end of a round.
   audioplayers: ^6.1.0
+  # Sends bug reports (lib/bug_report.dart).
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:

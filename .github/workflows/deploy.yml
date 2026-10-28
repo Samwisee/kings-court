@@ -54,7 +54,12 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build web --release --base-href /kings-court/
+      # BUILD names the commit in bug reports; BUG_URL is where they go (the
+      # repo variable BUG_REPORT_URL, the Cloudflare Worker in tool/bug_worker).
+      - run: >-
+          flutter build web --release --base-href /kings-court/
+          --dart-define=BUILD=${GITHUB_SHA::8}
+          --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }}
       # Give each build's files a version so browsers fetch the new ones
       # instead of a cached copy.
       - name: Bust caches
