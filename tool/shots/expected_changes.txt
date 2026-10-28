@@ -4,3 +4,7 @@
 # taken.
 wide-screen-menu.png: the menu offers the Plain look (a new row, docs/DECISIONS.md step 7)
 wide-table-menu.png: the menu offers the Plain look (a new row, docs/DECISIONS.md step 7)
+plain-0-welcome.png: new, the Plain skin's set (docs/DECISIONS.md step 7)
+plain-1-setup.png: new, the Plain skin's set (docs/DECISIONS.md step 7)
+plain-2-table.png: new, the Plain skin's set (docs/DECISIONS.md step 7)
+plain-3-menu.png: new, the Plain skin's set (docs/DECISIONS.md step 7)

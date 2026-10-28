@@ -267,3 +267,11 @@ with such literals as the next debt.
   instead of felt, a teal accent instead of gold, the body face for titles,
   flat dialogs and buttons; the Court Cards and the table's ornament are
   the court's art in both.
+- The screenshots take a Plain set (`plain-0-welcome` … `plain-3-menu`)
+  beside the Court set: the front page, setup, a round on screen and the
+  menu, on a phone. They are new, so listed in `expected_changes.txt`
+  until the baseline is retaken.
+- `skin/strings.dart` holds the chrome's words (menu, top bar, front
+  page, the small dialogs) as constants, so the widgets showing them stay
+  `const`; translation would make it an object chosen by locale (future
+  work).

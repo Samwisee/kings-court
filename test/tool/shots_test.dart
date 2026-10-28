@@ -12,6 +12,7 @@ import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
+import 'package:kings_court/skin/plain/plain_skin.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/dynasty/hall_pieces.dart';
@@ -374,6 +375,37 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
   }
+
+  testWidgets('The Plain skin: front page, setup, a round, the menu', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp(skin: PlainSkin()));
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-0-welcome.png'));
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-1-setup.png'));
+    await tester.tap(find.text('Single player'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Free play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('4').last);
+    await tester.pumpAndSettle();
+    if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start'));
+    for (var i = 0; i < 160; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-2-table.png'));
+    await tester.tap(find.byTooltip('Menu'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-3-menu.png'));
+  });
 
   testWidgets('The front page, wide', (tester) async {
     tester.view.physicalSize = const Size(3840, 2160);
