@@ -23,7 +23,7 @@ Widget middle(List<Widget> cards) => MaterialApp(
 
 void main() {
   test('Trick cards fit the table: narrower with more players, never tiny', () {
-    expect(trickCardWidth(360, 3), lessThan(trickCardWidth(360, 2)));
+    expect(trickCardWidth(360, 6), lessThan(trickCardWidth(360, 3)));
     expect(trickCardWidth(100, 6), 34);
     expect(trickCardWidth(2000, 3), 100);
   });
