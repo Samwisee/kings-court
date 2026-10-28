@@ -273,6 +273,24 @@ void main() {
       for (int i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
+      // Report a bug, from the menu.
+      await tester.tap(find.byTooltip('Menu'));
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await tester.tap(find.text('Report a bug'));
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await tester.enterText(find.byKey(const ValueKey('bugMessage')),
+          'I tapped the Jester and nothing happened.');
+      await tester.pump(const Duration(milliseconds: 300));
+      await expectLater(find.byType(MaterialApp),
+          matchesGoldenFile('goldens/wide-$name-bug.png'));
+      await tester.tap(find.text('Cancel'));
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
       final points = find.byTooltip('Points target');
       if (points.evaluate().isNotEmpty) {
         await tester.tap(points.first);
