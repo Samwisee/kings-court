@@ -56,6 +56,32 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 - **Commit identity:** in these sessions a stop hook asks for `Claude <noreply@anthropic.com>` as author.
 - **Commit messages:** a plain sentence of what changed for the player ("The court stays put across scenes; petitioners come and go"), with the session's `Co-Authored-By` / `Claude-Session` lines.
 
+## Feedback from players: bug reports, crashes, counts
+
+Friends and family play the Pages build; three things tell us how it goes.
+Each switches on when its repo setting exists (Settings > Secrets and
+variables > Actions) and does nothing without it.
+
+| What | Code | Setting | Where to read it |
+|---|---|---|---|
+| **Report a bug** (menu) | `lib/bug_report.dart`, Worker in `tool/bug_worker/` | variable `BUG_REPORT_URL` | GitHub issues labelled `bug` + `from-game`: `gh issue list -R Samwisee/kings-court -l from-game` |
+| **Crash reports** | `lib/crash_reports.dart` (Sentry) | variables `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`; secret `SENTRY_AUTH_TOKEN` (source maps) | sentry.io (Sam's account) |
+| **Counts** | `lib/analytics.dart` (GoatCounter) | variable `GOATCOUNTER_CODE` | `<code>.goatcounter.com` |
+
+- A bug report carries the game as saved (`state`, load it with
+  `GameState.fromJson`), the last 40 moves, recent errors and recent counted
+  events. To reproduce one, paste `state` into a test and pump the page with
+  that game, or compare it with what the player describes.
+- Without `BUG_REPORT_URL`, Send copies the report for the player to paste.
+- Counted events are short paths: `start/<mode>/<n>p/<screen|table>[/roles|plain]`,
+  `continue/<mode>`, `round/<mode>/<r1..r5|r6-10|r11+|lessonN|chapterN>/<won|lost>`,
+  `left/<mode>/<round>` (a new game started mid-round), `tutorial/finished`,
+  `menu/<choice>[/on|off]`. Add new ones with `Analytics.event([...])`.
+- `build_info.dart` holds the commit (`BUILD`), shown in reports and crashes.
+- Branches other than `main` run analyze, tests and a web build
+  (`.github/workflows/check.yml`) without deploying: use a branch for work
+  that might break the build, then fast-forward `main`.
+
 ## Code map
 
 | File | What lives there |

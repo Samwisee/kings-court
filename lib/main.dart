@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'analytics.dart';
 import 'bug_report.dart';
 import 'chronicle.dart';
 import 'crash_reports.dart';
@@ -55,7 +56,10 @@ part 'home/transitions.dart';
 part 'home/mini_card.dart';
 part 'home/buttons.dart';
 
-void main() => runWithCrashReports(const TheKingsCourtApp());
+void main() {
+  Analytics.visit();
+  runWithCrashReports(const TheKingsCourtApp());
+}
 
 class TheKingsCourtApp extends StatelessWidget {
   const TheKingsCourtApp({super.key});
@@ -219,6 +223,11 @@ class _HomePageState extends State<HomePage>
   static const _uprightKey = 'kingsCourt.upright';
   static const _suitsKey = 'kingsCourt.fourColourSuits';
   static const _keysKey = 'kingsCourt.showShortcuts';
+  static const _tutorialDoneKey = 'kingsCourt.tutorialDone';
+
+  /// Whether this player has finished the tutorial (or played before it
+  /// existed): until then, setup points them to it first.
+  bool _tutorialDone = false;
 
   /// Desktop: the keyboard shortcuts shown beside the table.
   bool _showKeys = false;
@@ -600,6 +609,8 @@ class _HomePageState extends State<HomePage>
       Palette.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
       _showKeys = prefs.getBool(_keysKey) ?? false;
       final saves = await _readSaves(prefs);
+      // Anyone with a saved game has played already.
+      _tutorialDone = (prefs.getBool(_tutorialDoneKey) ?? false) || saves.isNotEmpty;
       if (!mounted) return;
       setState(() {
         _bestStreak = best;
@@ -681,6 +692,7 @@ class _HomePageState extends State<HomePage>
       await prefs.setBool(_uprightKey, _upright);
       await prefs.setBool(_suitsKey, Palette.fourColourSuits);
       await prefs.setBool(_keysKey, _showKeys);
+      await prefs.setBool(_tutorialDoneKey, _tutorialDone);
     } catch (_) {}
   }
 
@@ -712,6 +724,7 @@ class _HomePageState extends State<HomePage>
 
   /// Picks up a saved game exactly where it was left.
   void _continueSaved(_SavedGame saved) {
+    Analytics.event(['continue', saved.game.mode.name]);
     final g = saved.game;
     final data = saved.data;
     setState(() {
@@ -3521,6 +3534,17 @@ class _HomePageState extends State<HomePage>
       _progress.startAttempt(chapter);
       _saveSettings();
     }
+    // Leaving a round part-way for a new game counts as giving up on it.
+    if (_inGame && !game.isTutorial && game.outcome == RoundOutcome.inProgress) {
+      Analytics.event(['left', game.mode.name, Analytics.roundBucket(game.roundNumber)]);
+    }
+    Analytics.event([
+      'start',
+      mode.name,
+      '${count}p',
+      digital ? 'screen' : 'table',
+      if (mode != GameMode.tutorial && mode != GameMode.dynasty) roles ? 'roles' : 'plain',
+    ]);
     setState(() {
       playerCount = count;
       targetPoints = target;
@@ -3617,6 +3641,9 @@ class _HomePageState extends State<HomePage>
 
   /// Leaves the tutorial for the welcome table, and offers a real game.
   Future<void> _finishTutorial() async {
+    Analytics.event(['tutorial', 'finished']);
+    _tutorialDone = true;
+    _saveSettings();
     _botTimer?.cancel();
     _botTimer = null;
     setState(() {
@@ -4075,6 +4102,17 @@ class _HomePageState extends State<HomePage>
       _lastMark = (task, previous);
       if (game.recordOutcomeIfFinished()) {
         final won = game.outcome == RoundOutcome.won;
+        Analytics.event([
+          'round',
+          game.mode.name,
+          if (game.isTutorial)
+            'lesson${game.lesson + 1}'
+          else if (game.mode == GameMode.chronicle && game.chapter != null)
+            'chapter${game.chapter! + 1}'
+          else
+            Analytics.roundBucket(game.roundNumber),
+          won ? 'won' : 'lost',
+        ]);
         if (won) {
           Sfx.win();
         } else {
@@ -4819,6 +4857,7 @@ class _HomePageState extends State<HomePage>
       },
       // On-screen cards unless the game being replaced used a real deck.
       digital: _inGame ? game.digital : true,
+      newPlayer: !_tutorialDone,
       onSound: (on) {
         setState(() => Sfx.enabled = on);
         _saveSettings();
@@ -5260,6 +5299,13 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _onMenuChoice(String choice) async {
+        Analytics.event([
+          'menu',
+          choice,
+          if (choice == 'sound') Sfx.enabled ? 'off' : 'on',
+          if (choice == 'suits') Palette.fourColourSuits ? 'off' : 'on',
+          if (choice == 'keys') _showKeys ? 'off' : 'on',
+        ]);
         switch (choice) {
           case 'new':
             _showSetupDialog();

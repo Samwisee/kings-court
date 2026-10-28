@@ -61,6 +61,7 @@ jobs:
           --dart-define=BUILD=${GITHUB_SHA::8}
           --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }}
           --dart-define=SENTRY_DSN=${{ vars.SENTRY_DSN }}
+          --dart-define=GOATCOUNTER=${{ vars.GOATCOUNTER_CODE }}
           --source-maps
       # Source maps go to Sentry (when it's set up) so crash reports show the
       # Dart lines, then are left off the published site.

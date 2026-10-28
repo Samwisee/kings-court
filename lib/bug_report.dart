@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import 'analytics.dart';
 import 'build_info.dart';
 import 'crash_reports.dart';
 import 'widgets.dart';
@@ -48,6 +49,7 @@ Future<void> showBugReport(BuildContext context,
         },
         'time': DateTime.now().toUtc().toIso8601String(),
         if (recentErrors.isNotEmpty) 'recentErrors': List.of(recentErrors),
+        if (Analytics.sent.isNotEmpty) 'recentEvents': List.of(Analytics.sent),
         ...snapshot,
       },
     ),

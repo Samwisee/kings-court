@@ -41,11 +41,15 @@ class _SetupPanel extends StatefulWidget {
     this.saves = const [],
     this.onContinue,
     this.onSound,
+    this.newPlayer = false,
   });
 
   /// Sounds switched on or off on the last step (the same setting as in
   /// the menu).
   final ValueChanged<bool>? onSound;
+
+  /// Hasn't done the tutorial yet: it's marked as the place to start.
+  final bool newPlayer;
 
   final List<_SavedGame> saves;
   final ValueChanged<_SavedGame>? onContinue;
@@ -220,7 +224,7 @@ class _SetupPanelState extends State<_SetupPanel> {
   /// The first choice: how you'll play. Tap one to go on.
   Widget _howStep() {
     Widget tile(String title, String description, IconData icon,
-            VoidCallback? onTap, {String? badge}) =>
+            VoidCallback? onTap, {String? badge, bool highlight = false}) =>
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Opacity(
@@ -228,6 +232,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             child: _ModeTile(
               title: title,
               badge: badge,
+              badgeGold: highlight,
               icon: icon,
               description: description,
               selected: false,
@@ -257,11 +262,12 @@ class _SetupPanelState extends State<_SetupPanel> {
         const Text('How will you play?',
             textAlign: TextAlign.center, style: _heading),
         const SizedBox(height: 12),
+        // A first-timer is pointed here first.
         tile('Tutorial', 'New to the court? Learn the rules step by step.',
             Icons.school_rounded, () {
           mode = GameMode.tutorial;
           _start();
-        }),
+        }, badge: widget.newPlayer ? 'Start here' : null, highlight: widget.newPlayer),
         tile('Single player',
             'Just you, with the cards on screen and courtiers who play with you.',
             Icons.person_rounded, () => setState(() {
@@ -779,6 +785,7 @@ class _ModeTile extends StatelessWidget {
   const _ModeTile(
       {required this.title,
       this.badge,
+      this.badgeGold = false,
       this.icon,
       required this.description,
       required this.selected,
@@ -791,6 +798,9 @@ class _ModeTile extends StatelessWidget {
   /// A note beside the title, such as "(Alpha)" for a mode still taking
   /// shape.
   final String? badge;
+
+  /// The badge in gold, for one that invites rather than warns.
+  final bool badgeGold;
   final String description;
   final bool selected;
   final VoidCallback onTap;
@@ -831,10 +841,10 @@ class _ModeTile extends StatelessWidget {
                   if (badge != null) ...[
                     const SizedBox(width: 8),
                     Text(badge!,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white70)),
+                            color: badgeGold ? Palette.gold : Colors.white70)),
                   ],
                 ],
               ),

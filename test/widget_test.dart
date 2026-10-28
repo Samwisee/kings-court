@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kings_court/analytics.dart';
 import 'package:kings_court/chronicle.dart';
 import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/main.dart';
@@ -125,6 +126,27 @@ void main() {
     expect(find.text('How will you play?'), findsOneWidget);
     expect(find.text('Tutorial'), findsOneWidget);
     expect(find.text('Continue'), findsNothing);
+    // A first-timer is pointed to the tutorial.
+    expect(find.text('Start here'), findsOneWidget);
+  });
+
+  testWidgets('After the tutorial, setup no longer says Start here',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'kingsCourt.tutorialDone': true});
+    setPhoneSize(tester);
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tutorial'), findsOneWidget);
+    expect(find.text('Start here'), findsNothing);
+  });
+
+  testWidgets('Starting and finishing rounds are counted', (tester) async {
+    setPhoneSize(tester);
+    Analytics.sent.clear();
+    await dealGame(tester, 4);
+    expect(Analytics.sent, contains(startsWith('start/free/4p/table')));
   });
 
   testWidgets('How to play opens as a dialog with the 2-player rules',
