@@ -43,6 +43,14 @@ class _CardTrackerState extends State<_CardTracker> {
   /// The player whose possible hand is shown under the grid.
   int? _seat;
 
+  /// The eye is held down.
+  bool _peekHeld = false;
+
+  /// How far past the panel's padding its bronze rule runs (the panel's
+  /// padding, less where [OrnateCard] draws the rule): the eye reaches
+  /// out to meet it.
+  static const _notchReach = 12.0 - OrnateCard.ruleInset;
+
   MatchState get cards => widget.cards;
   int get you => widget.you;
   List<Player> get players => widget.players;
@@ -320,7 +328,7 @@ class _CardTrackerState extends State<_CardTracker> {
           // Along the bottom: the deck and each player, then (in the
           // corner, easy to reach with a thumb) the eye to hold for a look at
           // the table.
-          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Expanded(
               child: Wrap(
                 spacing: 4,
@@ -332,24 +340,41 @@ class _CardTrackerState extends State<_CardTracker> {
               ),
             ),
             const SizedBox(width: 12),
-            Tooltip(
-              message: 'Hold to see the table',
-              child: Listener(
-                onPointerDown: (_) => widget.onPeek?.call(true),
-                onPointerUp: (_) => widget.onPeek?.call(false),
-                onPointerCancel: (_) => widget.onPeek?.call(false),
-                child: Container(
-                  width: 48,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: ShapeDecoration(
-                    color: const Color(0x33000000),
-                    shape: StadiumBorder(
-                        side: BorderSide(
-                            color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
+            // Set into the corner of the panel: its own top and left edges
+            // meet the panel's bronze rule, which makes its other two
+            // sides, round the same curve.
+            Transform.translate(
+              offset: const Offset(_notchReach, _notchReach),
+              child: Tooltip(
+                message: 'Hold to see the table',
+                child: Listener(
+                  onPointerDown: (_) {
+                    setState(() => _peekHeld = true);
+                    widget.onPeek?.call(true);
+                  },
+                  onPointerUp: (_) {
+                    setState(() => _peekHeld = false);
+                    widget.onPeek?.call(false);
+                  },
+                  onPointerCancel: (_) {
+                    setState(() => _peekHeld = false);
+                    widget.onPeek?.call(false);
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: CustomPaint(
+                      painter: _CornerNotch(held: _peekHeld),
+                      child: const SizedBox(
+                        width: 54,
+                        height: 42,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 3, top: 3),
+                          child: Icon(Icons.visibility_rounded,
+                              color: Palette.gold, size: 20),
+                        ),
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.visibility_rounded,
-                      color: Palette.gold, size: 20),
                 ),
               ),
             ),
@@ -375,4 +400,35 @@ class _CardTrackerState extends State<_CardTracker> {
     return math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
   }
 
+}
+
+/// The eye's corner of the card tracker: a tint following the panel's
+/// rounded corner, with a bronze line along its top and left only, curved
+/// like the panel's own rule ([OrnateCard.ruleRadius]).
+class _CornerNotch extends CustomPainter {
+  const _CornerNotch({required this.held});
+  final bool held;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const r = Radius.circular(OrnateCard.ruleRadius);
+    final rect = Offset.zero & size;
+    canvas.drawRRect(
+        RRect.fromRectAndCorners(rect, topLeft: r, bottomRight: r),
+        Paint()..color = held ? const Color(0x33D4A63A) : const Color(0x33000000));
+    final edge = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, r.y)
+      ..arcToPoint(Offset(r.x, 0), radius: r)
+      ..lineTo(size.width, 0);
+    canvas.drawPath(
+        edge,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = OrnateCard.ruleWidth
+          ..color = OrnateCard.ruleColour(Palette.gold));
+  }
+
+  @override
+  bool shouldRepaint(_CornerNotch old) => old.held != held;
 }

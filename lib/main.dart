@@ -469,6 +469,12 @@ class _HomePageState extends State<HomePage>
         for (final t in open)
           if (_openTaskKeys[t] case final key?)
             if (_rectOn(key) case final r?) _KbStop(1, t, r),
+        // Tasks already taken, in front of whoever took them: to read
+        // again (Enter opens them).
+        for (final t in game.tasks)
+          if (t.assignedPlayerIndex != null && !_landing.contains(t))
+            if (_destKeys[t] case final key?)
+              if (_rectOn(key) case final r?) _KbStop(1, t, r),
         if (_kbButtonPress != null)
           if (_rectOn(_kbButtonKey) case final r?) _KbStop(2, null, r),
         if (_rectOn(_handKey) case final area?)
@@ -1467,6 +1473,26 @@ class _HomePageState extends State<HomePage>
         inPlay: c.inPlay);
   }
 
+  /// The round as the table shows it: a trick still lying on the table
+  /// (before it's swept to its winner) doesn't count yet, so the tasks'
+  /// tallies and crossed-out cards change as the cards arrive.
+  RoundView get _shownView {
+    final c = _cards;
+    final pending = _lastTrick != null && c.tricks.isNotEmpty;
+    return RoundView(
+        players: c.players,
+        king: game.kingIndex ?? c.king,
+        tricks: pending ? c.tricks.sublist(0, c.tricks.length - 1) : c.tricks,
+        totalTricks: c.totalTricks,
+        inPlay: c.inPlay);
+  }
+
+  /// Tricks [seat] has won, as the table shows them (see [_shownView]).
+  int _shownTricksWon(int seat) {
+    final n = _cards.tricksWon(seat);
+    return _lastTrick != null && _lastTrick!.winner == seat ? n - 1 : n;
+  }
+
   /// How far along an on-screen task is ("2/4"), for the card's corner.
   /// How [t] is going, in a sentence for its close-up (on-screen cards
   /// only, once it's been taken).
@@ -1481,7 +1507,7 @@ class _HomePageState extends State<HomePage>
     if (_cards.tricks.isEmpty && game.pickTurn != null) {
       return 'The tricks haven’t started yet.';
     }
-    return taskStatus(t.description, _roundView, t.assignedPlayerIndex!,
+    return taskStatus(t.description, _shownView, t.assignedPlayerIndex!,
         _cards.announced[t.description],
         names: [for (final p in game.players) p.name]);
   }
@@ -1495,7 +1521,7 @@ class _HomePageState extends State<HomePage>
         t.description.startsWith("Don't")) {
       return const {};
     }
-    final won = {for (final c in _roundView.won(owner)) c.label};
+    final won = {for (final c in _shownView.won(owner)) c.label};
     return {
       for (final m in RegExp(r'[A2-9][♥♦♠♣]').allMatches(t.description))
         if (won.contains(m.group(0))) m.group(0)!
@@ -1614,7 +1640,7 @@ class _HomePageState extends State<HomePage>
         t.status != TaskStatus.pending) {
       return null;
     }
-    return taskProgress(t.description, _roundView, t.assignedPlayerIndex!,
+    return taskProgress(t.description, _shownView, t.assignedPlayerIndex!,
         _cards.announced[t.description]);
   }
 
@@ -1864,16 +1890,25 @@ class _HomePageState extends State<HomePage>
                       if (i == 0) {
                         _handRects.clear();
                         // The card chosen with the arrow keys was played
-                        // (or shown): its neighbour is chosen instead.
+                        // (or shown), or can't be played now a new trick
+                        // has begun: the nearest card you can play is
+                        // chosen instead.
+                        final kb = _kbCard;
+                        final pool = hand.where(legal.contains).toList();
                         if (_kbRow == 0 &&
-                            _kbLast != null &&
-                            _kbCard != null &&
-                            !hand.contains(_kbCard)) {
+                            kb != null &&
+                            (!hand.contains(kb) ||
+                                (pool.isNotEmpty && !pool.contains(kb)))) {
                           final area = _rectOn(_handKey);
-                          final pool = hand.where(legal.contains).toList();
                           final from = pool.isEmpty ? hand : pool;
-                          if (area != null) {
-                            final x = _kbLast!.center.dx - area.left;
+                          final at = hand.indexOf(kb);
+                          final lastX = at >= 0
+                              ? (width - total) / 2 + at * step + cardW / 2
+                              : _kbLast == null || area == null
+                                  ? null
+                                  : _kbLast!.center.dx - area.left;
+                          if (lastX != null) {
+                            final x = lastX;
                             _kbCard = from.reduce((a, b) {
                               double d(PlayingCard c) =>
                                   ((width - total) / 2 + hand.indexOf(c) * step + cardW / 2 - x)
@@ -2302,6 +2337,7 @@ class _HomePageState extends State<HomePage>
             fontSize: fontSize,
             progress: _progressOf(t),
             struck: _wonNamed(t),
+            focused: _kbRow == 1 && _kbTask == t,
             charged: game.isCharged(t),
             onTap: () => _showTaskDetail(t, Offset.zero),
             onLongPress: () => _showTaskDetail(t, Offset.zero),
@@ -2514,7 +2550,7 @@ class _HomePageState extends State<HomePage>
                             : 0,
                         child: Text(
                             c.dealId == game.dealId
-                                ? '${c.tricksWon(seat)} won · ${c.hands[seat].length} cards'
+                                ? '${_shownTricksWon(seat)} won · ${c.hands[seat].length} cards'
                                 : '0 won · 0 cards',
                             maxLines: 1,
                             overflow: TextOverflow.fade,
@@ -2927,7 +2963,7 @@ class _HomePageState extends State<HomePage>
                         : 0,
                 child: Text(
                     c.dealId == game.dealId
-                        ? '${c.tricksWon(_you)} trick${c.tricksWon(_you) == 1 ? '' : 's'}'
+                        ? '${_shownTricksWon(_you)} trick${_shownTricksWon(_you) == 1 ? '' : 's'}'
                         : '0 tricks',
                     style: const TextStyle(fontSize: 11, color: Colors.white54)),
               ),
@@ -4927,8 +4963,18 @@ class _HomePageState extends State<HomePage>
                   key: const ValueKey('plain-bar'),
                   toolbarHeight: 60,
                   actions: [
-                    Padding(
-                        padding: const EdgeInsets.only(top: 8), child: _buildMenu()),
+                    // Not on the front page, which is just the title and
+                    // its buttons; it fades in with setup.
+                    IgnorePointer(
+                      ignoring: _setupArgs == null,
+                      child: AnimatedOpacity(
+                        opacity: _setupArgs == null ? 0 : 1,
+                        duration: const Duration(milliseconds: 250),
+                        child: Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: _buildMenu()),
+                      ),
+                    ),
                     const SizedBox(width: 18),
                   ]),
         ),

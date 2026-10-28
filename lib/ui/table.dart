@@ -14,6 +14,11 @@ class TableTrim extends StatelessWidget {
   /// How much of the table shows round the felt.
   static const rim = 7.0;
 
+  /// The brass rules' thickness: the outer one where the felt begins, and
+  /// the fainter one inside it.
+  static const outerRule = 2.5;
+  static const innerRule = 1.6;
+
   @override
   Widget build(BuildContext context) {
     if (table) return const CustomPaint(painter: _TablePainter(), size: Size.infinite);
@@ -21,13 +26,13 @@ class TableTrim extends StatelessWidget {
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x99D4A63A), width: 1.5),
+        border: Border.all(color: const Color(0x99D4A63A), width: outerRule),
       ),
       child: Container(
         margin: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0x55D4A63A), width: 1),
+          border: Border.all(color: const Color(0x66D4A63A), width: innerRule),
         ),
       ),
     );
@@ -67,14 +72,14 @@ class _TablePainter extends CustomPainter {
         felt,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
+          ..strokeWidth = TableTrim.outerRule
           ..color = const Color(0xCCD4A63A));
     canvas.drawRRect(
-        felt.deflate(3.5),
+        felt.deflate(4.5),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..color = const Color(0x55D4A63A));
+          ..strokeWidth = TableTrim.innerRule
+          ..color = const Color(0x66D4A63A));
   }
 
   @override

@@ -144,8 +144,8 @@ these, and every screen follows.
    - `outlineColour` / `outlineWidth`: the dark line round every card.
 2. **Panels**: `OrnateCard` in `lib/ui/panels.dart` draws every panel and
    ornate dialog, at one of three levels of `Ornament`:
-   - `low` (the default): gradient, faint damask, two bronze rules.
-   - `medium`: corner scrolls and a crown medallion. Used for the menu,
+   - `low` (the default): gradient, faint damask, one bronze rule.
+   - `medium`: a curl in each corner and a crown medallion. Used for the menu,
      results, points and You're ready.
    - `high`: a gold sheen sweeps across it.
 

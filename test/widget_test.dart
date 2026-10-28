@@ -132,6 +132,10 @@ void main() {
     setPhoneSize(tester);
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
+    // No menu on the front page; it's there once setup opens.
+    expect(find.byTooltip('Menu').hitTestable(), findsNothing);
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('How to Play'));
@@ -1348,6 +1352,50 @@ void main() {
     }
   });
   }
+
+  testWidgets('A courtier can be tapped anywhere on their token', (tester) async {
+    setPhoneSize(tester);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pumpAndSettle();
+    await openSetup(tester);
+    await tester.tap(find.text('Single player'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Free play'));
+    await tester.tap(find.text('Free play'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3').last);
+    await tester.pumpAndSettle();
+    if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start'));
+    for (int i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    // Each courtier's token: its middle, and near its edges.
+    final shapes = find.descendant(
+        of: find.byType(SeatToken), matching: find.byType(ShapedToken));
+    expect(shapes, findsWidgets);
+    final n = shapes.evaluate().length;
+    for (int k = 0; k < n; k++) {
+      final r = tester.getRect(shapes.at(k));
+      for (final at in [r.center, r.center + Offset(0, r.height * 0.3),
+          r.center - Offset(r.width * 0.3, 0)]) {
+        final hit = HitTestResult();
+        tester.binding.hitTestInView(hit, at, tester.view.viewId);
+        await tester.tapAt(at);
+        await tester.pump(const Duration(milliseconds: 50));
+        final opened = find.byType(Dialog).evaluate().isNotEmpty;
+        expect(opened, isTrue,
+            reason: 'token $k at $at (rect $r) opened nothing. Hit: '
+                '${hit.path.take(14).map((e) => e.target.runtimeType).join(' > ')}');
+        Navigator.of(tester.element(find.byType(Dialog))).pop();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+    }
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
 
   testWidgets('The tutorial plays through every lesson, following the coach',
       (tester) async {

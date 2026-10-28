@@ -1,17 +1,17 @@
 // Panels and dialogs: the ornate court card at each level, gold pips, and the shared dialogs.
 part of '../widgets.dart';
 
-/// The card that announces a round's end: a framed panel with a double
-/// rule, gem corners and a soft sheen. Gold for a win; dark wine edged in
-/// red and gold for a loss.
 /// How dressed up a panel or dialog is. Everything is [low] unless it's an
 /// occasion:
-/// * [low]: the gradient, a faint damask and two bronze rules round it.
-/// * [medium]: scrolls in the corners and a crown medallion over the top
+/// * [low]: the gradient, a faint damask and a bronze rule round it.
+/// * [medium]: a curl in each corner and a crown medallion over the top
 ///   (the menu, a lesson or round's result, You're ready).
 /// * [high]: a sheen of gold sweeps across it and stars twinkle.
 enum Ornament { low, medium, high }
 
+/// The court's panel for menus, results and dialogs: a framed card at one
+/// of three [Ornament] levels. Gold for a win, dark wine for a loss, felt
+/// and gold for the court ([court]).
 class OrnateCard extends StatelessWidget {
   const OrnateCard(
       {super.key,
@@ -37,6 +37,14 @@ class OrnateCard extends StatelessWidget {
   final EdgeInsets padding;
   final double maxWidth;
   final Widget child;
+
+  /// The bronze rule inside the edge: how far in it runs, how round its
+  /// corners are, how thick, and its colour on an [ink]. Something set
+  /// into a corner (the card tracker's eye) follows these.
+  static const ruleInset = 8.0;
+  static const ruleRadius = 12.0;
+  static const ruleWidth = 1.3;
+  static Color ruleColour(Color ink) => ink.withValues(alpha: 0.8);
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +87,7 @@ class OrnateCard extends StatelessWidget {
           ),
           Positioned.fill(
             child: CustomPaint(
-                painter: _Filigree(ink.withValues(alpha: 0.8),
+                painter: _Filigree(ruleColour(ink),
                     scrolls: ornament != Ornament.low)),
           ),
           // A win glitters: a sheen sweeps the gold and stars twinkle.
@@ -152,13 +160,12 @@ class _Damask extends CustomPainter {
   bool shouldRepaint(_Damask old) => old.color != color;
 }
 
-/// The inner double rule, with a curling scroll and a gem at each corner.
+/// The rule inside the edge, with a curl in each corner.
 class _Filigree extends CustomPainter {
   _Filigree(this.color, {this.scrolls = true});
   final Color color;
 
-  /// The second rule and the scrolls in the corners; without them, just
-  /// the one rule inside the edge.
+  /// A curl in each corner; without it, just the rule inside the edge.
   final bool scrolls;
 
   @override
@@ -166,30 +173,24 @@ class _Filigree extends CustomPainter {
     final line = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.3
+      ..strokeWidth = OrnateCard.ruleWidth
       ..strokeCap = StrokeCap.round;
-    const inset = 8.0, r = 12.0;
+    const inset = OrnateCard.ruleInset, r = OrnateCard.ruleRadius;
     canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2),
             const Radius.circular(r)),
         line);
     if (!scrolls) return;
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(inset + 4, inset + 4, size.width - inset * 2 - 8,
-                size.height - inset * 2 - 8),
-            const Radius.circular(r - 3)),
-        line..strokeWidth = 0.8);
     line.strokeWidth = 1.6;
     // A scroll in the top-left corner, mirrored into the others.
     void corner(double sx, double sy, Offset o) {
       canvas.save();
       canvas.translate(o.dx, o.dy);
       canvas.scale(sx, sy);
+      // Just the curl: the second rule, the arc hugging the corner and
+      // the gem are gone, so the corner stays quiet.
       final scroll = Path()
-        ..moveTo(4, 30)
-        ..cubicTo(4, 12, 12, 4, 30, 4)
         ..moveTo(14, 26)
         ..cubicTo(14, 18, 18, 14, 26, 14)
         ..moveTo(26, 14)
@@ -199,13 +200,6 @@ class _Filigree extends CustomPainter {
         ..cubicTo(14, 32, 20, 34, 22, 30)
         ..cubicTo(24, 27, 21, 24, 19, 26);
       canvas.drawPath(scroll, line);
-      final gem = Path()
-        ..moveTo(10, 4)
-        ..lineTo(14, 8)
-        ..lineTo(10, 12)
-        ..lineTo(6, 8)
-        ..close();
-      canvas.drawPath(gem.shift(const Offset(-2, -2)), Paint()..color = color);
       canvas.restore();
     }
 
