@@ -185,3 +185,61 @@ Notes as the sequence runs:
   (the rules, the move to send). The widget draws the seats, prompt, cards
   and crowning from it and reports taps and drags. The seat someone holds
   the felt from is the widget's own state, since nothing else reads it.
+
+- Items 8 and 11 stop short. The on-screen table's trick is a library
+  (`ui/table/trick_view.dart`); its opponents' columns, the middle with the
+  task flights, and your hand (with the queue, the speech token, the drag
+  and the keyboard focus) stay on the page: they share a dozen keys and
+  timers with the page's bot pacing and judging, and taking them out
+  without changing a frame needs the pacing to move first (future work,
+  listed in the report). Item 11 (a `ModeState` per mode, saves at
+  version 3) is not done: the mode-specific fields are two ints
+  (`chapter`, `lesson`) already set only through `NextRound`, and moving
+  them changes sixteen call sites and the save format for little; it stays
+  as future work.
+- Step 9 before step 7: every file is in its layer's folder (the layer
+  test's `legacy` and `legacyFolders` are empty; `lib/main.dart` is the
+  top), and a file-size test holds every file under 600 lines with an
+  allow-list for art and data and a shrinking list of debts
+  (`test/file_size_test.dart`). The widgets, the throne room, the bot and
+  the game state were split to fit; the page, `Round`, the setup panel
+  and the tutorial pager are the debts.
+
+## Step 7: skins
+
+The order of the commits:
+
+1. `skin/skin.dart` (`Skin`: the palette by name, the seat colours, the
+   suit colours, the fonts, the felt shadow, the card outline, the
+   dialogs' look, `theme()`), `skin/court/court_skin.dart` (`CourtSkin`:
+   today's look, its values the constants `skin/theme.dart` has always
+   had), `skin/skin_scope.dart` (`SkinScope`, `context.skin`; the Court
+   skin when there is no scope, so every widget test is unchanged), the
+   app wrapped in a scope with the theme from the skin, and
+   `test/skin_test.dart`: no file under `lib/ui/` names `Palette`, a font
+   constant, `feltShadow`, `DialogStyle` or the outline constants, with an
+   allow-list of the files not swept yet that only shrinks. Pixels
+   identical.
+2. The sweep, a family of files per commit: every widget reads the skin
+   from its context (`final skin = context.skin;` at the top of `build`),
+   painters and helpers take it as a parameter; `const` goes where a value
+   now comes from the skin. Pixels identical each time (the screenshots).
+3. `PlainSkin`: other colours, the system faces, flat dialogs, a flat
+   theme.
+4. The switcher: the menu offers the skins, the choice saved
+   (`kingsCourt.skin`), the app rebuilt under the new scope;
+   `Entitlements` (`owns(skin)`) with `AllOwned` the only implementation,
+   a lock on a skin not owned.
+5. `skin/strings.dart`: the chrome's strings (menu, top bar, welcome,
+   setup, the dialogs' buttons) read from `Strings`.
+6. Screenshots per skin: the shots test takes the Plain set beside the
+   Court set.
+
+What the skin covers: the look `skin/theme.dart` has always defined (the
+named palette, fonts, shadows, outline, dialogs, theme). The translucent
+tints (`Colors.white70`, `Color(0x33000000)`) and the one-off colours
+inside the ornament painters (gradients of the damask, the glitter, the
+throne room) stay literals for now: they are shades of the look rather
+than the look, naming ninety of them is a design job of its own, and the
+Plain skin changes the look without them. The skin test lists the files
+with such literals as the next debt.

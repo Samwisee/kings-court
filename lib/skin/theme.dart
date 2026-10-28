@@ -39,11 +39,14 @@ class Palette {
   /// background, where [text] is the colour of the words around it.
   static Color suitColourOnDark(Suit s, Color text) => switch (s) {
         Suit.hearts => redOnDark,
-        Suit.diamonds =>
-          fourColourSuits ? const Color(0xFF8DBBFF) : redOnDark,
-        Suit.clubs => fourColourSuits ? const Color(0xFF7FD99A) : text,
+        Suit.diamonds => fourColourSuits ? diamondOnDark : redOnDark,
+        Suit.clubs => fourColourSuits ? clubOnDark : text,
         Suit.spades || Suit.court => text,
       };
+
+  /// Four-colour ♦ and ♣ on the felt.
+  static const diamondOnDark = Color(0xFF8DBBFF);
+  static const clubOnDark = Color(0xFF7FD99A);
   static const gold = Color(0xFFD4A63A);
   static const goldDeep = Color(0xFFA57C1B);
 
