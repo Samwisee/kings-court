@@ -123,7 +123,7 @@ class _GlowButtonState extends State<GlowButton>
 
 /// The keyboard shortcuts, as small gold key caps with what each does.
 class ShortcutsCard extends StatelessWidget {
-  const ShortcutsCard();
+  const ShortcutsCard({super.key});
 
   static const _keys = [
     (['1', '2', '…'], 'Play the card with that key'),
@@ -187,7 +187,7 @@ class ShortcutsCard extends StatelessWidget {
 
 /// A key on the keyboard, drawn as a small gold key cap.
 class KeyCap extends StatelessWidget {
-  const KeyCap(this.label, {required this.size});
+  const KeyCap(this.label, {super.key, required this.size});
   final String label;
   final double size;
 

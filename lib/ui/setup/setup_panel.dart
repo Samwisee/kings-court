@@ -36,6 +36,7 @@ typedef SetupResult = ({
 /// the table never needs to scroll.
 class SetupPanel extends StatefulWidget {
   const SetupPanel({
+    super.key,
     required this.players,
     required this.playerCount,
     required this.targetPoints,

@@ -4,7 +4,6 @@ library;
 import 'dart:math' as math;
 
 import '../../models.dart';
-import '../../modes/chronicle/chapters.dart';
 import '../../modes/modes.dart';
 
 /// A game saved on this device: its state, the table layout that goes with

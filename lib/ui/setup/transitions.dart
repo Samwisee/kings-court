@@ -23,7 +23,8 @@ enum TurnStyle { fade, deal, fadeThrough, slide, curtain, sealPress }
 
 class PageTurn extends StatelessWidget {
   const PageTurn(
-      {required this.animation,
+      {super.key,
+      required this.animation,
       required this.incoming,
       required this.forward,
       this.style = TurnStyle.deal,

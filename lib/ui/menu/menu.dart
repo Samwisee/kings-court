@@ -11,7 +11,8 @@ import '../../widgets.dart';
 /// A button in the top corner, flat on the felt: just its gold, pressing
 /// in when tapped.
 class GoldBar extends StatefulWidget {
-  const GoldBar({required this.onTap, required this.child, this.semanticLabel});
+  const GoldBar(
+      {super.key, required this.onTap, required this.child, this.semanticLabel});
   final VoidCallback onTap;
   final Widget child;
   final String? semanticLabel;
@@ -114,7 +115,7 @@ typedef MenuEntry = ({String value, IconData icon, String title, bool? on});
 /// The menu, on the court's ornate panel: a medallion over the top, each
 /// line with a gold icon, divided by fine gold rules.
 class OrnateMenu extends StatefulWidget {
-  const OrnateMenu({required this.entries, required this.onToggle});
+  const OrnateMenu({super.key, required this.entries, required this.onToggle});
   final List<MenuEntry> Function() entries;
   final void Function(String) onToggle;
 
@@ -209,7 +210,7 @@ class _OrnateMenuState extends State<OrnateMenu> {
 /// with a small diamond. While the menu is open the outer bars cross and
 /// the middle one draws in to a single jewel.
 class OrnateMenuIcon extends StatelessWidget {
-  const OrnateMenuIcon({this.open = false});
+  const OrnateMenuIcon({super.key, this.open = false});
   static const size = 30.0;
   final bool open;
 

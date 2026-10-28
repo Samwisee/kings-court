@@ -11,7 +11,8 @@ import '../../widgets.dart';
 /// large behind the house name and motto.
 class HouseBanner extends StatelessWidget {
   const HouseBanner(
-      {required this.courtier,
+      {super.key,
+      required this.courtier,
       required this.color,
       required this.name,
       this.king = false});

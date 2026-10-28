@@ -73,6 +73,7 @@ class Flight {
 /// like a card: points, wording, and how far along it is.
 class TaskChip extends StatelessWidget {
   const TaskChip({
+    super.key,
     required this.task,
     required this.points,
     required this.text,
@@ -296,7 +297,7 @@ typedef MarkedCard = ({PlayingCard card, Color? edge, int? trick, bool played});
 /// The cards a task is about, each marked the way the card tracker marks
 /// it: who played it and in which trick, or who holds it.
 class TaskCardsRow extends StatelessWidget {
-  const TaskCardsRow({required this.cards});
+  const TaskCardsRow({super.key, required this.cards});
   final List<MarkedCard> cards;
 
   @override
@@ -327,7 +328,10 @@ class TaskCardsRow extends StatelessWidget {
 /// A task's explanation, game words and fine print, behind an info button.
 class MoreAbout extends StatefulWidget {
   const MoreAbout(
-      {required this.explanation, required this.terms, required this.notes});
+      {super.key,
+      required this.explanation,
+      required this.terms,
+      required this.notes});
   final String explanation;
   final List<String> terms;
   final List<String> notes;

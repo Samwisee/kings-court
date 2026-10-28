@@ -12,7 +12,10 @@ import '../../widgets.dart';
 /// first one not yet beaten.
 class ChapterPicker extends StatelessWidget {
   const ChapterPicker(
-      {required this.progress, required this.chapter, required this.onChanged});
+      {super.key,
+      required this.progress,
+      required this.chapter,
+      required this.onChanged});
   final ChronicleProgress progress;
   final int chapter;
   final ValueChanged<int> onChanged;

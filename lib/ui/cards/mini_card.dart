@@ -13,7 +13,8 @@ import '../../widgets.dart';
 /// the Court Card's letter) and an outline, cheap enough to show dozens.
 class MiniCard extends StatelessWidget {
   const MiniCard(
-      {required this.card,
+      {super.key,
+      required this.card,
       required this.width,
       this.dimmed = false,
       this.edge,

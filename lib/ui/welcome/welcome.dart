@@ -15,7 +15,7 @@ import '../overlays/crowning.dart';
 /// fan out wide, with a burst of sparks. It plays once (about two seconds)
 /// and then holds still.
 class WelcomeIntro extends StatefulWidget {
-  const WelcomeIntro({required this.crownSize, required this.buttons});
+  const WelcomeIntro({super.key, required this.crownSize, required this.buttons});
   final double crownSize;
 
   /// The front page's buttons, which fade in one after another.

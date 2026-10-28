@@ -353,14 +353,16 @@ void main() {
     // Four is enough to stack up; the test font makes cards larger than
     // on a phone, so more can leave no room at all.
     final count = total < 4 ? total : 4;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
     for (var n = 0; n < count; n++) {
-      final card = freeCard(tester, (_) => true);
-      final seat = tester.getCenter(find.byType(SeatToken).at(n.isEven ? 0 : 1));
+      // A task the seat may take: not one that clashes with what it holds.
+      final to = n.isEven ? 0 : 1;
+      final card = freeCard(tester, (w) => state.game.round!.mayTake(w.task, to));
+      final seat = tester.getCenter(find.byType(SeatToken).at(to));
       await dragCardTo(tester, card, seat);
       await tester.pumpAndSettle();
     }
 
-    final state = tester.state<HomePageState>(find.byType(HomePage));
     final owned = state.game
         .tasks
         .where((t) => t.owner != null)
