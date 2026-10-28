@@ -45,7 +45,8 @@ Commit messages are one plain sentence of what changed for the player.
 ```
 lib/
   main.dart          The app and its one page, the table (HomePage).
-  game/              GameController: the game, its table link, and saving.
+  game/              GameController: the game, its table link, and saving;
+                     bot_turn.dart: what a courtier does on their turn.
   home/              The table's pieces, one family per file (part of main.dart).
   widgets.dart       Shared UI used on every screen...
   ui/                ...one family per file (part of widgets.dart).
@@ -56,6 +57,9 @@ lib/
                      tricks, deals, bots. Runs anywhere, a server included.
   net/               Where moves go: the seam for online play.
   models.dart        GameState: players, tasks, modes, Dynasty, saving.
+                     Plain Dart too (colours are numbers; theme.dart turns
+                     them into Colors), as are the chronicle, courtiers,
+                     story and tutorial: the whole game can run on a server.
   tasks.dart         Every task's words and points (data).
   courtiers.dart     The houses, their lore, and Dynasty's dilemmas and lines.
   story.dart         Dynasty's tidings and story arcs.
@@ -108,9 +112,13 @@ goes through, and saving. The page reads `game` from it and draws.
   toast, the tracker, keyboard selection, dragging), and rebuilds without
   any of that. Use `_ui` for anything that doesn't change the game.
 
-Still on the page for now: the bots' timing, dealing cards to the screen
-and the trick pauses. They are tied to animations; they move into the
-controller as online play needs them.
+What a courtier does on their turn is worked out in
+`lib/game/bot_turn.dart` (`botDecision`), with no screen in it; the page
+keeps only *whether* a courtier may move right now (`_botThink`: not
+mid-animation, not under a dialog) and makes the move through the link.
+Still on the page: the bots' timing, dealing cards to the screen and the
+trick pauses. They are tied to animations; they move into the controller
+as online play needs them.
 
 ### lib/ui (widgets.dart)
 
@@ -180,8 +188,10 @@ colours are used.
 1. `GameState.addTasksUntilTarget` deals the round's tasks.
 2. `MatchState.dealFor` deals the cards and the King is crowned. It
    rejects any deal that makes a task impossible.
-3. Tasks are taken in turn from the King (`game.assign`); courtiers think
-   in `_botThink`.
+3. Tasks are taken in turn from the King: `_assignTask` sends a `PickTask`
+   move to the table link and `_assignTaskNow` takes it when it comes back
+   (`game.assign`). Passing (`Pass`) and announcing a number (`Announce`)
+   go the same way. Courtiers decide in `botDecision`.
 4. Cards are played: `_playCard` sends a `PlayCard` move to the table link,
    and `_playCardNow` plays it when it comes back. Showing a card works the
    same way (`ShowCard`).
@@ -194,18 +204,23 @@ colours are used.
 
 The engine was built for this:
 
-- `lib/engine` is plain Dart with no Flutter (a test keeps it that way),
-  so the same rules can run on a server.
-- Every move is a `MatchAction` (`PickTask`, `Announce`, `PlayCard`,
-  `ShowCard`) that turns into JSON and back. `MatchState.problem()` says
-  whether a move is allowed, and `MatchState.apply()` plays it.
-- `lib/net/table_link.dart`: the table sends its moves to a `TableLink`
-  and plays them as they come back. `LocalLink` sends them straight back.
+- `lib/engine` and the whole game model (`models.dart`, the chronicle,
+  courtiers, story, tutorial, `game/bot_turn.dart`) are plain Dart with no
+  Flutter (a test keeps it that way), so the same rules, and the same
+  courtiers, can run on a server.
+- Every move is a `MatchAction` (`PickTask`, `Pass`, `Announce`,
+  `PlayCard`, `ShowCard`) that turns into JSON and back.
+  `MatchState.problem()` says whether a move is allowed, and
+  `MatchState.apply()` plays it.
+- `lib/net/table_link.dart`: the table sends every move to a `TableLink`
+  and makes it when it comes back. `LocalLink` sends them straight back.
   A network link (Firebase, say) would send them to the server and play
   whatever the server sends back, in the same order, on every device.
+- A game's deals come from its `seed` (`GameState.dealRandom`), so a
+  round can be dealt again exactly, and a server could deal the same.
+- The seat you play from is `GameController.mySeat` (0 on one device).
 
-Still to move onto the link: taking tasks and passing, which go through
-`GameState` directly today. `docs/ONLINE.md` has the full plan.
+`docs/ONLINE.md` has the plan and what's still to do.
 
 ---
 
@@ -228,6 +243,22 @@ Still to move onto the link: taking tasks and passing, which go through
 - Dragging a task on a real table redraws only that task: each task
   card listens to a notifier, and only the dragged one listens to the
   drag. The page rebuilds only when the seat under the card changes.
+- The brass trim round the screen and the top bar sit on their own layers
+  too, and the felt's inner shadow is a few fading strokes rather than a
+  blur (a blur along the whole screen's edge was the dearest thing in
+  every frame).
+- Bots think in slices of time (8 ms, then a frame), not counts of
+  playouts, so thinking gives the screen just the frames it needs.
+- **Measured** (`tool/bench`, published as `bench.txt` on the `shots`
+  branch with every screenshot run): the courtiers decide in 25–65 ms in
+  Chrome (900 playouts) and 5–30 ms on the VM, far under the 700 ms they
+  wait anyway, so the playout budget could go up for smarter courtiers.
+  A whole-page rebuild mid-round costs the framework about 14 ms in the
+  debug test harness, nearly all of it building and laying out the hand
+  and the table inside their `LayoutBuilder`s (release on a phone is
+  several times faster). If a device profile ever shows jank, the next
+  step is the hand and the table rebuilding only when their own inputs
+  change, rather than with every page rebuild.
 - Still possible later: parts of the table (the hand, the status bar)
   listening to the controller directly, so a move redraws only what it
   touches. Game moves are a few a second at most, so this matters less
@@ -242,6 +273,9 @@ Still to move onto the link: taking tasks and passing, which go through
 - `test/tutorial_test.dart`: every lesson is fair and winnable.
 - `test/task_help_test.dart`: task explanations and counters.
 - `test/net_test.dart`: moves to JSON and back, the local link, and the
-  engine staying free of Flutter.
+  engine and game model staying free of Flutter.
+- `test/bot_turn_test.dart`: the courtiers' decisions, without widgets.
+- `tool/bench/`: not tests; timings of the bots and the page, published
+  with the screenshots.
 - `tool/shots/shots_test.dart`: the screenshots.
 - `tool/balance/balance_test.dart`: the balance report.

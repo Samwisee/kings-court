@@ -78,6 +78,16 @@ variables > Actions) and does nothing without it.
   `left/<mode>/<round>` (a new game started mid-round), `tutorial/finished`,
   `menu/<choice>[/on|off]`. Add new ones with `Analytics.event([...])`.
 - `build_info.dart` holds the commit (`BUILD`), shown in reports and crashes.
+- A report's `state` carries the game's `seed`, so its deals can be made
+  again exactly (`GameState.dealRandom`).
+
+## Benchmarks
+
+`tool/bench/` times the bots (VM and Chrome) and a whole-page rebuild
+mid-round; the Screenshots workflow runs them and publishes `bench.txt` on
+the `shots` branch (`git fetch origin shots && git show origin/shots:bench.txt`).
+Runners vary a lot run to run, so compare numbers within one run (sliced
+vs straight, with vs without a part of the page), not across runs.
 - Branches other than `main` run analyze, tests and a web build
   (`.github/workflows/check.yml`) without deploying: use a branch for work
   that might break the build, then fast-forward `main`.
