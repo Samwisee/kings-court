@@ -134,6 +134,12 @@ jobs:
             bench "branch (run $round)" .
           done
           cat out/bench-compare.txt
+      - name: The budget (the branch may not be 30% slower than main on both runs)
+        id: budget
+        run: |
+          set +e
+          python3 tool/bench/budget.py out/bench-compare.txt | tee out/budget.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
       - name: Publish to bench-${{ github.ref_name }}
         if: always()
         run: |
@@ -142,3 +148,5 @@ jobs:
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Benchmarks for ${GITHUB_SHA}"
           git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "bench-${GITHUB_REF_NAME}"
+      - name: The budget must be kept
+        run: test "${{ steps.budget.outputs.code }}" = "0"

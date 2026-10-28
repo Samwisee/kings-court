@@ -21,7 +21,9 @@ with the screenshots it explains (`tool/shots/expected_changes.txt`).
   - `shots`: takes the 66 screenshots and compares them with the
     `shots-baseline` branch; fails on any difference not listed in
     `tool/shots/expected_changes.txt`.
-  - `bench`: times main and the branch, twice each, on the same runner.
+  - `bench`: times main and the branch, twice each, on the same runner;
+    fails when the branch is 30% or more slower on both runs
+    (`tool/bench/budget.py`; its verdict is `budget.txt` on `bench-<branch>`).
 - **Reading a run** without the SDK (replace `refactor` with the branch):
   ```
   gh run list -L 1 --json status,conclusion,headSha
