@@ -9,6 +9,7 @@
 library;
 
 import '../engine/round.dart';
+import '../engine/rules.dart';
 import 'state.dart';
 
 /// The version saves are written in.
