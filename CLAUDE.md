@@ -35,6 +35,11 @@ with the screenshots it explains (`tool/shots/expected_changes.txt`).
   git show origin/bench-refactor:bench-compare.txt
   ```
   A screenshot's red-overlay diff is `diff/<name>.png` on `shots-<branch>`.
+- **Lint fixes without the SDK**: push work in progress to `fix-<name>`
+  (`git push origin HEAD:fix-<name>`); **Fix a branch** (`fix.yml`) runs
+  `dart fix --apply` and publishes `fix.patch` and the analyzer's findings
+  after it to `fixed-<name>`. `git show origin/fixed-<name>:fix.patch |
+  git apply`, fix what's left, then commit and push the real branch.
 - **Every pushed commit is green** (analyzer 0, tests, screenshots). Small
   commits: one sub-step each. A red commit is fixed before anything else.
 - **Commit messages**: one plain sentence, under about fifteen words, of

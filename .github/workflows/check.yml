@@ -7,7 +7,7 @@ name: Check a branch
 # read from a session where the logs can't be.
 on:
   push:
-    branches-ignore: [main, 'ci-*', 'shots*', 'bench*', balance, fixtures]
+    branches-ignore: [main, 'ci-*', 'shots*', 'bench*', balance, fixtures, 'fix-*', 'fixed-*']
 
 permissions:
   contents: write

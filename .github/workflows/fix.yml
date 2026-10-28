@@ -1,0 +1,42 @@
+name: Fix a branch
+
+# For a session without the SDK: push work in progress to fix-<name> and
+# this runs `dart fix --apply` on it (the lints' bulk fixes: const where it
+# can be, needless const, imports), then publishes the patch it made and
+# the analyzer's findings after it to fixed-<name> (fix.patch,
+# analyze.txt). Apply the patch, fix what's left, push the real commit.
+on:
+  push:
+    branches: ['fix-*']
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Fix and analyze
+        run: |
+          mkdir -p /tmp/out
+          dart fix --apply > /tmp/out/fix.txt 2>&1 || true
+          dart fix --apply >> /tmp/out/fix.txt 2>&1 || true
+          git diff > /tmp/out/fix.patch
+          dart analyze --format=machine --fatal-infos --fatal-warnings > /tmp/out/analyze.txt 2>&1 || true
+          echo "analyzer issues after the fixes: $(grep -c '|' /tmp/out/analyze.txt || true)" | tee /tmp/out/summary.txt
+      - name: Publish to fixed-${{ github.ref_name }}
+        if: always()
+        run: |
+          cd /tmp/out
+          git init -q -b "fixed-${GITHUB_REF_NAME#fix-}"
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Fixes for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "fixed-${GITHUB_REF_NAME#fix-}"
