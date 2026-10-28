@@ -340,6 +340,11 @@ class _HomePageState extends State<HomePage>
       return false;
     }
     if (key == LogicalKeyboardKey.keyS) {
+      // While the table asks whether you'll show a card, S again skips.
+      if (_speakPromptDue) {
+        _skipShowing();
+        return true;
+      }
       if (!(_mayAskToSpeak || _revealing)) return false;
       _speak();
       return true;
@@ -354,13 +359,18 @@ class _HomePageState extends State<HomePage>
       _ui(() {
         _kbRow = 0;
         _kbCard = hand[keyAt];
+        final r = _handRects[hand[keyAt]];
+        final area = _rectOn(_handKey);
+        if (r != null && area != null) _kbLast = r.shift(area.topLeft);
       });
       play();
       return true;
     }
-    // Up to the tasks on the table, down to your hand. The arrows only
-    // stop on tasks you may take and cards you may play (or show), and
-    // run round from one end to the other.
+    // The arrows move round the table as it looks: up from your hand to
+    // the Skip or Pass button (when there is one), then up through the
+    // rows of tasks; left and right along a row, running on round. They
+    // only stop on tasks you may take and cards you may play (or show),
+    // and always go to whatever is nearest the last thing chosen.
     final open = [
       for (final t in game.tasks)
         if (t.assignedPlayerIndex == null &&
@@ -380,46 +390,125 @@ class _HomePageState extends State<HomePage>
           c
     ];
     final choices = playable.isEmpty ? hand : playable;
-    if (key == LogicalKeyboardKey.arrowUp) {
-      if (open.isEmpty) return false;
-      _ui(() {
-        _kbRow = 1;
-        if (!open.contains(_kbTask)) _kbTask = open.first;
-      });
-      return true;
-    }
-    if (key == LogicalKeyboardKey.arrowDown) {
-      _ui(() => _kbRow = 0);
+    final stops = _kbStops(open, choices);
+    if (stops.isEmpty) return false;
+    final here = _kbHere(stops);
+    void go(_KbStop to) => _ui(() {
+          _kbRow = to.row;
+          if (to.item case final Task t) _kbTask = t;
+          if (to.item case final PlayingCard c) _kbCard = c;
+          _kbLast = to.rect;
+        });
+    if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.arrowDown) {
+      final up = key == LogicalKeyboardKey.arrowUp;
+      // Nothing chosen yet: start from your hand.
+      final hand0 = [for (final st in stops) if (st.row == 0) st];
+      if (here == null && _kbLast == null && !up && hand0.isNotEmpty) {
+        go(hand0[hand0.length ~/ 2]);
+        return true;
+      }
+      final from = here?.rect ?? _kbLast ?? _rectOn(_handKey);
+      if (from == null) return false;
+      final ahead = [
+        for (final st in stops)
+          if (st.item != here?.item &&
+              (up
+                  ? st.rect.center.dy < from.top + 4
+                  : st.rect.center.dy > from.bottom - 4))
+            st
+      ];
+      if (ahead.isEmpty) return true;
+      // The nearest row that way, then the nearest thing along it.
+      double gap(_KbStop st) =>
+          up ? from.top - st.rect.bottom : st.rect.top - from.bottom;
+      final nearest = ahead.reduce((a, b) => gap(a) <= gap(b) ? a : b);
+      final row = [
+        for (final st in ahead)
+          if (st.rect.top < nearest.rect.bottom && st.rect.bottom > nearest.rect.top) st
+      ];
+      go(_closestTo(row, from));
       return true;
     }
     if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
       final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
-      if (_kbRow == 1 && open.isNotEmpty) {
-        final at = open.indexOf(_kbTask ?? open.first);
-        _ui(() => _kbTask = open[(at + step) % open.length]);
-        return true;
+      var kind = here?.row ?? _kbRow;
+      if (!stops.any((st) => st.row == kind)) kind = 0;
+      final same = _readingOrder([for (final st in stops) if (st.row == kind) st]);
+      if (same.isEmpty) return false;
+      final at = here == null ? -1 : same.indexWhere((st) => st.item == here.item);
+      if (at < 0) {
+        // Nothing chosen yet (or it's gone): start nearest the last choice.
+        go(_kbLast == null
+            ? same[step > 0 ? 0 : same.length - 1]
+            : _closestTo(same, _kbLast!));
+      } else {
+        go(same[(at + step) % same.length]);
       }
-      if (choices.isEmpty) return false;
-      final at = _kbCard == null ? -1 : choices.indexOf(_kbCard!);
-      final next = at < 0
-          ? (step > 0 ? 0 : choices.length - 1)
-          : (at + step) % choices.length;
-      _ui(() {
-        _kbRow = 0;
-        _kbCard = choices[next];
-      });
       return true;
     }
-    // Enter: open the chosen task (its Take button is ready for Enter), or
-    // play (or show) the chosen card.
-    if (_kbRow == 1 && _kbTask != null && open.contains(_kbTask)) {
-      _showTaskDetail(_kbTask!, Offset.zero);
-      return true;
+    // Enter: open the chosen task (its Take button is ready for Enter),
+    // press the button, or play (or show) the chosen card.
+    if (here == null) return false;
+    switch (here.item) {
+      case final Task t:
+        _showTaskDetail(t, Offset.zero);
+      case final PlayingCard c:
+        _handPlays[c]?.call();
+      default:
+        _kbButtonPress?.call();
+        // The button's gone: back down to your hand.
+        _ui(() => _kbRow = 0);
     }
-    final play = _kbCard == null ? null : _handPlays[_kbCard!];
-    if (play == null) return false;
-    play();
     return true;
+  }
+
+  /// Everything the arrow keys can stop on just now, where it is.
+  List<_KbStop> _kbStops(List<Task> open, List<PlayingCard> cards) => [
+        for (final t in open)
+          if (_openTaskKeys[t] case final key?)
+            if (_rectOn(key) case final r?) _KbStop(1, t, r),
+        if (_kbButtonPress != null)
+          if (_rectOn(_kbButtonKey) case final r?) _KbStop(2, null, r),
+        if (_rectOn(_handKey) case final area?)
+          for (final c in cards)
+            if (_handRects[c] case final r?) _KbStop(0, c, r.shift(area.topLeft)),
+      ];
+
+  /// Where the arrow keys are now, if it's still there to stop on.
+  _KbStop? _kbHere(List<_KbStop> stops) {
+    for (final st in stops) {
+      if (st.row != _kbRow) continue;
+      if (_kbRow == 1 && st.item == _kbTask) return st;
+      if (_kbRow == 0 && st.item == _kbCard) return st;
+      if (_kbRow == 2) return st;
+    }
+    return null;
+  }
+
+  /// The stop in [stops] nearest [r]: across first, then up or down.
+  static _KbStop _closestTo(List<_KbStop> stops, Rect r) {
+    double d(_KbStop st) =>
+        (st.rect.center.dx - r.center.dx).abs() +
+        (st.rect.center.dy - r.center.dy).abs() * 0.25;
+    return stops.reduce((a, b) => d(a) <= d(b) ? a : b);
+  }
+
+  /// [stops] as they're read: row by row from the top, each row left to
+  /// right (the tasks are packed in columns of different heights, so a
+  /// row is whatever overlaps it side by side).
+  static List<_KbStop> _readingOrder(List<_KbStop> stops) {
+    final rest = [...stops]..sort((a, b) => a.rect.top.compareTo(b.rect.top));
+    final out = <_KbStop>[];
+    while (rest.isNotEmpty) {
+      final first = rest.first;
+      final row = [
+        for (final st in rest)
+          if (st.rect.top < first.rect.bottom - 4) st
+      ]..sort((a, b) => a.rect.left.compareTo(b.rect.left));
+      out.addAll(row);
+      rest.removeWhere(row.contains);
+    }
+    return out;
   }
 
   /// The keys that play the cards in your hand, left to right.
@@ -444,9 +533,37 @@ class _HomePageState extends State<HomePage>
   /// What's printed on each of those keys.
   static const _cardKeyLabels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Q', 'W', 'E'];
 
-  /// Where the arrow keys are: your hand (0) or the tasks on the table (1).
+  /// Where the arrow keys are: your hand (0), the tasks on the table (1)
+  /// or the Skip or Pass button (2).
   int _kbRow = 0;
   Task? _kbTask;
+
+  /// Where the last thing chosen with the arrow keys was, so the next
+  /// choice is whatever is nearest it (when a card is played or a task
+  /// taken, its neighbour is chosen).
+  Rect? _kbLast;
+
+  /// The Skip or Pass button beside your hand, while it's there.
+  final _kbButtonKey = GlobalKey();
+
+  /// A choice with a way out is up: show a card or Skip, take a task or
+  /// Pass. The button sits beside your hand.
+  bool get _barChoice =>
+      (_speakPromptDue || (game.pickTurn == _you && game.canPass(_you))) &&
+      _toast == null;
+
+  /// What that button does, for the Enter key.
+  VoidCallback? get _kbButtonPress =>
+      !_barChoice ? null : _speakPromptDue ? _skipShowing : _passPick;
+
+  /// Skip: you won't show a card before the tasks are taken.
+  void _skipShowing() => _startChoosing();
+
+  /// Pass on taking a task this time round.
+  void _passPick() => setState(() => game.pass(_you));
+
+  /// Each card in your hand, where it sits (at rest) within it.
+  final Map<PlayingCard, Rect> _handRects = {};
 
   /// The shortcuts are shown (the menu setting, on a computer with room).
   bool get _keysShown =>
@@ -632,6 +749,8 @@ class _HomePageState extends State<HomePage>
     _deal.dispose();
     _handSnap.dispose();
     _handDragV.dispose();
+    _taskDragTick.dispose();
+    _stillTick.dispose();
     _crown.dispose();
     _coronation.dispose();
     _outcomeHold.dispose();
@@ -1605,8 +1724,7 @@ class _HomePageState extends State<HomePage>
             child: Row(
             children: [
               Expanded(
-                child: (_speakPromptDue || (game.pickTurn == _you && game.canPass(_you))) &&
-                        _toast == null
+                child: _barChoice
                     // A choice with a way out: show a card or skip, pick a
                     // task or pass. Both right in the middle, where you're
                     // looking, the button always in the same place.
@@ -1627,15 +1745,20 @@ class _HomePageState extends State<HomePage>
                                     color: Palette.gold)),
                           ),
                           const SizedBox(width: 8),
-                          _speakPromptDue
-                              ? _GlowButton(
-                                  key: const ValueKey('skip'),
-                                  label: 'Skip',
-                                  onPressed: _startChoosing)
-                              : _GlowButton(
-                                  key: const ValueKey('pass'),
-                                  label: 'Pass',
-                                  onPressed: () => setState(() => game.pass(_you))),
+                          KeyedSubtree(
+                            key: _kbButtonKey,
+                            child: _speakPromptDue
+                                ? _GlowButton(
+                                    key: const ValueKey('skip'),
+                                    label: 'Skip',
+                                    focused: _kbRow == 2,
+                                    onPressed: _skipShowing)
+                                : _GlowButton(
+                                    key: const ValueKey('pass'),
+                                    label: 'Pass',
+                                    focused: _kbRow == 2,
+                                    onPressed: _passPick),
+                          ),
                         ],
                       )
                     : AnimatedDefaultTextStyle(
@@ -1681,10 +1804,20 @@ class _HomePageState extends State<HomePage>
               // The speech token: show one card, once a round.
               SizedBox(
                 width: 44,
+                // While Skip is showing beside it, this is its X: the
+                // two do the same, so they look linked.
                 child: IconButton(
-                  tooltip: 'Show a card (once a round)',
-                  onPressed: _mayAskToSpeak || _revealing ? _speak : null,
-                  icon: _revealing
+                  tooltip: _speakPromptDue
+                      ? 'Skip showing a card'
+                      : _revealing
+                          ? 'Don\u2019t show a card'
+                          : 'Show a card (once a round)',
+                  onPressed: _speakPromptDue
+                      ? _skipShowing
+                      : _mayAskToSpeak || _revealing
+                          ? _speak
+                          : null,
+                  icon: _revealing || _speakPromptDue
                       ? const Icon(Icons.close_rounded, color: Palette.gold)
                       : ShowCardIcon(
                           size: 28,
@@ -1726,6 +1859,29 @@ class _HomePageState extends State<HomePage>
                       final card = hand[i];
                       final dragging = _handDragCard == card.id;
                       final left = (width - total) / 2 + i * step;
+                      if (i == 0) {
+                        _handRects.clear();
+                        // The card chosen with the arrow keys was played
+                        // (or shown): its neighbour is chosen instead.
+                        if (_kbRow == 0 &&
+                            _kbLast != null &&
+                            _kbCard != null &&
+                            !hand.contains(_kbCard)) {
+                          final area = _rectOn(_handKey);
+                          final pool = hand.where(legal.contains).toList();
+                          final from = pool.isEmpty ? hand : pool;
+                          if (area != null) {
+                            final x = _kbLast!.center.dx - area.left;
+                            _kbCard = from.reduce((a, b) {
+                              double d(PlayingCard c) =>
+                                  ((width - total) / 2 + hand.indexOf(c) * step + cardW / 2 - x)
+                                      .abs();
+                              return d(a) <= d(b) ? a : b;
+                            });
+                          }
+                        }
+                      }
+                      _handRects[card] = Rect.fromLTWH(left, 0, cardW, h);
                       // The card chosen with the arrow keys stands up a
                       // little higher.
                       final chosen = _kbCard == card && _kbRow == 0;
@@ -1799,7 +1955,7 @@ class _HomePageState extends State<HomePage>
                                   ? drag
                                   : Offset.zero,
                               child: child),
-                          child: GestureDetector(
+                          child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
                           onTap: play,
                           // Or drag it up onto the table.
                           onPanStart: (_) => _ui(() {
@@ -1858,7 +2014,7 @@ class _HomePageState extends State<HomePage>
                               ]),
                             ),
                           ),
-                        ),
+                        )),
                         ),
                       );
                     }(),
@@ -2320,7 +2476,7 @@ class _HomePageState extends State<HomePage>
                   children: [
                     // The token, name and tally are all one big target, so
                     // a tap anywhere on them reaches the courtier.
-                    GestureDetector(
+                    MouseRegion(cursor: seat == null ? MouseCursor.defer : SystemMouseCursors.click, child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: seat == null ? null : _seatTap(seat),
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -2365,7 +2521,7 @@ class _HomePageState extends State<HomePage>
                                 fontSize: 11, color: Colors.white54)),
                       ),
                       ]),
-                    ),
+                    )),
                     // A traitor's scheme, face up: a black card the court
                     // must stop.
                     if (seat != null &&
@@ -3756,14 +3912,22 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  /// Ticks as a task card is dragged; only that card listens (see
+  /// [_buildCards]). The page rebuilds only when the seat under it changes.
+  final _taskDragTick = ValueNotifier(0);
+  final _stillTick = ValueNotifier(0);
+
   void _onDragUpdate(Task t, Offset delta) {
-    _ui(() {
-      final geo = _geo;
-      final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
-      _pos[t] = _toFrac(p);
-      final seat = _geo.seatAt(p);
-      _hoverSeat = seat != null && game.canTake(t, seat) ? seat : null;
-    });
+    final geo = _geo;
+    final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
+    _pos[t] = _toFrac(p);
+    final seat = geo.seatAt(p);
+    final hover = seat != null && game.canTake(t, seat) ? seat : null;
+    if (hover != _hoverSeat) {
+      _ui(() => _hoverSeat = hover);
+    } else {
+      _taskDragTick.value++;
+    }
   }
 
   void _onDragEnd(Task t) {
@@ -4146,7 +4310,7 @@ class _HomePageState extends State<HomePage>
                                       style: const TextStyle(
                                           fontSize: 15, color: Palette.ink)),
                                 ),
-                                GestureDetector(
+                                MouseRegion(cursor: canSpeak ? SystemMouseCursors.click : MouseCursor.defer, child: GestureDetector(
                                   onTap: !canSpeak
                                       ? null
                                       : () {
@@ -4159,7 +4323,7 @@ class _HomePageState extends State<HomePage>
                                     label: 'Card reveal used',
                                     child: GoldPip(on: spoke, enabled: canSpeak, size: 26),
                                   ),
-                                ),
+                                )),
                               ]),
                             ],
                           ],
@@ -5075,7 +5239,7 @@ class _HomePageState extends State<HomePage>
             setState(() => Sfx.enabled = !Sfx.enabled);
             _saveSettings();
           case 'keys':
-            setState(() => _showKeys = !_showKeys);
+            _ui(() => _showKeys = !_showKeys);
             _saveSettings();
           case 'suits':
             setState(() => Palette.fourColourSuits = !Palette.fourColourSuits);
@@ -5294,10 +5458,10 @@ class _HomePageState extends State<HomePage>
               behavior: HitTestBehavior.opaque,
               onLongPressStart: _choosingKing
                   ? null
-                  : (d) => setState(
+                  : (d) => _ui(
                       () => _readerSeat = geo.nearestSeat(d.localPosition)),
-              onLongPressEnd: (_) => setState(() => _readerSeat = null),
-              onLongPressCancel: () => setState(() => _readerSeat = null),
+              onLongPressEnd: (_) => _ui(() => _readerSeat = null),
+              onLongPressCancel: () => _ui(() => _readerSeat = null),
             ),
           ),
           for (int i = 0; i < game.players.length; i++)
@@ -5829,7 +5993,12 @@ class _HomePageState extends State<HomePage>
           clipBehavior: Clip.none,
           children: [
             for (final t in _order)
-              () {
+              ValueListenableBuilder<int>(
+                // Only the card being dragged listens to the drag, so moving
+                // it redraws that card alone.
+                key: ObjectKey(t),
+                valueListenable: _dragging == t ? _taskDragTick : _stillTick,
+                builder: (context, tick, child) {
                 // Each card leaves the deck a moment after the one before.
                 final i = game.tasks.indexOf(t);
                 final start = n <= 1 ? 0.0 : i / n * 0.55;
@@ -5873,7 +6042,7 @@ class _HomePageState extends State<HomePage>
                       turns: angle / (2 * math.pi),
                       duration: const Duration(milliseconds: 260),
                       curve: Curves.easeOutCubic,
-                      child: GestureDetector(
+                      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
                         // Measure the drag from where the finger went down,
                         // so the card doesn't lag behind by the touch slop.
                         dragStartBehavior: DragStartBehavior.down,
@@ -5910,11 +6079,11 @@ class _HomePageState extends State<HomePage>
                             charged: game.isCharged(t),
                           ),
                         ),
-                      ),
+                      )),
                     ),
                   ),
                 );
-              }(),
+              }),
           ],
         );
       },
@@ -7408,7 +7577,7 @@ class _HomePageState extends State<HomePage>
       // A save still waiting goes in first, so the list is up to date.
       if (_ctrl.savePending) await _ctrl.saveNow();
       final saves = await _readSaves(await SharedPreferences.getInstance());
-      if (mounted) setState(() => _saves = saves);
+      if (mounted) _ui(() => _saves = saves);
     } catch (_) {}
     if (!mounted) return;
     if (_saves.length == 1) {

@@ -21,7 +21,7 @@ class _GoldBarState extends State<_GoldBar> {
     return Semantics(
       button: true,
       label: widget.semanticLabel,
-      child: GestureDetector(
+      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _down = true),
         onTapCancel: () => setState(() => _down = false),
@@ -38,7 +38,7 @@ class _GoldBarState extends State<_GoldBar> {
             child: widget.child,
           ),
         ),
-      ),
+      )),
     );
   }
 }

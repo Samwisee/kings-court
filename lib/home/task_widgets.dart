@@ -224,8 +224,16 @@ class _TaskChip extends StatelessWidget {
       ),
     ),
     );
-    // Done: the chip turns over to show a seal of completion.
-    return GestureDetector(
+    // Done: the chip turns over to show a seal of completion. Chosen with
+    // the arrow keys: ringed and lifted a little, so it's plain to see.
+    return AnimatedScale(
+      scale: focused ? 1.05 : 1,
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOut,
+      child: KeyFocusRing(
+      on: focused,
+      radius: 8,
+      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: TweenAnimationBuilder<double>(
@@ -270,6 +278,8 @@ class _TaskChip extends StatelessWidget {
             ),
           ]),
         ),
+      ),
+      )),
       ),
     );
   }

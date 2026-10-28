@@ -869,7 +869,7 @@ class _CountChip extends StatelessWidget {
       selected: selected,
       label: '$n players',
       excludeSemantics: true,
-      child: GestureDetector(
+      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
         onTap: onTap,
         // A large gold pip: a gold ring, filled with a glowing jewel
         // when chosen, the number in its middle.
@@ -911,7 +911,7 @@ class _CountChip extends StatelessWidget {
                         : const [Shadow(color: Colors.black54, blurRadius: 8)])),
           ),
         ),
-      ),
+      )),
     );
   }
 }

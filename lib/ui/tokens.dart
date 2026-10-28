@@ -209,10 +209,10 @@ class SeatToken extends StatelessWidget {
                     ),
                   // The whole seat is one button: badges included.
                   Positioned.fill(
-                    child: GestureDetector(
+                    child: MouseRegion(cursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click, child: GestureDetector(
                       onTap: onTap,
                       behavior: HitTestBehavior.opaque,
-                    ),
+                    )),
                   ),
                 ],
               ),

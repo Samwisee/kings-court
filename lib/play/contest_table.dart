@@ -211,7 +211,7 @@ class ContestTableState extends State<ContestTable> {
                           Positioned(
                             left: (avail - span) / 2 + i * step,
                             top: legal.contains(hand[i]) ? 0 : 8,
-                            child: GestureDetector(
+                            child: MouseRegion(cursor: legal.contains(hand[i]) ? SystemMouseCursors.click : MouseCursor.defer, child: GestureDetector(
                               onTap: legal.contains(hand[i])
                                   ? () => _play(widget.you, hand[i])
                                   : null,
@@ -220,7 +220,7 @@ class ContestTableState extends State<ContestTable> {
                                 width: handW,
                                 dimmed: yourTurn && !legal.contains(hand[i]),
                               ),
-                            ),
+                            )),
                           ),
                       ]),
                     );

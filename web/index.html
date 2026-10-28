@@ -42,6 +42,21 @@
        the game loads. -->
   <style>
     html, body { margin: 0; background: #4E0B18; }
+    /* The court's own mouse pointers: a gilt arrow, and a gilt hand over
+       anything you can press (Flutter marks those with an inline
+       "cursor: pointer" on its view, which these win over). The art is
+       cursors/*.svg; the PNGs are drawn from it at 1x and 2x. */
+    html, body, [style*="cursor: default"] {
+      cursor: url(cursors/arrow.png) 3 2, default;
+      cursor: -webkit-image-set(url(cursors/arrow.png) 1x, url(cursors/arrow@2x.png) 2x) 3 2, default;
+      cursor: image-set(url(cursors/arrow.png) 1x, url(cursors/arrow@2x.png) 2x) 3 2, default;
+    }
+    [style*="cursor: default"] { cursor: url(cursors/arrow.png) 3 2, default !important; }
+    [style*="cursor: pointer"] {
+      cursor: url(cursors/hand.png) 13 2, pointer !important;
+      cursor: -webkit-image-set(url(cursors/hand.png) 1x, url(cursors/hand@2x.png) 2x) 13 2, pointer !important;
+      cursor: image-set(url(cursors/hand.png) 1x, url(cursors/hand@2x.png) 2x) 13 2, pointer !important;
+    }
     /* While the game loads: a gold crown on the felt, rising and glowing,
        which fades away as the first frame appears. */
     #loading {

@@ -577,3 +577,51 @@ Future<void> showTermDialog(BuildContext context, String term) => showDialog<voi
             keywords: false, textAlign: TextAlign.center, style: DialogStyle.body),
       ),
     );
+
+/// The ring round whatever the arrow keys have chosen (a task, a button):
+/// pale gold with a dark line outside it, drawn just outside [child] so
+/// nothing moves when it comes and goes. One look for every keyboard
+/// choice; a skin changes [KeyFocusRing.colour].
+class KeyFocusRing extends StatelessWidget {
+  const KeyFocusRing(
+      {super.key, required this.on, required this.child, this.radius = 10, this.gap = 3});
+  final bool on;
+  final double radius;
+  final double gap;
+  final Widget child;
+
+  static const colour = Palette.goldPale;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+        foregroundPainter: on ? _FocusRingPainter(radius, gap) : null,
+        child: child,
+      );
+}
+
+class _FocusRingPainter extends CustomPainter {
+  const _FocusRingPainter(this.radius, this.gap);
+  final double radius;
+  final double gap;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = RRect.fromRectAndRadius(
+        (Offset.zero & size).inflate(gap + 1.5), Radius.circular(radius + gap));
+    canvas.drawRRect(
+        r.inflate(1.5),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = outlineColour);
+    canvas.drawRRect(
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..color = KeyFocusRing.colour);
+  }
+
+  @override
+  bool shouldRepaint(_FocusRingPainter old) => old.radius != radius || old.gap != gap;
+}

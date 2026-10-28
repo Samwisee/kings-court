@@ -290,3 +290,12 @@ class _TableGeometry {
     );
   }
 }
+
+/// Something the arrow keys can stop on: a card in your hand (row 0), a
+/// task (row 1) or the button beside your hand (row 2), and where it is.
+class _KbStop {
+  const _KbStop(this.row, this.item, this.rect);
+  final int row;
+  final Object? item;
+  final Rect rect;
+}

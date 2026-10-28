@@ -352,7 +352,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
     return Semantics(
       button: true,
       label: 'Task: ${task.fullText(3)}. Tap to read it.',
-      child: GestureDetector(
+      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
         onTap: () => _preview(task),
         child: TableCard(
             task: task,
@@ -363,7 +363,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                 : Player(tutorialCourtiers[owner], color: Palette.players[owner]),
             width: size.width,
             height: size.height),
-      ),
+      )),
     );
   }
 

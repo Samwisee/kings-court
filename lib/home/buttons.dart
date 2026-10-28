@@ -3,9 +3,13 @@ part of '../main.dart';
 
 /// A button that softly pulses with a gold glow, to draw the eye.
 class _GlowButton extends StatefulWidget {
-  const _GlowButton({super.key, required this.label, required this.onPressed});
+  const _GlowButton(
+      {super.key, required this.label, required this.onPressed, this.focused = false});
   final String label;
   final VoidCallback onPressed;
+
+  /// Chosen with the arrow keys (Enter presses it).
+  final bool focused;
 
   @override
   State<_GlowButton> createState() => _GlowButtonState();
@@ -95,13 +99,17 @@ class _GlowButtonState extends State<_GlowButton>
             ]),
           );
         },
-        child: FilledButton(
-          onPressed: widget.onPressed,
-          style: FilledButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 18)),
-          child: Text(widget.label),
+        child: KeyFocusRing(
+          on: widget.focused,
+          radius: 12,
+          child: FilledButton(
+            onPressed: widget.onPressed,
+            style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 18)),
+            child: Text(widget.label),
+          ),
         ),
       ),
     );
@@ -115,9 +123,9 @@ class _ShortcutsCard extends StatelessWidget {
   static const _keys = [
     (['1', '2', '…'], 'Play the card with that key'),
     (['←', '→'], 'Choose a card or a task'),
-    (['↑', '↓'], 'Between your hand and the tasks'),
-    (['Enter'], 'Play the card, or open the task'),
-    (['S'], 'Show a card'),
+    (['↑', '↓'], 'Up to the tasks and buttons, down to your hand'),
+    (['Enter'], 'Play the card, open the task, or press the button'),
+    (['S'], 'Show a card (again to skip)'),
     (['Space'], 'Card tracker; hold to peek'),
   ];
 

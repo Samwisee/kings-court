@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kings_court/chronicle.dart';
@@ -1298,6 +1299,48 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     });
   }
+
+  testWidgets('The arrow keys reach the Skip button, and S skips too', (tester) async {
+    for (final bySKey in [false, true]) {
+      setPhoneSize(tester);
+      HomePageTestHooks.fast();
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(const TheKingsCourtApp());
+      await tester.pumpAndSettle();
+      await openSetup(tester);
+      await tester.tap(find.text('Single player'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Free play'));
+      await tester.tap(find.text('Free play'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3').last);
+      await tester.pumpAndSettle();
+      if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pump();
+      for (int i = 0; i < 300 && find.text('Skip').evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      expect(find.text('Skip'), findsOneWidget);
+      // While Skip shows, the show-a-card button beside it is its X.
+      expect(find.byTooltip('Skip showing a card'), findsOneWidget);
+      final ringed = find.byWidgetPredicate((w) => w is KeyFocusRing && w.on);
+      if (bySKey) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+      } else {
+        // Up from your hand: the Skip button is chosen, and Enter presses it.
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pump();
+        expect(ringed, findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      }
+      await tester.pump();
+      expect(find.text('Skip'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
+    }
+  });
 
   testWidgets('The tutorial plays through every lesson, following the coach',
       (tester) async {

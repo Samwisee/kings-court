@@ -104,14 +104,14 @@ class SuitText extends StatelessWidget {
         child: Semantics(
           button: true,
           hint: 'What it means',
-          child: GestureDetector(
+          child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => showTermDialog(context, term),
             child: Text(word,
                 style: base.copyWith(
                     color: dark ? Palette.gold : Palette.goldDeep,
                     fontWeight: FontWeight.w700)),
-          ),
+          )),
         ),
       );
 
