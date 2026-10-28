@@ -30,6 +30,7 @@ import 'engine/contest.dart';
 import 'engine/inference.dart';
 import 'engine/match.dart';
 import 'engine/rules.dart';
+import 'game/bot_turn.dart';
 import 'game/controller.dart';
 import 'net/table_link.dart';
 import 'play/card_view.dart';
@@ -1165,6 +1166,8 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Returns true when a bot acted, so the next one can be scheduled.
+  /// What the move is comes from game/bot_turn.dart; here is only whether
+  /// a courtier may move right now, and making the move.
   Future<bool> _botThink() async {
     // Traitors play for their schemes; the loyal play to stop them.
     _cards.schemes = {
@@ -1190,94 +1193,27 @@ class _HomePageState extends State<HomePage>
     final view = _matchView();
     _bot.budget = botBudget;
     final before = _moment;
-    final picker = game.pickTurn;
-    if (picker != null) {
-      if (picker == _you) return false;
-      final open = [
-        for (int i = 0; i < game.tasks.length; i++)
-          if (game.tasks[i].assignedPlayerIndex == null) i
-      ];
-      if (open.isEmpty) return false;
-      if (game.decree == Decree.kingsCommand) {
-        // The King hands every task to whoever is best placed for it.
-        final i = open.first;
-        final seats = [
-          for (int s = 0; s < game.players.length; s++)
-            if (game.canTake(game.tasks[i], s)) s
-        ];
-        if (seats.isEmpty) return false;
-        int best = seats.first;
-        double bestScore = -1;
-        for (final s in seats) {
-          final assigned = {
-            for (int t = 0; t < game.tasks.length; t++)
-              if (game.tasks[t].assignedPlayerIndex != null)
-                t: game.tasks[t].assignedPlayerIndex!,
-            i: s,
-          };
-          final score = await _bot.scoreAsync(view, assigned, 120);
-          if (score > bestScore) {
-            bestScore = score;
-            best = s;
-          }
-        }
-        if (!mounted || _moment != before) return true;
-        _assignTask(game.tasks[i], best);
-        return true;
-      } else {
-        if (!open.any((i) => view.canTake(i, picker))) return false;
-        // A courtier may show a card someone's task needs before picking.
-        if (_botReveals(picker)) return true;
-        final pick = await _bot.choosePickAsync(view, picker);
-        if (!mounted || _moment != before) return true;
-        // Nothing suits their hand: pass the pick on, once a round.
-        if (game.canPass(picker) && _bot.lastPickScore < 0.12) {
-          _pass(picker);
-          return true;
-        }
-        _assignTask(game.tasks[pick], picker);
-        return true;
-      }
-    }
-    if (game.tasks.any((t) => t.assignedPlayerIndex == null)) return false;
-    // Numbers for the "exactly X tricks" tasks.
-    for (int i = 0; i < game.tasks.length; i++) {
-      final t = game.tasks[i];
-      if (!needsX(t.description) ||
-          _cards.announced.containsKey(t.description)) {
-        continue;
-      }
-      if (t.assignedPlayerIndex == _you) {
-        _askX(t);
-        return false;
-      }
-      final x = await _bot.chooseXAsync(view, t.assignedPlayerIndex!, i);
-      if (!mounted || _moment != before) return true;
-      _announce(t, x);
-      return true;
-    }
-    // Between tricks, any bot may show a card someone needs.
-    if (_cards.current.isEmpty && !game.isTutorial) {
-      for (int s = 0; s < game.players.length; s++) {
-        if (s != _you && _botReveals(s)) return true;
-      }
-    }
-    final turn = _cards.turn;
-    if (turn == _you) return false;
-    // The tutorial's courtiers follow the lesson's script while it holds.
-    if (game.isTutorial) {
-      final planned =
-          lessons[game.lesson].scripted(_cards.tricks.length, turn);
-      if (planned != null && _cards.legalFor(turn).contains(planned)) {
-        _playCard(turn, planned);
-        return true;
-      }
-    }
-    // Nothing to play (the hand is over, or a new deal is on its way).
-    if (view.legalFor(turn).isEmpty) return false;
-    final card = await _bot.choosePlayAsync(view, turn);
+    final decision = await botDecision(game, view, _bot, you: _you);
+    // Nothing may have moved while the bot thought; if it did, the next
+    // turn will think again.
     if (!mounted || _moment != before) return true;
-    _playCard(turn, card);
+    switch (decision) {
+      case null:
+        return false;
+      case YourAnnouncement(:final task):
+        _askX(game.tasks[task]);
+        return false;
+      case BotPicks(:final seat, :final task):
+        _assignTask(game.tasks[task], seat);
+      case BotPasses(:final seat):
+        _pass(seat);
+      case BotAnnounces(:final task, :final x):
+        _announce(game.tasks[task], x);
+      case BotShows(:final seat, :final card):
+        _reveal(seat, card);
+      case BotPlays(:final seat, :final card):
+        _playCard(seat, card);
+    }
     return true;
   }
 
@@ -3277,26 +3213,6 @@ class _HomePageState extends State<HomePage>
     showable.sort((a, b) => score(b).compareTo(score(a)));
     _haptic(HapticFeedback.selectionClick);
     _reveal(seat, showable.first);
-  }
-
-  /// A bot shows a card someone's task needs, if it may, once a round.
-  bool _botReveals(int seat) {
-    if (game.spoke[seat] || !game.canSpeak(seat) || _cards.current.isNotEmpty) {
-      return false;
-    }
-    for (final card in _cards.hands[seat]) {
-      if (_cards.revealFor(seat, card) == null) continue;
-      final needed = game.tasks.any((t) =>
-          t.status == TaskStatus.pending &&
-          t.assignedPlayerIndex != null &&
-          t.assignedPlayerIndex != seat &&
-          neededCards(t.description).contains(card));
-      if (needed) {
-        _reveal(seat, card);
-        return true;
-      }
-    }
-    return false;
   }
 
   Courtier? get _yourCourtier =>
