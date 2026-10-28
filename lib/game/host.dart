@@ -20,7 +20,11 @@ import 'bot_turn.dart';
 typedef HostTurn = ({BotDecision? decision, bool stale});
 
 class Host {
-  Host({required this.bot, required this.you, required this.send});
+  Host(
+      {required this.bot,
+      required this.you,
+      required this.send,
+      this.script = const CourtierScript()});
 
   /// The courtiers' brain, shared between the seats.
   final Bot bot;
@@ -30,6 +34,9 @@ class Host {
 
   /// Where a courtier's move goes (the table link).
   final void Function(MatchAction move) send;
+
+  /// The mode's say over the courtiers (a lesson's script).
+  CourtierScript script;
 
   /// A courtier is thinking (a slice at a time, so the screen stays smooth).
   bool busy = false;
@@ -62,7 +69,7 @@ class Host {
     busy = true;
     try {
       final before = moment(g);
-      final decision = await botDecision(g, bot, you: you);
+      final decision = await botDecision(g, bot, you: you, script: script);
       if (!(still?.call() ?? true) || moment(g) != before) {
         return (decision: null, stale: true);
       }

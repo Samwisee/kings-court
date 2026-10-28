@@ -90,6 +90,27 @@ class RoundTask {
   }
 }
 
+/// How a round ended, for the mode that played it and the outcome card:
+/// won or lost, each task as it finished (its owner, status and why it
+/// failed), the King and the tricks played.
+class RoundResult {
+  const RoundResult(
+      {required this.won,
+      required this.tasks,
+      required this.king,
+      required this.tricksPlayed,
+      required this.target});
+  final bool won;
+  final List<RoundTask> tasks;
+  final int? king;
+  final int tricksPlayed;
+
+  /// The points the tasks were drawn to.
+  final int target;
+
+  Iterable<RoundTask> get failed => tasks.where((t) => t.isFailed);
+}
+
 /// A task the tricks have settled: done, or failed and why.
 class TaskFlip {
   const TaskFlip(this.task, this.status, {this.why});
@@ -201,6 +222,10 @@ class Round {
   Decree? decree;
   int? exiledSeat;
 
+  /// Whether anyone may pass on a pick this round (the tutorial's lessons
+  /// walk through every pick, so there nobody does).
+  bool passing = true;
+
   /// The players' names, for the wording of a failed task ("Player 2 won
   /// the 3♥"). Not saved: the game sets them.
   List<String> names;
@@ -239,6 +264,17 @@ class Round {
         RoundOutcome.inProgress => null,
         RoundOutcome.won => true,
         RoundOutcome.lost => false,
+      };
+
+  /// How the round ended, once it has.
+  RoundResult? get result => switch (won) {
+        null => null,
+        final won => RoundResult(
+            won: won,
+            tasks: List.unmodifiable(tasks),
+            king: king,
+            tricksPlayed: tricks.length,
+            target: target),
       };
 
   /// Every task has an owner.
@@ -377,10 +413,11 @@ class Round {
     return 'Seal ${Seals.label(first)} must be done before seal ${Seals.label(seal)}.';
   }
 
-  /// Whether [seat] may pass on picking a task right now: it's their turn,
-  /// they haven't passed this round, and someone else could pick instead.
-  /// (The tutorial never passes; the page keeps to that.)
+  /// Whether [seat] may pass on picking a task right now: the round allows
+  /// it, it's their turn, they haven't passed this round, and someone else
+  /// could pick instead.
   bool canPass(int seat) =>
+      passing &&
       pickTurn == seat &&
       decree != Decree.kingsCommand &&
       !passed.contains(seat) &&
@@ -795,6 +832,7 @@ class Round {
         'sealCount': sealCount,
         'decree': decree?.index,
         'exiled': exiledSeat,
+        'passing': passing,
         'tricks': [for (final t in tricks) t.toJson()],
         'leader': leader,
         'currentSeats': currentSeats,
@@ -824,6 +862,7 @@ class Round {
       ..sealCount = (j['sealCount'] as int?) ?? 0
       ..decree = j['decree'] == null ? null : Decree.values[j['decree'] as int]
       ..exiledSeat = j['exiled'] as int?
+      ..passing = (j['passing'] as bool?) ?? true
       ..tricks = [
         for (final t in j['tricks'] as List)
           Trick.fromJson(Map<String, dynamic>.from(t as Map))

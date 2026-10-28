@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../courtiers.dart';
+import '../game/courtiers.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';

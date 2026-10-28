@@ -1,5 +1,6 @@
-import 'chronicle.dart';
-import 'courtiers.dart';
+import '../../../engine/decrees.dart';
+import '../../../game/courtiers.dart';
+import 'dilemmas.dart';
 
 /// What happens when a round's tidings are won or lost.
 class Outcome {

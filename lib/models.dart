@@ -1,13 +1,12 @@
 import 'dart:math';
 
-import 'chronicle.dart';
-import 'courtiers.dart';
 import 'engine/deal_mix.dart';
+import 'engine/decrees.dart';
 import 'engine/round.dart';
 import 'engine/rules.dart';
 import 'engine/showing.dart';
 import 'engine/task.dart';
-import 'tutorial.dart';
+import 'game/courtiers.dart';
 
 export 'engine/round.dart' show RoundOutcome;
 export 'engine/task.dart';
@@ -20,6 +19,10 @@ enum GameMode { free, endless, chronicle, dynasty, tutorial }
 
 const minPlayers = 2;
 const maxPlayers = 6;
+
+/// The highest points target a round can have. The balance report shows
+/// rounds above this are close to impossible.
+const maxTarget = 20;
 
 /// The colours seats are given, as ARGB values (the Okabe–Ito set, which
 /// stays distinct for colour-blind players and at a glance). The screen's
@@ -40,6 +43,27 @@ class Player {
   /// Color; the game itself has no Flutter in it, so it can run on a server).
   int colorValue;
   Player(this.name, {required this.colorValue});
+}
+
+/// What a round is set up with, as its mode decides: its tasks (or none,
+/// for a draw to the points target), its seals and decree, and whether
+/// anyone may pass on a pick.
+class RoundSetup {
+  const RoundSetup(
+      {this.tasks, this.sealCount = 0, this.decree, this.passing = true});
+
+  /// The seals, decree and rules of [round] again, for a re-deal; the
+  /// tasks are drawn afresh.
+  RoundSetup.keep(Round? round)
+      : tasks = null,
+        sealCount = round?.sealCount ?? 0,
+        decree = round?.decree,
+        passing = round?.passing ?? true;
+
+  final List<Task>? tasks;
+  final int sealCount;
+  final Decree? decree;
+  final bool passing;
 }
 
 /// A game at the table: who's playing, how, the round in progress and the
@@ -63,7 +87,7 @@ class GameState {
   /// The Chronicle chapter being played, if any.
   int? chapter;
 
-  /// The tutorial lesson being played (see [lessons]).
+  /// The tutorial lesson being played (see modes/tutorial/lessons.dart).
   int lesson = 0;
   bool get isTutorial => mode == GameMode.tutorial;
   bool get isDynasty => mode == GameMode.dynasty;
@@ -170,19 +194,73 @@ class GameState {
     round = _newRound(old.players, target)
       ..tasks = [for (final t in old.tasks) RoundTask(t.task, seal: t.seal)]
       ..sealCount = old.sealCount
-      ..decree = old.decree;
+      ..decree = old.decree
+      ..passing = old.passing;
   }
 
-  /// Draws a new set of tasks. Starts a new round unless the current round
-  /// is still in progress (shuffling mid-round replaces this round's tasks
-  /// and the King picks first again).
-  void shuffleTasks(int playerCount, int targetPoints) {
+  /// New tasks for the table: a new round once this one is over, or, mid-
+  /// round, this round's tasks dealt again with the King kept (the King
+  /// picks first again). [setup] is the mode's say for the round, told
+  /// whether it's a re-deal.
+  void shuffleTasks(int playerCount, int targetPoints,
+      {RoundSetup Function(Random rand, {bool redeal})? setup}) {
     final old = round;
-    final finished = old == null || old.tasks.isEmpty || outcome != RoundOutcome.inProgress;
-    addTasksUntilTarget(playerCount, targetPoints, newRound: finished);
-    if (!finished) {
-      roundNumber--; // same round, new tasks
-      final r = round!
+    final redeal = old != null && old.tasks.isNotEmpty && outcome == RoundOutcome.inProgress;
+    final keep = RoundSetup.keep(old);
+    startRound(playerCount, targetPoints,
+        setup: (rand) => setup != null
+            ? setup(rand, redeal: redeal)
+            : redeal
+                ? keep
+                : const RoundSetup(),
+        countRound: !redeal,
+        keepKing: redeal);
+  }
+
+  /// Starts a round of [playerCount] seats played to [targetPoints]: its
+  /// tasks drawn at random to the target unless [setup] names them, with
+  /// the seals, decree and rules [setup] gives it (none, by default). The
+  /// setup rolls on [rand] first, so the same seed draws the same round.
+  /// With [keepKing] the reigning King, the exile and the pick stay (a
+  /// shuffle mid-round); otherwise the round waits to be crowned.
+  void startRound(int playerCount, int targetPoints,
+      {RoundSetup Function(Random rand)? setup,
+      bool countRound = true,
+      bool keepKing = false}) {
+    final old = round;
+    if (countRound) roundNumber++;
+    dealId++;
+    _resultRecorded = false;
+    final r = _newRound(playerCount, targetPoints);
+    round = r;
+    final rand = dealRandom(1);
+    final rules = setup?.call(rand) ?? const RoundSetup();
+    r.sealCount = rules.sealCount;
+    r.decree = rules.decree;
+    r.passing = rules.passing;
+    // Exile needs someone to banish besides the King.
+    if (r.decree == Decree.exile && playerCount < 3) r.decree = Decree.silence;
+    if (rules.tasks case final fixed?) {
+      r.tasks = [for (final t in fixed) RoundTask(t)];
+    } else {
+      // Draw the tasks, and if the round has seals, try a few draws for
+      // enough tasks a seal can sit on.
+      var best = const <Task>[];
+      var bestFree = -1;
+      for (var attempt = 0; attempt < 12; attempt++) {
+        final drawn = _drawTasks(playerCount, targetPoints, r.decree, rand);
+        final free = drawn.where(_sealable).length;
+        if (free > bestFree) {
+          best = drawn;
+          bestFree = free;
+        }
+        if (r.sealCount < 2 || free >= r.sealCount) break;
+      }
+      r.tasks = [for (final t in best) RoundTask(t)];
+      _placeSeals(r, rand);
+    }
+    if (keepKing && old != null) {
+      r
         ..king = old.king
         ..exiledSeat = old.exiledSeat
         ..pickTurn = old.king;
@@ -197,60 +275,6 @@ class GameState {
           for (var i = 0; i < playerCount; i++)
             i < players.length ? players[i].name : 'Player ${i + 1}'
         ];
-
-  /// Draws random tasks (no repeats) whose points add up to [targetPoints]
-  /// for the given player count, or as close as the pool allows, into a
-  /// new round.
-  ///
-  /// A new round also settles its seals and decree: a Chronicle chapter
-  /// fixes them; with [surprise] on they're rolled at random. Otherwise
-  /// (a re-deal) the round keeps the seals and decree it had.
-  void addTasksUntilTarget(int playerCount, int targetPoints,
-      {bool newRound = true, bool countRound = true}) {
-    final old = round;
-    if (countRound) roundNumber++;
-    dealId++;
-    _resultRecorded = false;
-    final r = _newRound(playerCount, targetPoints);
-    round = r;
-    final rand = dealRandom(1);
-    // The tutorial sets its own tasks, with no seals or decrees.
-    if (isTutorial) {
-      final lessonTasks = lessons[max(0, min(lesson, lessons.length - 1))].tasks;
-      r.tasks = [for (final d in lessonTasks) RoundTask(taskByDescription(d))];
-      return;
-    }
-    if (newRound) {
-      if (mode == GameMode.chronicle && chapter != null) {
-        r.sealCount = chronicle[chapter!].seals;
-        r.decree = chronicle[chapter!].decree;
-      } else if (surprise) {
-        r.sealCount = const [0, 0, 2, 3][rand.nextInt(4)];
-        r.decree = rand.nextBool()
-            ? Decree.values[rand.nextInt(Decree.values.length)]
-            : null;
-      }
-      if (r.decree == Decree.exile && playerCount < 3) r.decree = Decree.silence;
-    } else if (old != null) {
-      r.sealCount = old.sealCount;
-      r.decree = old.decree;
-    }
-    // Draw the tasks, and if the round has seals, try a few draws for
-    // enough tasks a seal can sit on.
-    var best = const <Task>[];
-    var bestFree = -1;
-    for (var attempt = 0; attempt < 12; attempt++) {
-      final drawn = _drawTasks(playerCount, targetPoints, r.decree, rand);
-      final free = drawn.where(_sealable).length;
-      if (free > bestFree) {
-        best = drawn;
-        bestFree = free;
-      }
-      if (r.sealCount < 2 || free >= r.sealCount) break;
-    }
-    r.tasks = [for (final t in best) RoundTask(t)];
-    _placeSeals(r, rand);
-  }
 
   /// A seal orders tasks by when they're done, so it only goes on a task
   /// that can be done on any trick (see [TaskTiming]).
@@ -386,7 +410,8 @@ class GameState {
       ..pickTurn = j['pickTurn'] as int?
       ..sealCount = (j['sealCount'] as int?) ?? 0
       ..decree = j['decree'] == null ? null : Decree.values[j['decree'] as int]
-      ..exiledSeat = j['exiled'] as int?;
+      ..exiledSeat = j['exiled'] as int?
+      ..passing = !g.isTutorial;
     if (j['spoke'] case final List<dynamic> spoke when spoke.length == r.players) {
       r.spoke = List<bool>.from(spoke);
     }

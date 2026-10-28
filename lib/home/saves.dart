@@ -13,13 +13,7 @@ class _SavedGame {
   /// before the target was part of the game kept it beside the game).
   bool get hasTarget => (data['game'] as Map<String, dynamic>).containsKey('target');
 
-  String get title => switch (game.mode) {
-        GameMode.free => 'Free play',
-        GameMode.endless => 'Endless',
-        GameMode.chronicle => 'The Chronicle',
-        GameMode.dynasty => 'Dynasty',
-        GameMode.tutorial => 'Tutorial',
-      };
+  String get title => modeOf(game.mode).title;
 
   /// Where the game had got to, in a few words.
   String get detail {

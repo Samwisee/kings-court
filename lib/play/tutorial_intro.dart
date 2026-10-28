@@ -9,13 +9,13 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../courtiers.dart';
 import '../engine/cards.dart';
 import '../engine/round.dart';
+import '../game/courtiers.dart';
 import '../models.dart';
+import '../modes/tutorial/lessons.dart';
 import '../task_help.dart';
 import '../theme.dart';
-import '../tutorial.dart';
 import '../widgets.dart';
 import 'card_view.dart';
 

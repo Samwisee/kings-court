@@ -9,8 +9,8 @@
 /// normal and the lesson can be tried again.
 library;
 
-import 'courtiers.dart';
-import 'engine/cards.dart';
+import '../../engine/cards.dart';
+import '../../game/courtiers.dart';
 
 class Lesson {
   const Lesson({

@@ -6,18 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/analytics.dart';
-import 'package:kings_court/chronicle.dart';
-import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/contest.dart';
+import 'package:kings_court/engine/decrees.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
+import 'package:kings_court/modes/chronicle/chapters.dart';
+import 'package:kings_court/modes/dynasty/data/dilemmas.dart';
+import 'package:kings_court/modes/dynasty/data/story.dart';
+import 'package:kings_court/modes/free/free_play.dart';
+import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/play/contest_table.dart';
 import 'package:kings_court/sfx.dart';
-import 'package:kings_court/story.dart';
-import 'package:kings_court/tutorial.dart';
 import 'package:kings_court/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -644,7 +646,7 @@ void main() {
       ..players = [
         for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.red.toARGB32())
       ]
-      ..addTasksUntilTarget(3, 6);
+      ..startRound(3, 6);
     for (final t in game.tasks) {
       t.status = TaskStatus.completed;
     }
@@ -663,7 +665,7 @@ void main() {
       ..players = [
         for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.blue.toARGB32())
       ]
-      ..addTasksUntilTarget(4, 10)
+      ..startRound(4, 10)
       ..crown(2);
     game.round!.assign(game.tasks.first, 3);
     game.round!.toggleSpoke(1);
@@ -679,7 +681,7 @@ void main() {
   test('Seals must be completed in order, Ω last', () {
     final game = GameState()
       ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
-      ..addTasksUntilTarget(4, 14);
+      ..startRound(4, 14);
     final round = game.round!;
     while (round.tasks.length < 4) {
       round.tasks.add(RoundTask(GameState.taskPool[round.tasks.length]));
@@ -704,7 +706,7 @@ void main() {
     Round make(Decree d) {
       final g = GameState()
         ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
-        ..addTasksUntilTarget(4, 10);
+        ..startRound(4, 10);
       g.round!.decree = d;
       return g.round!;
     }
@@ -767,7 +769,7 @@ void main() {
   GameState withRoles(int players) => GameState()
     ..players = [for (int i = 0; i < players; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
     ..seatCourtiers()
-    ..addTasksUntilTarget(players, 8);
+    ..startRound(players, 8);
 
   test('Every story flag a matter needs can be earned', () {
     final earned = <String>{
@@ -907,7 +909,7 @@ void main() {
     setPhoneSize(tester);
     final old = GameState()
       ..mode = GameMode.endless
-      ..addTasksUntilTarget(3, 4);
+      ..startRound(3, 4);
     old.players = [
       for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.teal.toARGB32())
     ];
@@ -932,9 +934,9 @@ void main() {
 
   test('Seals come in twos or not at all', () {
     for (var i = 0; i < 50; i++) {
-      final g = GameState()
-        ..surprise = true
-        ..addTasksUntilTarget(4, 3 + i % 12);
+      final g = GameState()..surprise = true;
+      g.startRound(4, 3 + i % 12,
+          setup: (rand) => const FreePlay().roundSetup(g, 4, rand));
       final sealed = g.tasks.where((t) => t.seal != null).length;
       expect(sealed == 0 || sealed >= 2, isTrue);
     }
@@ -944,10 +946,10 @@ void main() {
   test('Seals only sit where they can be kept', () {
     var omegas = 0, numbered = 0;
     for (var i = 0; i < 400; i++) {
-      // A re-deal keeps the round's seal count: set it, then deal again.
-      final g = GameState()..addTasksUntilTarget(3 + i % 3, 6 + i % 14);
-      g.round!.sealCount = const [2, 3, 4][i % 3];
-      g.addTasksUntilTarget(3 + i % 3, 6 + i % 14, newRound: false);
+      final seals = const [2, 3, 4][i % 3];
+      final g = GameState()
+        ..startRound(3 + i % 3, 6 + i % 14,
+            setup: (_) => RoundSetup(sealCount: seals));
       final sealed = g.tasks.where((t) => t.seal != null).toList();
       expect(sealed.isEmpty || sealed.length >= 2, isTrue);
       for (final t in sealed) {
@@ -1280,7 +1282,7 @@ void main() {
   test('Each player may pass on picking once a round', () {
     final game = GameState()
       ..players = [for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.teal.toARGB32())]
-      ..addTasksUntilTarget(3, 10)
+      ..startRound(3, 10)
       ..crown(0);
     final g = game.round!;
     final first = g.pickTurn!;
@@ -1317,7 +1319,7 @@ void main() {
   test('Task draw hits the target without repeats', () {
     for (final players in [2, 3, 4, 5, 6]) {
       for (final target in [5, 10, 20]) {
-        final game = GameState()..addTasksUntilTarget(players, target);
+        final game = GameState()..startRound(players, target);
         final total = game.tasks
             .fold<int>(0, (sum, t) => sum + t.points(players));
         final names = game.tasks.map((t) => t.description).toSet();
@@ -1334,7 +1336,7 @@ void main() {
   });
 
   test('Round is won when all tasks complete, lost when any fails', () {
-    final game = GameState()..addTasksUntilTarget(6, 12);
+    final game = GameState()..startRound(6, 12);
     expect(game.outcome, RoundOutcome.inProgress);
     for (final t in game.tasks) {
       t.status = TaskStatus.completed;
@@ -1355,7 +1357,7 @@ void main() {
 
   test('Shuffling mid-round keeps the round number and King', () {
     final game = GameState()
-      ..addTasksUntilTarget(4, 10)
+      ..startRound(4, 10)
       ..crown(1);
     game.shuffleTasks(4, 10);
     expect(game.roundNumber, 1);

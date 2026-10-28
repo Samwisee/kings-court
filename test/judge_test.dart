@@ -19,7 +19,7 @@ Round table(List<String> tasks, {int seed = 5}) {
     ..digital = true
     ..players = [for (var i = 0; i < 3; i++) Player('P$i', colorValue: 0xFF000000 + i)]
     ..seatCourtiers()
-    ..addTasksUntilTarget(3, 5);
+    ..startRound(3, 5);
   g.round!.tasks = [for (final d in tasks) RoundTask(taskByDescription(d))];
   dealRound(g, you: 0);
   g.crown(g.round!.kingCardHolder);

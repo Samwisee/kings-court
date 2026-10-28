@@ -26,10 +26,6 @@ const legacy = {
   'lib/tasks.dart': 'engine',
   'lib/task_help.dart': 'engine',
   'lib/models.dart': 'game',
-  'lib/chronicle.dart': 'modes',
-  'lib/courtiers.dart': 'modes',
-  'lib/story.dart': 'modes',
-  'lib/tutorial.dart': 'modes',
   'lib/sfx.dart': 'platform',
   'lib/analytics.dart': 'platform',
   'lib/crash_reports.dart': 'platform',
@@ -45,13 +41,7 @@ const legacyFolders = {'home': 'ui', 'play': 'ui'};
 
 /// Imports pointing the wrong way today, and the step that fixes them.
 const knownDebts = {
-  // Courtiers' roles move to game; the tutorial's scripts reach the bots
-  // through an interface (step 4).
-  'lib/models.dart → lib/chronicle.dart',
-  'lib/models.dart → lib/courtiers.dart',
-  'lib/models.dart → lib/tutorial.dart',
-  'lib/game/bot_turn.dart → lib/tutorial.dart',
-  // The controller is Flutter and belongs in ui/ (step 3).
+  // The controller is Flutter and belongs in ui/ (step 7).
   'lib/game/controller.dart → package:flutter/foundation.dart',
   'lib/game/controller.dart → package:shared_preferences/shared_preferences.dart',
   'lib/game/controller.dart → lib/net/table_link.dart',

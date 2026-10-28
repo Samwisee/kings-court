@@ -24,7 +24,7 @@ import 'package:kings_court/models.dart';
   // The seed from [rand], so a seeded run deals the same tasks every time.
   final g = GameState()
     ..seed = rand.nextInt(1 << 30)
-    ..addTasksUntilTarget(players, target);
+    ..startRound(players, target);
   final s = Round(players: players, target: target);
   s.dealFor(1, rand,
       accept: (hands, inPlay) =>

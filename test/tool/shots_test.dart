@@ -7,14 +7,14 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/engine/cards.dart';
+import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
+import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/play/card_view.dart';
 import 'package:kings_court/play/throne_room.dart';
 import 'package:kings_court/sfx.dart';
-import 'package:kings_court/tutorial.dart';
 import 'package:kings_court/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

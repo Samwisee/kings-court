@@ -16,7 +16,7 @@ GameState table({int seed = 3}) {
     ..digital = true
     ..players = [for (var i = 0; i < 4; i++) Player('P$i', colorValue: 0xFF000000 + i)]
     ..seatCourtiers()
-    ..addTasksUntilTarget(4, 6);
+    ..startRound(4, 6);
   dealRound(g, you: 0);
   return g;
 }

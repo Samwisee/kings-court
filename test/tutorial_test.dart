@@ -3,7 +3,7 @@ import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
-import 'package:kings_court/tutorial.dart';
+import 'package:kings_court/modes/tutorial/lessons.dart';
 
 void main() {
   for (var i = 0; i < lessons.length; i++) {

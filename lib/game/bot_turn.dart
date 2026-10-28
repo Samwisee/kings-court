@@ -15,7 +15,6 @@ import '../engine/round.dart';
 import '../engine/rules.dart';
 import '../engine/showing.dart';
 import '../models.dart';
-import '../tutorial.dart';
 
 /// A move a courtier wants to make, or what the table is waiting on.
 sealed class BotDecision {
@@ -64,11 +63,22 @@ class YourAnnouncement extends BotDecision {
   final int task;
 }
 
+/// What a mode tells the courtiers: a card to play on a trick (the
+/// tutorial's lessons script every trick, while the script holds), and
+/// whether they show cards between tricks (the lessons keep to the point).
+class CourtierScript {
+  const CourtierScript({this.play, this.showsBetweenTricks = true});
+
+  /// The card [seat] should play on trick [trick], or null to decide freely.
+  final PlayingCard? Function(int trick, int seat)? play;
+  final bool showsBetweenTricks;
+}
+
 /// The next move a courtier makes in [game]'s round, or null when it's
 /// your move or there is nothing to do. [you] is the seat the player sits
-/// in. The tutorial's lesson scripts the courtiers while it holds; the
-/// tutorial never passes.
-Future<BotDecision?> botDecision(GameState game, Bot bot, {required int you}) async {
+/// in; [script] is the mode's say over the courtiers.
+Future<BotDecision?> botDecision(GameState game, Bot bot,
+    {required int you, CourtierScript script = const CourtierScript()}) async {
   final r = game.round!;
   final picker = r.pickTurn;
   if (picker != null) {
@@ -110,9 +120,7 @@ Future<BotDecision?> botDecision(GameState game, Bot bot, {required int you}) as
     // Nothing suits their hand: pass the pick on, once a round.
     // (Fair courtiers see only their own hand, so they rate every pick
     // lower than all-seeing ones did; the bar is set to match.)
-    if (!game.isTutorial &&
-        r.canPass(picker) &&
-        bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) {
+    if (r.canPass(picker) && bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) {
       return BotPasses(picker);
     }
     return BotPicks(picker, pick);
@@ -127,7 +135,7 @@ Future<BotDecision?> botDecision(GameState game, Bot bot, {required int you}) as
     return BotAnnounces(t.owner!, i, x);
   }
   // Between tricks, any courtier may show a card someone needs.
-  if (r.current.isEmpty && !game.isTutorial) {
+  if (r.current.isEmpty && script.showsBetweenTricks) {
     for (var s = 0; s < r.players; s++) {
       if (s == you) continue;
       final shown = botShows(r, s);
@@ -136,12 +144,10 @@ Future<BotDecision?> botDecision(GameState game, Bot bot, {required int you}) as
   }
   final turn = r.turn;
   if (turn == you) return null;
-  // The tutorial's courtiers follow the lesson's script while it holds.
-  if (game.isTutorial) {
-    final planned = lessons[game.lesson].scripted(r.tricks.length, turn);
-    if (planned != null && r.legalFor(turn).contains(planned)) {
-      return BotPlays(turn, planned);
-    }
+  // A scripted courtier (a lesson's) follows the script while it holds.
+  if (script.play?.call(r.tricks.length, turn) case final planned?
+      when r.legalFor(turn).contains(planned)) {
+    return BotPlays(turn, planned);
   }
   // Nothing to play (the hand is over, or a new deal is on its way).
   if (r.legalFor(turn).isEmpty) return null;

@@ -1,6 +1,8 @@
-import 'engine/decrees.dart';
+/// The Chronicle: chapters that build up points, seals and decrees, and
+/// how far a player has got through them.
+library;
 
-export 'engine/decrees.dart';
+import '../../engine/decrees.dart';
 
 /// One chapter of the Chronicle: a fixed points target, a number of
 /// seals, and perhaps a decree.

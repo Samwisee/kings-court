@@ -26,11 +26,6 @@ abstract final class Analytics {
   static void event(List<Object> path) =>
       _send(path.map((p) => '$p'.toLowerCase().replaceAll(' ', '-')).join('/'));
 
-  /// A round number grouped, so the list stays short: 1 to 5, then 6-10,
-  /// then 11+.
-  static String roundBucket(int round) =>
-      round <= 5 ? 'r$round' : round <= 10 ? 'r6-10' : 'r11+';
-
   static void _send(String path, {bool event = true}) {
     sent.add(path);
     if (sent.length > 50) sent.removeAt(0);

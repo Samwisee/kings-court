@@ -8,7 +8,7 @@ import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/game/dealer.dart';
 import 'package:kings_court/models.dart';
-import 'package:kings_court/tutorial.dart';
+import 'package:kings_court/modes/tutorial/lessons.dart';
 
 GameState game(int players, int target, {int seed = 11, GameMode mode = GameMode.free}) =>
     GameState()
@@ -18,7 +18,7 @@ GameState game(int players, int target, {int seed = 11, GameMode mode = GameMode
       ..digital = true
       ..players = [for (var i = 0; i < players; i++) Player('P$i', colorValue: 0xFF000000 + i)]
       ..seatCourtiers()
-      ..addTasksUntilTarget(players, target);
+      ..startRound(players, target);
 
 void main() {
   test('The same seed deals the same cards, and a different seed does not', () {

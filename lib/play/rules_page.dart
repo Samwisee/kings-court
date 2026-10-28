@@ -7,7 +7,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../chronicle.dart';
+import '../engine/decrees.dart';
 import '../theme.dart';
 import '../widgets.dart';
 

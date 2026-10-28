@@ -226,7 +226,7 @@ void main() {
 
   test('Rounds never deal tasks that clash', () {
     for (var i = 0; i < 300; i++) {
-      final g = GameState()..addTasksUntilTarget(3 + i % 4, 10 + i % 21);
+      final g = GameState()..startRound(3 + i % 4, 10 + i % 21);
       for (final a in g.tasks) {
         for (final b in g.tasks) {
           if (a != b) {
@@ -264,7 +264,7 @@ void main() {
     expect(tierOf('Win exactly as many tricks as the player on your left'), TaskTier.precise);
     for (var i = 0; i < 400; i++) {
       final players = 3 + i % 3;
-      final g = GameState()..addTasksUntilTarget(players, 6 + i % 25);
+      final g = GameState()..startRound(players, 6 + i % 25);
       final ds = g.tasks.map((t) => t.description).toList();
       for (final e in tierLimit.entries) {
         expect(ds.where((d) => tierOf(d) == e.key).length,
@@ -324,7 +324,7 @@ void main() {
       ..seed = seed
       ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: 0xff000000)]
       ..seatCourtiers()
-      ..addTasksUntilTarget(4, 6);
+      ..startRound(4, 6);
     final a = fresh(42), b = fresh(42), c = fresh(43);
     expect([for (final t in a.tasks) t.description], [for (final t in b.tasks) t.description]);
     final ma = Round(players: 4, target: 6)..dealFor(a.dealId, a.dealRandom());

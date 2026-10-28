@@ -17,21 +17,25 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'analytics.dart';
 import 'bug_report.dart';
-import 'chronicle.dart';
-import 'courtiers.dart';
 import 'crash_reports.dart';
 import 'engine/bot.dart';
 import 'engine/cards.dart';
 import 'engine/conflicts.dart';
+import 'engine/decrees.dart';
 import 'engine/inference.dart';
 import 'engine/round.dart';
 import 'engine/rules.dart';
 import 'game/bot_turn.dart';
 import 'game/controller.dart';
+import 'game/courtiers.dart';
 import 'game/dealer.dart';
 import 'game/host.dart';
 import 'game/judge.dart';
 import 'models.dart';
+import 'modes/chronicle/chapters.dart';
+import 'modes/modes.dart';
+import 'modes/progress.dart';
+import 'modes/tutorial/lessons.dart';
 import 'net/table_link.dart';
 import 'play/card_view.dart';
 import 'play/rules_page.dart';
@@ -39,7 +43,6 @@ import 'play/tutorial_intro.dart';
 import 'sfx.dart';
 import 'task_help.dart';
 import 'theme.dart';
-import 'tutorial.dart';
 import 'widgets.dart';
 
 part 'home/geometry.dart';
@@ -183,10 +186,9 @@ class HomePageState extends State<HomePage>
   /// Points chosen in the end-of-round dialog for the next round.
   int _nextTarget = 10;
 
-  /// Crowns earned for the chapter just won, and what it had before (so an
-  /// undo can put it back).
-  int _crownsEarned = 0;
-  int? _crownsBefore;
+  /// What the round just finished meant to its mode (crowns earned, the
+  /// next target), and how to take that back if its last mark is undone.
+  RoundEffects? _effects;
 
   /// The last done/failed mark, so it can be undone from the round result.
   (RoundTask, TaskStatus)? _lastMark;
@@ -235,8 +237,12 @@ class HomePageState extends State<HomePage>
   /// Setup opened from Continue: it lists the saved games instead.
   bool _setupContinuing = false;
 
-  /// Chronicle progress on this device.
-  ChronicleProgress _progress = ChronicleProgress();
+  /// The player's progress on this device (the Chronicle's crowns).
+  Progress _progress = Progress();
+
+  /// The way this game is played (modes/): what each round is set up
+  /// with, and what its result means.
+  Mode get _mode => modeOf(game.mode);
 
   @override
   void initState() {
@@ -550,7 +556,7 @@ class HomePageState extends State<HomePage>
   /// A choice with a way out is up: show a card or Skip, take a task or
   /// Pass. The button sits beside your hand.
   bool get _barChoice =>
-      (_speakPromptDue || (_round.pickTurn == _you && _canPass(_you))) &&
+      (_speakPromptDue || (_round.pickTurn == _you && _round.canPass(_you))) &&
       _toast == null;
 
   /// What that button does, for the Enter key.
@@ -598,7 +604,7 @@ class HomePageState extends State<HomePage>
       if (!mounted) return;
       setState(() {
         _bestStreak = best;
-        _progress = progress;
+        _progress = Progress(chronicle: progress);
         _saves = saves;
       });
     } catch (_) {
@@ -697,7 +703,7 @@ class HomePageState extends State<HomePage>
   Future<void> _saveSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_chronicleKey, jsonEncode(_progress.toJson()));
+      await prefs.setString(_chronicleKey, jsonEncode(_progress.chronicle.toJson()));
       await prefs.setBool(_soundKey, Sfx.enabled);
       await prefs.setBool(_uprightKey, _upright);
       await prefs.setBool(_suitsKey, Palette.fourColourSuits);
@@ -718,14 +724,23 @@ class HomePageState extends State<HomePage>
 
   /// Starts (or retries) a Chronicle chapter with the same players.
   void _beginChapter(int chapter) {
-    _progress.startAttempt(chapter);
+    _progress.chronicle.startAttempt(chapter);
     _saveSettings();
     setState(() {
       game.chapter = chapter;
       game.target = chronicle[chapter].points;
-      game.shuffleTasks(game.players.length, game.target);
+      _newTasks();
       _resetTable();
     });
+  }
+
+  /// New tasks from the mode: a new round once this one is over, or the
+  /// round in progress dealt again (see GameState.shuffleTasks).
+  void _newTasks() {
+    final n = game.players.length;
+    game.shuffleTasks(n, game.target,
+        setup: (rand, {redeal = false}) =>
+            _mode.roundSetup(game, n, rand, redeal: redeal));
   }
 
   /// Picks up a saved game exactly where it was left.
@@ -939,8 +954,7 @@ class HomePageState extends State<HomePage>
   /// lets the King card choose the King.
   void _syncCards() {
     if (!_digital || !_inGame) return;
-    if (dealRound(game,
-        you: _you, rigged: game.isTutorial ? lessons[game.lesson].deal() : null)) {
+    if (dealRound(game, you: _you, rigged: _mode.riggedDeal(game))) {
       _lastTrick = null;
       _collecting = false;
       _revealing = false;
@@ -1059,6 +1073,7 @@ class HomePageState extends State<HomePage>
       return false;
     }
     _host.bot.budget = botBudget;
+    _host.script = _mode.script(game);
     final turn = await _host.act(game, still: () => mounted);
     // Nothing may have moved while the bot thought; if it did, the next
     // turn will think again.
@@ -1188,16 +1203,12 @@ class HomePageState extends State<HomePage>
 
   /// [seat] passes on picking a task: sends the move.
   void _pass(int seat) {
-    if (!_canPass(seat)) return;
+    if (!_round.canPass(seat)) return;
     _link.send(Pass(seat));
   }
 
-  /// Whether [seat] may pass on picking right now (never in the tutorial,
-  /// which walks you through every pick).
-  bool _canPass(int seat) => !game.isTutorial && _round.canPass(seat);
-
   void _passNow(int seat) {
-    if (!_canPass(seat)) return;
+    if (!_round.canPass(seat)) return;
     if (seat != _you) {
       _quip(seat, 'I\u2019ll pass for now.');
       _showSnack('${game.players[seat].name} passes', Palette.feltDeep);
@@ -1451,7 +1462,7 @@ class HomePageState extends State<HomePage>
       if (_round.pickTurn == _you) {
         return _round.decree == Decree.kingsCommand
             ? "King's Command: hold a task to hand it out"
-            : _canPass(_you)
+            : _round.canPass(_you)
                 ? 'Hold a task to take it, or'
                 : 'Hold a task to take it';
       }
@@ -2878,12 +2889,12 @@ class HomePageState extends State<HomePage>
       int lesson = 0}) {
     if (chapter != null) {
       target = chronicle[chapter].points;
-      _progress.startAttempt(chapter);
+      _progress.chronicle.startAttempt(chapter);
       _saveSettings();
     }
     // Leaving a round part-way for a new game counts as giving up on it.
     if (_inGame && !game.isTutorial && game.outcome == RoundOutcome.inProgress) {
-      Analytics.event(['left', game.mode.name, Analytics.roundBucket(game.roundNumber)]);
+      Analytics.event(['left', game.mode.name, roundBucket(game.roundNumber)]);
     }
     Analytics.event([
       'start',
@@ -2928,7 +2939,8 @@ class HomePageState extends State<HomePage>
         }
       }
       // The first round, named after the players as seated.
-      game.addTasksUntilTarget(count, target);
+      game.startRound(count, target,
+          setup: (rand) => _mode.roundSetup(game, count, rand));
       _resetTable();
       // A new game takes the place of any saved game of the same kind.
       _saves = [for (final s in _saves) if (s.game.mode != mode) s];
@@ -3233,7 +3245,7 @@ class HomePageState extends State<HomePage>
     final midRound = _inGame && game.outcome == RoundOutcome.inProgress &&
         _round.king != null;
     setState(() {
-      game.shuffleTasks(game.players.length, game.target);
+      _newTasks();
       if (midRound) _decreeReadFor = game.dealId; // already read this round
       _resetTable();
     });
@@ -3431,31 +3443,20 @@ class HomePageState extends State<HomePage>
       }
       _lastMark = (task, previous);
       if (game.recordOutcomeIfFinished()) {
-        final won = game.outcome == RoundOutcome.won;
-        Analytics.event([
-          'round',
-          game.mode.name,
-          if (game.isTutorial)
-            'lesson${game.lesson + 1}'
-          else if (game.mode == GameMode.chronicle && game.chapter != null)
-            'chapter${game.chapter! + 1}'
-          else
-            Analytics.roundBucket(game.roundNumber),
-          won ? 'won' : 'lost',
-        ]);
+        final result = _round.result!;
+        final won = result.won;
+        Analytics.event(
+            ['round', game.mode.name, _mode.roundLabel(game), won ? 'won' : 'lost']);
         if (won) {
           Sfx.win();
         } else {
           Sfx.lose();
         }
-        if (game.mode == GameMode.chronicle && game.chapter != null && won) {
-          _crownsBefore = _progress.crowns[game.chapter!];
-          _crownsEarned = _progress.recordWin(game.chapter!);
-          _saveSettings();
-        }
-        _nextTarget = game.campaign && game.outcome == RoundOutcome.won
-            ? math.min(maxTarget, game.target + 1)
-            : game.target;
+        // What the result means to the mode: crowns, the next target.
+        final effects = _mode.afterRound(game, result, _progress);
+        _effects = effects;
+        if (effects.crowns > 0) _saveSettings();
+        _nextTarget = effects.nextTarget;
         if (game.bestStreak > _bestStreak) _bestStreak = game.bestStreak;
         // The last tasks turn over first, then the result comes up.
         _outcome.value = 0;
@@ -3991,8 +3992,8 @@ class HomePageState extends State<HomePage>
       mode: args.mode ?? game.mode,
       surprise: game.surprise,
       roles: game.roles,
-      chapter: args.chapter ?? _progress.nextChapter,
-      progress: _progress,
+      chapter: args.chapter ?? _progress.chronicle.nextChapter,
+      progress: _progress.chronicle,
       canCancel: true,
       onCancel: _closeSetup,
       onStart: _startFromSetup,
@@ -4092,8 +4093,10 @@ class HomePageState extends State<HomePage>
   /// King card is King.
   void _redeal() {
     setState(() {
-      game.addTasksUntilTarget(game.players.length, game.target,
-          newRound: false, countRound: false);
+      final n = game.players.length;
+      game.startRound(n, game.target,
+          setup: (rand) => _mode.roundSetup(game, n, rand, redeal: true),
+          countRound: false);
       _resetTable();
     });
   }
@@ -4561,7 +4564,7 @@ class HomePageState extends State<HomePage>
         // At a real table: whoever's picking may pass, once a round.
         if (!_digital &&
             _round.pickTurn != null &&
-            _canPass(_round.pickTurn!))
+            _round.canPass(_round.pickTurn!))
           Tooltip(
             message: '${game.players[_round.pickTurn!].name} passes the pick on (once a round)',
             child: TextButton(
@@ -5200,7 +5203,7 @@ class HomePageState extends State<HomePage>
                       padding: const EdgeInsets.symmetric(horizontal: 3),
                       child: CrownIcon(
                           size: 28,
-                          color: i < _crownsEarned
+                          color: i < (_effects?.crowns ?? 0)
                               ? Palette.ink
                               : const Color(0x33000000)),
                     ),
@@ -5314,17 +5317,12 @@ class HomePageState extends State<HomePage>
     if (mark == null) return;
     setState(() {
       final (task, previous) = mark;
-      if (game.mode == GameMode.chronicle &&
-          game.chapter != null &&
-          game.outcome == RoundOutcome.won) {
-        final c = game.chapter!;
-        if (_crownsBefore == null) {
-          _progress.crowns.remove(c);
-        } else {
-          _progress.crowns[c] = _crownsBefore!;
-        }
+      // Whatever the result meant to the mode (crowns) is taken back too.
+      if (_effects?.undo case final undo?) {
+        undo();
         _saveSettings();
       }
+      _effects = null;
       game.undoOutcome();
       task.status = previous;
       _lastMark = null;
@@ -5388,6 +5386,3 @@ class HomePageState extends State<HomePage>
 /// The soft shadow under words on the felt, as on the front page.
 const _feltShadow = feltShadow;
 
-/// The highest points target a round can have. The balance report shows
-/// rounds above this are close to impossible.
-const maxTarget = 20;
