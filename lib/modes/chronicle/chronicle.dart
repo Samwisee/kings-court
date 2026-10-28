@@ -22,12 +22,13 @@ class ChronicleMode extends Mode {
   /// The chapter being played, or the first.
   Chapter chapterOf(GameState g) => chronicle[g.chapter ?? 0];
 
-  /// A chapter fixes its seals and decree, new round or re-deal.
+  /// A chapter fixes its points, seals and decree, new round or re-deal.
   @override
   RoundSetup roundSetup(GameState g, int players, Random rand,
       {bool redeal = false}) {
     final chapter = chapterOf(g);
-    return RoundSetup(sealCount: chapter.seals, decree: chapter.decree);
+    return RoundSetup(
+        target: chapter.points, sealCount: chapter.seals, decree: chapter.decree);
   }
 
   /// Winning a chapter earns crowns (3 at the first attempt, 2 within

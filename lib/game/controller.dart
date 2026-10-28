@@ -39,8 +39,12 @@ class GameController extends ChangeNotifier {
   /// ([changed]), so swapping in a blank game never overwrites a save.
   GameState get game => _game;
   set game(GameState g) {
-    // The last game's waiting save goes in first, to its own slot.
-    if (_saveTimer != null && !identical(g, _game)) saveNow();
+    if (!identical(g, _game)) {
+      // The last game's waiting save goes in first, to its own slot.
+      if (_saveTimer != null) saveNow();
+      // A new game: its moves start from the first.
+      link.reset();
+    }
     _game = g;
     notifyListeners();
   }

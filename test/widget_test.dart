@@ -159,8 +159,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(t.owner, 1);
     expect(link.history.length, before + 1);
-    expect(link.history.last, isA<PickTask>());
-    expect((link.history.last as PickTask).seat, 1);
+    expect(link.history.last.action, isA<PickTask>());
+    expect((link.history.last.action as PickTask).seat, 1);
   });
 
   testWidgets('Starting and finishing rounds are counted', (tester) async {

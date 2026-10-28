@@ -25,6 +25,7 @@ import 'engine/decrees.dart';
 import 'engine/inference.dart';
 import 'engine/round.dart';
 import 'engine/rules.dart';
+import 'game/actions.dart';
 import 'game/bot_turn.dart';
 import 'game/controller.dart';
 import 'game/courtiers.dart';
@@ -190,8 +191,6 @@ class HomePageState extends State<HomePage>
   /// next target), and how to take that back if its last mark is undone.
   RoundEffects? _effects;
 
-  /// The last done/failed mark, so it can be undone from the round result.
-  (RoundTask, TaskStatus)? _lastMark;
 
   final _tableKey = GlobalKey();
 
@@ -247,7 +246,7 @@ class HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _moves = _link.moves.listen(_onMove);
+    _moves = _link.moves.listen((m) => _onAction(m.action));
     // What a save holds beside the game: the real table's layout.
     _ctrl.saveExtras = () => {
           'cardWidth': _cardWidth,
@@ -722,26 +721,10 @@ class HomePageState extends State<HomePage>
       chapter: chapter);
 
 
-  /// Starts (or retries) a Chronicle chapter with the same players.
-  void _beginChapter(int chapter) {
-    _progress.chronicle.startAttempt(chapter);
-    _saveSettings();
-    setState(() {
-      game.chapter = chapter;
-      game.target = chronicle[chapter].points;
-      _newTasks();
-      _resetTable();
-    });
-  }
-
-  /// New tasks from the mode: a new round once this one is over, or the
-  /// round in progress dealt again (see GameState.shuffleTasks).
-  void _newTasks() {
-    final n = game.players.length;
-    game.shuffleTasks(n, game.target,
-        setup: (rand, {redeal = false}) =>
-            _mode.roundSetup(game, n, rand, redeal: redeal));
-  }
+  /// Starts (or retries) a Chronicle chapter with the same players: sends
+  /// the action.
+  void _beginChapter(int chapter) =>
+      _link.send(NextRound(_you, chapter: chapter));
 
   /// Picks up a saved game exactly where it was left.
   void _continueSaved(_SavedGame saved) {
@@ -970,7 +953,7 @@ class HomePageState extends State<HomePage>
       _crownTimer = Timer(const Duration(milliseconds: 350), () {
         _crownTimer = null;
         final holder = _round.kingCardHolder;
-        if (mounted && _choosingKing && holder != null) _crownKing(holder);
+        if (mounted && _choosingKing && holder != null) _crown(holder);
       });
     }
   }
@@ -1166,24 +1149,91 @@ class HomePageState extends State<HomePage>
 
   /// Where moves go: this device, for now.
   TableLink get _link => _ctrl.link;
-  late final StreamSubscription<MatchAction> _moves;
+  late final StreamSubscription<Move> _moves;
 
-  /// A move coming back from the link: make it on the table.
+  /// The mode's say for a new round, for the game to apply the actions
+  /// that start one.
+  RoundSetup Function(math.Random rand, {bool redeal}) get _setup =>
+      (rand, {redeal = false}) =>
+          _mode.roundSetup(game, game.players.length, rand, redeal: redeal);
+
+  /// An action coming back from the link: make it on the table. One that
+  /// isn't allowed any more (the table moved on) is let go.
+  void _onAction(Action action) {
+    if (!mounted || !_inGame) return;
+    switch (action) {
+      case MatchAction():
+        if (_round.problem(action) != null) return;
+        _onMove(action);
+      case GameAction():
+        if (game.problem(action) != null) return;
+        _onGameAction(action);
+    }
+  }
+
+  /// A move within the round's play.
   void _onMove(MatchAction move) {
-    if (!mounted) return;
     switch (move) {
       case PickTask(:final seat, :final task):
-        if (task < game.tasks.length) _assignTaskNow(game.tasks[task], seat);
+        _assignTaskNow(game.tasks[task], seat);
       case Pass(:final seat):
         _passNow(seat);
-      case Announce(:final task, :final x):
-        if (task < game.tasks.length) {
-          setState(() => _round.announce(task, x));
-        }
+      case Announce():
+        setState(() => _round.apply(move));
       case PlayCard(:final seat, :final card):
         _playCardNow(seat, card);
-      case ShowCard(:final seat, :final card):
-        _revealNow(seat, card);
+      case ShowCard(:final seat):
+        setState(() {
+          _round.apply(move);
+          if (seat == _you) _revealing = false;
+        });
+      case ReturnTask():
+        setState(() {
+          _round.apply(move);
+          _layoutOwned();
+        });
+    }
+  }
+
+  /// One of the game's actions: crowning, a mark, the next round.
+  void _onGameAction(GameAction action) {
+    switch (action) {
+      case Crown(:final king):
+        // Applied once the crown has flown to its seat (see _crownKing).
+        _crownKing(king);
+      case Speak():
+        setState(() => game.apply(action));
+      case MarkTask(:final task):
+        _markNow(game.tasks[task], action);
+      case UndoMark():
+        setState(() {
+          // Whatever the result meant to the mode (crowns) is taken back too.
+          if (_effects?.undo case final undo?) {
+            undo();
+            _saveSettings();
+          }
+          _effects = null;
+          game.apply(action);
+        });
+      case NextRound(:final chapter):
+        final midRound = _inGame &&
+            game.outcome == RoundOutcome.inProgress &&
+            _round.king != null;
+        if (chapter != null) {
+          _progress.chronicle.startAttempt(chapter);
+          _saveSettings();
+        }
+        setState(() {
+          game.apply(action, setup: _setup);
+          if (midRound) _decreeReadFor = game.dealId; // already read this round
+          _resetTable();
+        });
+      case Retry():
+      case Redeal():
+        setState(() {
+          game.apply(action, setup: _setup);
+          _resetTable();
+        });
     }
   }
 
@@ -1196,7 +1246,10 @@ class HomePageState extends State<HomePage>
 
   void _assignTaskNow(RoundTask t, int seat) {
     setState(() {
-      if (_round.assign(t, seat)) _play.forward(from: 0);
+      final wasPicking = _round.pickTurn != null;
+      _round.apply(PickTask(seat, game.tasks.indexOf(t)));
+      // The last task taken: play begins.
+      if (wasPicking && _round.allTaken) _play.forward(from: 0);
       _layoutOwned();
     });
   }
@@ -1208,12 +1261,11 @@ class HomePageState extends State<HomePage>
   }
 
   void _passNow(int seat) {
-    if (!_round.canPass(seat)) return;
     if (seat != _you) {
       _quip(seat, 'I\u2019ll pass for now.');
       _showSnack('${game.players[seat].name} passes', Palette.feltDeep);
     }
-    setState(() => _round.pass(seat));
+    setState(() => _round.apply(Pass(seat)));
   }
 
   /// The number announced for an "exactly X tricks" task: sends the move.
@@ -1229,7 +1281,8 @@ class HomePageState extends State<HomePage>
   /// Plays a card on the table. When it finishes a trick, the trick stays
   /// a moment, sweeps to the winner, and then the tasks are judged.
   void _playCardNow(int seat, PlayingCard card) {
-    final trick = _round.playCard(seat, card);
+    // The table turns the cards over at its own pace: see _judgeTasks.
+    final trick = _round.apply(PlayCard(seat, card), judge: false);
     if (trick == null) {
       setState(() {});
       return;
@@ -1286,10 +1339,20 @@ class HomePageState extends State<HomePage>
         await Future<void>.delayed(flipStagger);
         if (!mounted || !game.tasks.contains(flip.task)) continue;
       }
-      _setTaskStatus(flip.task, flip.status, why: flip.why);
+      _flipNow(flip);
     }
     // Nothing to undo when the cards decided.
-    _lastMark = null;
+    game.lastMark = null;
+  }
+
+  /// Turns a task over as the judge decided, and shows the result when
+  /// that settles the round.
+  void _flipNow(TaskFlip flip) {
+    setState(() {
+      _round.flip(flip);
+      _markFeedback(flip.task);
+      if (game.recordOutcomeIfFinished()) _roundSettled();
+    });
   }
 
   /// The round as the table shows it (see game/judge.dart): a trick still
@@ -2798,14 +2861,6 @@ class HomePageState extends State<HomePage>
     _link.send(ShowCard(seat, card));
   }
 
-  void _revealNow(int seat, PlayingCard card) {
-    if (_round.revealFor(seat, card) == null) return;
-    setState(() {
-      _round.apply(ShowCard(seat, card));
-      if (seat == _you) _revealing = false;
-    });
-  }
-
   /// You ask a courtier to show a card. They show one a task needs if they
   /// can, else one that says the most (the only card of its suit, or the
   /// highest of their longest suit).
@@ -2844,7 +2899,7 @@ class HomePageState extends State<HomePage>
 
   /// Marks a task done, for tests.
   @visibleForTesting
-  void debugComplete(RoundTask t) => _setTaskStatus(t, TaskStatus.completed);
+  void debugComplete(RoundTask t) => _mark(t, TaskStatus.completed);
 
   /// Gives a task to a seat, for tests (as a drop onto that seat would).
   @visibleForTesting
@@ -2977,8 +3032,7 @@ class HomePageState extends State<HomePage>
     }
     if (r != 'go') return;
     if (_inGame && game.isTutorial) {
-      setState(() => game.lesson = i);
-      _shuffleTasks();
+      _shuffleTasks(lesson: i);
     } else {
       _beginLesson(i);
     }
@@ -3241,22 +3295,14 @@ class HomePageState extends State<HomePage>
     _landing.clear();
   }
 
-  void _shuffleTasks() {
-    final midRound = _inGame && game.outcome == RoundOutcome.inProgress &&
-        _round.king != null;
-    setState(() {
-      _newTasks();
-      if (midRound) _decreeReadFor = game.dealId; // already read this round
-      _resetTable();
-    });
-  }
+  /// New tasks: a new round once this one is over (to [target] points, or
+  /// the next lesson), or the round in progress dealt again. Sends the
+  /// action.
+  void _shuffleTasks({int? target, int? lesson}) =>
+      _link.send(NextRound(_you, target: target, lesson: lesson));
 
-  void _retryRound() {
-    setState(() {
-      game.retryRound();
-      _resetTable();
-    });
-  }
+  /// The same tasks again in a new round: sends the action.
+  void _retryRound() => _link.send(Retry(_you));
 
   /// A haptic tap where the device supports it.
   void _haptic(Future<void> Function() feedback) {
@@ -3265,17 +3311,29 @@ class HomePageState extends State<HomePage>
     } catch (_) {}
   }
 
+  /// The speech token at a real table: sends the action.
   void _toggleSpoke(int seat) {
-    if (!_round.canSpeak(seat) && !_round.spoke[seat]) {
-      _showSnack(_round.whyCantSpeak() ?? 'No cards may be shown now', Palette.feltDeep);
+    final action = Speak(seat, on: !_round.spoke[seat]);
+    final why = game.problem(action);
+    if (why != null) {
+      _showSnack(why, Palette.feltDeep);
       return;
     }
     _haptic(HapticFeedback.selectionClick);
-    setState(() => _round.toggleSpoke(seat));
+    _link.send(action);
   }
 
-  /// Crowns the King with a flourish: the crown flies from the deck to
-  /// their seat and lands with a burst of gold, then the tasks are dealt.
+  /// Crowns [index]: sends the action (the King card's holder on screen, a
+  /// tapped seat at a real table).
+  void _crown(int index) {
+    if (_crowning != null || game.problem(Crown(_you, index)) != null) return;
+    _link.send(Crown(_you, index));
+  }
+
+  /// The crowning's flourish: the crown flies from the deck to the seat and
+  /// lands with a burst of gold, and the Crown is applied as it lands (so
+  /// the table keeps "choosing the King" until then); then the tasks are
+  /// dealt.
   void _crownKing(int index) {
     if (_crowning != null) return;
     final fromCentre = _crownWaiting;
@@ -3292,7 +3350,8 @@ class HomePageState extends State<HomePage>
       if (!mounted) return;
       _haptic(HapticFeedback.heavyImpact);
       setState(() {
-        game.crown(index);
+        final crown = Crown(_you, index);
+        if (game.problem(crown) == null) game.apply(crown);
         _crowning = null;
         _crownFromCentre = false;
       });
@@ -3388,29 +3447,28 @@ class HomePageState extends State<HomePage>
       _assignTask(t, seat);
       return;
     }
+    // A real table: the task goes to the seat it's dropped on, or back
+    // onto the table. Either is sent as the move it is.
     final p = _toPx(_pos[t]!);
     final seat = _dropSeat(p);
-    final previous = t.owner;
+    final i = game.tasks.indexOf(t);
+    final taken = seat != null && _round.mayTake(t, seat);
     setState(() {
       _dragging = null;
       _hoverSeat = null;
-      var startPlay = false;
-      if (seat != null && _round.mayTake(t, seat)) {
-        if (t.owner != seat) _haptic(HapticFeedback.selectionClick);
-        startPlay = _round.assign(t, seat);
-      } else {
-        _round.assign(t, null);
-        if (seat != null) {
-          // Dropped on the King, who can't take it: leave it just inside.
-          _pos[t] = _toFrac(_geo.clampToTable(
-              Offset.lerp(_geo.seatCenter(seat), _geo.center, 0.45)!));
-        }
+      if (!taken && seat != null) {
+        // Dropped on the King, who can't take it: leave it just inside.
+        _pos[t] = _toFrac(_geo.clampToTable(
+            Offset.lerp(_geo.seatCenter(seat), _geo.center, 0.45)!));
       }
-      if (t.owner != null || previous != null) _layoutOwned();
-      if (startPlay) _play.forward(from: 0);
     });
-    _save();
-    if (seat != null && !_round.mayTake(t, seat)) {
+    if (taken) {
+      if (t.owner != seat) _haptic(HapticFeedback.selectionClick);
+      _link.send(PickTask(seat, i));
+    } else if (t.owner != null) {
+      _link.send(ReturnTask(_you, i));
+    }
+    if (seat != null && !taken) {
       _haptic(HapticFeedback.heavyImpact);
       _showSnack(_round.whyCantTake(t, seat)!, Palette.lost);
     }
@@ -3428,45 +3486,56 @@ class HomePageState extends State<HomePage>
     }));
   }
 
-  /// Marks a task done or failed (choosing its mark again clears it), and
-  /// when that settles the round, records the result. [why] is the judge's
-  /// reason for a failure, for the end of the round.
-  void _setTaskStatus(RoundTask task, TaskStatus status, {String? why}) {
+  /// Marks a task done or failed by hand (choosing its mark again clears
+  /// it): sends the action.
+  void _mark(RoundTask task, TaskStatus status) {
+    final i = game.tasks.indexOf(task);
+    if (i < 0) return;
+    _link.send(MarkTask(_you, i, status));
+  }
+
+  void _markNow(RoundTask task, MarkTask action) {
     setState(() {
-      final previous = task.status;
-      _round.mark(task, status);
-      if (task.isFailed) task.whyFailed = why;
-      if (task.isFailed) {
-        _haptic(HapticFeedback.vibrate);
-      } else if (task.isCompleted) {
-        _haptic(HapticFeedback.mediumImpact);
-      }
-      _lastMark = (task, previous);
-      if (game.recordOutcomeIfFinished()) {
-        final result = _round.result!;
-        final won = result.won;
-        Analytics.event(
-            ['round', game.mode.name, _mode.roundLabel(game), won ? 'won' : 'lost']);
-        if (won) {
-          Sfx.win();
-        } else {
-          Sfx.lose();
-        }
-        // What the result means to the mode: crowns, the next target.
-        final effects = _mode.afterRound(game, result, _progress);
-        _effects = effects;
-        if (effects.crowns > 0) _saveSettings();
-        _nextTarget = effects.nextTarget;
-        if (game.bestStreak > _bestStreak) _bestStreak = game.bestStreak;
-        // The last tasks turn over first, then the result comes up.
-        _outcome.value = 0;
-        _outcomeHold.duration = Duration(milliseconds: won ? 800 : 450);
-        _outcomeHold.forward(from: 0).whenComplete(() {
-          if (!mounted) return;
-          setState(() {});
-          _outcome.forward(from: 0);
-        });
-      }
+      final settled = game.apply(action);
+      _markFeedback(task);
+      if (settled) _roundSettled();
+    });
+  }
+
+  /// A buzz for a task failed, a tap for one done.
+  void _markFeedback(RoundTask task) {
+    if (task.isFailed) {
+      _haptic(HapticFeedback.vibrate);
+    } else if (task.isCompleted) {
+      _haptic(HapticFeedback.mediumImpact);
+    }
+  }
+
+  /// The round's result was just recorded: what it means to the mode, the
+  /// sounds, and the outcome card coming up.
+  void _roundSettled() {
+    final result = _round.result!;
+    final won = result.won;
+    Analytics.event(
+        ['round', game.mode.name, _mode.roundLabel(game), won ? 'won' : 'lost']);
+    if (won) {
+      Sfx.win();
+    } else {
+      Sfx.lose();
+    }
+    // What the result means to the mode: crowns, the next target.
+    final effects = _mode.afterRound(game, result, _progress);
+    _effects = effects;
+    if (effects.crowns > 0) _saveSettings();
+    _nextTarget = effects.nextTarget;
+    if (game.bestStreak > _bestStreak) _bestStreak = game.bestStreak;
+    // The last tasks turn over first, then the result comes up.
+    _outcome.value = 0;
+    _outcomeHold.duration = Duration(milliseconds: won ? 800 : 450);
+    _outcomeHold.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {});
+      _outcome.forward(from: 0);
     });
   }
 
@@ -3504,11 +3573,6 @@ class HomePageState extends State<HomePage>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
-          void update(VoidCallback change) {
-            setState(change);
-            setDialogState(() {});
-          }
-
           final spoke = _round.spoke[seat];
           final canSpeak = _round.canSpeak(seat) || spoke;
           return RotatedBox(
@@ -3607,7 +3671,8 @@ class HomePageState extends State<HomePage>
                                       : () {
                                           _haptic(
                                               HapticFeedback.selectionClick);
-                                          update(() => _round.toggleSpoke(seat));
+                                          _link.send(Speak(seat, on: !_round.spoke[seat]));
+                                          setDialogState(() {});
                                         },
                                   child: Semantics(
                                     toggled: spoke,
@@ -3836,7 +3901,7 @@ class HomePageState extends State<HomePage>
             : [
           OutlinedButton.icon(
             onPressed: () {
-              _setTaskStatus(task, TaskStatus.failed);
+              _mark(task, TaskStatus.failed);
               Navigator.pop(context);
             },
             icon: const Icon(Icons.close_rounded),
@@ -3853,10 +3918,10 @@ class HomePageState extends State<HomePage>
                 final fail = await _confirmSealBreak(problem, quarterTurns);
                 if (!context.mounted) return;
                 Navigator.pop(context);
-                if (fail == true) _setTaskStatus(task, TaskStatus.failed);
+                if (fail == true) _mark(task, TaskStatus.failed);
                 return;
               }
-              _setTaskStatus(task, TaskStatus.completed);
+              _mark(task, TaskStatus.completed);
               Navigator.pop(context);
             },
             icon: const Icon(Icons.check_rounded),
@@ -4084,21 +4149,9 @@ class HomePageState extends State<HomePage>
       ),
     );
     if (apply != true || !mounted) return;
-    game.target = target;
-    _redeal();
-  }
-
-  /// Deals the round again from the start, cards, tasks and all, for a new
-  /// points target (keeping its seals and decree): whoever's dealt the
-  /// King card is King.
-  void _redeal() {
-    setState(() {
-      final n = game.players.length;
-      game.startRound(n, game.target,
-          setup: (rand) => _mode.roundSetup(game, n, rand, redeal: true),
-          countRound: false);
-      _resetTable();
-    });
+    // The round is dealt again from the start, cards, tasks and all, for
+    // the new target: whoever's dealt the King card is King.
+    _link.send(Redeal(_you, target));
   }
 
   // ------------------------------------------------------------------ views
@@ -4475,7 +4528,7 @@ class HomePageState extends State<HomePage>
   /// the whole game as saved with the last moves, so it can be loaded
   /// (GameState.fromJson) and seen exactly as they saw it.
   Map<String, dynamic> _bugDetails() {
-    final moves = _inGame ? _link.history : const <MatchAction>[];
+    final moves = _inGame ? _link.history : const <Move>[];
     return {
       'where': {
         'inGame': _inGame,
@@ -4672,7 +4725,7 @@ class HomePageState extends State<HomePage>
                     // tap opens the courtier's card, or with no roles just
                     // flips the card-reveal token.
                     onTap: _choosingKing
-                        ? (_digital ? null : () => _crownKing(i))
+                        ? (_digital ? null : () => _crown(i))
                         : game.hasRoles
                             ? () => _showCourtier(i)
                             : () => _toggleSpoke(i),
@@ -5283,10 +5336,7 @@ class HomePageState extends State<HomePage>
                   child: const Text('Retry'),
                 ),
                 FilledButton(
-                  onPressed: () {
-                    game.target = _nextTarget;
-                    _shuffleTasks();
-                  },
+                  onPressed: () => _shuffleTasks(target: _nextTarget),
                   style: won
                       ? FilledButton.styleFrom(
                           backgroundColor: Palette.ink,
@@ -5297,7 +5347,7 @@ class HomePageState extends State<HomePage>
                 ],
               ],
             ),
-            if (_lastMark != null)
+            if (game.lastMark != null)
               TextButton(
                 onPressed: _undoLastMark,
                 style: TextButton.styleFrom(
@@ -5311,22 +5361,11 @@ class HomePageState extends State<HomePage>
   }
 
   /// Puts the last done/failed mark back, for a mis-tap that ended the
-  /// round by mistake. The round's result is taken back off the record.
+  /// round by mistake: sends the action. The round's result is taken back
+  /// off the record when it comes back.
   void _undoLastMark() {
-    final mark = _lastMark;
-    if (mark == null) return;
-    setState(() {
-      final (task, previous) = mark;
-      // Whatever the result meant to the mode (crowns) is taken back too.
-      if (_effects?.undo case final undo?) {
-        undo();
-        _saveSettings();
-      }
-      _effects = null;
-      game.undoOutcome();
-      task.status = previous;
-      _lastMark = null;
-    });
+    if (game.lastMark == null) return;
+    _link.send(UndoMark(_you));
   }
 
   /// Continue on the welcome screen: the saved games, to pick one up.

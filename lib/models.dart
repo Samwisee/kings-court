@@ -6,6 +6,7 @@ import 'engine/round.dart';
 import 'engine/rules.dart';
 import 'engine/showing.dart';
 import 'engine/task.dart';
+import 'game/actions.dart';
 import 'game/courtiers.dart';
 
 export 'engine/round.dart' show RoundOutcome;
@@ -46,21 +47,28 @@ class Player {
 }
 
 /// What a round is set up with, as its mode decides: its tasks (or none,
-/// for a draw to the points target), its seals and decree, and whether
-/// anyone may pass on a pick.
+/// for a draw to the points target), the target itself when the mode
+/// fixes it (a chapter's), its seals and decree, and whether anyone may
+/// pass on a pick.
 class RoundSetup {
   const RoundSetup(
-      {this.tasks, this.sealCount = 0, this.decree, this.passing = true});
+      {this.tasks,
+      this.target,
+      this.sealCount = 0,
+      this.decree,
+      this.passing = true});
 
   /// The seals, decree and rules of [round] again, for a re-deal; the
   /// tasks are drawn afresh.
   RoundSetup.keep(Round? round)
       : tasks = null,
+        target = null,
         sealCount = round?.sealCount ?? 0,
         decree = round?.decree,
         passing = round?.passing ?? true;
 
   final List<Task>? tasks;
+  final int? target;
   final int sealCount;
   final Decree? decree;
   final bool passing;
@@ -152,6 +160,79 @@ class GameState {
   /// picks first.
   void crown(int? seat) => round!.crown(seat, dealRandom(2));
 
+  /// The last done or failed mark made by hand, so it can be undone from
+  /// the round's result (not saved).
+  (RoundTask, TaskStatus)? lastMark;
+
+  /// Why [a] isn't allowed right now, or null if it is.
+  String? problem(GameAction a) {
+    final r = round;
+    if (r == null || r.tasks.isEmpty) return 'No round in progress';
+    switch (a) {
+      case Crown(:final king):
+        if (king < 0 || king >= players.length) return 'No such seat';
+        if (r.king != null) return 'The King is crowned already';
+      case Speak(:final seat, :final on):
+        if (seat < 0 || seat >= players.length) return 'No such seat';
+        if (on && !r.spoke[seat] && !r.canSpeak(seat)) {
+          return r.whyCantSpeak() ?? 'No cards may be shown now';
+        }
+      case MarkTask(:final task):
+        if (task < 0 || task >= r.tasks.length) return 'No such task';
+      case UndoMark():
+        if (lastMark == null) return 'Nothing to undo';
+      case NextRound(:final chapter, :final lesson):
+        if (chapter != null && chapter < 0) return 'No such chapter';
+        if (lesson != null && lesson < 0) return 'No such lesson';
+      case Retry():
+      case Redeal():
+        break;
+    }
+    return null;
+  }
+
+  /// Carries out [a], the one way the game changes outside a round's
+  /// play. [setup] is the mode's say for a new round (the next round, a
+  /// re-deal). Returns true when [a] settled the round's result (a mark
+  /// that won or lost it), which the table then shows.
+  bool apply(GameAction a,
+      {RoundSetup Function(Random rand, {bool redeal})? setup}) {
+    final why = problem(a);
+    if (why != null) throw StateError(why);
+    final r = round!;
+    switch (a) {
+      case Crown(:final king):
+        crown(king);
+      case Speak(:final seat, :final on):
+        r.spoke[seat] = on;
+      case MarkTask(:final task, :final status):
+        final t = r.tasks[task];
+        final previous = t.status;
+        r.mark(t, status);
+        lastMark = (t, previous);
+        return recordOutcomeIfFinished();
+      case UndoMark():
+        final (task, previous) = lastMark!;
+        undoOutcome();
+        task.status = previous;
+        lastMark = null;
+      case NextRound(:final target, :final chapter, :final lesson):
+        if (chapter != null) this.chapter = chapter;
+        if (lesson != null) this.lesson = lesson;
+        lastMark = null;
+        shuffleTasks(players.length, target ?? this.target, setup: setup);
+      case Retry():
+        lastMark = null;
+        retryRound();
+      case Redeal(:final target):
+        lastMark = null;
+        startRound(players.length, target,
+            setup: setup == null ? null : (rand) => setup(rand, redeal: true),
+            countRound: false);
+    }
+    return false;
+  }
+
   /// Updates the win/loss record and streak once per round. Returns true if
   /// a result was recorded by this call.
   bool recordOutcomeIfFinished() {
@@ -217,12 +298,13 @@ class GameState {
         keepKing: redeal);
   }
 
-  /// Starts a round of [playerCount] seats played to [targetPoints]: its
-  /// tasks drawn at random to the target unless [setup] names them, with
-  /// the seals, decree and rules [setup] gives it (none, by default). The
-  /// setup rolls on [rand] first, so the same seed draws the same round.
-  /// With [keepKing] the reigning King, the exile and the pick stay (a
-  /// shuffle mid-round); otherwise the round waits to be crowned.
+  /// Starts a round of [playerCount] seats played to [targetPoints] (or
+  /// the target [setup] fixes): its tasks drawn at random to the target
+  /// unless [setup] names them, with the seals, decree and rules [setup]
+  /// gives it (none, by default). The setup rolls on [rand] first, so the
+  /// same seed draws the same round. With [keepKing] the reigning King,
+  /// the exile and the pick stay (a shuffle mid-round); otherwise the
+  /// round waits to be crowned.
   void startRound(int playerCount, int targetPoints,
       {RoundSetup Function(Random rand)? setup,
       bool countRound = true,
@@ -231,10 +313,11 @@ class GameState {
     if (countRound) roundNumber++;
     dealId++;
     _resultRecorded = false;
-    final r = _newRound(playerCount, targetPoints);
-    round = r;
     final rand = dealRandom(1);
     final rules = setup?.call(rand) ?? const RoundSetup();
+    target = rules.target ?? targetPoints;
+    final r = _newRound(playerCount, target);
+    round = r;
     r.sealCount = rules.sealCount;
     r.decree = rules.decree;
     r.passing = rules.passing;
@@ -248,7 +331,7 @@ class GameState {
       var best = const <Task>[];
       var bestFree = -1;
       for (var attempt = 0; attempt < 12; attempt++) {
-        final drawn = _drawTasks(playerCount, targetPoints, r.decree, rand);
+        final drawn = _drawTasks(playerCount, target, r.decree, rand);
         final free = drawn.where(_sealable).length;
         if (free > bestFree) {
           best = drawn;

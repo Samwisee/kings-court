@@ -158,9 +158,11 @@ void main() {
   test('A game in progress saves and loads', () {
     final rand = Random(5);
     final s = Round(players: 4, target: 5)..newRound(rand);
-    for (var i = 0; i < s.tasks.length; i++) {
-      s.apply(PickTask(s.pickTurn!, s.tasks.indexWhere((t) =>
-          t.owner == null && !(t.task.kingCantTake && s.pickTurn == s.king))));
+    while (s.phase == Phase.picking) {
+      final seat = s.pickTurn!;
+      final options = [for (var i = 0; i < s.tasks.length; i++) if (s.canTake(i, seat)) i];
+      if (options.isEmpty) break;
+      s.apply(PickTask(seat, options.first));
     }
     if (s.phase == Phase.announcing) {
       for (var i = 0; i < s.tasks.length; i++) {
@@ -172,7 +174,7 @@ void main() {
     s.apply(PlayCard(s.turn, s.legalFor(s.turn).first));
     final copy = Round.fromJson(s.toJson());
     expect(copy.toJson(), s.toJson());
-    expect(MatchAction.fromJson(PlayCard(2, c('7♦')).toJson()).toJson(),
+    expect(MatchAction.fromJson(PlayCard(2, c('7♦')).toJson())!.toJson(),
         PlayCard(2, c('7♦')).toJson());
   });
 

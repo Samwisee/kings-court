@@ -60,3 +60,37 @@ explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
   step 5**, where every action goes on the link.
 - `maxTarget` (the points slider's top, 20) moved from the page to
   `models.dart` next to `minPlayers`/`maxPlayers`.
+
+## Step 4½: the extras
+
+- **Saves are versioned** (`GameState.saveVersion`, 2 today): a save from
+  an older version is migrated one step at a time, as JSON, before it's
+  read (`upgradeSave`). Fixtures of every shape ever written live under
+  `test/fixtures/saves` (version 1 at the top, `v2/` and on below); CI
+  writes the current shape's set (`test/tool/make_saves_test.dart`) and
+  the saves test wants a set per version.
+- **The bench has a budget**: the branch may not be 30% or more slower
+  than main on both runs of any headline number (`tool/bench/budget.py`).
+- **Every pushed commit gets its own check run** (`cancel-in-progress`
+  off): a newer push no longer cancels the run of the commit before it.
+
+## Step 5: every action on the link
+
+- **Two coupled sub-steps in one commit** (5a actions and `apply`, 5b
+  numbered moves): the page can't send actions through a link that
+  doesn't carry them, and the sealed action types made a half-way commit
+  not compile.
+- **The Crown is applied as its flourish lands**, not as the action comes
+  back: the table keeps "choosing the King" (no crown on the seat, the
+  decree unread, the tasks undealt) while the crown flies, exactly as
+  before. Replay and the headless game apply it at once. Screenshots: none
+  differ.
+- **At a real table the phone is lenient with tasks**: `PickTask` moves a
+  task from seat to seat and `ReturnTask` puts one back on the table, in
+  any phase, since the players share the tasks out as they like (as the
+  page already allowed); on screen a pick is only the picker's, of a loose
+  task, in their turn.
+- **A stale action is let go**: one that comes back no longer allowed
+  (the table moved on) is ignored, as a server would refuse it.
+- **The link's history starts again with each game** (`TableLink.reset`),
+  so a game's moves are its own, for replay and for a bug report.

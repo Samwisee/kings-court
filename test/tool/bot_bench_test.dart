@@ -34,7 +34,9 @@ void main() {
       void settle(Round s) {
         while (s.phase == Phase.picking) {
           final seat = s.pickTurn!;
-          final i = List.generate(s.tasks.length, (t) => t).firstWhere((t) => s.canTake(t, seat));
+          final i = List.generate(s.tasks.length, (t) => t)
+              .firstWhere((t) => s.canTake(t, seat), orElse: () => -1);
+          if (i < 0) break;
           s.apply(PickTask(seat, i));
         }
         for (var i = 0; i < s.tasks.length; i++) {
