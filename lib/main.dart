@@ -8758,9 +8758,14 @@ class _SetupPanelState extends State<_SetupPanel> {
         children: [
           const Row(children: [
             Text('Players', style: TextStyle(fontSize: 16)),
-            Spacer(),
-            Text('You and your courtiers',
-                style: TextStyle(fontSize: 14, color: Colors.white70)),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text('You and your courtiers',
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14, color: Colors.white70)),
+            ),
           ]),
           const SizedBox(height: 10),
           Wrap(
