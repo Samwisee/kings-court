@@ -125,3 +125,38 @@ explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
   the state, so `replayReport` (`net/replay.dart`) can play the report
   again from its setup and say whether that reaches the reported state;
   `test/tool/replay_report_test.dart` does it for a report file.
+
+## Step 6: the page in pieces
+
+The order of the commits, each one component out of `HomePageState` into
+its own library under `ui/` with explicit inputs and callbacks, the
+widget tree unchanged so the screenshots stay the same, and a test of its
+own where it has state or branches:
+
+1. The outcome card and the lesson card → `ui/overlays/outcome_card.dart`.
+2. The King prompt, the decree scroll overlay, the play flourish, the
+   crowning scenes → `ui/overlays/`.
+3. The tutorial's coach line → `ui/modes/tutorial/coach.dart`.
+4. The dialogs: task close-up, courtier card, how many tricks, points,
+   continue, setup-from-menu → `ui/dialogs/`.
+5. The welcome screen → `ui/welcome/`; the setup panel, chapter picker,
+   saved games and page transitions → `ui/setup/`; the top bar and menu →
+   `ui/menu/`.
+6. The shared widgets (`lib/home/*` and `lib/ui/*` part files) →
+   libraries under `ui/widgets/`, `ui/cards/`, `ui/tracker/`,
+   `ui/round_table/geometry.dart`, each with its own imports.
+7. The round table (task cards on the felt, dragging, dealing) →
+   `ui/round_table/round_table.dart` with its own state (positions, tilt,
+   order, the drag).
+8. The on-screen table → `ui/table/`: the opponents, the middle, the
+   trick, your hand (with the queue, the speech token and the drag), the
+   task flights, the keyboard.
+9. `GameController` → `ui/controller.dart`; the screen-only state the
+   components share → `TableUi` beside it.
+10. `TheKingsCourtApp` → `ui/app.dart`; `HomePage` → `ui/table_page.dart`;
+    `main.dart` is `runApp`.
+11. 6a, last rather than first: `GameState`'s mode-specific fields
+    (`chapter`, `lesson`, streaks) into a `ModeState` per mode with its
+    own JSON, saves at version 3. Done after the page split because the
+    page reads those fields in forty places and the split moves them
+    anyway.
