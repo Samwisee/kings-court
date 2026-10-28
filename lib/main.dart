@@ -577,7 +577,7 @@ class _HomePageState extends State<HomePage>
   void _skipShowing() => _startChoosing();
 
   /// Pass on taking a task this time round.
-  void _passPick() => setState(() => game.pass(_you));
+  void _passPick() => _pass(_you);
 
   /// Each card in your hand, where it sits (at rest) within it.
   final Map<PlayingCard, Rect> _handRects = {};
@@ -968,9 +968,12 @@ class _HomePageState extends State<HomePage>
     if (!_digital || !_inGame) return;
     final c = _cards;
     if (c.dealId != game.dealId) {
+      // The same game and round always deal the same cards (see
+      // GameState.seed), so a round from a bug report can be dealt again.
+      final rand = game.dealRandom();
       c.dealFor(
         game.dealId,
-        _rand,
+        rand,
         // Solo Dynasty: you are always the King.
         king: game.kingIndex ?? (game.isDynasty ? _you : null),
         mayRule: (seat) => !game.isAntagonist(seat),
@@ -994,7 +997,7 @@ class _HomePageState extends State<HomePage>
           continue;
         }
         final names = game.tasks.map((x) => x.description).toSet();
-        final swap = (List.of(GameState.taskPool)..shuffle(_rand)).where((p) =>
+        final swap = (List.of(GameState.taskPool)..shuffle(rand)).where((p) =>
             !names.contains(p.description) &&
             !needsX(p.description) &&
             _points(p) <= _points(t) + 1 &&
@@ -1225,9 +1228,7 @@ class _HomePageState extends State<HomePage>
         if (!mounted || _moment != before) return true;
         // Nothing suits their hand: pass the pick on, once a round.
         if (game.canPass(picker) && _bot.lastPickScore < 0.12) {
-          _quip(picker, 'I\u2019ll pass for now.');
-          _showSnack('${game.players[picker].name} passes', Palette.feltDeep);
-          setState(() => game.pass(picker));
+          _pass(picker);
           return true;
         }
         _assignTask(game.tasks[pick], picker);
@@ -1248,7 +1249,7 @@ class _HomePageState extends State<HomePage>
       }
       final x = await _bot.chooseXAsync(view, t.assignedPlayerIndex!, i);
       if (!mounted || _moment != before) return true;
-      setState(() => _cards.announced[t.description] = x);
+      _announce(t, x);
       return true;
     }
     // Between tricks, any bot may show a card someone needs.
@@ -1340,41 +1341,74 @@ class _HomePageState extends State<HomePage>
     );
     _askingX = false;
     if (!mounted || !_digital) return;
-    setState(() => _cards.announced[task.description] = chosen ?? x);
+    _announce(task, chosen ?? x);
   }
 
-  /// Gives a task to a seat, as dropping it there would.
+  // ------------------------------------------------------------ moves
+  //
+  // Every move at the table goes through the table link (net/table_link
+  // dart): taking a task, passing, announcing a number, playing a card,
+  // showing one. The move is sent, and made when it comes back. On one
+  // device it comes straight back; online, it would come back from the
+  // server, in the same order on every device, so every table agrees.
+
+  /// Where moves go: this device, for now.
+  TableLink get _link => _ctrl.link;
+  late final StreamSubscription<MatchAction> _moves;
+
+  /// A move coming back from the link: make it on the table.
+  void _onMove(MatchAction move) {
+    if (!mounted) return;
+    switch (move) {
+      case PickTask(:final seat, :final task):
+        if (task < game.tasks.length) _assignTaskNow(game.tasks[task], seat);
+      case Pass(:final seat):
+        _passNow(seat);
+      case Announce(:final task, :final x):
+        if (task < game.tasks.length) {
+          setState(() => _cards.announced[game.tasks[task].description] = x);
+        }
+      case PlayCard(:final seat, :final card):
+        _playCardNow(seat, card);
+      case ShowCard(:final seat, :final card):
+        _revealNow(seat, card);
+    }
+  }
+
+  /// Gives a task to a seat, as dropping it there would: sends the move.
   void _assignTask(Task t, int seat) {
+    final i = game.tasks.indexOf(t);
+    if (i < 0) return;
+    _link.send(PickTask(seat, i));
+  }
+
+  void _assignTaskNow(Task t, int seat) {
     setState(() {
       if (game.assign(t, seat)) _play.forward(from: 0);
       _layoutOwned();
     });
   }
 
-  // ------------------------------------------------------------ moves
-  //
-  // Playing and showing cards go through the table link (net/table_link
-  // dart): the move is sent, and played when it comes back. On one device
-  // it comes straight back; online, it would come back from the server, in
-  // the same order on every device.
+  /// [seat] passes on picking a task: sends the move.
+  void _pass(int seat) {
+    if (!game.canPass(seat)) return;
+    _link.send(Pass(seat));
+  }
 
-  /// Where moves go: this device, for now.
-  TableLink get _link => _ctrl.link;
-  late final StreamSubscription<MatchAction> _moves;
-
-  /// A move coming back from the link: play it on the table.
-  void _onMove(MatchAction move) {
-    if (!mounted) return;
-    switch (move) {
-      case PlayCard(:final seat, :final card):
-        _playCardNow(seat, card);
-      case ShowCard(:final seat, :final card):
-        _revealNow(seat, card);
-      case PickTask() || Announce():
-        // Tasks are still taken through the game state directly; they'll
-        // move here with online play.
-        break;
+  void _passNow(int seat) {
+    if (!game.canPass(seat)) return;
+    if (seat != _you) {
+      _quip(seat, 'I\u2019ll pass for now.');
+      _showSnack('${game.players[seat].name} passes', Palette.feltDeep);
     }
+    setState(() => game.pass(seat));
+  }
+
+  /// The number announced for an "exactly X tricks" task: sends the move.
+  void _announce(Task t, int x) {
+    final i = game.tasks.indexOf(t);
+    if (i < 0 || t.assignedPlayerIndex == null) return;
+    _link.send(Announce(t.assignedPlayerIndex!, i, x));
   }
 
   /// Plays a card: sends the move, which plays it when it comes back.
@@ -3496,6 +3530,14 @@ class _HomePageState extends State<HomePage>
   @visibleForTesting
   void debugComplete(Task t) => _setTaskStatus(t, TaskStatus.completed);
 
+  /// Gives a task to a seat, for tests (as a drop onto that seat would).
+  @visibleForTesting
+  void debugAssign(Task t, int seat) => _assignTask(t, seat);
+
+  /// The table link, for tests.
+  @visibleForTesting
+  TableLink get debugLink => _link;
+
   /// Plays your part, for tests: picks, announces or plays the first
   /// thing allowed. Returns false when there's nothing for you to do.
   @visibleForTesting
@@ -5527,7 +5569,7 @@ class _HomePageState extends State<HomePage>
           Tooltip(
             message: '${game.players[game.pickTurn!].name} passes the pick on (once a round)',
             child: TextButton(
-              onPressed: () => setState(() => game.pass(game.pickTurn!)),
+              onPressed: () => _pass(game.pickTurn!),
               style: TextButton.styleFrom(foregroundColor: Palette.gold),
               child: const Text('Pass'),
             ),

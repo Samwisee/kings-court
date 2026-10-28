@@ -981,6 +981,16 @@ class GameState {
   /// Increases every time tasks are dealt or shuffled, so the UI can
   /// animate the change.
   int dealId = 0;
+
+  /// The game's seed: with [dealId] it fixes the cards and tasks each round
+  /// deals, so a round can be dealt again exactly (a bug report, a shared
+  /// hand, a daily deal). New games get a random one.
+  int seed = Random().nextInt(1 << 30);
+
+  /// The random numbers for this deal: the same for the same game, round
+  /// and [salt] every time.
+  Random dealRandom([int salt = 0]) =>
+      Random(seed ^ (dealId * 0x9E3779B1) ^ (salt * 0x85EBCA6B));
   bool _resultRecorded = false;
   int _streakBefore = 0;
   int _bestBefore = 0;
@@ -1319,7 +1329,7 @@ class GameState {
     dealId++;
     _resultRecorded = false;
     _resetRoundCounters();
-    final rand = Random();
+    final rand = dealRandom(1);
     // The tutorial sets its own tasks, with no seals or decrees.
     if (isTutorial) {
       sealCount = 0;
@@ -1487,6 +1497,7 @@ class GameState {
         'streak': streak,
         'bestStreak': bestStreak,
         'dealId': dealId,
+        'seed': seed,
         'resultRecorded': _resultRecorded,
       };
 
@@ -1592,6 +1603,7 @@ class GameState {
         ..streak = j['streak'] as int
         ..bestStreak = j['bestStreak'] as int
         ..dealId = j['dealId'] as int;
+      if (j['seed'] is int) g.seed = j['seed'] as int;
       g._resultRecorded = j['resultRecorded'] as bool;
       if (g.players.isEmpty || g.tasks.isEmpty) return null;
       if (g.courtiers.length != g.players.length) g.seatCourtiers();

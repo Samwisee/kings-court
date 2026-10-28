@@ -20,6 +20,7 @@ import 'package:kings_court/engine/contest.dart';
 import 'package:kings_court/play/contest_table.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
+import 'package:kings_court/net/table_link.dart';
 
 void setPhoneSize(WidgetTester tester) {
   tester.view.physicalSize = const Size(1170, 2532); // iPhone-sized
@@ -140,6 +141,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Tutorial'), findsOneWidget);
     expect(find.text('Start here'), findsNothing);
+  });
+
+  testWidgets('Taking a task goes through the table link', (tester) async {
+    setPhoneSize(tester);
+    await dealGame(tester, 4);
+    await tester.tap(find.byType(SeatToken).first);
+    await tester.pumpAndSettle();
+    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final game = state.game as GameState;
+    final link = state.debugLink as TableLink;
+    final before = link.history.length;
+    final t = game.tasks.firstWhere((t) => t.assignedPlayerIndex == null && game.canTake(t, 1));
+    state.debugAssign(t, 1);
+    await tester.pumpAndSettle();
+    expect(t.assignedPlayerIndex, 1);
+    expect(link.history.length, before + 1);
+    expect(link.history.last, isA<PickTask>());
+    expect((link.history.last as PickTask).seat, 1);
   });
 
   testWidgets('Starting and finishing rounds are counted', (tester) async {

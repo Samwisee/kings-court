@@ -50,8 +50,16 @@ sealed class MatchAction {
         'announce' =>
           Announce(j['seat'] as int, j['task'] as int, j['x'] as int),
         'show' => ShowCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
+        'pass' => Pass(j['seat'] as int),
         _ => PlayCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
       };
+}
+
+/// Passing on a pick: the turn to take a task moves on.
+class Pass extends MatchAction {
+  const Pass(super.seat);
+  @override
+  Map<String, dynamic> toJson() => {'type': 'pass', 'seat': seat};
 }
 
 class PickTask extends MatchAction {
@@ -289,6 +297,9 @@ class MatchState {
               ? 'That task is taken'
               : "The King can't take this task";
         }
+      case Pass(:final seat):
+        if (phase != Phase.picking) return 'Tasks are not being picked';
+        if (seat != pickTurn) return 'Not your turn to pick';
       case Announce(:final seat, :final task, :final x):
         if (phase != Phase.announcing) return 'Nothing to announce';
         if (tasks[task].owner != seat) return 'Not your task';
@@ -318,16 +329,11 @@ class MatchState {
               ? Phase.announcing
               : Phase.playing;
         } else {
-          // Clockwise, skipping anyone with nothing they may take.
-          var next = seat;
-          for (int i = 0; i < players; i++) {
-            next = (next + 1) % players;
-            if (List.generate(tasks.length, (t) => t).any((t) => canTake(t, next))) {
-              break;
-            }
-          }
-          pickTurn = next;
+          pickTurn = _nextPicker(seat);
         }
+        return null;
+      case Pass(:final seat):
+        pickTurn = _nextPicker(seat);
         return null;
       case Announce(:final task, :final x):
         tasks[task].x = x;
@@ -354,6 +360,19 @@ class MatchState {
         return trick;
     }
     return null;
+  }
+
+  /// Who picks after [seat]: clockwise, skipping anyone with nothing they
+  /// may take.
+  int _nextPicker(int seat) {
+    var next = seat;
+    for (int i = 0; i < players; i++) {
+      next = (next + 1) % players;
+      if (List.generate(tasks.length, (t) => t).any((t) => canTake(t, next))) {
+        break;
+      }
+    }
+    return next;
   }
 
   /// Marks tasks done or failed after a trick, and ends the round when one

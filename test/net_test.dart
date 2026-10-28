@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
@@ -13,11 +14,22 @@ void main() {
       ShowCard(1, card),
       const PickTask(0, 3),
       const Announce(1, 2, 4),
+      const Pass(2),
     ]) {
       final back = MatchAction.fromJson(move.toJson());
       expect(back.runtimeType, move.runtimeType);
       expect(back.toJson(), move.toJson());
     }
+  });
+
+  test('Passing moves the pick on, and only on your turn', () {
+    final s = MatchState(players: 3, target: 5)..newRound(Random(3));
+    final first = s.pickTurn!;
+    expect(s.problem(Pass((first + 1) % 3)), isNotNull);
+    expect(s.problem(Pass(first)), isNull);
+    s.apply(Pass(first));
+    expect(s.pickTurn, (first + 1) % 3);
+    expect(s.phase, Phase.picking);
   });
 
   test('A local link plays each move at once, in order, and keeps them', () {

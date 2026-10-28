@@ -348,4 +348,23 @@ void main() {
       expect(bot.choosePlay(s, holder), isNot(PlayingCard.king), reason: 'seed $seed');
     }
   });
+
+  test('The same seed deals the same cards and tasks again', () {
+    GameState fresh(int seed) => GameState()
+      ..seed = seed
+      ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: const Color(0xff000000))]
+      ..seatCourtiers()
+      ..addTasksUntilTarget(4, 6);
+    final a = fresh(42), b = fresh(42), c = fresh(43);
+    expect([for (final t in a.tasks) t.description], [for (final t in b.tasks) t.description]);
+    final ma = MatchState(players: 4, target: 6)..dealFor(a.dealId, a.dealRandom());
+    final mb = MatchState(players: 4, target: 6)..dealFor(b.dealId, b.dealRandom());
+    final mc = MatchState(players: 4, target: 6)..dealFor(c.dealId, c.dealRandom());
+    expect(ma.hands, mb.hands);
+    expect(ma.hands, isNot(mc.hands));
+    // The seed survives a save.
+    final back = GameState.fromJson(a.toJson())!;
+    expect(back.seed, 42);
+    expect(back.dealRandom().nextInt(1 << 20), a.dealRandom().nextInt(1 << 20));
+  });
 }
