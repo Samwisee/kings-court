@@ -447,7 +447,7 @@ class GameState {
     for (final e in leaving.entries) {
       final c = e.key;
       final (text, exit, _) = e.value;
-      courtNews.add(CourtNews(c, colorOf(c).toARGB32(), text, exit: exit));
+      courtNews.add(CourtNews(c, colorValueOf(c), text, exit: exit));
       court.remove(c);
       standing.remove(c.name);
       schemeBy.remove(c.name);
@@ -517,7 +517,7 @@ class GameState {
     final kingLoyalty = loyalty.isEmpty ? startingLoyalty : loyalty.first;
     players = [
       you,
-      for (final c in cast) Player(c.title, color: colorOf(c)),
+      for (final c in cast) Player(c.title, colorValue: colorValueOf(c)),
     ];
     courtiers = [mine, ...cast];
     loyalty = [kingLoyalty, for (final c in cast) loyaltyOf(c)];
