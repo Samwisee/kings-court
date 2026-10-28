@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -489,11 +490,11 @@ class _HomePageState extends State<HomePage>
   bool _showKeys = false;
 
   /// A computer with a keyboard (not a phone or tablet).
-  static bool get _desktop => const {
+  static bool get _desktop => const [
         TargetPlatform.macOS,
         TargetPlatform.windows,
         TargetPlatform.linux,
-      }.contains(defaultTargetPlatform);
+      ].contains(defaultTargetPlatform);
 
   /// Laptop view: everything upright instead of turned to each seat.
   bool _upright = false;
@@ -532,7 +533,7 @@ class _HomePageState extends State<HomePage>
       return false;
     }
     if (e is! KeyDownEvent) return false;
-    const handled = {
+    final handled = [
       LogicalKeyboardKey.space,
       LogicalKeyboardKey.keyS,
       LogicalKeyboardKey.keyT,
@@ -541,7 +542,7 @@ class _HomePageState extends State<HomePage>
       LogicalKeyboardKey.arrowRight,
       LogicalKeyboardKey.enter,
       LogicalKeyboardKey.numpadEnter,
-    };
+    ];
     if (!handled.contains(key)) return false;
     // Not while typing (player names), or off the on-screen game.
     if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) return false;
