@@ -93,7 +93,7 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
               t: game.tasks[t].assignedPlayerIndex!,
           i: s,
         };
-        final score = await bot.scoreAsync(view, assigned, 120);
+        final score = await bot.scoreAsync(view, picker, assigned, 120);
         if (score > bestScore) {
           bestScore = score;
           best = s;

@@ -40,7 +40,8 @@ jobs:
           timeout 600 flutter test --platform chrome test/zz_bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]|rror' | sed 's/^BENCH //' | head -20 >> bench.txt || true
           rm test/zz_bot_bench_test.dart
           echo "== bot strength: random vs guided playouts, same deals ==" >> bench.txt
-          timeout 600 flutter test tool/bench/bot_strength_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
+          STRENGTH_ROUNDS=60 timeout 900 flutter test tool/bench/bot_strength_test.dart --reporter expanded > strength.txt 2>&1 || true
+          grep -E '^BENCH|\[E\]|Error' strength.txt | sed 's/^BENCH //' | head -20 >> bench.txt
           echo "== the page, mid-round (phone size) ==" >> bench.txt
           timeout 300 flutter test tool/bench/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
           cat bench.txt

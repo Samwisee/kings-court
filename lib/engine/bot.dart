@@ -1,7 +1,10 @@
-/// Bots that play as your teammates. They are cooperative and, like a
-/// friendly table, they know where every card is: each decision tries
-/// every option in many quick random playouts of the rest of the round
-/// and keeps the one that most often completes every task.
+/// Bots that play as your teammates. They are cooperative, and they play
+/// fair: a bot sees only its own hand and what's public, and imagines the
+/// hands it can't see (sampling.dart). Each decision tries every option in
+/// many quick playouts of the rest of the round, spread over several
+/// imagined deals, and keeps the one that most often completes every
+/// task. ([omniscient] lets a bot see every hand instead, for the balance
+/// tool and a hard setting.)
 library;
 
 import 'dart:math';
@@ -11,6 +14,7 @@ import 'conflicts.dart';
 import 'deal_mix.dart';
 import 'match.dart';
 import 'rules.dart';
+import 'sampling.dart';
 
 class Bot {
   Bot([Random? random]) : rand = random ?? Random();
@@ -18,6 +22,34 @@ class Bot {
 
   /// Playouts per decision, shared between the options.
   int budget = 900;
+
+  /// Whether the bot sees every hand. Off (the game), it knows only its own
+  /// hand and what's public, and thinks across [samples] imagined deals
+  /// of the rest.
+  bool omniscient = false;
+
+  /// How many imagined deals a fair bot thinks across per decision. The
+  /// playouts are shared out between them.
+  int samples = 8;
+
+  /// The deals to think in: the real one when all-seeing, else [samples]
+  /// deals of the cards [viewer] can't see that fit everything known.
+  List<MatchState> _worldsFor(MatchState s, int viewer) {
+    _decisionSeed = rand.nextInt(1 << 30);
+    return omniscient ? [s] : sampleWorlds(s, viewer, samples, rand);
+  }
+
+  /// Whether every option is tried against the same imagined futures: the
+  /// n-th playout of each card uses the same random numbers, so what
+  /// differs between two cards is the cards, not the luck of the playouts.
+  /// Far steadier comparisons for the same cost.
+  bool paired = true;
+
+  /// The seed this decision's playouts run from (see [paired]).
+  int _decisionSeed = 0;
+
+  /// The random numbers for playout [n] of this decision.
+  Random _randFor(int n) => paired ? Random(_decisionSeed + n * 7919) : rand;
 
   /// Whether playouts are guided: in each one, every player mostly plays
   /// for their own tasks (winning a trick that holds a card they need,
@@ -38,6 +70,7 @@ class Bot {
     ];
     if (options.length == 1) return options.first;
     final per = max(20, budget ~/ options.length);
+    final worlds = _worldsFor(s, seat);
     var best = options.first;
     var bestScore = -1.0;
     for (final i in options) {
@@ -46,7 +79,7 @@ class Bot {
           if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
         i: seat,
       };
-      final score = _scoreOf(s, assigned, per, freeX: true) +
+      final score = _scoreOf(worlds, assigned, per, freeX: true) +
           rand.nextDouble() * 0.01;
       if (score > bestScore) {
         bestScore = score;
@@ -64,13 +97,14 @@ class Bot {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
-    final inPlay = s.inPlay;
+    final worlds = _worldsFor(s, seat);
     final guide = _guideFor(s, assigned);
     for (int n = 0; n < budget; n++) {
-      final sim = _Sim.from(s);
-      sim.playOut(rand, guide: guide);
+      final w = worlds[n % worlds.length];
+      final sim = _Sim.from(w);
+      sim.playOut(_randFor(n), guide: guide);
       // Count this playout if everything else would succeed.
-      final v = sim.view(s, inPlay);
+      final v = sim.view(w, w.inPlay);
       all[v.tricksWon(seat)]++;
       final others = assigned.entries.where((e) =>
           e.key != task && !needsX(s.tasks[e.key].description));
@@ -91,8 +125,9 @@ class Bot {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
+    final worlds = _worldsFor(s, seat);
     return _focus(legal, budget,
-        (card, n) => _scoreOf(s, assigned, n, first: (seat, card)));
+        (card, from, n) => _scoreOf(worlds, assigned, n, from: from, first: (seat, card)));
   }
 
   /// Whether the playouts are spent in two rounds: a look at every option,
@@ -101,14 +136,15 @@ class Bot {
   bool focus = true;
 
   /// Picks the best of [options] with [total] playouts, by [score] (the
-  /// average of n playouts), spending them where they tell the most.
-  T _focus<T>(List<T> options, int total, double Function(T option, int n) score) {
+  /// average of n playouts numbered from `from`), spending them where they
+  /// tell the most.
+  T _focus<T>(List<T> options, int total, double Function(T option, int from, int n) score) {
     if (!focus) {
       final per = max(20, total ~/ options.length);
       T best = options.first;
       var bestScore = -1.0;
       for (final o in options) {
-        final v = score(o, per) + rand.nextDouble() * 0.01;
+        final v = score(o, 0, per) + rand.nextDouble() * 0.01;
         if (v > bestScore) {
           bestScore = v;
           best = o;
@@ -119,7 +155,7 @@ class Bot {
     // First look: a share of the budget over every option.
     final first = max(16, (total * 0.4) ~/ options.length);
     final scores = <T, (double, int)>{
-      for (final o in options) o: (score(o, first), first)
+      for (final o in options) o: (score(o, 0, first), first)
     };
     // The best few get the rest, and their scores are pooled.
     final keep = max(2, (options.length / 3).ceil());
@@ -131,7 +167,7 @@ class Bot {
     var bestScore = -1.0;
     for (final o in finalists) {
       final (s1, n1) = scores[o]!;
-      final s2 = score(o, more);
+      final s2 = score(o, first, more);
       final pooled = (s1 * n1 + s2 * more) / (n1 + more) + rand.nextDouble() * 0.01;
       if (pooled > bestScore) {
         bestScore = pooled;
@@ -145,16 +181,18 @@ class Bot {
   /// 1 for each playout where all are done, plus a little for each task
   /// done in the ones that fall short. With [freeX], "exactly X" tasks
   /// count as done whatever X turns out to be (it's announced later).
-  double score(MatchState s, Map<int, int> assigned, int playouts) =>
-      _scoreOf(s, assigned, playouts);
+  double score(MatchState s, int viewer, Map<int, int> assigned, int playouts) =>
+      _scoreOf(_worldsFor(s, viewer), assigned, playouts);
 
-  double _scoreOf(MatchState s, Map<int, int> assigned, int playouts,
-      {(int, PlayingCard)? first, bool freeX = false}) {
+  /// The playouts are spread over the [worlds] in turn, numbered from
+  /// [from] (see [paired]).
+  double _scoreOf(List<MatchState> worlds, Map<int, int> assigned, int playouts,
+      {int from = 0, (int, PlayingCard)? first, bool freeX = false}) {
     double total = 0;
-    final inPlay = s.inPlay;
-    final guide = _guideFor(s, assigned);
-    for (int n = 0; n < playouts; n++) {
-      total += _playout(s, assigned, inPlay, first, freeX, guide);
+    final guide = _guideFor(worlds.first, assigned);
+    for (int n = from; n < from + playouts; n++) {
+      final w = worlds[n % worlds.length];
+      total += _playout(w, assigned, w.inPlay, first, freeX, guide, _randFor(n));
     }
     return total / playouts;
   }
@@ -168,7 +206,7 @@ class Bot {
   /// little for each one done otherwise.
   double _playout(MatchState s, Map<int, int> assigned,
       Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX,
-      [_Guide? guide]) {
+      _Guide? guide, Random rand) {
     final sim = _Sim.from(s);
     var lostNow = false;
     if (first != null) {
@@ -297,13 +335,13 @@ class Bot {
     return Future<void>.delayed(Duration.zero).then((_) => _clock.reset());
   }
 
-  Future<double> _scoreAsync(MatchState s, Map<int, int> assigned,
-      int playouts, {(int, PlayingCard)? first, bool freeX = false}) async {
+  Future<double> _scoreAsync(List<MatchState> worlds, Map<int, int> assigned,
+      int playouts, {int from = 0, (int, PlayingCard)? first, bool freeX = false}) async {
     double total = 0;
-    final inPlay = s.inPlay;
-    final guide = _guideFor(s, assigned);
-    for (int n = 0; n < playouts; n++) {
-      total += _playout(s, assigned, inPlay, first, freeX, guide);
+    final guide = _guideFor(worlds.first, assigned);
+    for (int n = from; n < from + playouts; n++) {
+      final w = worlds[n % worlds.length];
+      total += _playout(w, assigned, w.inPlay, first, freeX, guide, _randFor(n));
       final pause = _breathe();
       if (pause != null) await pause;
     }
@@ -311,9 +349,9 @@ class Bot {
   }
 
   Future<double> scoreAsync(
-      MatchState s, Map<int, int> assigned, int playouts) {
+      MatchState s, int viewer, Map<int, int> assigned, int playouts) {
     _begin();
-    return _scoreAsync(s, assigned, playouts);
+    return _scoreAsync(_worldsFor(s, viewer), assigned, playouts);
   }
 
   /// How well the last pick chosen is likely to go (0 to 1).
@@ -328,6 +366,7 @@ class Bot {
     if (options.length == 1) return options.first;
     _begin();
     final per = max(20, budget ~/ options.length);
+    final worlds = _worldsFor(s, seat);
     var best = options.first;
     var bestScore = -1.0;
     for (final i in options) {
@@ -336,7 +375,7 @@ class Bot {
           if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
         i: seat,
       };
-      final score = await _scoreAsync(s, assigned, per, freeX: true) +
+      final score = await _scoreAsync(worlds, assigned, per, freeX: true) +
           rand.nextDouble() * 0.01;
       if (score > bestScore) {
         bestScore = score;
@@ -355,19 +394,20 @@ class Bot {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
+    final worlds = _worldsFor(s, seat);
     return _focusAsync(legal, budget,
-        (card, n) => _scoreAsync(s, assigned, n, first: (seat, card)));
+        (card, from, n) => _scoreAsync(worlds, assigned, n, from: from, first: (seat, card)));
   }
 
   /// [_focus], a slice at a time.
   Future<T> _focusAsync<T>(List<T> options, int total,
-      Future<double> Function(T option, int n) score) async {
+      Future<double> Function(T option, int from, int n) score) async {
     if (!focus) {
       final per = max(20, total ~/ options.length);
       T best = options.first;
       var bestScore = -1.0;
       for (final o in options) {
-        final v = await score(o, per) + rand.nextDouble() * 0.01;
+        final v = await score(o, 0, per) + rand.nextDouble() * 0.01;
         if (v > bestScore) {
           bestScore = v;
           best = o;
@@ -378,7 +418,7 @@ class Bot {
     final first = max(16, (total * 0.4) ~/ options.length);
     final scores = <T, (double, int)>{};
     for (final o in options) {
-      scores[o] = (await score(o, first), first);
+      scores[o] = (await score(o, 0, first), first);
     }
     final keep = max(2, (options.length / 3).ceil());
     final top = options.toList()
@@ -389,7 +429,7 @@ class Bot {
     var bestScore = -1.0;
     for (final o in finalists) {
       final (s1, n1) = scores[o]!;
-      final s2 = await score(o, more);
+      final s2 = await score(o, first, more);
       final pooled = (s1 * n1 + s2 * more) / (n1 + more) + rand.nextDouble() * 0.01;
       if (pooled > bestScore) {
         bestScore = pooled;
@@ -406,19 +446,20 @@ class Bot {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
-    final inPlay = s.inPlay;
     // The other tasks whose success decides whether a count is usable;
     // worked out once, not once a playout.
     final others = [
       for (final e in assigned.entries)
         if (e.key != task && !needsX(s.tasks[e.key].description)) e
     ];
+    final worlds = _worldsFor(s, seat);
     final guide = _guideFor(s, assigned);
     _begin();
     for (int n = 0; n < budget; n++) {
-      final sim = _Sim.from(s);
-      sim.playOut(rand, guide: guide);
-      final v = sim.view(s, inPlay);
+      final w = worlds[n % worlds.length];
+      final sim = _Sim.from(w);
+      sim.playOut(_randFor(n), guide: guide);
+      final v = sim.view(w, w.inPlay);
       all[v.tricksWon(seat)]++;
       if (others.every((e) =>
           taskRules[s.tasks[e.key].description]!(v, e.value, s.tasks[e.key].x) ==

@@ -13,7 +13,9 @@ rewriting the rules.
   `MatchAction` (`PickTask`, `Announce`, `PlayCard`, `ShowCard`).
   `MatchState.apply` changes a game, and `problem()` says why an action
   isn't allowed.
-- `lib/engine/bot.dart`: bot teammates (guided playouts, see HANDOFF.md).
+- `lib/engine/bot.dart`: bot teammates that see only their own hand and
+  imagine the rest (`engine/sampling.dart`), so a bot in an empty seat at
+  an online table knows no more than a player would (see HANDOFF.md).
 - `lib/game/bot_turn.dart`: what a courtier does on their turn
   (`botDecision`), from the game alone: pick, pass, announce, show or
   play. A server can run it for empty seats.
