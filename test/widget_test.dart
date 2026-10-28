@@ -308,7 +308,7 @@ void main() {
 
     // A fresh deal for the new target: same players and round, and the
     // King card is dealt again, so the table asks who has it.
-    expect(state.targetPoints, isNot(5));
+    expect(state.game.target, isNot(5));
     expect(state.game.players, same(players));
     expect(state.game.kingIndex, isNull);
     expect(find.text('Who holds the King card?'), findsOneWidget);
@@ -508,7 +508,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final state = tester.state<HomePageState>(find.byType(HomePage));
-    expect(state.targetPoints, isNot(5));
+    expect(state.game.target, isNot(5));
     expect(find.text('Round 2'), findsOneWidget);
     expect(find.text('Who holds the King card?'), findsOneWidget);
   });

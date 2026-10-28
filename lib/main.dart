@@ -28,6 +28,8 @@ import 'engine/match.dart';
 import 'engine/rules.dart';
 import 'game/bot_turn.dart';
 import 'game/controller.dart';
+import 'game/dealer.dart';
+import 'game/judge.dart';
 import 'models.dart';
 import 'net/table_link.dart';
 import 'play/card_view.dart';
@@ -107,8 +109,10 @@ class HomePageState extends State<HomePage>
   final _ctrl = GameController();
   GameState get game => _ctrl.game;
   set game(GameState g) => _ctrl.game = g;
-  int playerCount = 4;
-  int targetPoints = 5;
+
+  /// The last choices made in setup, offered again next time.
+  int _setupCount = 4;
+  int _setupTarget = 5;
 
   /// Card centres as fractions of the table size, so they survive rotation
   /// and window resizes.
@@ -239,8 +243,6 @@ class HomePageState extends State<HomePage>
     _moves = _link.moves.listen(_onMove);
     // What a save holds beside the game: the real table's layout.
     _ctrl.saveExtras = () => {
-          'playerCount': playerCount,
-          'targetPoints': targetPoints,
           'cardWidth': _cardWidth,
           'dealt': _dealtFor == game.dealId,
           'pos': [
@@ -719,8 +721,8 @@ class HomePageState extends State<HomePage>
     _saveSettings();
     setState(() {
       game.chapter = chapter;
-      targetPoints = chronicle[chapter].points;
-      game.shuffleTasks(playerCount, targetPoints);
+      game.target = chronicle[chapter].points;
+      game.shuffleTasks(game.players.length, game.target);
       _resetTable();
     });
   }
@@ -732,8 +734,12 @@ class HomePageState extends State<HomePage>
     final data = saved.data;
     setState(() {
       game = g;
-      playerCount = data['playerCount'] as int;
-      targetPoints = (data['targetPoints'] as int).clamp(1, maxTarget);
+      // Saves from before the target was part of the game kept it beside.
+      if (data['targetPoints'] case final int t when !saved.hasTarget) {
+        g.target = t.clamp(1, maxTarget);
+      }
+      _setupCount = g.players.length;
+      _setupTarget = g.target;
       _resetTable();
       final pos = data['pos'] as List;
       final tilt = data['tilt'] as List;
@@ -811,10 +817,10 @@ class HomePageState extends State<HomePage>
   bool get _readyToDeal =>
       !_choosingKing && !_decreePending && _dealtFor != game.dealId;
 
-  int _points(Task t) => t.getPointsForPlayerCount(playerCount);
+  int _points(Task t) => t.getPointsForPlayerCount(game.players.length);
 
   _TableGeometry get _geo => _TableGeometry(
-      _tableSize, game.players.length, (t) => t.boardText(playerCount),
+      _tableSize, game.players.length, (t) => t.boardText(game.players.length),
       fixedCardWidth: _dealtFor == game.dealId ? _cardWidth : null,
       upright: _upright || game.digital);
 
@@ -858,34 +864,13 @@ class HomePageState extends State<HomePage>
 
   MatchState get _cards => game.cards!;
 
-  /// The cards' view of the round, with this table's tasks, owners and
-  /// rules on who may take what.
-  MatchState _matchView() {
-    final c = _cards;
-    c.target = targetPoints;
-    c.king = game.kingIndex ?? c.king;
-    c.tasks = [
-      for (final t in game.tasks)
-        MatchTask(t,
-            owner: t.assignedPlayerIndex, x: c.announced[t.description])
-    ];
-    c.pickTurn = game.pickTurn;
-    c.takeRule = (i, seat) => game.canTake(game.tasks[i], seat);
-    return c;
-  }
-
-  bool get _tasksSettled =>
-      game.tasks.every((t) => t.assignedPlayerIndex != null) &&
-      game.tasks.every((t) =>
-          !needsX(t.description) || _cards.announced.containsKey(t.description));
-
   bool get _playing =>
       _digital &&
       !_choosingKing &&
       !_decreePending &&
       _dealtFor == game.dealId &&
       game.outcome == RoundOutcome.inProgress &&
-      _tasksSettled;
+      tasksSettled(game);
 
   bool get _yourPlay =>
       _playing && !_autoPlaying && _lastTrick == null && _cards.turn == _you;
@@ -902,25 +887,7 @@ class HomePageState extends State<HomePage>
   /// it starts.
   bool _maybeAutoFinish() {
     if (_autoPlaying || !_playing || game.isTutorial) return false;
-    final c = _cards;
-    if (c.current.isNotEmpty || c.tricks.length >= c.totalTricks) return false;
-    final open = [
-      for (final t in game.tasks)
-        if (t.status == TaskStatus.pending && t.assignedPlayerIndex != null) t
-    ];
-    // Sealed tasks hang on their order: those rounds play on by hand.
-    if (open.isEmpty || open.any((t) => t.seal != null)) return false;
-    final v = _roundView;
-    final verdicts = [
-      for (final t in open)
-        taskRules[t.description]!(
-            v, t.assignedPlayerIndex!, c.announced[t.description])
-    ];
-    if (verdicts.contains(Verdict.failed)) return false;
-    // Only once every task has actually been done: a round that merely
-    // can't be lost is still played to the end by hand.
-    final certain = verdicts.every((x) => x == Verdict.done);
-    if (!certain) return false;
+    if (!canPlayOut(game)) return false;
     _botTimer?.cancel();
     _botTimer = null;
     setState(() {
@@ -965,45 +932,8 @@ class HomePageState extends State<HomePage>
   /// lets the King card choose the King.
   void _syncCards() {
     if (!_digital || !_inGame) return;
-    final c = _cards;
-    if (c.dealId != game.dealId) {
-      // The same game and round always deal the same cards (see
-      // GameState.seed), so a round from a bug report can be dealt again.
-      final rand = game.dealRandom();
-      c.dealFor(
-        game.dealId,
-        rand,
-        king: game.kingIndex,
-        accept: (hands, inPlay) => game.tasks.every((t) =>
-            playableWith(t.description, hands, inPlay) &&
-            _possible(t, hands, inPlay)),
-      );
-      // The tutorial deals the same cards every time, with you as King.
-      if (game.isTutorial) {
-        final d = lessons[game.lesson].deal();
-        c.hands = d.hands;
-        c.setAside = d.setAside;
-        c.king = _you;
-        c.leader = _you;
-      }
-      // Any task the deal still makes impossible is swapped for one that
-      // can be done.
-      for (var i = 0; i < game.tasks.length && !game.isTutorial; i++) {
-        final t = game.tasks[i];
-        if (t.assignedPlayerIndex != null || _possible(t, c.hands, c.inPlay)) {
-          continue;
-        }
-        final names = game.tasks.map((x) => x.description).toSet();
-        final swap = (List.of(GameState.taskPool)..shuffle(rand)).where((p) =>
-            !names.contains(p.description) &&
-            !needsX(p.description) &&
-            _points(p) <= _points(t) + 1 &&
-            fitsDeal([for (final o in game.tasks) if (o != t) o.description],
-                p.description, math.max(3, game.players.length)) &&
-            playableWith(p.description, c.hands, c.inPlay) &&
-            _possible(p, c.hands, c.inPlay)).firstOrNull;
-        if (swap != null) game.tasks[i] = swap.freshCopy()..seal = t.seal;
-      }
+    if (dealRound(game,
+        you: _you, rigged: game.isTutorial ? lessons[game.lesson].deal() : null)) {
       _lastTrick = null;
       _collecting = false;
       _revealing = false;
@@ -1021,29 +951,6 @@ class HomePageState extends State<HomePage>
         if (mounted && _choosingKing) _crownKing(_cards.king);
       });
     }
-  }
-
-  /// Whether [t] could still be done by someone allowed to take it, with
-  /// these cards in play: no task should be lost before the first trick.
-  bool _possible(Task t, List<List<PlayingCard>> hands, Set<PlayingCard> inPlay) {
-    if (needsX(t.description) || hands.isEmpty || hands.first.isEmpty) return true;
-    final v = RoundView(
-        players: hands.length,
-        king: game.kingIndex ?? _you,
-        tricks: const [],
-        totalTricks: hands.first.length,
-        inPlay: inPlay);
-    final rule = taskRules[t.description]!;
-    return [
-      for (int s = 0; s < hands.length; s++)
-        if (t.assignedPlayerIndex == s || game.canTake(t, s)) s
-    ].any((s) {
-      try {
-        return rule(v, s, null) != Verdict.failed;
-      } catch (_) {
-        return true;
-      }
-    });
   }
 
   /// Lets whichever bot is due act, after a short pause.
@@ -1172,7 +1079,7 @@ class HomePageState extends State<HomePage>
         game.outcome != RoundOutcome.inProgress) {
       return false;
     }
-    final view = _matchView();
+    final view = matchView(game);
     _bot.budget = botBudget;
     final before = _moment;
     final decision = await botDecision(game, view, _bot, you: _you);
@@ -1221,7 +1128,7 @@ class HomePageState extends State<HomePage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SuitText(task.cardText(playerCount),
+              SuitText(task.cardText(game.players.length),
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 16, color: Colors.white70)),
               const SizedBox(height: 14),
@@ -1383,38 +1290,21 @@ class HomePageState extends State<HomePage>
     }));
   }
 
-  /// Marks each task done or failed from the tricks so far. Sealed tasks
-  /// are judged in seal order, and one done out of order fails.
+  /// Marks each task done or failed from the tricks so far (game/judge.dart
+  /// decides; the cards turn over here, several done at once one after
+  /// another).
   Future<void> _judgeTasks() async {
-    final c = _cards;
-    final v = _roundView;
-    int order(Task t) => t.seal == null ? 0 : t.seal!;
-    final pending = game.tasks
-        .where((t) => t.status == TaskStatus.pending && t.assignedPlayerIndex != null)
-        .toList()
-      ..sort((a, b) => order(a).compareTo(order(b)));
     var flipped = 0;
-    for (final t in pending) {
+    for (final flip in judgeTasks(game)) {
       if (game.outcome != RoundOutcome.inProgress) break;
-      final verdict = taskRules[t.description]!(
-          v, t.assignedPlayerIndex!, c.announced[t.description]);
-      if (verdict == Verdict.pending) continue;
-      final status = verdict == Verdict.done && game.sealProblem(t) == null
-          ? TaskStatus.completed
-          : TaskStatus.failed;
-      if (status == TaskStatus.failed) {
-        _whyFailed[t] = verdict == Verdict.done
-            ? 'Done out of order: ${game.sealProblem(t)}'
-            : failReason(t.description, v, t.assignedPlayerIndex!,
-                c.announced[t.description], [for (final p in game.players) p.name]);
-      }
-      if (!mounted || !game.tasks.contains(t)) continue;
+      if (!mounted || !game.tasks.contains(flip.task)) continue;
+      if (flip.why != null) _whyFailed[flip.task] = flip.why!;
       // Several done at once turn over one after another.
-      if (status == TaskStatus.completed && flipped++ > 0) {
+      if (flip.status == TaskStatus.completed && flipped++ > 0) {
         await Future<void>.delayed(flipStagger);
-        if (!mounted || !game.tasks.contains(t)) continue;
+        if (!mounted || !game.tasks.contains(flip.task)) continue;
       }
-      _setTaskStatus(t, status);
+      _setTaskStatus(flip.task, flip.status);
     }
     // Nothing to undo when the cards decided.
     _lastMark = null;
@@ -1423,40 +1313,12 @@ class HomePageState extends State<HomePage>
   /// Why each failed task failed this round, for the end of the round.
   final _whyFailed = <Task, String>{};
 
-  /// The tricks so far, as the task rules see them.
-  RoundView get _roundView {
-    final c = _cards;
-    return RoundView(
-        players: c.players,
-        king: game.kingIndex ?? c.king,
-        tricks: c.tricks,
-        totalTricks: c.totalTricks,
-        inPlay: c.inPlay,
-        shown: c.revealed,
-        shownAt: c.revealedAt);
-  }
+  /// The round as the table shows it (see game/judge.dart): a trick still
+  /// on the table doesn't count yet.
+  RoundView get _shownView => shownView(game, trickPending: _lastTrick != null);
 
-  /// The round as the table shows it: a trick still lying on the table
-  /// (before it's swept to its winner) doesn't count yet, so the tasks'
-  /// tallies and crossed-out cards change as the cards arrive.
-  RoundView get _shownView {
-    final c = _cards;
-    final pending = _lastTrick != null && c.tricks.isNotEmpty;
-    return RoundView(
-        players: c.players,
-        king: game.kingIndex ?? c.king,
-        tricks: pending ? c.tricks.sublist(0, c.tricks.length - 1) : c.tricks,
-        totalTricks: c.totalTricks,
-        inPlay: c.inPlay,
-        shown: c.revealed,
-        shownAt: c.revealedAt);
-  }
-
-  /// Tricks [seat] has won, as the table shows them (see [_shownView]).
-  int _shownTricksWon(int seat) {
-    final n = _cards.tricksWon(seat);
-    return _lastTrick != null && _lastTrick!.winner == seat ? n - 1 : n;
-  }
+  /// Tricks [seat] has won, as the table shows them.
+  int _shownTricksWon(int seat) => shownTricksWon(game, seat, _lastTrick);
 
   /// How far along an on-screen task is ("2/4"), for the card's corner.
   /// How [t] is going, in a sentence for its close-up (on-screen cards
@@ -1478,20 +1340,9 @@ class HomePageState extends State<HomePage>
   }
 
   /// The cards [t] names that its owner has already won, to cross out.
-  Set<String> _wonNamed(Task t) {
-    final owner = t.assignedPlayerIndex;
-    if (!_digital ||
-        owner == null ||
-        _cards.dealId != game.dealId ||
-        t.description.startsWith("Don't")) {
-      return const {};
-    }
-    final won = {for (final c in _shownView.won(owner)) c.label};
-    return {
-      for (final m in RegExp('[A2-9][♥♦♠♣]').allMatches(t.description))
-        if (won.contains(m.group(0))) m.group(0)!
-    };
-  }
+  Set<String> _wonNamed(Task t) => !_digital || _cards.dealId != game.dealId
+      ? const {}
+      : wonNamed(game, t, trickPending: _lastTrick != null);
 
   /// Every card in the deck, by suit: played (and in which trick, by
   /// whom), in your hand, shown by someone, or still to come.
@@ -1611,7 +1462,7 @@ class HomePageState extends State<HomePage>
 
   /// A task's wording, with the announced number filled in.
   String _cardText(Task t) {
-    final text = t.boardText(playerCount);
+    final text = t.boardText(game.players.length);
     final x = _digital ? _cards.announced[t.description] : null;
     if (x == null) return text;
     final secret = t.description.contains('secret') && t.assignedPlayerIndex != _you;
@@ -1639,7 +1490,7 @@ class HomePageState extends State<HomePage>
       if (_speakPromptDue) return 'Share a card?';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
     }
-    if (!_tasksSettled) return 'Announcing numbers…';
+    if (!tasksSettled(game)) return 'Announcing numbers…';
     if (game.outcome != RoundOutcome.inProgress) return '';
     final c = _cards;
     if (c.turn == _you) {
@@ -3078,10 +2929,11 @@ class HomePageState extends State<HomePage>
       if (mode != GameMode.tutorial && mode != GameMode.dynasty) roles ? 'roles' : 'plain',
     ]);
     setState(() {
-      playerCount = count;
-      targetPoints = target;
+      _setupCount = count;
+      _setupTarget = target;
       game = GameState()
         ..mode = mode
+        ..target = target
         ..lesson = lesson
         ..seed = HomePageTestHooks.seed ?? math.Random().nextInt(1 << 30)
         ..chapter = chapter
@@ -3418,7 +3270,7 @@ class HomePageState extends State<HomePage>
     final midRound = _inGame && game.outcome == RoundOutcome.inProgress &&
         game.kingIndex != null;
     setState(() {
-      game.shuffleTasks(playerCount, targetPoints);
+      game.shuffleTasks(game.players.length, game.target);
       if (midRound) _decreeReadFor = game.dealId; // already read this round
       _resetTable();
     });
@@ -3636,8 +3488,8 @@ class HomePageState extends State<HomePage>
           _saveSettings();
         }
         _nextTarget = game.campaign && game.outcome == RoundOutcome.won
-            ? math.min(maxTarget, targetPoints + 1)
-            : targetPoints;
+            ? math.min(maxTarget, game.target + 1)
+            : game.target;
         if (game.bestStreak > _bestStreak) _bestStreak = game.bestStreak;
         // The last tasks turn over first, then the result comes up.
         _outcome.value = 0;
@@ -3941,7 +3793,7 @@ class HomePageState extends State<HomePage>
                 ],
               ),
               const SizedBox(height: 6),
-              SuitText(task.fullText(playerCount),
+              SuitText(task.fullText(game.players.length),
                   struck: _wonNamed(task),
                   style: const TextStyle(
                       fontSize: 19,
@@ -4173,8 +4025,8 @@ class HomePageState extends State<HomePage>
     final args = _setupArgs!;
     return _SetupPanel(
       players: game.players,
-      playerCount: playerCount,
-      targetPoints: targetPoints,
+      playerCount: _setupCount,
+      targetPoints: _setupTarget,
       mode: args.mode ?? game.mode,
       surprise: game.surprise,
       roles: game.roles,
@@ -4202,7 +4054,7 @@ class HomePageState extends State<HomePage>
   /// Changes the points target mid-game. Players and the King stay; the
   /// tasks are re-dealt to match the new target.
   Future<void> _showPointsDialog() async {
-    var target = targetPoints;
+    var target = game.target;
     final apply = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -4270,7 +4122,7 @@ class HomePageState extends State<HomePage>
       ),
     );
     if (apply != true || !mounted) return;
-    targetPoints = target;
+    game.target = target;
     _redeal();
   }
 
@@ -4279,7 +4131,7 @@ class HomePageState extends State<HomePage>
   void _redeal() {
     setState(() {
       final keepDecree = game.decree;
-      game.addTasksUntilTarget(playerCount, targetPoints,
+      game.addTasksUntilTarget(game.players.length, game.target,
           newRound: false, countRound: false);
       game.decree = keepDecree;
       _resetTable();
@@ -4591,7 +4443,7 @@ class HomePageState extends State<HomePage>
                         },
                         onScreen: _digital,
                         players: game.players.length,
-                        points: targetPoints,
+                        points: game.target,
                         seals: [
                           for (final t in game.tasks)
                             if (t.seal != null) t.seal!
@@ -4767,7 +4619,7 @@ class HomePageState extends State<HomePage>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('$targetPoints',
+                  Text('${game.target}',
                       style: const TextStyle(
                           fontFamily: displayFont,
                           fontWeight: FontWeight.w900,
@@ -5112,7 +4964,7 @@ class HomePageState extends State<HomePage>
           Text(
             _digital
                 ? 'The cards are dealt. Whoever holds the King card will be crowned.'
-                : playerCount == 2
+                : game.players.length == 2
                 ? 'Tap their seat to crown the King and deal the tasks. If the Dummy has it, choose a King together.'
                 : 'Tap their seat to crown the King and deal the tasks.',
             textAlign: TextAlign.center,
@@ -5470,7 +5322,7 @@ class HomePageState extends State<HomePage>
                 ),
                 FilledButton(
                   onPressed: () {
-                    targetPoints = _nextTarget;
+                    game.target = _nextTarget;
                     _shuffleTasks();
                   },
                   style: won

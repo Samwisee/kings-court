@@ -65,9 +65,10 @@ void main() {
       } else {
         expect(game.cards, isNull);
       }
-      // The page's extras: the real table's layout.
+      // The target was kept beside the game then; the page reads it in.
       expect(data['playerCount'], facts['playerCount']);
       expect(data['targetPoints'], facts['target']);
+      expect(game.players.length, facts['playerCount']);
     });
   }
 

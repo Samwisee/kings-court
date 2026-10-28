@@ -68,6 +68,9 @@ class GameState {
 
   GameMode mode = GameMode.free;
 
+  /// The points the round's tasks add up to.
+  int target = 5;
+
   /// Endless mode: each win adds a point to the next round.
   bool get campaign => mode == GameMode.endless;
   set campaign(bool on) => mode = on ? GameMode.endless : GameMode.free;
@@ -534,6 +537,7 @@ class GameState {
         'passed': passed.toList(),
         'pickTurn': pickTurn,
         'mode': mode.index,
+        'target': target,
         'chapter': chapter,
         'lesson': lesson,
         'surprise': surprise,
@@ -577,6 +581,7 @@ class GameState {
         ..passed = {for (final s in (j['passed'] as List?) ?? const []) s as int}
         ..pickTurn = j['pickTurn'] as int?
         ..mode = GameMode.values[(j['mode'] as int?) ?? 0]
+        ..target = (j['target'] as int?) ?? 5
         ..chapter = j['chapter'] as int?
         ..lesson = (j['lesson'] as int?) ?? 0
         ..surprise = (j['surprise'] as bool?) ?? false

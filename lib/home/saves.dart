@@ -9,6 +9,10 @@ class _SavedGame {
   final Map<String, dynamic> data;
   final DateTime at;
 
+  /// Whether the save's game carries its own points target (saves from
+  /// before the target was part of the game kept it beside the game).
+  bool get hasTarget => (data['game'] as Map<String, dynamic>).containsKey('target');
+
   String get title => switch (game.mode) {
         GameMode.free => 'Free play',
         GameMode.endless => 'Endless',
