@@ -1,0 +1,153 @@
+// Small cards: in the tracker, a task’s close-up and shown cards.
+part of '../main.dart';
+
+/// A plain card face for the card tracker: just its number and suit (or
+/// the Court Card's letter) and an outline, cheap enough to show dozens.
+class _MiniCard extends StatelessWidget {
+  const _MiniCard(
+      {required this.card,
+      required this.width,
+      this.dimmed = false,
+      this.edge,
+      this.trick,
+      this.faint = false,
+      this.centred = true});
+
+  /// Only possibly there: drawn in faded colours (cheaper than making it
+  /// see-through).
+  final bool faint;
+  final PlayingCard card;
+  final double width;
+
+  /// Played: greyed inside, but its outline stays bright.
+  final bool dimmed;
+  final Color? edge;
+
+  /// The trick it was played in, shown in its corner.
+  final int? trick;
+
+  /// Rank over suit, large in the middle (the only layout now; kept so
+  /// callers can say so).
+  final bool centred;
+
+  static const _cloth = [
+    Color(0xFF4A2670),
+    Color(0xFF0F5B3A),
+    Color(0xFF203C8C),
+    Color(0xFF7E1828),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final court = card.isCourt;
+    const felt = Palette.feltDeep;
+    final fade = faint ? 0.55 : 0.0;
+    final ink = Color.lerp(
+        court ? Palette.gold : Palette.suitColour(card.suit), felt, fade)!;
+    final face = Color.lerp(
+        court
+            ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.5 : 0)!
+            : dimmed
+                ? const Color(0xFFB4AFA4)
+                : Palette.card,
+        felt,
+        fade)!;
+    final r = width * 0.14;
+    final edgeW = edge != null ? math.max(2.5, width * 0.08) : 1.0;
+    // Nudged up a little: the suit's glyph sits low in its line.
+    final label = Center(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+            width * 0.06, width * 0.02, width * 0.06, width * 0.14),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text.rich(
+            TextSpan(children: [
+              TextSpan(
+                  text: card.rankLabel,
+                  style: TextStyle(
+                      fontFamily: court ? displayFont : bodyFont,
+                      fontWeight: FontWeight.w900,
+                      fontSize: width * 0.5)),
+              if (!court) ...[
+                const TextSpan(text: '\n'),
+                WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: width * 0.06),
+                      child: SuitIcon(card.suit, size: width * 0.38, color: ink),
+                    )),
+              ],
+            ]),
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.0, color: ink),
+          ),
+        ),
+      ),
+    );
+    // A coloured outline is edged in black on both sides, so it stands out
+    // from the felt and from the card face alike.
+    return Container(
+      width: width,
+      height: width * 1.3,
+      decoration: BoxDecoration(
+        color: outlineColour,
+        borderRadius: BorderRadius.circular(r),
+      ),
+      padding: EdgeInsets.all(edge != null ? 1.2 : 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: face,
+          borderRadius: BorderRadius.circular(r - 1),
+          border: Border.all(
+              color: edge ??
+                  Color.lerp(court ? Palette.gold : const Color(0xFFD9D2C3),
+                      felt, fade)!,
+              width: edgeW),
+        ),
+        child: Container(
+          decoration: edge != null
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(math.max(0, r - edgeW)),
+                  border: Border.all(color: outlineColour, width: 1),
+                )
+              : null,
+          child: Stack(children: [
+            Positioned.fill(child: label),
+            if (trick != null)
+              Positioned(
+                right: width * 0.04,
+                bottom: 0,
+                child: _OutlinedNumber('$trick',
+                    size: width * 0.28, color: edge ?? Colors.white),
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small number in a colour, ringed in black so it reads on anything.
+class _OutlinedNumber extends StatelessWidget {
+  const _OutlinedNumber(this.text, {required this.size, required this.color});
+  final String text;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+        fontSize: size, fontWeight: FontWeight.w900, height: 1.05);
+    return Stack(children: [
+      Text(text,
+          style: style.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = math.max(2.5, size * 0.22)
+                ..strokeJoin = StrokeJoin.round
+                ..color = Colors.black)),
+      Text(text, style: style.copyWith(color: color)),
+    ]);
+  }
+}
