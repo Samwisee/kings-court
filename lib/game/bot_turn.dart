@@ -13,6 +13,7 @@ import '../engine/cards.dart';
 import '../engine/match.dart';
 import '../engine/conflicts.dart';
 import '../engine/rules.dart';
+import '../engine/showing.dart';
 import '../models.dart';
 import '../tutorial.dart';
 
@@ -151,6 +152,12 @@ PlayingCard? botShows(GameState game, MatchState view, int seat) {
   if (game.spoke[seat] || !game.canSpeak(seat) || view.current.isNotEmpty) {
     return null;
   }
+  // A task of its own that asks it to show a card comes first.
+  final own = intendedShow(view, seat, [
+    for (final t in game.tasks)
+      if (t.assignedPlayerIndex == seat && t.status == TaskStatus.pending) t.description
+  ]);
+  if (own != null) return own;
   for (final card in view.hands[seat]) {
     if (view.revealFor(seat, card) == null) continue;
     final needed = game.tasks.any((t) =>

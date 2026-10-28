@@ -15,7 +15,32 @@ class RoundView {
     required this.tricks,
     required this.totalTricks,
     required this.inPlay,
+    this.shown = const {},
+    this.shownAt = const {},
   });
+
+  /// The card each seat showed with the speech token this round, if any.
+  final Map<int, PlayingCard> shown;
+
+  /// How many tricks had been played when each seat showed its card.
+  final Map<int, int> shownAt;
+
+  /// This view with the same round but fewer tricks (for asking when
+  /// something happened).
+  RoundView upTo(int n) => RoundView(
+      players: players,
+      king: king,
+      tricks: tricks.sublist(0, n),
+      totalTricks: totalTricks,
+      inPlay: inPlay,
+      shown: {
+        for (final e in shown.entries)
+          if ((shownAt[e.key] ?? 0) <= n) e.key: e.value
+      },
+      shownAt: {
+        for (final e in shownAt.entries)
+          if (e.value <= n) e.key: e.value
+      });
 
   final int players;
   final int king;
@@ -340,6 +365,177 @@ final Map<String, TaskRule> taskRules = {
     }
     return _end(v, true);
   },
+  'Win the card you showed': (v, o, _) {
+    final card = v.shown[o];
+    if (card == null) return _end(v, false);
+    for (final t in v.tricks) {
+      if (t.cards.contains(card)) return t.winner == o ? Verdict.done : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  'Win a card someone else showed': (v, o, _) {
+    final theirs = {for (final e in v.shown.entries) if (e.key != o) e.value};
+    for (final t in v.tricks) {
+      if (t.winner == o && t.cards.any(theirs.contains)) return Verdict.done;
+    }
+    return _end(v, false);
+  },
+  'Win a trick led with a shown card': (v, o, _) {
+    for (final t in v.tricks) {
+      if (t.winner == o && v.shown.values.contains(t.cards.first)) return Verdict.done;
+    }
+    return _end(v, false);
+  },
+  'Win the trick right after you show a card': (v, o, _) {
+    final at = v.shownAt[o];
+    if (at == null) return _end(v, false);
+    if (v.tricks.length <= at) return Verdict.pending;
+    return v.tricks[at].winner == o ? Verdict.done : Verdict.failed;
+  },
+  "Don't win the card you showed": (v, o, _) {
+    final card = v.shown[o];
+    if (card == null) return _end(v, false);
+    for (final t in v.tricks) {
+      if (t.cards.contains(card)) return t.winner == o ? Verdict.failed : Verdict.done;
+    }
+    return _end(v, false);
+  },
+  "Don't win a trick before you've shown a card": (v, o, _) {
+    final at = v.shownAt[o];
+    for (int i = 0; i < v.tricks.length; i++) {
+      if (at != null && i >= at) return Verdict.done;
+      if (v.tricks[i].winner == o) return Verdict.failed;
+    }
+    return at != null ? Verdict.done : _end(v, true);
+  },
+  'Win the Joker with the Jack': (v, o, _) {
+    for (final t in v.tricks) {
+      if (!t.cards.contains(PlayingCard.joker)) continue;
+      return t.winner == o && t.winningCard == PlayingCard.jack
+          ? Verdict.done
+          : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  'Win the Jack with the Queen': (v, o, _) {
+    for (final t in v.tricks) {
+      if (!t.cards.contains(PlayingCard.jack)) continue;
+      return t.winner == o && t.winningCard == PlayingCard.queen
+          ? Verdict.done
+          : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  'Win two tricks that each hold a Court Card': (v, o, _) {
+    final n = v.tricks.where((t) => t.winner == o && t.cards.any(_court)).length;
+    if (n >= 2) return Verdict.done;
+    if (n + (v.countLeft(_court) > 0 ? v.countLeft(_court) : 0) < 2) return Verdict.failed;
+    return _end(v, false);
+  },
+  'Win the trick before the King card is played': (v, o, _) {
+    for (int i = 0; i < v.tricks.length; i++) {
+      if (!v.tricks[i].cards.contains(PlayingCard.king)) continue;
+      if (i == 0) return Verdict.failed;
+      return v.tricks[i - 1].winner == o ? Verdict.done : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  'Win the first trick a Court Card falls in': (v, o, _) {
+    for (final t in v.tricks) {
+      if (t.cards.any(_court)) return t.winner == o ? Verdict.done : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  'Win the last trick a Court Card falls in': (v, o, _) {
+    if (v.countLeft(_court) > 0) return _end(v, false);
+    for (final t in v.tricks.reversed) {
+      if (t.cards.any(_court)) return t.winner == o ? Verdict.done : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  "Don't win any trick the King leads": never((v, o) => v.tricks.any((t) => t.leader == v.king && t.winner == o)),
+  'Win a trick where everyone followed suit': anyTrick((t) {
+    final led = t.cards.first;
+    return !led.isCourt && t.cards.every((c) => c.suit == led.suit);
+  }),
+  'Win two tricks in a row led with the same suit': (v, o, _) {
+    for (int i = 1; i < v.tricks.length; i++) {
+      final a = v.tricks[i - 1], b = v.tricks[i];
+      if (a.winner == o && b.winner == o && a.cards.first.suit == b.cards.first.suit) {
+        return Verdict.done;
+      }
+    }
+    return _end(v, false);
+  },
+  'Win tricks led with three different suits': (v, o, _) {
+    final suits = {
+      for (final t in v.tricks)
+        if (t.winner == o && !t.cards.first.isCourt) t.cards.first.suit
+    };
+    return suits.length >= 3 ? Verdict.done : _end(v, false);
+  },
+  'Win the trick right after you lose one with a Court Card': (v, o, _) {
+    for (int i = 0; i + 1 < v.tricks.length; i++) {
+      final t = v.tricks[i];
+      final at = t.seats.indexOf(o);
+      if (at < 0 || !t.cards[at].isCourt || t.winner == o) continue;
+      if (v.tricks[i + 1].winner == o) return Verdict.done;
+    }
+    return _end(v, false);
+  },
+  'Win the last trick with a plain card': atEnd((v, o) => v.tricks.last.winner == o && !v.tricks.last.winningCard.isCourt),
+  'Win the 5♦': winAll(_cs(['5♦'])),
+  'Win the 8♥': winAll(_cs(['8♥'])),
+  'Win the A♠': winAll(_cs(['A♠'])),
+  'Win the 2♣ and the 8♠': winAll(_cs(['2♣', '8♠'])),
+  'Win the 6♥ and the 4♦': winAll(_cs(['6♥', '4♦'])),
+  'Win all four 9s': winAll(_cs(['9♥', '9♦', '9♠', '9♣'])),
+  'Win at least three 8s': atLeast(3, _rank(8)),
+  'Win exactly one ♣ card': exactly(1, _suit(Suit.clubs)),
+  'Win at least six ♥ cards': atLeast(6, _suit(Suit.hearts)),
+  'Win no ♦ cards': winNone(_suit(Suit.diamonds)),
+  "Don't win any of the first two tricks": notFirst(2),
+  "Don't win any of the first four tricks": notFirst(4),
+  'Win the first three tricks': firstN(3),
+  'Win only the first trick': (v, o, _) {
+    if (v.tricks.isNotEmpty && v.tricks.first.winner != o) return Verdict.failed;
+    if (v.wonIndexes(o).any((i) => i != 0)) return Verdict.failed;
+    return _end(v, true);
+  },
+  'Win at least one card of each suit': (v, o, _) {
+    const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs];
+    final mine = v.won(o);
+    if (suits.every((s) => mine.any(_suit(s)))) return Verdict.done;
+    final lost = suits.any((s) => !mine.any(_suit(s)) && v.countLeft(_suit(s)) == 0);
+    return lost ? Verdict.failed : _end(v, false);
+  },
+  'Never win two tricks in a row': never((v, o) => v.longestRun(o) >= 2),
+  'Win a trick with a 9': winWith(9),
+  'Win more ♠ cards than anyone else': atEnd((v, o) {
+    final mine = v.countWon(o, _suit(Suit.spades));
+    return [
+      for (int s = 0; s < v.players; s++)
+        if (s != o) v.countWon(s, _suit(Suit.spades))
+    ].every((n) => mine > n);
+  }),
+  'Win your first trick with a Court Card': (v, o, _) {
+    for (final t in v.tricks) {
+      if (t.winner == o) return t.winningCard.isCourt ? Verdict.done : Verdict.failed;
+    }
+    return _end(v, false);
+  },
+  'Win a trick that holds a 2 and a 9': anyTrick((t) =>
+      t.cards.any((c) => _rank(2)(c)) && t.cards.any((c) => _rank(9)(c))),
+  'Win exactly half as many tricks as the King': atEnd((v, o) => v.tricksWon(o) * 2 == v.tricksWon(v.king)),
+  'Win the trick in which someone first runs out of a suit': (v, o, _) {
+    for (final t in v.tricks) {
+      final led = t.cards.first;
+      if (!led.isCourt && t.cards.skip(1).any((c) => c.suit != led.suit)) {
+        return t.winner == o ? Verdict.done : Verdict.failed;
+      }
+    }
+    return _end(v, false);
+  },
 };
 
 /// When a task can be completed, which decides whether a seal on it makes
@@ -405,6 +601,32 @@ const _anyTrickTasks = {
   'Win at least five ♦ cards',
   'Win at least five ♣ cards',
   'Win two tricks led with a ♥',
+  'Win the card you showed',
+  'Win a card someone else showed',
+  'Win a trick led with a shown card',
+  'Win the trick right after you show a card',
+  'Win the Joker with the Jack',
+  'Win the Jack with the Queen',
+  'Win two tricks that each hold a Court Card',
+  'Win the trick before the King card is played',
+  'Win the first trick a Court Card falls in',
+  'Win a trick where everyone followed suit',
+  'Win two tricks in a row led with the same suit',
+  'Win tricks led with three different suits',
+  'Win the trick right after you lose one with a Court Card',
+  'Win the 5♦',
+  'Win the 8♥',
+  'Win the A♠',
+  'Win the 2♣ and the 8♠',
+  'Win the 6♥ and the 4♦',
+  'Win all four 9s',
+  'Win at least three 8s',
+  'Win at least six ♥ cards',
+  'Win at least one card of each suit',
+  'Win a trick with a 9',
+  'Win your first trick with a Court Card',
+  'Win a trick that holds a 2 and a 9',
+  'Win the trick in which someone first runs out of a suit',
 };
 
 const _earlyTasks = {
@@ -412,6 +634,9 @@ const _earlyTasks = {
   'Win the first two tricks',
   'Win the first trick with a Court Card',
   "Don't win any of the first three tricks",
+  "Don't win any of the first two tricks",
+  "Don't win any of the first four tricks",
+  'Win the first three tricks',
 };
 
 /// Every task named in the timing lists, for checking they're real tasks.

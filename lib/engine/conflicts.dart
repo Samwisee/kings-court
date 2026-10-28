@@ -122,6 +122,31 @@ final Map<String, TaskProfile> _profiles = {
   "Don't win any 5s": TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 5),
   "Don't win any of the first three tricks": const TaskProfile(forbidTricks: {0, 1, 2}),
   "Don't win any tricks": const TaskProfile(maxTricks: 0),
+  'Win the Joker with the Jack': TaskProfile(cards: {PlayingCard.joker}, courts: 2),
+  'Win the Jack with the Queen': TaskProfile(cards: {PlayingCard.jack}, courts: 2),
+  'Win two tricks that each hold a Court Card': const TaskProfile(courts: 2),
+  'Win the first trick a Court Card falls in': const TaskProfile(courts: 1),
+  'Win the last trick a Court Card falls in': const TaskProfile(courts: 1),
+  'Win the trick right after you lose one with a Court Card': const TaskProfile(courts: 1),
+  'Win the last trick with a plain card': const TaskProfile(tricks: {-1}),
+  'Win the 5♦': TaskProfile(cards: _cs(['5♦'])),
+  'Win the 8♥': TaskProfile(cards: _cs(['8♥'])),
+  'Win the A♠': TaskProfile(cards: _cs(['A♠'])),
+  'Win the 2♣ and the 8♠': TaskProfile(cards: _cs(['2♣', '8♠'])),
+  'Win the 6♥ and the 4♦': TaskProfile(cards: _cs(['6♥', '4♦'])),
+  'Win all four 9s': TaskProfile(cards: _rank(9)),
+  'Win at least three 8s': const TaskProfile(ranks: {8: 3}),
+  'Win exactly one ♣ card': const TaskProfile(suits: {Suit.clubs: 1}),
+  'Win at least six ♥ cards': const TaskProfile(suits: {Suit.hearts: 6}),
+  'Win no ♦ cards': TaskProfile(forbidCard: (c) => c.suit == Suit.diamonds),
+  "Don't win any of the first two tricks": const TaskProfile(forbidTricks: {0, 1}),
+  "Don't win any of the first four tricks": const TaskProfile(forbidTricks: {0, 1, 2, 3}),
+  'Win the first three tricks': const TaskProfile(tricks: {0, 1, 2}),
+  'Win only the first trick': const TaskProfile(tricks: {0}, maxTricks: 1),
+  'Win a trick with a 9': const TaskProfile(ranks: {9: 1}),
+  'Win more ♠ cards than anyone else': const TaskProfile(suits: {Suit.spades: 2}),
+  'Win your first trick with a Court Card': const TaskProfile(courts: 1),
+  'Win a trick that holds a 2 and a 9': const TaskProfile(ranks: {2: 1, 9: 1}),
 };
 
 TaskProfile profileOf(String description) =>
@@ -210,6 +235,7 @@ bool needsAWin(String d) {
     'Win fewer tricks',
     'Win the same number of tricks',
     'Win exactly X tricks',
+    'Win exactly half as many tricks',
   ];
   return !noneIsFine.any(d.startsWith);
 }
@@ -262,6 +288,9 @@ bool selfClash(String a, String b, {int players = 4}) {
   }
 
   if (forbids(p, q) || forbids(q, p)) return true;
+  // One card is shown a round: it can't be both won and not won.
+  const showPair = {'Win the card you showed', "Don't win the card you showed"};
+  if (showPair.contains(a) && showPair.contains(b) && a != b) return true;
   // Winning no tricks rules out every task that needs a win.
   if (p.maxTricks == 0 && needsAWin(b) || q.maxTricks == 0 && needsAWin(a)) return true;
   // Two different exact trick counts.
@@ -302,6 +331,25 @@ String? handBlocks(String d, List<PlayingCard> hand) {
   }
   if (d == 'Win a trick with the Jack' && !hand.contains(PlayingCard.jack)) {
     return 'You need the Jack in your hand to win a trick with it';
+  }
+  if (d == 'Win the Joker with the Jack') {
+    if (!hand.contains(PlayingCard.jack)) return 'You need the Jack in your hand for this';
+    if (hand.contains(PlayingCard.joker)) {
+      return 'You hold the Joker: you can’t play it and win it with the Jack in the same trick';
+    }
+  }
+  if (d == 'Win the Jack with the Queen') {
+    if (!hand.contains(PlayingCard.queen)) return 'You need the Queen in your hand for this';
+    if (hand.contains(PlayingCard.jack)) {
+      return 'You hold the Jack: you can’t play it and win it with the Queen in the same trick';
+    }
+  }
+  if (d == 'Win your first trick with a Court Card' && !hand.any((c) => c.isCourt)) {
+    return 'You need a Court Card in your hand for this';
+  }
+  if (d == 'Win the trick right after you lose one with a Court Card' &&
+      !hand.any((c) => c.isCourt && c != PlayingCard.king)) {
+    return 'You need a Court Card that can be beaten (not the King card) for this';
   }
   if (d == 'Win the Queen with the King') {
     if (!hand.contains(PlayingCard.king)) return 'You need the King card in your hand for this';

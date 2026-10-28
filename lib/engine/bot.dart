@@ -15,6 +15,7 @@ import 'deal_mix.dart';
 import 'match.dart';
 import 'rules.dart';
 import 'sampling.dart';
+import 'showing.dart';
 
 class Bot {
   Bot([Random? random]) : rand = random ?? Random();
@@ -202,12 +203,39 @@ class Bot {
   _Guide? _guideFor(MatchState s, Map<int, int> assigned) =>
       guided ? _Guide.of(s, assigned, guidance) : null;
 
+  /// The seats that will show a card for the show tasks they hold, with
+  /// those tasks (empty when nobody needs to).
+  Map<int, List<String>> _plansFor(MatchState s, Map<int, int> assigned) {
+    Map<int, List<String>>? out;
+    for (final e in assigned.entries) {
+      final d = s.tasks[e.key].description;
+      if (!showTasks.contains(d) || s.revealed.containsKey(e.value)) continue;
+      ((out ??= {})[e.value] ??= []).add(d);
+    }
+    return out ?? const {};
+  }
+
   /// One random playout's value: 1 if every assigned task is done, a
   /// little for each one done otherwise.
   double _playout(MatchState s, Map<int, int> assigned,
       Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX,
       _Guide? guide, Random rand) {
     final sim = _Sim.from(s);
+    // Cards about to be shown: whoever holds a task that asks them to show
+    // a card, and hasn't yet, is imagined showing it now (otherwise every
+    // imagined round would fail those tasks for want of a card shown).
+    var shown = s.revealed, shownAt = s.revealedAt;
+    final plans = _plansFor(s, assigned);
+    if (plans.isNotEmpty) {
+      shown = {...s.revealed};
+      shownAt = {...s.revealedAt};
+      for (final e in plans.entries) {
+        final c = intendedShow(s, e.key, e.value);
+        if (c == null) continue;
+        shown[e.key] = c;
+        shownAt[e.key] = s.tricks.length;
+      }
+    }
     var lostNow = false;
     if (first != null) {
       sim.play(first.$1, first.$2);
@@ -215,7 +243,7 @@ class Bot {
       // played in (the King led by someone who may win only the last trick)
       // is a blunder, whatever might happen later.
       sim.playOut(rand, until: s.tricks.length + 1, guide: guide);
-      final now = sim.view(s, inPlay);
+      final now = sim.view(s, inPlay, shown, shownAt);
       for (final e in assigned.entries) {
         final t = s.tasks[e.key];
         if (needsX(t.description) && (freeX || t.x == null)) continue;
@@ -227,7 +255,7 @@ class Bot {
       }
     }
     sim.playOut(rand, guide: guide);
-    final v = sim.view(s, inPlay);
+    final v = sim.view(s, inPlay, shown, shownAt);
     int done = 0;
     for (final e in assigned.entries) {
       final t = s.tasks[e.key];
@@ -266,12 +294,7 @@ class Bot {
     int doneAt(int t) {
       final task = s.tasks[t];
       for (int k = 1; k <= v.tricks.length; k++) {
-        final upTo = RoundView(
-            players: v.players,
-            king: v.king,
-            tricks: v.tricks.sublist(0, k),
-            totalTricks: v.totalTricks,
-            inPlay: v.inPlay);
+        final upTo = v.upTo(k);
         if (taskRules[task.description]!(upTo, assigned[t]!, task.x) ==
             Verdict.done) {
           return k;
@@ -536,12 +559,16 @@ class _Sim {
     return !best.isCourt && card.suit == cards.first.suit && card.rank > best.rank;
   }
 
-  RoundView view(MatchState s, Set<PlayingCard> inPlay) => RoundView(
-      players: players,
-      king: s.king,
-      tricks: tricks,
-      totalTricks: totalTricks,
-      inPlay: inPlay);
+  RoundView view(MatchState s, Set<PlayingCard> inPlay,
+          [Map<int, PlayingCard>? shown, Map<int, int>? shownAt]) =>
+      RoundView(
+          players: players,
+          king: s.king,
+          tricks: tricks,
+          totalTricks: totalTricks,
+          inPlay: inPlay,
+          shown: shown ?? s.revealed,
+          shownAt: shownAt ?? s.revealedAt);
 }
 
 /// What each seat plays for in a guided playout, from the tasks they hold:
