@@ -2,4 +2,3 @@
 # One per line, `name.png: why`, or `*: why` for all of them. The Compare job
 # fails on any difference not listed here. Clear it once a new baseline is
 # taken.
-*: the dice: the courtiers are seated, deals checked and the courtiers' choices rolled from the game's seed (step 5c)

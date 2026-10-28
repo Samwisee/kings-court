@@ -4500,8 +4500,9 @@ class HomePageState extends State<HomePage>
       ];
 
   /// What goes with a bug report: where the player is, their settings, and
-  /// the whole game as saved with the last moves, so it can be loaded
-  /// (GameState.fromJson) and seen exactly as they saw it.
+  /// the whole game as saved with every move of it, so it can be loaded
+  /// (GameState.fromJson) and seen exactly as they saw it, or played again
+  /// from the start move by move (net/replay.dart, tool/replay_report).
   Map<String, dynamic> _bugDetails() {
     final moves = _inGame ? _link.history : const <Move>[];
     return {
@@ -4518,10 +4519,7 @@ class HomePageState extends State<HomePage>
         'keyboard': _showKeys,
       },
       if (_inGame) 'state': game.toJson(),
-      if (moves.isNotEmpty)
-        'lastMoves': [
-          for (final m in moves.skip(math.max(0, moves.length - 40))) m.toJson()
-        ],
+      if (moves.isNotEmpty) 'moves': [for (final m in moves) m.toJson()],
     };
   }
 

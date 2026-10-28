@@ -78,6 +78,24 @@ void main() {
     expect(half.roundNumber, lessThanOrEqualTo(a.roundNumber));
   });
 
+  test('A bug report plays again to the state it carried', () async {
+    final (a, moves) = await play(rounds: 1);
+    final report = {
+      'message': 'The King vanished',
+      'state': jsonDecode(jsonEncode(a.toJson())),
+      'moves': [for (final m in moves) m.toJson()],
+    };
+    final result = replayReport(report, rulesFor: (m) => modeOf(m).rules)!;
+    expect(result.matches, isTrue, reason: result.verdict);
+    expect(result.skipped, isEmpty);
+    // A report whose moves stop short differs, and says where.
+    final short = replayReport({...report, 'moves': (report['moves']! as List).take(5).toList()},
+        rulesFor: (m) => modeOf(m).rules)!;
+    expect(short.matches, isFalse);
+    expect(short.differences, contains('tricks'));
+    expect(replayReport({'message': 'no game'}, rulesFor: (m) => modeOf(m).rules), isNull);
+  });
+
   test('Moves travel as JSON and replay the same', () async {
     final (a, moves) = await play(rounds: 1);
     final wire = [for (final m in moves) jsonDecode(jsonEncode(m.toJson())) as Map<String, dynamic>];

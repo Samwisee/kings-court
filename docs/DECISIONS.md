@@ -100,8 +100,8 @@ explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
   (same numbers); new: the courtiers' houses are seated from the seed
   (they were unseeded), and the courtiers' dice are set from the seed at
   each deal (they ran on from one `Random`). Same odds; replayable.
-  Screenshots: every table shot changes (seating and the courtiers'
-  choices); the baseline moves to this commit once checked by eye.
+  Screenshots: none differed after all (the seeded seating and choices
+  came out the same as the test runner's), so the baseline stays.
 - **A deal no longer depends on which seat is looking**: the check that
   no task is impossible took "you" as the King before the crowning; it
   takes the King card's holder now, so every device deals alike. The
@@ -121,3 +121,7 @@ explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
   `Room` and `Session` are interfaces with `InMemoryRooms` on the fake
   network. The page still plays on a `LocalLink`: nothing on screen
   changes. `docs/ONLINE.md` is rewritten around these.
+- **Bug reports carry every move of the game** (not the last 40) beside
+  the state, so `replayReport` (`net/replay.dart`) can play the report
+  again from its setup and say whether that reaches the reported state;
+  `test/tool/replay_report_test.dart` does it for a report file.
