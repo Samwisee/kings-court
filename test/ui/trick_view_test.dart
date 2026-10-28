@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/state.dart';
+import 'package:kings_court/skin/theme.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/table/trick_view.dart';
 
@@ -30,9 +31,9 @@ void main() {
   testWidgets('The cards played so far show from their seats; a won trick glows for the winner', (tester) async {
     final round = Round(players: 3, target: 6)
       ..hands = [
-        [PlayingCard.parse('9♠'), PlayingCard.parse('2♥')],
-        [PlayingCard.parse('3♠'), PlayingCard.parse('4♥')],
-        [PlayingCard.parse('5♠'), PlayingCard.parse('6♥')],
+        [PlayingCard.parse('9♠')!, PlayingCard.parse('2♥')!],
+        [PlayingCard.parse('3♠')!, PlayingCard.parse('4♥')!],
+        [PlayingCard.parse('5♠')!, PlayingCard.parse('6♥')!],
       ]
       ..setAside = []
       ..king = 0
@@ -41,8 +42,8 @@ void main() {
     expect(trickCards(
         area: const Size(400, 200), round: round, trick: null, collecting: false,
         players: players, origin: (_, __) => null), isEmpty);
-    round.apply(PlayCard(0, PlayingCard.parse('9♠')));
-    round.apply(PlayCard(1, PlayingCard.parse('3♠')));
+    round.apply(PlayCard(0, PlayingCard.parse('9♠')!));
+    round.apply(PlayCard(1, PlayingCard.parse('3♠')!));
     final mid = trickCards(
         area: const Size(400, 200),
         round: round,
@@ -58,7 +59,7 @@ void main() {
     expect(views[1].edge, players[1].color);
     expect(views.any((v) => v.glow), isFalse);
     // The third card wins the trick (the 9♠ led; seat 0 wins it).
-    round.apply(PlayCard(2, PlayingCard.parse('5♠')));
+    round.apply(PlayCard(2, PlayingCard.parse('5♠')!));
     final trick = round.tricks.last;
     expect(trick.winner, 0);
     final won = trickCards(

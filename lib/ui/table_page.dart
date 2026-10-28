@@ -11,7 +11,6 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,7 +53,6 @@ import 'modes/tutorial/coach.dart';
 import 'modes/tutorial/tutorial_intro.dart';
 import 'overlays/crowning.dart';
 import 'overlays/decree.dart';
-import 'overlays/king_prompt.dart';
 import 'overlays/outcome_card.dart';
 import 'overlays/play_flourish.dart';
 import 'round_table/geometry.dart';
