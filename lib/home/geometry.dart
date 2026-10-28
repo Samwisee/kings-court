@@ -31,7 +31,7 @@ class _TableGeometry {
   Rect get playArea => (Offset.zero & size).deflate(trimInset);
 
   /// The wording printed on each task's card, which decides its height.
-  final String Function(Task) textOf;
+  final String Function(RoundTask) textOf;
   final double seatSize;
   late final double seatExtent;
   late final double rx;
@@ -44,7 +44,7 @@ class _TableGeometry {
   static final _sizeCache = <String, Size>{};
 
   /// A task card's upright size: usual width, taller for long tasks.
-  Size cardSize(Task t) {
+  Size cardSize(RoundTask t) {
     final text = textOf(t);
     final sealed = t.seal != null;
     return _sizeCache.putIfAbsent('$cardWidth|$sealed|$text',
@@ -81,7 +81,7 @@ class _TableGeometry {
 
   /// Screen size of [t] when owned by seat [i] (side seats turn it
   /// sideways).
-  Size ownedCardSize(int i, Task t) {
+  Size ownedCardSize(int i, RoundTask t) {
     final s = cardSize(t);
     return edge(i).isOdd ? Size(s.height, s.width) : s;
   }
@@ -93,7 +93,7 @@ class _TableGeometry {
   /// the seat, then beside it along the table edge, then further in. Spots
   /// are worked out in the owner's frame (their right, and "up" towards
   /// the middle), so every card sits square to the person who holds it.
-  Map<Task, Offset> layoutOwned(List<Task> order,
+  Map<RoundTask, Offset> layoutOwned(List<RoundTask> order,
       {List<Rect> obstacles = const []}) {
     // Keep clear of the loose cards too, unless that leaves no room.
     final first = _layoutOwned(order, obstacles);
@@ -101,8 +101,8 @@ class _TableGeometry {
     return _layoutOwned(order, const []).spots;
   }
 
-  ({Map<Task, Offset> spots, bool crowded}) _layoutOwned(
-      List<Task> order, List<Rect> obstacles) {
+  ({Map<RoundTask, Offset> spots, bool crowded}) _layoutOwned(
+      List<RoundTask> order, List<Rect> obstacles) {
     var crowded = false;
     final table = playArea;
     final placed = <Rect>[
@@ -117,13 +117,13 @@ class _TableGeometry {
             height: seatSize + 34),
     ];
     const gap = 6.0;
-    final result = <Task, Offset>{};
+    final result = <RoundTask, Offset>{};
     // Whose card each placed rect is (null for seats and loose cards), so
     // a crowded stack may squeeze onto itself but never a neighbour's.
     final placedBy = <int?>[for (final _ in placed) null];
 
     for (var i = 0; i < players; i++) {
-      final owned = order.where((t) => t.assignedPlayerIndex == i).toList();
+      final owned = order.where((t) => t.owner == i).toList();
       if (owned.isEmpty) continue;
       final a = _frame(i);
       final right = Offset(math.cos(a), math.sin(a));
@@ -218,7 +218,7 @@ class _TableGeometry {
   /// Positions for freshly dealt cards: a neat grid in the open middle of
   /// the table, shrinking the cards if needed so they all fit. Each row is
   /// as tall as its tallest card.
-  List<Offset> dealPositions(List<Task> tasks) {
+  List<Offset> dealPositions(List<RoundTask> tasks) {
     final count = tasks.length;
     final innerW = math.max(size.width - 2 * (seatExtent + 6), cardWidth);
     final innerH = math.max(size.height - 2 * (seatExtent + 6), cardHeight);

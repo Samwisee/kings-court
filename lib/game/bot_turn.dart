@@ -7,11 +7,11 @@
 /// and can be tested without widgets.
 library;
 
-import '../chronicle.dart';
 import '../engine/bot.dart';
 import '../engine/cards.dart';
 import '../engine/conflicts.dart';
-import '../engine/match.dart';
+import '../engine/decrees.dart';
+import '../engine/round.dart';
 import '../engine/rules.dart';
 import '../engine/showing.dart';
 import '../models.dart';
@@ -64,37 +64,37 @@ class YourAnnouncement extends BotDecision {
   final int task;
 }
 
-/// The next move a courtier makes in [game], seen through [view] (the
-/// cards with this table's tasks and rules), or null when it's your move
-/// or there is nothing to do. [you] is the seat the player sits in.
-Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
-    {required int you}) async {
-  final picker = game.pickTurn;
+/// The next move a courtier makes in [game]'s round, or null when it's
+/// your move or there is nothing to do. [you] is the seat the player sits
+/// in. The tutorial's lesson scripts the courtiers while it holds; the
+/// tutorial never passes.
+Future<BotDecision?> botDecision(GameState game, Bot bot, {required int you}) async {
+  final r = game.round!;
+  final picker = r.pickTurn;
   if (picker != null) {
     if (picker == you) return null;
     final open = [
-      for (int i = 0; i < game.tasks.length; i++)
-        if (game.tasks[i].assignedPlayerIndex == null) i
+      for (var i = 0; i < r.tasks.length; i++)
+        if (r.tasks[i].owner == null) i
     ];
     if (open.isEmpty) return null;
-    if (game.decree == Decree.kingsCommand) {
+    if (r.decree == Decree.kingsCommand) {
       // The King hands every task to whoever is best placed for it.
       final i = open.first;
       final seats = [
-        for (int s = 0; s < game.players.length; s++)
-          if (game.canTake(game.tasks[i], s)) s
+        for (var s = 0; s < r.players; s++)
+          if (r.mayTake(r.tasks[i], s)) s
       ];
       if (seats.isEmpty) return null;
       var best = seats.first;
       var bestScore = -1.0;
       for (final s in seats) {
         final assigned = {
-          for (int t = 0; t < game.tasks.length; t++)
-            if (game.tasks[t].assignedPlayerIndex != null)
-              t: game.tasks[t].assignedPlayerIndex!,
+          for (var t = 0; t < r.tasks.length; t++)
+            if (r.tasks[t].owner != null) t: r.tasks[t].owner!,
           i: s,
         };
-        final score = await bot.scoreAsync(view, picker, assigned, 120);
+        final score = await bot.scoreAsync(r, picker, assigned, 120);
         if (score > bestScore) {
           bestScore = score;
           best = s;
@@ -102,70 +102,68 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
       }
       return BotPicks(best, i);
     }
-    if (!open.any((i) => view.canTake(i, picker))) return null;
+    if (!open.any((i) => r.canTake(i, picker))) return null;
     // A courtier may show a card someone's task needs before picking.
-    final shown = botShows(game, view, picker);
+    final shown = botShows(r, picker);
     if (shown != null) return BotShows(picker, shown);
-    final pick = await bot.choosePickAsync(view, picker);
+    final pick = await bot.choosePickAsync(r, picker);
     // Nothing suits their hand: pass the pick on, once a round.
     // (Fair courtiers see only their own hand, so they rate every pick
     // lower than all-seeing ones did; the bar is set to match.)
-    if (game.canPass(picker) && bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) {
+    if (!game.isTutorial &&
+        r.canPass(picker) &&
+        bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) {
       return BotPasses(picker);
     }
     return BotPicks(picker, pick);
   }
-  if (game.tasks.any((t) => t.assignedPlayerIndex == null)) return null;
+  if (!r.allTaken) return null;
   // Numbers for the "exactly X tricks" tasks.
-  for (var i = 0; i < game.tasks.length; i++) {
-    final t = game.tasks[i];
-    if (!needsX(t.description) || view.announced.containsKey(t.description)) {
-      continue;
-    }
-    if (t.assignedPlayerIndex == you) return YourAnnouncement(i);
-    final x = await bot.chooseXAsync(view, t.assignedPlayerIndex!, i);
-    return BotAnnounces(t.assignedPlayerIndex!, i, x);
+  for (var i = 0; i < r.tasks.length; i++) {
+    final t = r.tasks[i];
+    if (!needsX(t.description) || t.x != null) continue;
+    if (t.owner == you) return YourAnnouncement(i);
+    final x = await bot.chooseXAsync(r, t.owner!, i);
+    return BotAnnounces(t.owner!, i, x);
   }
   // Between tricks, any courtier may show a card someone needs.
-  if (view.current.isEmpty && !game.isTutorial) {
-    for (var s = 0; s < game.players.length; s++) {
+  if (r.current.isEmpty && !game.isTutorial) {
+    for (var s = 0; s < r.players; s++) {
       if (s == you) continue;
-      final shown = botShows(game, view, s);
+      final shown = botShows(r, s);
       if (shown != null) return BotShows(s, shown);
     }
   }
-  final turn = view.turn;
+  final turn = r.turn;
   if (turn == you) return null;
   // The tutorial's courtiers follow the lesson's script while it holds.
   if (game.isTutorial) {
-    final planned = lessons[game.lesson].scripted(view.tricks.length, turn);
-    if (planned != null && view.legalFor(turn).contains(planned)) {
+    final planned = lessons[game.lesson].scripted(r.tricks.length, turn);
+    if (planned != null && r.legalFor(turn).contains(planned)) {
       return BotPlays(turn, planned);
     }
   }
   // Nothing to play (the hand is over, or a new deal is on its way).
-  if (view.legalFor(turn).isEmpty) return null;
-  return BotPlays(turn, await bot.choosePlayAsync(view, turn));
+  if (r.legalFor(turn).isEmpty) return null;
+  return BotPlays(turn, await bot.choosePlayAsync(r, turn));
 }
 
 /// The card [seat] would show now, if they may: one that someone else's
 /// task needs, once a round. Null when there's nothing to show.
-PlayingCard? botShows(GameState game, MatchState view, int seat) {
-  if (game.spoke[seat] || !game.canSpeak(seat) || view.current.isNotEmpty) {
-    return null;
-  }
+PlayingCard? botShows(Round r, int seat) {
+  if (r.spoke[seat] || !r.canSpeak(seat) || r.current.isNotEmpty) return null;
   // A task of its own that asks it to show a card comes first.
-  final own = intendedShow(view, seat, [
-    for (final t in game.tasks)
-      if (t.assignedPlayerIndex == seat && t.status == TaskStatus.pending) t.description
+  final own = intendedShow(r, seat, [
+    for (final t in r.tasks)
+      if (t.owner == seat && t.isPending) t.description
   ]);
   if (own != null) return own;
-  for (final card in view.hands[seat]) {
-    if (view.revealFor(seat, card) == null) continue;
-    final needed = game.tasks.any((t) =>
-        t.status == TaskStatus.pending &&
-        t.assignedPlayerIndex != null &&
-        t.assignedPlayerIndex != seat &&
+  for (final card in r.hands[seat]) {
+    if (r.revealFor(seat, card) == null) continue;
+    final needed = r.tasks.any((t) =>
+        t.isPending &&
+        t.owner != null &&
+        t.owner != seat &&
         neededCards(t.description).contains(card));
     if (needed) return card;
   }

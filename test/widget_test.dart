@@ -10,7 +10,7 @@ import 'package:kings_court/chronicle.dart';
 import 'package:kings_court/courtiers.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/contest.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
@@ -57,7 +57,7 @@ Future<void> dragCardTo(WidgetTester tester, Finder card, Offset to) async {
     await dragFromTo(tester,
         Offset(rect.left + rect.width * f.dx, rect.top + rect.height * f.dy), to);
     await tester.pump();
-    if (task.assignedPlayerIndex != null) return;
+    if (task.owner != null) return;
   }
 }
 
@@ -151,10 +151,10 @@ void main() {
     final game = state.game;
     final link = state.debugLink;
     final before = link.history.length;
-    final t = game.tasks.firstWhere((t) => t.assignedPlayerIndex == null && game.canTake(t, 1));
+    final t = game.tasks.firstWhere((t) => t.owner == null && game.round!.mayTake(t, 1));
     state.debugAssign(t, 1);
     await tester.pumpAndSettle();
-    expect(t.assignedPlayerIndex, 1);
+    expect(t.owner, 1);
     expect(link.history.length, before + 1);
     expect(link.history.last, isA<PickTask>());
     expect((link.history.last as PickTask).seat, 1);
@@ -232,7 +232,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final tasks = state.game.tasks;
-    expect(tasks.where((t) => t.assignedPlayerIndex == 1), isNotEmpty);
+    expect(tasks.where((t) => t.owner == 1), isNotEmpty);
     // Drags on the round table are occasionally missed in the test
     // harness (random tasks, random layouts); one retry settles it.
   }, retry: 2);
@@ -285,7 +285,7 @@ void main() {
     final game = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(back, isNotNull);
     expect(back!.tasks.length, game.tasks.length);
-    expect(back.kingIndex, game.kingIndex);
+    expect(back.round!.king, game.round!.king);
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(find.text('Report copied'), findsNothing);
@@ -310,7 +310,7 @@ void main() {
     // King card is dealt again, so the table asks who has it.
     expect(state.game.target, isNot(5));
     expect(state.game.players, same(players));
-    expect(state.game.kingIndex, isNull);
+    expect(state.game.round!.king, isNull);
     expect(find.text('Who holds the King card?'), findsOneWidget);
     expect(find.text('Round 1'), findsOneWidget);
   });
@@ -360,7 +360,7 @@ void main() {
     final state = tester.state<HomePageState>(find.byType(HomePage));
     final owned = state.game
         .tasks
-        .where((t) => t.assignedPlayerIndex != null)
+        .where((t) => t.owner != null)
         .toList();
     expect(owned.length, count);
 
@@ -372,7 +372,7 @@ void main() {
             final a = box.localToGlobal(Offset.zero);
             final b = box.localToGlobal(box.size.bottomRight(Offset.zero));
             return (
-              (el.widget as TableCard).task.assignedPlayerIndex,
+              (el.widget as TableCard).task.owner,
               Rect.fromPoints(a, b).deflate(1)
             );
           }(),
@@ -541,7 +541,7 @@ void main() {
     await tester.tap(find.byType(SeatToken).at(1)); // seat 1 is King
     await tester.pumpAndSettle();
     final state = tester.state<HomePageState>(find.byType(HomePage));
-    final game = state.game;
+    final game = state.game.round!;
     expect(game.pickTurn, 1);
     expect(find.byType(PulseRing), findsOneWidget);
 
@@ -549,7 +549,7 @@ void main() {
     expect(seat, 1);
     while (game.pickTurn != null) {
       final card =
-          freeCard(tester, (w) => game.canTake(w.task, game.pickTurn!));
+          freeCard(tester, (w) => game.mayTake(w.task, game.pickTurn!));
       final picker = game.pickTurn!;
       final target = tester.getCenter(find.byType(SeatToken).at(picker));
       final task = (tester.widget(card) as TableCard).task;
@@ -560,7 +560,7 @@ void main() {
       seat = picker;
       for (var step = 1; step <= 3; step++) {
         final s = (picker + step) % 3;
-        if (game.tasks.any((t) => t.assignedPlayerIndex == null && game.canTake(t, s))) {
+        if (game.tasks.any((t) => t.owner == null && game.mayTake(t, s))) {
           seat = s;
           break;
         }
@@ -572,13 +572,13 @@ void main() {
       if (game.pickTurn != null) {
         expect(game.pickTurn, seat,
             reason: 'dragged ${task.description} from $start to $target; '
-                'now held by ${task.assignedPlayerIndex}; '
+                'now held by ${task.owner}; '
                 'card now at ${tester.getCenter(find.byWidgetPredicate((w) => w is TableCard && w.task == task))}; '
                 'hit at start: $hits');
       }
       await tester.pumpAndSettle();
     }
-    expect(game.tasks.every((t) => t.assignedPlayerIndex != null), isTrue);
+    expect(game.tasks.every((t) => t.owner != null), isTrue);
     expect(find.byType(PulseRing), findsNothing);
     // Drags on the round table are occasionally missed in the test
     // harness (random tasks, random layouts); one retry settles it.
@@ -598,7 +598,7 @@ void main() {
     expect(find.text(game.courtiers[2].house), findsOneWidget);
     await tester.tap(find.byType(GoldPip));
     await tester.pumpAndSettle();
-    expect(game.spoke[2], isTrue);
+    expect(game.round!.spoke[2], isTrue);
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
     expect(find.byType(Dialog), findsNothing);
@@ -617,7 +617,7 @@ void main() {
     await tester.tap(find.byType(GoldPip));
     await tester.pumpAndSettle();
     final live = tester.state<HomePageState>(find.byType(HomePage)).game;
-    expect(live.spoke[1], isTrue, reason: 'the switch marks the reveal');
+    expect(live.round!.spoke[1], isTrue, reason: 'the switch marks the reveal');
     await tester.ensureVisible(find.text('Close'));
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
@@ -632,8 +632,8 @@ void main() {
 
     final state = tester.state<HomePageState>(find.byType(HomePage));
     final game = state.game;
-    expect(game.kingIndex, 0);
-    expect(game.spoke[1], isTrue);
+    expect(game.round!.king, 0);
+    expect(game.round!.spoke[1], isTrue);
     expect(find.byType(TableCard), findsWidgets);
     expect(find.text('Who holds the King card?'), findsNothing);
   });
@@ -664,14 +664,14 @@ void main() {
         for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.blue.toARGB32())
       ]
       ..addTasksUntilTarget(4, 10)
-      ..setKing(2);
-    game.assign(game.tasks.first, 3);
-    game.toggleSpoke(1);
+      ..crown(2);
+    game.round!.assign(game.tasks.first, 3);
+    game.round!.toggleSpoke(1);
     final copy = GameState.fromJson(
         jsonDecode(jsonEncode(game.toJson())) as Map<String, dynamic>)!;
-    expect(copy.kingIndex, 2);
-    expect(copy.tasks.first.assignedPlayerIndex, 3);
-    expect(copy.spoke[1], isTrue);
+    expect(copy.round!.king, 2);
+    expect(copy.tasks.first.owner, 3);
+    expect(copy.round!.spoke[1], isTrue);
     expect(copy.tasks.map((t) => t.description),
         game.tasks.map((t) => t.description));
   });
@@ -679,46 +679,49 @@ void main() {
   test('Seals must be completed in order, Ω last', () {
     final game = GameState()
       ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
-      ..sealCount = 0
-      ..addTasksUntilTarget(4, 14, newRound: false);
-    while (game.tasks.length < 4) {
-      game.tasks.add(GameState.taskPool[game.tasks.length].freshCopy());
+      ..addTasksUntilTarget(4, 14);
+    final round = game.round!;
+    while (round.tasks.length < 4) {
+      round.tasks.add(RoundTask(GameState.taskPool[round.tasks.length]));
     }
-    game.tasks[0].seal = 1;
-    game.tasks[1].seal = 2;
-    game.tasks[2].seal = Seals.last;
-    final sealed = {for (final t in game.tasks) if (t.seal != null) t.seal!: t};
+    round.tasks[0].seal = 1;
+    round.tasks[1].seal = 2;
+    round.tasks[2].seal = Seals.last;
+    final sealed = {for (final t in round.tasks) if (t.seal != null) t.seal!: t};
     expect(sealed.keys.toSet(), {1, 2, Seals.last});
-    expect(game.sealProblem(sealed[2]!), contains('Seal I'));
-    expect(game.sealProblem(sealed[1]!), isNull);
+    expect(round.sealProblem(sealed[2]!), contains('Seal I'));
+    expect(round.sealProblem(sealed[1]!), isNull);
     sealed[1]!.status = TaskStatus.completed;
-    expect(game.sealProblem(sealed[2]!), isNull);
-    expect(game.sealProblem(sealed[Seals.last]!), contains('Ω'));
-    for (final t in game.tasks) {
+    expect(round.sealProblem(sealed[2]!), isNull);
+    expect(round.sealProblem(sealed[Seals.last]!), contains('Ω'));
+    for (final t in round.tasks) {
       if (t.seal != Seals.last) t.status = TaskStatus.completed;
     }
-    expect(game.sealProblem(sealed[Seals.last]!), isNull);
+    expect(round.sealProblem(sealed[Seals.last]!), isNull);
   });
 
   test('Decrees change who can pick, speak and take tasks', () {
-    GameState make(Decree d) => GameState()
-      ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
-      ..addTasksUntilTarget(4, 10)
-      ..decree = d;
+    Round make(Decree d) {
+      final g = GameState()
+        ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
+        ..addTasksUntilTarget(4, 10);
+      g.round!.decree = d;
+      return g.round!;
+    }
 
-    final exile = make(Decree.exile)..setKing(0);
+    final exile = make(Decree.exile)..crown(0, Random(1));
     expect(exile.exiledSeat, isNotNull);
     expect(exile.exiledSeat, isNot(0));
-    expect(exile.canTake(exile.tasks.first, exile.exiledSeat!), isFalse);
+    expect(exile.mayTake(exile.tasks.first, exile.exiledSeat!), isFalse);
 
-    final silence = make(Decree.silence)..setKing(0);
+    final silence = make(Decree.silence)..crown(0, Random(1));
     expect(silence.canSpeak(1), isFalse);
 
     // Late Counsel is kept by the players: the app doesn't count tricks.
-    final late = make(Decree.lateCounsel)..setKing(0);
+    final late = make(Decree.lateCounsel)..crown(0, Random(1));
     expect(late.canSpeak(1), isTrue);
 
-    final command = make(Decree.kingsCommand)..setKing(2);
+    final command = make(Decree.kingsCommand)..crown(2, Random(1));
     command.assign(command.tasks.first, 0);
     expect(command.pickTurn, 2); // the King keeps handing out tasks
   });
@@ -941,9 +944,10 @@ void main() {
   test('Seals only sit where they can be kept', () {
     var omegas = 0, numbered = 0;
     for (var i = 0; i < 400; i++) {
-      final g = GameState()
-        ..sealCount = const [2, 3, 4][i % 3]
-        ..addTasksUntilTarget(3 + i % 3, 6 + i % 14, newRound: false);
+      // A re-deal keeps the round's seal count: set it, then deal again.
+      final g = GameState()..addTasksUntilTarget(3 + i % 3, 6 + i % 14);
+      g.round!.sealCount = const [2, 3, 4][i % 3];
+      g.addTasksUntilTarget(3 + i % 3, 6 + i % 14, newRound: false);
       final sealed = g.tasks.where((t) => t.seal != null).toList();
       expect(sealed.isEmpty || sealed.length >= 2, isTrue);
       for (final t in sealed) {
@@ -1062,7 +1066,7 @@ void main() {
         expect(find.text('Skip'), findsOneWidget);
         // Nobody has picked yet (a task only one player could take may
         // already have gone straight to them).
-        expect(game.tasks.where((t) => t.assignedPlayerIndex != null).length,
+        expect(game.tasks.where((t) => t.owner != null).length,
             lessThan(game.tasks.length));
         await tester.tap(find.text('Skip'));
         await tester.pump();
@@ -1255,7 +1259,7 @@ void main() {
       }
       expect(game.outcome, RoundOutcome.won,
           reason: 'lesson ${lesson + 1}: ${lessons[lesson].title}');
-      expect(game.kingIndex, 0, reason: 'you are the King');
+      expect(game.round!.king, 0, reason: 'you are the King');
       // The tasks turn over, then the result comes up.
       await tester.pump(const Duration(milliseconds: 900));
       await tester.pump(const Duration(milliseconds: 600));
@@ -1274,10 +1278,11 @@ void main() {
   });
 
   test('Each player may pass on picking once a round', () {
-    final g = GameState()
+    final game = GameState()
       ..players = [for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.teal.toARGB32())]
-      ..addTasksUntilTarget(3, 10);
-    g.setKing(0);
+      ..addTasksUntilTarget(3, 10)
+      ..crown(0);
+    final g = game.round!;
     final first = g.pickTurn!;
     expect(g.canPass(first), isTrue);
     g.pass(first);
@@ -1286,8 +1291,8 @@ void main() {
     for (var i = 0; i < 6 && g.pickTurn != null && g.pickTurn != first; i++) {
       final seat = g.pickTurn!;
       final t = g.tasks.firstWhere(
-          (t) => t.assignedPlayerIndex == null && g.canTake(t, seat),
-          orElse: () => g.tasks.firstWhere((t) => t.assignedPlayerIndex == null));
+          (t) => t.owner == null && g.mayTake(t, seat),
+          orElse: () => g.tasks.firstWhere((t) => t.owner == null));
       g.assign(t, seat);
     }
     if (g.pickTurn == first) expect(g.canPass(first), isFalse);
@@ -1351,31 +1356,30 @@ void main() {
   test('Shuffling mid-round keeps the round number and King', () {
     final game = GameState()
       ..addTasksUntilTarget(4, 10)
-      ..setKing(1);
+      ..crown(1);
     game.shuffleTasks(4, 10);
     expect(game.roundNumber, 1);
-    expect(game.kingIndex, 1);
+    expect(game.round!.king, 1);
   });
 
   test('A task only one player can take goes straight to them', () {
-    final g = GameState()
-      ..players = [for (int i = 0; i < 2; i++) Player('P$i', colorValue: Colors.red.toARGB32())];
     final kingTask = GameState.taskPool.firstWhere((t) => t.kingCantTake);
     final other = GameState.taskPool.firstWhere((t) => !t.kingCantTake);
-    g.tasks = [kingTask.freshCopy(), other.freshCopy()];
-    g.setKing(0);
-    expect(g.tasks.first.assignedPlayerIndex, 1);
-    expect(g.tasks.last.assignedPlayerIndex, isNull);
+    final r = Round(players: 2, target: 5)
+      ..tasks = [RoundTask(kingTask), RoundTask(other)];
+    r.crown(0, Random(1));
+    expect(r.tasks.first.owner, 1);
+    expect(r.tasks.last.owner, isNull);
   });
 
   test('The King cannot take King-relative tasks', () {
-    final game = GameState();
     final kingTask = GameState.taskPool.firstWhere((t) => t.kingCantTake);
-    game.tasks = [kingTask.freshCopy()..assignedPlayerIndex = 2];
-    game.setKing(2);
-    expect(game.tasks.first.assignedPlayerIndex, isNull);
-    expect(game.canTake(game.tasks.first, 2), isFalse);
-    expect(game.canTake(game.tasks.first, 0), isTrue);
+    final r = Round(players: 4, target: 5)
+      ..tasks = [RoundTask(kingTask, owner: 2)];
+    r.crown(2, Random(1));
+    expect(r.tasks.first.owner, isNull);
+    expect(r.mayTake(r.tasks.first, 2), isFalse);
+    expect(r.mayTake(r.tasks.first, 0), isTrue);
   });
 
   test('Every task has 6-player points', () {

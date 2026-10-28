@@ -4,7 +4,7 @@ part of '../widgets.dart';
 /// One pip per task: hollow while pending, green when done, red when failed.
 class TaskPips extends StatelessWidget {
   const TaskPips({super.key, required this.tasks});
-  final List<Task> tasks;
+  final List<RoundTask> tasks;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +56,7 @@ class TableCard extends StatelessWidget {
     this.progress,
   });
 
-  final Task task;
+  final RoundTask task;
 
   /// How far along the task is, e.g. "2/4", shown in the bottom corner.
   final String? progress;

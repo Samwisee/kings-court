@@ -11,76 +11,77 @@ import 'dart:math';
 
 import '../engine/cards.dart';
 import '../engine/deal_mix.dart';
+import '../engine/round.dart';
 import '../engine/rules.dart';
 import '../models.dart';
 
 /// A deal fixed in advance (the tutorial's lessons), crowning [you].
 typedef RiggedDeal = ({List<List<PlayingCard>> hands, List<PlayingCard> setAside});
 
-/// Deals the round's cards when they're out of date (a new round, or a
-/// saved game whose deal was never made). Returns true when it dealt.
+/// Deals the round's cards when it has none yet (a new round, or a saved
+/// game whose deal was never made). Returns true when it dealt. The table
+/// then crowns whoever holds the King card ([Round.kingCardHolder]), unless
+/// a King reigns already (a re-deal mid-round).
 ///
 /// [you] is the seat this device plays from; a [rigged] deal (a tutorial
-/// lesson's) is used as it is, with you as King.
+/// lesson's) is used as it is, with the King card in your hand.
 bool dealRound(GameState game, {required int you, RiggedDeal? rigged}) {
-  final c = game.cards;
-  if (c == null || game.tasks.isEmpty || c.dealId == game.dealId) return false;
+  final r = game.round;
+  if (!game.digital || r == null || r.tasks.isEmpty || r.hasCards) return false;
   final rand = game.dealRandom();
-  c.dealFor(
+  r.dealFor(
     game.dealId,
     rand,
-    king: game.kingIndex,
-    accept: (hands, inPlay) => game.tasks.every((t) =>
+    king: r.king,
+    accept: (hands, inPlay) => r.tasks.every((t) =>
         playableWith(t.description, hands, inPlay) &&
-        stillPossible(game, t, hands, inPlay, you: you)),
+        stillPossible(r, t, hands, inPlay, you: you)),
   );
   // A lesson deals the same cards every time, with you as King.
   if (rigged != null) {
-    c.hands = rigged.hands;
-    c.setAside = rigged.setAside;
-    c.king = you;
-    c.leader = you;
+    r.hands = rigged.hands;
+    r.setAside = rigged.setAside;
+    r.leader = you;
     return true;
   }
   // Any task the deal still makes impossible is swapped for one that can
   // be done.
-  final n = game.players.length;
-  for (var i = 0; i < game.tasks.length; i++) {
-    final t = game.tasks[i];
-    if (t.assignedPlayerIndex != null ||
-        stillPossible(game, t, c.hands, c.inPlay, you: you)) {
+  final n = r.players;
+  for (var i = 0; i < r.tasks.length; i++) {
+    final t = r.tasks[i];
+    if (t.owner != null || stillPossible(r, t, r.hands, r.inPlay, you: you)) {
       continue;
     }
-    final names = game.tasks.map((x) => x.description).toSet();
+    final names = r.tasks.map((x) => x.description).toSet();
     final swap = (List.of(GameState.taskPool)..shuffle(rand)).where((p) =>
         !names.contains(p.description) &&
         !needsX(p.description) &&
-        p.getPointsForPlayerCount(n) <= t.getPointsForPlayerCount(n) + 1 &&
-        fitsDeal([for (final o in game.tasks) if (o != t) o.description],
+        p.getPointsForPlayerCount(n) <= t.points(n) + 1 &&
+        fitsDeal([for (final o in r.tasks) if (o != t) o.description],
             p.description, max(3, n)) &&
-        playableWith(p.description, c.hands, c.inPlay) &&
-        stillPossible(game, p, c.hands, c.inPlay, you: you)).firstOrNull;
-    if (swap != null) game.tasks[i] = swap.freshCopy()..seal = t.seal;
+        playableWith(p.description, r.hands, r.inPlay) &&
+        stillPossible(r, RoundTask(p), r.hands, r.inPlay, you: you)).firstOrNull;
+    if (swap != null) r.tasks[i] = RoundTask(swap, seal: t.seal);
   }
   return true;
 }
 
 /// Whether [t] could still be done by someone allowed to take it, with
 /// these cards in play: no task should be lost before the first trick.
-bool stillPossible(GameState game, Task t, List<List<PlayingCard>> hands,
+bool stillPossible(Round r, RoundTask t, List<List<PlayingCard>> hands,
     Set<PlayingCard> inPlay,
     {required int you}) {
   if (needsX(t.description) || hands.isEmpty || hands.first.isEmpty) return true;
   final v = RoundView(
       players: hands.length,
-      king: game.kingIndex ?? you,
+      king: r.king ?? you,
       tricks: const [],
       totalTricks: hands.first.length,
       inPlay: inPlay);
   final rule = taskRules[t.description]!;
   return [
     for (var s = 0; s < hands.length; s++)
-      if (t.assignedPlayerIndex == s || game.canTake(t, s)) s
+      if (t.owner == s || r.mayTake(t, s)) s
   ].any((s) {
     try {
       return rule(v, s, null) != Verdict.failed;

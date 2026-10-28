@@ -15,7 +15,7 @@ import 'dart:math';
 
 import 'cards.dart';
 import 'inference.dart';
-import 'match.dart';
+import 'round.dart';
 
 /// A deal of the cards [viewer] can't see into the other seats' hands, as
 /// one possible world: each seat gets exactly the number of cards it holds,
@@ -27,7 +27,7 @@ import 'match.dart';
 /// (they can, in a real game, but a saved game from an older version might
 /// not), the leftovers are dealt out wherever there's room.
 List<List<PlayingCard>> sampleHands(
-    MatchState m, int viewer, List<HandGuess> guesses, Random rand) {
+    Round m, int viewer, List<HandGuess> guesses, Random rand) {
   final hands = [for (int s = 0; s < m.players; s++) <PlayingCard>[]];
   if (m.hands.length > viewer) hands[viewer] = List.of(m.hands[viewer]);
   // The cards to place: every unseen card that someone could hold. Any
@@ -106,25 +106,22 @@ List<List<PlayingCard>> sampleHands(
 /// A copy of the round [m] as [viewer] might imagine it: the same tricks,
 /// tasks and rules, with [hands] in place of the real ones, and the cards
 /// dealt to nobody set aside.
-MatchState worldWith(MatchState m, List<List<PlayingCard>> hands) {
-  final w = MatchState(players: m.players, target: m.target)
-    ..round = m.round
-    ..wins = m.wins
-    ..losses = m.losses
-    ..streak = m.streak
+Round worldWith(Round m, List<List<PlayingCard>> hands) {
+  final w = Round(players: m.players, target: m.target, dealId: m.dealId)
     ..hands = hands
     ..king = m.king
     ..tasks = m.tasks
     ..pickTurn = m.pickTurn
+    ..passed = m.passed
+    ..spoke = m.spoke
+    ..sealCount = m.sealCount
+    ..decree = m.decree
+    ..exiledSeat = m.exiledSeat
     ..tricks = m.tricks
     ..leader = m.leader
     ..currentSeats = m.currentSeats
     ..current = m.current
     ..phase = m.phase
-    ..won = m.won
-    ..dealId = m.dealId
-    ..takeRule = m.takeRule
-    ..announced = m.announced
     ..revealed = m.revealed
     ..revealHint = m.revealHint
     ..revealedAt = m.revealedAt;
@@ -140,7 +137,7 @@ MatchState worldWith(MatchState m, List<List<PlayingCard>> hands) {
 }
 
 /// [count] worlds [viewer] might be in, from what they can see of [m].
-List<MatchState> sampleWorlds(MatchState m, int viewer, int count, Random rand) {
+List<Round> sampleWorlds(Round m, int viewer, int count, Random rand) {
   final guesses = guessHands(m, viewer);
   return [
     for (int k = 0; k < count; k++)

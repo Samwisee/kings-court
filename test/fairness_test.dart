@@ -10,16 +10,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/inference.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/sampling.dart';
 
 PlayingCard c(String l) => PlayingCard.parse(l)!;
 
 /// A 4-player round where seat 1 (the viewer) is the King and leads.
-MatchState table({int seed = 3}) {
-  final s = MatchState(players: 4, target: 6)..newRound(Random(seed));
+Round table({int seed = 3}) {
+  final s = Round(players: 4, target: 6)..newRound(Random(seed));
   // Seat 1 takes the King card, so it's the King and leads.
-  final holder = s.king;
+  final holder = s.king!;
   if (holder != 1) {
     final swap = s.hands[1].firstWhere((x) => !x.isCourt);
     s.hands[1].remove(swap);
@@ -50,7 +50,7 @@ MatchState table({int seed = 3}) {
 
 /// The same round with the hands seat 1 can't see shuffled between the
 /// other seats (the King card stays with the King; sizes stay the same).
-MatchState hiddenCardsMoved(MatchState s, Random rand) {
+Round hiddenCardsMoved(Round s, Random rand) {
   final others = [for (int k = 0; k < s.players; k++) if (k != 1) k];
   final pool = [for (final k in others) ...s.hands[k]]..shuffle(rand);
   final hands = [for (final h in s.hands) List.of(h)];
@@ -94,7 +94,7 @@ void main() {
     Bot bot() => Bot(Random(9))..budget = 200;
     expect(bot().choosePlay(b, 1), bot().choosePlay(a, 1));
     // Picking too: a fresh round, seat 1 to pick.
-    final pa = MatchState(players: 4, target: 6)..newRound(Random(4));
+    final pa = Round(players: 4, target: 6)..newRound(Random(4));
     pa.pickTurn = 1;
     final pb = hiddenCardsMoved(pa, Random(14))..pickTurn = 1;
     expect(bot().choosePick(pb, 1), bot().choosePick(pa, 1));
@@ -104,7 +104,7 @@ void main() {
 
   test('Imagined deals honour every public fact', () {
     List<PlayingCard> cs(String l) => [for (final x in l.split(' ')) c(x)];
-    final s = MatchState(players: 4, target: 6)
+    final s = Round(players: 4, target: 6)
       ..hands = [
         cs('A♥ 2♥ 3♥ A♦ 2♦ 3♦ A♠ 2♠ 3♠') + [PlayingCard.joker],
         cs('4♥ 5♥ 6♥ 4♦ 5♦ 6♦ 4♠ 5♠ 6♠') + [PlayingCard.king],
@@ -154,7 +154,7 @@ void main() {
   });
 
   test('In a 2-player game the imagined deals set cards aside', () {
-    final s = MatchState(players: 2, target: 5)..newRound(Random(8));
+    final s = Round(players: 2, target: 5)..newRound(Random(8));
     expect(s.setAside.length, 40 - 24);
     final worlds = sampleWorlds(s, 0, 5, Random(3));
     for (final w in worlds) {

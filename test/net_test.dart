@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/net/table_link.dart';
 
 void main() {
@@ -22,7 +22,7 @@ void main() {
   });
 
   test('Passing moves the pick on, and only on your turn', () {
-    final s = MatchState(players: 3, target: 5)..newRound(Random(3));
+    final s = Round(players: 3, target: 5)..newRound(Random(3));
     final first = s.pickTurn!;
     expect(s.problem(Pass((first + 1) % 3)), isNotNull);
     expect(s.problem(Pass(first)), isNull);

@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/inference.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 
 void main() {
   PlayingCard c(String l) => PlayingCard.parse(l)!;
 
   test('Not following suit shows a player has none of it', () {
-    final m = MatchState(players: 3, target: 1)
+    final m = Round(players: 3, target: 1)
       ..hands = [
         [c('2♠'), c('3♠')],
         [c('4♥'), c('5♥')],
@@ -22,7 +22,7 @@ void main() {
   });
 
   test('A shown card and its mark narrow a hand down', () {
-    final m = MatchState(players: 3, target: 1)
+    final m = Round(players: 3, target: 1)
       ..hands = [
         [c('2♠')],
         [c('7♥'), c('3♥')],
@@ -38,7 +38,7 @@ void main() {
   });
 
   test('Everyone knows who holds the King', () {
-    final m = MatchState(players: 3, target: 1)
+    final m = Round(players: 3, target: 1)
       ..hands = [
         [c('2♠')],
         [c('3♠')],

@@ -5,7 +5,7 @@
 library;
 
 import 'cards.dart';
-import 'match.dart';
+import 'round.dart';
 
 /// Tasks that ask their holder to show a card (and so can't be dealt in a
 /// round where nobody may: the Silence decree).
@@ -30,7 +30,7 @@ bool needsShowing(String d) => showTasks.contains(d) || shownCardTasks.contains(
 /// card it shows, or the trick after, it shows its strongest card that may
 /// be shown; to keep its card from itself, its weakest; and to be free to
 /// win tricks, anything at once (its weakest).
-PlayingCard? intendedShow(MatchState m, int seat, Iterable<String> mine) {
+PlayingCard? intendedShow(Round m, int seat, Iterable<String> mine) {
   final wants = {for (final d in mine) if (showTasks.contains(d)) d};
   if (wants.isEmpty || m.revealed.containsKey(seat) || seat >= m.hands.length) return null;
   final showable = [

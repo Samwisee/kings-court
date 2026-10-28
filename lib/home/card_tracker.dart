@@ -17,7 +17,7 @@ class _CardTracker extends StatefulWidget {
 
   /// Held down (true) and let go (false): hide the tracker to see the table.
   final ValueChanged<bool>? onPeek;
-  final MatchState cards;
+  final Round cards;
   final int you;
   final List<Player> players;
 
@@ -37,7 +37,7 @@ class _CardTrackerState extends State<_CardTracker> {
   /// out to meet it.
   static const _notchReach = 12.0 - OrnateCard.ruleInset;
 
-  MatchState get cards => widget.cards;
+  Round get cards => widget.cards;
   int get you => widget.you;
   List<Player> get players => widget.players;
 

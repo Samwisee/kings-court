@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/tutorial.dart';
@@ -35,17 +35,14 @@ void main() {
 
     test('Lesson ${i + 1} (${lesson.title}) is won by following the coach', () {
       final d = lesson.deal();
-      final m = MatchState(players: 3, target: 1)
+      final m = Round(players: 3, target: 1)
         ..hands = d.hands
         ..setAside = d.setAside
         ..king = 0
         ..leader = 0
         ..tasks = [
           for (int t = 0; t < lesson.tasks.length; t++)
-            MatchTask(
-                GameState.taskPool
-                    .firstWhere((p) => p.description == lesson.tasks[t])
-                    .freshCopy(),
+            RoundTask(taskByDescription(lesson.tasks[t]),
                 // You take the first task; any other goes to the Duke.
                 owner: t == 0 ? 0 : 1)
         ]
@@ -62,7 +59,7 @@ void main() {
         m.apply(PlayCard(seat, card!));
       }
       expect(m.won, isTrue);
-      expect(m.tasks.every((t) => t.verdict == Verdict.done), isTrue);
+      expect(m.tasks.every((t) => t.isCompleted), isTrue);
     });
   }
 }

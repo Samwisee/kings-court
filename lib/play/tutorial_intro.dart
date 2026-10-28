@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import '../courtiers.dart';
 import '../engine/cards.dart';
+import '../engine/round.dart';
 import '../models.dart';
 import '../task_help.dart';
 import '../theme.dart';
@@ -343,16 +344,14 @@ class _TutorialIntroState extends State<TutorialIntro> {
 
   /// A task card as on the table; tap it for its close-up.
   Widget _task(String description, {double width = 150, int? owner}) {
-    final task = GameState.taskPool
-        .firstWhere((t) => t.description == description)
-        .freshCopy();
+    final task = RoundTask(taskByDescription(description));
     final text = task.boardText(3);
     final size = TableCard.sizeFor(text, width);
     return Semantics(
       button: true,
       label: 'Task: ${task.fullText(3)}. Tap to read it.',
       child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
-        onTap: () => _preview(task),
+        onTap: () => _preview(task.task),
         child: TableCard(
             task: task,
             text: text,

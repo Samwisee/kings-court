@@ -1,6 +1,6 @@
-/// A task: what it asks, its points at each table size, and how it's
-/// going this round. Plain Dart, with no Flutter, so the same rules can run
-/// on a server for online play.
+/// A task: what it asks and its points at each table size. How it's going
+/// this round is the round's business (RoundTask in engine/round.dart).
+/// Plain Dart, with no Flutter, so the same rules can run on a server.
 library;
 
 import '../tasks.dart';
@@ -18,25 +18,14 @@ class Task {
   /// can't be taken by the King.
   final bool kingCantTake;
 
-  TaskStatus status;
-  int? assignedPlayerIndex;
-
-  /// Wax seal fixing when this task must be completed (see [Seals]).
-  int? seal;
-
-  Task({
+  const Task({
     required this.description,
     required this.threePlayerPoints,
     required this.fourPlayerPoints,
     required this.fivePlayerPoints,
     required this.sixPlayerPoints,
     this.kingCantTake = false,
-    this.status = TaskStatus.pending,
-    this.assignedPlayerIndex,
   });
-
-  bool get isCompleted => status == TaskStatus.completed;
-  bool get isFailed => status == TaskStatus.failed;
 
   /// Difficulty for [playerCount]. The 2-player variant (with the Dummy)
   /// uses the 3-player difficulty.
@@ -147,18 +136,19 @@ class Task {
 
   bool get hasNotes => notes.isNotEmpty;
 
-  Task freshCopy() => Task(
-        description: description,
-        threePlayerPoints: threePlayerPoints,
-        fourPlayerPoints: fourPlayerPoints,
-        fivePlayerPoints: fivePlayerPoints,
-        sixPlayerPoints: sixPlayerPoints,
-        kingCantTake: kingCantTake,
-      )..seal = seal;
 }
 
 /// Every task in the game, built from [tasksData].
 final List<Task> allTasks = _buildTaskPool();
+
+final Map<String, Task> _tasksByDescription = {
+  for (final t in allTasks) t.description: t
+};
+
+/// The task worded [description] (its words are its name).
+Task taskByDescription(String description) =>
+    _tasksByDescription[description] ??
+    (throw StateError('No task "$description"'));
 
 /// The King holds the King card, the highest card, so whenever they play it they
 /// win that trick and a Court Card with it. These can never be theirs.

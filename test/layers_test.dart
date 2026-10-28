@@ -45,12 +45,11 @@ const legacyFolders = {'home': 'ui', 'play': 'ui'};
 
 /// Imports pointing the wrong way today, and the step that fixes them.
 const knownDebts = {
-  // Decrees and seals become engine rules; courtiers' roles move to game;
-  // the tutorial's scripts reach the bots through an interface (step 4).
+  // Courtiers' roles move to game; the tutorial's scripts reach the bots
+  // through an interface (step 4).
   'lib/models.dart → lib/chronicle.dart',
   'lib/models.dart → lib/courtiers.dart',
   'lib/models.dart → lib/tutorial.dart',
-  'lib/game/bot_turn.dart → lib/chronicle.dart',
   'lib/game/bot_turn.dart → lib/tutorial.dart',
   // The controller is Flutter and belongs in ui/ (step 3).
   'lib/game/controller.dart → package:flutter/foundation.dart',

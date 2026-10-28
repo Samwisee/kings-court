@@ -24,7 +24,7 @@ import 'engine/bot.dart';
 import 'engine/cards.dart';
 import 'engine/conflicts.dart';
 import 'engine/inference.dart';
-import 'engine/match.dart';
+import 'engine/round.dart';
 import 'engine/rules.dart';
 import 'game/bot_turn.dart';
 import 'game/controller.dart';
@@ -117,13 +117,13 @@ class HomePageState extends State<HomePage>
 
   /// Card centres as fractions of the table size, so they survive rotation
   /// and window resizes.
-  final Map<Task, Offset> _pos = {};
-  final Map<Task, double> _tilt = {};
+  final Map<RoundTask, Offset> _pos = {};
+  final Map<RoundTask, double> _tilt = {};
 
   /// Draw order: the last card is on top.
-  List<Task> _order = [];
+  List<RoundTask> _order = [];
 
-  Task? _dragging;
+  RoundTask? _dragging;
   int? _hoverSeat;
 
   /// While someone holds the felt: the seat nearest their finger. Every
@@ -189,7 +189,7 @@ class HomePageState extends State<HomePage>
   int? _crownsBefore;
 
   /// The last done/failed mark, so it can be undone from the round result.
-  (Task, TaskStatus)? _lastMark;
+  (RoundTask, TaskStatus)? _lastMark;
 
   final _tableKey = GlobalKey();
 
@@ -310,7 +310,7 @@ class HomePageState extends State<HomePage>
         !_inGame ||
         _setupArgs != null ||
         !_digital ||
-        _cards.dealId != game.dealId) {
+        !_round.hasCards) {
       return false;
     }
     if (key == LogicalKeyboardKey.space && _trackerOpen) {
@@ -343,7 +343,7 @@ class HomePageState extends State<HomePage>
       _speak();
       return true;
     }
-    final hand = _cards.hands.length > _you ? _cards.hands[_you] : const <PlayingCard>[];
+    final hand = _round.hands.length > _you ? _round.hands[_you] : const <PlayingCard>[];
     // A card by its key: 1 to 9, 0, - and = along the top row, then Q W E.
     final keyAt = _cardKeys.indexOf(key);
     if (keyAt >= 0) {
@@ -367,19 +367,19 @@ class HomePageState extends State<HomePage>
     // and always go to whatever is nearest the last thing chosen.
     final open = [
       for (final t in game.tasks)
-        if (t.assignedPlayerIndex == null &&
-            (!_yourPick || (_mayTake(t) && game.canTake(t, _you))))
+        if (t.owner == null &&
+            (!_yourPick || (_mayTake(t) && _round.mayTake(t, _you))))
           t
     ];
     final showing = _revealing || _speakPromptDue;
     final playable = [
       for (final c in hand)
         if (showing
-            ? _cards.revealFor(_you, c) != null
-            : _cards.turn == _you
-                ? _cards.legalFor(_you).contains(c)
-                : _cards.current.isEmpty ||
-                    legalPlays(hand, _cards.current.first).contains(c))
+            ? _round.revealFor(_you, c) != null
+            : _round.turn == _you
+                ? _round.legalFor(_you).contains(c)
+                : _round.current.isEmpty ||
+                    legalPlays(hand, _round.current.first).contains(c))
           c
     ];
     final choices = playable.isEmpty ? hand : playable;
@@ -388,7 +388,7 @@ class HomePageState extends State<HomePage>
     final here = _kbHere(stops);
     void go(_KbStop to) => _ui(() {
           _kbRow = to.row;
-          if (to.item case final Task t) _kbTask = t;
+          if (to.item case final RoundTask t) _kbTask = t;
           if (to.item case final PlayingCard c) _kbCard = c;
           _kbLast = to.rect;
         });
@@ -445,7 +445,7 @@ class HomePageState extends State<HomePage>
     // press the button, or play (or show) the chosen card.
     if (here == null) return false;
     switch (here.item) {
-      case final Task t:
+      case final RoundTask t:
         _showTaskDetail(t, Offset.zero);
       case final PlayingCard c:
         _handPlays[c]?.call();
@@ -458,14 +458,14 @@ class HomePageState extends State<HomePage>
   }
 
   /// Everything the arrow keys can stop on just now, where it is.
-  List<_KbStop> _kbStops(List<Task> open, List<PlayingCard> cards) => [
+  List<_KbStop> _kbStops(List<RoundTask> open, List<PlayingCard> cards) => [
         for (final t in open)
           if (_openTaskKeys[t] case final key?)
             if (_rectOn(key) case final r?) _KbStop(1, t, r),
         // Tasks already taken, in front of whoever took them: to read
         // again (Enter opens them).
         for (final t in game.tasks)
-          if (t.assignedPlayerIndex != null && !_landing.contains(t))
+          if (t.owner != null && !_landing.contains(t))
             if (_destKeys[t] case final key?)
               if (_rectOn(key) case final r?) _KbStop(1, t, r),
         if (_kbButtonPress != null)
@@ -537,7 +537,7 @@ class HomePageState extends State<HomePage>
   /// Where the arrow keys are: your hand (0), the tasks on the table (1)
   /// or the Skip or Pass button (2).
   int _kbRow = 0;
-  Task? _kbTask;
+  RoundTask? _kbTask;
 
   /// Where the last thing chosen with the arrow keys was, so the next
   /// choice is whatever is nearest it (when a card is played or a task
@@ -550,7 +550,7 @@ class HomePageState extends State<HomePage>
   /// A choice with a way out is up: show a card or Skip, take a task or
   /// Pass. The button sits beside your hand.
   bool get _barChoice =>
-      (_speakPromptDue || (game.pickTurn == _you && game.canPass(_you))) &&
+      (_speakPromptDue || (_round.pickTurn == _you && _canPass(_you))) &&
       _toast == null;
 
   /// What that button does, for the Enter key.
@@ -806,19 +806,20 @@ class HomePageState extends State<HomePage>
   }
 
   bool get _inGame => game.tasks.isNotEmpty;
-  bool get _choosingKing => _inGame && game.kingIndex == null;
+  bool get _choosingKing => _inGame && _round.king == null;
 
   /// A decree waiting to be read out after the crowning.
   bool get _decreePending =>
+      _inGame &&
       !_choosingKing &&
-      game.decree != null &&
+      _round.decree != null &&
       _decreeReadFor != game.dealId &&
       _dealtFor != game.dealId;
 
   bool get _readyToDeal =>
       !_choosingKing && !_decreePending && _dealtFor != game.dealId;
 
-  int _points(Task t) => t.getPointsForPlayerCount(game.players.length);
+  int _points(RoundTask t) => t.getPointsForPlayerCount(game.players.length);
 
   _TableGeometry get _geo => _TableGeometry(
       _tableSize, game.players.length, (t) => t.boardText(game.players.length),
@@ -869,7 +870,7 @@ class HomePageState extends State<HomePage>
   bool _collecting = false;
   bool _askingX = false;
 
-  MatchState get _cards => game.cards!;
+  Round get _round => game.round!;
 
   bool get _playing =>
       _digital &&
@@ -877,10 +878,10 @@ class HomePageState extends State<HomePage>
       !_decreePending &&
       _dealtFor == game.dealId &&
       game.outcome == RoundOutcome.inProgress &&
-      tasksSettled(game);
+      _round.settled;
 
   bool get _yourPlay =>
-      _playing && !_autoPlaying && _lastTrick == null && _cards.turn == _you;
+      _playing && !_autoPlaying && _lastTrick == null && _round.turn == _you;
 
   /// Every task is done with cards still in hand: the table plays the rest
   /// of the round out by itself, quickly, like a won game of FreeCell
@@ -894,7 +895,7 @@ class HomePageState extends State<HomePage>
   /// it starts.
   bool _maybeAutoFinish() {
     if (_autoPlaying || !_playing || game.isTutorial) return false;
-    if (!canPlayOut(game)) return false;
+    if (!_round.canPlayOut) return false;
     _botTimer?.cancel();
     _botTimer = null;
     setState(() {
@@ -911,7 +912,7 @@ class HomePageState extends State<HomePage>
 
   void _autoStep() {
     if (!mounted || !_autoPlaying) return;
-    final c = _cards;
+    final c = _round;
     if (game.dealId != _autoDeal) {
       // A new round or game began meanwhile: hand play back.
       setState(() => _autoPlaying = false);
@@ -932,7 +933,7 @@ class HomePageState extends State<HomePage>
       !_choosingKing &&
       !_decreePending &&
       _dealtFor == game.dealId &&
-      game.pickTurn == _you;
+      _round.pickTurn == _you;
 
   /// Deals hands for a new round (or after a reload with an old deal), and
   /// lets the King card choose the King.
@@ -954,7 +955,8 @@ class HomePageState extends State<HomePage>
       // Long live the King first; the tasks are shuffled out after.
       _crownTimer = Timer(const Duration(milliseconds: 350), () {
         _crownTimer = null;
-        if (mounted && _choosingKing) _crownKing(_cards.king);
+        final holder = _round.kingCardHolder;
+        if (mounted && _choosingKing && holder != null) _crownKing(holder);
       });
     }
   }
@@ -967,7 +969,7 @@ class HomePageState extends State<HomePage>
     if (_queued != null && _yourPlay) {
       final card = _queued!;
       _queued = null;
-      if (_cards.legalFor(_you).contains(card)) {
+      if (_round.legalFor(_you).contains(card)) {
         scheduleMicrotask(() {
           if (mounted && _yourPlay) _playCard(_you, card);
         });
@@ -978,7 +980,7 @@ class HomePageState extends State<HomePage>
     if (_wantsToSpeak &&
         !_revealing &&
         _playing &&
-        _cards.current.isEmpty &&
+        _round.current.isEmpty &&
         _lastTrick == null) {
       _wantsToSpeak = false;
       scheduleMicrotask(() {
@@ -1000,15 +1002,15 @@ class HomePageState extends State<HomePage>
   /// picks first.
   bool get _openingPick =>
       _digital &&
-      game.pickTurn != null &&
-      _cards.dealId == game.dealId &&
+      _round.pickTurn != null &&
+      _round.hasCards &&
       // Nobody has picked yet (tasks that went straight to the only player
       // who could take them don't count).
-      game.picksMade == 0;
+      _round.picksMade == 0;
 
   /// Where each open task starts from in the deal (the middle of the
   /// table), measured once per deal.
-  Map<Task, Offset> _dealFrom = {};
+  Map<RoundTask, Offset> _dealFrom = {};
   int _dealMeasuredFor = -1;
 
   /// The deal the table last asked "anyone want to show a card?" for.
@@ -1046,7 +1048,7 @@ class HomePageState extends State<HomePage>
     if (_autoPlaying ||
         _revealing ||
         _speakPromptDue ||
-        (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
+        (_wantsToSpeak && _playing && _round.current.isEmpty)) {
       return false;
     }
     if (!Host.ready(game, dealtFor: _dealtFor) ||
@@ -1073,13 +1075,13 @@ class HomePageState extends State<HomePage>
   }
 
   /// Asks how many tricks you'll win for an "exactly X" task.
-  Future<void> _askX(Task task) async {
+  Future<void> _askX(RoundTask task) async {
     if (_askingX) return;
     _askingX = true;
     var x = 1;
     // The King card always wins its trick, so whoever holds it wins at
     // least one.
-    final least = _cards.hands[_you].contains(PlayingCard.king) ? 1 : 0;
+    final least = _round.hands[_you].contains(PlayingCard.king) ? 1 : 0;
     final chosen = await showDialog<int>(
       context: context,
       barrierDismissible: false,
@@ -1116,7 +1118,7 @@ class HomePageState extends State<HomePage>
                             color: Palette.gold)),
                   ),
                   IconButton.outlined(
-                    onPressed: x < _cards.totalTricks
+                    onPressed: x < _round.totalTricks
                         ? () => setDialog(() => x++)
                         : null,
                     icon: const Icon(Icons.add),
@@ -1125,8 +1127,8 @@ class HomePageState extends State<HomePage>
               ),
               Text(
                   least > 0
-                      ? '${_cards.totalTricks} tricks in the round. You hold the King card, so you\u2019ll win at least one.'
-                      : '${_cards.totalTricks} tricks in the round.',
+                      ? '${_round.totalTricks} tricks in the round. You hold the King card, so you\u2019ll win at least one.'
+                      : '${_round.totalTricks} tricks in the round.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white60)),
             ],
@@ -1161,7 +1163,7 @@ class HomePageState extends State<HomePage>
         _passNow(seat);
       case Announce(:final task, :final x):
         if (task < game.tasks.length) {
-          setState(() => _cards.announced[game.tasks[task].description] = x);
+          setState(() => _round.announce(task, x));
         }
       case PlayCard(:final seat, :final card):
         _playCardNow(seat, card);
@@ -1171,39 +1173,43 @@ class HomePageState extends State<HomePage>
   }
 
   /// Gives a task to a seat, as dropping it there would: sends the move.
-  void _assignTask(Task t, int seat) {
+  void _assignTask(RoundTask t, int seat) {
     final i = game.tasks.indexOf(t);
     if (i < 0) return;
     _link.send(PickTask(seat, i));
   }
 
-  void _assignTaskNow(Task t, int seat) {
+  void _assignTaskNow(RoundTask t, int seat) {
     setState(() {
-      if (game.assign(t, seat)) _play.forward(from: 0);
+      if (_round.assign(t, seat)) _play.forward(from: 0);
       _layoutOwned();
     });
   }
 
   /// [seat] passes on picking a task: sends the move.
   void _pass(int seat) {
-    if (!game.canPass(seat)) return;
+    if (!_canPass(seat)) return;
     _link.send(Pass(seat));
   }
 
+  /// Whether [seat] may pass on picking right now (never in the tutorial,
+  /// which walks you through every pick).
+  bool _canPass(int seat) => !game.isTutorial && _round.canPass(seat);
+
   void _passNow(int seat) {
-    if (!game.canPass(seat)) return;
+    if (!_canPass(seat)) return;
     if (seat != _you) {
       _quip(seat, 'I\u2019ll pass for now.');
       _showSnack('${game.players[seat].name} passes', Palette.feltDeep);
     }
-    setState(() => game.pass(seat));
+    setState(() => _round.pass(seat));
   }
 
   /// The number announced for an "exactly X tricks" task: sends the move.
-  void _announce(Task t, int x) {
+  void _announce(RoundTask t, int x) {
     final i = game.tasks.indexOf(t);
-    if (i < 0 || t.assignedPlayerIndex == null) return;
-    _link.send(Announce(t.assignedPlayerIndex!, i, x));
+    if (i < 0 || t.owner == null) return;
+    _link.send(Announce(t.owner!, i, x));
   }
 
   /// Plays a card: sends the move, which plays it when it comes back.
@@ -1212,7 +1218,7 @@ class HomePageState extends State<HomePage>
   /// Plays a card on the table. When it finishes a trick, the trick stays
   /// a moment, sweeps to the winner, and then the tasks are judged.
   void _playCardNow(int seat, PlayingCard card) {
-    final trick = _cards.playCard(seat, card);
+    final trick = _round.playCard(seat, card);
     if (trick == null) {
       setState(() {});
       return;
@@ -1237,7 +1243,7 @@ class HomePageState extends State<HomePage>
         _lastTrick = null;
         _collecting = false;
       });
-      final c = _cards;
+      final c = _round;
       final more = c.tricks.length < c.totalTricks;
       // A round playing itself out is judged once, at the end. And when
       // the round is won already with cards to spare, it plays out first.
@@ -1261,54 +1267,50 @@ class HomePageState extends State<HomePage>
   /// another).
   Future<void> _judgeTasks() async {
     var flipped = 0;
-    for (final flip in judgeTasks(game)) {
+    for (final flip in _round.judge()) {
       if (game.outcome != RoundOutcome.inProgress) break;
       if (!mounted || !game.tasks.contains(flip.task)) continue;
-      if (flip.why != null) _whyFailed[flip.task] = flip.why!;
       // Several done at once turn over one after another.
       if (flip.status == TaskStatus.completed && flipped++ > 0) {
         await Future<void>.delayed(flipStagger);
         if (!mounted || !game.tasks.contains(flip.task)) continue;
       }
-      _setTaskStatus(flip.task, flip.status);
+      _setTaskStatus(flip.task, flip.status, why: flip.why);
     }
     // Nothing to undo when the cards decided.
     _lastMark = null;
   }
 
-  /// Why each failed task failed this round, for the end of the round.
-  final _whyFailed = <Task, String>{};
-
   /// The round as the table shows it (see game/judge.dart): a trick still
   /// on the table doesn't count yet.
-  RoundView get _shownView => shownView(game, trickPending: _lastTrick != null);
+  RoundView get _shownView => shownView(_round, trickPending: _lastTrick != null);
 
   /// Tricks [seat] has won, as the table shows them.
-  int _shownTricksWon(int seat) => shownTricksWon(game, seat, _lastTrick);
+  int _shownTricksWon(int seat) => shownTricksWon(_round, seat, _lastTrick);
 
   /// How far along an on-screen task is ("2/4"), for the card's corner.
   /// How [t] is going, in a sentence for its close-up (on-screen cards
   /// only, once it's been taken).
-  String? _statusOf(Task t) {
+  String? _statusOf(RoundTask t) {
     if (!_digital ||
-        _cards.dealId != game.dealId ||
-        t.assignedPlayerIndex == null) {
+        !_round.hasCards ||
+        t.owner == null) {
       return null;
     }
     if (t.isCompleted) return 'Done!';
     if (t.isFailed) return 'Failed this round.';
-    if (_cards.tricks.isEmpty && game.pickTurn != null) {
+    if (_round.tricks.isEmpty && _round.pickTurn != null) {
       return 'The tricks haven’t started yet.';
     }
-    return taskStatus(t.description, _shownView, t.assignedPlayerIndex!,
-        _cards.announced[t.description],
+    return taskStatus(t.description, _shownView, t.owner!,
+        t.x,
         names: [for (final p in game.players) p.name]);
   }
 
   /// The cards [t] names that its owner has already won, to cross out.
-  Set<String> _wonNamed(Task t) => !_digital || _cards.dealId != game.dealId
+  Set<String> _wonNamed(RoundTask t) => !_digital || !_round.hasCards
       ? const {}
-      : wonNamed(game, t, trickPending: _lastTrick != null);
+      : wonNamed(_round, t, trickPending: _lastTrick != null);
 
   /// Every card in the deck, by suit: played (and in which trick, by
   /// whom), in your hand, shown by someone, or still to come.
@@ -1370,25 +1372,25 @@ class HomePageState extends State<HomePage>
   /// The cards a task is about, marked the way the card tracker marks
   /// them: outlined in the colour of whoever played each one (with the
   /// trick it fell in), or of whoever is known to hold it.
-  List<_TaskCard> _cardStates(Task t) {
+  List<_TaskCard> _cardStates(RoundTask t) {
     final cards = relevantCards(t.description);
-    if (!_digital || _cards.dealId != game.dealId) {
+    if (!_digital || !_round.hasCards) {
       return [for (final c in cards) (card: c, edge: null, trick: null, played: false)];
     }
     final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
-    for (var i = 0; i < _cards.tricks.length; i++) {
-      final tr = _cards.tricks[i];
+    for (var i = 0; i < _round.tricks.length; i++) {
+      final tr = _round.tricks[i];
       for (var k = 0; k < tr.cards.length; k++) {
         playedIn[tr.cards[k]] = (i + 1, tr.seats[k]);
       }
     }
-    for (var k = 0; k < _cards.current.length; k++) {
-      playedIn[_cards.current[k]] = (_cards.tricks.length + 1, _cards.currentSeats[k]);
+    for (var k = 0; k < _round.current.length; k++) {
+      playedIn[_round.current[k]] = (_round.tricks.length + 1, _round.currentSeats[k]);
     }
     final holder = <PlayingCard, int>{
-      if (_cards.hands.length > _you)
-        for (final c in _cards.hands[_you]) c: _you,
-      for (final g in guessHands(_cards, _you))
+      if (_round.hands.length > _you)
+        for (final c in _round.hands[_you]) c: _you,
+      for (final g in guessHands(_round, _you))
         for (final c in g.certain) c: g.seat,
     };
     return [
@@ -1406,32 +1408,32 @@ class HomePageState extends State<HomePage>
     ];
   }
 
-  String? _progressOf(Task t) {
+  String? _progressOf(RoundTask t) {
     if (!_digital ||
-        _cards.dealId != game.dealId ||
-        t.assignedPlayerIndex == null ||
+        !_round.hasCards ||
+        t.owner == null ||
         t.status != TaskStatus.pending) {
       return null;
     }
-    return taskProgress(t.description, _shownView, t.assignedPlayerIndex!,
-        _cards.announced[t.description]);
+    return taskProgress(t.description, _shownView, t.owner!,
+        t.x);
   }
 
   /// Colours of the players whose open tasks need [card] won.
   List<Color> _marksFor(PlayingCard card) => [
         for (final t in game.tasks)
-          if (t.assignedPlayerIndex != null &&
+          if (t.owner != null &&
               t.status == TaskStatus.pending &&
               neededCards(t.description).contains(card))
-            game.players[t.assignedPlayerIndex!].color
+            game.players[t.owner!].color
       ];
 
   /// A task's wording, with the announced number filled in.
-  String _cardText(Task t) {
+  String _cardText(RoundTask t) {
     final text = t.boardText(game.players.length);
-    final x = _digital ? _cards.announced[t.description] : null;
+    final x = _digital ? t.x : null;
     if (x == null) return text;
-    final secret = t.description.contains('secret') && t.assignedPlayerIndex != _you;
+    final secret = t.description.contains('secret') && t.owner != _you;
     return text.replaceFirst('X', secret ? '?' : '$x');
   }
 
@@ -1444,21 +1446,21 @@ class HomePageState extends State<HomePage>
           : '${game.players[w].name} wins the trick';
     }
     if (_choosingKing) return '';
-    if (game.pickTurn != null) {
+    if (_round.pickTurn != null) {
       if (_speakPromptDue) return 'Share a card?';
-      if (game.pickTurn == _you) {
-        return game.decree == Decree.kingsCommand
+      if (_round.pickTurn == _you) {
+        return _round.decree == Decree.kingsCommand
             ? "King's Command: hold a task to hand it out"
-            : game.canPass(_you)
+            : _canPass(_you)
                 ? 'Hold a task to take it, or'
                 : 'Hold a task to take it';
       }
       if (_speakPromptDue) return 'Share a card?';
-      return '${game.players[game.pickTurn!].name} is choosing a task…';
+      return '${game.players[_round.pickTurn!].name} is choosing a task…';
     }
-    if (!tasksSettled(game)) return 'Announcing numbers…';
+    if (!_round.settled) return 'Announcing numbers…';
     if (game.outcome != RoundOutcome.inProgress) return '';
-    final c = _cards;
+    final c = _round;
     if (c.turn == _you) {
       if (c.current.isEmpty) return 'Your lead';
       final led = c.led!;
@@ -1483,12 +1485,12 @@ class HomePageState extends State<HomePage>
   double _gameHeight = 800;
 
   Widget _buildHand() {
-    final c = _cards;
+    final c = _round;
     // Once a suit is led you may choose your card early; it's played as
     // soon as your turn comes.
     final canQueue = _playing &&
         !_yourPlay &&
-        c.dealId == game.dealId &&
+        c.hasCards &&
         c.current.isNotEmpty &&
         !c.currentSeats.contains(_you) &&
         _lastTrick == null;
@@ -1498,7 +1500,7 @@ class HomePageState extends State<HomePage>
     final yourTurn = _yourPlay || showing;
     final legal = showing
         ? {
-            for (final card in c.dealId == game.dealId ? c.hands[_you] : const <PlayingCard>[])
+            for (final card in c.hasCards ? c.hands[_you] : const <PlayingCard>[])
               if (c.revealFor(_you, card) != null) card
           }
         : _yourPlay
@@ -1595,7 +1597,7 @@ class HomePageState extends State<HomePage>
               // your card for later, or pass on picking.
 
               // Every card: which are played, which are still to come.
-              if (_cards.dealId == game.dealId)
+              if (_round.hasCards)
                 IconButton(
                   tooltip: 'Card tracker',
                   onPressed: _showCardTracker,
@@ -1622,7 +1624,7 @@ class HomePageState extends State<HomePage>
                       ? const Icon(Icons.close_rounded, color: Palette.gold)
                       : ShowCardIcon(
                           size: 28,
-                          used: game.spoke.length > _you && game.spoke[_you],
+                          used: _round.spoke.length > _you && _round.spoke[_you],
                           color: _wantsToSpeak
                               ? Colors.white
                               : _mayAskToSpeak
@@ -1635,7 +1637,7 @@ class HomePageState extends State<HomePage>
           ),
           const SizedBox(height: 2),
           LayoutBuilder(builder: (context, box) {
-            final hand = c.dealId == game.dealId ? c.hands[_you] : const <PlayingCard>[];
+            final hand = c.hasCards ? c.hands[_you] : const <PlayingCard>[];
             final width = box.maxWidth;
             // Wider screens get bigger cards, as far as the height allows.
             final cardW = clampD(
@@ -1704,7 +1706,7 @@ class HomePageState extends State<HomePage>
                       // queued); a drag that didn't slides back.
                       bool play() {
                         if (_revealing || _speakPromptDue) {
-                          if (_cards.revealFor(_you, card) == null) {
+                          if (_round.revealFor(_you, card) == null) {
                             _showSnack(
                                 'Only your highest, lowest or only card of a suit can be shown, never a Court Card',
                                 Palette.feltDeep);
@@ -1850,11 +1852,11 @@ class HomePageState extends State<HomePage>
   final _handKey = GlobalKey();
   final _yourRowKey = GlobalKey();
   final _seatKeys = <int, GlobalKey>{};
-  final _openTaskKeys = <Task, GlobalKey>{};
-  Map<Task, Rect> _openTaskRects = {};
+  final _openTaskKeys = <RoundTask, GlobalKey>{};
+  Map<RoundTask, Rect> _openTaskRects = {};
   final _flights = <_Flight>[];
   final _flightTimers = <Timer>[];
-  Map<Task, int?> _owners = {};
+  Map<RoundTask, int?> _owners = {};
 
   /// Where your played card left your hand, by card id.
   final _launchFrom = <int, Offset>{};
@@ -1906,11 +1908,11 @@ class HomePageState extends State<HomePage>
   }
 
   /// Tasks on their way to their owner: laid out there but not shown yet.
-  final Set<Task> _landing = {};
+  final Set<RoundTask> _landing = {};
 
   /// Where each task sits in front of its owner, and how it's drawn there.
-  final _destKeys = <Task, GlobalKey>{};
-  final _miniStyle = <Task, (double, double)>{};
+  final _destKeys = <RoundTask, GlobalKey>{};
+  final _miniStyle = <RoundTask, (double, double)>{};
 
   /// How the open tasks in the middle are drawn (their font size).
   double _openFontSize = 13;
@@ -1920,8 +1922,8 @@ class HomePageState extends State<HomePage>
   /// place is known, the flight goes exactly there.
   void _launchTaskFlights() {
     if (!_digital) return;
-    final owners = {for (final t in game.tasks) t: t.assignedPlayerIndex};
-    final taken = <(Task, Rect)>[];
+    final owners = {for (final t in game.tasks) t: t.owner};
+    final taken = <(RoundTask, Rect)>[];
     for (final t in game.tasks) {
       final owner = owners[t];
       if (_owners[t] != null || owner == null) continue;
@@ -1949,9 +1951,9 @@ class HomePageState extends State<HomePage>
         final flight = _Flight(t, from, to, _points(t), _cardText(t),
             fromFont: _openFontSize,
             toFont: style.$2,
-            toColor: t.assignedPlayerIndex == null
+            toColor: t.owner == null
                 ? Palette.inkSoft
-                : game.players[t.assignedPlayerIndex!].color);
+                : game.players[t.owner!].color);
         _flights.add(flight);
         _flightTimers.add(Timer(_Flight.duration, () {
           if (mounted) {
@@ -2020,7 +2022,7 @@ class HomePageState extends State<HomePage>
         color: Colors.black38,
         child: Center(
           child: DecreeScroll(
-            decree: game.decree!,
+            decree: _round.decree!,
             detail: _decreeDetail,
             onAccept: () => setState(() => _decreeReadFor = game.dealId),
           ),
@@ -2029,9 +2031,9 @@ class HomePageState extends State<HomePage>
 
   bool _seatActive(int seat) =>
       !_choosingKing &&
-      (game.pickTurn != null
-          ? game.pickTurn == seat
-          : _playing && _lastTrick == null && _cards.turn == seat);
+      (_round.pickTurn != null
+          ? _round.pickTurn == seat
+          : _playing && _lastTrick == null && _round.turn == seat);
 
   /// What tapping a seat does: their courtier's card, or (without roles)
   /// asking them to show a card.
@@ -2058,10 +2060,10 @@ class HomePageState extends State<HomePage>
         child: SeatToken(
         player: game.players[seat],
         label: labels[seat],
-        isKing: game.kingIndex == seat,
+        isKing: _round.king == seat,
         size: size,
         highlighted: _seatActive(seat),
-        exiled: game.exiledSeat == seat,
+        exiled: _round.exiledSeat == seat,
         shape: game.hasRoles && seat < game.courtiers.length
             ? game.courtiers[seat].shape
             : null,
@@ -2076,7 +2078,7 @@ class HomePageState extends State<HomePage>
   /// A task in front of its owner. It's laid out as soon as the task is
   /// taken, but kept hidden while its flying copy travels there: the
   /// flight lands exactly on it, then it shows, so nothing jumps.
-  Widget _miniTask(Task t, double width, {double fontSize = 12}) {
+  Widget _miniTask(RoundTask t, double width, {double fontSize = 12}) {
     _miniStyle[t] = (width, fontSize);
     return Opacity(
         key: ValueKey('mini-${t.description}'),
@@ -2089,9 +2091,9 @@ class HomePageState extends State<HomePage>
             task: t,
             points: _points(t),
             text: _cardText(t),
-            color: t.assignedPlayerIndex == null
+            color: t.owner == null
                 ? Palette.inkSoft
-                : game.players[t.assignedPlayerIndex!].color,
+                : game.players[t.owner!].color,
             width: width,
             fontSize: fontSize,
             progress: _progressOf(t),
@@ -2151,7 +2153,7 @@ class HomePageState extends State<HomePage>
         game.hasRoles && i < game.courtiers.length ? game.courtiers[i] : null;
     final colWidth = width / math.max(1, seats.length);
     final taskWidth = math.min(colWidth - 6, width > 600 ? 170.0 : 130.0);
-    final c = _cards;
+    final c = _round;
     Widget column(int seat) => SizedBox(
           key: ValueKey('col-$seat'),
           width: colWidth,
@@ -2187,12 +2189,12 @@ class HomePageState extends State<HomePage>
                     // kept from the start, so nothing shifts when they
                     // appear.
                     Opacity(
-                        opacity: c.dealId == game.dealId &&
+                        opacity: c.hasCards &&
                                 (_playing || c.tricks.isNotEmpty)
                             ? 1
                             : 0,
                         child: Text(
-                            c.dealId == game.dealId
+                            c.hasCards
                                 ? '${_shownTricksWon(seat)} won · ${c.hands[seat].length} cards'
                                 : '0 won · 0 cards',
                             maxLines: 1,
@@ -2204,7 +2206,7 @@ class HomePageState extends State<HomePage>
                       ]),
                     )),
                     for (final t in game.tasks)
-                      if (t.assignedPlayerIndex == seat)
+                      if (t.owner == seat)
                         _miniTask(t, taskWidth,
                             fontSize: colWidth < 80
                                 ? 11
@@ -2268,9 +2270,9 @@ class HomePageState extends State<HomePage>
 
   /// A card shown with the speech token, while it's still in hand.
   Widget? _revealedView(int seat, {double height = 40}) {
-    final c = _cards;
+    final c = _round;
     final card = c.revealed[seat];
-    if (card == null || c.dealId != game.dealId || !c.hands[seat].contains(card)) {
+    if (card == null || !c.hasCards || !c.hands[seat].contains(card)) {
       return null;
     }
     // High contrast: framed in the player's colour with dark lines, and
@@ -2309,7 +2311,7 @@ class HomePageState extends State<HomePage>
 
   Widget _digiMiddle(double width) {
     if (_choosingKing) return const SizedBox.expand();
-    final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
+    final open = [for (final t in game.tasks) if (t.owner == null) t];
     if (open.isEmpty && _landing.isEmpty && _flights.isEmpty) {
       // The trick, laid out right here so it always shows.
       return LayoutBuilder(
@@ -2323,7 +2325,7 @@ class HomePageState extends State<HomePage>
       if (!mounted) return;
       _openTaskRects = {
         for (final e in _openTaskKeys.entries)
-          if (e.key.assignedPlayerIndex == null)
+          if (e.key.owner == null)
             if (_rectOn(e.value) case final r?) e.key: r,
       };
     });
@@ -2335,7 +2337,7 @@ class HomePageState extends State<HomePage>
     // has landed the rest close up, so the middle never runs out of room.
     final slots = [
       for (final t in game.tasks)
-        if (t.assignedPlayerIndex == null ||
+        if (t.owner == null ||
             _landing.contains(t) ||
             _flights.any((f) => f.task == t))
           t
@@ -2368,7 +2370,7 @@ class HomePageState extends State<HomePage>
             key: ValueKey('slot-${slots[i].description}'),
             child: () {
             final t = slots[i];
-            final taken = t.assignedPlayerIndex != null;
+            final taken = t.owner != null;
             // Who could take it: a task only one player may take is marked
             // in their colour, so the table knows it's theirs to choose.
             // Only what everyone can see: your own hand counts for you,
@@ -2376,8 +2378,8 @@ class HomePageState extends State<HomePage>
             final able = [
               for (int s = 0; s < game.players.length; s++)
                 if (s == _you
-                    ? game.canTake(t, s)
-                    : game.whyCantTake(t, s, publicOnly: true) == null)
+                    ? _round.mayTake(t, s)
+                    : _round.whyCantTake(t, s, publicOnly: true) == null)
                   s
             ];
             final only = !taken && able.length == 1 ? able.single : null;
@@ -2506,15 +2508,15 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  bool _mayTake(Task t) =>
-      game.decree == Decree.kingsCommand || game.canTake(t, _you);
+  bool _mayTake(RoundTask t) =>
+      _round.decree == Decree.kingsCommand || _round.mayTake(t, _you);
 
   /// Your pick: take a task. Under King's Command you're the King handing
   /// tasks out, so choose who gets it.
-  Future<void> _takeTask(Task t) async {
-    if (game.decree != Decree.kingsCommand) {
-      if (!game.canTake(t, _you)) {
-        _showSnack(game.whyCantTake(t, _you)!, Palette.feltDeep);
+  Future<void> _takeTask(RoundTask t) async {
+    if (_round.decree != Decree.kingsCommand) {
+      if (!_round.mayTake(t, _you)) {
+        _showSnack(_round.whyCantTake(t, _you)!, Palette.feltDeep);
         return;
       }
       _assignTask(t, _you);
@@ -2522,7 +2524,7 @@ class HomePageState extends State<HomePage>
     }
     final seats = [
       for (int s = 0; s < game.players.length; s++)
-        if (game.canTake(t, s)) s
+        if (_round.mayTake(t, s)) s
     ];
     final seat = await showDialog<int>(
       context: context,
@@ -2537,7 +2539,7 @@ class HomePageState extends State<HomePage>
         ]),
       ),
     );
-    if (seat != null && mounted && t.assignedPlayerIndex == null) {
+    if (seat != null && mounted && t.owner == null) {
       _assignTask(t, seat);
     }
   }
@@ -2549,9 +2551,9 @@ class HomePageState extends State<HomePage>
   Widget _digiYou(double width) {
     final mine = [
       for (final t in game.tasks)
-        if (t.assignedPlayerIndex == _you) t
+        if (t.owner == _you) t
     ];
-    final c = _cards;
+    final c = _round;
     const tokenW = 58.0;
     // A place kept for the card you show, as tall as your token.
     const revealW = 40 / 1.3 + 12;
@@ -2568,11 +2570,11 @@ class HomePageState extends State<HomePage>
               // Room kept from the start, so nothing shifts when it appears.
               Opacity(
                 opacity:
-                    c.dealId == game.dealId && (_playing || c.tricks.isNotEmpty)
+                    c.hasCards && (_playing || c.tricks.isNotEmpty)
                         ? 1
                         : 0,
                 child: Text(
-                    c.dealId == game.dealId
+                    c.hasCards
                         ? '${_shownTricksWon(_you)} trick${_shownTricksWon(_you) == 1 ? '' : 's'}'
                         : '0 tricks',
                     style: const TextStyle(fontSize: 11, color: Colors.white54)),
@@ -2645,8 +2647,8 @@ class HomePageState extends State<HomePage>
   /// The trick in the middle of the table: each card glides in from
   /// whoever played it, and once won the trick sweeps off to the winner.
   List<Widget> _trickCards(Size area) {
-    if (_cards.dealId != game.dealId) return [];
-    final c = _cards;
+    if (!_round.hasCards) return [];
+    final c = _round;
     final trick = _lastTrick;
     final seats = trick?.seats ?? c.currentSeats;
     final cards = trick?.cards ?? c.current;
@@ -2747,12 +2749,12 @@ class HomePageState extends State<HomePage>
       _inGame &&
       !_choosingKing &&
       game.outcome == RoundOutcome.inProgress &&
-      _cards.dealId == game.dealId &&
-      _cards.hands.length > _you &&
-      _cards.hands[_you].isNotEmpty &&
-      game.spoke.length > _you &&
-      !game.spoke[_you] &&
-      game.canSpeak(_you);
+      _round.hasCards &&
+      _round.hands.length > _you &&
+      _round.hands[_you].isNotEmpty &&
+      _round.spoke.length > _you &&
+      !_round.spoke[_you] &&
+      _round.canSpeak(_you);
 
   /// Speak now if it's between tricks, otherwise as soon as this trick is
   /// over. The table waits while you choose.
@@ -2764,11 +2766,11 @@ class HomePageState extends State<HomePage>
     if (!_mayAskToSpeak) return;
     // Mid-trick, you speak as soon as the trick is over. Otherwise, while
     // tasks are being chosen or between tricks, right away.
-    if (_cards.current.isNotEmpty || _lastTrick != null) {
+    if (_round.current.isNotEmpty || _lastTrick != null) {
       setState(() => _wantsToSpeak = !_wantsToSpeak);
       return;
     }
-    if (!_cards.hands[_you].any((c) => _cards.revealFor(_you, c) != null)) {
+    if (!_round.hands[_you].any((c) => _round.revealFor(_you, c) != null)) {
       _showSnack(
           'Nothing you may show: only your highest, lowest or only card of a suit',
           Palette.feltDeep);
@@ -2778,21 +2780,17 @@ class HomePageState extends State<HomePage>
   }
 
 
-  /// Shows [card] for [seat]: it stays in their hand, face up for all.
-  /// Shows a card: sends the move, which shows it when it comes back.
+  /// Shows [card] for [seat]: sends the move, which shows it when it
+  /// comes back. The card stays in their hand, face up for all.
   void _reveal(int seat, PlayingCard card) {
-    if (_cards.revealFor(seat, card) == null) return;
+    if (_round.revealFor(seat, card) == null) return;
     _link.send(ShowCard(seat, card));
   }
 
   void _revealNow(int seat, PlayingCard card) {
-    final hint = _cards.revealFor(seat, card);
-    if (hint == null) return;
+    if (_round.revealFor(seat, card) == null) return;
     setState(() {
-      _cards.revealed[seat] = card;
-      _cards.revealHint[seat] = hint;
-      _cards.revealedAt[seat] = _cards.tricks.length;
-      if (!game.spoke[seat]) game.toggleSpoke(seat);
+      _round.apply(ShowCard(seat, card));
       if (seat == _you) _revealing = false;
     });
   }
@@ -2801,14 +2799,14 @@ class HomePageState extends State<HomePage>
   /// can, else one that says the most (the only card of its suit, or the
   /// highest of their longest suit).
   void _askToSpeak(int seat) {
-    final c = _cards;
+    final c = _round;
     final name = game.players[seat].name;
-    if (c.dealId != game.dealId || game.outcome != RoundOutcome.inProgress) return;
+    if (!c.hasCards || game.outcome != RoundOutcome.inProgress) return;
     String? no;
-    if (game.spoke[seat]) {
+    if (_round.spoke[seat]) {
       no = '$name has already shown a card this round';
-    } else if (!game.canSpeak(seat)) {
-      no = game.whyCantSpeak() ?? 'No cards may be shown now';
+    } else if (!_round.canSpeak(seat)) {
+      no = _round.whyCantSpeak() ?? 'No cards may be shown now';
     } else if (c.current.isNotEmpty) {
       no = '$name can show a card once this trick is over';
     }
@@ -2835,11 +2833,11 @@ class HomePageState extends State<HomePage>
 
   /// Marks a task done, for tests.
   @visibleForTesting
-  void debugComplete(Task t) => _setTaskStatus(t, TaskStatus.completed);
+  void debugComplete(RoundTask t) => _setTaskStatus(t, TaskStatus.completed);
 
   /// Gives a task to a seat, for tests (as a drop onto that seat would).
   @visibleForTesting
-  void debugAssign(Task t, int seat) => _assignTask(t, seat);
+  void debugAssign(RoundTask t, int seat) => _assignTask(t, seat);
 
   /// The table link, for tests.
   @visibleForTesting
@@ -2855,14 +2853,14 @@ class HomePageState extends State<HomePage>
     }
     if (_yourPick) {
       final t = game.tasks.firstWhere(
-          (t) => t.assignedPlayerIndex == null && game.canTake(t, _you),
-          orElse: () => game.tasks.firstWhere((t) => t.assignedPlayerIndex == null));
-      _assignTask(t, game.canTake(t, _you) ? _you : (_you + 1) % game.players.length);
+          (t) => t.owner == null && _round.mayTake(t, _you),
+          orElse: () => game.tasks.firstWhere((t) => t.owner == null));
+      _assignTask(t, _round.mayTake(t, _you) ? _you : (_you + 1) % game.players.length);
       return true;
     }
     if (_yourPlay) {
       // The tutorial follows its own advice.
-      final legal = _cards.legalFor(_you);
+      final legal = _round.legalFor(_you);
       final hint = _tutorialHint;
       _playCard(_you, hint != null && legal.contains(hint) ? hint : legal.first);
       return true;
@@ -2910,8 +2908,7 @@ class HomePageState extends State<HomePage>
           for (int i = 0; i < count; i++)
             Player(names[i], colorValue: Palette.players[i % Palette.players.length].toARGB32())
         ]
-        ..seatCourtiers()
-        ..addTasksUntilTarget(count, target);
+        ..seatCourtiers();
       // The tutorial's courtiers are always the same: you, the Duke and
       // the Bishop, each with their house's token.
       if (mode == GameMode.tutorial) {
@@ -2919,7 +2916,7 @@ class HomePageState extends State<HomePage>
       }
       if (digital) {
         // You sit at the bottom; bots take the other seats.
-        game.cards = MatchState(players: count, target: target);
+        game.digital = true;
         for (var i = 0; i < count; i++) {
           game.players[i].name = i == _you
               ? 'You'
@@ -2930,6 +2927,8 @@ class HomePageState extends State<HomePage>
                       : 'Bot ${i + 1}';
         }
       }
+      // The first round, named after the players as seated.
+      game.addTasksUntilTarget(count, target);
       _resetTable();
       // A new game takes the place of any saved game of the same kind.
       _saves = [for (final s in _saves) if (s.game.mode != mode) s];
@@ -3032,9 +3031,9 @@ class HomePageState extends State<HomePage>
   /// The card the tutorial suggests on this trick, if it's your turn.
   PlayingCard? get _tutorialHint => game.isTutorial &&
           _digital &&
-          _cards.dealId == game.dealId &&
+          _round.hasCards &&
           game.lesson < lessons.length
-      ? lessons[game.lesson].hint(_cards.tricks.length)
+      ? lessons[game.lesson].hint(_round.tricks.length)
       : null;
 
   /// What the tutorial's coach says right now.
@@ -3047,11 +3046,11 @@ class HomePageState extends State<HomePage>
     if (_choosingKing || _crowning != null || _dealtFor != game.dealId) {
       return l.intro;
     }
-    if (game.pickTurn == _you) return l.pick;
-    if (game.pickTurn != null) {
-      return '${game.players[game.pickTurn!].name} is choosing a task.';
+    if (_round.pickTurn == _you) return l.pick;
+    if (_round.pickTurn != null) {
+      return '${game.players[_round.pickTurn!].name} is choosing a task.';
     }
-    final c = _cards;
+    final c = _round;
     if (_lastTrick != null) {
       final done = c.tricks.length - 1;
       return l.afterTrick[done] ??
@@ -3228,12 +3227,11 @@ class HomePageState extends State<HomePage>
     _dealtFor = -1;
     _deal.reset();
     _landing.clear();
-    _whyFailed.clear();
   }
 
   void _shuffleTasks() {
     final midRound = _inGame && game.outcome == RoundOutcome.inProgress &&
-        game.kingIndex != null;
+        _round.king != null;
     setState(() {
       game.shuffleTasks(game.players.length, game.target);
       if (midRound) _decreeReadFor = game.dealId; // already read this round
@@ -3256,12 +3254,12 @@ class HomePageState extends State<HomePage>
   }
 
   void _toggleSpoke(int seat) {
-    if (!game.canSpeak(seat) && !game.spoke[seat]) {
-      _showSnack(game.whyCantSpeak() ?? 'No cards may be shown now', Palette.feltDeep);
+    if (!_round.canSpeak(seat) && !_round.spoke[seat]) {
+      _showSnack(_round.whyCantSpeak() ?? 'No cards may be shown now', Palette.feltDeep);
       return;
     }
     _haptic(HapticFeedback.selectionClick);
-    setState(() => game.toggleSpoke(seat));
+    setState(() => _round.toggleSpoke(seat));
   }
 
   /// Crowns the King with a flourish: the crown flies from the deck to
@@ -3282,7 +3280,7 @@ class HomePageState extends State<HomePage>
       if (!mounted) return;
       _haptic(HapticFeedback.heavyImpact);
       setState(() {
-        game.setKing(index);
+        game.crown(index);
         _crowning = null;
         _crownFromCentre = false;
       });
@@ -3303,7 +3301,7 @@ class HomePageState extends State<HomePage>
     }
     _dealtFor = game.dealId;
     // A task only one player may take is dealt straight to them.
-    if (game.tasks.any((t) => t.assignedPlayerIndex != null)) _layoutOwned();
+    if (game.tasks.any((t) => t.owner != null)) _layoutOwned();
     _deal.forward(from: 0);
   }
 
@@ -3315,7 +3313,7 @@ class HomePageState extends State<HomePage>
     });
   }
 
-  void _onDragStart(Task t) {
+  void _onDragStart(RoundTask t) {
     _ui(() {
       _dragging = t;
       _order
@@ -3329,12 +3327,12 @@ class HomePageState extends State<HomePage>
   final _taskDragTick = ValueNotifier(0);
   final _stillTick = ValueNotifier(0);
 
-  void _onDragUpdate(Task t, Offset delta) {
+  void _onDragUpdate(RoundTask t, Offset delta) {
     final geo = _geo;
     final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
     _pos[t] = _toFrac(p);
     final seat = geo.seatAt(p);
-    final hover = seat != null && game.canTake(t, seat) ? seat : null;
+    final hover = seat != null && _round.mayTake(t, seat) ? seat : null;
     if (hover != _hoverSeat) {
       _ui(() => _hoverSeat = hover);
     } else {
@@ -3342,16 +3340,16 @@ class HomePageState extends State<HomePage>
     }
   }
 
-  void _onDragEnd(Task t) {
+  void _onDragEnd(RoundTask t) {
     if (_digital) {
       final p = _toPx(_pos[t]!);
       final seat = _geo.seatAt(p);
-      final kingsCommand = game.decree == Decree.kingsCommand;
+      final kingsCommand = _round.decree == Decree.kingsCommand;
       final allowed = _yourPick &&
-          t.assignedPlayerIndex == null &&
+          t.owner == null &&
           seat != null &&
           (seat == _you || kingsCommand) &&
-          game.canTake(t, seat);
+          _round.mayTake(t, seat);
       if (!allowed) {
         setState(() {
           _dragging = null;
@@ -3362,10 +3360,10 @@ class HomePageState extends State<HomePage>
           _showSnack(
               !_yourPick
                   ? 'Wait for your turn to pick'
-                  : t.assignedPlayerIndex != null
+                  : t.owner != null
                       ? 'Tasks stay with whoever took them'
-                      : !game.canTake(t, seat)
-                          ? game.whyCantTake(t, seat)!
+                      : !_round.mayTake(t, seat)
+                          ? _round.whyCantTake(t, seat)!
                           : 'Take tasks onto your own seat',
               Palette.feltDeep);
         }
@@ -3380,29 +3378,29 @@ class HomePageState extends State<HomePage>
     }
     final p = _toPx(_pos[t]!);
     final seat = _dropSeat(p);
-    final previous = t.assignedPlayerIndex;
+    final previous = t.owner;
     setState(() {
       _dragging = null;
       _hoverSeat = null;
       var startPlay = false;
-      if (seat != null && game.canTake(t, seat)) {
-        if (t.assignedPlayerIndex != seat) _haptic(HapticFeedback.selectionClick);
-        startPlay = game.assign(t, seat);
+      if (seat != null && _round.mayTake(t, seat)) {
+        if (t.owner != seat) _haptic(HapticFeedback.selectionClick);
+        startPlay = _round.assign(t, seat);
       } else {
-        game.assign(t, null);
+        _round.assign(t, null);
         if (seat != null) {
           // Dropped on the King, who can't take it: leave it just inside.
           _pos[t] = _toFrac(_geo.clampToTable(
               Offset.lerp(_geo.seatCenter(seat), _geo.center, 0.45)!));
         }
       }
-      if (t.assignedPlayerIndex != null || previous != null) _layoutOwned();
+      if (t.owner != null || previous != null) _layoutOwned();
       if (startPlay) _play.forward(from: 0);
     });
     _save();
-    if (seat != null && !game.canTake(t, seat)) {
+    if (seat != null && !_round.mayTake(t, seat)) {
       _haptic(HapticFeedback.heavyImpact);
-      _showSnack(game.whyCantTake(t, seat)!, Palette.lost);
+      _showSnack(_round.whyCantTake(t, seat)!, Palette.lost);
     }
   }
 
@@ -3418,11 +3416,14 @@ class HomePageState extends State<HomePage>
     }));
   }
 
-  void _setTaskStatus(Task task, TaskStatus status) {
+  /// Marks a task done or failed (choosing its mark again clears it), and
+  /// when that settles the round, records the result. [why] is the judge's
+  /// reason for a failure, for the end of the round.
+  void _setTaskStatus(RoundTask task, TaskStatus status, {String? why}) {
     setState(() {
       final previous = task.status;
-      // Choosing the active status again resets the task.
-      task.status = task.status == status ? TaskStatus.pending : status;
+      _round.mark(task, status);
+      if (task.isFailed) task.whyFailed = why;
       if (task.isFailed) {
         _haptic(HapticFeedback.vibrate);
       } else if (task.isCompleted) {
@@ -3497,7 +3498,7 @@ class HomePageState extends State<HomePage>
     if (seat >= game.courtiers.length) return;
     final courtier = game.courtiers[seat];
     final player = game.players[seat];
-    final isKing = game.kingIndex == seat;
+    final isKing = _round.king == seat;
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -3507,8 +3508,8 @@ class HomePageState extends State<HomePage>
             setDialogState(() {});
           }
 
-          final spoke = game.spoke[seat];
-          final canSpeak = game.canSpeak(seat) || spoke;
+          final spoke = _round.spoke[seat];
+          final canSpeak = _round.canSpeak(seat) || spoke;
           return RotatedBox(
             quarterTurns: _geo.edge(seat),
             child: Dialog(
@@ -3605,7 +3606,7 @@ class HomePageState extends State<HomePage>
                                       : () {
                                           _haptic(
                                               HapticFeedback.selectionClick);
-                                          update(() => game.toggleSpoke(seat));
+                                          update(() => _round.toggleSpoke(seat));
                                         },
                                   child: Semantics(
                                     toggled: spoke,
@@ -3677,7 +3678,7 @@ class HomePageState extends State<HomePage>
   /// The close-up of a task, turned to face the player who holds it.
   /// The marks a task card carries beside its points (the same as on the
   /// table), each with what it means.
-  List<(Widget, String)> _taskMarks(Task task, double size) => [
+  List<(Widget, String)> _taskMarks(RoundTask task, double size) => [
         if (task.noCourtCards)
           (NoCourtIcon(size: size), 'The trick can\u2019t have any Court Cards in it.'),
         if (task.kingCantTake)
@@ -3689,15 +3690,15 @@ class HomePageState extends State<HomePage>
           (WaxSeal(seal: task.seal!, size: size + 3), Seals.describe(task.seal!)),
       ];
 
-  Future<void> _showTaskDetail(Task task, Offset tapGlobal) async {
-    final owner = task.assignedPlayerIndex == null
+  Future<void> _showTaskDetail(RoundTask task, Offset tapGlobal) async {
+    final owner = task.owner == null
         ? null
-        : game.players[task.assignedPlayerIndex!];
+        : game.players[task.owner!];
     // An owned task's close-up turns to face its owner; a loose task's
     // stays upright.
-    final quarterTurns = task.assignedPlayerIndex == null
+    final quarterTurns = task.owner == null
         ? 0
-        : _geo.edge(task.assignedPlayerIndex!);
+        : _geo.edge(task.owner!);
 
     await showDialog<void>(
       context: context,
@@ -3819,7 +3820,7 @@ class HomePageState extends State<HomePage>
                 ),
                 // Your pick: take it from here too.
                 if (_yourPick &&
-                    task.assignedPlayerIndex == null &&
+                    task.owner == null &&
                     _mayTake(task))
                   FilledButton(
                     // Ready for Enter, when chosen with the keys.
@@ -3846,7 +3847,7 @@ class HomePageState extends State<HomePage>
           FilledButton.icon(
             onPressed: () async {
               // Completing a sealed task out of order fails the round.
-              final problem = task.isCompleted ? null : game.sealProblem(task);
+              final problem = task.isCompleted ? null : _round.sealProblem(task);
               if (problem != null) {
                 final fail = await _confirmSealBreak(problem, quarterTurns);
                 if (!context.mounted) return;
@@ -4087,13 +4088,12 @@ class HomePageState extends State<HomePage>
   }
 
   /// Deals the round again from the start, cards, tasks and all, for a new
-  /// points target: whoever's dealt the King card is King.
+  /// points target (keeping its seals and decree): whoever's dealt the
+  /// King card is King.
   void _redeal() {
     setState(() {
-      final keepDecree = game.decree;
       game.addTasksUntilTarget(game.players.length, game.target,
           newRound: false, countRound: false);
-      game.decree = keepDecree;
       _resetTable();
     });
   }
@@ -4280,7 +4280,7 @@ class HomePageState extends State<HomePage>
           _inGame &&
           _setupArgs == null &&
           _digital &&
-          _cards.dealId == game.dealId)
+          _round.hasCards)
         Positioned.fill(
           key: const ValueKey('tracker'),
           child: IgnorePointer(
@@ -4314,7 +4314,7 @@ class HomePageState extends State<HomePage>
                             type: MaterialType.transparency,
                             child: _CardTracker(
                               key: _trackerKey,
-                              cards: _cards,
+                              cards: _round,
                               you: _you,
                               players: game.players,
                               onClose: _closeTracker,
@@ -4408,7 +4408,7 @@ class HomePageState extends State<HomePage>
                           for (final t in game.tasks)
                             if (t.seal != null) t.seal!
                         ]..sort(),
-                        decree: game.decree?.title,
+                        decree: _round.decree?.title,
                         roles: game.hasRoles,
                       )
                     : null);
@@ -4531,7 +4531,7 @@ class HomePageState extends State<HomePage>
                       style: TextStyle(fontSize: 13, color: Colors.white70)),
                 ),
               ],
-              if (game.decree != null && !_choosingKing) ...[
+              if (_round.decree != null && !_choosingKing) ...[
                 const SizedBox(width: 8),
                 // The decree in force; tap to read it again.
                 Flexible(child: InkWell(
@@ -4544,7 +4544,7 @@ class HomePageState extends State<HomePage>
                       color: Palette.cardRed,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(game.decree!.title,
+                    child: Text(_round.decree!.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -4560,12 +4560,12 @@ class HomePageState extends State<HomePage>
       actions: [
         // At a real table: whoever's picking may pass, once a round.
         if (!_digital &&
-            game.pickTurn != null &&
-            game.canPass(game.pickTurn!))
+            _round.pickTurn != null &&
+            _canPass(_round.pickTurn!))
           Tooltip(
-            message: '${game.players[game.pickTurn!].name} passes the pick on (once a round)',
+            message: '${game.players[_round.pickTurn!].name} passes the pick on (once a round)',
             child: TextButton(
-              onPressed: () => _pass(game.pickTurn!),
+              onPressed: () => _pass(_round.pickTurn!),
               style: TextButton.styleFrom(foregroundColor: Palette.gold),
               child: const Text('Pass'),
             ),
@@ -4652,19 +4652,19 @@ class HomePageState extends State<HomePage>
                   child: SeatToken(
                     player: game.players[i],
                     label: labels[i],
-                    isKing: game.kingIndex == i,
+                    isKing: _round.king == i,
                     size: geo.seatSize,
                     highlighted: _hoverSeat == i,
                     prompting: _choosingKing && _crowning == null,
                     picking: !_choosingKing &&
                         _dealtFor == game.dealId &&
-                        game.pickTurn == i,
-                    exiled: game.exiledSeat == i,
-                    speakLocked: !game.canSpeak(i),
+                        _round.pickTurn == i,
+                    exiled: _round.exiledSeat == i,
+                    speakLocked: !_round.canSpeak(i),
                     shape: game.hasRoles && i < game.courtiers.length
                         ? game.courtiers[i].shape
                         : null,
-                    spoke: _choosingKing || _digital ? null : game.spoke[i],
+                    spoke: _choosingKing || _digital ? null : _round.spoke[i],
                     // While choosing the King a tap crowns. During play a
                     // tap opens the courtier's card, or with no roles just
                     // flips the card-reveal token.
@@ -4853,13 +4853,13 @@ class HomePageState extends State<HomePage>
     ];
   }
 
-  String? get _decreeDetail => game.decree == Decree.exile &&
-          game.exiledSeat != null
-      ? 'Seat ${seatLabels(game.players)[game.exiledSeat!]} is exiled this round.'
+  String? get _decreeDetail => _round.decree == Decree.exile &&
+          _round.exiledSeat != null
+      ? 'Seat ${seatLabels(game.players)[_round.exiledSeat!]} is exiled this round.'
       : null;
 
   void _showDecree() {
-    final d = game.decree;
+    final d = _round.decree;
     if (d == null) return;
     showDialog<void>(
       context: context,
@@ -4983,7 +4983,7 @@ class HomePageState extends State<HomePage>
                     : target;
                 // Cards travel face down and turn over as they land.
                 final faceDown = dealing && progress < 0.98;
-                final owner = t.assignedPlayerIndex;
+                final owner = t.owner;
                 final lifted = _dragging == t;
                 final cardSize = geo.cardSize(t);
                 final cw = cardSize.width;
@@ -5178,11 +5178,11 @@ class HomePageState extends State<HomePage>
                       const SizedBox(height: 2),
                       SuitText(
                           [
-                            if (t.assignedPlayerIndex != null)
-                              t.assignedPlayerIndex == _you && _digital
+                            if (t.owner != null)
+                              t.owner == _you && _digital
                                   ? 'Your task.'
-                                  : '${game.players[t.assignedPlayerIndex!].name}\u2019s task.',
-                            _whyFailed[t] ?? 'Marked as failed.',
+                                  : '${game.players[t.owner!].name}\u2019s task.',
+                            t.whyFailed ?? 'Marked as failed.',
                           ].join(' '),
                           style: const TextStyle(
                               fontSize: 14.5, height: 1.3, color: Colors.white70)),

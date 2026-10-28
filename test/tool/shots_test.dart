@@ -94,7 +94,7 @@ void main() {
     Future<void> snap(String name) => expectLater(
         find.byType(MaterialApp), matchesGoldenFile('goldens/tut-$name.png'));
     for (var lesson = 0; lesson < 4; lesson++) {
-      for (var i = 0; i < 300 && game.pickTurn != 0; i++) {
+      for (var i = 0; i < 300 && game.round!.pickTurn != 0; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }
       await frames(40);
@@ -151,7 +151,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await snap();
-    for (var i = 0; i < 400 && game.pickTurn != null; i++) {
+    for (var i = 0; i < 400 && game.round!.pickTurn != null; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i == 3) await snap();
       if (i % 4 == 0) state.debugYourMove();
@@ -197,7 +197,7 @@ void main() {
           matchesGoldenFile('goldens/laptop-${shot++}.png'));
     }
 
-    for (var i = 0; i < 400 && game.pickTurn != null; i++) {
+    for (var i = 0; i < 400 && game.round!.pickTurn != null; i++) {
       await tester.pump(const Duration(milliseconds: 30));
       if (i == 40) await snap();
       state.debugYourMove();
@@ -251,7 +251,7 @@ void main() {
       final game = state.game;
       final name = onScreen ? 'screen' : 'table';
       if (onScreen) {
-        for (var i = 0; i < 400 && game.pickTurn != null; i++) {
+        for (var i = 0; i < 400 && game.round!.pickTurn != null; i++) {
           await tester.pump(const Duration(milliseconds: 30));
           state.debugYourMove();
         }

@@ -7,7 +7,7 @@ import 'dart:math';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/conflicts.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/engine/showing.dart';
 import 'package:kings_court/models.dart';
@@ -20,21 +20,19 @@ import 'package:kings_court/models.dart';
 /// task on the table needs (and that it may show). [onPlay] sees every
 /// card about to be played, for benchmarks.
 (bool, List<String>, List<String>) playRound(int players, int target, Random rand, Bot bot,
-    {void Function(MatchState s, int seat, PlayingCard card)? onPlay, bool showing = true}) {
+    {void Function(Round s, int seat, PlayingCard card)? onPlay, bool showing = true}) {
   // The seed from [rand], so a seeded run deals the same tasks every time.
   final g = GameState()
     ..seed = rand.nextInt(1 << 30)
     ..addTasksUntilTarget(players, target);
-  final s = MatchState(players: players, target: target);
+  final s = Round(players: players, target: target);
   s.dealFor(1, rand,
       accept: (hands, inPlay) =>
           g.tasks.every((t) => playableWith(t.description, hands, inPlay)));
-  s.tasks = [for (final t in g.tasks) MatchTask(t.freshCopy()..seal = null)];
+  s.tasks = [for (final t in g.tasks) RoundTask(t.task)];
   final dealt = [for (final t in s.tasks) t.description];
-  // Nobody takes two tasks that work against each other (as in the game).
-  s.takeRule = (task, seat) => !s.tasks.any((o) =>
-      o.owner == seat &&
-      selfClash(o.description, s.tasks[task].description, players: players));
+  // The King card's holder is King, and picks first.
+  s.king = s.kingCardHolder;
   s.pickTurn = s.king;
   s.phase = Phase.picking;
   // A card someone's task needs, shown once a round, as a courtier would.
@@ -45,7 +43,7 @@ import 'package:kings_court/models.dart';
       // A task of its own that asks it to show a card comes first.
       final own = intendedShow(s, seat, [
         for (final t in s.tasks)
-          if (t.owner == seat && t.verdict == Verdict.pending) t.description
+          if (t.owner == seat && t.isPending) t.description
       ]);
       if (own != null) {
         s.apply(ShowCard(seat, own));
@@ -54,7 +52,7 @@ import 'package:kings_court/models.dart';
       for (final card in s.hands[seat]) {
         if (s.revealFor(seat, card) == null) continue;
         final needed = s.tasks.any((t) =>
-            t.verdict == Verdict.pending &&
+            t.isPending &&
             (t.owner == null || t.owner != seat) &&
             neededCards(t.description).contains(card));
         if (needed) {

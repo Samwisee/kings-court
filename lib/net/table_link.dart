@@ -14,7 +14,7 @@ library;
 
 import 'dart:async';
 
-import '../engine/match.dart';
+import '../engine/round.dart';
 
 abstract class TableLink {
   /// Every move, from every seat, in the order the table plays them.

@@ -116,11 +116,13 @@ jobs:
       - name: Time main and the branch, twice each, on this runner
         run: |
           mkdir -p out
+          # The benchmarks live under test/tool (before the refactor, tool/bench).
+          where() { ls "$1/test/tool/$2" "$1/tool/bench/$2" 2>/dev/null | head -1 | sed "s|^$1/||"; }
           bench() {
             echo "== $1: the page, mid-round (phone size) ==" >> out/bench-compare.txt
-            (cd $2 && timeout 300 flutter test test/tool/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
+            (cd $2 && timeout 300 flutter test "$(where . page_bench_test.dart)" --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
             echo "== $1: bots, on the Dart VM ==" >> out/bench-compare.txt
-            (cd $2 && timeout 300 flutter test test/tool/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
+            (cd $2 && timeout 300 flutter test "$(where . bot_bench_test.dart)" --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
           }
           for round in 1 2; do
             bench "main (run $round)" base

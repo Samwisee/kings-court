@@ -2,18 +2,15 @@ import 'dart:math';
 
 import 'chronicle.dart';
 import 'courtiers.dart';
-import 'engine/conflicts.dart';
 import 'engine/deal_mix.dart';
-import 'engine/match.dart';
+import 'engine/round.dart';
 import 'engine/rules.dart';
 import 'engine/showing.dart';
 import 'engine/task.dart';
-import 'tasks.dart';
 import 'tutorial.dart';
 
+export 'engine/round.dart' show RoundOutcome;
 export 'engine/task.dart';
-
-enum RoundOutcome { inProgress, won, lost }
 
 /// Free play; Endless (each win adds a point); the Chronicle chapters;
 /// Dynasty, where the King reigns until they fall; or the Tutorial, short
@@ -45,26 +42,14 @@ class Player {
   Player(this.name, {required this.colorValue});
 }
 
+/// A game at the table: who's playing, how, the round in progress and the
+/// record so far. Plain Dart (colours are numbers), so the whole game can
+/// run on a server.
 class GameState {
   List<Player> players = [];
-  List<Task> tasks = [];
 
-  /// Index of the player holding the King card, or null if not chosen yet.
-  int? kingIndex;
-
-  int roundNumber = 0;
-  int wins = 0;
-  int losses = 0;
-
-  /// Whether each player has used their once-per-round card reveal.
-  List<bool> spoke = [];
-
-  /// Seats that have passed on taking a task this round. Each player may
-  /// pass once a round, handing the pick to the next player.
-  Set<int> passed = {};
-
-  /// Whose turn it is to pick a task, or null once every task has an owner.
-  int? pickTurn;
+  /// Which courtier sits in each seat (decides the token's shape).
+  List<Courtier> courtiers = [];
 
   GameMode mode = GameMode.free;
 
@@ -81,6 +66,7 @@ class GameState {
   /// The tutorial lesson being played (see [lessons]).
   int lesson = 0;
   bool get isTutorial => mode == GameMode.tutorial;
+  bool get isDynasty => mode == GameMode.dynasty;
 
   /// Free play and Endless: add random seals and decrees to each round.
   bool surprise = false;
@@ -90,54 +76,20 @@ class GameState {
   bool get hasRoles => roles;
 
   /// On-screen cards: the round is played on the device, you in seat 0
-  /// and bots in the rest. Null when playing with a real deck.
-  MatchState? cards;
-  bool get digital => cards != null;
+  /// and bots in the rest. Otherwise the phone keeps the tasks for a real
+  /// deck.
+  bool digital = false;
 
-  /// Seals in this round, the decree in force, and the exiled seat.
-  int sealCount = 0;
-  Decree? decree;
-  int? exiledSeat;
+  /// The round in progress: its tasks, deal and tricks. Null before a game
+  /// is set up.
+  Round? round;
 
-  /// Which courtier sits in each seat (decides the token's shape).
-  List<Courtier> courtiers = [];
+  /// The round's tasks (none before a game is set up).
+  List<RoundTask> get tasks => round?.tasks ?? const [];
 
-  /// Seats each player as a courtier: a different shape for everyone.
-  void seatCourtiers() {
-    courtiers = (Courtier.houses..shuffle()).take(players.length).toList();
-  }
-
-  bool get isDynasty => mode == GameMode.dynasty;
-
-  void _chooseExile() {
-    exiledSeat = null;
-    final king = kingIndex;
-    if (king != null && decree == Decree.exile && players.length >= 3) {
-      // Banish someone other than the King.
-      final others = [
-        for (int i = 0; i < players.length; i++)
-          if (i != king) i
-      ];
-      if (others.isNotEmpty) exiledSeat = others[Random().nextInt(others.length)];
-    }
-  }
-
-  /// The next seat clockwise after [from] that may pick a task.
-  int? _nextPicker(int from) {
-    // Skip anyone who can't take any of the tasks left.
-    for (var step = 1; step <= players.length; step++) {
-      final seat = (from + step) % players.length;
-      if (seat != exiledSeat &&
-          tasks.any((t) => t.assignedPlayerIndex == null && canTake(t, seat))) {
-        return seat;
-      }
-    }
-    for (var step = 1; step <= players.length; step++) {
-      final seat = (from + step) % players.length;
-      if (seat != exiledSeat) return seat;
-    }
-    return null;
-  }
+  int roundNumber = 0;
+  int wins = 0;
+  int losses = 0;
 
   /// Rounds won in a row, and the best run (kept across games by the app).
   int streak = 0;
@@ -163,14 +115,18 @@ class GameState {
   /// Every task in the game (see engine/task.dart).
   static final List<Task> taskPool = allTasks;
 
-  /// A round is won when every task is completed and lost as soon as any
-  /// task fails.
-  RoundOutcome get outcome {
-    if (tasks.isEmpty) return RoundOutcome.inProgress;
-    if (tasks.any((t) => t.isFailed)) return RoundOutcome.lost;
-    if (tasks.every((t) => t.isCompleted)) return RoundOutcome.won;
-    return RoundOutcome.inProgress;
+  /// Seats each player as a courtier: a different shape for everyone.
+  void seatCourtiers() {
+    courtiers = (Courtier.houses..shuffle()).take(players.length).toList();
   }
+
+  /// How the round in progress stands.
+  RoundOutcome get outcome => round?.outcome ?? RoundOutcome.inProgress;
+
+  /// Crowns the King: the exile (under that decree) is chosen from the
+  /// game's seed, tasks only one player may take go to them, and the King
+  /// picks first.
+  void crown(int? seat) => round!.crown(seat, dealRandom(2));
 
   /// Updates the win/loss record and streak once per round. Returns true if
   /// a result was recorded by this call.
@@ -205,264 +161,95 @@ class GameState {
     _resultRecorded = false;
   }
 
-  /// Whether [playerIndex] may take [task].
-  bool canTake(Task task, int playerIndex) =>
-      whyCantTake(task, playerIndex) == null;
-
-  /// Why [seat] can't take [task], or null if they can.
-  /// With [publicOnly], nobody's hand is consulted: only what the whole
-  /// table can see.
-  String? whyCantTake(Task task, int seat, {bool publicOnly = false}) {
-    if (seat == exiledSeat) return 'Exiled: no tasks this round';
-    if (task.kingCantTake && seat == kingIndex) {
-      return "The King can't take this task";
-    }
-    // Someone can't hold two tasks that work against each other.
-    for (final o in tasks) {
-      if (o != task &&
-          o.assignedPlayerIndex == seat &&
-          selfClash(o.description, task.description, players: players.length)) {
-        return 'That clashes with a task they already hold';
-      }
-    }
-    // On screen the app knows every hand: no task someone's cards make
-    // impossible for them (unless nobody else could take it either).
-    final m = cards;
-    if (!publicOnly && m != null && m.dealId == dealId && seat < m.hands.length) {
-      final why = handBlocks(task.description, m.hands[seat]);
-      if (why != null) {
-        final someoneElse = [
-          for (int s = 0; s < players.length && s < m.hands.length; s++)
-            if (s != seat &&
-                s != exiledSeat &&
-                !(task.kingCantTake && s == kingIndex) &&
-                handBlocks(task.description, m.hands[s]) == null)
-              s
-        ].isNotEmpty;
-        if (someoneElse) return why;
-      }
-    }
-    return null;
-  }
-
-  /// Whether [seat] may reveal a card right now, given the decree.
-  /// Late Counsel holds every card back until three tricks have been
-  /// played (on screen, where the app sees the tricks; at a real table the
-  /// players keep to it themselves).
-  bool canSpeak(int seat) => switch (decree) {
-        Decree.silence => false,
-        Decree.lateCounsel =>
-          !digital || (cards != null && cards!.dealId == dealId && cards!.tricks.length >= 3),
-        _ => true,
-      };
-
-  /// Why no card may be shown now, or null if one may.
-  String? whyCantSpeak() => switch (decree) {
-        Decree.silence => 'Silence is decreed: no cards may be shown this round',
-        Decree.lateCounsel when !canSpeak(0) =>
-          'Late Counsel: no cards may be shown until three tricks have been played',
-        _ => null,
-      };
-
-  /// Why completing [task] now would break the seal order, or null if it's
-  /// fine. Completing a task out of order fails the round.
-  String? sealProblem(Task task) {
-    final seal = task.seal;
-    if (seal == null) return null;
-    if (seal == Seals.last) {
-      final open = tasks.where((t) => t != task && !t.isCompleted);
-      return open.isEmpty
-          ? null
-          : 'The Ω seal must be the last task done, and ${open.length} '
-              'other task${open.length == 1 ? ' is' : 's are'} still open.';
-    }
-    final earlier = tasks.where((t) =>
-        t.seal != null && t.seal != Seals.last && t.seal! < seal && !t.isCompleted);
-    if (earlier.isEmpty) return null;
-    final first = earlier.map((t) => t.seal!).reduce(min);
-    return 'Seal ${Seals.label(first)} must be done before seal ${Seals.label(seal)}.';
-  }
-
-  /// Crowns the King, who picks the first task.
-  void setKing(int? index) {
-    kingIndex = index;
-    _chooseExile();
-    assignForced();
-    // The King picks first, unless there's nothing they're allowed to take.
-    final loose = tasks.where((t) => t.assignedPlayerIndex == null);
-    pickTurn = loose.isEmpty || index == null
-        ? null
-        : loose.any((t) => canTake(t, index))
-            ? index
-            : _nextPicker(index);
-    for (final t in tasks) {
-      if (t.assignedPlayerIndex != null && !canTake(t, t.assignedPlayerIndex!)) {
-        t.assignedPlayerIndex = null;
-      }
-    }
-  }
-
-  /// Gives [task] to [seat] (or takes it back with null). Picking moves on
-  /// clockwise each time a loose task is taken. Returns true when this was
-  /// the last task to be taken, so play can begin.
-  bool assign(Task task, int? seat) {
-    final wasLoose = task.assignedPlayerIndex == null;
-    if (seat != null && wasLoose) picksMade++;
-    task.assignedPlayerIndex = seat;
-    if (seat != null) assignForced();
-    final allTaken = tasks.every((t) => t.assignedPlayerIndex != null);
-    if (allTaken) {
-      final justFinished = pickTurn != null;
-      pickTurn = null;
-      return justFinished;
-    }
-    if (decree == Decree.kingsCommand) {
-      pickTurn = kingIndex; // the King hands out every task
-    } else if (seat != null && wasLoose && pickTurn != null) {
-      pickTurn = _nextPicker(pickTurn!);
-    } else if (pickTurn == null && kingIndex != null) {
-      // A task was handed back after picking finished: picking resumes.
-      pickTurn = seat == null ? kingIndex : pickTurn;
-    }
-    return false;
-  }
-
-  /// Tasks taken by a pick this round (not counting ones that went
-  /// straight to the only player who could take them).
-  int picksMade = 0;
-
-  /// A task only one player can take goes straight to them.
-  void assignForced() {
-    if (kingIndex == null) return;
-    var changed = true;
-    while (changed) {
-      changed = false;
-      for (final t in tasks) {
-        if (t.assignedPlayerIndex != null) continue;
-        final able = [
-          for (int s = 0; s < players.length; s++)
-            if (canTake(t, s)) s
-        ];
-        if (able.length == 1) {
-          t.assignedPlayerIndex = able.single;
-          changed = true;
-        }
-      }
-    }
-    if (tasks.every((t) => t.assignedPlayerIndex != null)) pickTurn = null;
-  }
-
-  void toggleSpoke(int seat) => spoke[seat] = !spoke[seat];
-
-  void _resetRoundCounters() {
-    picksMade = 0;
-    spoke = List.filled(players.length, false);
-    pickTurn = null;
-    passed = {};
-  }
-
-  /// Whether [seat] may pass on picking a task right now: it's their turn,
-  /// they haven't passed this round, and someone else could pick instead.
-  bool canPass(int seat) =>
-      pickTurn == seat &&
-      !isTutorial &&
-      decree != Decree.kingsCommand &&
-      !passed.contains(seat) &&
-      tasks.any((t) => t.assignedPlayerIndex == null) &&
-      _nextPicker(seat) != seat;
-
-  /// [seat] passes: the pick moves on clockwise.
-  void pass(int seat) {
-    if (!canPass(seat)) return;
-    passed.add(seat);
-    pickTurn = _nextPicker(seat);
-  }
-
   /// Replays the same tasks in a new round: clears results and assignments.
   void retryRound() {
-    tasks = tasks.map((t) => t.freshCopy()).toList();
-    kingIndex = null;
-    exiledSeat = null;
+    final old = round!;
     roundNumber++;
     dealId++;
     _resultRecorded = false;
-    _resetRoundCounters();
+    round = _newRound(old.players, target)
+      ..tasks = [for (final t in old.tasks) RoundTask(t.task, seal: t.seal)]
+      ..sealCount = old.sealCount
+      ..decree = old.decree;
   }
 
   /// Draws a new set of tasks. Starts a new round unless the current round
   /// is still in progress (shuffling mid-round replaces this round's tasks
   /// and the King picks first again).
   void shuffleTasks(int playerCount, int targetPoints) {
-    final finished = tasks.isEmpty || outcome != RoundOutcome.inProgress;
-    final king = kingIndex;
-    final exiled = exiledSeat;
-    final keepDecree = decree;
+    final old = round;
+    final finished = old == null || old.tasks.isEmpty || outcome != RoundOutcome.inProgress;
     addTasksUntilTarget(playerCount, targetPoints, newRound: finished);
     if (!finished) {
       roundNumber--; // same round, new tasks
-      decree = keepDecree;
-      kingIndex = king;
-      exiledSeat = exiled;
-      pickTurn = king;
+      final r = round!
+        ..king = old.king
+        ..exiledSeat = old.exiledSeat
+        ..pickTurn = old.king;
+      if (old.king != null) r.leader = old.king!;
     }
   }
 
+  /// A fresh round for this game's seats, named after the players.
+  Round _newRound(int playerCount, int targetPoints) =>
+      Round(players: playerCount, target: targetPoints, dealId: dealId)
+        ..names = [
+          for (var i = 0; i < playerCount; i++)
+            i < players.length ? players[i].name : 'Player ${i + 1}'
+        ];
+
   /// Draws random tasks (no repeats) whose points add up to [targetPoints]
-  /// for the given player count, or as close as the pool allows.
+  /// for the given player count, or as close as the pool allows, into a
+  /// new round.
   ///
   /// A new round also settles its seals and decree: a Chronicle chapter
-  /// fixes them; with [surprise] on they're rolled at random.
+  /// fixes them; with [surprise] on they're rolled at random. Otherwise
+  /// (a re-deal) the round keeps the seals and decree it had.
   void addTasksUntilTarget(int playerCount, int targetPoints,
       {bool newRound = true, bool countRound = true}) {
-    tasks.clear();
-    kingIndex = null;
-    exiledSeat = null;
+    final old = round;
     if (countRound) roundNumber++;
     dealId++;
     _resultRecorded = false;
-    _resetRoundCounters();
+    final r = _newRound(playerCount, targetPoints);
+    round = r;
     final rand = dealRandom(1);
     // The tutorial sets its own tasks, with no seals or decrees.
     if (isTutorial) {
-      sealCount = 0;
-      decree = null;
       final lessonTasks = lessons[max(0, min(lesson, lessons.length - 1))].tasks;
-      tasks.addAll([
-        for (final d in lessonTasks)
-          taskPool.firstWhere((t) => t.description == d).freshCopy()..seal = null
-      ]);
+      r.tasks = [for (final d in lessonTasks) RoundTask(taskByDescription(d))];
       return;
     }
     if (newRound) {
       if (mode == GameMode.chronicle && chapter != null) {
-        sealCount = chronicle[chapter!].seals;
-        decree = chronicle[chapter!].decree;
+        r.sealCount = chronicle[chapter!].seals;
+        r.decree = chronicle[chapter!].decree;
       } else if (surprise) {
-        sealCount = const [0, 0, 2, 3][rand.nextInt(4)];
-        decree = rand.nextBool()
+        r.sealCount = const [0, 0, 2, 3][rand.nextInt(4)];
+        r.decree = rand.nextBool()
             ? Decree.values[rand.nextInt(Decree.values.length)]
             : null;
-      } else {
-        sealCount = 0;
-        decree = null;
       }
-      if (decree == Decree.exile && playerCount < 3) decree = Decree.silence;
+      if (r.decree == Decree.exile && playerCount < 3) r.decree = Decree.silence;
+    } else if (old != null) {
+      r.sealCount = old.sealCount;
+      r.decree = old.decree;
     }
     // Draw the tasks, and if the round has seals, try a few draws for
     // enough tasks a seal can sit on.
     var best = const <Task>[];
     var bestFree = -1;
     for (var attempt = 0; attempt < 12; attempt++) {
-      final drawn = _drawTasks(playerCount, targetPoints, rand);
+      final drawn = _drawTasks(playerCount, targetPoints, r.decree, rand);
       final free = drawn.where(_sealable).length;
       if (free > bestFree) {
         best = drawn;
         bestFree = free;
       }
-      if (sealCount < 2 || free >= sealCount) break;
+      if (r.sealCount < 2 || free >= r.sealCount) break;
     }
-    tasks.addAll(best);
-    _placeSeals(rand);
+    r.tasks = [for (final t in best) RoundTask(t)];
+    _placeSeals(r, rand);
   }
 
   /// A seal orders tasks by when they're done, so it only goes on a task
@@ -470,7 +257,7 @@ class GameState {
   static bool _sealable(Task t) =>
       timingOf(t.description) == TaskTiming.anyTrick;
 
-  List<Task> _drawTasks(int playerCount, int targetPoints, Random rand) {
+  List<Task> _drawTasks(int playerCount, int targetPoints, Decree? decree, Random rand) {
     final drawn = <Task>[];
     var currentTotal = 0;
     final pool = drawOrder(taskPool, rand,
@@ -488,25 +275,25 @@ class GameState {
       if (!fitsDeal([for (final t in drawn) t.description], task.description, hands)) {
         continue;
       }
-      drawn.add(task.freshCopy()..seal = null);
+      drawn.add(task);
       currentTotal += points;
     }
     return drawn;
   }
 
-  /// Puts [sealCount] seals on tasks that can take them. A single seal
+  /// Puts the round's seals on tasks that can take them. A single seal
   /// orders nothing, so a round has two or none. The Ω seal must be the
   /// last task done, so it's only used when no other task waits for the
   /// round to end; otherwise the seals are all numbered.
-  void _placeSeals(Random rand) {
-    final free = tasks.where(_sealable).toList()..shuffle(rand);
-    final count = min(sealCount, free.length);
+  static void _placeSeals(Round r, Random rand) {
+    final free = r.tasks.where((t) => _sealable(t.task)).toList()..shuffle(rand);
+    final count = min(r.sealCount, free.length);
     if (count < 2) return;
-    final othersWait = tasks.any((t) =>
+    final othersWait = r.tasks.any((t) =>
         !free.take(count).contains(t) &&
         timingOf(t.description) == TaskTiming.end);
     final seals = othersWait
-        ? [for (int i = 1; i <= count; i++) i]
+        ? [for (var i = 1; i <= count; i++) i]
         : Seals.forCount(count);
     for (var i = 0; i < seals.length; i++) {
       free[i].seal = seals[i];
@@ -520,33 +307,18 @@ class GameState {
           for (final p in players)
             {'name': p.name, 'color': p.colorValue},
         ],
-        'tasks': [
-          for (final t in tasks)
-            {
-              'description': t.description,
-              'status': t.status.index,
-              'owner': t.assignedPlayerIndex,
-              'seal': t.seal,
-            },
-        ],
-        'king': kingIndex,
-        'round': roundNumber,
-        'wins': wins,
-        'losses': losses,
-        'spoke': spoke,
-        'passed': passed.toList(),
-        'pickTurn': pickTurn,
+        'courtiers': [for (final c in courtiers) c.index],
         'mode': mode.index,
         'target': target,
         'chapter': chapter,
         'lesson': lesson,
         'surprise': surprise,
         'roles': roles,
-        'cards': cards?.toJson(),
-        'sealCount': sealCount,
-        'decree': decree?.index,
-        'exiled': exiledSeat,
-        'courtiers': [for (final c in courtiers) c.index],
+        'digital': digital,
+        'round': round?.toJson(),
+        'roundNumber': roundNumber,
+        'wins': wins,
+        'losses': losses,
         'streak': streak,
         'bestStreak': bestStreak,
         'dealId': dealId,
@@ -555,60 +327,89 @@ class GameState {
       };
 
   /// Rebuilds a saved game. Returns null if the save can't be read (for
-  /// example after the task list changed in an update).
+  /// example after the task list changed in an update). Reads saves from
+  /// before the round was one record too (`tasks` beside `cards`).
   static GameState? fromJson(Map<String, dynamic> j) {
     try {
-      final byDescription = {for (final t in taskPool) t.description: t};
       final g = GameState()
         ..players = [
           for (final p in (j['players'] as List<dynamic>).cast<Map<String, dynamic>>())
             Player(p['name'] as String, colorValue: p['color'] as int),
         ]
-        ..tasks = [
-          for (final t in (j['tasks'] as List<dynamic>).cast<Map<String, dynamic>>())
-            byDescription[renamedTasks[t['description'] as String] ??
-                    t['description'] as String]!
-                .freshCopy()
-              ..status = TaskStatus.values[t['status'] as int]
-              ..assignedPlayerIndex = t['owner'] as int?
-              ..seal = t['seal'] as int?,
+        ..courtiers = [
+          for (final c in (j['courtiers'] as List?) ?? const [])
+            Courtier.values[c as int]
         ]
-        ..kingIndex = j['king'] as int?
-        ..roundNumber = j['round'] as int
-        ..wins = j['wins'] as int
-        ..losses = j['losses'] as int
-        ..spoke = List<bool>.from(j['spoke'] as List)
-        ..passed = {for (final s in (j['passed'] as List?) ?? const []) s as int}
-        ..pickTurn = j['pickTurn'] as int?
         ..mode = GameMode.values[(j['mode'] as int?) ?? 0]
         ..target = (j['target'] as int?) ?? 5
         ..chapter = j['chapter'] as int?
         ..lesson = (j['lesson'] as int?) ?? 0
         ..surprise = (j['surprise'] as bool?) ?? false
         ..roles = (j['roles'] as bool?) ?? true
-        ..cards = j['cards'] == null
-            ? null
-            : MatchState.fromJson(Map<String, dynamic>.from(j['cards'] as Map))
-        ..sealCount = (j['sealCount'] as int?) ?? 0
-        ..decree = j['decree'] == null ? null : Decree.values[j['decree'] as int]
-        ..exiledSeat = j['exiled'] as int?
-        ..courtiers = [
-          for (final c in (j['courtiers'] as List?) ?? const [])
-            Courtier.values[c as int]
-        ]
+        ..roundNumber = (j['roundNumber'] ?? j['round']) as int
+        ..wins = j['wins'] as int
+        ..losses = j['losses'] as int
         ..streak = j['streak'] as int
         ..bestStreak = j['bestStreak'] as int
         ..dealId = j['dealId'] as int;
       if (j['seed'] is int) g.seed = j['seed'] as int;
       g._resultRecorded = j['resultRecorded'] as bool;
-      if (g.players.isEmpty || g.tasks.isEmpty) return null;
+      if (g.players.isEmpty) return null;
       // A game of the old Dynasty: its story no longer loads.
       if (g.isDynasty) return null;
+      if (j['round'] is Map) {
+        g.digital = (j['digital'] as bool?) ?? false;
+        g.round = Round.fromJson(Map<String, dynamic>.from(j['round'] as Map));
+      } else {
+        g.digital = j['cards'] != null;
+        g.round = _legacyRound(j, g);
+      }
+      final r = g.round;
+      if (r == null || r.tasks.isEmpty) return null;
+      r.names = [for (final p in g.players) p.name];
       if (g.courtiers.length != g.players.length) g.seatCourtiers();
       return g;
     } catch (_) {
       return null;
     }
+  }
+
+  /// A round from a save that kept the tasks and the cards apart.
+  static Round _legacyRound(Map<String, dynamic> j, GameState g) {
+    final r = Round(players: g.players.length, target: g.target, dealId: g.dealId)
+      ..tasks = [
+        for (final t in (j['tasks'] as List<dynamic>).cast<Map<String, dynamic>>())
+          RoundTask.fromJson(t)
+      ]
+      ..king = j['king'] as int?
+      ..passed = {for (final s in (j['passed'] as List?) ?? const []) s as int}
+      ..pickTurn = j['pickTurn'] as int?
+      ..sealCount = (j['sealCount'] as int?) ?? 0
+      ..decree = j['decree'] == null ? null : Decree.values[j['decree'] as int]
+      ..exiledSeat = j['exiled'] as int?;
+    if (j['spoke'] case final List<dynamic> spoke when spoke.length == r.players) {
+      r.spoke = List<bool>.from(spoke);
+    }
+    // The cards, if they were dealt for this very deal.
+    if (j['cards'] case final Map<dynamic, dynamic> cards
+        when cards['dealId'] == g.dealId) {
+      final c = Round.fromJson(Map<String, dynamic>.from(cards));
+      r
+        ..hands = c.hands
+        ..setAside = c.setAside
+        ..tricks = c.tricks
+        ..leader = c.leader
+        ..currentSeats = c.currentSeats
+        ..current = c.current
+        ..revealed = c.revealed
+        ..revealHint = c.revealHint
+        ..revealedAt = c.revealedAt;
+      for (final t in r.tasks) {
+        final x = c.announced[t.description];
+        if (x != null) t.x = x;
+      }
+    }
+    return r;
   }
 }
 

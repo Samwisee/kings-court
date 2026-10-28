@@ -6,7 +6,7 @@ part of '../main.dart';
 class _Flight {
   _Flight(this.task, this.from, this.to, this.points, this.text,
       {this.fromFont = 13, this.toFont = 12, this.toColor = Palette.inkSoft});
-  final Task task;
+  final RoundTask task;
   final Rect from;
   final Rect to;
   final int points;
@@ -78,7 +78,7 @@ class _TaskChip extends StatelessWidget {
   /// Chosen with the arrow keys: it glows gold.
   final bool focused;
 
-  final Task task;
+  final RoundTask task;
   final int points;
   final String text;
   final Color color;

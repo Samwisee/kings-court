@@ -5,7 +5,7 @@ import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/deal_mix.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/models.dart';
 
@@ -31,7 +31,7 @@ void main() {
   });
 
   test('A two-player hand is played to its end', () {
-    final m = MatchState(players: 2, target: 6)..dealFor(1, Random(4), king: 0);
+    final m = Round(players: 2, target: 6)..dealFor(1, Random(4), king: 0);
     expect(m.totalTricks, 12);
     var guard = 0;
     while (m.hands.any((h) => h.isNotEmpty) && guard++ < 100) {
@@ -114,7 +114,7 @@ void main() {
     final rand = Random(7);
     for (var game = 0; game < 40; game++) {
       final players = 3 + game % 4;
-      final s = MatchState(players: players, target: 0)..newRound(rand);
+      final s = Round(players: players, target: 0)..newRound(rand);
       s.phase = Phase.playing;
       while (s.tricks.length < s.totalTricks) {
         final legal = s.legalFor(s.turn);
@@ -133,7 +133,7 @@ void main() {
   test('Bots can play a whole round', () {
     final rand = Random(3);
     final bot = Bot(rand)..budget = 40;
-    final s = MatchState(players: 4, target: 6)..newRound(rand);
+    final s = Round(players: 4, target: 6)..newRound(rand);
     var guard = 0;
     while (s.phase != Phase.roundOver && guard++ < 200) {
       switch (s.phase) {
@@ -152,12 +152,12 @@ void main() {
     }
     expect(s.phase, Phase.roundOver);
     expect(s.won, isNotNull);
-    expect(s.wins + s.losses, 1);
+    expect(s.outcome, isNot(RoundOutcome.inProgress));
   });
 
   test('A game in progress saves and loads', () {
     final rand = Random(5);
-    final s = MatchState(players: 4, target: 5)..newRound(rand);
+    final s = Round(players: 4, target: 5)..newRound(rand);
     for (var i = 0; i < s.tasks.length; i++) {
       s.apply(PickTask(s.pickTurn!, s.tasks.indexWhere((t) =>
           t.owner == null && !(t.task.kingCantTake && s.pickTurn == s.king))));
@@ -170,14 +170,14 @@ void main() {
       }
     }
     s.apply(PlayCard(s.turn, s.legalFor(s.turn).first));
-    final copy = MatchState.fromJson(s.toJson());
+    final copy = Round.fromJson(s.toJson());
     expect(copy.toJson(), s.toJson());
     expect(MatchAction.fromJson(PlayCard(2, c('7♦')).toJson()).toJson(),
         PlayCard(2, c('7♦')).toJson());
   });
 
   test('Illegal moves are refused', () {
-    final s = MatchState(players: 4, target: 5)..newRound(Random(9));
+    final s = Round(players: 4, target: 5)..newRound(Random(9));
     final notYou = (s.pickTurn! + 1) % 4;
     expect(s.problem(PickTask(notYou, 0)), isNotNull);
     expect(() => s.apply(PlayCard(0, s.hands[0].first)), throwsStateError);
@@ -278,16 +278,13 @@ void main() {
   });
 
   test('Nobody may hold two tasks that work against each other', () {
-    final g = GameState()
-      ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: 0xFF000000)];
-    Task task(String d) =>
-        GameState.taskPool.firstWhere((t) => t.description == d).freshCopy();
-    final noHearts = task('Win no ♠ cards')..assignedPlayerIndex = 1;
-    final threeHearts = task('Win the 9♠');
-    g.tasks = [noHearts, threeHearts];
-    expect(g.canTake(threeHearts, 1), isFalse);
-    expect(g.whyCantTake(threeHearts, 1), contains('clashes'));
-    expect(g.canTake(threeHearts, 2), isTrue);
+    final r = Round(players: 4, target: 5);
+    final noSpades = RoundTask(taskByDescription('Win no ♠ cards'), owner: 1);
+    final nineSpades = RoundTask(taskByDescription('Win the 9♠'));
+    r.tasks = [noSpades, nineSpades];
+    expect(r.mayTake(nineSpades, 1), isFalse);
+    expect(r.whyCantTake(nineSpades, 1), contains('clashes'));
+    expect(r.mayTake(nineSpades, 2), isTrue);
   });
 
   test('Progress counts what a task has won so far', () {
@@ -316,15 +313,10 @@ void main() {
   });
 
   test("If the King can't take any task, the next player picks first", () {
-    final g = GameState()
-      ..players = [for (int i = 0; i < 3; i++) Player('P$i', colorValue: 0xFF000000)]
-      ..tasks = [
-        GameState.taskPool
-            .firstWhere((t) => t.description == 'Win no Court Cards')
-            .freshCopy()
-      ];
-    g.setKing(0);
-    expect(g.pickTurn, 1);
+    final r = Round(players: 3, target: 5)
+      ..tasks = [RoundTask(taskByDescription('Win no Court Cards'))];
+    r.crown(0, Random(1));
+    expect(r.pickTurn, 1);
   });
 
   test('The same seed deals the same cards and tasks again', () {
@@ -335,9 +327,9 @@ void main() {
       ..addTasksUntilTarget(4, 6);
     final a = fresh(42), b = fresh(42), c = fresh(43);
     expect([for (final t in a.tasks) t.description], [for (final t in b.tasks) t.description]);
-    final ma = MatchState(players: 4, target: 6)..dealFor(a.dealId, a.dealRandom());
-    final mb = MatchState(players: 4, target: 6)..dealFor(b.dealId, b.dealRandom());
-    final mc = MatchState(players: 4, target: 6)..dealFor(c.dealId, c.dealRandom());
+    final ma = Round(players: 4, target: 6)..dealFor(a.dealId, a.dealRandom());
+    final mb = Round(players: 4, target: 6)..dealFor(b.dealId, b.dealRandom());
+    final mc = Round(players: 4, target: 6)..dealFor(c.dealId, c.dealRandom());
     expect(ma.hands, mb.hands);
     expect(ma.hands, isNot(mc.hands));
     // The seed survives a save.

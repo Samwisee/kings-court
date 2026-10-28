@@ -7,7 +7,7 @@
 library;
 
 import 'cards.dart';
-import 'match.dart';
+import 'round.dart';
 
 /// What [viewer] can tell about one other seat's hand.
 class HandGuess {
@@ -28,7 +28,7 @@ class HandGuess {
 }
 
 /// Everything [viewer] can deduce about the other hands in [m].
-List<HandGuess> guessHands(MatchState m, int viewer) {
+List<HandGuess> guessHands(Round m, int viewer) {
   final played = <PlayingCard>{
     for (final t in m.tricks) ...t.cards,
     ...m.current,
@@ -70,11 +70,8 @@ List<HandGuess> guessHands(MatchState m, int viewer) {
     if (!played.contains(e.value)) shownBy[e.value] = e.key;
   }
   // Everyone knows who the King is, so everyone knows who holds the King.
-  if (!played.contains(PlayingCard.king) &&
-      m.king != viewer &&
-      m.king >= 0 &&
-      m.king < m.players) {
-    shownBy[PlayingCard.king] = m.king;
+  if (m.king case final king? when !played.contains(PlayingCard.king) && king != viewer) {
+    shownBy[PlayingCard.king] = king;
   }
   bool ruledOut(HandGuess g, PlayingCard c) {
     final owner = shownBy[c];

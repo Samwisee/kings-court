@@ -1,7 +1,7 @@
 /// The game being played, apart from how it's drawn.
 ///
 /// [GameController] owns the [GameState] (and with it the cards on screen,
-/// [MatchState]), the [TableLink] every move goes through, and saving. The
+/// [Round]), the [TableLink] every move goes through, and saving. The
 /// page (HomePage) draws the controller and turns taps into calls on it;
 /// it keeps only what is about drawing: animations, where things are on
 /// screen, what's open.
@@ -18,7 +18,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../engine/match.dart';
+import '../engine/round.dart';
 import '../models.dart';
 import '../net/table_link.dart';
 
@@ -44,9 +44,6 @@ class GameController extends ChangeNotifier {
     _game = g;
     notifyListeners();
   }
-
-  /// The cards on screen, in an on-screen game.
-  MatchState get cards => _game.cards!;
 
   // ------------------------------------------------------------ saving
 

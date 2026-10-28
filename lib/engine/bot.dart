@@ -12,7 +12,7 @@ import 'dart:math';
 import 'cards.dart';
 import 'conflicts.dart';
 import 'deal_mix.dart';
-import 'match.dart';
+import 'round.dart';
 import 'rules.dart';
 import 'sampling.dart';
 import 'showing.dart';
@@ -35,7 +35,7 @@ class Bot {
 
   /// The deals to think in: the real one when all-seeing, else [samples]
   /// deals of the cards [viewer] can't see that fit everything known.
-  List<MatchState> _worldsFor(MatchState s, int viewer) {
+  List<Round> _worldsFor(Round s, int viewer) {
     _decisionSeed = rand.nextInt(1 << 30);
     return omniscient ? [s] : sampleWorlds(s, viewer, samples, rand);
   }
@@ -64,7 +64,7 @@ class Bot {
   double guidance = 0.85;
 
   /// The task [seat] should pick.
-  int choosePick(MatchState s, int seat) {
+  int choosePick(Round s, int seat) {
     final options = [
       for (int i = 0; i < s.tasks.length; i++)
         if (s.canTake(i, seat)) i
@@ -91,7 +91,7 @@ class Bot {
   }
 
   /// The number of tricks [seat] should announce for task [task].
-  int chooseX(MatchState s, int seat, int task) {
+  int chooseX(Round s, int seat, int task) {
     final counts = List.filled(s.totalTricks + 1, 0);
     final all = List.filled(s.totalTricks + 1, 0);
     final assigned = {
@@ -119,7 +119,7 @@ class Bot {
   }
 
   /// The card [seat] should play.
-  PlayingCard choosePlay(MatchState s, int seat) {
+  PlayingCard choosePlay(Round s, int seat) {
     final legal = s.legalFor(seat);
     if (legal.length == 1) return legal.first;
     final assigned = {
@@ -182,12 +182,12 @@ class Bot {
   /// 1 for each playout where all are done, plus a little for each task
   /// done in the ones that fall short. With [freeX], "exactly X" tasks
   /// count as done whatever X turns out to be (it's announced later).
-  double score(MatchState s, int viewer, Map<int, int> assigned, int playouts) =>
+  double score(Round s, int viewer, Map<int, int> assigned, int playouts) =>
       _scoreOf(_worldsFor(s, viewer), assigned, playouts);
 
   /// The playouts are spread over the [worlds] in turn, numbered from
   /// [from] (see [paired]).
-  double _scoreOf(List<MatchState> worlds, Map<int, int> assigned, int playouts,
+  double _scoreOf(List<Round> worlds, Map<int, int> assigned, int playouts,
       {int from = 0, (int, PlayingCard)? first, bool freeX = false}) {
     double total = 0;
     final guide = _guideFor(worlds.first, assigned);
@@ -200,12 +200,12 @@ class Bot {
 
   /// What each seat plays for in guided playouts, from the tasks they
   /// hold (null when playouts are random).
-  _Guide? _guideFor(MatchState s, Map<int, int> assigned) =>
+  _Guide? _guideFor(Round s, Map<int, int> assigned) =>
       guided ? _Guide.of(s, assigned, guidance) : null;
 
   /// The seats that will show a card for the show tasks they hold, with
   /// those tasks (empty when nobody needs to).
-  Map<int, List<String>> _plansFor(MatchState s, Map<int, int> assigned) {
+  Map<int, List<String>> _plansFor(Round s, Map<int, int> assigned) {
     Map<int, List<String>>? out;
     for (final e in assigned.entries) {
       final d = s.tasks[e.key].description;
@@ -217,7 +217,7 @@ class Bot {
 
   /// One random playout's value: 1 if every assigned task is done, a
   /// little for each one done otherwise.
-  double _playout(MatchState s, Map<int, int> assigned,
+  double _playout(Round s, Map<int, int> assigned,
       Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX,
       _Guide? guide, Random rand) {
     final sim = _Sim.from(s);
@@ -247,7 +247,7 @@ class Bot {
       for (final e in assigned.entries) {
         final t = s.tasks[e.key];
         if (needsX(t.description) && (freeX || t.x == null)) continue;
-        if (t.verdict == Verdict.pending &&
+        if (t.isPending &&
             taskRules[t.description]!(now, e.value, t.x) == Verdict.failed) {
           lostNow = true;
           break;
@@ -276,7 +276,7 @@ class Bot {
 
   /// Whether the sealed tasks among [assigned] were done in seal order
   /// (numbered seals in turn, Ω after every other task) in the round [v].
-  static bool _sealsKept(MatchState s, Map<int, int> assigned, RoundView v) {
+  static bool _sealsKept(Round s, Map<int, int> assigned, RoundView v) {
     const omega = 99;
     final seals = {
       for (final e in assigned.entries)
@@ -316,7 +316,7 @@ class Bot {
   /// every other task succeed, or failing that the most likely count. Never
   /// fewer than the tricks [seat] is sure to win (the King card always
   /// wins its trick).
-  static int _bestX(List<int> counts, List<int> all, MatchState s, int seat) {
+  static int _bestX(List<int> counts, List<int> all, Round s, int seat) {
     final least = s.hands[seat].contains(PlayingCard.king) ? 1 : 0;
     final useful = counts.any((c) => c > 0) ? counts : all;
     var best = least;
@@ -351,7 +351,7 @@ class Bot {
     return Future<void>.delayed(Duration.zero).then((_) => _clock.reset());
   }
 
-  Future<double> _scoreAsync(List<MatchState> worlds, Map<int, int> assigned,
+  Future<double> _scoreAsync(List<Round> worlds, Map<int, int> assigned,
       int playouts, {int from = 0, (int, PlayingCard)? first, bool freeX = false}) async {
     double total = 0;
     final guide = _guideFor(worlds.first, assigned);
@@ -365,7 +365,7 @@ class Bot {
   }
 
   Future<double> scoreAsync(
-      MatchState s, int viewer, Map<int, int> assigned, int playouts) {
+      Round s, int viewer, Map<int, int> assigned, int playouts) {
     _begin();
     return _scoreAsync(_worldsFor(s, viewer), assigned, playouts);
   }
@@ -373,7 +373,7 @@ class Bot {
   /// How well the last pick chosen is likely to go (0 to 1).
   double lastPickScore = 1;
 
-  Future<int> choosePickAsync(MatchState s, int seat) async {
+  Future<int> choosePickAsync(Round s, int seat) async {
     final options = [
       for (int i = 0; i < s.tasks.length; i++)
         if (s.canTake(i, seat)) i
@@ -402,7 +402,7 @@ class Bot {
     return best;
   }
 
-  Future<PlayingCard> choosePlayAsync(MatchState s, int seat) async {
+  Future<PlayingCard> choosePlayAsync(Round s, int seat) async {
     final legal = s.legalFor(seat);
     if (legal.length == 1) return legal.first;
     _begin();
@@ -455,7 +455,7 @@ class Bot {
     return best;
   }
 
-  Future<int> chooseXAsync(MatchState s, int seat, int task) async {
+  Future<int> chooseXAsync(Round s, int seat, int task) async {
     final counts = List.filled(s.totalTricks + 1, 0);
     final all = List.filled(s.totalTricks + 1, 0);
     final assigned = {
@@ -494,7 +494,7 @@ class _Sim {
   _Sim(this.players, this.hands, this.tricks, this.leader, this.seats,
       this.cards, this.totalTricks);
 
-  factory _Sim.from(MatchState s) => _Sim(
+  factory _Sim.from(Round s) => _Sim(
         s.players,
         [for (final h in s.hands) List.of(h)],
         List.of(s.tricks),
@@ -552,11 +552,11 @@ class _Sim {
     return !best.isCourt && card.suit == cards.first.suit && card.rank > best.rank;
   }
 
-  RoundView view(MatchState s, Set<PlayingCard> inPlay,
+  RoundView view(Round s, Set<PlayingCard> inPlay,
           [Map<int, PlayingCard>? shown, Map<int, int>? shownAt]) =>
       RoundView(
           players: players,
-          king: s.king,
+          king: s.king ?? s.leader,
           tricks: tricks,
           totalTricks: totalTricks,
           inPlay: inPlay,
@@ -583,13 +583,13 @@ class _Guide {
   /// How often a player follows the guide rather than playing at random.
   final double strength;
 
-  factory _Guide.of(MatchState s, Map<int, int> assigned, double strength) {
+  factory _Guide.of(Round s, Map<int, int> assigned, double strength) {
     final need = [for (int i = 0; i < s.players; i++) <PlayingCard>{}];
     final avoids = [for (int i = 0; i < s.players; i++) <bool Function(PlayingCard)>[]];
     final temper = List.filled(s.players, 0);
     for (final e in assigned.entries) {
       final t = s.tasks[e.key];
-      if (t.verdict != Verdict.pending) continue;
+      if (!t.isPending) continue;
       final seat = e.value;
       final d = t.description;
       final p = profileOf(d);

@@ -19,7 +19,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/sampling.dart';
 
 import 'play_round.dart';
@@ -56,7 +56,7 @@ void main() {
           // At some fair plays made after a card was shown: the same
           // decision with the shown cards forgotten, and the same decision
           // thought through again.
-          void check(MatchState s, int seat, PlayingCard card) {
+          void check(Round s, int seat, PlayingCard card) {
             if (s.revealed.isEmpty) return;
             afterShow++;
             final forgot = worldWith(s, s.hands)

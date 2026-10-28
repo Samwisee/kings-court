@@ -14,7 +14,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
-import 'package:kings_court/engine/match.dart';
+import 'package:kings_court/engine/round.dart';
 
 void main() {
   test('bot timings', () async {
@@ -29,9 +29,9 @@ void main() {
     for (final players in [3, 4, 5]) {
       // A fresh, fixed deal each time, so the numbers mean the same thing
       // run to run.
-      MatchState fresh() => MatchState(players: players, target: 6)..newRound(Random(11 + players));
+      Round fresh() => Round(players: players, target: 6)..newRound(Random(11 + players));
       // Everyone takes a task, round-robin from the King.
-      void settle(MatchState s) {
+      void settle(Round s) {
         while (s.phase == Phase.picking) {
           final seat = s.pickTurn!;
           final i = List.generate(s.tasks.length, (t) => t).firstWhere((t) => s.canTake(t, seat));
