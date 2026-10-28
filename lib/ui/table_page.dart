@@ -41,6 +41,7 @@ import '../platform/analytics.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
 import '../skin/skin_scope.dart';
+import '../skin/skins.dart';
 import '../skin/theme.dart';
 import 'bug_report.dart';
 import 'cards/card_view.dart';
@@ -178,6 +179,7 @@ class HomePageState extends State<HomePage>
   static const _uprightKey = 'kingsCourt.upright';
   static const _suitsKey = 'kingsCourt.fourColourSuits';
   static const _keysKey = 'kingsCourt.showShortcuts';
+  static const _skinKey = 'kingsCourt.skin';
   static const _tutorialDoneKey = 'kingsCourt.tutorialDone';
 
   /// Whether this player has finished the tutorial (or played before it
@@ -564,6 +566,8 @@ class HomePageState extends State<HomePage>
       _upright = prefs.getBool(_uprightKey) ?? false;
       Settings.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
       _showKeys = prefs.getBool(_keysKey) ?? false;
+      final skin = prefs.getString(_skinKey);
+      if (skin != null && mounted) SkinScope.choose(context, skinById(skin));
       final saves = await _readSaves(prefs);
       // Anyone with a saved game has played already.
       _tutorialDone = (prefs.getBool(_tutorialDoneKey) ?? false) || saves.isNotEmpty;
@@ -667,8 +671,10 @@ class HomePageState extends State<HomePage>
 
   /// Saves Chronicle progress and the sound setting.
   Future<void> _saveSettings() async {
+    final skin = context.skin.id;
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_skinKey, skin);
       await prefs.setString(_chronicleKey, jsonEncode(_progress.chronicle.toJson()));
       await prefs.setBool(_soundKey, Sfx.enabled);
       await prefs.setBool(_uprightKey, _upright);
@@ -3605,6 +3611,20 @@ class HomePageState extends State<HomePage>
             _saveSettings();
           case 'bug':
             showBugReport(context, details: _bugDetails);
+          case 'skin':
+            final next = context.skin.id == skins[1].id ? skins[0] : skins[1];
+            if (SkinScope.choose(context, next)) {
+              // Everything is drawn again, the cards kept on their layers too.
+              void redraw(Element e) {
+                e.markNeedsBuild();
+                e.visitChildren(redraw);
+              }
+              (context as Element).visitChildren(redraw);
+              // Saved once the page is under the new skin.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _saveSettings();
+              });
+            }
           case 'suits':
             setState(() => Settings.fourColourSuits = !Settings.fourColourSuits);
             // Every card on screen repaints in the new colours, even ones
@@ -3638,6 +3658,10 @@ class HomePageState extends State<HomePage>
         // For colour-blind players: no two suits share a colour.
         _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
             on: Settings.fourColourSuits),
+        // The quiet look beside the court's (a lock if it isn't owned).
+        _menuItem('skin', Icons.brush_outlined,
+            SkinScope.owns(context, skins[1]) ? 'Plain look' : 'Plain look (locked)',
+            on: context.skin.id == skins[1].id),
         // On a computer: the keyboard shortcuts, beside the table.
         if (_desktop)
           _menuItem('keys', Icons.keyboard_outlined, 'Keyboard shortcuts',
