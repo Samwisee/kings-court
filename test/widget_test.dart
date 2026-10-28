@@ -1320,7 +1320,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     }
 
-    final state = tester.state(find.byType(HomePage)) as dynamic;
+    // The table sits under the pages, so look past them for it.
+    final state =
+        tester.state(find.byType(HomePage, skipOffstage: false)) as dynamic;
     for (int lesson = 0; lesson < lessons.length; lesson++) {
       await readPages(lessons[lesson].pages, 'Play lesson ${lesson + 1}');
       final game = state.game as GameState;
