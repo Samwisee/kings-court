@@ -12,9 +12,11 @@ on:
 permissions:
   contents: write
 
+# One run at a time per branch, and every pushed commit gets its run (a
+# commit must be green on its own, so a newer push doesn't cancel it).
 concurrency:
   group: check-${{ github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   test:
