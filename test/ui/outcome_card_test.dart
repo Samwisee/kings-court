@@ -5,11 +5,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/modes/chronicle/chapters.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/ui/overlays/outcome_card.dart';
+import 'package:kings_court/widgets.dart';
 
 GameState finished({required bool won, GameMode mode = GameMode.free, int? chapter}) {
   final g = GameState()
@@ -75,7 +75,9 @@ void main() {
     await tester.pumpWidget(card(finished(won: false), canUndo: true, onUndo: () => undone = true));
     expect(find.text('Round lost'), findsOneWidget);
     expect(find.text('This task failed:'), findsOneWidget);
-    expect(find.textContaining('P1’s task. The 3♥ went elsewhere.', findRichText: true), findsOneWidget);
+    // SuitText sets the suit in its own span, so match its text as given.
+    expect(find.byWidgetPredicate((w) => w is SuitText && w.text == 'P1’s task. The 3♥ went elsewhere.'),
+        findsOneWidget);
     await tester.tap(find.text('Undo last mark'));
     expect(undone, isTrue);
   });
