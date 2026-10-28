@@ -10,6 +10,7 @@ import 'engine/cards.dart';
 import 'courtiers.dart';
 import 'models.dart';
 import 'play/suits.g.dart';
+import 'task_help.dart';
 import 'theme.dart';
 
 /// Clamps [v] to [lo]..[hi] as a double. Unlike num.clamp it never throws
@@ -64,12 +65,38 @@ class SuitText extends StatelessWidget {
       this.textAlign,
       this.struck = const {},
       this.maxLines,
-      this.overflow});
+      this.overflow,
+      this.keywords = true});
   final String text;
   final TextStyle style;
   final TextAlign? textAlign;
   final int? maxLines;
   final TextOverflow? overflow;
+
+  /// Game words set in gold, a little bolder, each tappable for what it
+  /// means (the first time each appears). Off on small task cards, where a
+  /// tap opens the card.
+  final bool keywords;
+
+  /// The game words found in text, and the glossary entry each opens.
+  static const _terms = <(String, String)>[
+    (r'follow(?:ing|s)? suit', 'Follow suit'),
+    (r'court cards?', 'Court Cards'),
+    (r'tricks?', 'Trick'),
+    (r'lead|leads|led|leading', 'Lead'),
+    (r'suits?', 'Suit'),
+    (r'aces?', 'Ace'),
+    (r'the king', 'The King'),
+    (r'in a row', 'In a row'),
+    (r'total|totalling', 'Total'),
+    (r'pass|passes', 'Pass'),
+    (r'show(?:s|ing)? (?:a|one) card', 'Show a card'),
+    (r'(?:wax )?seals?', 'Seal'),
+    (r'(?:royal )?decrees?', 'Royal decree'),
+  ];
+  static final _termPattern = RegExp(
+      [for (final (i, (p, _)) in _terms.indexed) '(?<k$i>\\b(?:$p)\\b)'].join('|'),
+      caseSensitive: false);
 
   /// Cards named in the text that are already won ("A♥"), crossed out.
   final Set<String> struck;
@@ -80,6 +107,26 @@ class SuitText extends StatelessWidget {
   /// Markers [Task.boardText] uses: no Court Cards, and a Court Card.
   static const noCourt = '\uE000';
   static const court = '\uE001';
+
+  /// A game word in gold, a little bolder; tap it to read what it means.
+  InlineSpan _keyword(
+          BuildContext context, String word, String term, TextStyle base, bool dark) =>
+      WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: Semantics(
+          button: true,
+          hint: 'What it means',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => showTermDialog(context, term),
+            child: Text(word,
+                style: base.copyWith(
+                    color: dark ? Palette.gold : Palette.goldDeep,
+                    fontWeight: FontWeight.w700)),
+          ),
+        ),
+      );
 
   InlineSpan _suit(String symbol, Color colour) {
     final size = (style.fontSize ?? 14) * 0.8;
@@ -98,6 +145,29 @@ class SuitText extends StatelessWidget {
     // On a dark background, suits are printed in lighter colours so they
     // keep their contrast.
     final dark = (style.color?.computeLuminance() ?? 0) > 0.3;
+    final seen = <String>{};
+    final base = DefaultTextStyle.of(context).style.merge(style);
+
+    // Plain words, with any game words in them picked out.
+    void words(String part) {
+      if (!keywords) {
+        spans.add(TextSpan(text: part));
+        return;
+      }
+      var at = 0;
+      for (final m in _termPattern.allMatches(part)) {
+        var term = '';
+        for (int i = 0; i < _terms.length; i++) {
+          if (m.namedGroup('k$i') != null) term = _terms[i].$2;
+        }
+        if (!seen.add(term)) continue;
+        if (m.start > at) spans.add(TextSpan(text: part.substring(at, m.start)));
+        spans.add(_keyword(context, m.group(0)!, term, base, dark));
+        at = m.end;
+      }
+      if (at < part.length) spans.add(TextSpan(text: part.substring(at)));
+    }
+
     Color suitColour(String symbol) {
       final suit = Suit.values.firstWhere((s) => s.symbol == symbol);
       return dark
@@ -107,7 +177,7 @@ class SuitText extends StatelessWidget {
 
     var last = 0;
     for (final m in _marked.allMatches(text)) {
-      if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
+      if (m.start > last) words(text.substring(last, m.start));
       final token = m.group(0)!;
       if (m.group(1) != null) {
         // A named card: its rank, then its suit in colour; crossed out once
@@ -140,13 +210,17 @@ class SuitText extends StatelessWidget {
         spans.add(_suit(token, suitColour(token)));
       } else {
         final plural = token.toLowerCase().endsWith('s');
-        spans.add(TextSpan(
-            text: plural ? 'Court Cards' : 'Court Card',
-            style: const TextStyle(fontWeight: FontWeight.w700)));
+        final name = plural ? 'Court Cards' : 'Court Card';
+        if (keywords && seen.add('Court Cards')) {
+          spans.add(_keyword(context, name, 'Court Cards', base, dark));
+        } else {
+          spans.add(TextSpan(
+              text: name, style: const TextStyle(fontWeight: FontWeight.w700)));
+        }
       }
       last = m.end;
     }
-    if (last < text.length) spans.add(TextSpan(text: text.substring(last)));
+    if (last < text.length) words(text.substring(last));
     return Text.rich(TextSpan(style: style, children: spans),
         textAlign: textAlign, maxLines: maxLines, overflow: overflow);
   }
@@ -934,6 +1008,7 @@ class TableCard extends StatelessWidget {
                         child: SizedBox(
                           width: c.maxWidth,
                           child: SuitText(text ?? task.description,
+                              keywords: false,
                               style: textStyle.copyWith(fontWeight: FontWeight.w600)),
                         ),
                       ),
@@ -3015,3 +3090,46 @@ class HighVisBorder extends RoundedRectangleBorder {
     canvas.drawRRect(r.deflate(8.5), line(outlineColour, 1.5));
   }
 }
+
+
+/// What a game word means, in the court's colours.
+Future<void> showTermDialog(BuildContext context, String term) => showDialog<void>(
+      context: context,
+      barrierColor: Colors.black45,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        child: OrnateCard(
+          won: false,
+          court: true,
+          margin: const EdgeInsets.only(top: 34),
+          padding: const EdgeInsets.fromLTRB(28, 34, 28, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(term,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      color: Palette.gold,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 10)])),
+              const SizedBox(height: 10),
+              SuitText(glossary[term] ?? '',
+                  keywords: false,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, height: 1.45, color: Colors.white)),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                    foregroundColor: Palette.gold, overlayColor: Colors.transparent),
+                child: const Text('Got it'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );

@@ -31,6 +31,14 @@ const glossary = <String, String>{
   'In a row': 'One straight after another, with no trick in between won by anyone else.',
   'Total':
       'Add up the numbers on the cards in the trick (an Ace counts as 1).',
+  'Pass':
+      'Once a round, when it’s your turn to choose a task, you may let the next player choose instead.',
+  'Show a card':
+      'Once a round, show everyone your highest, lowest or only card of a suit, saying which. It stays in your hand, face up, until you play it. Court Cards can’t be shown.',
+  'Seal':
+      'A wax seal on a task: sealed tasks must be done in order, I before II before III, and Ω last of all.',
+  'Royal decree':
+      'A rule for one round, read out at its start, such as Silence (no showing cards).',
 };
 
 /// Which [glossary] words a task uses, in the order they're worth reading.

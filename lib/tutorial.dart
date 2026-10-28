@@ -161,7 +161,7 @@ const _beforeLead = <IntroPage>[
     'A round goes on, trick after trick, until every hand is empty.',
   ], IntroArt.trick),
   IntroPage('Lesson 1: lead and win', [
-    'Your first round: one task, “Win the first trick”. As the King you take it, then lead the first trick.',
+    'Your first round: one task, “Win the first trick”. As the King you take it (press and hold a task to take it; a tap just reads it), then lead the first trick.',
     'You hold the 9♠, the highest ♠ there is. Lead it, and whatever ♠ the courtiers play, yours wins.',
     'A note under the table guides you, and the card it suggests glows in your hand.',
   ], IntroArt.firstRound),
@@ -254,7 +254,7 @@ const lessons = <Lesson>[
     intro:
         'King’s Court is played together: every round has tasks, and the court wins when every task is done.',
     tasks: ['Win the first trick'],
-    pick: 'You hold the King card, so you are the King and choose first. Tap the task to take it.',
+    pick: 'You hold the King card, so you are the King and choose first. Tap a task to read it; press and hold it to take it.',
     cards: [
       ['King', '9♠'],
       ['3♠'],
@@ -280,7 +280,7 @@ const lessons = <Lesson>[
     intro:
         'Many tasks ask you to win a certain card. A card is yours when it lands in a trick you win, whoever played it.',
     tasks: ['Win the 3♥'],
-    pick: 'Tap “Win the 3♥” to take it.',
+    pick: 'Press and hold “Win the 3♥” to take it.',
     cards: [
       ['King', '8♥'],
       ['3♥'],
@@ -309,7 +309,7 @@ const lessons = <Lesson>[
     intro:
         'The Joker, Jack, Queen and King are the Court Cards. They beat every suit, from the Joker (lowest) to the King (highest).',
     tasks: ['Win the 7♥ with a Court Card'],
-    pick: 'Tap the task to take it. You have no ♥ of your own, so someone else will have to lead one.',
+    pick: 'Press and hold the task to take it. You have no ♥ of your own, so someone else will have to lead one.',
     cards: [
       ['King', 'Jack', '2♣'],
       ['9♣', '7♥'],
@@ -344,7 +344,7 @@ const lessons = <Lesson>[
     intro:
         'Everyone wins or loses together. Your courtiers have tasks too, and a good King helps them.',
     tasks: ['Win the A♦', 'Win the 6♣'],
-    pick: 'There are two tasks. Tap “Win the A♦” to take it; the Duke will take the other.',
+    pick: 'There are two tasks. Press and hold “Win the A♦” to take it; the Duke will take the other.',
     cards: [
       ['King', '9♦', '6♣'],
       ['A♦', '8♣'],

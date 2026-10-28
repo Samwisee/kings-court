@@ -1566,10 +1566,10 @@ class _HomePageState extends State<HomePage>
       if (_speakPromptDue) return 'Share a card?';
       if (game.pickTurn == _you) {
         return game.decree == Decree.kingsCommand
-            ? "King's Command: tap a task to hand it out"
+            ? "King's Command: hold a task to hand it out"
             : game.canPass(_you)
-                ? 'Pick a task, or'
-                : 'Pick a task';
+                ? 'Hold a task to take it, or'
+                : 'Hold a task to take it';
       }
       if (_speakPromptDue) return 'Share a card?';
       return '${game.players[game.pickTurn!].name} is choosing a task…';
@@ -1649,7 +1649,7 @@ class _HomePageState extends State<HomePage>
                         children: [
                           Flexible(
                             child: Text(
-                                _speakPromptDue ? 'Show a card, or' : 'Pick a task, or',
+                                _speakPromptDue ? 'Show a card, or' : 'Hold a task to take it, or',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.right,
@@ -2552,10 +2552,12 @@ class _HomePageState extends State<HomePage>
                         : game.players[only].color,
                     width: w,
                     fontSize: big ? 16 : 13,
-                    onTap: () => _yourPick
+                    // A tap reads it; press and hold to take it, so taking
+                    // a task is always meant.
+                    onTap: () => _showTaskDetail(t, Offset.zero),
+                    onLongPress: () => _yourPick
                         ? _takeTask(t)
                         : _showTaskDetail(t, Offset.zero),
-                    onLongPress: () => _showTaskDetail(t, Offset.zero),
                   ),
                   if (only != null)
                     Padding(
@@ -3045,6 +3047,7 @@ class _HomePageState extends State<HomePage>
                 SimpleDialogOption(
                   onPressed: () => Navigator.pop(context, value),
                   child: SuitText(label,
+                      keywords: false,
                       style: const TextStyle(fontSize: 16, color: Colors.white)),
                 ),
             ],
@@ -3326,9 +3329,33 @@ class _HomePageState extends State<HomePage>
 
   /// The tutorial: a few pages of rules before each lesson, then the
   /// lesson that plays them out (see tutorial.dart).
-  Future<void> _startTutorial() async {
-    final r = await _lessonPages(0);
-    if (r == 'go' && mounted) _beginLesson(0);
+  Future<void> _startTutorial() => _openSection(0);
+
+  /// Opens the tutorial's reading section [i] (the pages before lesson [i],
+  /// or the closing pages after the last lesson), then plays on from it:
+  /// lesson [i], or out of the tutorial. Back on its first page returns to
+  /// wherever you were.
+  Future<void> _openSection(int i) async {
+    final closing = i >= lessons.length;
+    final r = closing
+        ? await showTutorialPages(context,
+            pages: outroPages,
+            heading: 'Part ${lessons.length + 1} of ${lessons.length + 1}',
+            finishLabel: 'Finish')
+        : await _lessonPages(i);
+    if (!mounted) return;
+    // Leaving, or done: out of the tutorial (if a lesson was under way).
+    if (r == 'quit' || (closing && r == 'go')) {
+      if (_inGame && game.isTutorial) _finishTutorial();
+      return;
+    }
+    if (r != 'go') return;
+    if (_inGame && game.isTutorial) {
+      setState(() => game.lesson = i);
+      _shuffleTasks();
+    } else {
+      _beginLesson(i);
+    }
   }
 
   /// The pages read before lesson [i].
@@ -3345,28 +3372,8 @@ class _HomePageState extends State<HomePage>
         roles: true, digital: true, lesson: i);
   }
 
-  Future<void> _nextLesson() async {
-    if (game.lesson >= lessons.length - 1) {
-      // The last pages, then out into the court.
-      final r = await showTutorialPages(context,
-          pages: outroPages,
-          heading: 'Part ${lessons.length + 1} of ${lessons.length + 1}',
-          finishLabel: 'Finish');
-      if (!mounted || r == 'back') return;
-      _finishTutorial();
-      return;
-    }
-    // Read the rules the next lesson plays out, then play it.
-    final r = await _lessonPages(game.lesson + 1);
-    if (!mounted) return;
-    if (r == 'quit') {
-      _finishTutorial();
-      return;
-    }
-    if (r != 'go') return;
-    setState(() => game.lesson++);
-    _shuffleTasks();
-  }
+  /// On to the next section's reading, then its lesson.
+  Future<void> _nextLesson() => _openSection(game.lesson + 1);
 
   /// Leaves the tutorial for the welcome table, and offers a real game.
   Future<void> _finishTutorial() async {
@@ -3382,31 +3389,45 @@ class _HomePageState extends State<HomePage>
     if (!mounted) return;
     final play = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Palette.feltDeep,
+      barrierColor: Colors.black54,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        title: const Row(children: [
-          CrownIcon(size: 26),
-          SizedBox(width: 10),
-          Flexible(
-            child: Text('You’re ready',
-                style: TextStyle(
-                    fontFamily: displayFont,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 24)),
+        elevation: 0,
+        child: OrnateCard(
+          won: false,
+          court: true,
+          margin: const EdgeInsets.only(top: 34),
+          padding: const EdgeInsets.fromLTRB(30, 38, 30, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('You’re ready',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 26,
+                      color: Palette.gold,
+                      shadows: _feltShadow)),
+              const SizedBox(height: 12),
+              const SuitText(
+                  'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, height: 1.45, color: Colors.white)),
+              const SizedBox(height: 22),
+              FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Play a game')),
+              const SizedBox(height: 6),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                      foregroundColor: Palette.gold, overlayColor: Colors.transparent),
+                  child: const Text('Not now')),
+            ],
           ),
-        ]),
-        content: const Text(
-            'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
-            style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Not now')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Play a game')),
-        ],
+        ),
       ),
     );
     if (play == true && mounted) _showSetupDialog();
@@ -3494,13 +3515,22 @@ class _HomePageState extends State<HomePage>
                               color: Palette.gold,
                               shadows: _feltShadow)),
                     ),
+                    // Back to this lesson's reading, or on to the next.
                     TextButton(
-                      onPressed: _finishTutorial,
+                      onPressed: () => _openSection(game.lesson),
                       style: TextButton.styleFrom(
                           foregroundColor: Palette.gold,
                           overlayColor: Colors.transparent,
                           visualDensity: VisualDensity.compact),
-                      child: const Text('Skip tutorial'),
+                      child: const Text('Back'),
+                    ),
+                    TextButton(
+                      onPressed: () => _openSection(game.lesson + 1),
+                      style: TextButton.styleFrom(
+                          foregroundColor: Palette.gold,
+                          overlayColor: Colors.transparent,
+                          visualDensity: VisualDensity.compact),
+                      child: const Text('Skip'),
                     ),
                   ]),
                   Padding(
@@ -4392,6 +4422,17 @@ class _HomePageState extends State<HomePage>
                   style: TextButton.styleFrom(foregroundColor: Palette.ink),
                   child: const Text('Close'),
                 ),
+                // Your pick: take it from here too.
+                if (_yourPick &&
+                    task.assignedPlayerIndex == null &&
+                    _mayTake(task))
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _takeTask(task);
+                    },
+                    child: const Text('Take this task'),
+                  ),
               ]
             : [
           OutlinedButton.icon(
@@ -9275,6 +9316,7 @@ class _TaskChip extends StatelessWidget {
           const SizedBox(height: 3),
           SuitText(text,
               struck: struck,
+              keywords: false,
               style: TextStyle(
                   fontSize: fontSize,
                   height: 1.15,

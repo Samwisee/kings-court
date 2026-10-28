@@ -61,7 +61,7 @@ const _sections = <_Section>[
   _Section('Choosing tasks', [
     'The tasks are shuffled and dealt face up in the middle of the table.',
     'Before anyone picks, you may show a card (see Showing a card): tap it in your hand, or tap Skip.',
-    'Picking goes round from the King. When it’s your pick, tap a task to take it.',
+    'Picking goes round from the King. When it’s your pick, press and hold a task to take it (a tap reads it, and its close-up has a Take button).',
     'Once a round you may pass instead, with Pass beside the status line: the pick moves on. Courtiers may pass too, and say so.',
     'A task outlined in a player’s colour can only be taken by them. Some tasks can’t be taken: the King can’t take a task marked with a barred circle, no one may hold two tasks that work against each other, and your own hand can rule a task out (you can’t win the 7♥ with a Court Card if you hold the 7♥).',
   ], RulesFor.onScreen),
