@@ -355,7 +355,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
         child: TableCard(
             task: task,
             text: text,
-            points: task.getPointsForPlayerCount(3),
+            points: task.points(3),
             owner: owner == null
                 ? null
                 : Player(tutorialCourtiers[owner], colorValue: Palette.players[owner].toARGB32()),

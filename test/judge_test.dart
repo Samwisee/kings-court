@@ -115,7 +115,7 @@ void main() {
     expect(r.tasks[0].whyFailed, isNotNull);
 
     final w = table(['Win the first trick']);
-    w.assign(w.tasks[0], w.king!);
+    w.assign(w.tasks[0], w.king);
     kingWinsTrick(w);
     for (final f in w.judge()) {
       w.flip(f);

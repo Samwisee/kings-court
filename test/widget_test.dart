@@ -1319,7 +1319,7 @@ void main() {
       for (final target in [5, 10, 20]) {
         final game = GameState()..addTasksUntilTarget(players, target);
         final total = game.tasks
-            .fold<int>(0, (sum, t) => sum + t.getPointsForPlayerCount(players));
+            .fold<int>(0, (sum, t) => sum + t.points(players));
         final names = game.tasks.map((t) => t.description).toSet();
         expect(total, lessThanOrEqualTo(target));
         expect(names.length, game.tasks.length);

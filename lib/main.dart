@@ -819,7 +819,7 @@ class HomePageState extends State<HomePage>
   bool get _readyToDeal =>
       !_choosingKing && !_decreePending && _dealtFor != game.dealId;
 
-  int _points(RoundTask t) => t.getPointsForPlayerCount(game.players.length);
+  int _points(RoundTask t) => t.points(game.players.length);
 
   _TableGeometry get _geo => _TableGeometry(
       _tableSize, game.players.length, (t) => t.boardText(game.players.length),

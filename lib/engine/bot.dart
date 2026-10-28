@@ -280,7 +280,7 @@ class Bot {
     const omega = 99;
     final seals = {
       for (final e in assigned.entries)
-        if (s.tasks[e.key].task.seal != null) e.key: s.tasks[e.key].task.seal!
+        if (s.tasks[e.key].seal != null) e.key: s.tasks[e.key].seal!
     };
     if (seals.isEmpty) return true;
     // The trick each task was done on (they're all done by now).
