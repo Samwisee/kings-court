@@ -15,14 +15,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import 'build_info.dart';
+import 'crash_reports.dart';
 import 'widgets.dart';
 
 /// Where reports go, set when the game is built
 /// (`--dart-define=BUG_URL=https://…`). Empty means copy instead.
 const bugReportUrl = String.fromEnvironment('BUG_URL');
 
-/// Which build this is (the commit), set when the game is built.
-const buildVersion = String.fromEnvironment('BUILD', defaultValue: 'dev');
 
 /// Asks what went wrong and sends it. [details] is called when the report
 /// is sent, so it captures the game as it is at that moment.
@@ -47,6 +47,7 @@ Future<void> showBugReport(BuildContext context,
           'locale': PlatformDispatcher.instance.locale.toLanguageTag(),
         },
         'time': DateTime.now().toUtc().toIso8601String(),
+        if (recentErrors.isNotEmpty) 'recentErrors': List.of(recentErrors),
         ...snapshot,
       },
     ),

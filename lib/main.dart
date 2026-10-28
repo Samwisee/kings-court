@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'bug_report.dart';
 import 'chronicle.dart';
+import 'crash_reports.dart';
 import 'courtiers.dart';
 import 'story.dart';
 import 'models.dart';
@@ -54,9 +55,7 @@ part 'home/transitions.dart';
 part 'home/mini_card.dart';
 part 'home/buttons.dart';
 
-void main() {
-  runApp(const TheKingsCourtApp());
-}
+void main() => runWithCrashReports(const TheKingsCourtApp());
 
 class TheKingsCourtApp extends StatelessWidget {
   const TheKingsCourtApp({super.key});

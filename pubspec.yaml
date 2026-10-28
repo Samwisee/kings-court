@@ -43,6 +43,8 @@ dependencies:
   audioplayers: ^6.1.0
   # Sends bug reports (lib/bug_report.dart).
   http: ^1.2.2
+  # Crash reports (lib/crash_reports.dart).
+  sentry_flutter: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +56,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  # Uploads web source maps to Sentry in CI.
+  sentry_dart_plugin: ^3.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -112,3 +116,14 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Source maps for crash reports, uploaded by CI (dart run sentry_dart_plugin).
+# The org, project, token and release come from the environment.
+sentry:
+  upload_debug_symbols: false
+  upload_source_maps: true
+  upload_sources: true
+  web_build_path: build/web
+  url_prefix: ~/kings-court/
+  commits: false
+  ignore_missing: true

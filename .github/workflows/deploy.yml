@@ -60,6 +60,23 @@ jobs:
           flutter build web --release --base-href /kings-court/
           --dart-define=BUILD=${GITHUB_SHA::8}
           --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }}
+          --dart-define=SENTRY_DSN=${{ vars.SENTRY_DSN }}
+          --source-maps
+      # Source maps go to Sentry (when it's set up) so crash reports show the
+      # Dart lines, then are left off the published site.
+      - name: Upload source maps
+        if: ${{ vars.SENTRY_DSN != '' }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            SENTRY_RELEASE=kings-court@${GITHUB_SHA::8} dart run sentry_dart_plugin
+          else
+            echo "::warning::SENTRY_AUTH_TOKEN not set; crash reports will show compiled JS lines"
+          fi
+      - run: find build/web -name '*.map' -delete
       # Give each build's files a version so browsers fetch the new ones
       # instead of a cached copy.
       - name: Bust caches
