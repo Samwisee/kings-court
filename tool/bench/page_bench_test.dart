@@ -59,6 +59,36 @@ void main() {
     await time('a change to the game (setState)', () => state.setState(() {}));
     final whole = await time('a change to the screen only (_ui)', () => state.debugUi(() {}));
     await time('a frame with nothing changed', () {});
+
+    // The frame's phases on their own: building widgets, laying them out
+    // and recording the paint (what the framework does), apart from
+    // rasterising, which the test harness does on the CPU at 3x and a
+    // phone's GPU does for next to nothing.
+    Future<void> phases(String what) async {
+      final binding = tester.binding;
+      double build = 0, layout = 0, paint = 0;
+      const n = 20;
+      for (int i = 0; i < n; i++) {
+        state.debugUi(() {});
+        final sw = Stopwatch()..start();
+        binding.buildOwner!.buildScope(binding.rootElement!);
+        build += sw.elapsedMicroseconds;
+        sw.reset();
+        binding.rootPipelineOwner.flushLayout();
+        binding.rootPipelineOwner.flushCompositingBits();
+        layout += sw.elapsedMicroseconds;
+        sw.reset();
+        binding.rootPipelineOwner.flushPaint();
+        paint += sw.elapsedMicroseconds;
+        await tester.pump();
+      }
+      // ignore: avoid_print
+      print('BENCH $what: build ${(build / n / 1000).toStringAsFixed(1)} ms, '
+          'layout ${(layout / n / 1000).toStringAsFixed(1)} ms, '
+          'paint ${(paint / n / 1000).toStringAsFixed(1)} ms');
+    }
+
+    await phases('the framework\'s work a frame');
     // What each part of the page costs: the frame without it.
     for (final part in ['table', 'hand', 'bar', 'trim']) {
       HomePageTestHooks.skip = {part};
@@ -67,6 +97,7 @@ void main() {
       final without = await time('  without the $part', () => state.debugUi(() {}));
       // ignore: avoid_print
       print('BENCH  so the $part costs about ${(whole - without).toStringAsFixed(1)} ms');
+      await phases('  without the $part');
     }
     HomePageTestHooks.skip = {};
     // What a change to the game does besides the rebuild.
