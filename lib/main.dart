@@ -411,7 +411,7 @@ class _HomePageState extends State<HomePage>
       if (from == null) return false;
       final ahead = [
         for (final st in stops)
-          if (st.item != here?.item &&
+          if (!identical(st, here) &&
               (up
                   ? st.rect.center.dy < from.top + 4
                   : st.rect.center.dy > from.bottom - 4))
@@ -435,7 +435,9 @@ class _HomePageState extends State<HomePage>
       if (!stops.any((st) => st.row == kind)) kind = 0;
       final same = _readingOrder([for (final st in stops) if (st.row == kind) st]);
       if (same.isEmpty) return false;
-      final at = here == null ? -1 : same.indexWhere((st) => st.item == here.item);
+      final at = here == null
+          ? -1
+          : same.indexWhere((st) => st.row == here.row && st.item == here.item);
       if (at < 0) {
         // Nothing chosen yet (or it's gone): start nearest the last choice.
         go(_kbLast == null
