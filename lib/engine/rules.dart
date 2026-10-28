@@ -107,9 +107,10 @@ TaskRule anyTrick(bool Function(Trick t) test) => (v, owner, _) =>
 TaskRule never(bool Function(RoundView v, int owner) bad) =>
     (v, owner, _) => bad(v, owner) ? Verdict.failed : _end(v, true);
 
-/// Decided at the end of the round.
+/// Decided at the end of the round (and not looked at before it: a rule
+/// about the last trick has nothing to look at until then).
 TaskRule atEnd(bool Function(RoundView v, int owner) success) =>
-    (v, owner, _) => _end(v, success(v, owner));
+    (v, owner, _) => v.over ? _end(v, success(v, owner)) : Verdict.pending;
 
 /// Win every one of [cards]: failed once anyone else wins one.
 TaskRule winAll(List<PlayingCard> cards) => (v, owner, _) {
