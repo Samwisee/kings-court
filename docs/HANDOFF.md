@@ -122,7 +122,7 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 
 - **Multiplayer/Firebase:** plan in `docs/ONLINE.md`. The seam is `lib/net/table_link.dart`; card plays and shown cards already go through it.
 - **Tutorial follow-ups:** more lessons for seals, royal decrees, the speech token (showing a card), and a short Dynasty primer.
-- **`_HomePageState` is very large:** its widgets now live in `lib/home/`; the next step is a controller (`ChangeNotifier`) owning the game, bots and table link (see README).
+- **`_HomePageState` is very large:** its widgets live in `lib/home/`, and `GameController` (`lib/game/`) owns the game, the table link and debounced saving. Use `setState` when the game changes and `_ui` when only the screen does. Bots, dealing to the screen and trick pauses still live on the page (see README).
 - **Flaky test:** "Stacks for neighbouring seats never overlap" sometimes needs its built-in retry.
 - **Card reveals on screen** exist (`_speak`/`_reveal`) but bots only reveal outside the tutorial.
 

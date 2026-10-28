@@ -45,6 +45,7 @@ Commit messages are one plain sentence of what changed for the player.
 ```
 lib/
   main.dart          The app and its one page, the table (HomePage).
+  game/              GameController: the game, its table link, and saving.
   home/              The table's pieces, one family per file (part of main.dart).
   widgets.dart       Shared UI used on every screen...
   ui/                ...one family per file (part of widgets.dart).
@@ -90,11 +91,26 @@ state lives in `lib/home/`:
 | `transitions.dart` | How setup pages turn. |
 | `chronicle_ui.dart`, `saves.dart` | The chapter picker; saved games. |
 
-The next structural step is to lift the game logic out of
-`_HomePageState` into a controller: a `ChangeNotifier` owning the
-`GameState`, the `MatchState`, the bots and the table link, so the page
-only draws it. Online play wants the same shape, with the controller
-listening to the link and the page rendering.
+### lib/game: the controller
+
+`GameController` (`lib/game/controller.dart`) is a `ChangeNotifier` that
+owns the `GameState` (and its `MatchState`), the `TableLink` every move
+goes through, and saving. The page reads `game` from it and draws.
+
+- **Saving waits for a pause.** A change asks the controller to save, and
+  it writes 400 ms after the last one, so a trick or a deal is written
+  once rather than a dozen times. A waiting save is written straight away
+  when the app goes into the background, the page closes, a new game
+  replaces the old one, or the saved-games list is opened.
+- **Two kinds of change on the page.** `setState` is for the game
+  changing: it saves, deals cards to the screen, starts task flights and
+  wakes the courtiers. `_ui` is for what's on screen only (a menu, a
+  toast, the tracker, keyboard selection, dragging), and rebuilds without
+  any of that. Use `_ui` for anything that doesn't change the game.
+
+Still on the page for now: the bots' timing, dealing cards to the screen
+and the trick pauses. They are tied to animations; they move into the
+controller as online play needs them.
 
 ### lib/ui (widgets.dart)
 
@@ -195,9 +211,17 @@ Still to move onto the link: taking tasks and passing, which go through
   `disableAnimationsOf`), so they don't rebuild when unrelated things
   change.
 - Endless animations stop under tests, and respect reduced motion.
-- The one big cost left is that most changes call `setState` on the whole
-  page. The controller step above would let each part listen to only what
-  it shows.
+- Saving is debounced (see the controller), so JSON encoding and storage
+  happen once per burst of moves, not on every change.
+- Screen-only changes use `_ui`, which skips saving and the game hooks.
+- Dragging a card from your hand moves only that card: the offset is a
+  `ValueNotifier` read by a `Transform`, so the page doesn't rebuild each
+  frame. A card let go short of the table slides back on its own
+  animation.
+- What's left: dragging a task on a real table still rebuilds the page
+  each frame (cheaply, through `_ui`). The next step would be the same
+  notifier trick for task positions, and parts of the table listening to
+  the controller instead of the whole page.
 
 ---
 
