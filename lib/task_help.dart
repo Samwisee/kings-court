@@ -186,12 +186,8 @@ const _special = <String, String>{
       'By the end of the round the King must have won more tricks than you.',
   'Win the same number of tricks as the King':
       'By the end of the round you and the King must have won exactly the same number of tricks (none each counts).',
-  'Win more Court Cards than the King':
-      'At the end of the round, the Court Cards in your tricks must outnumber those in the King’s. The King always wins the King card, so you need at least two, or the King must win none but that one. The King can’t take this task.',
   'Win exactly as many tricks as the player on your left':
       'At the end of the round, you and the player on your left (the next to play after you) must have won the same number of tricks. Zero each is fine.',
-  'Win a trick with an Ace':
-      'Win a trick where your winning card is an Ace, the lowest card of its suit. That only happens when you lead it and no one can follow suit, and no Court Card is played. Hard, but a quiet suit late in the round can do it.',
   'Win a trick with the Joker':
       'Play the Joker and take the trick with it. The Joker beats every plain card but loses to the Jack, Queen and King, so play it when no higher Court Card is coming. You need the Joker in your hand.',
   'Win a trick with the Jack':
@@ -256,8 +252,8 @@ const _special = <String, String>{
       'Every Court Card but the King must end up in tricks you win. Only the King card can take any of them from you.',
   'Win at least two Aces':
       'Win two or more Aces, of any suit, in the tricks you win. Aces are the lowest card of each suit, so they usually fall to whoever wins the trick they’re played in.',
-  'Win three tricks led with a ♥':
-      'Win three tricks in which the first card played was a ♥, whoever led it. There are nine hearts, so at most nine such tricks; lead hearts yourself when you can win them.',
+  'Win two tricks led with a ♥':
+      'Win two tricks in which the first card played was a ♥, whoever led it. Lead hearts yourself when you can win them, or take the hearts others lead.',
   'Win no ♠ cards':
       'None of the tricks you win may contain a ♠ card, whoever played it.',
   'Win no Court Cards':

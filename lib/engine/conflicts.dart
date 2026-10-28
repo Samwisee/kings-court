@@ -59,8 +59,6 @@ Set<PlayingCard> _rank(int r) => {
 final Map<String, TaskProfile> _profiles = {
   'Win more tricks than anyone else': const TaskProfile(mostTricks: true),
   'Win more tricks than the rest of the court put together': const TaskProfile(mostTricks: true),
-  'Win more Court Cards than the King': const TaskProfile(courts: 1),
-  'Win a trick with an Ace': const TaskProfile(ranks: {1: 1}),
   'Win a trick with a 3': const TaskProfile(ranks: {3: 1}),
   'Win a trick with a 5': const TaskProfile(ranks: {5: 1}),
   'Win a trick with a 7': const TaskProfile(ranks: {7: 1}),
@@ -110,7 +108,7 @@ final Map<String, TaskProfile> _profiles = {
   'Win at least five ♣ cards': const TaskProfile(suits: {Suit.clubs: 5}),
   'Win exactly three ♥ cards': const TaskProfile(suits: {Suit.hearts: 3}),
   'Win exactly two ♦ cards': const TaskProfile(suits: {Suit.diamonds: 2}),
-  'Win three tricks led with a ♥': const TaskProfile(suits: {Suit.hearts: 3}),
+  'Win two tricks led with a ♥': const TaskProfile(suits: {Suit.hearts: 2}),
   'Win no ♠ cards': TaskProfile(forbidCard: (c) => c.suit == Suit.spades),
   'Win no Court Cards': TaskProfile(forbidCard: (c) => c.isCourt),
   'Win exactly one Court Card': const TaskProfile(courts: 1),
@@ -311,9 +309,7 @@ String? handBlocks(String d, List<PlayingCard> hand) {
       return 'You hold the Queen: you can’t play her and win her with the King in the same trick';
     }
   }
-  if (d == 'Win a trick with an Ace' && !hand.any((c) => !c.isCourt && c.rank == 1)) {
-    return 'You need an Ace in your hand to win a trick with it';
-  }
+
   bool has(int r) => hand.any((c) => !c.isCourt && c.rank == r);
   final withRank = RegExp(r'^Win (?:a trick|a \d|an \d|any \d) with (?:a|another) (\d)$').firstMatch(d);
   if (withRank != null) {

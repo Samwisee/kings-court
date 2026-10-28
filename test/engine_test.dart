@@ -192,7 +192,7 @@ void main() {
 
   test('Clashing tasks are spotted', () {
     expect(clash('Win the A♦', 'Win all four Aces'), isTrue);
-    expect(clash('Win a trick with an Ace', 'Win all four Aces'), isTrue);
+    expect(clash('Win at least two Aces', 'Win all four Aces'), isTrue);
     expect(clash('Win the first trick', 'Win the first two tricks'), isTrue);
     expect(clash('Win more tricks than anyone else',
         'Win more tricks than the rest of the court put together'), isTrue);
@@ -261,7 +261,7 @@ void main() {
     expect(tierOf('Win the 3♥'), TaskTier.capture);
     expect(tierOf('Win a trick with a 5'), TaskTier.trick);
     expect(tierOf('Win a trick the King leads'), TaskTier.trick);
-    expect(tierOf('Win more Court Cards than the King'), TaskTier.race);
+    expect(tierOf('Win more tricks than the King'), TaskTier.race);
     expect(tierOf('Win exactly as many tricks as the player on your left'), TaskTier.precise);
     for (int i = 0; i < 400; i++) {
       final players = 3 + i % 3;

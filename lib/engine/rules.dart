@@ -192,9 +192,7 @@ final Map<String, TaskRule> taskRules = {
   'Win more tricks than the King': atEnd((v, o) => v.tricksWon(o) > v.tricksWon(v.king)),
   'Win fewer tricks than the King': atEnd((v, o) => v.tricksWon(o) < v.tricksWon(v.king)),
   'Win the same number of tricks as the King': atEnd((v, o) => v.tricksWon(o) == v.tricksWon(v.king)),
-  'Win more Court Cards than the King': atEnd((v, o) => v.countWon(o, _court) > v.countWon(v.king, _court)),
   'Win exactly as many tricks as the player on your left': atEnd((v, o) => v.tricksWon(o) == v.tricksWon((o + 1) % v.players)),
-  'Win a trick with an Ace': winWith(1),
   'Win a trick with a 3': winWith(3),
   'Win a trick with a 5': winWith(5),
   'Win a trick with a 7': winWith(7),
@@ -317,9 +315,9 @@ final Map<String, TaskRule> taskRules = {
   'Win at least five ♣ cards': atLeast(5, _suit(Suit.clubs)),
   'Win exactly three ♥ cards': exactly(3, _suit(Suit.hearts)),
   'Win exactly two ♦ cards': exactly(2, _suit(Suit.diamonds)),
-  'Win three tricks led with a ♥': (v, o, _) {
+  'Win two tricks led with a ♥': (v, o, _) {
     final mine = v.tricks.where((t) => t.winner == o && t.cards.first.suit == Suit.hearts).length;
-    if (mine >= 3) return Verdict.done;
+    if (mine >= 2) return Verdict.done;
     return _end(v, false);
   },
   'Win no ♠ cards': winNone(_suit(Suit.spades)),
@@ -361,7 +359,6 @@ enum TaskTiming {
 }
 
 const _anyTrickTasks = {
-  'Win a trick with an Ace',
   'Win a trick with a 3',
   'Win a trick with a 5',
   'Win a trick with a 7',
@@ -407,7 +404,7 @@ const _anyTrickTasks = {
   'Win at least four ♠ cards',
   'Win at least five ♦ cards',
   'Win at least five ♣ cards',
-  'Win three tricks led with a ♥',
+  'Win two tricks led with a ♥',
 };
 
 const _earlyTasks = {

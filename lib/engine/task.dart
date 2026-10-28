@@ -116,7 +116,7 @@ class Task {
     ('the trick after the Queen is played', 'the trick after the Queen'),
     ('exactly as many tricks as the player on your left', 'as many tricks as your left neighbour'),
     ('Win no tricks until the King has won one', 'Win nothing before the King does'),
-    ('three tricks led with a ♥', 'three ♥-led tricks'),
+    ('two tricks led with a ♥', 'two ♥-led tricks'),
     (RegExp(r'([♥♦♠♣]) cards?\b'), r'$1'),
     ('Win no Court Cards', 'Win no \uE001'),
     (RegExp(r'Court Cards?'), '\uE001'),

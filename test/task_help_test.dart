@@ -116,7 +116,6 @@ void main() {
     expect(handBlocks('Win the 7♥ with a Court Card', [c('2♣')]), isNotNull);
     expect(handBlocks('Win the 7♥ with a Court Card', [c('2♣'), PlayingCard.jack]),
         isNull);
-    expect(handBlocks('Win a trick with an Ace', [c('2♣')]), isNotNull);
     expect(handBlocks('Win a trick with the Joker', [c('2♣')]), isNotNull);
     expect(handBlocks('Win the Queen with the King', [PlayingCard.king, PlayingCard.queen]), isNotNull);
     expect(handBlocks('Win the Queen with the King', [PlayingCard.king, c('2♣')]), isNull);
