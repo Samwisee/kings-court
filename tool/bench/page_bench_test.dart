@@ -51,6 +51,11 @@ void main() {
       return ms;
     }
 
+    // Warm up first, so the first number isn't the slowest for being first.
+    for (int i = 0; i < 20; i++) {
+      state.setState(() {});
+      await tester.pump();
+    }
     await time('a change to the game (setState)', () => state.setState(() {}));
     final whole = await time('a change to the screen only (_ui)', () => state.debugUi(() {}));
     await time('a frame with nothing changed', () {});

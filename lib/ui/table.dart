@@ -53,16 +53,21 @@ class _TablePainter extends CustomPainter {
       ..addRRect(felt);
 
     // The felt is sunk a little into the table: a soft shadow just inside
-    // its edge.
+    // its edge. Drawn as a few fading strokes rather than a blur: a blur
+    // across the whole screen's edge was the dearest thing in every frame.
     canvas.save();
     canvas.clipRRect(felt);
-    canvas.drawRRect(
-        felt.inflate(6),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 12
-          ..color = const Color(0x66000000)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+    const steps = 7;
+    for (int i = 0; i < steps; i++) {
+      // Darkest at the edge, fading inwards over about 9px.
+      final alpha = (0x3A * (1 - i / steps) * (1 - i / steps)).round();
+      canvas.drawRRect(
+          felt.deflate(i * 1.3),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.6
+            ..color = Color(alpha << 24));
+    }
     canvas.restore();
 
     // The table: plain royal red.

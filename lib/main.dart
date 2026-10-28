@@ -4981,7 +4981,8 @@ class _HomePageState extends State<HomePage>
       // points don't pop in and out with the setup.
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
-        child: AnimatedSwitcher(
+        // Its own layer: the bar is drawn again only when it changes.
+        child: RepaintBoundary(child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           layoutBuilder: (current, previous) => Stack(
               fit: StackFit.expand,
@@ -5006,7 +5007,7 @@ class _HomePageState extends State<HomePage>
                     ),
                     const SizedBox(width: 18),
                   ]),
-        ),
+        )),
       ),
       body: SafeArea(
         top: !useTopBar,
