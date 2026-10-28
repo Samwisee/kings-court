@@ -38,7 +38,7 @@ void main() {
   });
 
   test('Picks follow the table’s rules: whose turn, what they may hold, who picks next', () {
-    final r = table(['Win the 3♥', 'Win the 7♣', 'Win the first trick'], king: 1);
+    final r = table(['Win the 3♥', 'Win the 6♣', 'Win the first trick'], king: 1);
     expect(r.phase, Phase.picking);
     expect(r.pickTurn, 1);
     expect(r.problem(const PickTask(2, 0)), 'Not your turn to pick');
@@ -52,7 +52,7 @@ void main() {
   });
 
   test('Under the King’s Command the King hands every task out', () {
-    final r = table(['Win the 3♥', 'Win the 7♣'], king: 1, decree: Decree.kingsCommand);
+    final r = table(['Win the 3♥', 'Win the 6♣'], king: 1, decree: Decree.kingsCommand);
     expect(r.pickTurn, 1);
     // Seat 3 may not pick for itself, but the King may hand it a task.
     expect(r.problem(const PickTask(3, 0)), isNull);
@@ -62,13 +62,13 @@ void main() {
   });
 
   test('Passing is refused when the round or the turn says so', () {
-    final r = table(['Win the 3♥', 'Win the 7♣'], king: 1);
+    final r = table(['Win the 3♥', 'Win the 6♣'], king: 1);
     expect(r.problem(const Pass(2)), 'Not your turn to pick');
     expect(r.problem(const Pass(1)), isNull);
     r.apply(const Pass(1));
     expect(r.passed, contains(1));
     expect(r.pickTurn, isNot(1));
-    final quiet = table(['Win the 3♥', 'Win the 7♣'], king: 1)..passing = false;
+    final quiet = table(['Win the 3♥', 'Win the 6♣'], king: 1)..passing = false;
     expect(quiet.problem(const Pass(1)), 'No passing now');
   });
 
@@ -106,7 +106,7 @@ void main() {
   });
 
   test('A seat’s view keeps its own hand and hides the others', () {
-    final r = table(['Win the 3♥', 'Win the 7♣'], king: 1);
+    final r = table(['Win the 3♥', 'Win the 6♣'], king: 1);
     final v = r.visibleTo(2);
     expect(v.hands[2], r.hands[2]);
     for (final s in [0, 1, 3]) {
