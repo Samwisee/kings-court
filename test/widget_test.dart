@@ -393,25 +393,11 @@ void main() {
     // harness (random tasks, random layouts); one retry settles it.
   }, retry: 2);
 
-  test('Table cards use short wording for the player count', () {
-    final total = GameState.taskPool
-        .firstWhere((t) => t.description.contains('totalling more than'));
-    expect(total.cardText(4),
-        'Win a trick totalling more than 26, with no Court Cards');
-    expect(total.cardText(2), contains('more than 21'));
-    expect(total.cardText(6), contains('more than 34'));
-
-    final redeal = GameState.taskPool
-        .firstWhere((t) => t.description.startsWith('Win the Joker and no'));
-    expect(redeal.cardText(4), 'Win the Joker and no other Court Card');
-    expect(redeal.notes.single, startsWith('Redeal if'));
-
-    final more = GameState.taskPool
-        .firstWhere((t) => t.description.startsWith('Win more ♣ cards than ♦'));
-    expect(more.cardText(4), 'Win more ♣ cards than ♦ cards');
-    expect(more.notes.single, 'Winning no ♦ cards is fine.');
-    expect(total.notes, isEmpty); // the player-count numbers aren't a note
-
+  test('Table cards keep their wording short', () {
+    final x = GameState.taskPool
+        .firstWhere((t) => t.description.startsWith('Win exactly X tricks'));
+    expect(x.cardText(4), 'Win exactly X tricks, named before the first trick');
+    expect(x.notes, isEmpty);
     for (final t in GameState.taskPool) {
       expect(t.cardText(6).length, lessThanOrEqualTo(70), reason: t.description);
       expect(t.cardText(6), isNot(contains('(')), reason: t.description);
@@ -419,10 +405,9 @@ void main() {
   });
 
   test('The board wording is shorter, with Court Cards as crowns', () {
-    final total = GameState.taskPool
-        .firstWhere((t) => t.description.contains('totalling more than'));
-    expect(total.boardText(4), 'Win a trick worth over 26');
-    expect(total.noCourtCards, isTrue);
+    final two = GameState.taskPool
+        .firstWhere((t) => t.description == 'Win a trick with exactly two Court Cards in it');
+    expect(two.boardText(4), 'Win a trick holding two \uE001');
     final none = GameState.taskPool.firstWhere((t) => t.description == "Don't win any ♥ cards");
     expect(none.boardText(4), 'Win no ♥');
     for (final t in GameState.taskPool) {
@@ -1671,6 +1656,6 @@ void main() {
     for (final t in GameState.taskPool) {
       expect(t.sixPlayerPoints, greaterThan(0), reason: t.description);
     }
-    expect(GameState.taskPool.length, 108);
+    expect(GameState.taskPool.length, 85);
   });
 }

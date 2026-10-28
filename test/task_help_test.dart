@@ -69,7 +69,7 @@ void main() {
     final v = view([Trick(0, const [0, 1, 2], [c('7♥'), c('2♥'), c('3♥')], 0)]);
     expect(taskProgress('Win at least three 7s', v, 1, null), '0/3');
     final s = taskStatus('Win at least three 7s', v, 1, null);
-    expect(s, contains('7♦'));
+    expect(s, contains('0 of 3'));
     expect(s, isNot(contains('Not yet')));
   });
 
