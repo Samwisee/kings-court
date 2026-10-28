@@ -1,9 +1,14 @@
-// Glowing buttons, and the keyboard shortcuts card.
-part of '../main.dart';
+/// Glowing buttons, and the keyboard shortcuts card.
+library;
+
+import 'package:flutter/material.dart';
+
+import '../../theme.dart';
+import '../../widgets.dart';
 
 /// A button that softly pulses with a gold glow, to draw the eye.
-class _GlowButton extends StatefulWidget {
-  const _GlowButton(
+class GlowButton extends StatefulWidget {
+  const GlowButton(
       {super.key, required this.label, required this.onPressed, this.focused = false});
   final String label;
   final VoidCallback onPressed;
@@ -12,10 +17,10 @@ class _GlowButton extends StatefulWidget {
   final bool focused;
 
   @override
-  State<_GlowButton> createState() => _GlowButtonState();
+  State<GlowButton> createState() => _GlowButtonState();
 }
 
-class _GlowButtonState extends State<_GlowButton>
+class _GlowButtonState extends State<GlowButton>
     with TickerProviderStateMixin {
   late final _pulse = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1200));
@@ -117,8 +122,8 @@ class _GlowButtonState extends State<_GlowButton>
 }
 
 /// The keyboard shortcuts, as small gold key caps with what each does.
-class _ShortcutsCard extends StatelessWidget {
-  const _ShortcutsCard();
+class ShortcutsCard extends StatelessWidget {
+  const ShortcutsCard();
 
   static const _keys = [
     (['1', '2', '…'], 'Play the card with that key'),
@@ -158,7 +163,7 @@ class _ShortcutsCard extends StatelessWidget {
                     SizedBox(
                       width: 84,
                       child: Wrap(spacing: 3, runSpacing: 3, children: [
-                        for (final c in caps) _KeyCap(c, size: 21),
+                        for (final c in caps) KeyCap(c, size: 21),
                       ]),
                     ),
                     // Long lines wrap inside the card rather than running
@@ -181,8 +186,8 @@ class _ShortcutsCard extends StatelessWidget {
 }
 
 /// A key on the keyboard, drawn as a small gold key cap.
-class _KeyCap extends StatelessWidget {
-  const _KeyCap(this.label, {required this.size});
+class KeyCap extends StatelessWidget {
+  const KeyCap(this.label, {required this.size});
   final String label;
   final double size;
 

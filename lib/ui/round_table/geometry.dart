@@ -1,11 +1,18 @@
-// Where everything sits on the table: seats round the edge, the cards in the middle, the dealt tasks.
-part of '../main.dart';
+/// Where everything sits on the table: seats round the edge, the cards in the middle, the dealt tasks.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/round.dart';
+import '../../widgets.dart';
 
 /// Where everything sits on the table for a given screen size. The phone
 /// lies in the middle of the table, so seats are spread evenly around its
 /// edge and turned to face the player sitting there.
-class _TableGeometry {
-  _TableGeometry(this.size, this.players, this.textOf,
+class TableGeometry {
+  TableGeometry(this.size, this.players, this.textOf,
       {double? fixedCardWidth, this.upright = false})
       : seatSize = clampD(math.min(size.width, size.height) * 0.13, 36, 64) {
     seatExtent = seatSize + 32; // token, with room for the crown
@@ -293,8 +300,8 @@ class _TableGeometry {
 
 /// Something the arrow keys can stop on: a card in your hand (row 0), a
 /// task (row 1) or the button beside your hand (row 2), and where it is.
-class _KbStop {
-  const _KbStop(this.row, this.item, this.rect);
+class KbStop {
+  const KbStop(this.row, this.item, this.rect);
   final int row;
   final Object? item;
   final Rect rect;

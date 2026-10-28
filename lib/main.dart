@@ -45,26 +45,26 @@ import 'play/tutorial_intro.dart';
 import 'sfx.dart';
 import 'task_help.dart';
 import 'theme.dart';
+import 'ui/cards/mini_card.dart';
+import 'ui/cards/task_chip.dart';
 import 'ui/modes/tutorial/coach.dart';
 import 'ui/overlays/crowning.dart';
 import 'ui/overlays/decree.dart';
 import 'ui/overlays/king_prompt.dart';
 import 'ui/overlays/outcome_card.dart';
 import 'ui/overlays/play_flourish.dart';
+import 'ui/round_table/geometry.dart';
+import 'ui/setup/saves.dart';
+import 'ui/setup/transitions.dart';
+import 'ui/tracker/card_tracker.dart';
+import 'ui/widgets/buttons.dart';
+import 'ui/widgets/house_banner.dart';
 import 'widgets.dart';
 
-part 'home/geometry.dart';
 part 'home/welcome.dart';
 part 'home/menu.dart';
 part 'home/chronicle_ui.dart';
 part 'home/setup.dart';
-part 'home/house_banner.dart';
-part 'home/task_widgets.dart';
-part 'home/saves.dart';
-part 'home/card_tracker.dart';
-part 'home/transitions.dart';
-part 'home/mini_card.dart';
-part 'home/buttons.dart';
 
 void main() {
   Analytics.visit();
@@ -203,7 +203,7 @@ class HomePageState extends State<HomePage>
 
   /// Games saved from last time, one for each way to play, newest first.
   /// Play on the welcome screen offers them.
-  List<_SavedGame> _saves = [];
+  List<SavedGame> _saves = [];
 
   /// Best win streak across every game on this device.
   int _bestStreak = 0;
@@ -398,7 +398,7 @@ class HomePageState extends State<HomePage>
     final stops = _kbStops(open, choices);
     if (stops.isEmpty) return false;
     final here = _kbHere(stops);
-    void go(_KbStop to) => _ui(() {
+    void go(KbStop to) => _ui(() {
           _kbRow = to.row;
           if (to.item case final RoundTask t) _kbTask = t;
           if (to.item case final PlayingCard c) _kbCard = c;
@@ -424,7 +424,7 @@ class HomePageState extends State<HomePage>
       ];
       if (ahead.isEmpty) return true;
       // The nearest row that way, then the nearest thing along it.
-      double gap(_KbStop st) =>
+      double gap(KbStop st) =>
           up ? from.top - st.rect.bottom : st.rect.top - from.bottom;
       final nearest = ahead.reduce((a, b) => gap(a) <= gap(b) ? a : b);
       final row = [
@@ -470,25 +470,25 @@ class HomePageState extends State<HomePage>
   }
 
   /// Everything the arrow keys can stop on just now, where it is.
-  List<_KbStop> _kbStops(List<RoundTask> open, List<PlayingCard> cards) => [
+  List<KbStop> _kbStops(List<RoundTask> open, List<PlayingCard> cards) => [
         for (final t in open)
           if (_openTaskKeys[t] case final key?)
-            if (_rectOn(key) case final r?) _KbStop(1, t, r),
+            if (_rectOn(key) case final r?) KbStop(1, t, r),
         // Tasks already taken, in front of whoever took them: to read
         // again (Enter opens them).
         for (final t in game.tasks)
           if (t.owner != null && !_landing.contains(t))
             if (_destKeys[t] case final key?)
-              if (_rectOn(key) case final r?) _KbStop(1, t, r),
+              if (_rectOn(key) case final r?) KbStop(1, t, r),
         if (_kbButtonPress != null)
-          if (_rectOn(_kbButtonKey) case final r?) _KbStop(2, null, r),
+          if (_rectOn(_kbButtonKey) case final r?) KbStop(2, null, r),
         if (_rectOn(_handKey) case final area?)
           for (final c in cards)
-            if (_handRects[c] case final r?) _KbStop(0, c, r.shift(area.topLeft)),
+            if (_handRects[c] case final r?) KbStop(0, c, r.shift(area.topLeft)),
       ];
 
   /// Where the arrow keys are now, if it's still there to stop on.
-  _KbStop? _kbHere(List<_KbStop> stops) {
+  KbStop? _kbHere(List<KbStop> stops) {
     for (final st in stops) {
       if (st.row != _kbRow) continue;
       if (_kbRow == 1 && st.item == _kbTask) return st;
@@ -499,8 +499,8 @@ class HomePageState extends State<HomePage>
   }
 
   /// The stop in [stops] nearest [r]: across first, then up or down.
-  static _KbStop _closestTo(List<_KbStop> stops, Rect r) {
-    double d(_KbStop st) =>
+  static KbStop _closestTo(List<KbStop> stops, Rect r) {
+    double d(KbStop st) =>
         (st.rect.center.dx - r.center.dx).abs() +
         (st.rect.center.dy - r.center.dy).abs() * 0.25;
     return stops.reduce((a, b) => d(a) <= d(b) ? a : b);
@@ -509,9 +509,9 @@ class HomePageState extends State<HomePage>
   /// [stops] as they're read: row by row from the top, each row left to
   /// right (the tasks are packed in columns of different heights, so a
   /// row is whatever overlaps it side by side).
-  static List<_KbStop> _readingOrder(List<_KbStop> stops) {
+  static List<KbStop> _readingOrder(List<KbStop> stops) {
     final rest = [...stops]..sort((a, b) => a.rect.top.compareTo(b.rect.top));
-    final out = <_KbStop>[];
+    final out = <KbStop>[];
     while (rest.isNotEmpty) {
       final first = rest.first;
       final row = [
@@ -620,7 +620,7 @@ class HomePageState extends State<HomePage>
 
   /// Reads every saved game still in progress, newest first, moving an old
   /// single save into its slot.
-  static Future<List<_SavedGame>> _readSaves(SharedPreferences prefs) async {
+  static Future<List<SavedGame>> _readSaves(SharedPreferences prefs) async {
     final legacy = prefs.getString(_legacySaveKey);
     if (legacy != null) {
       try {
@@ -632,7 +632,7 @@ class HomePageState extends State<HomePage>
       } catch (_) {}
       await prefs.remove(_legacySaveKey);
     }
-    final saves = <_SavedGame>[];
+    final saves = <SavedGame>[];
     for (final mode in GameMode.values) {
       if (mode == GameMode.tutorial) continue;
       final raw = prefs.getString(_slotKey(mode));
@@ -641,7 +641,7 @@ class HomePageState extends State<HomePage>
         final data = jsonDecode(raw) as Map<String, dynamic>;
         final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
         if (g == null || g.outcome != RoundOutcome.inProgress) continue;
-        saves.add(_SavedGame(g, data,
+        saves.add(SavedGame(g, data,
             DateTime.fromMillisecondsSinceEpoch(data['savedAt'] as int? ?? 0)));
       } catch (_) {
         // A save that no longer reads is skipped.
@@ -734,7 +734,7 @@ class HomePageState extends State<HomePage>
       _link.send(NextRound(_you, chapter: chapter));
 
   /// Picks up a saved game exactly where it was left.
-  void _continueSaved(_SavedGame saved) {
+  void _continueSaved(SavedGame saved) {
     Analytics.event(['continue', saved.game.mode.name]);
     final g = saved.game;
     final data = saved.data;
@@ -826,7 +826,7 @@ class HomePageState extends State<HomePage>
 
   int _points(RoundTask t) => t.points(game.players.length);
 
-  _TableGeometry get _geo => _TableGeometry(
+  TableGeometry get _geo => TableGeometry(
       _tableSize, game.players.length, (t) => t.boardText(game.players.length),
       fixedCardWidth: _dealtFor == game.dealId ? _cardWidth : null,
       upright: _upright || game.digital);
@@ -1403,7 +1403,7 @@ class HomePageState extends State<HomePage>
   /// Hidden for a moment (its eye, or the space bar, held down) to see
   /// the table behind it.
   bool _trackerPeek = false;
-  final _trackerKey = GlobalKey<_CardTrackerState>();
+  final _trackerKey = GlobalKey<CardTrackerState>();
 
   void _showCardTracker() {
     if (_trackerOpen) {
@@ -1448,7 +1448,7 @@ class HomePageState extends State<HomePage>
   /// The cards a task is about, marked the way the card tracker marks
   /// them: outlined in the colour of whoever played each one (with the
   /// trick it fell in), or of whoever is known to hold it.
-  List<_TaskCard> _cardStates(RoundTask t) {
+  List<MarkedCard> _cardStates(RoundTask t) {
     final cards = relevantCards(t.description);
     if (!_digital || !_round.hasCards) {
       return [for (final c in cards) (card: c, edge: null, trick: null, played: false)];
@@ -1627,12 +1627,12 @@ class HomePageState extends State<HomePage>
                           KeyedSubtree(
                             key: _kbButtonKey,
                             child: _speakPromptDue
-                                ? _GlowButton(
+                                ? GlowButton(
                                     key: const ValueKey('skip'),
                                     label: 'Skip',
                                     focused: _kbRow == 2,
                                     onPressed: _skipShowing)
-                                : _GlowButton(
+                                : GlowButton(
                                     key: const ValueKey('pass'),
                                     label: 'Pass',
                                     focused: _kbRow == 2,
@@ -1897,7 +1897,7 @@ class HomePageState extends State<HomePage>
                                   Positioned(
                                     left: cardW * 0.08,
                                     bottom: cardW * 0.08,
-                                    child: _KeyCap(_cardKeyLabels[i], size: cardW * 0.2),
+                                    child: KeyCap(_cardKeyLabels[i], size: cardW * 0.2),
                                   ),
                               ]),
                             ),
@@ -1930,7 +1930,7 @@ class HomePageState extends State<HomePage>
   final _seatKeys = <int, GlobalKey>{};
   final _openTaskKeys = <RoundTask, GlobalKey>{};
   Map<RoundTask, Rect> _openTaskRects = {};
-  final _flights = <_Flight>[];
+  final _flights = <Flight>[];
   final _flightTimers = <Timer>[];
   Map<RoundTask, int?> _owners = {};
 
@@ -2024,14 +2024,14 @@ class HomePageState extends State<HomePage>
           continue;
         }
         final style = _miniStyle[t] ?? (to.width, 12.0);
-        final flight = _Flight(t, from, to, _points(t), _cardText(t),
+        final flight = Flight(t, from, to, _points(t), _cardText(t),
             fromFont: _openFontSize,
             toFont: style.$2,
             toColor: t.owner == null
                 ? Palette.inkSoft
                 : game.players[t.owner!].color);
         _flights.add(flight);
-        _flightTimers.add(Timer(_Flight.duration, () {
+        _flightTimers.add(Timer(Flight.duration, () {
           if (mounted) {
             setState(() {
               _flights.remove(flight);
@@ -2152,7 +2152,7 @@ class HomePageState extends State<HomePage>
           padding: const EdgeInsets.only(top: 3),
           child: KeyedSubtree(
             key: _destKeys.putIfAbsent(t, GlobalKey.new),
-            child: _TaskChip(
+            child: TaskChip(
             task: t,
             points: _points(t),
             text: _cardText(t),
@@ -2344,7 +2344,7 @@ class HomePageState extends State<HomePage>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _MiniCard(card: card, width: height / 1.3, edge: game.players[seat].color),
+        MiniCard(card: card, width: height / 1.3, edge: game.players[seat].color),
         const SizedBox(height: 3),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -2458,7 +2458,7 @@ class HomePageState extends State<HomePage>
                         ? 0.5
                         : 1,
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  _TaskChip(
+                  TaskChip(
                     task: t,
                     points: _points(t),
                     text: _cardText(t),
@@ -3378,7 +3378,7 @@ class HomePageState extends State<HomePage>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _HouseBanner(
+                      HouseBanner(
                         courtier: courtier,
                         color: player.color,
                         name: isKing ? '${player.name}, the King' : player.name,
@@ -3653,10 +3653,10 @@ class HomePageState extends State<HomePage>
                 ),
               // The cards it's about, and what's become of them.
               if (relevantCards(task.description).isNotEmpty)
-                _TaskCardsRow(cards: _cardStates(task)),
+                TaskCardsRow(cards: _cardStates(task)),
               // What it means, the game words it uses and any fine print,
               // behind an info button.
-              _MoreAbout(
+              MoreAbout(
                 explanation: explainTask(task.description),
                 terms: termsIn(task.description),
                 notes: const [],
@@ -4069,7 +4069,7 @@ class HomePageState extends State<HomePage>
                 opacity: _keysShown ? 1 : 0,
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
-                child: const _ShortcutsCard(),
+                child: const ShortcutsCard(),
               ),
             ),
           ),
@@ -4113,7 +4113,7 @@ class HomePageState extends State<HomePage>
                               maxHeight: MediaQuery.sizeOf(context).height * 0.88),
                           child: Material(
                             type: MaterialType.transparency,
-                            child: _CardTracker(
+                            child: CardTracker(
                               key: _trackerKey,
                               cards: _round,
                               you: _you,
@@ -4505,7 +4505,7 @@ class HomePageState extends State<HomePage>
   /// The crowning: the crown rises from the deck, arcs to the new King's
   /// seat and lands with a bounce and a ring of gold sparks, while "Long
   /// live the King" glows in the middle of the table.
-  Widget _buildCrowning(_TableGeometry geo, int seat) {
+  Widget _buildCrowning(TableGeometry geo, int seat) {
     final a = geo.facing(seat);
     final up = Offset(math.sin(a), -math.cos(a));
     return CrowningScene(
@@ -4540,7 +4540,7 @@ class HomePageState extends State<HomePage>
     return _geo.seatAt(cardCentre);
   }
 
-  Widget _buildCards(_TableGeometry geo) {
+  Widget _buildCards(TableGeometry geo) {
     return AnimatedBuilder(
       animation: _deal,
       builder: (context, _) {

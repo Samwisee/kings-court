@@ -1,10 +1,18 @@
-// Small cards: in the tracker, a task’s close-up and shown cards.
-part of '../main.dart';
+/// Small cards: in the tracker, a task’s close-up and shown cards.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/cards.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 /// A plain card face for the card tracker: just its number and suit (or
 /// the Court Card's letter) and an outline, cheap enough to show dozens.
-class _MiniCard extends StatelessWidget {
-  const _MiniCard(
+class MiniCard extends StatelessWidget {
+  const MiniCard(
       {required this.card,
       required this.width,
       this.dimmed = false,

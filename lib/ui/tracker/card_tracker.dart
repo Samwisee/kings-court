@@ -1,12 +1,24 @@
-// The card tracker: every card in the deck, and what each player may still hold.
-part of '../main.dart';
+/// The card tracker: every card in the deck, and what each player may still hold.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/cards.dart';
+import '../../engine/inference.dart';
+import '../../engine/round.dart';
+import '../../models.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
+import '../cards/mini_card.dart';
 
 /// The card tracker: every card in the deck, row by suit, outlined in the
 /// colour of whoever played it (with its trick number), or of whoever
 /// holds it if that's known. Tap a player in the key above it to see what
 /// they may still hold.
-class _CardTracker extends StatefulWidget {
-  const _CardTracker(
+class CardTracker extends StatefulWidget {
+  const CardTracker(
       {super.key,
       required this.cards,
       required this.you,
@@ -22,10 +34,10 @@ class _CardTracker extends StatefulWidget {
   final List<Player> players;
 
   @override
-  State<_CardTracker> createState() => _CardTrackerState();
+  State<CardTracker> createState() => CardTrackerState();
 }
 
-class _CardTrackerState extends State<_CardTracker> {
+class CardTrackerState extends State<CardTracker> {
   /// The player whose possible hand is shown under the grid.
   int? _seat;
 
@@ -84,7 +96,7 @@ class _CardTrackerState extends State<_CardTracker> {
       return Semantics(
         label: '${c.spoken}: $where',
         excludeSemantics: true,
-        child: _MiniCard(
+        child: MiniCard(
             card: c, width: w, dimmed: p != null, edge: edge, trick: p?.$1),
       );
     }
@@ -132,7 +144,7 @@ class _CardTrackerState extends State<_CardTracker> {
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: on ? Palette.ink : Colors.white,
-                      shadows: on ? null : _feltShadow)),
+                      shadows: on ? null : feltShadow)),
             ),
           ),
         ),
@@ -150,7 +162,7 @@ class _CardTrackerState extends State<_CardTracker> {
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: picked ? Palette.ink : Colors.white,
-                shadows: picked ? null : _feltShadow)),
+                shadows: picked ? null : feltShadow)),
       ]);
       if (seat == you) {
         return Padding(
@@ -196,7 +208,7 @@ class _CardTrackerState extends State<_CardTracker> {
                           fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white54))
                   : Wrap(spacing: 3, runSpacing: 3, children: [
                       for (final c in cs)
-                        _MiniCard(
+                        MiniCard(
                             card: c,
                             width: small,
                             faint: !g.certain.contains(c),
@@ -260,7 +272,7 @@ class _CardTrackerState extends State<_CardTracker> {
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
                       color: Palette.gold,
-                      shadows: _feltShadow)),
+                      shadows: feltShadow)),
             ),
             SizedBox(
               width: 36,
@@ -270,7 +282,7 @@ class _CardTrackerState extends State<_CardTracker> {
                 visualDensity: VisualDensity.compact,
                 style: IconButton.styleFrom(overlayColor: Colors.transparent),
                 icon: const Icon(Icons.close_rounded,
-                    color: Palette.gold, size: 22, shadows: _feltShadow),
+                    color: Palette.gold, size: 22, shadows: feltShadow),
               ),
             ),
           ]),

@@ -1,10 +1,16 @@
-// A courtier’s banner, at the top of their card.
-part of '../main.dart';
+/// A courtier’s banner, at the top of their card.
+library;
+
+import 'package:flutter/material.dart';
+
+import '../../game/courtiers.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 /// The top of a courtier's card: a wash of their colour with their sigil
 /// large behind the house name and motto.
-class _HouseBanner extends StatelessWidget {
-  const _HouseBanner(
+class HouseBanner extends StatelessWidget {
+  const HouseBanner(
       {required this.courtier,
       required this.color,
       required this.name,

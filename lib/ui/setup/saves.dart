@@ -1,10 +1,16 @@
-// A saved game, one per way to play.
-part of '../main.dart';
+/// A saved game, one per way to play.
+library;
+
+import 'dart:math' as math;
+
+import '../../models.dart';
+import '../../modes/chronicle/chapters.dart';
+import '../../modes/modes.dart';
 
 /// A game saved on this device: its state, the table layout that goes with
 /// it, and when it was last saved.
-class _SavedGame {
-  _SavedGame(this.game, this.data, this.at);
+class SavedGame {
+  SavedGame(this.game, this.data, this.at);
   final GameState game;
   final Map<String, dynamic> data;
   final DateTime at;

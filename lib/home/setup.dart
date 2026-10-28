@@ -47,8 +47,8 @@ class _SetupPanel extends StatefulWidget {
   /// Hasn't done the tutorial yet: it's marked as the place to start.
   final bool newPlayer;
 
-  final List<_SavedGame> saves;
-  final ValueChanged<_SavedGame>? onContinue;
+  final List<SavedGame> saves;
+  final ValueChanged<SavedGame>? onContinue;
   final List<Player> players;
   final int playerCount;
   final int targetPoints;
@@ -622,11 +622,11 @@ class _SetupPanelState extends State<_SetupPanel> {
                 ),
                 transitionBuilder: (child, a) => still
                     ? FadeTransition(opacity: a, child: child)
-                    : _PageTurn(
+                    : PageTurn(
                         animation: a,
                         incoming: child.key == ValueKey(step),
                         forward: _forward,
-                        style: _TurnStyle.fade,
+                        style: TurnStyle.fade,
                         child: child),
                 child: Center(
                   key: ValueKey(step),

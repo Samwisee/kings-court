@@ -1,10 +1,21 @@
-// Task cards on the on-screen table, their flights to their owners, and the close-up’s parts.
-part of '../main.dart';
+/// Task cards on the on-screen table, their flights to their owners, and the close-up’s parts.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/cards.dart';
+import '../../engine/round.dart';
+import '../../play/card_view.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
+import 'mini_card.dart';
 
 /// A task card on its way from the middle of the table to whoever took it,
 /// shrinking as it goes.
-class _Flight {
-  _Flight(this.task, this.from, this.to, this.points, this.text,
+class Flight {
+  Flight(this.task, this.from, this.to, this.points, this.text,
       {this.fromFont = 13, this.toFont = 12, this.toColor = Palette.inkSoft});
   final RoundTask task;
   final Rect from;
@@ -23,7 +34,7 @@ class _Flight {
         // Its own natural height at that width, stretched to the flight.
         child: SizedBox(
           width: size.width,
-          child: _TaskChip(
+          child: TaskChip(
             task: task,
             points: points,
             text: text,
@@ -60,8 +71,8 @@ class _Flight {
 
 /// A task on the on-screen table, sized to be read rather than to look
 /// like a card: points, wording, and how far along it is.
-class _TaskChip extends StatelessWidget {
-  const _TaskChip({
+class TaskChip extends StatelessWidget {
+  const TaskChip({
     required this.task,
     required this.points,
     required this.text,
@@ -280,13 +291,13 @@ class _TaskChip extends StatelessWidget {
 }
 
 /// A card a task is about, marked as in the card tracker.
-typedef _TaskCard = ({PlayingCard card, Color? edge, int? trick, bool played});
+typedef MarkedCard = ({PlayingCard card, Color? edge, int? trick, bool played});
 
 /// The cards a task is about, each marked the way the card tracker marks
 /// it: who played it and in which trick, or who holds it.
-class _TaskCardsRow extends StatelessWidget {
-  const _TaskCardsRow({required this.cards});
-  final List<_TaskCard> cards;
+class TaskCardsRow extends StatelessWidget {
+  const TaskCardsRow({required this.cards});
+  final List<MarkedCard> cards;
 
   @override
   Widget build(BuildContext context) {
@@ -300,7 +311,7 @@ class _TaskCardsRow extends StatelessWidget {
             Semantics(
               label: '${c.card.spoken}: ${c.played ? 'played in trick ${c.trick}' : c.edge != null ? 'held' : 'still to come'}',
               excludeSemantics: true,
-              child: _MiniCard(
+              child: MiniCard(
                   card: c.card,
                   width: 32,
                   dimmed: c.played,
@@ -314,18 +325,18 @@ class _TaskCardsRow extends StatelessWidget {
 }
 
 /// A task's explanation, game words and fine print, behind an info button.
-class _MoreAbout extends StatefulWidget {
-  const _MoreAbout(
+class MoreAbout extends StatefulWidget {
+  const MoreAbout(
       {required this.explanation, required this.terms, required this.notes});
   final String explanation;
   final List<String> terms;
   final List<String> notes;
 
   @override
-  State<_MoreAbout> createState() => _MoreAboutState();
+  State<MoreAbout> createState() => _MoreAboutState();
 }
 
-class _MoreAboutState extends State<_MoreAbout> {
+class _MoreAboutState extends State<MoreAbout> {
   bool _open = false;
 
   @override

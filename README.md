@@ -85,21 +85,22 @@ web/                 The page shell: loading crown, PWA manifest, icons.
 scenes. Its state, `_HomePageState`, is still one big class (about 7,000
 lines). Flutter state can't be split across files without rewriting it, so
 its sections are marked with `// ----` headers. Everything that isn't that
-state lives in `lib/home/`:
+state is a library of its own (the last few still parts, in `lib/home/`):
 
 | File | What's in it |
 |---|---|
-| `geometry.dart` | Where seats, cards and dealt tasks sit on the table. |
-| `welcome.dart` | The front page's fanned Court Cards and crowned title. |
-| `menu.dart` | The gold top-bar buttons and the ornate drop-down menu. |
-| `setup.dart` | New game: how, which way to play, players, names, last choices. |
-| `card_tracker.dart` | The card tracker. |
-| `task_widgets.dart` | Task cards on the on-screen table, flights, close-up parts. |
-| `mini_card.dart` | Small cards (tracker, close-ups, shown cards). |
-| `house_banner.dart` | A courtier card's banner. |
-| `buttons.dart` | Glowing buttons, key caps and the shortcuts card. |
-| `transitions.dart` | How setup pages turn. |
-| `chronicle_ui.dart`, `saves.dart` | The chapter picker; saved games. |
+| `home/welcome.dart` | The front page's fanned Court Cards and crowned title. |
+| `home/menu.dart` | The gold top-bar buttons and the ornate drop-down menu. |
+| `home/setup.dart` | New game: how, which way to play, players, names, last choices. |
+| `home/chronicle_ui.dart` | The chapter picker. |
+| `ui/round_table/geometry.dart` | Where seats, cards and dealt tasks sit on the table. |
+| `ui/tracker/card_tracker.dart` | The card tracker. |
+| `ui/cards/task_chip.dart` | Task cards on the on-screen table, flights, close-up parts. |
+| `ui/cards/mini_card.dart` | Small cards (tracker, close-ups, shown cards). |
+| `ui/widgets/house_banner.dart` | A courtier card's banner. |
+| `ui/widgets/buttons.dart` | Glowing buttons, key caps and the shortcuts card. |
+| `ui/setup/transitions.dart` | How setup pages turn. |
+| `ui/setup/saves.dart` | Saved games, one per way to play. |
 
 ### lib/game: the controller
 

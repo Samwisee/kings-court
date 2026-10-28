@@ -1,5 +1,11 @@
-// How one setup page turns to the next.
-part of '../main.dart';
+/// How one setup page turns to the next.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../theme.dart';
 
 /// The ways a setup page can turn to the next. [fade] is the one in use:
 /// the old page fades out, then the new one fades in. The others were
@@ -13,19 +19,19 @@ part of '../main.dart';
 ///   gold edge, like a curtain drawn aside.
 /// * [sealPress]: the new page settles down onto the table from just above,
 ///   like a wax seal being pressed.
-enum _TurnStyle { fade, deal, fadeThrough, slide, curtain, sealPress }
+enum TurnStyle { fade, deal, fadeThrough, slide, curtain, sealPress }
 
-class _PageTurn extends StatelessWidget {
-  const _PageTurn(
+class PageTurn extends StatelessWidget {
+  const PageTurn(
       {required this.animation,
       required this.incoming,
       required this.forward,
-      this.style = _TurnStyle.deal,
+      this.style = TurnStyle.deal,
       required this.child});
   final Animation<double> animation;
   final bool incoming;
   final bool forward;
-  final _TurnStyle style;
+  final TurnStyle style;
   final Widget child;
 
   @override
@@ -40,28 +46,28 @@ class _PageTurn extends StatelessWidget {
         final side = (incoming ? 1 : -1) * (forward ? 1 : -1);
         final away = 1 - t;
         switch (style) {
-          case _TurnStyle.fade:
+          case TurnStyle.fade:
             return Opacity(opacity: t, child: child);
-          case _TurnStyle.fadeThrough:
+          case TurnStyle.fadeThrough:
             return Opacity(
               opacity: t,
               child: Transform.scale(
                   scale: incoming ? 0.94 + 0.06 * t : 1, child: child),
             );
-          case _TurnStyle.slide:
+          case TurnStyle.slide:
             return Opacity(
               opacity: t,
               child: Transform.translate(
                   offset: Offset(side * 60 * away, 0), child: child),
             );
-          case _TurnStyle.sealPress:
+          case TurnStyle.sealPress:
             return Opacity(
               opacity: t,
               child: Transform.scale(
                   scale: incoming ? 1 + 0.07 * away : 1 - 0.03 * away,
                   child: child),
             );
-          case _TurnStyle.curtain:
+          case TurnStyle.curtain:
             if (!incoming) return Opacity(opacity: t, child: child);
             final dir = forward ? 1.0 : -1.0;
             return LayoutBuilder(builder: (context, box) {
@@ -86,7 +92,7 @@ class _PageTurn extends StatelessWidget {
                   ),
               ]);
             });
-          case _TurnStyle.deal:
+          case TurnStyle.deal:
             final glint = incoming ? math.sin(t * math.pi) : 0.0;
             return Opacity(
               opacity: t,
