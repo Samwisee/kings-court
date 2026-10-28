@@ -1,5 +1,18 @@
-// Seat tokens and the courtiers’ living tokens: breathing, arriving, speaking, walking.
-part of '../widgets.dart';
+/// Seat tokens and the courtiers’ living tokens: breathing, arriving, speaking, walking.
+library;
+
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../game/courtiers.dart';
+import '../../models.dart';
+import '../../theme.dart';
+import 'clamp.dart';
+import 'icons.dart';
+import 'table.dart';
+import 'task_card.dart';
 
 /// A player's seat: a coloured token with their seat number or initials.
 /// The King's seat gets a gold ring and a crown. During play the token

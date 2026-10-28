@@ -1,5 +1,13 @@
-// The game’s small drawn icons: crowns, suits, Court Cards, and the buttons by your hand.
-part of '../widgets.dart';
+/// The game’s small drawn icons: crowns, suits, Court Cards, and the buttons by your hand.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/cards.dart';
+import '../../play/suits.g.dart';
+import '../../theme.dart';
 
 /// A small five-point crown, drawn so it looks the same on every platform.
 class CrownIcon extends StatelessWidget {

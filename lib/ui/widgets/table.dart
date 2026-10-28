@@ -1,5 +1,13 @@
-// The table itself: its red rim and brass inlay, sparks, confetti and the masonry layout.
-part of '../widgets.dart';
+/// The table itself: its red rim and brass inlay, sparks, confetti and the masonry layout.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
+
+import '../../theme.dart';
 
 /// The felt set into a royal-red table: round the edge of the screen the
 /// table shows, then a thin double brass rule where the felt begins, like

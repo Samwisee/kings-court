@@ -1,5 +1,12 @@
-// Game text: suits in colour, named cards, icons, and gold game words you can tap.
-part of '../widgets.dart';
+/// Game text: suits in colour, named cards, icons, and gold game words you can tap.
+library;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/cards.dart';
+import '../../theme.dart';
+import 'icons.dart';
+import 'panels.dart';
 
 /// Game text with suits printed in their card colours (♥ ♦ in red,
 /// ♠ ♣ in black) and the term "Court Cards" always capitalised and set a

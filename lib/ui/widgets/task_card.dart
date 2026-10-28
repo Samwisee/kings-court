@@ -1,5 +1,19 @@
-// Task cards on a real table, the deck, wax seals and decree scrolls.
-part of '../widgets.dart';
+/// Task cards on a real table, the deck, wax seals and decree scrolls.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/decrees.dart';
+import '../../engine/round.dart';
+import '../../game/courtiers.dart';
+import '../../models.dart';
+import '../../theme.dart';
+import 'clamp.dart';
+import 'icons.dart';
+import 'suit_text.dart';
+import 'table.dart';
 
 /// One pip per task: hollow while pending, green when done, red when failed.
 class TaskPips extends StatelessWidget {

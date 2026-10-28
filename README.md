@@ -48,8 +48,11 @@ lib/
   game/              GameController: the game, its table link, and saving;
                      bot_turn.dart: what a courtier does on their turn.
   home/              The table's pieces, one family per file (part of main.dart).
-  widgets.dart       Shared UI used on every screen...
-  ui/                ...one family per file (part of widgets.dart).
+  widgets.dart       Shared UI used on every screen: exports lib/ui/widgets/...
+  ui/widgets/        ...one family per library.
+  ui/overlays/       What lies over the table: the outcome card, the crowning,
+                     the decree, the King prompt, "Play!".
+  ui/modes/          Screen pieces one mode owns (the tutorial's coach).
   theme.dart         THE SKIN: colours, fonts, shadows, dialogs, buttons.
   play/              Whole screens and big pieces: cards, rules, tutorial pages,
                      the throne room, the Trial of Hearts.
@@ -123,7 +126,7 @@ Still on the page: the bots' timing, dealing cards to the screen and the
 trick pauses. They are tied to animations; they move into the controller
 as online play needs them.
 
-### lib/ui (widgets.dart)
+### lib/ui/widgets (exported by widgets.dart)
 
 | File | What's in it |
 |---|---|
@@ -133,6 +136,7 @@ as online play needs them.
 | `task_card.dart` | Task cards on a real table, the deck, wax seals, decree scrolls. |
 | `table.dart` | The red table rim and brass inlay, sparks and confetti. |
 | `panels.dart` | `OrnateCard` and its `Ornament` levels, `CourtDialog`, gold pips, `HighVisBorder`. |
+| `clamp.dart` | `clampD`, a clamp that never throws. |
 
 ---
 
@@ -153,7 +157,7 @@ these, and every screen follows.
    - `buildTheme()`: the bevelled gold buttons, text buttons, outlined
      buttons and the dialog theme.
    - `outlineColour` / `outlineWidth`: the dark line round every card.
-2. **Panels**: `OrnateCard` in `lib/ui/panels.dart` draws every panel and
+2. **Panels**: `OrnateCard` in `lib/ui/widgets/panels.dart` draws every panel and
    ornate dialog, at one of three levels of `Ornament`:
    - `low` (the default): gradient, faint damask, one bronze rule.
    - `medium`: a curl in each corner and a crown medallion. Used for the menu,
@@ -175,7 +179,7 @@ these, and every screen follows.
    PNGs (1x and 2x) are drawn from them, and `web/index.html` puts them
    on the page. Anything tappable that isn't a button needs
    `MouseRegion(cursor: SystemMouseCursors.click)` to get the hand.
-7. **Keyboard choice**: `KeyFocusRing` (`lib/ui/panels.dart`) is the ring
+7. **Keyboard choice**: `KeyFocusRing` (`lib/ui/widgets/panels.dart`) is the ring
    round whatever the arrow keys have chosen.
 
 Today a skin is a code change and a new build. To switch skins inside the

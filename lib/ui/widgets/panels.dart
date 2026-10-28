@@ -1,5 +1,16 @@
-// Panels and dialogs: the ornate court card at each level, gold pips, and the shared dialogs.
-part of '../widgets.dart';
+/// Panels and dialogs: the ornate court card at each level, gold pips, and the shared dialogs.
+library;
+
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+
+import '../../task_help.dart';
+import '../../theme.dart';
+import 'icons.dart';
+import 'suit_text.dart';
+import 'tokens.dart';
 
 /// How dressed up a panel or dialog is. Everything is [low] unless it's an
 /// occasion:
