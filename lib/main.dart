@@ -47,6 +47,9 @@ import 'task_help.dart';
 import 'theme.dart';
 import 'ui/cards/mini_card.dart';
 import 'ui/cards/task_chip.dart';
+import 'ui/dialogs/courtier_card.dart';
+import 'ui/dialogs/table_dialogs.dart';
+import 'ui/dialogs/task_close_up.dart';
 import 'ui/menu/menu.dart';
 import 'ui/modes/tutorial/coach.dart';
 import 'ui/overlays/crowning.dart';
@@ -1076,67 +1079,16 @@ class HomePageState extends State<HomePage>
   Future<void> _askX(RoundTask task) async {
     if (_askingX) return;
     _askingX = true;
-    var x = 1;
     // The King card always wins its trick, so whoever holds it wins at
     // least one.
     final least = _round.hands[_you].contains(PlayingCard.king) ? 1 : 0;
-    final chosen = await showDialog<int>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialog) => CourtDialog(
-          title: 'How many tricks?',
-          actions: [
-            FilledButton(
-                onPressed: () => Navigator.pop(context, x),
-                child: const Text('Announce')),
-          ],
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SuitText(task.cardText(game.players.length),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.white70)),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton.outlined(
-                    onPressed: x > least ? () => setDialog(() => x--) : null,
-                    icon: const Icon(Icons.remove),
-                  ),
-                  SizedBox(
-                    width: 70,
-                    child: Text('$x',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontFamily: bodyFont,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 40,
-                            color: Palette.gold)),
-                  ),
-                  IconButton.outlined(
-                    onPressed: x < _round.totalTricks
-                        ? () => setDialog(() => x++)
-                        : null,
-                    icon: const Icon(Icons.add),
-                  ),
-                ],
-              ),
-              Text(
-                  least > 0
-                      ? '${_round.totalTricks} tricks in the round. You hold the King card, so you\u2019ll win at least one.'
-                      : '${_round.totalTricks} tricks in the round.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white60)),
-            ],
-          ),
-        ),
-      ),
-    );
+    final chosen = await showAnnounceDialog(context,
+        text: task.cardText(game.players.length),
+        least: least,
+        totalTricks: _round.totalTricks);
     _askingX = false;
     if (!mounted || !_digital) return;
-    _announce(task, chosen ?? x);
+    _announce(task, chosen);
   }
 
   // ------------------------------------------------------------ moves
@@ -2588,19 +2540,7 @@ class HomePageState extends State<HomePage>
       for (int s = 0; s < game.players.length; s++)
         if (_round.mayTake(t, s)) s
     ];
-    final seat = await showDialog<int>(
-      context: context,
-      builder: (context) => CourtDialog(
-        title: "King's Command: who takes it?",
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          for (final s in seats)
-            TextButton(
-              onPressed: () => Navigator.pop(context, s),
-              child: Text(game.players[s].name, style: const TextStyle(fontSize: 17)),
-            ),
-        ]),
-      ),
-    );
+    final seat = await showWhoTakesDialog(context, seats: seats, players: game.players);
     if (seat != null && mounted && t.owner == null) {
       _assignTask(t, seat);
     }
@@ -3039,25 +2979,7 @@ class HomePageState extends State<HomePage>
     // Any game saved before the tutorial can be continued again.
     await _loadSaved();
     if (!mounted) return;
-    final play = await showDialog<bool>(
-      context: context,
-      builder: (context) => CourtDialog(
-        title: 'You’re ready',
-        ornament: Ornament.medium,
-        actions: [
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Play a game')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Not now')),
-        ],
-        child: const SuitText(
-            'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
-            textAlign: TextAlign.center,
-            style: DialogStyle.body),
-      ),
-    );
+    final play = await showReadyDialog(context);
     if (play ?? false) {
       if (mounted) _showSetupDialog();
     }
@@ -3351,373 +3273,47 @@ class HomePageState extends State<HomePage>
   /// (mark it used), facing the player.
   Future<void> _showCourtier(int seat) async {
     if (seat >= game.courtiers.length) return;
-    final courtier = game.courtiers[seat];
-    final player = game.players[seat];
-    final isKing = _round.king == seat;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final spoke = _round.spoke[seat];
-          final canSpeak = _round.canSpeak(seat) || spoke;
-          return RotatedBox(
-            quarterTurns: _geo.edge(seat),
-            child: Dialog(
-              backgroundColor: DialogStyle.paper,
-              surfaceTintColor: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
-              // Edged in the player's colour, like their tasks.
-              shape: HighVisBorder(player.color),
-              insetPadding: const EdgeInsets.all(20),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      HouseBanner(
-                        courtier: courtier,
-                        color: player.color,
-                        name: isKing ? '${player.name}, the King' : player.name,
-                        king: isKing,
-                      ),
-                      // A gilt band between the banner and the card.
-                      Container(
-                        height: 5,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(colors: [
-                            Palette.goldDeep,
-                            Palette.goldLight,
-                            Palette.gold,
-                            Palette.goldDeep,
-                          ]),
-                          border: Border(
-                              bottom: BorderSide(color: outlineColour)),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(courtier.story,
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    height: 1.4,
-                                    fontStyle: FontStyle.italic,
-                                    color: Palette.inkSoft)),
-                            if (_digital && !_choosingKing) ...[
-                              const SizedBox(height: 8),
-                              if (seat == _you)
-                                Wrap(spacing: 8, runSpacing: 8, children: [
-                                  OutlinedButton.icon(
-                                    onPressed: _mayAskToSpeak
-                                        ? () {
-                                            Navigator.pop(context);
-                                            _speak();
-                                          }
-                                        : null,
-                                    icon: const Icon(Icons.record_voice_over),
-                                    label: Text(spoke ? 'Card shown' : 'Show a card'),
-                                    style: OutlinedButton.styleFrom(
-                                        foregroundColor: Palette.ink,
-                                        disabledForegroundColor: Palette.inkSoft,
-                                        side: const BorderSide(color: Palette.ink)),
-                                  ),
-                                ])
-                              else
-                                Text(
-                                    spoke ? 'Has shown a card.' : 'Hasn\u2019t shown a card.',
-                                    style: const TextStyle(
-                                        fontSize: 15, color: Palette.inkSoft)),
-                            ],
-                            if (!_choosingKing && !_digital) ...[
-                              const Divider(height: 26),
-                              Row(children: [
-                                SpeakToken(
-                                    used: spoke,
-                                    locked: !canSpeak,
-                                    size: 26),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                      !canSpeak
-                                          ? 'Silence: no card reveals this round'
-                                          : spoke
-                                              ? 'Card reveal used'
-                                              : 'Card reveal available',
-                                      style: const TextStyle(
-                                          fontSize: 15, color: Palette.ink)),
-                                ),
-                                MouseRegion(cursor: canSpeak ? SystemMouseCursors.click : MouseCursor.defer, child: GestureDetector(
-                                  onTap: !canSpeak
-                                      ? null
-                                      : () {
-                                          _haptic(
-                                              HapticFeedback.selectionClick);
-                                          _link.send(Speak(seat, on: !_round.spoke[seat]));
-                                          setDialogState(() {});
-                                        },
-                                  child: Semantics(
-                                    toggled: spoke,
-                                    label: 'Card reveal used',
-                                    child: GoldPip(on: spoke, enabled: canSpeak, size: 26),
-                                  ),
-                                )),
-                              ]),
-                            ],
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                        child: Row(
-                          children: [
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                  foregroundColor: Palette.ink),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// Asks what to do about a seal completed out of order.
-  Future<bool?> _confirmSealBreak(String problem, int quarterTurns) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => RotatedBox(
-        quarterTurns: quarterTurns,
-        child: AlertDialog(
-          backgroundColor: DialogStyle.paper,
-          shape: const HighVisBorder(null),
-          title: const Text('A seal is broken', style: DialogStyle.paperTitle),
-          content: Text(
-              '$problem\n\nIf this task really was done out of order, the round is lost.',
-              style: const TextStyle(fontSize: 16, height: 1.4, color: Palette.ink)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: TextButton.styleFrom(foregroundColor: Palette.ink),
-              child: const Text('Go back'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: FilledButton.styleFrom(
-                  backgroundColor: Palette.lost, foregroundColor: Colors.white),
-              child: const Text('It was: fail the round'),
-            ),
-          ],
-        ),
-      ),
-    );
+    await showCourtierCard(
+        context,
+        CourtierCard(
+          seat: seat,
+          courtier: game.courtiers[seat],
+          player: game.players[seat],
+          round: _round,
+          quarterTurns: _geo.edge(seat),
+          onScreen: _digital,
+          choosingKing: _choosingKing,
+          you: _you,
+          onSpeak: _mayAskToSpeak ? _speak : null,
+          onToggleReveal: (on) {
+            _haptic(HapticFeedback.selectionClick);
+            _link.send(Speak(seat, on: on));
+          },
+        ));
   }
 
   /// The close-up of a task, turned to face the player who holds it.
-  /// The marks a task card carries beside its points (the same as on the
-  /// table), each with what it means.
-  List<(Widget, String)> _taskMarks(RoundTask task, double size) => [
-        if (task.noCourtCards)
-          (NoCourtIcon(size: size), 'The trick can\u2019t have any Court Cards in it.'),
-        if (task.kingCantTake)
-          (Icon(Icons.block, size: size, color: Palette.inkSoft),
-              'The King can\u2019t take this task.'),
-        for (final n in task.notes)
-          (Icon(Icons.info_outline, size: size, color: Palette.inkSoft), n),
-        if (task.seal != null)
-          (WaxSeal(seal: task.seal!, size: size + 3), Seals.describe(task.seal!)),
-      ];
-
   Future<void> _showTaskDetail(RoundTask task, Offset tapGlobal) async {
-    final owner = task.owner == null
-        ? null
-        : game.players[task.owner!];
     // An owned task's close-up turns to face its owner; a loose task's
     // stays upright.
-    final quarterTurns = task.owner == null
-        ? 0
-        : _geo.edge(task.owner!);
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => RotatedBox(
-        quarterTurns: quarterTurns,
-        child: AlertDialog(
-        backgroundColor: task.isFailed ? Palette.failedCard : DialogStyle.paper,
-        // Whose it is shows as on the table: their colour, edged in dark.
-        shape: HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
-        scrollable: true,
-        contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        content: SizedBox(
-          width: 360,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Laid out as the card on the table: points and crown, then
-              // the words.
-              Row(
-                children: [
-                  Text('${_points(task)}',
-                      style: const TextStyle(
-                          fontFamily: displayFont,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 28,
-                          height: 1,
-                          color: Palette.ink)),
-                  const SizedBox(width: 3),
-                  const CrownIcon(size: 19, color: Palette.goldDeep),
-                  // The same marks as the card on the table, each
-                  // explained under the words.
-                  for (final (icon, _) in _taskMarks(task, 21)) ...[
-                    const SizedBox(width: 7),
-                    icon,
-                  ],
-                  const Spacer(),
-                  if (_progressOf(task) case final p? when !task.isCompleted && !task.isFailed)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Palette.ink,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(p,
-                          style: const TextStyle(
-                              fontFamily: bodyFont,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Palette.gold)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              SuitText(task.fullText(game.players.length),
-                  struck: _wonNamed(task),
-                  style: const TextStyle(
-                      fontSize: 19,
-                      height: 1.3,
-                      fontWeight: FontWeight.w600,
-                      color: Palette.ink)),
-              // What each mark by the points means.
-              for (final (icon, words) in _taskMarks(task, 16))
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                          width: 26,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 1),
-                            child: Align(alignment: Alignment.topLeft, child: icon),
-                          )),
-                      Expanded(
-                        child: SuitText(words,
-                            style: const TextStyle(
-                                fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
-                      ),
-                    ],
-                  ),
-                ),
-              // Once it's settled, why: a plain line (the badge by the
-              // points tells how it's going until then).
-              if (_statusOf(task) case final status?
-                  when task.isCompleted || task.isFailed)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: SuitText(status,
-                        style: TextStyle(
-                            fontSize: 15,
-                            height: 1.35,
-                            fontWeight: FontWeight.w700,
-                            color: task.isCompleted ? Palette.won : Palette.lost)),
-                  ),
-                ),
-              // The cards it's about, and what's become of them.
-              if (relevantCards(task.description).isNotEmpty)
-                TaskCardsRow(cards: _cardStates(task)),
-              // What it means, the game words it uses and any fine print,
-              // behind an info button.
-              MoreAbout(
-                explanation: explainTask(task.description),
-                terms: termsIn(task.description),
-                notes: const [],
-              ),
-            ],
-          ),
-        ),
-        actions: _digital
-            ? [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(foregroundColor: Palette.ink),
-                  child: const Text('Close'),
-                ),
-                // Your pick: take it from here too.
-                if (_yourPick &&
-                    task.owner == null &&
-                    _mayTake(task))
-                  FilledButton(
-                    // Ready for Enter, when chosen with the keys.
-                    autofocus: true,
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _takeTask(task);
-                    },
-                    child: const Text('Take'),
-                  ),
-              ]
-            : [
-          OutlinedButton.icon(
-            onPressed: () {
-              _mark(task, TaskStatus.failed);
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.close_rounded),
-            label: Text(task.isFailed ? 'Not failed' : 'Failed'),
-            style: OutlinedButton.styleFrom(
-                foregroundColor: Palette.lost,
-                side: const BorderSide(color: Palette.lost)),
-          ),
-          FilledButton.icon(
-            onPressed: () async {
-              // Completing a sealed task out of order fails the round.
-              final problem = task.isCompleted ? null : _round.sealProblem(task);
-              if (problem != null) {
-                final fail = await _confirmSealBreak(problem, quarterTurns);
-                if (!context.mounted) return;
-                Navigator.pop(context);
-                if (fail == true) _mark(task, TaskStatus.failed);
-                return;
-              }
-              _mark(task, TaskStatus.completed);
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.check_rounded),
-            label: Text(task.isCompleted ? 'Not done' : 'Done'),
-            style: FilledButton.styleFrom(
-                backgroundColor: Palette.won, foregroundColor: Colors.white),
-          ),
-        ],
-        ),
-      ),
-    );
+    final quarterTurns = task.owner == null ? 0 : _geo.edge(task.owner!);
+    await showTaskCloseUp(
+        context,
+        TaskCloseUp(
+          task: task,
+          round: _round,
+          players: game.players,
+          quarterTurns: quarterTurns,
+          onScreen: _digital,
+          progress: _progressOf(task),
+          struck: _wonNamed(task),
+          status: _statusOf(task),
+          cards: _cardStates(task),
+          onTake: _yourPick && task.owner == null && _mayTake(task)
+              ? () => _takeTask(task)
+              : null,
+          onMark: (status) => _mark(task, status),
+        ));
   }
 
   /// Opens the New Game panel on the table.
@@ -3804,74 +3400,8 @@ class HomePageState extends State<HomePage>
   /// Changes the points target mid-game. Players and the King stay; the
   /// tasks are re-dealt to match the new target.
   Future<void> _showPointsDialog() async {
-    var target = game.target;
-    final apply = await showDialog<bool>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          backgroundColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          child: OrnateCard(
-      ornament: Ornament.medium,
-            won: false,
-            court: true,
-            margin: const EdgeInsets.only(top: 34),
-            padding: const EdgeInsets.fromLTRB(32, 30, 32, 28),
-            maxWidth: 380,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Points target',
-                      style: TextStyle(
-                          fontFamily: displayFont,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 24,
-                          color: Palette.goldOnFelt)),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('$target',
-                          style: const TextStyle(
-                              fontFamily: displayFont,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 52,
-                              height: 1.1,
-                              color: Palette.gold)),
-                      const SizedBox(width: 8),
-                      const CrownIcon(size: 32),
-                    ],
-                  ),
-                  Slider(
-                    value: target.clamp(1, maxTarget).toDouble(),
-                    min: 1,
-                    max: maxTarget.toDouble(),
-                    divisions: maxTarget - 1,
-                    onChanged: (v) => setDialogState(() => target = v.round()),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel')),
-                      FilledButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Deal')),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    if (apply != true || !mounted) return;
+    final target = await showPointsDialog(context, current: game.target);
+    if (target == null || !mounted) return;
     // The round is dealt again from the start, cards, tasks and all, for
     // the new target: whoever's dealt the King card is King.
     _link.send(Redeal(_you, target));

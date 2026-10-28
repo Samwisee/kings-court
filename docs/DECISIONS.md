@@ -167,3 +167,13 @@ Notes as the sequence runs:
   screen) is `IntroSparks` in `ui/overlays/crowning.dart`, shared by the
   welcome screen and the walk-in's crown; the welcome screen will import
   it from there when it moves out of the page (item 5).
+- Items 4 and 6 swapped: the dialogs use the shared widgets (the mini
+  card, the house banner, the task's cards row), so those became
+  libraries first. `lib/home/` is gone; `lib/ui/widgets/`, `ui/cards/`,
+  `ui/tracker/`, `ui/setup/`, `ui/menu/`, `ui/welcome/` and
+  `ui/round_table/geometry.dart` hold what it had, and `lib/widgets.dart`
+  exports `ui/widgets/`.
+- The task close-up (`ui/dialogs/task_close_up.dart`) takes what the
+  screen knows of the task (progress, crossed-out cards, status, the
+  cards' marks) as values when it opens, rather than reading the page
+  while open; bots don't move under a dialog, so nothing changes meanwhile.
