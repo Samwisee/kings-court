@@ -486,7 +486,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
           ]),
         ]);
       case IntroArt.choosing:
-        return Row(mainAxisSize: MainAxisSize.min, children: [
+        return FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisSize: MainAxisSize.min, children: [
           for (final (i, name, n) in const [(0, 'You, the King', '1st'), (1, 'Duke', '2nd'), (2, 'Bishop', '3rd')])
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -497,9 +497,9 @@ class _TutorialIntroState extends State<TutorialIntro> {
                 _caption('picks $n', color: Palette.gold),
               ]),
             ),
-        ]);
+        ]));
       case IntroArt.speak:
-        return Row(mainAxisSize: MainAxisSize.min, children: [
+        return FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisSize: MainAxisSize.min, children: [
           _token(1, 'D', 52),
           const SizedBox(width: 10),
           Column(mainAxisSize: MainAxisSize.min, children: [
@@ -508,7 +508,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
           ]),
           const SizedBox(width: 22),
           const ShowCardIcon(size: 44),
-        ]);
+        ]));
       case IntroArt.tracker:
         return Column(children: [
           const TrackerIcon(size: 48),
