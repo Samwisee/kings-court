@@ -351,11 +351,13 @@ void main() {
         body: SuitText('Win no court cards', style: TextStyle(fontSize: 14)),
       ),
     ));
-    final rich = tester.widget<Text>(find.byType(Text)).textSpan! as TextSpan;
-    final term = rich.children!
-        .cast<TextSpan>()
-        .firstWhere((s) => s.text == 'Court Cards');
+    // A game word: gold, bolder, and tappable for what it means.
+    final term = tester.widget<Text>(find.text('Court Cards'));
     expect(term.style!.fontWeight, FontWeight.w700);
+    await tester.tap(find.text('Court Cards'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('The Joker, Jack, Queen and King', findRichText: true),
+        findsOneWidget);
   });
 
   test('Seat labels are short and never repeat', () {
