@@ -29,10 +29,15 @@ jobs:
           timeout 600 flutter test tool/shots/shots_test.dart --update-goldens --reporter expanded > shots.txt 2>&1 || true
           tail -30 shots.txt
           python3 tool/ci_annotate.py shots.txt || true
+      # How fast the bots think (tool/bench): bench.txt beside the screenshots.
+      - name: Time the bots
+        run: |
+          timeout 300 flutter test tool/bench/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' > bench.txt || true
+          cat bench.txt
       - name: Publish to the shots branch
         run: |
           mkdir -p /tmp/out && cp tool/shots/goldens/*.png /tmp/out/ 2>/dev/null || true
-          cp shots.txt /tmp/out/
+          cp shots.txt bench.txt /tmp/out/
           cd /tmp/out
           git init -q -b shots
           git config user.name ci && git config user.email ci@example.com
