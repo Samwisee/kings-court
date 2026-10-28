@@ -12,7 +12,7 @@ import '../theme.dart';
 import '../widgets.dart';
 
 /// Which games a section of the rules is about.
-enum RulesFor { all, onScreen, inPerson, dynasty, twoPlayer }
+enum RulesFor { all, onScreen, inPerson, twoPlayer }
 
 /// What's being played, for the rules to fit it.
 class RulesContext {
@@ -20,7 +20,6 @@ class RulesContext {
     required this.modeName,
     required this.onScreen,
     required this.players,
-    required this.dynasty,
     this.points,
     this.seals = const [],
     this.decree,
@@ -29,7 +28,6 @@ class RulesContext {
   final String modeName;
   final bool onScreen;
   final int players;
-  final bool dynasty;
   final int? points;
   final List<int> seals;
   final String? decree;
@@ -109,18 +107,9 @@ const _sections = <_Section>[
     'Free play: you choose the points target. Turn on Seals and decrees for surprises.',
     'Endless: each win adds a point to the next round; the app keeps your win streaks.',
     'The Chronicle: 24 chapters with set points, seals and decrees. Earn up to three crowns for each.',
-    'Dynasty (Alpha): a solo story on screen. You are the King, with courtiers, powers and dilemmas.',
-    'Courtly roles: everyone plays a courtier of a great house, with a power to use once a round. Tap a seat to read it.',
+    'Courtly roles: everyone plays a courtier of a great house. Tap a seat to read about them.',
     'Your game saves as you play, one save for each way to play: tap Play to pick any of them up.',
   ]),
-  _Section('Dynasty (Alpha)', [
-    'You are the King. You take the King card into your hand each round, and keep the crown round after round.',
-    'Every lost round wounds the King. How many wounds they can bear is secret: one, two or three. When the King falls, an heir is crowned and the dynasty goes on.',
-    'Each round opens with tidings from the kingdom, and may charge one house with a task (the gold ribbon). After each round the King faces a dilemma; choices win or lose courtiers’ loyalty, heal or wound the King, and can bring decrees.',
-    'Loyalty is a candle by each courtier: the taller the flame, the more loyal. A courtier whose loyalty runs out turns traitor, with a scheme shown as a black card. Stop it, or the King is wounded.',
-    'Some matters divide the court: the sides play the Trial of Hearts, where every ♥ won is a mark of shame and the Q♠ is five.',
-    'The story runs from the harvest to war with Karsk. Conquer Karsk or seal a lasting peace to secure the realm. If three Kings fall, or traitors outnumber the loyal, the dynasty falls.',
-  ], RulesFor.dynasty),
   _Section('Two players', [
     'Deal 13 cards each. The other 14 go to a third hand, the Dummy: 7 face down, with 7 face up on top. When a face-up Dummy card is played, flip the card underneath it.',
     'The King plays the Dummy’s cards as well as their own. Only the two players take tasks, which use the 3-player difficulty.',
@@ -133,7 +122,6 @@ bool _applies(_Section s, RulesContext? c) {
     RulesFor.all => true,
     RulesFor.onScreen => c.onScreen,
     RulesFor.inPerson => !c.onScreen,
-    RulesFor.dynasty => c.dynasty,
     RulesFor.twoPlayer => !c.onScreen && c.players == 2,
   };
 }

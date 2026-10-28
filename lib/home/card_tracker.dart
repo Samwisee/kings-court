@@ -377,14 +377,6 @@ class _CardTrackerState extends State<_CardTracker> {
     setState(() => _seat = order[(at + dir) % order.length]);
   }
 
-  static double cellWidth(double width, double height) {
-    final across = math.min(width, 720.0) - 24;
-    const header = 40.0; // the legend above the grid
-    final byWidth = (across - 8 * 4) / 9;
-    final byHeight = ((height - header - 8) / 5 - 4) / 1.3;
-    return math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
-  }
-
 }
 
 /// The eye's corner of the card tracker: a tint following the panel's

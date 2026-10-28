@@ -8,12 +8,10 @@ class _HouseBanner extends StatelessWidget {
       {required this.courtier,
       required this.color,
       required this.name,
-      required this.antagonist,
       this.king = false});
   final Courtier courtier;
   final Color color;
   final String name;
-  final bool antagonist;
 
   /// The King's seat: their token wears the crown, as at the table.
   final bool king;
@@ -27,9 +25,7 @@ class _HouseBanner extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: antagonist
-              ? [const Color(0xFF5A0C18), Palette.traitorDeep]
-              : [color, deep],
+          colors: [color, deep],
         ),
       ),
       child: Stack(
@@ -62,7 +58,7 @@ class _HouseBanner extends StatelessWidget {
                   ShapedToken(
                       shape: courtier.shape,
                       size: 52,
-                      color: antagonist ? Palette.traitor : color,
+                      color: color,
                       ring: Palette.gold,
                       ringWidth: 2.5),
                 ]),

@@ -26,6 +26,9 @@ def main(baseline, new, expected_file, out):
             expected[name.strip()] = why.strip()
     diff_dir = os.path.join(out, 'diff')
     os.makedirs(diff_dir, exist_ok=True)
+    if not os.path.isdir(new) or not any(f.endswith('.png') for f in os.listdir(new)):
+        print('no screenshots were taken (did the test compile?)')
+        return 1
     if not os.path.isdir(baseline):
         print('no baseline: nothing to compare')
         return 0

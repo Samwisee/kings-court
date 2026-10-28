@@ -615,34 +615,6 @@ bool playableWith(String description, List<List<PlayingCard>> hands,
   return true;
 }
 
-/// Whether a Dynasty traitor's open scheme (by index into `schemes` in
-/// courtiers.dart) came off, judged from the tricks played.
-bool schemeSucceeded(int scheme, RoundView v, int seat) {
-  final king = v.king;
-  switch (scheme) {
-    case 0: // Win the trick that the King card is played in.
-      return v.tricks.any(
-          (t) => t.cards.contains(PlayingCard.king) && t.winner == seat);
-    case 1: // The King must win no tricks at all.
-      return v.tricksWon(king) == 0;
-    case 2: // Win the last trick of the round.
-      return v.over && v.tricks.last.winner == seat;
-    case 3: // Win more tricks than the King.
-      return v.tricksWon(seat) > v.tricksWon(king);
-    case 4: // Win at least two Court Cards.
-      return v.countWon(seat, (c) => c.isCourt) >= 2;
-    case 5: // Win the first trick and the last trick.
-      return v.over &&
-          v.tricks.first.winner == seat &&
-          v.tricks.last.winner == seat;
-    case 6: // The King must win exactly one trick.
-      return v.tricksWon(king) == 1;
-    case 7: // Win three tricks in a row.
-      return v.longestRun(seat) >= 3;
-  }
-  return false;
-}
-
 // ------------------------------------------------------------- progress
 
 /// How far along a task is, as a plain count for the corner of its card

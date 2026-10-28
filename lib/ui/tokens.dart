@@ -18,10 +18,6 @@ class SeatToken extends StatelessWidget {
     this.exiled = false,
     this.speakLocked = false,
     this.shape,
-    this.antagonist = false,
-    this.wounds,
-    this.powerUsed,
-    this.loyalty,
     this.spoke,
     this.onTap,
     this.tight = false,
@@ -55,19 +51,6 @@ class SeatToken extends StatelessWidget {
   /// The courtier's token outline; a plain circle when null.
   final TokenShape? shape;
 
-  /// Dynasty: this courtier has openly turned against the King.
-  final bool antagonist;
-
-  /// Dynasty: wounds the King has taken (shown by the crown).
-  final int? wounds;
-
-  /// Dynasty: whether the courtier's power is spent this round (hidden
-  /// when null).
-  final bool? powerUsed;
-
-  /// Dynasty: loyalty to the crown, shown as a candle (hidden when null).
-  final int? loyalty;
-
   /// Whether the player has used their card reveal; hidden when null.
   final bool? spoke;
   final VoidCallback? onTap;
@@ -86,11 +69,9 @@ class SeatToken extends StatelessWidget {
     final labelText = OutlinedLabel(initial,
         fontSize: size * (initial.length > 1 ? 0.36 : 0.46),
         strokeWidth: size * 0.07);
-    final ringColor = antagonist ? Palette.lost : ring;
-    final ringWidth = isKing || highlighted || picking || antagonist ? 3.0 : 2.0;
-    final fill = antagonist
-        ? Color.lerp(player.color, Palette.traitor, 0.55)!
-        : player.color;
+    final ringColor = ring;
+    final ringWidth = isKing || highlighted || picking ? 3.0 : 2.0;
+    final fill = player.color;
     final token = shape == null
         ? AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -138,7 +119,6 @@ class SeatToken extends StatelessWidget {
         if (spoke == true) 'card reveal used',
         if (picking) 'picking a task',
         if (exiled) 'exiled',
-        if (antagonist) 'against the King',
       ].join(', '),
       excludeSemantics: true,
       child: AnimatedScale(
@@ -150,25 +130,10 @@ class SeatToken extends StatelessWidget {
             SizedBox(
               height: 14,
               child: isKing
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CrownIcon(size: 18),
-                        // Wounds taken; how many the King can bear is secret.
-                        for (int w = 0; w < (wounds ?? 0); w++)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 1),
-                            child: Icon(Icons.water_drop,
-                                size: 12, color: Palette.lost),
-                          ),
-                      ],
-                    )
+                  ? const CrownIcon(size: 18)
                   : exiled
                       ? const Icon(Icons.block, size: 14, color: Palette.lost)
-                      : antagonist
-                          ? const Icon(Icons.dangerous,
-                              size: 15, color: Palette.lost)
-                          : null,
+                      : null,
             ),
             const SizedBox(height: 2),
             SizedBox(
@@ -188,18 +153,6 @@ class SeatToken extends StatelessWidget {
                     duration: const Duration(milliseconds: 300),
                     child: token,
                   ),
-                  if (loyalty != null)
-                    Positioned(
-                      left: 0,
-                      bottom: 0,
-                      child: LoyaltyCandle(loyalty: loyalty!, size: badge),
-                    ),
-                  if (powerUsed != null)
-                    Positioned(
-                      right: 0,
-                      top: -4,
-                      child: _PowerBadge(used: powerUsed!, size: badge),
-                    ),
                   if (spoke != null)
                     Positioned(
                       right: 0,
@@ -566,30 +519,6 @@ class _TokenPainter extends CustomPainter {
       old.ring != ring ||
       old.ringWidth != ringWidth ||
       old.glow != glow;
-}
-
-/// A courtier's power: a gold bolt while it's ready, dimmed once used.
-class _PowerBadge extends StatelessWidget {
-  const _PowerBadge({required this.used, required this.size});
-  final bool used;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: used ? const Color(0xFF55524C) : Palette.ink,
-        border: Border.all(
-            color: used ? Colors.white38 : Palette.gold, width: 1.5),
-      ),
-      child: Icon(Icons.bolt_rounded,
-          size: size * 0.7, color: used ? Colors.white38 : Palette.gold),
-    );
-  }
 }
 
 /// How a character token is behaving.
@@ -1011,77 +940,4 @@ class _BubbleTail extends CustomPainter {
 
   @override
   bool shouldRepaint(_BubbleTail old) => old.below != below || old.above != above;
-}
-
-/// Glides [child] from wherever it was last laid out to where it is now,
-/// so a courtier changing places walks there instead of jumping. Give it
-/// a key that follows the courtier.
-class SlideToPlace extends StatefulWidget {
-  const SlideToPlace(
-      {super.key, required this.child, this.hop = true, this.within, this.enabled = true});
-  final Widget child;
-
-  /// Off: stays put, however the layout moves.
-  final bool enabled;
-
-  /// A little hop in each step, for walking courtiers.
-  final bool hop;
-
-  /// Only moves within this ancestor count (so the whole thing scrolling
-  /// or shifting doesn't set it gliding).
-  final GlobalKey? within;
-
-  @override
-  State<SlideToPlace> createState() => _SlideToPlaceState();
-}
-
-class _SlideToPlaceState extends State<SlideToPlace>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 650));
-  Offset? _last;
-  Offset _from = Offset.zero;
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  void _measure(_) {
-    if (!mounted) return;
-    final box = context.findRenderObject();
-    if (box is! RenderBox || !box.hasSize || !box.attached) return;
-    final anchor = widget.within?.currentContext?.findRenderObject();
-    final now = box.localToGlobal(Offset.zero,
-        ancestor: anchor is RenderBox && anchor.attached ? anchor : null);
-    final last = _last;
-    _last = now;
-    if (last == null || !widget.enabled) return;
-    final moved = last - now;
-    if (moved.distance > 2) {
-      // Start from where it appeared to be, mid-glide or not.
-      final showing = _from * (1 - Curves.easeInOutCubic.transform(_c.value));
-      _from = moved + showing;
-      _c.forward(from: 0);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback(_measure);
-    return AnimatedBuilder(
-      animation: _c,
-      child: widget.child,
-      builder: (context, child) {
-        final t = Curves.easeInOutCubic.transform(_c.value);
-        final off = _c.isAnimating || _c.value < 1 ? _from * (1 - t) : Offset.zero;
-        // A little hop in each step as they walk.
-        final hop = widget.hop && _c.isAnimating
-            ? -math.sin(t * math.pi * 4).abs() * 4
-            : 0.0;
-        return Transform.translate(offset: off + Offset(0, hop), child: child);
-      },
-    );
-  }
 }

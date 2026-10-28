@@ -5,10 +5,6 @@ part of '../main.dart';
 typedef _SetupArgs = ({GameMode? mode, int? chapter});
 
 /// The settings a New Game panel hands back.
-/// Dynasty doesn't ask for points: the story sets them, starting here
-/// and growing with each win.
-const dynastyStartingPoints = 5;
-
 typedef _SetupResult = ({
   int count,
   int target,
@@ -119,10 +115,6 @@ class _SetupPanelState extends State<_SetupPanel> {
           text: i < widget.players.length ? widget.players[i].name : ''),
   ];
 
-  /// Dynasty is always played solo with on-screen cards, so it goes
-  /// straight from the way to play to the story.
-  bool get _solo => mode == GameMode.dynasty;
-
   /// The steps, in order: how you'll play, which game, then the table and
   /// the details. The first two go on as soon as you tap a choice.
   List<String> get _flow => [
@@ -130,8 +122,8 @@ class _SetupPanelState extends State<_SetupPanel> {
         'mode',
         // On screen the number of players is chosen on the last step; at a
         // real table it comes first, for the names.
-        if (!_solo && !digital) 'count',
-        if (!_solo && !digital) 'names',
+        if (!digital) 'count',
+        if (!digital) 'names',
         'final',
       ];
   int get _steps => _flow.length;
@@ -146,10 +138,8 @@ class _SetupPanelState extends State<_SetupPanel> {
 
   void _start() {
     widget.onStart((
-      // Solo Dynasty: the story decides who sits at the table; it opens
-      // with three courtiers at the coronation.
-      count: _solo ? 4 : count,
-      target: mode == GameMode.dynasty ? dynastyStartingPoints : target,
+      count: count,
+      target: target,
       names: [
         for (int i = 0; i < count; i++)
           controllers[i].text.trim().isEmpty
@@ -159,7 +149,7 @@ class _SetupPanelState extends State<_SetupPanel> {
       mode: mode,
       surprise: surprise,
       roles: roles,
-      digital: _solo || digital,
+      digital: digital,
       chapter: mode == GameMode.chronicle ? chapter : null,
     ));
   }
@@ -197,18 +187,15 @@ class _SetupPanelState extends State<_SetupPanel> {
         ])
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
+            // Dynasty is being remade as a story mode; its tile waits.
             child: Opacity(
-              opacity: m == GameMode.dynasty && dynastyComingSoon ? 0.55 : 1,
+              opacity: m == GameMode.dynasty ? 0.55 : 1,
               child: _ModeTile(
                 title: _modeInfo[m]!.$1,
-                badge: m == GameMode.dynasty
-                    ? dynastyComingSoon
-                        ? '(Coming soon)'
-                        : '(Alpha)'
-                    : null,
+                badge: m == GameMode.dynasty ? '(Coming soon)' : null,
                 description: _modeInfo[m]!.$2,
                 selected: false,
-                onTap: m == GameMode.dynasty && dynastyComingSoon
+                onTap: m == GameMode.dynasty
                     ? () {}
                     : () => setState(() {
                           mode = m;
@@ -283,9 +270,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             'Round a real table with a real deck; the app keeps the tasks.',
             Icons.table_restaurant_rounded, () => setState(() {
                   digital = false;
-                  if (mode == GameMode.dynasty || mode == GameMode.tutorial) {
-                    mode = GameMode.free;
-                  }
+                  if (mode == GameMode.tutorial) mode = GameMode.free;
                   step++;
                 })),
         ],
@@ -298,20 +283,10 @@ class _SetupPanelState extends State<_SetupPanel> {
       key: const ValueKey('count'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-            mode == GameMode.dynasty && digital
-                ? 'You will be King'
-                : 'How many players?',
-            textAlign: TextAlign.center,
-            style: _heading),
+        const Text('How many players?',
+            textAlign: TextAlign.center, style: _heading),
         const SizedBox(height: 18),
-        if (mode == GameMode.dynasty && digital)
-          const Text(
-              'The story decides who sits at your table: one courtier for a quiet matter, the whole court for a crisis.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white))
-        else
-          Wrap(
+        Wrap(
             alignment: WrapAlignment.center,
             spacing: 10,
             runSpacing: 10,
@@ -359,15 +334,11 @@ class _SetupPanelState extends State<_SetupPanel> {
         SizedBox(
           height: 66,
           child: Text(
-            digital && mode == GameMode.dynasty
-                ? ''
-                : digital
+            digital
                 ? 'You take the bottom seat. Bots play the rest, with you, not against you.'
                 : count == 2
                 ? 'Two players add a third hand, the Dummy, which the King plays. Tasks use the 3-player difficulty.'
-                : mode == GameMode.dynasty && count == 3
-                    ? 'Dynasty is richest with four or more.'
-                    : '',
+                : '',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, height: 1.35),
           ),
@@ -410,8 +381,6 @@ class _SetupPanelState extends State<_SetupPanel> {
     );
   }
 
-  /// Courtly roles: houses, shapes and powers. Always on in Dynasty.
-  /// Courtiers keep their houses; their powers are still to come.
   /// Sounds, asked every time before a game starts, set as last time.
   Widget _soundSwitch() => PipTile(
         value: Sfx.enabled,
@@ -480,35 +449,6 @@ class _SetupPanelState extends State<_SetupPanel> {
         ],
       );
 
-  Widget _rolesSwitch() => powersComingSoon
-      ? const Opacity(
-          opacity: 0.55,
-          child: PipTile(
-            value: false,
-            onChanged: null,
-            title: Text.rich(TextSpan(children: [
-              TextSpan(text: 'Powers', style: TextStyle(fontSize: 16)),
-              TextSpan(
-                  text: '  (Coming soon)',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white70)),
-            ])),
-            subtitle: Text(
-                'Each courtier gets a power to use once a round.',
-                style: TextStyle(color: Colors.white70)),
-          ),
-        )
-      : PipTile(
-          value: roles,
-          onChanged: (v) => setState(() => roles = v),
-          title: const Text('Powers', style: TextStyle(fontSize: 16)),
-          subtitle: const Text(
-              'Each courtier gets a power to use once a round.',
-              style: TextStyle(color: Colors.white70)),
-        );
-
   Widget _finalStep() {
     switch (mode) {
       case GameMode.chronicle:
@@ -529,26 +469,10 @@ class _SetupPanelState extends State<_SetupPanel> {
               label: Text('All chapters (${widget.progress.totalCrowns} crowns)'),
               style: TextButton.styleFrom(foregroundColor: Palette.gold),
             ),
-            _settingsPanel([if (digital) _playersRow(), _rolesSwitch(), _soundSwitch()]),
+            _settingsPanel([if (digital) _playersRow(), _soundSwitch()]),
           ],
         );
       case GameMode.dynasty:
-        return Column(
-          key: const ValueKey('story'),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CrownIcon(size: 48),
-            const SizedBox(height: 10),
-            const Text('A crown awaits', style: _heading),
-            const SizedBox(height: 10),
-            const Text(
-              'The old King is dead, and the great houses gather in the throne hall: the Duke and the Bishop, the General and the Spymaster, the Merchant and the Jester, each with a sigil, a secret and a sworn power.\n\nYou will wear the crown, and your courtiers play their own cards beside you. How long you keep it is up to you. Win glory together, keep the houses loyal, and watch for the knife in the dark.\n\nDynasty is still taking shape (alpha), so expect rough edges.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, height: 1.4, color: Colors.white70),
-            ),
-            _settingsPanel([_soundSwitch()]),
-          ],
-        );
       case GameMode.tutorial:
         return const SizedBox.shrink();
       case GameMode.free:
@@ -597,7 +521,6 @@ class _SetupPanelState extends State<_SetupPanel> {
                     'Surprise me: rounds may bring order seals and royal decrees.',
                     style: TextStyle(color: Colors.white70)),
               ),
-              _rolesSwitch(),
               _soundSwitch(),
             ]),
           ],
@@ -760,9 +683,7 @@ class _SetupPanelState extends State<_SetupPanel> {
                             ? 'Start the tutorial'
                             : !last
                                 ? 'Next'
-                                : mode == GameMode.dynasty
-                                    ? 'Begin the reign'
-                                    : 'Start'),
+                                : 'Start'),
                       ),
                     ),
                   ),

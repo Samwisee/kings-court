@@ -584,7 +584,7 @@ void main() {
     // harness (random tasks, random layouts); one retry settles it.
   }, retry: 2);
 
-  testWidgets('Tapping a seat opens the courtier card to mark power and reveal',
+  testWidgets('Tapping a seat opens the courtier card to mark the reveal',
       (tester) async {
     setPhoneSize(tester);
     await dealGame(tester, 4);
@@ -596,40 +596,11 @@ void main() {
     await tester.tap(find.byType(SeatToken).at(2));
     await tester.pumpAndSettle();
     expect(find.text(game.courtiers[2].house), findsOneWidget);
-    if (!powersComingSoon) {
-      await tester.tap(find.text('Use power'));
-      await tester.pumpAndSettle();
-      expect(game.powerUsed[2], isTrue);
-    }
     await tester.tap(find.byType(GoldPip));
     await tester.pumpAndSettle();
     expect(game.spoke[2], isTrue);
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
-    expect(find.byType(Dialog), findsNothing);
-  });
-
-  testWidgets('Without roles, tapping a seat flips its speech token',
-      (tester) async {
-    if (powersComingSoon) return;
-    setPhoneSize(tester);
-    await tester.pumpWidget(const TheKingsCourtApp());
-    await tester.pumpAndSettle();
-    await openSetup(tester);
-    await setupThrough(tester, mode: 'Free play');
-    await tester.ensureVisible(find.text('Courtly roles'));
-    await tester.tap(find.text('Courtly roles'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Start'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(SeatToken).first);
-    await tester.pumpAndSettle();
-    final game = tester.state<HomePageState>(find.byType(HomePage)).game;
-    expect(game.roles, isFalse);
-    expect(find.byType(ShapedToken), findsNothing);
-    await tester.tap(find.byType(SeatToken).at(3));
-    await tester.pumpAndSettle();
-    expect(game.spoke[3], isTrue);
     expect(find.byType(Dialog), findsNothing);
   });
 
@@ -790,8 +761,7 @@ void main() {
     expect(find.text('Silence'), findsOneWidget); // the chip in the top bar
   });
 
-  GameState dynasty(int players) => GameState()
-    ..mode = GameMode.dynasty
+  GameState withRoles(int players) => GameState()
     ..players = [for (int i = 0; i < players; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
     ..seatCourtiers()
     ..addTasksUntilTarget(players, 8);
@@ -827,158 +797,9 @@ void main() {
     }
   });
 
-  test('A story picks up where the King left it', () {
-    final g = dynasty(6)..setKing(0);
-    g.flags.add('mira_helped');
-    g.flags.add('seen:Mira of Ashford');
-    var grain = 0;
-    for (var i = 0; i < 40; i++) {
-      g.flags.remove('seen:Grain from Ashford');
-      final d = dilemmas[g.pickDilemma(Random(i))];
-      if (d.title == 'Grain from Ashford') grain++;
-    }
-    expect(grain, greaterThan(20));
-    // Once faced, a story matter never comes back.
-    g.flags.add('seen:Grain from Ashford');
-    for (var i = 0; i < 40; i++) {
-      expect(dilemmas[g.pickDilemma(Random(i))].title, isNot('Grain from Ashford'));
-    }
-    // Choices are remembered, and saved.
-    g.flags.add('karsk_paid');
-    g.applyChoice(dilemmas.firstWhere((d) => d.title == 'Tribute Doubled').b);
-    expect(g.flags, contains('karsk_defied'));
-    expect(g.flags, isNot(contains('karsk_paid')));
-    final copy = GameState.fromJson(
-        jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)!;
-    expect(copy.flags, contains('karsk_defied'));
-  });
-
-  test('In solo Dynasty each scene seats its own cast from the court', () {
-    final g = dynasty(4)
-      ..cards = MatchState(players: 4, target: 8)
-      ..setKing(0);
-    expect(g.solo, isTrue);
-    final mine = g.courtiers.first;
-    expect(g.courtiers.first, Courtier.king);
-    g.nextDynastyRound(4, 8);
-    expect(g.court.length, greaterThanOrEqualTo(3));
-    final role = g.court.first;
-    g.applyChoice(Choice('x', 'y', [Depart(role)]));
-    g.nextDynastyRound(4, 8);
-    // They leave (though a scene may summon a new one at once).
-    expect(g.courtNews.first.role, role);
-    expect(g.courtNews.first.arrived, isFalse);
-    g.applyChoice(Choice('x', 'y', [Arrive(role)]));
-    g.nextDynastyRound(4, 8);
-    expect(g.court, contains(role));
-    final rand = Random(5);
-    final sizes = <int>{};
-    for (var i = 0; i < 80; i++) {
-      if (rand.nextBool()) {
-        final c = Courtier.houses[rand.nextInt(6)];
-        g.applyChoice(Choice('x', 'y', [rand.nextBool() ? Depart(c) : Arrive(c)]));
-      }
-      g.nextDynastyRound(g.players.length, 8);
-      final n = g.players.length;
-      sizes.add(n);
-      expect(g.court.length, inInclusiveRange(GameState.minCourt, GameState.maxCourt));
-      expect(n, inInclusiveRange(2, g.court.length + 1));
-      expect([g.courtiers.length, g.loyalty.length, g.powerUsed.length,
-          g.spoke.length, g.schemeOf.length, g.cards!.players], everyElement(n));
-      expect(g.courtiers.toSet(), hasLength(n));
-      expect(g.courtiers.first, mine);
-      expect(g.court, isNot(contains(mine)));
-      expect(g.courtiers.skip(1).every(g.court.contains), isTrue);
-      expect(g.kingIndex, 0);
-      expect(g.tasks, isNotEmpty);
-    }
-    // Scenes call for different numbers at the table.
-    expect(sizes.length, greaterThan(1));
-  });
-
-  test('The main story runs from the harvest towards war', () {
-    final g = dynasty(4)
-      ..cards = MatchState(players: 4, target: 8)
-      ..setKing(0);
-    final seen = <String>[];
-    for (var i = 0; i < 12; i++) {
-      g.nextDynastyRound(g.players.length, 8);
-      final t = g.currentTiding;
-      if (t?.arc == GameState.mainArc) seen.add(t!.title);
-      // Pick the first choice whenever the story asks.
-      g.resolveTiding(true);
-      g.applyChoice(dilemmas[g.pickDilemmaAfter(true)].a);
-    }
-    expect(seen.take(3), ['The Harvest Count', 'Roads to Market', 'Riders from Karsk']);
-    expect(seen, contains('The Tribute Wagons'));
-  });
-
   test('Every seat gets a different courtier shape', () {
-    final g = dynasty(6);
+    final g = withRoles(6);
     expect(g.courtiers.map((c) => c.shape).toSet(), hasLength(6));
-  });
-
-  test('The King keeps the crown until wounds exceed a hidden toughness', () {
-    final g = dynasty(4)..setKing(1);
-    expect(g.reign, 1);
-    expect(g.kingToughness, inInclusiveRange(1, 3));
-    var rounds = 0;
-    while (!g.kingFallen) {
-      g.tasks.first.status = TaskStatus.failed;
-      g.recordOutcomeIfFinished();
-      if (!g.kingFallen) {
-        g.nextDynastyRound(4, 8);
-        expect(g.kingIndex, 1); // same King, new round
-      }
-      rounds++;
-    }
-    expect(rounds, g.kingToughness);
-    g.succession();
-    g.nextDynastyRound(4, 8);
-    expect(g.kingIndex, isNull); // an heir must be crowned
-    g.setKing(2);
-    expect(g.reign, 2);
-    expect(g.kingWounds, 0);
-  });
-
-  test('Losing all loyalty turns a courtier into an open antagonist', () {
-    final g = dynasty(4)..setKing(0);
-    const seat = 2;
-    final who = g.courtiers[seat];
-    g.applyChoice(Choice('x', 'y', [Loyalty(who, -5)]));
-    expect(g.isAntagonist(seat), isTrue);
-    expect(g.schemeOf[seat], isNotNull);
-    expect(g.canTake(g.tasks.first, seat), isFalse);
-
-    // A failed scheme does nothing; a successful one wounds the King.
-    g.resolveScheme(seat, true);
-    expect(g.kingWounds, 1);
-    g.resolveScheme(seat, false);
-    expect(g.kingWounds, 0);
-
-    g.applyChoice(Choice('x', 'y', [Loyalty(who, 2)]));
-    expect(g.isAntagonist(seat), isFalse); // won back
-  });
-
-  test('Dilemmas only involve courtiers at the table', () {
-    final g = dynasty(3);
-    for (var i = 0; i < 30; i++) {
-      final d = dilemmas[g.pickDilemma()];
-      for (final e in [...d.a.effects, ...d.b.effects].whereType<Loyalty>()) {
-        expect(g.courtiers, contains(e.courtier));
-      }
-    }
-  });
-
-  test('A dynasty survives saving and loading', () {
-    final g = dynasty(4)..setKing(3);
-    g.applyChoice(Choice('x', 'y', [Loyalty(g.courtiers[1], -5), const Wound(1)]));
-    final copy = GameState.fromJson(
-        jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)!;
-    expect(copy.courtiers, g.courtiers);
-    expect(copy.kingWounds, 1);
-    expect(copy.kingToughness, g.kingToughness);
-    expect(copy.isAntagonist(1), isTrue);
   });
 
   test('Tidings lead to dilemmas that exist', () {
@@ -987,19 +808,6 @@ void main() {
       for (final f in [t.followWon, t.followLost]) {
         if (f != null) expect(titles, contains(f), reason: t.title);
       }
-    }
-  });
-
-  test('A royal charge deals a house its task, and it counts', () {
-    final g = dynasty(4);
-    g.pendingCharge = g.courtiers[2];
-    g.setKing(0);
-    expect(g.currentTiding, isNotNull);
-    if (g.exiledSeat != 2) {
-      expect(g.chargeSeat, 2);
-      expect(g.chargeByKing, isTrue);
-      final charged = g.tasks.where(g.isCharged).single;
-      expect(charged.assignedPlayerIndex, 2);
     }
   });
 
@@ -1064,81 +872,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Let it be done'));
     expect(done, isTrue);
-  });
-
-  test('Overruling the council costs loyalty', () {
-    final g = dynasty(4)..setKing(0);
-    final before = g.loyalty[1];
-    g.overruled([1]);
-    expect(g.loyalty[1], before - 1);
-  });
-
-  test('Deeds move loyalty: the busiest courtier gains favour', () {
-    final g = dynasty(4)..setKing(0);
-    g.chargeSeat = null; // no royal charge, to count deeds alone
-    g.chargeTask = null;
-    for (final t in g.tasks) {
-      t.assignedPlayerIndex = 1;
-      t.status = TaskStatus.completed;
-    }
-    final before = g.loyalty[1];
-    expect(g.recordOutcomeIfFinished(), isTrue);
-    expect(g.loyalty[1], before + 1);
-    expect(g.roundLoyalty[1], 1);
-    expect(g.reignWins, 1);
-    g.undoOutcome();
-    expect(g.loyalty[1], before);
-    expect(g.reignWins, 0);
-  });
-
-  test('A dynasty ends in a Golden Age, a fall or a usurping', () {
-    final g = dynasty(4)..setKing(0);
-    expect(g.ending, isNull);
-    // Five wins bring a golden age to the story, but not its end.
-    g.reignWins = GameState.goldenAgeWins;
-    expect(g.ending, isNull);
-    expect(g.epithet, 'the Golden');
-    g.flags.add('karsk_conquered');
-    expect(g.ending, DynastyEnding.goldenAge);
-    g.flags.remove('karsk_conquered');
-    g.reignWins = 0;
-    g.applyChoice(Choice('x', 'y',
-        [Loyalty(g.courtiers[1], -5), Loyalty(g.courtiers[2], -5)]));
-    expect(g.ending, DynastyEnding.usurped);
-    expect(g.epithet, 'the Stern');
-    final h = dynasty(4)..setKing(1);
-    for (var i = 0; i < GameState.maxFallenKings; i++) {
-      h.succession();
-      h.setKing(1);
-    }
-    expect(h.ending, DynastyEnding.fallen);
-    expect(h.annals.length, GameState.maxFallenKings);
-  });
-
-  testWidgets('Dynasty goes straight to the story, always on screen',
-      (tester) async {
-    if (dynastyComingSoon) return;
-    setPhoneSize(tester);
-    await tester.pumpWidget(const TheKingsCourtApp());
-    await tester.pumpAndSettle();
-    await openSetup(tester);
-    expect(find.text('Multiplayer'), findsOneWidget);
-    await tester.tap(find.text('Single player'));
-    await tester.pumpAndSettle();
-    expect(find.text('(Alpha)'), findsOneWidget);
-    await tester.ensureVisible(find.text('Dynasty'));
-    await tester.tap(find.text('Dynasty'));
-    await tester.pumpAndSettle();
-    expect(find.text('You will be King'), findsNothing);
-    expect(find.text('Use a real deck'), findsNothing);
-    expect(find.text('A crown awaits'), findsOneWidget);
-    await tester.tap(find.text('Begin the reign'));
-    await tester.pump();
-    final game = tester.state<HomePageState>(find.byType(HomePage)).game;
-    expect(game.isDynasty, isTrue);
-    expect(game.digital, isTrue);
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 2));
   });
 
   testWidgets('Each way to play keeps its own save', (tester) async {
@@ -1295,7 +1028,7 @@ void main() {
     }
   });
 
-  for (final mode in ['Free play', if (!dynastyComingSoon) 'Dynasty']) {
+  for (final mode in ['Free play']) {
     testWidgets('On-screen cards play a whole $mode round', (tester) async {
       setPhoneSize(tester);
       HomePageTestHooks.fast();
@@ -1307,15 +1040,12 @@ void main() {
       await tester.ensureVisible(find.text(mode));
       await tester.tap(find.text(mode));
       await tester.pumpAndSettle();
-      // Dynasty is always solo with on-screen cards: no players step.
-      if (mode != 'Dynasty') {
-        await tester.tap(find.text('3').last);
-        await tester.pumpAndSettle();
-        // On screen, the number of players is on the last step itself.
-        if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
-        await tester.pumpAndSettle();
-      }
-      await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Start'));
+      await tester.tap(find.text('3').last);
+      await tester.pumpAndSettle();
+      // On screen, the number of players is on the last step itself.
+      if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
       await tester.pump();
 
       final state = tester.state<HomePageState>(find.byType(HomePage));
@@ -1342,15 +1072,8 @@ void main() {
           i < 3000 && game.outcome == RoundOutcome.inProgress;
           i++) {
         await tester.pump(const Duration(milliseconds: 30));
-        if (find.text('So it begins').evaluate().isNotEmpty) {
-          await tester.tap(find.text('So it begins'));
-        } else if (find.text('Tap to continue').hitTestable().evaluate().isNotEmpty) {
-          // Solo Dynasty's throne room: a tap goes on.
-          await tester.tap(find.text('Tap to continue').hitTestable());
-        } else if (find.text('So be it').evaluate().isNotEmpty) {
+        if (find.text('So be it').evaluate().isNotEmpty) {
           await tester.tap(find.text('So be it'));
-        } else if (find.text('Let it fail').evaluate().isNotEmpty) {
-          await tester.tap(find.text('Let it fail'));
         } else if (find.text('Announce').evaluate().isNotEmpty) {
           await tester.tap(find.text('Announce'));
         } else if (find.text('Got it').evaluate().isNotEmpty) {

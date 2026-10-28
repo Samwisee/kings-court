@@ -13,7 +13,7 @@ class _SavedGame {
         GameMode.free => 'Free play',
         GameMode.endless => 'Endless',
         GameMode.chronicle => 'The Chronicle',
-        GameMode.dynasty => 'Dynasty (Alpha)',
+        GameMode.dynasty => 'Dynasty',
         GameMode.tutorial => 'Tutorial',
       };
 
@@ -24,10 +24,6 @@ class _SavedGame {
         ? 'on-screen cards'
         : '${g.players.length} at the table';
     return switch (g.mode) {
-      GameMode.dynasty => [
-          'Reign ${roman(math.max(1, g.reign))}',
-          if (g.reignName.isNotEmpty) g.reignName,
-        ].join(' · '),
       GameMode.chronicle =>
         'Chapter ${(g.chapter ?? 0) + 1} · $seats',
       GameMode.endless => 'Streak ${g.streak} · $seats',

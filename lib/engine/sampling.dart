@@ -127,8 +127,8 @@ MatchState worldWith(MatchState m, List<List<PlayingCard>> hands) {
     ..announced = m.announced
     ..revealed = m.revealed
     ..revealHint = m.revealHint
-    ..revealedAt = m.revealedAt
-    ..schemes = m.schemes;
+    ..revealedAt = m.revealedAt;
+
   // Whatever isn't in a hand, in a trick or on the table was set aside.
   final seen = <PlayingCard>{
     for (final h in hands) ...h,

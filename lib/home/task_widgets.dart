@@ -69,7 +69,6 @@ class _TaskChip extends StatelessWidget {
     required this.width,
     this.fontSize = 12,
     this.progress,
-    this.charged = false,
     this.onTap,
     this.onLongPress,
     this.struck = const {},
@@ -89,7 +88,6 @@ class _TaskChip extends StatelessWidget {
 
   /// Cards the task names that its owner has already won.
   final Set<String> struck;
-  final bool charged;
   final VoidCallback? onTap;
 
   /// Always opens the task's close-up, even while tapping would take it.
@@ -142,10 +140,6 @@ class _TaskChip extends StatelessWidget {
         if (task.seal != null) ...[
           const SizedBox(width: 3),
           WaxSeal(seal: task.seal!, size: fontSize + 4),
-        ],
-        if (charged && !narrow) ...[
-          const SizedBox(width: 2),
-          Icon(Icons.workspace_premium, size: fontSize + 2, color: Palette.goldDeep),
         ],
             ]),
           ),

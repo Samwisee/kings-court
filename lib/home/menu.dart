@@ -212,7 +212,7 @@ class _OrnateMenuIcon extends StatelessWidget {
         duration: const Duration(milliseconds: 320),
         curve: Curves.easeInOutCubic,
         builder: (context, t, _) =>
-            CustomPaint(size: Size.square(size), painter: _OrnateMenuPainter(t)),
+            CustomPaint(size: const Size.square(size), painter: _OrnateMenuPainter(t)),
       );
 }
 

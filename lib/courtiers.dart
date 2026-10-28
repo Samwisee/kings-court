@@ -129,20 +129,6 @@ enum DynastyEnding {
   final String story;
 }
 
-/// A King remembered in the annals of the dynasty.
-class Annal {
-  const Annal(this.name, this.epithet, this.rounds, this.reign);
-  final String name;
-  final String epithet;
-  final int rounds;
-  final int reign;
-
-  Map<String, dynamic> toJson() =>
-      {'name': name, 'epithet': epithet, 'rounds': rounds, 'reign': reign};
-  static Annal fromJson(Map<String, dynamic> j) => Annal(j['name'] as String,
-      j['epithet'] as String, j['rounds'] as int, j['reign'] as int);
-}
-
 /// A scheme an antagonist works towards, openly, against the court. If it
 /// succeeds the King takes a wound, even if every task is done.
 const schemes = <String>[
@@ -1170,28 +1156,6 @@ const departures = <Courtier, List<(String, Exit)>>{
     ('The Jester tells one joke too many and is thrown out.', Exit.banished),
   ],
 };
-
-/// A coming or going at court, told with the next round's news.
-class CourtNews {
-  const CourtNews(this.role, this.color, this.text, {this.exit});
-  final Courtier role;
-  final int color;
-  final String text;
-
-  /// How they left; null for an arrival.
-  final Exit? exit;
-  bool get arrived => exit == null;
-
-  Map<String, dynamic> toJson() =>
-      {'role': role.name, 'color': color, 'text': text, 'exit': exit?.name};
-
-  static CourtNews fromJson(Map<String, dynamic> j) => CourtNews(
-        Courtier.values.byName(j['role'] as String),
-        j['color'] as int,
-        j['text'] as String,
-        exit: j['exit'] == null ? null : Exit.values.byName(j['exit'] as String),
-      );
-}
 
 /// A courtier joins the court before the next round, if there's room.
 class Arrive extends Effect {

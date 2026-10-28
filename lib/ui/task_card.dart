@@ -53,7 +53,6 @@ class TableCard extends StatelessWidget {
     this.ownerLabel,
     this.lifted = false,
     this.faceDown = false,
-    this.charged = false,
     this.progress,
   });
 
@@ -63,7 +62,6 @@ class TableCard extends StatelessWidget {
   final String? progress;
 
   /// Dynasty: a royal charge, dealt straight to one house.
-  final bool charged;
   final int points;
   final double width;
 
@@ -239,14 +237,6 @@ class TableCard extends StatelessWidget {
               if (task.seal != null) ...[
                 const SizedBox(width: 3),
                 WaxSeal(seal: task.seal!, size: indexSize + 3),
-              ],
-              if (charged) ...[
-                const SizedBox(width: 2),
-                Tooltip(
-                  message: 'A royal charge',
-                  child: Icon(Icons.workspace_premium,
-                      size: iconSize + 1, color: Palette.goldDeep),
-                ),
               ],
             ]),
           ),
