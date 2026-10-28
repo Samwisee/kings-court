@@ -42,6 +42,7 @@ import '../platform/settings.dart';
 import '../platform/sfx.dart';
 import '../skin/skin_scope.dart';
 import '../skin/skins.dart';
+import '../skin/strings.dart';
 import '../skin/theme.dart';
 import 'bug_report.dart';
 import 'cards/card_view.dart';
@@ -3526,7 +3527,7 @@ class HomePageState extends State<HomePage>
 
   /// The menu button: its bars fold into a cross while the menu is open.
   Widget _buildMenu() => Tooltip(
-        message: 'Menu',
+        message: Strings.menu,
         child: GoldBar(
           onTap: _openMenu,
           semanticLabel: 'Menu',
@@ -3640,33 +3641,35 @@ class HomePageState extends State<HomePage>
 
   List<MenuEntry> _menuEntries() => [
         if ((_inGame || _saves.isNotEmpty) && _setupArgs == null)
-          _menuItem('new', Icons.group_add_outlined, 'New game'),
+          _menuItem('new', Icons.group_add_outlined, Strings.newGame),
         if (_inGame && _setupArgs == null)
-          _menuItem('shuffle', Icons.style_outlined, 'Shuffle tasks'),
-        _menuItem('rules', Icons.menu_book_outlined, 'How to Play'),
+          _menuItem('shuffle', Icons.style_outlined, Strings.shuffleTasks),
+        _menuItem('rules', Icons.menu_book_outlined, Strings.howToPlay),
         // Only round a real table does the view need turning.
         if (_inGame && !_digital)
           _menuItem(
               'upright',
               _upright ? Icons.laptop_rounded : Icons.table_restaurant_outlined,
-              _upright ? 'Laptop view' : 'Table view'),
+              _upright ? Strings.laptopView : Strings.tableView),
         _menuItem(
             'sound',
             Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-            'Sounds',
+            Strings.sounds,
             on: Sfx.enabled),
         // For colour-blind players: no two suits share a colour.
-        _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
+        _menuItem('suits', Icons.palette_outlined, Strings.fourColourSuits,
             on: Settings.fourColourSuits),
         // The quiet look beside the court's (a lock if it isn't owned).
         _menuItem('skin', Icons.brush_outlined,
-            SkinScope.owns(context, skins[1]) ? 'Plain look' : 'Plain look (locked)',
+            SkinScope.owns(context, skins[1])
+                ? Strings.plainLook
+                : '${Strings.plainLook} ${Strings.locked}',
             on: context.skin.id == skins[1].id),
         // On a computer: the keyboard shortcuts, beside the table.
         if (_desktop)
-          _menuItem('keys', Icons.keyboard_outlined, 'Keyboard shortcuts',
+          _menuItem('keys', Icons.keyboard_outlined, Strings.keyboardShortcuts,
               on: _showKeys),
-        _menuItem('bug', Icons.bug_report_outlined, 'Report a bug'),
+        _menuItem('bug', Icons.bug_report_outlined, Strings.reportBug),
       ];
 
   /// What goes with a bug report: where the player is, their settings, and
@@ -3767,13 +3770,13 @@ class HomePageState extends State<HomePage>
             child: TextButton(
               onPressed: () => _pass(_round.pickTurn!),
               style: TextButton.styleFrom(foregroundColor: skin.gold),
-              child: const Text('Pass'),
+              child: const Text(Strings.pass),
             ),
           ),
         Padding(
           padding: const EdgeInsets.only(top: 8, right: 10),
           child: Tooltip(
-            message: 'Points target',
+            message: Strings.pointsTarget,
             child: GoldBar(
               onTap: _showPointsDialog,
               child: Row(
@@ -3909,16 +3912,16 @@ class HomePageState extends State<HomePage>
                 if (_saves.isNotEmpty)
                   FilledButton(
                     onPressed: _showContinue,
-                    child: const Text('Continue'),
+                    child: const Text(Strings.continueGame),
                   ),
                 if (_saves.isEmpty)
                   FilledButton(
                       onPressed: _showSetupDialog,
-                      child: const Text('New game'))
+                      child: const Text(Strings.newGame))
                 else
                   OutlinedButton(
                       onPressed: _showSetupDialog,
-                      child: const Text('New game')),
+                      child: const Text(Strings.newGame)),
               ],
             ),
           ),

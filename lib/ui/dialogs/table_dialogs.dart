@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../game/state.dart';
 import '../../skin/skin_scope.dart';
+import '../../skin/strings.dart';
 import '../widgets.dart';
 
 /// Chooses a points target, starting from [current]; null when cancelled.
@@ -66,10 +67,10 @@ Future<int?> showPointsDialog(BuildContext context, {required int current}) asyn
                   children: [
                     TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel')),
+                        child: const Text(Strings.cancel)),
                     FilledButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Deal')),
+                        child: const Text(Strings.deal)),
                   ],
                 ),
               ],
@@ -94,11 +95,11 @@ Future<int> showAnnounceDialog(BuildContext context,
     barrierDismissible: false,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialog) => CourtDialog(
-        title: 'How many tricks?',
+        title: Strings.howManyTricks,
         actions: [
           FilledButton(
               onPressed: () => Navigator.pop(context, x),
-              child: const Text('Announce')),
+              child: const Text(Strings.announce)),
         ],
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -176,10 +177,10 @@ Future<bool?> showReadyDialog(BuildContext context) {
       actions: [
         FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Play a game')),
+            child: const Text(Strings.playAGame)),
         TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Not now')),
+            child: const Text(Strings.notNow)),
       ],
       child: SuitText(
           'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
