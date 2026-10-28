@@ -313,14 +313,23 @@ void main() {
         }
       }
       if (onScreen) {
-        await tester.tap(find.byTooltip('Cards played and still to come'));
+        await tester.tap(find.byTooltip('Card tracker'));
         for (int i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('goldens/wide-$name-5-cards.png'));
-        // The top of the dock closes it.
-        await tester.tapAt(const Offset(960, 200));
+        // A player in the key: what they may hold.
+        final who = find.bySemanticsLabel(RegExp('^What .* may hold'));
+        if (who.evaluate().isNotEmpty) {
+          await tester.tap(who.first);
+          for (int i = 0; i < 20; i++) {
+            await tester.pump(const Duration(milliseconds: 30));
+          }
+          await expectLater(find.byType(MaterialApp),
+              matchesGoldenFile('goldens/wide-$name-6-hand.png'));
+        }
+        await tester.tap(find.byTooltip('Close').last);
         for (int i = 0; i < 25; i++) {
           await tester.pump(const Duration(milliseconds: 30));
         }
