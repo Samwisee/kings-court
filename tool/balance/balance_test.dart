@@ -1,8 +1,9 @@
 // The balance report: the bots play many rounds at each table size and
 // point target, and we count how often they win, overall and with each
-// task on the table. The bots see every card, so these are best-case
-// numbers: a task or pairing the bots rarely win with is close to
-// impossible for people.
+// task on the table. The bots play fair, seeing only their own hand, as
+// they do in the game, so a task or pairing they rarely win with is hard
+// for people too (BALANCE_OMNISCIENT=1 gives all-seeing bots, the old
+// best-case numbers).
 //
 // Run with: flutter test tool/balance/balance_test.dart
 // BALANCE_SECONDS sets how long to play for (default 60).
@@ -37,9 +38,11 @@ void main() {
     final seconds = int.tryParse(Platform.environment['BALANCE_SECONDS'] ?? '') ?? 60;
     final deadline = DateTime.now().add(Duration(seconds: seconds));
     final rand = Random(2026);
-    // The same thinking time as the bots in the game.
+    // The same thinking as the bots in the game: fair, seeing only their
+    // own hand (BALANCE_OMNISCIENT=1 lets them see every card instead).
     final bot = Bot(rand)
-      ..budget = int.tryParse(Platform.environment['BALANCE_BUDGET'] ?? '') ?? 900;
+      ..budget = int.tryParse(Platform.environment['BALANCE_BUDGET'] ?? '') ?? 900
+      ..omniscient = Platform.environment['BALANCE_OMNISCIENT'] == '1';
     // How often each task fails itself at each table size.
     final dealtAt = {for (final p in [3, 4, 5, 6]) p: <String, int>{}};
     final failedAt = {for (final p in [3, 4, 5, 6]) p: <String, int>{}};
@@ -84,7 +87,7 @@ void main() {
     }
     final out = StringBuffer()
       ..writeln('BALANCE REPORT  ${DateTime.now().toUtc()}')
-      ..writeln('$n rounds, bots see every card (best case), ${bot.budget} playouts per decision.')
+      ..writeln('$n rounds, ${bot.omniscient ? 'bots see every card (best case)' : 'bots see only their own hand (fair, as in the game)'}, ${bot.budget} playouts per decision.')
       ..writeln()
       ..writeln('WIN RATE BY TABLE SIZE AND TARGET')
       ..writeln('players  target  rounds  won  tasks (average)');
