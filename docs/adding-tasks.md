@@ -105,6 +105,18 @@ Rough guide:
 The task list began as an adaptation of The Crew's. It is now a library of
 the King's Court's own, built in two passes:
 
+* **Third edition (29 Oct 2026): showing cards, and the classics back.**
+  With the courtiers playing fair, a shown card means something, so six
+  tasks are about showing (`engine/showing.dart`: win the card you
+  showed, give it away, win the trick right after you show, show before
+  you win anything, win a card someone else showed, win a trick led by a
+  shown card). Rules see shown cards through `RoundView.shown` and
+  `shownAt`; a courtier holding a showing task shows the card that suits
+  it (`intendedShow`) and imagines doing so when it thinks ahead. Showing
+  tasks are never dealt under Silence, and are swapped out if Silence
+  arrives with the round's news. Thirteen more are about the Court Cards
+  and the shape of a trick, eighteen plain classics come back in new
+  words, and a few are new ideas.
 * **Second edition (28 Oct 2026): rebuilt around the court.** The borrowed
   compositions are gone: trick totals, odd and even tricks, "win an X with
   a Y" pairings, suit balances ("as many ♠ as ♣"), the secret bid, the
