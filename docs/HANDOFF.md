@@ -4,10 +4,10 @@ Read this first, then `docs/ONLINE.md` if the work touches multiplayer.
 
 ## What the game is
 
-A cooperative trick-taking card game for 2 to 6 players, adapted from *The Crew: Mission Deep Sea*. Everyone plays together. Each round deals **tasks** ("Win the 3♥", "Win the first trick", "Win no Court Cards"), players take them in turn, then play tricks until every task is done (round won) or one fails (round lost).
+A cooperative trick-taking card game for 2 to 6 players, in the family of *The Crew* (its inspiration; the tasks are the court's own, see docs/adding-tasks.md). Everyone plays together. Each round deals **tasks** ("Win the 3♥", "Win the first trick", "Win no Court Cards"), players take them in turn, then play tricks until every task is done (round won) or one fails (round lost).
 
 - **The deck:** 40 cards, Ace (1) to 9 in ♥ ♦ ♠ ♣, plus four **Court Cards** (Joker < Jack < Queen < King). Court Cards are their own suit and beat every suit. Whoever holds the King card is **the King**, picks the first task and leads the first trick. Players must follow the suit led if they can.
-- **Mapping from The Crew:** pink = ♥, yellow = ♦, blue = ♠, green = ♣. Submarines 1–4 = the Court Cards. Captain = the King. The task list in `lib/tasks.dart` comes from The Crew. The "six" column is our own (one point above the hardest original value).
+- **The tasks** (`lib/tasks.dart`, 85 of them) are the court's own: tasks about the King, the Court Cards and how a trick is won, plus the plain goals every trick-taking game shares. Their points, per table size, come from the balance report (`tool/balance`), not from any other game.
 
 ### Ways to play (`GameMode` in `lib/models.dart`)
 

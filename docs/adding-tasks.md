@@ -99,15 +99,29 @@ The bots see every card, so these are **best-case** numbers. Rough guide:
 
 ## The library is the game's own (Oct 2026)
 
-The task list began as an adaptation of The Crew's, and has since been
-made the King's Court's own:
+The task list began as an adaptation of The Crew's. It is now a library of
+the King's Court's own, built in two passes:
 
-* **New picks.** Every multi-card task names different cards (Win the 4♥ and
-  the 9♠, Win the 7♣, 8♣ and 9♣…), the rank and suit tasks count different
-  numbers and suits, the "win an X with a Y" pairs are new, and the trick
-  totals use new thresholds. Eleven tasks are new outright.
-* **New wording** where the old phrasing was distinctive (the race tasks,
-  the X tasks, the redeal notes).
+* **Second edition (28 Oct 2026): rebuilt around the court.** The borrowed
+  compositions are gone: trick totals, odd and even tricks, "win an X with
+  a Y" pairings, suit balances ("as many ♠ as ♣"), the secret bid, the
+  "and no other Court Card" tasks and their redeal clauses, "don't lead"
+  by suit, and the run-of-tricks exact counts. In their place are tasks
+  about the game's own pieces: the King's tricks (a trick the King leads,
+  the trick after the King wins, no tricks until the King has won, more
+  Court Cards than the King), the Court Cards by name (the Joker, the
+  Jack, the Queen with the King, two Court Cards in one trick) and the
+  shape of a trick (won by one rank, won by the last to play, a trick
+  nobody followed, three suits in one trick, two tricks with the same
+  rank, the trick after the Queen falls). What remains from the first
+  pass is the plain stock of every trick-taking game: win a named card, a
+  count of a rank or suit, the first or last trick, exactly N tricks, no
+  tricks, nothing of a suit.
+* **Not legal advice.** Game mechanics can't be copyrighted; a specific
+  curated list and its wording can be. The library is now a different
+  selection in the court's own words. Before anything is sold, have a
+  lawyer look at it, with The Crew's task cards beside it.
+* **First pass:** new card picks, numbers and wording for the kept tasks.
 * **Points from the game's own data.** Every task's points, at each table
   size, come from the balance report: points are proportional to
   -ln(chance the task succeeds), scaled so the average task keeps the same
