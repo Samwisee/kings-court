@@ -29,6 +29,7 @@ import 'engine/rules.dart';
 import 'game/bot_turn.dart';
 import 'game/controller.dart';
 import 'game/dealer.dart';
+import 'game/host.dart';
 import 'game/judge.dart';
 import 'models.dart';
 import 'net/table_link.dart';
@@ -840,8 +841,15 @@ class HomePageState extends State<HomePage>
   /// The seat you play from: the bottom of the table. Online, the seat
   /// you joined in (see GameController.mySeat).
   int get _you => _ctrl.mySeat;
-  final _bot = Bot(
-      HomePageTestHooks.seed == null ? null : math.Random(HomePageTestHooks.seed));
+
+  /// The courtiers' side of the table (game/host.dart): what they do, and
+  /// sending it. The page keeps only its own pauses and the timers.
+  late final _host = Host(
+      bot: Bot(HomePageTestHooks.seed == null
+          ? null
+          : math.Random(HomePageTestHooks.seed)),
+      you: _you,
+      send: _link.send);
   Timer? _botTimer;
   Timer? _crownTimer;
   final _trickTimers = <Timer>[];
@@ -913,9 +921,8 @@ class HomePageState extends State<HomePage>
     // Every card played: the last trick's pause ends the play-out.
     if (c.tricks.length >= c.totalTricks) return;
     if (_lastTrick == null) {
-      final seat = c.turn;
-      final legal = c.legalFor(seat);
-      if (legal.isNotEmpty) _playCard(seat, legal.first);
+      final play = _host.playOutStep(game);
+      if (play != null) _link.send(play);
     }
     _trickTimers.add(Timer(autoPlayStep, _autoStep));
   }
@@ -979,7 +986,7 @@ class HomePageState extends State<HomePage>
       });
       return;
     }
-    if (!_digital || _botTimer != null || _botBusy) return;
+    if (!_digital || _botTimer != null || _host.busy) return;
     // Before anyone takes a task, the table pauses a moment so a card can
     // be shown first.
     final delay = game.isTutorial ? botDelay * 2 : botDelay;
@@ -1023,44 +1030,18 @@ class HomePageState extends State<HomePage>
   /// then the first pick is made.
   void _startChoosing() {
     setState(() => _speakAskedFor = game.dealId);
-    final open = [for (final t in game.tasks) if (t.assignedPlayerIndex == null) t];
-    for (var seat = 0; seat < game.players.length; seat++) {
-      if (seat == _you || game.spoke[seat] || !game.canSpeak(seat)) continue;
-      for (final card in _cards.hands[seat]) {
-        if (_cards.revealFor(seat, card) == null) continue;
-        if (open.any((t) => neededCards(t.description).contains(card))) {
-          _reveal(seat, card);
-          break;
-        }
-      }
-    }
+    _host.openingShows(game).forEach(_link.send);
   }
 
-  /// A bot is thinking (a slice at a time, so the screen stays smooth).
-  bool _botBusy = false;
-
-  /// What the round looks like now, to check nothing moved while a bot
-  /// was thinking.
-  String get _moment => _digital
-      ? '${game.dealId}|${game.pickTurn}|${game.tasks.where((t) => t.assignedPlayerIndex != null).length}|'
-          '${_cards.announced.length}|${_cards.tricks.length}|${_cards.current.length}'
-      : '';
-
   Future<void> _botStep() async {
-    if (_botBusy) return;
-    _botBusy = true;
-    var acted = false;
-    try {
-      acted = await _botThink();
-    } finally {
-      _botBusy = false;
-    }
+    if (_host.busy) return;
+    final acted = await _botThink();
     if (acted && mounted) _scheduleBot();
   }
 
   /// Returns true when a bot acted, so the next one can be scheduled.
-  /// What the move is comes from game/bot_turn.dart; here is only whether
-  /// a courtier may move right now, and making the move.
+  /// What the move is comes from game/host.dart; here is only whether a
+  /// courtier may move right now, given what the screen is doing.
   Future<bool> _botThink() async {
     if (_autoPlaying ||
         _revealing ||
@@ -1068,41 +1049,27 @@ class HomePageState extends State<HomePage>
         (_wantsToSpeak && _playing && _cards.current.isEmpty)) {
       return false;
     }
-    if (!_digital ||
-        _choosingKing ||
+    if (!Host.ready(game, dealtFor: _dealtFor) ||
         _crowning != null ||
         _decreePending ||
-        _dealtFor != game.dealId ||
         _dragging != null ||
-        _lastTrick != null ||
-        game.outcome != RoundOutcome.inProgress) {
+        _lastTrick != null) {
       return false;
     }
-    final view = matchView(game);
-    _bot.budget = botBudget;
-    final before = _moment;
-    final decision = await botDecision(game, view, _bot, you: _you);
+    _host.bot.budget = botBudget;
+    final turn = await _host.act(game, still: () => mounted);
     // Nothing may have moved while the bot thought; if it did, the next
     // turn will think again.
-    if (!mounted || _moment != before) return true;
-    switch (decision) {
+    if (turn.stale) return true;
+    switch (turn.decision) {
       case null:
         return false;
       case YourAnnouncement(:final task):
         unawaited(_askX(game.tasks[task]));
         return false;
-      case BotPicks(:final seat, :final task):
-        _assignTask(game.tasks[task], seat);
-      case BotPasses(:final seat):
-        _pass(seat);
-      case BotAnnounces(:final task, :final x):
-        _announce(game.tasks[task], x);
-      case BotShows(:final seat, :final card):
-        _reveal(seat, card);
-      case BotPlays(:final seat, :final card):
-        _playCard(seat, card);
+      default:
+        return true;
     }
-    return true;
   }
 
   /// Asks how many tricks you'll win for an "exactly X" task.
