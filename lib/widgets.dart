@@ -260,8 +260,6 @@ class SuitText extends StatelessWidget {
                   ? ShowCardIcon(size: size, color: c)
                   : TrackerIcon(size: size, color: c),
             )));
-      } else if (token.length == 1 && dark) {
-        spans.add(_cardChip(null, token, false));
       } else if (token.length == 1) {
         spans.add(_suit(token, suitColour(token)));
       } else {
@@ -2183,6 +2181,14 @@ class _SlideToPlaceState extends State<SlideToPlace>
 /// The card that announces a round's end: a framed panel with a double
 /// rule, gem corners and a soft sheen. Gold for a win; dark wine edged in
 /// red and gold for a loss.
+/// How dressed up a panel or dialog is. Everything is [low] unless it's an
+/// occasion:
+/// * [low]: the gradient, a faint damask and two bronze rules round it.
+/// * [medium]: scrolls in the corners and a crown medallion over the top
+///   (the menu, a lesson or round's result, You're ready).
+/// * [high]: a sheen of gold sweeps across it and stars twinkle.
+enum Ornament { low, medium, high }
+
 class OrnateCard extends StatelessWidget {
   const OrnateCard(
       {super.key,
@@ -2191,8 +2197,12 @@ class OrnateCard extends StatelessWidget {
       this.court = false,
       this.margin = const EdgeInsets.fromLTRB(24, 46, 24, 24),
       this.padding = const EdgeInsets.fromLTRB(28, 30, 28, 18),
-      this.maxWidth = 400});
+      this.maxWidth = 400,
+      this.ornament = Ornament.low});
   final bool won;
+
+  /// How much decoration: see [Ornament].
+  final Ornament ornament;
 
   /// The court's own colours, for menus and settings: deep felt, gold.
   final bool court;
@@ -2241,10 +2251,12 @@ class OrnateCard extends StatelessWidget {
             ),
           ),
           Positioned.fill(
-            child: CustomPaint(painter: _Filigree(ink.withValues(alpha: 0.8))),
+            child: CustomPaint(
+                painter: _Filigree(ink.withValues(alpha: 0.8),
+                    scrolls: ornament != Ornament.low)),
           ),
           // A win glitters: a sheen sweeps the gold and stars twinkle.
-          if (won && !court)
+          if (won && !court || ornament == Ornament.high)
             Positioned.fill(
               child: IgnorePointer(
                 child: ClipRRect(
@@ -2255,6 +2267,7 @@ class OrnateCard extends StatelessWidget {
             ),
           Padding(padding: padding, child: child),
           // A medallion over the top edge.
+          if (ornament != Ornament.low)
           Positioned(
             top: -30,
             left: 0,
@@ -2314,8 +2327,12 @@ class _Damask extends CustomPainter {
 
 /// The inner double rule, with a curling scroll and a gem at each corner.
 class _Filigree extends CustomPainter {
-  _Filigree(this.color);
+  _Filigree(this.color, {this.scrolls = true});
   final Color color;
+
+  /// The second rule and the scrolls in the corners; without them, just
+  /// the one rule inside the edge.
+  final bool scrolls;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2330,6 +2347,7 @@ class _Filigree extends CustomPainter {
             Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2),
             const Radius.circular(r)),
         line);
+    if (!scrolls) return;
     canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromLTWH(inset + 4, inset + 4, size.width - inset * 2 - 8,
@@ -2371,7 +2389,7 @@ class _Filigree extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_Filigree old) => old.color != color;
+  bool shouldRepaint(_Filigree old) => old.color != color || old.scrolls != scrolls;
 }
 
 /// A rule with a gem in the middle, for under a title.
@@ -3157,9 +3175,17 @@ class CourtDialog extends StatelessWidget {
       this.title,
       required this.child,
       this.actions = const [],
-      this.maxWidth = 420});
+      this.maxWidth = 420,
+      this.ornament = Ornament.low,
+      this.align = CrossAxisAlignment.center});
   final String? title;
   final Widget child;
+
+  /// How dressed up it is: plain by default.
+  final Ornament ornament;
+
+  /// Where its words sit: centred, or from the left for longer reading.
+  final CrossAxisAlignment align;
 
   /// Buttons, centred under the words, the main one first.
   final List<Widget> actions;
@@ -3170,13 +3196,17 @@ class CourtDialog extends StatelessWidget {
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        // No edge of its own: the panel draws its edges.
+        shape: const RoundedRectangleBorder(),
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: OrnateCard(
           won: false,
           court: true,
+          ornament: ornament,
           maxWidth: maxWidth,
-          margin: const EdgeInsets.only(top: 34),
-          padding: const EdgeInsets.fromLTRB(28, 38, 28, 16),
+          margin: EdgeInsets.only(top: ornament == Ornament.low ? 0 : 34),
+          padding: EdgeInsets.fromLTRB(
+              26, ornament == Ornament.low ? 24 : 38, 26, 14),
           child: DefaultTextStyle.merge(
             style: DialogStyle.body,
             child: Column(
@@ -3187,7 +3217,10 @@ class CourtDialog extends StatelessWidget {
                   Text(title!, textAlign: TextAlign.center, style: DialogStyle.title),
                   const SizedBox(height: 12),
                 ],
-                child,
+                Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: align,
+                    children: [child]),
                 if (actions.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Wrap(

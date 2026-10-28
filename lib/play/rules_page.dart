@@ -411,8 +411,8 @@ class _RulesPageState extends State<RulesPage> {
       won: false,
       court: true,
       maxWidth: 620,
-      margin: const EdgeInsets.fromLTRB(0, 34, 0, 18),
-      padding: const EdgeInsets.fromLTRB(34, 38, 34, 20),
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 18),
+      padding: const EdgeInsets.fromLTRB(26, 20, 26, 18),
       // Full width, so every line sits in the middle of the panel.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

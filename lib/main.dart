@@ -539,7 +539,14 @@ class _HomePageState extends State<HomePage>
       }
       return false;
     }
-    if (e is! KeyDownEvent) return false;
+    // Arrows keep moving while held; everything else acts once.
+    const arrows = [
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
+    ];
+    if (e is! KeyDownEvent && !(e is KeyRepeatEvent && arrows.contains(key))) return false;
     final handled = [
       LogicalKeyboardKey.space,
       LogicalKeyboardKey.keyS,
@@ -595,11 +602,28 @@ class _HomePageState extends State<HomePage>
       play();
       return true;
     }
-    // Up to the tasks on the table, down to your hand.
+    // Up to the tasks on the table, down to your hand. The arrows only
+    // stop on tasks you may take and cards you may play (or show), and
+    // run round from one end to the other.
     final open = [
       for (final t in game.tasks)
-        if (t.assignedPlayerIndex == null && !game.isCharged(t)) t
+        if (t.assignedPlayerIndex == null &&
+            !game.isCharged(t) &&
+            (!_yourPick || (_mayTake(t) && game.canTake(t, _you))))
+          t
     ];
+    final showing = _revealing || _speakPromptDue;
+    final playable = [
+      for (final c in hand)
+        if (showing
+            ? _cards.revealFor(_you, c) != null
+            : _cards.turn == _you
+                ? _cards.legalFor(_you).contains(c)
+                : _cards.current.isEmpty ||
+                    legalPlays(hand, _cards.current.first).contains(c))
+          c
+    ];
+    final choices = playable.isEmpty ? hand : playable;
     if (key == LogicalKeyboardKey.arrowUp) {
       if (open.isEmpty) return false;
       setState(() {
@@ -616,17 +640,17 @@ class _HomePageState extends State<HomePage>
       final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
       if (_kbRow == 1 && open.isNotEmpty) {
         final at = open.indexOf(_kbTask ?? open.first);
-        setState(() => _kbTask = open[(at + step).clamp(0, open.length - 1)]);
+        setState(() => _kbTask = open[(at + step) % open.length]);
         return true;
       }
-      if (hand.isEmpty) return false;
-      final at = _kbCard == null ? -1 : hand.indexOf(_kbCard!);
+      if (choices.isEmpty) return false;
+      final at = _kbCard == null ? -1 : choices.indexOf(_kbCard!);
       final next = at < 0
-          ? (step > 0 ? 0 : hand.length - 1)
-          : (at + step).clamp(0, hand.length - 1);
+          ? (step > 0 ? 0 : choices.length - 1)
+          : (at + step) % choices.length;
       setState(() {
         _kbRow = 0;
-        _kbCard = hand[next];
+        _kbCard = choices[next];
       });
       return true;
     }
@@ -1370,9 +1394,9 @@ class _HomePageState extends State<HomePage>
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialog) => AlertDialog(
-          title: const Text('How many tricks?'),
-          content: Column(
+        builder: (context, setDialog) => CourtDialog(
+          title: 'How many tricks?',
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SuitText(task.cardText(playerCount),
@@ -1794,7 +1818,11 @@ class _HomePageState extends State<HomePage>
         child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
+          // One height whatever it holds (two lines of words, a button), so
+          // your hand never moves up or down.
+          SizedBox(
+            height: 56,
+            child: Row(
             children: [
               Expanded(
                 child: (_speakPromptDue || (game.pickTurn == _you && game.canPass(_you))) &&
@@ -1889,6 +1917,7 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ],
+          ),
           ),
           const SizedBox(height: 2),
           LayoutBuilder(builder: (context, box) {
@@ -2854,15 +2883,15 @@ class _HomePageState extends State<HomePage>
     ];
     final seat = await showDialog<int>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text("King's Command: who takes it?"),
-        children: [
+      builder: (context) => CourtDialog(
+        title: "King's Command: who takes it?",
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
           for (final s in seats)
-            SimpleDialogOption(
+            TextButton(
               onPressed: () => Navigator.pop(context, s),
               child: Text(game.players[s].name, style: const TextStyle(fontSize: 17)),
             ),
-        ],
+        ]),
       ),
     );
     if (seat != null && mounted && t.assignedPlayerIndex == null) {
@@ -3214,17 +3243,17 @@ class _HomePageState extends State<HomePage>
     Future<T?> choose<T>(String title, List<(T, String)> options) =>
         showDialog<T>(
           context: context,
-          builder: (context) => SimpleDialog(
-            title: Text(title),
-            children: [
+          builder: (context) => CourtDialog(
+            title: title,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
               for (final (value, label) in options)
-                SimpleDialogOption(
+                TextButton(
                   onPressed: () => Navigator.pop(context, value),
                   child: SuitText(label,
                       keywords: false,
                       style: const TextStyle(fontSize: 16, color: Colors.white)),
                 ),
-            ],
+            ]),
           ),
         );
     void used() {
@@ -3268,9 +3297,9 @@ class _HomePageState extends State<HomePage>
         final has = _cards.hands[seat].any((c) => c.suit == suit);
         await showDialog<void>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Whisper'),
-            content: SuitText(
+          builder: (context) => CourtDialog(
+            title: 'Whisper',
+            child: SuitText(
                 '${names[seat]} ${has ? 'holds' : 'holds no'} ${suit.symbol} cards.',
                 style: const TextStyle(fontSize: 18, color: Colors.white)),
             actions: [
@@ -3381,9 +3410,9 @@ class _HomePageState extends State<HomePage>
     final yes = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Absolution?'),
-        content: SuitText(
+      builder: (context) => CourtDialog(
+        title: 'Absolution?',
+        child: SuitText(
             '${t.assignedPlayerIndex == _you && _digital ? 'Your' : '${game.players[t.assignedPlayerIndex!].name}’s'} task is about to fail: '
             '${t.cardText(playerCount)}\n\nAbsolve it, and you must take a penance in its place: '
             '${penance.cardText(playerCount)}',
@@ -3563,6 +3592,7 @@ class _HomePageState extends State<HomePage>
       context: context,
       builder: (context) => CourtDialog(
         title: 'You’re ready',
+        ornament: Ornament.medium,
         actions: [
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
@@ -3711,6 +3741,7 @@ class _HomePageState extends State<HomePage>
     final l = lessons[math.min(game.lesson, lessons.length - 1)];
     final last = game.lesson >= lessons.length - 1;
     return OrnateCard(
+      ornament: Ornament.medium,
       won: won,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -4744,6 +4775,7 @@ class _HomePageState extends State<HomePage>
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           child: OrnateCard(
+      ornament: Ornament.medium,
             won: false,
             court: true,
             margin: const EdgeInsets.only(top: 34),
@@ -5078,8 +5110,8 @@ class _HomePageState extends State<HomePage>
                               won: false,
                               court: true,
                               maxWidth: 400,
-                              margin: const EdgeInsets.only(top: 34),
-                              padding: const EdgeInsets.fromLTRB(12, 26, 12, 12),
+                              margin: EdgeInsets.zero,
+                              padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
                               child: _CardTracker(
                                 cards: _cards,
                                 you: _you,
@@ -7307,6 +7339,7 @@ class _HomePageState extends State<HomePage>
     final hasNext = chapter != null && chapter < chronicle.length - 1;
     return StatefulBuilder(
       builder: (context, setCardState) => OrnateCard(
+      ornament: Ornament.medium,
         won: won,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -7859,6 +7892,7 @@ class _OrnateMenuState extends State<_OrnateMenu> {
         child: Material(
           type: MaterialType.transparency,
           child: OrnateCard(
+      ornament: Ornament.medium,
             won: false,
             court: true,
             margin: const EdgeInsets.fromLTRB(16, 86, 14, 16),
@@ -9877,24 +9911,14 @@ class _CardTrackerState extends State<_CardTracker> {
     return LayoutBuilder(builder: (context, box) {
       final w = math.min(34.0, (box.maxWidth - 8 * 3 - 1) / 9);
       final small = clampD(w * 0.7, 20, 34);
+      // The deck's height: the Court Cards and four suits, a row each.
+      final deckHeight = 5 * (w * 1.3 + 3);
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // The title, an eye to hold for a look at the table, and a cross.
+          // The title and a cross.
           Row(children: [
-            Tooltip(
-              message: 'Hold to see the table',
-              child: Listener(
-                onPointerDown: (_) => widget.onPeek?.call(true),
-                onPointerUp: (_) => widget.onPeek?.call(false),
-                onPointerCancel: (_) => widget.onPeek?.call(false),
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(Icons.visibility_rounded,
-                      color: Palette.gold, size: 21, shadows: _feltShadow),
-                ),
-              ),
-            ),
+            const SizedBox(width: 36),
             const Expanded(
               child: Text('Card tracker',
                   textAlign: TextAlign.center,
@@ -9905,62 +9929,84 @@ class _CardTrackerState extends State<_CardTracker> {
                       color: Palette.gold,
                       shadows: _feltShadow)),
             ),
-            IconButton(
-              tooltip: 'Close',
-              onPressed: widget.onClose,
-              visualDensity: VisualDensity.compact,
-              style: IconButton.styleFrom(overlayColor: Colors.transparent),
-              icon: const Icon(Icons.close_rounded,
-                  color: Palette.gold, size: 22, shadows: _feltShadow),
+            SizedBox(
+              width: 36,
+              child: IconButton(
+                tooltip: 'Close',
+                onPressed: widget.onClose,
+                visualDensity: VisualDensity.compact,
+                style: IconButton.styleFrom(overlayColor: Colors.transparent),
+                icon: const Icon(Icons.close_rounded,
+                    color: Palette.gold, size: 22, shadows: _feltShadow),
+              ),
             ),
           ]),
-          const SizedBox(height: 2),
+          const SizedBox(height: 6),
+          // The deck, or the chosen player's possible hand in its place: the
+          // same height either way, so the tracker never changes size.
+          SizedBox(
+            height: deckHeight,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [...previous, if (current != null) current]),
+              child: picked.isNotEmpty
+                  ? SingleChildScrollView(
+                      key: ValueKey('hand-${picked.single.seat}'),
+                      child: guessBox(picked.single, small))
+                  : Column(
+                      key: const ValueKey('deck'),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final suit in suits)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 3,
+                              runSpacing: 3,
+                              children: [
+                                for (final c in deck)
+                                  if (c.suit == suit) cell(c, w)
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Along the bottom: the eye to hold for a look at the table, then
+          // the deck and each player.
           Wrap(
             alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 4,
             runSpacing: 4,
             children: [
+              Tooltip(
+                message: 'Hold to see the table',
+                child: Listener(
+                  onPointerDown: (_) => widget.onPeek?.call(true),
+                  onPointerUp: (_) => widget.onPeek?.call(false),
+                  onPointerCancel: (_) => widget.onPeek?.call(false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: ShapeDecoration(
+                      color: const Color(0x33000000),
+                      shape: StadiumBorder(
+                          side: BorderSide(
+                              color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
+                    ),
+                    child: const Icon(Icons.visibility_rounded,
+                        color: Palette.gold, size: 17),
+                  ),
+                ),
+              ),
               deckChip(),
               for (int s = 0; s < players.length; s++) key(s),
             ],
-          ),
-          const SizedBox(height: 8),
-          // The deck, or the chosen player's possible hand in its place.
-          Flexible(
-            child: SingleChildScrollView(
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
-                alignment: Alignment.topCenter,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  layoutBuilder: (current, previous) => Stack(
-                      alignment: Alignment.topCenter,
-                      children: [...previous, if (current != null) current]),
-                  child: picked.isNotEmpty
-                      ? guessBox(picked.single, small)
-                      : Column(
-                          key: const ValueKey('deck'),
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            for (final suit in suits)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 3),
-                                child: Wrap(
-                                  alignment: WrapAlignment.center,
-                                  spacing: 3,
-                                  runSpacing: 3,
-                                  children: [
-                                    for (final c in deck)
-                                      if (c.suit == suit) cell(c, w)
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                ),
-              ),
-            ),
           ),
         ],
       );
@@ -10401,14 +10447,13 @@ class _ShortcutsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
         type: MaterialType.transparency,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 10, 16, 12),
-          decoration: BoxDecoration(
-            color: const Color(0xE60A3622),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: DialogStyle.edge, width: 1.2),
-            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 12)],
-          ),
+        // The court's plain panel, like every dialog.
+        child: OrnateCard(
+          won: false,
+          court: true,
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          maxWidth: 360,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -10426,9 +10471,9 @@ class _ShortcutsCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     SizedBox(
-                      width: 92,
-                      child: Wrap(spacing: 3, children: [
-                        for (final c in caps) _KeyCap(c, size: 20),
+                      width: 96,
+                      child: Wrap(spacing: 3, runSpacing: 3, children: [
+                        for (final c in caps) _KeyCap(c, size: 21),
                       ]),
                     ),
                     Text(what,
@@ -10451,8 +10496,7 @@ class _KeyCap extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         constraints: BoxConstraints(minWidth: size, minHeight: size),
-        padding: EdgeInsets.symmetric(horizontal: size * 0.25),
-        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: size * 0.25, vertical: size * 0.16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
               begin: Alignment.topCenter,
@@ -10463,6 +10507,7 @@ class _KeyCap extends StatelessWidget {
           boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 1.5))],
         ),
         child: Text(label,
+            textAlign: TextAlign.center,
             style: TextStyle(
                 fontFamily: bodyFont,
                 fontSize: size * 0.62,
