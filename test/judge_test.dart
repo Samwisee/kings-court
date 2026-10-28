@@ -21,7 +21,7 @@ Round table(List<String> tasks, {int seed = 5}) {
     ..seatCourtiers()
     ..startRound(3, 5);
   g.round!.tasks = [for (final d in tasks) RoundTask(taskByDescription(d))];
-  dealRound(g, you: 0);
+  dealRound(g);
   g.crown(g.round!.kingCardHolder);
   return g.round!;
 }

@@ -12,7 +12,7 @@ library;
 import '../engine/round.dart';
 import '../engine/task.dart';
 
-sealed class GameAction extends Action {
+sealed class GameAction extends TableAction {
   const GameAction(this.seat);
   @override
   final int seat;
@@ -29,7 +29,7 @@ sealed class GameAction extends Action {
           target: j['target'] as int?,
           chapter: j['chapter'] as int?,
           lesson: j['lesson'] as int?),
-      'retry' => Retry(seat),
+      'retry' => RetryRound(seat),
       'redeal' => Redeal(seat, j['target'] as int),
       _ => null,
     };
@@ -91,8 +91,8 @@ class NextRound extends GameAction {
 }
 
 /// The same tasks again in a new round.
-class Retry extends GameAction {
-  const Retry(super.seat);
+class RetryRound extends GameAction {
+  const RetryRound(super.seat);
   @override
   Map<String, dynamic> toJson() => {'type': 'retry', 'seat': seat};
 }
@@ -108,5 +108,5 @@ class Redeal extends GameAction {
 
 /// Any action from its JSON: a move within the round, or one of the
 /// game's. Null if it's neither.
-Action? actionFromJson(Map<String, dynamic> j) =>
+TableAction? tableActionFromJson(Map<String, dynamic> j) =>
     MatchAction.fromJson(j) ?? GameAction.fromJson(j);

@@ -57,7 +57,7 @@ void main() {
 
   test('A move travels as JSON with its number, as does every kind of action', () {
     final card = PlayingCard.parse('7♦')!;
-    for (final action in <Action>[
+    for (final action in <TableAction>[
       PlayCard(2, card),
       ShowCard(1, card),
       const PickTask(0, 3),
@@ -69,7 +69,7 @@ void main() {
       const UndoMark(0),
       const NextRound(0),
       const NextRound(0, target: 7, chapter: 3, lesson: 1),
-      const Retry(0),
+      const RetryRound(0),
       const Redeal(0, 9),
     ]) {
       final move = Move(5, action);

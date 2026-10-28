@@ -126,7 +126,7 @@ void main() {
   test('A retry plays the same tasks again; a re-deal draws new ones for a new target', () {
     final g = table()..apply(const Crown(0, 1));
     final tasks = [for (final t in g.tasks) t.description];
-    g.apply(const Retry(0));
+    g.apply(const RetryRound(0));
     expect([for (final t in g.tasks) t.description], tasks);
     expect(g.round!.king, isNull);
     expect(g.roundNumber, 2);

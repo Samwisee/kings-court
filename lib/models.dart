@@ -8,6 +8,8 @@ import 'engine/showing.dart';
 import 'engine/task.dart';
 import 'game/actions.dart';
 import 'game/courtiers.dart';
+import 'game/dice.dart';
+import 'game/setup.dart';
 
 export 'engine/round.dart' show RoundOutcome;
 export 'engine/task.dart';
@@ -112,6 +114,11 @@ class GameState {
   /// deck.
   bool digital = false;
 
+  /// What the game was started with (game/setup.dart), so it can be
+  /// started again exactly: a replay, a bug report. Null for a game from
+  /// before setups were kept.
+  GameSetup? setup;
+
   /// The round in progress: its tasks, deal and tricks. Null before a game
   /// is set up.
   Round? round;
@@ -131,15 +138,17 @@ class GameState {
   /// animate the change.
   int dealId = 0;
 
-  /// The game's seed: with [dealId] it fixes the cards and tasks each round
-  /// deals, so a round can be dealt again exactly (a bug report, a shared
-  /// hand, a daily deal). New games get a random one.
+  /// The game's seed: every random choice in the game comes from it (see
+  /// game/dice.dart), so a game can be dealt and played again exactly (a
+  /// bug report, a shared hand, a daily deal). New games get a random one.
   int seed = Random().nextInt(1 << 30);
 
-  /// The random numbers for this deal: the same for the same game, round
-  /// and [salt] every time.
-  Random dealRandom([int salt = 0]) =>
-      Random(seed ^ (dealId * 0x9E3779B1) ^ (salt * 0x85EBCA6B));
+  /// The game's dice: the random numbers for each purpose on each deal.
+  Dice get dice => Dice(seed);
+
+  /// The random numbers for [purpose] on this deal.
+  Random roll(Purpose purpose) => dice.roll(purpose, dealId: dealId);
+
   bool _resultRecorded = false;
   int _streakBefore = 0;
   int _bestBefore = 0;
@@ -147,9 +156,11 @@ class GameState {
   /// Every task in the game (see engine/task.dart).
   static final List<Task> taskPool = allTasks;
 
-  /// Seats each player as a courtier: a different shape for everyone.
+  /// Seats each player as a courtier, from the seed: a different shape
+  /// for everyone.
   void seatCourtiers() {
-    courtiers = (Courtier.houses..shuffle()).take(players.length).toList();
+    courtiers =
+        (Courtier.houses..shuffle(roll(Purpose.seats))).take(players.length).toList();
   }
 
   /// How the round in progress stands.
@@ -158,7 +169,7 @@ class GameState {
   /// Crowns the King: the exile (under that decree) is chosen from the
   /// game's seed, tasks only one player may take go to them, and the King
   /// picks first.
-  void crown(int? seat) => round!.crown(seat, dealRandom(2));
+  void crown(int? seat) => round!.crown(seat, roll(Purpose.exile));
 
   /// The last done or failed mark made by hand, so it can be undone from
   /// the round's result (not saved).
@@ -184,7 +195,7 @@ class GameState {
       case NextRound(:final chapter, :final lesson):
         if (chapter != null && chapter < 0) return 'No such chapter';
         if (lesson != null && lesson < 0) return 'No such lesson';
-      case Retry():
+      case RetryRound():
       case Redeal():
         break;
     }
@@ -221,7 +232,7 @@ class GameState {
         if (lesson != null) this.lesson = lesson;
         lastMark = null;
         shuffleTasks(players.length, target ?? this.target, setup: setup);
-      case Retry():
+      case RetryRound():
         lastMark = null;
         retryRound();
       case Redeal(:final target):
@@ -313,7 +324,7 @@ class GameState {
     if (countRound) roundNumber++;
     dealId++;
     _resultRecorded = false;
-    final rand = dealRandom(1);
+    final rand = roll(Purpose.tasks);
     final rules = setup?.call(rand) ?? const RoundSetup();
     target = rules.target ?? targetPoints;
     final r = _newRound(playerCount, target);
@@ -420,6 +431,7 @@ class GameState {
 
   Map<String, dynamic> toJson() => {
         'version': saveVersion,
+        if (setup != null) 'setup': setup!.toJson(),
         'players': [
           for (final p in players)
             {'name': p.name, 'color': p.colorValue},
@@ -471,6 +483,9 @@ class GameState {
         ..bestStreak = j['bestStreak'] as int
         ..dealId = j['dealId'] as int;
       if (j['seed'] is int) g.seed = j['seed'] as int;
+      if (j['setup'] is Map) {
+        g.setup = GameSetup.fromJson(Map<String, dynamic>.from(j['setup'] as Map));
+      }
       g._resultRecorded = j['resultRecorded'] as bool;
       if (g.players.isEmpty) return null;
       // A game of the old Dynasty: its story no longer loads.

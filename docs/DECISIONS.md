@@ -94,3 +94,22 @@ explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
   (the table moved on) is ignored, as a server would refuse it.
 - **The link's history starts again with each game** (`TableLink.reset`),
   so a game's moves are its own, for replay and for a bug report.
+- **Every random choice comes from the game's seed** (`game/dice.dart`,
+  one purpose each: the deal, the tasks, the exile, the courtiers'
+  choices, the seats). The deal, tasks and exile roll exactly as before
+  (same numbers); new: the courtiers' houses are seated from the seed
+  (they were unseeded), and the courtiers' dice are set from the seed at
+  each deal (they ran on from one `Random`). Same odds; replayable.
+  Screenshots: every table shot changes (seating and the courtiers'
+  choices); the baseline moves to this commit once checked by eye.
+- **A deal no longer depends on which seat is looking**: the check that
+  no task is impossible took "you" as the King before the crowning; it
+  takes the King card's holder now, so every device deals alike. The
+  seeded screenshots' deals may differ (see above).
+- **`GameSetup`** (`game/setup.dart`) is what a game starts from, kept in
+  the game and its saves, so a replay or a bug report can start the same
+  game again; `ModeRules` hands the mode's say to the game as functions.
+- **A headless table** (`net/headless_table.dart`) is the page without a
+  screen: deals, crowns, runs the courtiers, applies every move at once.
+  Replays, the determinism test and the two-device test run on it; a
+  server would too.

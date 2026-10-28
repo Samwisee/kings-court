@@ -7,6 +7,7 @@ import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/deal_mix.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
+import 'package:kings_court/game/dice.dart';
 import 'package:kings_court/models.dart';
 
 PlayingCard c(String label) => PlayingCard.parse(label)!;
@@ -329,14 +330,18 @@ void main() {
       ..startRound(4, 6);
     final a = fresh(42), b = fresh(42), c = fresh(43);
     expect([for (final t in a.tasks) t.description], [for (final t in b.tasks) t.description]);
-    final ma = Round(players: 4, target: 6)..dealFor(a.dealId, a.dealRandom());
-    final mb = Round(players: 4, target: 6)..dealFor(b.dealId, b.dealRandom());
-    final mc = Round(players: 4, target: 6)..dealFor(c.dealId, c.dealRandom());
+    final ma = Round(players: 4, target: 6)..dealFor(a.dealId, a.roll(Purpose.deal));
+    final mb = Round(players: 4, target: 6)..dealFor(b.dealId, b.roll(Purpose.deal));
+    final mc = Round(players: 4, target: 6)..dealFor(c.dealId, c.roll(Purpose.deal));
     expect(ma.hands, mb.hands);
     expect(ma.hands, isNot(mc.hands));
+    // The same seed seats the same courtiers.
+    expect(a.courtiers, b.courtiers);
     // The seed survives a save.
     final back = GameState.fromJson(a.toJson())!;
     expect(back.seed, 42);
-    expect(back.dealRandom().nextInt(1 << 20), a.dealRandom().nextInt(1 << 20));
+    expect(back.roll(Purpose.deal).nextInt(1 << 20), a.roll(Purpose.deal).nextInt(1 << 20));
+    // Each purpose rolls its own numbers.
+    expect(a.roll(Purpose.deal).nextInt(1 << 20), isNot(a.roll(Purpose.tasks).nextInt(1 << 20)));
   });
 }

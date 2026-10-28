@@ -12,6 +12,7 @@ import '../engine/conflicts.dart';
 import '../engine/round.dart';
 import '../models.dart';
 import 'bot_turn.dart';
+import 'dice.dart';
 
 /// What came of giving the courtiers a turn: [decision] is what the
 /// courtier (or you, for an announcement) decided, null when there was
@@ -41,6 +42,17 @@ class Host {
   /// A courtier is thinking (a slice at a time, so the screen stays smooth).
   bool busy = false;
 
+  /// The deal the courtiers' dice were last set for.
+  int _rolledFor = -1;
+
+  /// The courtiers roll the game's dice: set from the seed at each deal,
+  /// so the same game plays the same way wherever it's played.
+  void _rollFor(GameState g) {
+    if (_rolledFor == g.dealId) return;
+    _rolledFor = g.dealId;
+    bot.rand = g.roll(Purpose.courtiers);
+  }
+
   /// Whether the game itself is ready for a courtier to move: cards on
   /// screen, the King crowned, the deal shown ([dealtFor] is the deal the
   /// table has laid out) and the round still going. The screen adds its
@@ -68,6 +80,7 @@ class Host {
   Future<HostTurn> act(GameState g, {bool Function()? still}) async {
     busy = true;
     try {
+      _rollFor(g);
       final before = moment(g);
       final decision = await botDecision(g, bot, you: you, script: script);
       if (!(still?.call() ?? true) || moment(g) != before) {

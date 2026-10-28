@@ -19,7 +19,10 @@ import 'showing.dart';
 
 class Bot {
   Bot([Random? random]) : rand = random ?? Random();
-  final Random rand;
+
+  /// The bot's dice: a game sets them from its seed at each deal, so the
+  /// courtiers' choices replay.
+  Random rand;
 
   /// Playouts per decision, shared between the options.
   int budget = 900;

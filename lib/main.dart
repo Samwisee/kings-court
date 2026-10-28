@@ -32,6 +32,7 @@ import 'game/courtiers.dart';
 import 'game/dealer.dart';
 import 'game/host.dart';
 import 'game/judge.dart';
+import 'game/setup.dart';
 import 'models.dart';
 import 'modes/chronicle/chapters.dart';
 import 'modes/modes.dart';
@@ -843,12 +844,7 @@ class HomePageState extends State<HomePage>
 
   /// The courtiers' side of the table (game/host.dart): what they do, and
   /// sending it. The page keeps only its own pauses and the timers.
-  late final _host = Host(
-      bot: Bot(HomePageTestHooks.seed == null
-          ? null
-          : math.Random(HomePageTestHooks.seed)),
-      you: _you,
-      send: _link.send);
+  late final _host = Host(bot: Bot(), you: _you, send: _link.send);
   Timer? _botTimer;
   Timer? _crownTimer;
   final _trickTimers = <Timer>[];
@@ -937,7 +933,7 @@ class HomePageState extends State<HomePage>
   /// lets the King card choose the King.
   void _syncCards() {
     if (!_digital || !_inGame) return;
-    if (dealRound(game, you: _you, rigged: _mode.riggedDeal(game))) {
+    if (dealRound(game, rigged: _mode.riggedDeal(game))) {
       _lastTrick = null;
       _collecting = false;
       _revealing = false;
@@ -953,7 +949,7 @@ class HomePageState extends State<HomePage>
       _crownTimer = Timer(const Duration(milliseconds: 350), () {
         _crownTimer = null;
         final holder = _round.kingCardHolder;
-        if (mounted && _choosingKing && holder != null) _crown(holder);
+        if (mounted && _choosingKing && holder != null) _sendCrown(holder);
       });
     }
   }
@@ -1153,13 +1149,13 @@ class HomePageState extends State<HomePage>
 
   /// The mode's say for a new round, for the game to apply the actions
   /// that start one.
-  RoundSetup Function(math.Random rand, {bool redeal}) get _setup =>
+  RoundSetup Function(math.Random rand, {bool redeal}) get _nextRoundSetup =>
       (rand, {redeal = false}) =>
-          _mode.roundSetup(game, game.players.length, rand, redeal: redeal);
+          _mode.rules.roundSetup(game, rand, redeal: redeal);
 
   /// An action coming back from the link: make it on the table. One that
   /// isn't allowed any more (the table moved on) is let go.
-  void _onAction(Action action) {
+  void _onAction(TableAction action) {
     if (!mounted || !_inGame) return;
     switch (action) {
       case MatchAction():
@@ -1224,14 +1220,14 @@ class HomePageState extends State<HomePage>
           _saveSettings();
         }
         setState(() {
-          game.apply(action, setup: _setup);
+          game.apply(action, setup: _nextRoundSetup);
           if (midRound) _decreeReadFor = game.dealId; // already read this round
           _resetTable();
         });
-      case Retry():
+      case RetryRound():
       case Redeal():
         setState(() {
-          game.apply(action, setup: _setup);
+          game.apply(action, setup: _nextRoundSetup);
           _resetTable();
         });
     }
@@ -2961,41 +2957,22 @@ class HomePageState extends State<HomePage>
     setState(() {
       _setupCount = count;
       _setupTarget = target;
-      game = GameState()
-        ..mode = mode
-        ..target = target
-        ..lesson = lesson
-        ..seed = HomePageTestHooks.seed ?? math.Random().nextInt(1 << 30)
-        ..chapter = chapter
-        ..surprise = surprise
-        ..roles = roles
-        ..bestStreak = _bestStreak
-        ..players = [
-          for (int i = 0; i < count; i++)
-            Player(names[i], colorValue: Palette.players[i % Palette.players.length].toARGB32())
-        ]
-        ..seatCourtiers();
       // The tutorial's courtiers are always the same: you, the Duke and
       // the Bishop, each with their house's token.
-      if (mode == GameMode.tutorial) {
-        game.courtiers = List.of(tutorialHouses);
-      }
-      if (digital) {
-        // You sit at the bottom; bots take the other seats.
-        game.digital = true;
-        for (var i = 0; i < count; i++) {
-          game.players[i].name = i == _you
-              ? 'You'
-              : mode == GameMode.tutorial
-                  ? tutorialCourtiers[i]
-                  : game.hasRoles
-                      ? game.courtiers[i].title
-                      : 'Bot ${i + 1}';
-        }
-      }
-      // The first round, named after the players as seated.
-      game.startRound(count, target,
-          setup: (rand) => _mode.roundSetup(game, count, rand));
+      final tutorial = mode == GameMode.tutorial;
+      final setup = GameSetup(
+          mode: mode,
+          names: names.take(count).toList(),
+          target: target,
+          seed: HomePageTestHooks.seed ?? math.Random().nextInt(1 << 30),
+          digital: digital,
+          surprise: surprise,
+          roles: roles,
+          chapter: chapter,
+          lesson: lesson,
+          courtiers: tutorial ? tutorialHouses : null,
+          botNames: tutorial ? tutorialCourtiers : null);
+      game = setup.start(modeOf(mode).rules, you: _you)..bestStreak = _bestStreak;
       _resetTable();
       // A new game takes the place of any saved game of the same kind.
       _saves = [for (final s in _saves) if (s.game.mode != mode) s];
@@ -3302,7 +3279,7 @@ class HomePageState extends State<HomePage>
       _link.send(NextRound(_you, target: target, lesson: lesson));
 
   /// The same tasks again in a new round: sends the action.
-  void _retryRound() => _link.send(Retry(_you));
+  void _retryRound() => _link.send(RetryRound(_you));
 
   /// A haptic tap where the device supports it.
   void _haptic(Future<void> Function() feedback) {
@@ -3325,7 +3302,7 @@ class HomePageState extends State<HomePage>
 
   /// Crowns [index]: sends the action (the King card's holder on screen, a
   /// tapped seat at a real table).
-  void _crown(int index) {
+  void _sendCrown(int index) {
     if (_crowning != null || game.problem(Crown(_you, index)) != null) return;
     _link.send(Crown(_you, index));
   }
@@ -4725,7 +4702,7 @@ class HomePageState extends State<HomePage>
                     // tap opens the courtier's card, or with no roles just
                     // flips the card-reveal token.
                     onTap: _choosingKing
-                        ? (_digital ? null : () => _crown(i))
+                        ? (_digital ? null : () => _sendCrown(i))
                         : game.hasRoles
                             ? () => _showCourtier(i)
                             : () => _toggleSpoke(i),
@@ -5333,7 +5310,7 @@ class HomePageState extends State<HomePage>
                       foregroundColor: fg,
                       side: BorderSide(
                           color: won ? Palette.ink : Colors.white54)),
-                  child: const Text('Retry'),
+                  child: const Text('RetryRound'),
                 ),
                 FilledButton(
                   onPressed: () => _shuffleTasks(target: _nextTarget),

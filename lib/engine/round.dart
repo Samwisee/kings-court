@@ -124,8 +124,8 @@ class TaskFlip {
 /// moves within a round's play are [MatchAction]s; the rest (crowning,
 /// marking a task at a real table, the next round) are the game's
 /// (game/actions.dart).
-abstract class Action {
-  const Action();
+abstract class TableAction {
+  const TableAction();
 
   /// The seat making the move.
   int get seat;
@@ -134,7 +134,7 @@ abstract class Action {
 }
 
 /// A move within a round's play.
-sealed class MatchAction extends Action {
+sealed class MatchAction extends TableAction {
   const MatchAction(this.seat);
   @override
   final int seat;
@@ -781,7 +781,10 @@ class Round {
         if (!canSpeak(seat)) return whyCantSpeak() ?? 'No cards may be shown now';
         if (revealFor(seat, card) == null) return 'That card can’t be shown';
       case PlayCard(:final seat, :final card):
-        if (phase != Phase.playing) return 'Not playing yet';
+        // A won round may play itself out; a lost one stops.
+        if (!settled) return 'Not playing yet';
+        if (outcome == RoundOutcome.lost) return 'The round is lost';
+        if (tricks.length >= totalTricks) return 'Every card is played';
         if (seat != turn) return 'Not your turn';
         if (!legalFor(seat).contains(card)) {
           return 'You must follow ${led!.isCourt ? 'with a Court Card' : led!.suit.symbol}';
@@ -827,7 +830,7 @@ class Round {
   /// Marks tasks done or failed after a trick, and ends the round when one
   /// fails or every one is done.
   void _check() {
-    for (final f in this.judge()) {
+    for (final f in judge()) {
       flip(f);
     }
     _settle();
@@ -837,7 +840,7 @@ class Round {
 
   /// How many cards [seat] holds: counted from their hand, or, in a view
   /// where their hand is hidden, as told.
-  int handSize(int seat) =>
+  int cardsIn(int seat) =>
       handSizes != null && hands[seat].isEmpty ? handSizes![seat] : hands[seat].length;
 
   /// In a view for one seat, how many cards each of the others holds.

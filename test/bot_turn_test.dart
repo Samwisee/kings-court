@@ -13,7 +13,7 @@ GameState table({int seed = 7}) {
     ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: 0xff000000)]
     ..seatCourtiers()
     ..startRound(4, 6);
-  dealRound(g, you: 0);
+  dealRound(g);
   g.crown(g.round!.kingCardHolder);
   return g;
 }

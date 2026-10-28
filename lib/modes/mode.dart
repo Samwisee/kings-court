@@ -14,6 +14,7 @@ import 'dart:math';
 import '../engine/round.dart';
 import '../game/bot_turn.dart';
 import '../game/dealer.dart';
+import '../game/setup.dart';
 import '../models.dart';
 import 'progress.dart';
 
@@ -57,6 +58,13 @@ abstract class Mode {
 
   /// How a round of this mode is labelled in the analytics.
   String roundLabel(GameState g) => roundBucket(g.roundNumber);
+
+  /// The mode's say, as the game takes it (game/setup.dart).
+  ModeRules get rules => ModeRules(
+      roundSetup: (g, rand, {redeal = false}) =>
+          roundSetup(g, g.players.length, rand, redeal: redeal),
+      riggedDeal: riggedDeal,
+      script: script);
 }
 
 /// Rounds grouped for the analytics: each of the first five, then 6 to 10,

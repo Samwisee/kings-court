@@ -2,7 +2,7 @@
 ///
 /// Everything a player does at the table (playing a card, showing one,
 /// crowning the King, marking a task, dealing the next round) is an
-/// [Action]: plain data that turns into JSON and back. The table never
+/// [TableAction]: plain data that turns into JSON and back. The table never
 /// changes the game itself; it [TableLink.send]s the action, and changes
 /// the game when the action comes back on [TableLink.moves], numbered in
 /// the order the table plays them.
@@ -24,12 +24,12 @@ import '../game/actions.dart';
 class Move {
   const Move(this.seq, this.action);
   final int seq;
-  final Action action;
+  final TableAction action;
 
   Map<String, dynamic> toJson() => {'seq': seq, ...action.toJson()};
 
   static Move? fromJson(Map<String, dynamic> j) {
-    final action = actionFromJson(j);
+    final action = tableActionFromJson(j);
     return action == null ? null : Move(j['seq'] as int, action);
   }
 
@@ -42,7 +42,7 @@ abstract class TableLink {
   Stream<Move> get moves;
 
   /// An action made on this device: yours, or a courtier's played here.
-  void send(Action action);
+  void send(TableAction action);
 
   /// Every move so far this game, oldest first (for replays, and for a
   /// device that joins late to catch up).
@@ -67,7 +67,7 @@ class LocalLink implements TableLink {
   List<Move> get history => List.unmodifiable(_history);
 
   @override
-  void send(Action action) {
+  void send(TableAction action) {
     final move = Move(_history.length, action);
     _history.add(move);
     _moves.add(move);

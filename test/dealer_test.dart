@@ -25,18 +25,18 @@ void main() {
     final a = game(4, 10);
     final b = game(4, 10);
     final c = game(4, 10, seed: 12);
-    expect(dealRound(a, you: 0), isTrue);
-    expect(dealRound(b, you: 0), isTrue);
-    expect(dealRound(c, you: 0), isTrue);
+    expect(dealRound(a), isTrue);
+    expect(dealRound(b), isTrue);
+    expect(dealRound(c), isTrue);
     expect(a.round!.hands, b.round!.hands);
     expect(a.round!.hands, isNot(c.round!.hands));
     // Dealt once per round: asking again does nothing.
-    expect(dealRound(a, you: 0), isFalse);
+    expect(dealRound(a), isFalse);
   });
 
   test('A dealt round waits for the table to crown the King card’s holder', () {
     final g = game(4, 8);
-    dealRound(g, you: 0);
+    dealRound(g);
     final r = g.round!;
     expect(r.king, isNull);
     expect(r.kingCardHolder, isNotNull);
@@ -46,11 +46,11 @@ void main() {
 
   test('A re-deal keeps a reigning King, with the King card in their hand', () {
     final g = game(4, 8);
-    dealRound(g, you: 0);
+    dealRound(g);
     g.crown(2);
     g.shuffleTasks(4, 8);
     expect(g.round!.hasCards, isFalse, reason: 'new tasks, new cards');
-    expect(dealRound(g, you: 0), isTrue);
+    expect(dealRound(g), isTrue);
     expect(g.round!.king, 2);
     expect(g.round!.hands[2], contains(PlayingCard.king));
   });
@@ -59,13 +59,13 @@ void main() {
     for (var seed = 0; seed < 30; seed++) {
       for (final players in [3, 4, 5]) {
         final g = game(players, 8 + seed % 6, seed: seed);
-        dealRound(g, you: 0);
+        dealRound(g);
         final r = g.round!;
         expect(r.hands.length, players);
         for (final t in r.tasks) {
           expect(playableWith(t.description, r.hands, r.inPlay), isTrue,
               reason: '${t.description} (seed $seed, $players players)');
-          expect(stillPossible(r, t, r.hands, r.inPlay, you: 0), isTrue,
+          expect(stillPossible(r, t, r.hands, r.inPlay), isTrue,
               reason: '${t.description} (seed $seed, $players players)');
         }
       }
@@ -75,7 +75,7 @@ void main() {
   test('A rigged deal is used as it is, with the King card in your hand', () {
     final g = game(3, 1, mode: GameMode.tutorial);
     final rigged = lessons[0].deal();
-    expect(dealRound(g, you: 0, rigged: rigged), isTrue);
+    expect(dealRound(g, rigged: rigged), isTrue);
     final r = g.round!;
     expect(r.hands, rigged.hands);
     expect(r.setAside, rigged.setAside);
