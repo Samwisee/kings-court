@@ -1841,7 +1841,7 @@ class HomePageState extends State<HomePage>
                 IconButton(
                   tooltip: 'Card tracker',
                   onPressed: _showCardTracker,
-                  icon: const TrackerIcon(size: 26),
+                  icon: const TrackerIcon(),
                 ),
 
               // The speech token: show one card, once a round.
@@ -3332,14 +3332,14 @@ class HomePageState extends State<HomePage>
           context: context,
           builder: (context) => CourtDialog(
             title: 'Whisper',
-            child: SuitText(
-                '${names[seat]} ${has ? 'holds' : 'holds no'} ${suit.symbol} cards.',
-                style: const TextStyle(fontSize: 18, color: Colors.white)),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Close')),
             ],
+            child: SuitText(
+                '${names[seat]} ${has ? 'holds' : 'holds no'} ${suit.symbol} cards.',
+                style: const TextStyle(fontSize: 18, color: Colors.white)),
           ),
         );
       case Courtier.merchant:
@@ -3445,11 +3445,6 @@ class HomePageState extends State<HomePage>
       barrierDismissible: false,
       builder: (context) => CourtDialog(
         title: 'Absolution?',
-        child: SuitText(
-            '${t.assignedPlayerIndex == _you && _digital ? 'Your' : '${game.players[t.assignedPlayerIndex!].name}’s'} task is about to fail: '
-            '${t.cardText(playerCount)}\n\nAbsolve it, and you must take a penance in its place: '
-            '${penance.cardText(playerCount)}',
-            style: const TextStyle(fontSize: 16, height: 1.35, color: Colors.white)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -3458,6 +3453,11 @@ class HomePageState extends State<HomePage>
               onPressed: () => Navigator.pop(context, true),
               child: const Text('Take the penance')),
         ],
+        child: SuitText(
+            '${t.assignedPlayerIndex == _you && _digital ? 'Your' : '${game.players[t.assignedPlayerIndex!].name}’s'} task is about to fail: '
+            '${t.cardText(playerCount)}\n\nAbsolve it, and you must take a penance in its place: '
+            '${penance.cardText(playerCount)}',
+            style: const TextStyle(fontSize: 16, height: 1.35, color: Colors.white)),
       ),
     );
     if (yes != true || !mounted) return false;
@@ -7303,8 +7303,7 @@ class HomePageState extends State<HomePage>
 
   void _nextDynastyRound(bool won) {
     final target = (targetPoints + (won ? 1 : 0) + game.pointsBonus)
-        .clamp(1, maxTarget)
-        .toInt();
+        .clamp(1, maxTarget);
     game.pointsBonus = 0;
     targetPoints = target;
     game.nextDynastyRound(playerCount, target);

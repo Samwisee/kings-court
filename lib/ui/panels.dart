@@ -144,7 +144,7 @@ class _Damask extends CustomPainter {
     final p = Paint()..color = color;
     const step = 18.0;
     for (double y = 0; y < size.height + step; y += step) {
-      for (var x = (y ~/ step).isOdd ? step / 2 : 0; x < size.width + step; x += step) {
+      for (var x = (y ~/ step).isOdd ? step / 2 : 0.0; x < size.width + step; x += step) {
         final path = Path()
           ..moveTo(x, y - 4)
           ..lineTo(x + 4, y)

@@ -102,4 +102,3 @@ import 'package:kings_court/models.dart';
   ];
   return (s.won ?? false, failed, dealt);
 }
-

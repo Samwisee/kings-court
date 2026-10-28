@@ -21,20 +21,6 @@ class _CardTracker extends StatefulWidget {
   final int you;
   final List<Player> players;
 
-  /// Width of a card in the grid, for a tracker [width] x [height]: the
-  /// whole deck fits in view at once, five rows, as big as the space allows.
-  static double cellWidth(double width, double height) => _CardTrackerState.cellWidth(width, height);
-
-  /// The grid's width: nine cards and the gaps between them.
-  static double gridWidth(double cell) => 9 * cell + 8 * 4 + 1;
-
-  /// Room the tracker needs round its grid: the inlay and a little air.
-  static const sidePad = 22.0;
-
-  /// The grid's card width on a screen of [screen] size.
-  static double cellFor(Size screen) =>
-      cellWidth(screen.width - 2 * sidePad, screen.height * 0.5 - 18);
-
   @override
   State<_CardTracker> createState() => _CardTrackerState();
 }

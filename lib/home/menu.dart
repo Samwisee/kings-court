@@ -109,7 +109,7 @@ typedef _MenuEntry = ({String value, IconData icon, String title, bool? on});
 class _OrnateMenu extends StatefulWidget {
   const _OrnateMenu({required this.entries, required this.onToggle});
   final List<_MenuEntry> Function() entries;
-  final Future<void> Function(String) onToggle;
+  final void Function(String) onToggle;
 
   @override
   State<_OrnateMenu> createState() => _OrnateMenuState();
@@ -151,10 +151,10 @@ class _OrnateMenuState extends State<_OrnateMenu> {
                       highlightColor: Palette.gold.withValues(alpha: 0.08),
                       splashColor: Palette.gold.withValues(alpha: 0.12),
                       hoverColor: Palette.gold.withValues(alpha: 0.06),
-                      onTap: () async {
+                      onTap: () {
                         if (_toggles.contains(e.value)) {
-                          await widget.onToggle(e.value);
-                          if (mounted) setState(() {});
+                          widget.onToggle(e.value);
+                          setState(() {});
                         } else {
                           Navigator.pop(context, e.value);
                         }
@@ -202,8 +202,8 @@ class _OrnateMenuState extends State<_OrnateMenu> {
 /// with a small diamond. While the menu is open the outer bars cross and
 /// the middle one draws in to a single jewel.
 class _OrnateMenuIcon extends StatelessWidget {
-  const _OrnateMenuIcon({this.size = 30, this.open = false});
-  final double size;
+  const _OrnateMenuIcon({this.open = false});
+  static const size = 30.0;
   final bool open;
 
   @override

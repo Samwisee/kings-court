@@ -113,7 +113,7 @@ Future<int?> showChronicleDialog(
                     fontSize: 26,
                     color: Palette.gold)),
           ),
-          const CrownIcon(size: 16),
+          const CrownIcon(),
           const SizedBox(width: 4),
           Text('${progress.totalCrowns}/${chronicle.length * 3}',
               style: const TextStyle(

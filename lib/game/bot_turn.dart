@@ -86,7 +86,7 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
       ];
       if (seats.isEmpty) return null;
       var best = seats.first;
-      var bestScore = -1;
+      var bestScore = -1.0;
       for (final s in seats) {
         final assigned = {
           for (int t = 0; t < game.tasks.length; t++)

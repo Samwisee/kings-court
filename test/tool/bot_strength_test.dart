@@ -22,7 +22,7 @@ import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/sampling.dart';
 
-import '../balance/play_round.dart';
+import 'play_round.dart';
 
 Bot botFor(String config, Random rand) {
   final bot = Bot(rand);
