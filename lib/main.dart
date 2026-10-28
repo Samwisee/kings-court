@@ -6,7 +6,6 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -63,7 +62,6 @@ import 'ui/setup/setup_panel.dart';
 import 'ui/tracker/card_tracker.dart';
 import 'ui/welcome/welcome.dart';
 import 'ui/widgets/buttons.dart';
-import 'ui/widgets/house_banner.dart';
 import 'widgets.dart';
 
 
