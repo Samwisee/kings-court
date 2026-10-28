@@ -11,7 +11,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 void main() {
   test('Every older fixture saved again in the current shape', () {

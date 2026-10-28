@@ -10,10 +10,10 @@ library;
 
 import 'dart:math';
 
-import '../models.dart';
 import 'bot_turn.dart';
 import 'courtiers.dart';
 import 'dealer.dart';
+import 'state.dart';
 
 /// What a mode tells the game about a round: how it's set up, a deal fixed
 /// in advance, what the courtiers are told.

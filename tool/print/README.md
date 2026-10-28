@@ -88,7 +88,7 @@ Cartamundi; minimums are typically in the hundreds to low thousands of decks.
 ## The app's Court Cards
 
 The app draws the same emblems: `python3 tool/print/export_app.py` turns
-brand.py's emblems into `lib/play/emblems.g.dart`. Run it after changing an
+brand.py's emblems into `lib/skin/court/emblems.g.dart`. Run it after changing an
 emblem so the screen and the cards in the box stay the same. The cloths'
 patterns (rays, lattice, stripes, harlequin) are mirrored by hand in
-`lib/play/card_view.dart`.
+`lib/ui/cards/card_view.dart`.

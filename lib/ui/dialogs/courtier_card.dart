@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
 import '../../game/courtiers.dart';
-import '../../models.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../game/state.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 import '../widgets/house_banner.dart';
 
 /// Opens [CourtierCard] as a dialog.

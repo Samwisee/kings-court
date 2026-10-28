@@ -4,8 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../modes/chronicle/chapters.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 /// The rules, available from the welcome screen and during a game.
 /// Chooses a Chronicle chapter in the setup dialog: any chapter up to the

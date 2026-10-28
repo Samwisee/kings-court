@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/game/dealer.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 
 GameState game(int players, int target, {int seed = 11, GameMode mode = GameMode.free}) =>

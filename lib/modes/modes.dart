@@ -1,7 +1,7 @@
 /// Every way to play, by its [GameMode].
 library;
 
-import '../models.dart';
+import '../game/state.dart';
 import 'chronicle/chronicle.dart';
 import 'dynasty/dynasty.dart';
 import 'endless/endless.dart';

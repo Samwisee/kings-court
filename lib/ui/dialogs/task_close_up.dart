@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
 import '../../engine/round.dart';
-import '../../models.dart';
-import '../../task_help.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../engine/task_help.dart';
+import '../../game/state.dart';
+import '../../skin/theme.dart';
 import '../cards/task_chip.dart';
+import '../widgets.dart';
 
 /// The marks a task card carries beside its points (the same as on the
 /// table), each with what it means.

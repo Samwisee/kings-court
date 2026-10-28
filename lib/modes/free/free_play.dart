@@ -5,7 +5,7 @@ library;
 import 'dart:math';
 
 import '../../engine/decrees.dart';
-import '../../models.dart';
+import '../../game/state.dart';
 import '../mode.dart';
 
 class FreePlay extends Mode {

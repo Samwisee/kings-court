@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../engine/round.dart';
-import '../../models.dart';
-import '../../play/card_view.dart';
-import '../../widgets.dart';
+import '../../game/state.dart';
+import '../cards/card_view.dart';
+import '../widgets.dart';
 
 /// How wide trick cards are for a table [width] across with [n] players.
 double trickCardWidth(double width, int n) =>

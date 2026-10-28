@@ -7,7 +7,7 @@ import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/bot_turn.dart';
 import 'package:kings_court/game/dealer.dart';
 import 'package:kings_court/game/host.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 GameState table({int seed = 3}) {
   final g = GameState()

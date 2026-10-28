@@ -5,7 +5,7 @@ library;
 import 'dart:math';
 
 import '../../engine/round.dart';
-import '../../models.dart';
+import '../../game/state.dart';
 import '../mode.dart';
 import '../progress.dart';
 import 'chapters.dart';

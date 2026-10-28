@@ -10,11 +10,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
-import '../../models.dart';
+import '../../game/state.dart';
 import '../../modes/chronicle/chapters.dart';
 import '../../modes/tutorial/lessons.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 /// The outcome card's arrival over the table: [animation] runs from 0 to
 /// 1 as it comes up; [child] is the card.

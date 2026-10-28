@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import '../../engine/cards.dart';
 import '../../engine/inference.dart';
 import '../../engine/round.dart';
-import '../../models.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../game/state.dart';
+import '../../skin/theme.dart';
 import '../cards/mini_card.dart';
+import '../widgets.dart';
 
 /// The card tracker: every card in the deck, row by suit, outlined in the
 /// colour of whoever played it (with its trick number), or of whoever

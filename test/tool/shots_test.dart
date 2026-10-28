@@ -9,14 +9,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/game/courtiers.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
-import 'package:kings_court/play/card_view.dart';
-import 'package:kings_court/play/throne_room.dart';
-import 'package:kings_court/sfx.dart';
+import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/ui/app.dart';
+import 'package:kings_court/ui/cards/card_view.dart';
+import 'package:kings_court/ui/dynasty/throne_room.dart';
 import 'package:kings_court/ui/table_page.dart';
-import 'package:kings_court/widgets.dart';
+import 'package:kings_court/ui/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> loadFonts() async {

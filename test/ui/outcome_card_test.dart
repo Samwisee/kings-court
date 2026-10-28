@@ -5,11 +5,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/chronicle/chapters.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/ui/overlays/outcome_card.dart';
-import 'package:kings_court/widgets.dart';
+import 'package:kings_court/ui/widgets.dart';
 
 GameState finished({required bool won, GameMode mode = GameMode.free, int? chapter}) {
   final g = GameState()

@@ -3,8 +3,8 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 class PlayFlourish extends StatelessWidget {
   const PlayFlourish({super.key, required this.animation});

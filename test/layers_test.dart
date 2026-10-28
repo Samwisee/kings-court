@@ -22,22 +22,10 @@ const layers = ['engine', 'game', 'net', 'modes', 'platform', 'skin', 'ui'];
 const pure = {'engine', 'game', 'net', 'modes'};
 
 /// Files not yet in their layer's folder.
-const legacy = {
-  'lib/tasks.dart': 'engine',
-  'lib/task_help.dart': 'engine',
-  'lib/models.dart': 'game',
-  'lib/sfx.dart': 'platform',
-  'lib/analytics.dart': 'platform',
-  'lib/crash_reports.dart': 'platform',
-  'lib/build_info.dart': 'platform',
-  'lib/theme.dart': 'skin',
-  'lib/bug_report.dart': 'ui',
-  'lib/widgets.dart': 'ui',
-  'lib/main.dart': 'ui',
-};
+const legacy = <String, String>{};
 
 /// Old folders that are all UI.
-const legacyFolders = {'play': 'ui'};
+const legacyFolders = <String, String>{};
 
 /// Imports pointing the wrong way today, and the step that fixes them.
 const knownDebts = <String>{};
@@ -54,6 +42,7 @@ const flutterPackages = [
 ];
 
 String? layerOf(String path) {
+  if (path == 'lib/main.dart') return 'ui'; // runApp: the top
   if (legacy.containsKey(path)) return legacy[path];
   final parts = path.split('/');
   if (parts.length > 2) {

@@ -7,7 +7,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/decrees.dart';
 import 'package:kings_court/engine/round.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/chronicle/chapters.dart';
 import 'package:kings_court/modes/modes.dart';
 import 'package:kings_court/modes/progress.dart';

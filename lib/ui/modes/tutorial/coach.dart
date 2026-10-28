@@ -7,10 +7,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../engine/cards.dart';
-import '../../../models.dart';
+import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
-import '../../../theme.dart';
-import '../../../widgets.dart';
+import '../../../skin/theme.dart';
+import '../../widgets.dart';
 
 /// What the tutorial's coach says right now: nothing outside a tutorial
 /// round in progress; the lesson's intro while the table is [settingUp]

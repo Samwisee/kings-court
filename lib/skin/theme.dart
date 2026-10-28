@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'engine/cards.dart';
-import 'models.dart';
+import '../engine/cards.dart';
+import '../game/state.dart';
 
 /// The King's Court palette: card table felt, white card stock, card-red
 /// and black suits, and brass gold reserved for the King.

@@ -10,7 +10,7 @@ import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/engine/showing.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 /// Plays one round with bots; returns whether it was won, which tasks
 /// failed, and the tasks dealt.

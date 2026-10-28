@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/game/seats.dart';
 import 'package:kings_court/game/setup.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/modes.dart';
 import 'package:kings_court/net/fake_network.dart';
 import 'package:kings_court/net/headless_table.dart';

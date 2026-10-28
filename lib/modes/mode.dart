@@ -15,7 +15,7 @@ import '../engine/round.dart';
 import '../game/bot_turn.dart';
 import '../game/dealer.dart';
 import '../game/setup.dart';
-import '../models.dart';
+import '../game/state.dart';
 import 'progress.dart';
 
 /// What a finished round changes, as the mode worked it out: the points

@@ -45,35 +45,28 @@ Commit messages are one plain sentence of what changed for the player.
 ```
 lib/
   main.dart          runApp.
-  ui/app.dart        The app; ui/table_page.dart its one page, the table (HomePage).
-  game/              The game around the engine: dealing, the host and its
-                     courtiers, bot_turn.dart (what a courtier does on their turn).
-  ui/controller.dart GameController: the game, its table link, and saving.
-  widgets.dart       Shared UI used on every screen: exports lib/ui/widgets/...
-  ui/widgets/        ...one family per library.
-  ui/overlays/       What lies over the table: the outcome card, the crowning,
-                     the decree, the King prompt, "Play!".
-  ui/modes/          Screen pieces one mode owns (the tutorial's coach).
-  theme.dart         THE SKIN: colours, fonts, shadows, dialogs, buttons.
-  play/              Whole screens and big pieces: cards, rules, tutorial pages,
-                     the throne room, the Trial of Hearts.
-  engine/            The rules, in plain Dart (no Flutter): cards, tasks,
-                     tricks, deals, bots. The bots play fair: inference.dart
-                     works out what's known about the hidden hands and
-                     sampling.dart deals them out plausibly, so a bot sees
-                     only its own cards. Runs anywhere, a server included.
-  net/               Where moves go: the seam for online play.
-  models.dart        GameState: players, tasks, modes, Dynasty, saving.
-                     Plain Dart too (colours are numbers; theme.dart turns
-                     them into Colors), as are the chronicle, courtiers,
-                     story and tutorial: the whole game can run on a server.
-  tasks.dart         Every task's words and points (data).
-  courtiers.dart     The houses, their lore, and Dynasty's dilemmas and lines.
-  story.dart         Dynasty's tidings and story arcs.
-  chronicle.dart     The 24 Chronicle chapters, seals and decrees.
-  tutorial.dart      The tutorial's pages and scripted lessons (data).
-  task_help.dart     Plain words for every task, and the game-word glossary.
-  sfx.dart           Sounds.
+  engine/            The rules, in plain Dart (no Flutter): cards, tasks
+                     (tasks.dart, task_help.dart), tricks, deals, decrees,
+                     bots. The bots play fair: inference.dart works out
+                     what's known about the hidden hands and sampling.dart
+                     deals them out plausibly. Runs anywhere, a server included.
+  game/              The game around the rules, plain Dart too: GameState
+                     (state.dart: players, the round, the record, saving),
+                     its actions, the dice, the dealer, the host and its
+                     courtiers, bot_turn.dart (what a courtier does).
+  net/               Where moves go: the table link, the headless table,
+                     replay, the fake network and rooms: the seam for online play.
+  modes/             Free play, Endless, the Chronicle, the tutorial and the
+                     shelved Dynasty: each mode's rules, data and progress.
+  platform/          Flutter and plugins: sounds, analytics, crash reports,
+                     the build's version.
+  skin/              The look: theme.dart (palette, fonts, dialogs, buttons)
+                     and the Court Card art (court/).
+  ui/                Everything on screen: app.dart, table_page.dart (the one
+                     page), controller.dart, and the page's pieces by family:
+                     widgets/ (shared, exported by widgets.dart), cards/,
+                     overlays/, dialogs/, round_table/, table/, tracker/,
+                     setup/, menu/, welcome/, rules/, modes/, dynasty/.
 test/                Rules, deals, bots, UI flows, the tutorial, the net link.
 tool/                Screenshots, balance, the print pipeline, CI helpers.
 web/                 The page shell: loading crown, PWA manifest, icons.
@@ -149,7 +142,7 @@ as online play needs them.
 Everything visual is decided in a few central places. A new skin changes
 these, and every screen follows.
 
-1. **`lib/theme.dart`** is the skin itself:
+1. **`lib/skin/theme.dart`** is the skin itself:
    - `Palette`: every colour, named. That covers the felt, the table, card
      stock, ink, gold and its shades, suit colours, player colours and the
      traitor reds. Nothing else in the app should write a colour by
@@ -171,13 +164,13 @@ these, and every screen follows.
    `CourtDialog` is the one ornate dialog; use it for anything new.
 3. **Card art**: the Court Card emblems and suit shapes come from the
    print deck (`tool/print/brand.py`). `tool/print/export_app.py` generates
-   `lib/play/emblems.g.dart` and `lib/play/suits.g.dart` from it, so the app
+   `lib/skin/court/emblems.g.dart` and `lib/skin/court/suits.g.dart` from it, so the app
    and the printed cards always match. Change the art there, not in Dart.
 4. **The web shell**: `web/index.html` and `web/manifest.json` repeat the
    table red (`#4E0B18`) and the felt, for the loading screen and the
    browser bars. They can't read Dart, so change them along with the
    palette.
-5. **Sounds**: `assets/sounds`, played through `lib/sfx.dart`.
+5. **Sounds**: `assets/sounds`, played through `lib/platform/sfx.dart`.
 6. **Mouse pointers**: `web/cursors/` (a gilt arrow, and a gilt hand over
    anything you can press). The art is `arrow.svg` and `hand.svg`; the
    PNGs (1x and 2x) are drawn from them, and `web/index.html` puts them

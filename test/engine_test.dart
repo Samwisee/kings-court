@@ -8,7 +8,7 @@ import 'package:kings_court/engine/deal_mix.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/game/dice.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 PlayingCard c(String label) => PlayingCard.parse(label)!;
 

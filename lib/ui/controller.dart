@@ -19,7 +19,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../engine/round.dart';
-import '../models.dart';
+import '../game/state.dart';
 import '../net/table_link.dart';
 
 class GameController extends ChangeNotifier {

@@ -5,9 +5,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../models.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../game/state.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 /// Chooses a points target, starting from [current]; null when cancelled.
 Future<int?> showPointsDialog(BuildContext context, {required int current}) async {

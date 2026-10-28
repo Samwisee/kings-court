@@ -10,10 +10,10 @@ library;
 import '../engine/bot.dart';
 import '../engine/conflicts.dart';
 import '../engine/round.dart';
-import '../models.dart';
 import 'bot_turn.dart';
 import 'dice.dart';
 import 'seats.dart';
+import 'state.dart';
 
 /// What came of giving the courtiers a turn: [decision] is what the
 /// courtier (or you, for an announcement) decided, null when there was

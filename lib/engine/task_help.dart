@@ -5,8 +5,8 @@
 /// Pure Dart, like the engine, so it can be tested without a screen.
 library;
 
-import 'engine/cards.dart';
-import 'engine/rules.dart';
+import 'cards.dart';
+import 'rules.dart';
 
 /// Game words, with what they mean. Shown in a task's close-up when the
 /// task uses them, and in the tutorial.

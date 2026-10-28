@@ -5,7 +5,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../theme.dart';
+import '../../skin/theme.dart';
 
 /// The ways a setup page can turn to the next. [fade] is the one in use:
 /// the old page fades out, then the new one fades in. The others were

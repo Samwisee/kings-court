@@ -7,8 +7,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../engine/decrees.dart';
-import '../theme.dart';
+import '../../engine/decrees.dart';
+import '../../skin/theme.dart';
 import '../widgets.dart';
 
 /// Which games a section of the rules is about.

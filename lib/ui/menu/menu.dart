@@ -5,8 +5,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 /// A button in the top corner, flat on the felt: just its gold, pressing
 /// in when tapped.

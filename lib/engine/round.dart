@@ -11,14 +11,14 @@ library;
 
 import 'dart:math';
 
-import '../task_help.dart';
-import '../tasks.dart';
 import 'cards.dart';
 import 'conflicts.dart';
 import 'deal_mix.dart';
 import 'decrees.dart';
 import 'rules.dart';
 import 'task.dart';
+import 'task_help.dart';
+import 'tasks.dart';
 
 enum Phase { picking, announcing, playing, roundOver }
 

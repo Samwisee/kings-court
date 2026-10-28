@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/rules.dart';
-import 'package:kings_court/task_help.dart';
+import 'package:kings_court/engine/task_help.dart';
 
 void main() {
   RoundView view(List<Trick> tricks) => RoundView(

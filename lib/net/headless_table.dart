@@ -17,7 +17,7 @@ import '../game/dealer.dart';
 import '../game/host.dart';
 import '../game/seats.dart';
 import '../game/setup.dart';
-import '../models.dart';
+import '../game/state.dart';
 import 'table_link.dart';
 
 class HeadlessTable {

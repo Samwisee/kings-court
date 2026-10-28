@@ -2,8 +2,8 @@
 /// table, in lib/ui/table_page.dart; see README.md for the map.
 library;
 
-import 'analytics.dart';
-import 'crash_reports.dart';
+import 'platform/analytics.dart';
+import 'platform/crash_reports.dart';
 import 'ui/app.dart';
 
 void main() {

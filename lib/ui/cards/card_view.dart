@@ -2,10 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../engine/cards.dart';
-import '../theme.dart';
+import '../../engine/cards.dart';
+import '../../skin/court/emblems.g.dart';
+import '../../skin/theme.dart';
 import '../widgets.dart';
-import 'emblems.g.dart';
 
 /// A playing card drawn on screen. Plain suits show their pip. Each Court
 /// Card has a face of its own, all framed in gold: the Joker's jester cap

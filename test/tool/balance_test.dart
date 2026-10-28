@@ -16,7 +16,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/deal_mix.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 import 'play_round.dart';
 

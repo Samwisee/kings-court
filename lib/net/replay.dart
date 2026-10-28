@@ -8,7 +8,7 @@ import '../engine/round.dart';
 import '../game/actions.dart';
 import '../game/dealer.dart';
 import '../game/setup.dart';
-import '../models.dart';
+import '../game/state.dart';
 import 'table_link.dart';
 
 /// The game [setup] started, after [moves] in order. Rounds are dealt as

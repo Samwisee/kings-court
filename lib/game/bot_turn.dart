@@ -14,7 +14,7 @@ import '../engine/decrees.dart';
 import '../engine/round.dart';
 import '../engine/rules.dart';
 import '../engine/showing.dart';
-import '../models.dart';
+import 'state.dart';
 
 /// A move a courtier wants to make, or what the table is waiting on.
 sealed class BotDecision {

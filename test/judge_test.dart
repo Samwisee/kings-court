@@ -9,7 +9,7 @@ import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/dealer.dart';
 import 'package:kings_court/game/judge.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 /// A three-player round on screen with the given tasks, dealt and crowned.
 Round table(List<String> tasks, {int seed = 5}) {

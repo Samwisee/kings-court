@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
 import '../../engine/round.dart';
-import '../../models.dart';
-import '../../widgets.dart';
+import '../../game/state.dart';
+import '../widgets.dart';
 
 /// What the decree means at this table, when it names a seat.
 String? decreeDetail(Round round, List<Player> players) =>

@@ -6,8 +6,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
-import '../../play/suits.g.dart';
-import '../../theme.dart';
+import '../../skin/court/suits.g.dart';
+import '../../skin/theme.dart';
 
 /// A small five-point crown, drawn so it looks the same on every platform.
 class CrownIcon extends StatelessWidget {

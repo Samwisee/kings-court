@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../engine/round.dart';
-import '../../play/card_view.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
+import 'card_view.dart';
 import 'mini_card.dart';
 
 /// A task card on its way from the middle of the table to whoever took it,

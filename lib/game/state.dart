@@ -1,18 +1,18 @@
 import 'dart:math';
 
-import 'engine/deal_mix.dart';
-import 'engine/decrees.dart';
-import 'engine/round.dart';
-import 'engine/rules.dart';
-import 'engine/showing.dart';
-import 'engine/task.dart';
-import 'game/actions.dart';
-import 'game/courtiers.dart';
-import 'game/dice.dart';
-import 'game/setup.dart';
+import '../engine/deal_mix.dart';
+import '../engine/decrees.dart';
+import '../engine/round.dart';
+import '../engine/rules.dart';
+import '../engine/showing.dart';
+import '../engine/task.dart';
+import 'actions.dart';
+import 'courtiers.dart';
+import 'dice.dart';
+import 'setup.dart';
 
-export 'engine/round.dart' show RoundOutcome;
-export 'engine/task.dart';
+export '../engine/round.dart' show RoundOutcome;
+export '../engine/task.dart';
 
 /// Free play; Endless (each win adds a point); the Chronicle chapters;
 /// Dynasty, where the King reigns until they fall; or the Tutorial, short

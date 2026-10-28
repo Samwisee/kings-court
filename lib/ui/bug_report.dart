@@ -15,9 +15,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
-import 'analytics.dart';
-import 'build_info.dart';
-import 'crash_reports.dart';
+import '../platform/analytics.dart';
+import '../platform/build_info.dart';
+import '../platform/crash_reports.dart';
 import 'widgets.dart';
 
 /// Where reports go, set when the game is built

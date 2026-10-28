@@ -7,8 +7,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
-import '../../models.dart';
-import '../../theme.dart';
+import '../../game/state.dart';
+import '../../skin/theme.dart';
 import 'clamp.dart';
 import 'icons.dart';
 import 'table.dart';

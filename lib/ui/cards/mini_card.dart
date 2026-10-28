@@ -6,8 +6,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 /// A plain card face for the card tracker: just its number and suit (or
 /// the Court Card's letter) and an outline, cheap enough to show dozens.

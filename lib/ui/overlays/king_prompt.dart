@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 class KingPrompt extends StatelessWidget {
   const KingPrompt(

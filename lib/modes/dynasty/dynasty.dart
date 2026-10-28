@@ -4,7 +4,7 @@
 /// coming soon.
 library;
 
-import '../../models.dart';
+import '../../game/state.dart';
 import '../mode.dart';
 
 class Dynasty extends Mode {

@@ -3,10 +3,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../engine/cards.dart';
-import '../engine/contest.dart';
-import '../theme.dart';
-import 'card_view.dart';
+import '../../engine/cards.dart';
+import '../../engine/contest.dart';
+import '../../skin/theme.dart';
+import '../cards/card_view.dart';
 
 /// The Trial of Hearts: a round of hearts that settles a divided court.
 /// Sides stay secret until the end, so everyone plays for themselves.

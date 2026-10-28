@@ -6,8 +6,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../task_help.dart';
-import '../../theme.dart';
+import '../../engine/task_help.dart';
+import '../../skin/theme.dart';
 import 'icons.dart';
 import 'suit_text.dart';
 import 'tokens.dart';

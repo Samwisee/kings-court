@@ -6,10 +6,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
-import '../../play/card_view.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../cards/card_view.dart';
 import '../overlays/crowning.dart';
+import '../widgets.dart';
 
 /// The opening flourish on the front page: the four Court Cards rise and
 /// fan out wide, with a burst of sparks. It plays once (about two seconds)

@@ -13,8 +13,8 @@ import '../engine/cards.dart';
 import '../engine/deal_mix.dart';
 import '../engine/round.dart';
 import '../engine/rules.dart';
-import '../models.dart';
 import 'dice.dart';
+import 'state.dart';
 
 /// A deal fixed in advance (the tutorial's lessons).
 typedef RiggedDeal = ({List<List<PlayingCard>> hands, List<PlayingCard> setAside});

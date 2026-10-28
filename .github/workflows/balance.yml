@@ -7,9 +7,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'lib/tasks.dart'
-      - 'lib/models.dart'
       - 'lib/engine/**'
+      - 'lib/game/**'
       - 'test/tool/balance_test.dart'
       - 'test/tool/play_round.dart'
   workflow_dispatch:

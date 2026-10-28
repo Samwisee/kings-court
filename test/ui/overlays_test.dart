@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/ui/overlays/crowning.dart';
 import 'package:kings_court/ui/overlays/king_prompt.dart';
 import 'package:kings_court/ui/overlays/play_flourish.dart';
-import 'package:kings_court/widgets.dart';
+import 'package:kings_court/ui/widgets.dart';
 
 Widget onTable(Widget child) => MaterialApp(
     home: Scaffold(body: SizedBox(width: 600, height: 400, child: child)));

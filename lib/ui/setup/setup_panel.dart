@@ -5,12 +5,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../models.dart';
+import '../../game/state.dart';
 import '../../modes/chronicle/chapters.dart';
-import '../../sfx.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../platform/sfx.dart';
+import '../../skin/theme.dart';
 import '../menu/menu.dart';
+import '../widgets.dart';
 import 'chapter_picker.dart';
 import 'saves.dart';
 import 'transitions.dart';

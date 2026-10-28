@@ -7,7 +7,7 @@ import 'dart:math';
 
 import '../../game/bot_turn.dart';
 import '../../game/dealer.dart';
-import '../../models.dart';
+import '../../game/state.dart';
 import '../mode.dart';
 import 'lessons.dart';
 

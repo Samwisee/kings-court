@@ -4,7 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
-import '../../theme.dart';
+import '../../skin/theme.dart';
 import 'icons.dart';
 import 'panels.dart';
 

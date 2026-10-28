@@ -4,8 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
-import '../../theme.dart';
-import '../../widgets.dart';
+import '../../skin/theme.dart';
+import '../widgets.dart';
 
 /// The top of a courtier's card: a wash of their colour with their sigil
 /// large behind the house name and motto.

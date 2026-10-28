@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/courtiers.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/ui/dialogs/courtier_card.dart';
 import 'package:kings_court/ui/dialogs/table_dialogs.dart';
 import 'package:kings_court/ui/dialogs/task_close_up.dart';

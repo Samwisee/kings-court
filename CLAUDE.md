@@ -61,25 +61,28 @@ engine/    Pure Dart. Cards, the task library and rules, conflicts, the
            owners, tricks, shown cards, statuses, seals, decree, result;
            its actions, problem() and apply()), inference, sampling, the
            bots, the Trial of Hearts.
-game/      Pure Dart. GameState (players, seed, target, mode, the round,
-           counters, saving), the dealer, the judge's views, the host that
-           runs the courtiers, the courtiers' houses, the controller.
+game/      Pure Dart. GameState (state.dart: players, seed, target, mode,
+           the round, counters, saving), its actions, the dice, the dealer,
+           the judge's views, the host that runs the courtiers, the
+           courtiers' houses.
 net/       Pure Dart. Where moves go: the table link (local now, a server
            later), the fake network, replay, rooms.
 modes/     Pure Dart. One folder per way to play: how a round is set up,
            what the courtiers are told, what a result means. The Chronicle's
            chapters, the tutorial's lessons and the old Dynasty's story are
            data here.
-platform/  Flutter and plugins: settings, sounds, analytics, crash and bug
-           reports, build info.
-skin/      Flutter. The look: palette, fonts, card art, strings.
+platform/  Flutter and plugins: sounds, analytics, crash reports, build info.
+skin/      Flutter. The look: theme.dart (palette, fonts, dialogs, buttons)
+           and the Court Card art.
 ui/        Flutter. Widgets and screens: they draw state and send actions.
+           app.dart, table_page.dart (the one page) and controller.dart,
+           then one folder per family of pieces (widgets/, cards/,
+           overlays/, dialogs/, round_table/, table/, setup/, menu/…).
 main.dart  runApp.
 ```
 
-Files not yet in their folder are mapped in the layers test's `legacy`
-list; imports still pointing the wrong way are in `knownDebts`. Both only
-shrink (the test fails when a listed debt is paid without being removed).
+Every file is in its layer's folder and no import points the wrong way;
+the layers test's `legacy` and `knownDebts` lists are empty and stay so.
 
 ## How a round runs (where to look)
 
@@ -102,7 +105,7 @@ shrink (the test fails when a listed debt is paid without being removed).
 ## Recipes
 
 - **A task**: see `docs/adding-tasks.md` (words and points in
-  `lib/tasks.dart`, its rule in `engine/rules.dart`, plain words in
+  `engine/tasks.dart`, its rule in `engine/rules.dart`, plain words in
   `task_help.dart`, conflicts in `engine/conflicts.dart`), then run the
   balance tool.
 - **A mode**: a `Mode` in `lib/modes/<name>/` (round setup, courtier

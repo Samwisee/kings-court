@@ -3,7 +3,7 @@
 /// Plain Dart, with no Flutter, so the same rules can run on a server.
 library;
 
-import '../tasks.dart';
+import 'tasks.dart';
 
 enum TaskStatus { pending, completed, failed }
 

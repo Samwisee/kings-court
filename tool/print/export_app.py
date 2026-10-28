@@ -1,4 +1,4 @@
-"""Writes lib/play/emblems.g.dart: the Court Card emblems exactly as the
+"""Writes lib/skin/court/emblems.g.dart: the Court Card emblems exactly as the
 printed deck draws them (brand.py), as Flutter canvas code, so the app and
 the cards in the box are the same.
 
@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 import brand
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-OUT = ROOT / "lib" / "play" / "emblems.g.dart"
+OUT = ROOT / "lib" / "skin" / "court" / "emblems.g.dart"
 
 CLOTH = "#C10C10"           # stands in for the card's cloth colour
 GILT = "url(#GILT)"         # stands in for the emblem's gold

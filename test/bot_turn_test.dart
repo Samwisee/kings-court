@@ -3,7 +3,7 @@ import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/rules.dart';
 import 'package:kings_court/game/bot_turn.dart';
 import 'package:kings_court/game/dealer.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 
 /// An on-screen 4-player game, dealt and crowned.
 GameState table({int seed = 7}) {

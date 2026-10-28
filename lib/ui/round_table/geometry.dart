@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
-import '../../widgets.dart';
+import '../widgets.dart';
 
 /// Where everything sits on the table for a given screen size. The phone
 /// lies in the middle of the table, so seats are spread evenly around its

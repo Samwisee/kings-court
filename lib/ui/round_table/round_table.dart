@@ -11,11 +11,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
-import '../../models.dart';
-import '../../widgets.dart';
+import '../../game/state.dart';
 import '../overlays/crowning.dart';
 import '../overlays/king_prompt.dart';
 import '../overlays/play_flourish.dart';
+import '../widgets.dart';
 import 'geometry.dart';
 
 /// Where everything lies on the round table: each dealt task's centre (as

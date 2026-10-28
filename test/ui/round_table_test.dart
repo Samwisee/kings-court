@@ -6,11 +6,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/ui/overlays/king_prompt.dart';
 import 'package:kings_court/ui/round_table/geometry.dart';
 import 'package:kings_court/ui/round_table/round_table.dart';
-import 'package:kings_court/widgets.dart';
+import 'package:kings_court/ui/widgets.dart';
 
 const tableSize = Size(600, 400);
 

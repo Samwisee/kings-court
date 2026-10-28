@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../skin/theme.dart';
 import 'table_page.dart';
 
 class TheKingsCourtApp extends StatelessWidget {

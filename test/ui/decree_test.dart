@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/decrees.dart';
 import 'package:kings_court/engine/round.dart';
-import 'package:kings_court/models.dart';
+import 'package:kings_court/game/state.dart';
 import 'package:kings_court/ui/overlays/decree.dart';
-import 'package:kings_court/widgets.dart';
+import 'package:kings_court/ui/widgets.dart';
 
 final players = [for (final n in ['Ann', 'Ben', 'Cal']) Player(n, colorValue: 0xFF000000)];
 
