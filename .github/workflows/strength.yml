@@ -1,0 +1,50 @@
+name: Strength
+
+# Bots of different settings play the same seeded rounds; how often each
+# wins goes to the bench branch (strength.txt). Run by hand from the
+# Actions tab with the settings to compare.
+on:
+  workflow_dispatch:
+    inputs:
+      configs:
+        description: 'Bots to compare (see tool/bench/bot_strength_test.dart)'
+        default: 'seeing:b900,fair:s8:b900,fair:s4:b900,fair:s8:b1800'
+      rounds:
+        description: 'Rounds per table'
+        default: '200'
+
+permissions:
+  contents: write
+
+jobs:
+  strength:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Play
+        env:
+          STRENGTH_CONFIGS: ${{ github.event.inputs.configs }}
+          STRENGTH_ROUNDS: ${{ github.event.inputs.rounds }}
+        run: |
+          timeout 5000 flutter test tool/bench/bot_strength_test.dart --timeout none --reporter expanded > strength.raw 2>&1 || true
+          { echo "STRENGTH $(date -u +%FT%TZ) ${GITHUB_SHA::8} configs=$STRENGTH_CONFIGS rounds=$STRENGTH_ROUNDS"; grep -E '^BENCH|\[E\]|Error' strength.raw | sed 's/^BENCH //'; } > strength.txt
+          cat strength.txt
+      - name: Publish to the bench branch
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          mkdir -p /tmp/old /tmp/out
+          git clone -q --depth 1 --branch bench "$url" /tmp/old 2>/dev/null && cp /tmp/old/*.txt /tmp/out/ 2>/dev/null || true
+          cp strength.txt /tmp/out/strength.txt
+          cp strength.txt /tmp/out/strength-${GITHUB_SHA::8}-$(date -u +%H%M).txt
+          cd /tmp/out
+          git init -q -b bench
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Strength for ${GITHUB_SHA}"
+          git push -qf "$url" bench
