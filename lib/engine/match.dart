@@ -10,7 +10,7 @@ library;
 
 import 'dart:math';
 
-import '../models.dart';
+import 'task.dart';
 import 'cards.dart';
 import 'deal_mix.dart';
 import '../tasks.dart';
@@ -192,7 +192,7 @@ class MatchState {
 
   List<MatchTask> _drawTasks(Random rand) {
     final inPlay = this.inPlay;
-    final pool = drawOrder(GameState.taskPool, rand,
+    final pool = drawOrder(allTasks, rand,
         description: (t) => t.description,
         points: (t) => t.getPointsForPlayerCount(players),
         target: target);
@@ -409,7 +409,7 @@ class MatchState {
 
   static MatchState fromJson(Map<String, dynamic> j) {
     final byDescription = {
-      for (final t in GameState.taskPool) t.description: t
+      for (final t in allTasks) t.description: t
     };
     List<PlayingCard> cards(List l) =>
         [for (final c in l) PlayingCard.fromId(c as int)];
