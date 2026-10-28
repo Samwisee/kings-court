@@ -2392,13 +2392,15 @@ class _HomePageState extends State<HomePage>
   /// card never takes room from the trick.
   Widget _withReveal(int seat, Widget token, {required double size}) {
     final r = _revealedView(seat, height: size);
-    if (r == null) return token;
+    // Always the same shape, card or no card: otherwise showing a card
+    // would rebuild the token from scratch, and it would arrive all over
+    // again.
     return Stack(
       clipBehavior: Clip.none,
       children: [
         token,
         // Level with the token (below its crown slot), as tall as it.
-        Positioned(right: -(size / 1.3 + 8), top: 14, child: r),
+        if (r != null) Positioned(right: -(size / 1.3 + 8), top: 14, child: r),
       ],
     );
   }
