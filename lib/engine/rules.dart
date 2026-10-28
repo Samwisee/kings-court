@@ -189,164 +189,87 @@ final Map<String, TaskRule> taskRules = {
         for (int s = 0; s < v.players; s++)
           if (s != o) s
       ].every((s) => v.tricksWon(o) < v.tricksWon(s))),
-  'Win more tricks than the King':
-      atEnd((v, o) => v.tricksWon(o) > v.tricksWon(v.king)),
-  'Win fewer tricks than the King':
-      atEnd((v, o) => v.tricksWon(o) < v.tricksWon(v.king)),
-  'Win the same number of tricks as the King':
-      atEnd((v, o) => v.tricksWon(o) == v.tricksWon(v.king)),
-  'Win a trick where every card is lower than 7, with no Court Cards':
-      anyTrick((t) => _plainTrick(t, (c) => c.rank < 7)),
-  'Win a trick where every card is higher than 5':
-      anyTrick((t) => t.cards.every((c) => c.isCourt || c.rank > 5)),
-  'Win a trick with a 6': winWith(6),
-  'Win a trick with a 5': winWith(5),
+  'Win more tricks than the King': atEnd((v, o) => v.tricksWon(o) > v.tricksWon(v.king)),
+  'Win fewer tricks than the King': atEnd((v, o) => v.tricksWon(o) < v.tricksWon(v.king)),
+  'Win the same number of tricks as the King': atEnd((v, o) => v.tricksWon(o) == v.tricksWon(v.king)),
+  'Win more Court Cards than the King': atEnd((v, o) => v.countWon(o, _court) > v.countWon(v.king, _court)),
+  'Win exactly as many tricks as the player on your left': atEnd((v, o) => v.tricksWon(o) == v.tricksWon((o + 1) % v.players)),
+  'Win a trick with an Ace': winWith(1),
   'Win a trick with a 3': winWith(3),
-  'Win a 2 with a 6':
-      winWith(6, also: (t) => t.cards.any(_rank(2))),
-  'Win a 9 with a 5':
-      winWith(5, also: (t) => t.cards.any(_rank(9))),
-  'Win any 7 with another 7':
-      winWith(7, also: (t) => t.cards.where(_rank(7)).length >= 2),
-  'Win a trick with a 2': winWith(2),
-  'Win the 3♥': winAll(_cs(['3♥'])),
-  'Win the A♦': winAll(_cs(['A♦'])),
-  'Win the 4♠': winAll(_cs(['4♠'])),
-  'Win the 6♣': winAll(_cs(['6♣'])),
-  'Win all four 2s': winAll(_cs(['2♥', '2♦', '2♠', '2♣'])),
-  'Win at least three 4s': atLeast(3, _rank(4)),
-  'Win at least three 7s': atLeast(3, _rank(7)),
-  'Win at least two 9s': atLeast(2, _rank(9)),
-  'Win all four 8s': winAll(_cs(['8♥', '8♦', '8♠', '8♣'])),
-  'Win exactly three 5s': exactly(3, _rank(5)),
-  'Win exactly two 3s': exactly(2, _rank(3)),
-  'Win the 7♣, 8♣ and 9♣': winAll(_cs(['7♣', '8♣', '9♣'])),
-  'Win the 4♥ and the 9♠': winAll(_cs(['4♥', '9♠'])),
-  'Win the 2♠ and the 8♦': winAll(_cs(['2♠', '8♦'])),
-  'Win the 6♥ and the 3♠': winAll(_cs(['6♥', '3♠'])),
-  'Win the 7♦ and the 4♣': winAll(_cs(['7♦', '4♣'])),
-  'Win the A♣ and the 5♥': winAll(_cs(['A♣', '5♥'])),
-  'Win the 9♥ and the 2♣': winAll(_cs(['9♥', '2♣'])),
-  'Win the 3♦ and the 6♠': winAll(_cs(['3♦', '6♠'])),
-  'Win the 2♦, 4♣ and 6♥': winAll(_cs(['2♦', '4♣', '6♥'])),
-  'Win the A♥ in the last trick': (v, o, _) {
-    final card = _c('A♥');
-    for (int i = 0; i < v.tricks.length; i++) {
-      if (!v.tricks[i].cards.contains(card)) continue;
-      return i == v.totalTricks - 1 && v.tricks[i].winner == o
+  'Win a trick with a 5': winWith(5),
+  'Win a trick with a 7': winWith(7),
+  'Win a trick with the Joker': anyTrick((t) => t.winningCard == PlayingCard.joker),
+  'Win a trick with the Jack': anyTrick((t) => t.winningCard == PlayingCard.jack),
+  'Win the Queen with the King': (v, o, _) {
+    for (final t in v.tricks) {
+      if (!t.cards.contains(PlayingCard.queen)) continue;
+      return t.winner == o && t.winningCard == PlayingCard.king
           ? Verdict.done
           : Verdict.failed;
     }
     return _end(v, false);
   },
-  'Win exactly one ♦ and one ♠ card': (v, o, x) {
-    final h = exactly(1, _suit(Suit.diamonds))(v, o, x);
-    final c = exactly(1, _suit(Suit.spades))(v, o, x);
-    if (h == Verdict.failed || c == Verdict.failed) return Verdict.failed;
-    if (h == Verdict.done && c == Verdict.done) return Verdict.done;
-    return Verdict.pending;
-  },
-  'Win at least six ♣ cards': atLeast(6, _suit(Suit.clubs)),
-  'Win at least five ♦ cards': atLeast(5, _suit(Suit.diamonds)),
-  'Win exactly three ♥ cards': exactly(3, _suit(Suit.hearts)),
-  'Win exactly two ♦ cards': exactly(2, _suit(Suit.diamonds)),
-  'Win exactly one ♠ card': exactly(1, _suit(Suit.spades)),
-  'Win no ♠ cards': winNone(_suit(Suit.spades)),
-  "Win a card of every suit (Court Cards don't count)": (v, o, _) {
-    const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs];
-    final mine = v.won(o);
-    if (suits.every((s) => mine.any(_suit(s)))) return Verdict.done;
-    final lost = suits.any((s) =>
-        !mine.any(_suit(s)) && v.countLeft(_suit(s)) == 0);
-    return lost ? Verdict.failed : _end(v, false);
-  },
-  "Win all nine cards of any one suit": (v, o, _) {
-    const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs];
-    final others = v.wonByOthers(o);
-    final open = suits.where((s) => !others.any(_suit(s)));
-    if (open.isEmpty) return Verdict.failed;
-    if (open.any((s) => v.countLeft(_suit(s)) == 0)) return Verdict.done;
+  'Win the 7♥ with a Court Card': winWithCourt(_c('7♥')),
+  'Win a 9 with a Court Card': anyTrick(
+      (t) => t.winningCard.isCourt && t.cards.any((c) => _rank(9)(c))),
+  'Win a trick led with a Court Card': anyTrick((t) => t.cards.first.isCourt),
+  'Win a trick containing an Ace and a 9': anyTrick((t) =>
+      t.cards.any((c) => _rank(1)(c)) && t.cards.any((c) => _rank(9)(c))),
+  'Win a trick with exactly two Court Cards in it': anyTrick((t) => t.cards.where(_court).length == 2),
+  'Win a trick with three different suits in it': anyTrick((t) => {for (final c in t.cards) c.suit}.length >= 3),
+  'Win a trick where no one followed suit': anyTrick((t) {
+    final led = t.cards.first;
+    return !led.isCourt && t.cards.skip(1).every((c) => c.suit != led.suit);
+  }),
+  'Win a trick with a card just one above the card led': anyTrick((t) {
+    final led = t.cards.first, w = t.winningCard;
+    return !led.isCourt && !w.isCourt && w.suit == led.suit && w.rank == led.rank + 1;
+  }),
+  'Win two tricks with cards of the same rank': (v, o, _) {
+    final ranks = <int>[];
+    for (final t in v.tricks) {
+      if (t.winner != o || t.winningCard.isCourt) continue;
+      if (ranks.contains(t.winningCard.rank)) return Verdict.done;
+      ranks.add(t.winningCard.rank);
+    }
     return _end(v, false);
   },
-  'Win a trick of only even cards: 2s, 4s, 6s and 8s':
-      anyTrick((t) => _plainTrick(t, (c) => c.rank.isEven)),
-  'Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s':
-      anyTrick((t) => _plainTrick(t, (c) => c.rank.isOdd)),
-  'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
-      (v, o, x) => anyTrick((t) {
-            final total = _total(t);
-            return total != null && total > _byCount(v.players, [21, 26, 30, 34]);
-          })(v, o, x),
-  'Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards':
-      (v, o, x) => anyTrick((t) {
-            final total = _total(t);
-            return total != null && total < _byCount(v.players, [9, 13, 17, 21]);
-          })(v, o, x),
-  'Win a trick totalling exactly 20 or 21': anyTrick((t) {
-    final total = _total(t);
-    return total == 20 || total == 21;
-  }),
-  'Win exactly one Court Card (redeal if one player has all four)':
-      exactly(1, _court),
-  'Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)':
-      (v, o, _) {
-    final others = v.wonByOthers(o);
-    final mine = v.won(o);
-    if (others.contains(PlayingCard.joker) ||
-        mine.any((c) => c.isCourt && c != PlayingCard.joker)) {
-      return Verdict.failed;
+  'Win a trick you led': anyTrick((t) => t.leader == t.winner),
+  'Win a trick as the last to play': anyTrick((t) => t.seats.last == t.winner),
+  'Win a trick the King leads': (v, o, _) => v.tricks.any((t) => t.leader == v.king && t.winner == o)
+      ? Verdict.done
+      : _end(v, false),
+  'Win the trick right after the King wins one': (v, o, _) {
+    for (int i = 1; i < v.tricks.length; i++) {
+      if (v.tricks[i - 1].winner == v.king && v.tricks[i].winner == o) return Verdict.done;
     }
-    final rest = v.countLeft((c) => c.isCourt && c != PlayingCard.joker);
-    if (mine.contains(PlayingCard.joker) && rest == 0) return Verdict.done;
-    return _end(v, mine.contains(PlayingCard.joker));
+    return _end(v, false);
   },
-  'Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)':
-      (v, o, _) {
-    final others = v.wonByOthers(o);
-    final mine = v.won(o);
-    if (others.contains(PlayingCard.jack) ||
-        mine.any((c) => c.isCourt && c != PlayingCard.jack)) {
-      return Verdict.failed;
+  'Win the trick after the Queen is played': (v, o, _) {
+    for (int i = 0; i < v.tricks.length; i++) {
+      if (!v.tricks[i].cards.contains(PlayingCard.queen)) continue;
+      if (i + 1 >= v.totalTricks) return Verdict.failed;
+      if (i + 1 < v.tricks.length) {
+        return v.tricks[i + 1].winner == o ? Verdict.done : Verdict.failed;
+      }
+      return Verdict.pending;
     }
-    final rest = v.countLeft((c) => c.isCourt && c != PlayingCard.jack);
-    if (mine.contains(PlayingCard.jack) && rest == 0) return Verdict.done;
-    return _end(v, mine.contains(PlayingCard.jack));
+    return _end(v, false);
   },
-  'Win the Queen': winAll(const [PlayingCard.queen]),
-  'Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)':
-      exactly(2, _court),
-  'Win exactly three Court Cards (redeal if one player has all four)':
-      exactly(3, _court),
-  'Win no Court Cards': winNone(_court),
-  'Win the 7♥ with a Court Card': winWithCourt(_c('7♥')),
-  'Win the 8♦ with a Court Card': winWithCourt(_c('8♦')),
-  "Don't lead a trick with a ♦, ♠ or ♣ card": never((v, o) => v.tricks.any(
-      (t) => t.leader == o &&
-          const [Suit.diamonds, Suit.spades, Suit.clubs].contains(t.led.suit))),
-  "Don't lead a trick with a ♦ or ♠ card": never((v, o) => v.tricks.any(
-      (t) => t.leader == o &&
-          const [Suit.diamonds, Suit.spades].contains(t.led.suit))),
-  "Don't win any ♥ cards": winNone(_suit(Suit.hearts)),
-  "Don't win any ♦ cards": winNone(_suit(Suit.diamonds)),
-  "Don't win any ♥ or ♣ cards":
-      winNone((c) => c.suit == Suit.hearts || c.suit == Suit.clubs),
-  "Don't win any ♦ or ♠ cards":
-      winNone((c) => c.suit == Suit.diamonds || c.suit == Suit.spades),
-  "Don't win any 7s or 8s":
-      winNone((c) => !c.isCourt && (c.rank == 7 || c.rank == 8)),
-  "Don't win any 6s": winNone(_rank(6)),
-  "Don't win any 4s": winNone(_rank(4)),
-  "Don't win any Aces": winNone(_rank(1)),
-  "Don't win any Aces or 2s": winNone((c) => !c.isCourt && c.rank <= 2),
-  "Don't win any of the first four tricks": notFirst(4),
-  "Don't win any of the first three tricks": notFirst(3),
-  "Don't win any of the first five tricks": notFirst(5),
-  "Don't win any tricks": never((v, o) => v.tricksWon(o) > 0),
-  "Don't win two tricks in a row": never((v, o) => v.longestRun(o) >= 2),
-  'Win the last trick': atEnd((v, o) => v.tricks.last.winner == o),
-  'Win the first three tricks': firstN(3),
-  'Win the first two tricks': firstN(2),
   'Win the first trick': firstN(1),
+  'Win the first two tricks': firstN(2),
+  'Win the first trick with a Court Card': (v, o, _) {
+    if (v.tricks.isEmpty) return Verdict.pending;
+    final t = v.tricks.first;
+    return t.winner == o && t.winningCard.isCourt ? Verdict.done : Verdict.failed;
+  },
+  'Win the last trick': atEnd((v, o) => v.tricks.last.winner == o),
+  'Win the last trick with a Court Card': atEnd((v, o) => v.tricks.last.winner == o && v.tricks.last.winningCard.isCourt),
+  'Win the second-to-last trick': (v, o, _) {
+    final i = v.totalTricks - 2;
+    if (v.tricks.length <= i) return Verdict.pending;
+    return v.tricks[i].winner == o ? Verdict.done : Verdict.failed;
+  },
   'Win the first and the last trick': (v, o, _) {
     if (v.tricks.isNotEmpty && v.tricks.first.winner != o) {
       return Verdict.failed;
@@ -358,72 +281,67 @@ final Map<String, TaskRule> taskRules = {
     if (mine.any((i) => i != v.totalTricks - 1)) return Verdict.failed;
     return _end(v, mine.length == 1);
   },
-  'Win only the first trick': (v, o, _) {
-    final mine = v.wonIndexes(o);
-    if (v.tricks.isNotEmpty && v.tricks.first.winner != o) {
-      return Verdict.failed;
-    }
-    if (mine.any((i) => i != 0)) return Verdict.failed;
-    return _end(v, true);
-  },
   'Win exactly one trick': exactTricks(1),
   'Win exactly two tricks': exactTricks(2),
+  'Win exactly three tricks': exactTricks(3),
+  'Win exactly four tricks': exactTricks(4),
   'Win two tricks in a row': (v, o, _) =>
       v.longestRun(o) >= 2 ? Verdict.done : _end(v, false),
   'Win three tricks in a row': (v, o, _) =>
       v.longestRun(o) >= 3 ? Verdict.done : _end(v, false),
-  'Win exactly four tricks': exactTricks(4),
-  "Win exactly three tricks, and they're in a row": (v, o, x) {
-    final e = exactTricks(3)(v, o, x);
-    if (e == Verdict.failed) return e;
-    return _end(v, v.tricksWon(o) == 3 && v.longestRun(o) == 3);
-  },
-  "Win exactly two tricks, and they're in a row": (v, o, x) {
-    final e = exactTricks(2)(v, o, x);
-    if (e == Verdict.failed) return e;
-    return _end(v, v.tricksWon(o) == 2 && v.longestRun(o) == 2);
-  },
-  'Win exactly X tricks, said out loud before the first trick': (v, o, x) =>
+  'Win exactly X tricks, named before the first trick': (v, o, x) =>
       exactTricks(x ?? 0)(v, o, x),
-  'Win exactly X tricks, written down in secret before the first trick':
-      (v, o, x) => exactTricks(x ?? 0)(v, o, x),
-  'Win as many ♠ cards as ♣ cards (at least one of each)':
-      atEnd((v, o) {
-    final h = v.countWon(o, _suit(Suit.spades));
-    final d = v.countWon(o, _suit(Suit.clubs));
-    return h == d && h > 0;
-  }),
-  'Win a trick with as many ♥ cards as ♣ cards (at least one of each)':
-      anyTrick((t) {
-    final c = t.cards.where(_suit(Suit.clubs)).length;
-    final d = t.cards.where(_suit(Suit.hearts)).length;
-    return c == d && c > 0;
-  }),
-  'Win a trick with as many ♦ cards as ♠ cards (at least one of each)':
-      anyTrick((t) {
-    final h = t.cards.where(_suit(Suit.diamonds)).length;
-    final s = t.cards.where(_suit(Suit.spades)).length;
-    return h == s && h > 0;
-  }),
-  'Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)': atEnd((v, o) =>
-      v.countWon(o, _suit(Suit.spades)) > v.countWon(o, _suit(Suit.hearts))),
-  'Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)': atEnd((v, o) =>
-      v.countWon(o, _suit(Suit.clubs)) > v.countWon(o, _suit(Suit.diamonds))),
-  'Win a trick with a 4': winWith(4),
-  'Win a trick with a 7': winWith(7),
+  'Win the 3♥': winAll(_cs(['3♥'])),
+  'Win the A♦': winAll(_cs(['A♦'])),
+  'Win the 6♣': winAll(_cs(['6♣'])),
   'Win the 2♦': winAll(_cs(['2♦'])),
   'Win the 8♣': winAll(_cs(['8♣'])),
   'Win the 9♠': winAll(_cs(['9♠'])),
+  'Win the Queen': winAll(const [PlayingCard.queen]),
+  'Win the Joker': winAll(const [PlayingCard.joker]),
+  'Win the Jack': winAll(const [PlayingCard.jack]),
+  'Win the Jack and the Queen': winAll(const [PlayingCard.jack, PlayingCard.queen]),
+  'Win the Joker, the Jack and the Queen': winAll(const [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen]),
   'Win the 2♥ and the 3♦': winAll(_cs(['2♥', '3♦'])),
+  'Win the A♥ and the 9♥': winAll(_cs(['A♥', '9♥'])),
+  'Win the 5♠ and the 5♣': winAll(_cs(['5♠', '5♣'])),
+  'Win the 7♥ and the 7♣': winAll(_cs(['7♥', '7♣'])),
+  'Win the 3♦, 6♦ and 9♦': winAll(_cs(['3♦', '6♦', '9♦'])),
+  'Win all four Aces': winAll(_cs(['A♥', 'A♦', 'A♠', 'A♣'])),
   'Win at least two Aces': atLeast(2, _rank(1)),
+  'Win at least three 7s': atLeast(3, _rank(7)),
+  'Win at least three 6s': atLeast(3, _rank(6)),
+  'Win exactly two 4s': exactly(2, _rank(4)),
   'Win at least four ♠ cards': atLeast(4, _suit(Suit.spades)),
-  'Win a trick containing an Ace and a 9': anyTrick((t) =>
-      t.cards.any((c) => _rank(1)(c)) && t.cards.any((c) => _rank(9)(c))),
-  'Win a trick led with a Court Card': anyTrick((t) => t.cards.first.isCourt),
-  'Win a 9 with a Court Card': anyTrick(
-      (t) => t.winningCard.isCourt && t.cards.any((c) => _rank(9)(c))),
-  'Win a mixed-suit trick with no Court Cards': anyTrick((t) =>
-      !t.cards.any(_court) && t.cards.map((c) => c.suit).toSet().length > 1),
+  'Win at least five ♦ cards': atLeast(5, _suit(Suit.diamonds)),
+  'Win at least five ♣ cards': atLeast(5, _suit(Suit.clubs)),
+  'Win exactly three ♥ cards': exactly(3, _suit(Suit.hearts)),
+  'Win exactly two ♦ cards': exactly(2, _suit(Suit.diamonds)),
+  'Win three tricks led with a ♥': (v, o, _) {
+    final mine = v.tricks.where((t) => t.winner == o && t.cards.first.suit == Suit.hearts).length;
+    if (mine >= 3) return Verdict.done;
+    return _end(v, false);
+  },
+  'Win no ♠ cards': winNone(_suit(Suit.spades)),
+  'Win no Court Cards': winNone(_court),
+  'Win exactly one Court Card': exactly(1, _court),
+  'Win exactly two Court Cards': exactly(2, _court),
+  "Don't win any ♥ cards": winNone(_suit(Suit.hearts)),
+  "Don't win any ♣ cards": winNone(_suit(Suit.clubs)),
+  "Don't win any ♦ or ♠ cards": winNone((c) => c.suit == Suit.diamonds || c.suit == Suit.spades),
+  "Don't win any Aces": winNone(_rank(1)),
+  "Don't win any 9s": winNone(_rank(9)),
+  "Don't win any 5s": winNone(_rank(5)),
+  "Don't win any of the first three tricks": notFirst(3),
+  "Don't win any tricks": never((v, o) => v.tricksWon(o) > 0),
+  "Don't lead a trick with a Court Card": never((v, o) => v.tricks.any((t) => t.leader == o && t.led.isCourt)),
+  'Win no tricks until the King has won one': (v, o, _) {
+    for (final t in v.tricks) {
+      if (t.winner == v.king) return Verdict.done;
+      if (t.winner == o) return Verdict.failed;
+    }
+    return _end(v, true);
+  },
 };
 
 /// When a task can be completed, which decides whether a seal on it makes
@@ -443,69 +361,60 @@ enum TaskTiming {
 }
 
 const _anyTrickTasks = {
-  'Win a trick where every card is lower than 7, with no Court Cards',
-  'Win a trick where every card is higher than 5',
-  'Win a trick with a 6',
-  'Win a trick with a 5',
+  'Win a trick with an Ace',
   'Win a trick with a 3',
-  'Win a 2 with a 6',
-  'Win a 9 with a 5',
-  'Win any 7 with another 7',
-  'Win a trick with a 2',
-  'Win the 3♥',
-  'Win the A♦',
-  'Win the 4♠',
-  'Win the 6♣',
-  'Win all four 2s',
-  'Win at least three 4s',
-  'Win at least three 7s',
-  'Win at least two 9s',
-  'Win all four 8s',
-  'Win the 7♣, 8♣ and 9♣',
-  'Win the 4♥ and the 9♠',
-  'Win the 2♠ and the 8♦',
-  'Win the 6♥ and the 3♠',
-  'Win the 7♦ and the 4♣',
-  'Win the A♣ and the 5♥',
-  'Win the 9♥ and the 2♣',
-  'Win the 3♦ and the 6♠',
-  'Win the 2♦, 4♣ and 6♥',
-  'Win at least six ♣ cards',
-  'Win at least five ♦ cards',
-  "Win a card of every suit (Court Cards don't count)",
-  'Win a trick of only even cards: 2s, 4s, 6s and 8s',
-  'Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s',
-  'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards',
-  'Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards',
-  'Win a trick totalling exactly 20 or 21',
-  'Win the Queen',
+  'Win a trick with a 5',
+  'Win a trick with a 7',
+  'Win a trick with the Joker',
+  'Win a trick with the Jack',
+  'Win the Queen with the King',
   'Win the 7♥ with a Court Card',
-  'Win the 8♦ with a Court Card',
+  'Win a 9 with a Court Card',
+  'Win a trick led with a Court Card',
+  'Win a trick containing an Ace and a 9',
+  'Win a trick with exactly two Court Cards in it',
+  'Win a trick with three different suits in it',
+  'Win a trick where no one followed suit',
+  'Win a trick with a card just one above the card led',
+  'Win two tricks with cards of the same rank',
+  'Win a trick you led',
+  'Win a trick as the last to play',
+  'Win a trick the King leads',
+  'Win the trick right after the King wins one',
+  'Win the trick after the Queen is played',
   'Win two tricks in a row',
   'Win three tricks in a row',
-  'Win a trick with as many ♥ cards as ♣ cards (at least one of each)',
-  'Win a trick with as many ♦ cards as ♠ cards (at least one of each)',
-  'Win a mixed-suit trick with no Court Cards',
-  'Win a trick with a 4',
-  'Win a trick with a 7',
+  'Win the 3♥',
+  'Win the A♦',
+  'Win the 6♣',
   'Win the 2♦',
   'Win the 8♣',
   'Win the 9♠',
+  'Win the Queen',
+  'Win the Joker',
+  'Win the Jack',
+  'Win the Jack and the Queen',
+  'Win the Joker, the Jack and the Queen',
   'Win the 2♥ and the 3♦',
+  'Win the A♥ and the 9♥',
+  'Win the 5♠ and the 5♣',
+  'Win the 7♥ and the 7♣',
+  'Win the 3♦, 6♦ and 9♦',
+  'Win all four Aces',
   'Win at least two Aces',
+  'Win at least three 7s',
+  'Win at least three 6s',
   'Win at least four ♠ cards',
-  'Win a trick containing an Ace and a 9',
-  'Win a trick led with a Court Card',
-  'Win a 9 with a Court Card',
+  'Win at least five ♦ cards',
+  'Win at least five ♣ cards',
+  'Win three tricks led with a ♥',
 };
 
 const _earlyTasks = {
-  "Don't win any of the first four tricks",
-  "Don't win any of the first three tricks",
-  "Don't win any of the first five tricks",
-  'Win the first three tricks',
-  'Win the first two tricks',
   'Win the first trick',
+  'Win the first two tricks',
+  'Win the first trick with a Court Card',
+  "Don't win any of the first three tricks",
 };
 
 /// Every task named in the timing lists, for checking they're real tasks.
@@ -532,16 +441,12 @@ bool playableWith(String description, List<List<PlayingCard>> hands,
       hands.any((h) => cards.every(h.contains));
   const j = PlayingCard.joker, q = PlayingCard.queen;
   const jack = PlayingCard.jack, k = PlayingCard.king;
-  if (description.contains('redeal if one player has all four')) {
+  // Court Cards only ever go to whoever plays the highest one, so a player
+  // holding too many of them leaves these tasks to no one else.
+  if (description == 'Win exactly one Court Card') {
     return !someoneHolds([j, jack, q, k]);
   }
-  if (description.startsWith('Win the Joker and no other')) {
-    return !someoneHolds([j, k]) && !someoneHolds([j, jack, q]);
-  }
-  if (description.startsWith('Win the Jack and no other')) {
-    return !someoneHolds([jack, k]) && !someoneHolds([j, jack, q]);
-  }
-  if (description.contains('redeal if one player has the Jack, Queen and King')) {
+  if (description == 'Win exactly two Court Cards') {
     return !someoneHolds([jack, q, k]);
   }
   return true;

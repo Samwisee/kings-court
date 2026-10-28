@@ -73,10 +73,7 @@ class Task {
 
   /// The trick it's about can't have any Court Cards in it: shown as an
   /// icon beside the points.
-  bool get noCourtCards =>
-      description.contains('with no Court Cards') ||
-      description.contains('only even cards') ||
-      description.contains('only odd cards');
+  bool get noCourtCards => description.contains('with no Court Cards');
 
   /// The full wording for the close-up, less "with no Court Cards", which
   /// its icon says.
@@ -105,23 +102,21 @@ class Task {
     ('Win fewer tricks than anyone else', 'Win the fewest tricks'),
     ('than the rest of the court put together', 'than everyone else combined'),
     ('Win the same number of tricks as', 'Win as many tricks as'),
-    (RegExp(r'Win a trick where every card is lower than (\d)'), r'Win a trick of cards below $1'),
-    ('Win a trick where every card is higher than 5', 'Win a trick of cards above 5'),
-    ('totalling more than', 'worth over'),
-    ('totalling less than', 'worth under'),
-    ('totalling exactly', 'worth'),
-    (RegExp(r'only (even|odd) cards:.*$'), r'only $1 cards'),
-    ('Win all nine cards of any one suit', 'Win a whole suit'),
-    ('Win a card of every suit', 'Win one of every suit'),
     ("Don't win any of the first", 'Win none of the first'),
     ("Don't win any", 'Win no'),
-    ("Don't win two tricks in a row", 'Never win two in a row'),
     ("Don't lead a trick with a", 'Never lead'),
-    ('said out loud before the first trick', 'said aloud'),
-    ('written down in secret before the first trick', 'in secret'),
-    (", and they're in a row", ', in a row'),
+    ('named before the first trick', 'named first'),
     ('a trick containing an Ace and a 9', 'an Ace and a 9 in one trick'),
-    (RegExp(r'as many ([♥♦♠♣]) cards as ([♥♦♠♣]) cards'), r'equal $1 and $2'),
+    ('a trick with exactly two Court Cards in it', 'a trick holding two Court Cards'),
+    ('a trick with three different suits in it', 'a trick of three suits'),
+    ('a trick where no one followed suit', 'a trick nobody followed'),
+    ('a trick with a card just one above the card led', 'a trick by one rank'),
+    ('two tricks with cards of the same rank', 'two tricks with the same number'),
+    ('the trick right after the King wins one', 'the trick after the King wins'),
+    ('the trick after the Queen is played', 'the trick after the Queen'),
+    ('exactly as many tricks as the player on your left', 'as many tricks as your left neighbour'),
+    ('Win no tricks until the King has won one', 'Win nothing before the King does'),
+    ('three tricks led with a ♥', 'three ♥-led tricks'),
     (RegExp(r'([♥♦♠♣]) cards?\b'), r'$1'),
     ('Win no Court Cards', 'Win no \uE001'),
     (RegExp(r'Court Cards?'), '\uE001'),
@@ -156,8 +151,6 @@ final List<Task> allTasks = _buildTaskPool();
 const _impossibleForTheKing = [
   'Win no Court Cards',
   "Don't win any tricks",
-  'Win the Joker and no other Court Card',
-  'Win the Jack and no other Court Card',
 ];
 
 List<Task> _buildTaskPool() {

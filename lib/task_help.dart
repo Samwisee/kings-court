@@ -157,7 +157,7 @@ String explainTask(String d) {
   if (courts != null) {
     final n = courts.group(1)!;
     return 'Count the Court Cards (Joker, Jack, Queen and King) in the tricks you win: by the end of the round there must be exactly $n. '
-        'The deal is redone if one player holds too many of them for this to be fair.';
+        'A Court Card goes to whoever plays the highest one in its trick, so plan which of yours to play, and when.';
   }
   final exact = RegExp(r'^Win exactly (\w+) tricks?$').firstMatch(d);
   if (exact != null) {
@@ -184,97 +184,90 @@ const _special = <String, String>{
       'By the end of the round the King must have won more tricks than you.',
   'Win the same number of tricks as the King':
       'By the end of the round you and the King must have won exactly the same number of tricks (none each counts).',
-  'Win a trick where every card is lower than 7, with no Court Cards':
-      'Win one trick in which every card is a 6 or lower (Aces to 6s), and nobody played a Court Card.',
-  'Win a trick where every card is higher than 5':
-      'Win one trick in which every plain card is a 6 or higher. Court Cards are allowed in it.',
-  'Win a 2 with a 6':
-      'Win a trick with a 6 as your winning card, in a trick that also has a 2 in it (any suit).',
-  'Win a 9 with a 5':
-      'Win a trick with a 5 as your winning card, in a trick that also has a 9 in it. The 9 must be of another suit, or your 5 couldn’t win.',
-  'Win any 7 with another 7':
-      'Win a trick with a 7 as your winning card, in a trick that holds at least one other 7.',
-  'Win a trick with a 2':
-      'Win a trick where your winning card is a 2. Everyone else must play a card of another suit (and no Court Cards), so the 2 is the highest of the suit led.',
-  'Win the A♥ in the last trick':
-      'The A♥ must be played in the very last trick of the round, and you must win that trick. If the A♥ comes out earlier, or someone else wins it, the task fails.',
-  'Win exactly one ♦ and one ♠ card':
-      'By the end of the round, your tricks must hold exactly one ♦ card and exactly one ♠ card.',
-  'Win no ♠ cards':
-      'None of the tricks you win may contain a ♠ card, whoever played it.',
-  "Win a card of every suit (Court Cards don't count)":
-      'Your tricks must include at least one ♥, one ♦, one ♠ and one ♣ card by the end of the round.',
-  "Win all nine cards of any one suit":
-      'Pick a suit and win all of it: every card of that suit dealt this round must end up in your tricks. Court Cards aren’t a suit for this.',
-  'Win a trick of only even cards: 2s, 4s, 6s and 8s':
-      'Win one trick in which every card is a 2, 4, 6 or 8, with no Court Cards.',
-  'Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s':
-      'Win one trick in which every card is an Ace, 3, 5, 7 or 9, with no Court Cards.',
-  'Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards':
-      'Win one trick whose cards add up to more than the target for your table size (21 for two or three players, 26 for four, 30 for five, 34 for six). Aces count as 1. No Court Cards may be in it.',
-  'Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards':
-      'Win one trick whose cards add up to less than the target for your table size (9 for two or three players, 13 for four, 17 for five, 21 for six). Aces count as 1. No Court Cards may be in it.',
-  'Win a trick totalling exactly 20 or 21':
-      'Win one trick whose cards add up to exactly 20 or 21. Aces count as 1, and a trick with a Court Card in it doesn’t count.',
-  'Win exactly one Court Card (redeal if one player has all four)':
-      'Your tricks must hold exactly one Court Card (Joker, Jack, Queen or King) by the end of the round.',
-  'Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)':
-      'Win the Joker, and make sure the Jack, Queen and King all end up in other players’ tricks.',
-  'Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)':
-      'Win the Jack, and make sure the Joker, Queen and King all end up in other players’ tricks.',
-  'Win the Queen':
-      'The Queen must end up in a trick you win. Only the King card beats her, so whoever holds the King card matters.',
-  'Win no Court Cards':
-      'None of the tricks you win may contain a Court Card (Joker, Jack, Queen or King), whoever played it.',
-  "Don't lead a trick with a ♦, ♠ or ♣ card":
-      'Whenever you lead a trick (play its first card), it must be a ♥ card or a Court Card. Following someone else’s lead is fine with any card.',
-  "Don't lead a trick with a ♦ or ♠ card":
-      'Whenever you lead a trick, it must be a ♥ or ♣ card, or a Court Card. Following someone else’s lead is fine with any card.',
-  "Don't win any tricks":
-      'Get through the whole round without winning a single trick. Play low, and keep your Court Cards for when you can’t follow suit and someone else is sure to win anyway.',
-  "Don't win two tricks in a row":
-      'You may win tricks, but never two one straight after the other.',
-  'Win the last trick':
-      'Win the final trick of the round. Keep a strong card back for the end.',
+  'Win more Court Cards than the King':
+      'At the end of the round, the Court Cards in your tricks must outnumber those in the King’s. The King always wins the King card, so you need at least two, or the King must win none but that one. The King can’t take this task.',
+  'Win exactly as many tricks as the player on your left':
+      'At the end of the round, you and the player on your left (the next to play after you) must have won the same number of tricks. Zero each is fine.',
+  'Win a trick with an Ace':
+      'Win a trick where your winning card is an Ace, the lowest card of its suit. That only happens when you lead it and no one can follow suit, and no Court Card is played. Hard, but a quiet suit late in the round can do it.',
+  'Win a trick with the Joker':
+      'Play the Joker and take the trick with it. The Joker beats every plain card but loses to the Jack, Queen and King, so play it when no higher Court Card is coming. You need the Joker in your hand.',
+  'Win a trick with the Jack':
+      'Play the Jack and take the trick with it. Only the Queen and the King can beat it. You need the Jack in your hand.',
+  'Win the Queen with the King':
+      'The Queen must fall in a trick that you take by playing the King card. Hold the King back until the Queen is played, or until a Court Card is led. If the Queen is won any other way, the task fails. You need the King card, and not the Queen, in your hand.',
+  'Win a 9 with a Court Card':
+      'Win a trick with a Court Card as your winning card, in a trick that also has a 9 in it (any suit). Usually someone leads a suit you have none of, so you can play a Court Card on their 9. You need a Court Card in your hand.',
+  'Win a trick led with a Court Card':
+      'Win one trick whose first card was a Court Card (Joker, Jack, Queen or King). Everyone must answer a Court Card lead with a Court Card if they can, so the highest Court Card played takes it. You need a Court Card in your hand.',
+  'Win a trick containing an Ace and a 9':
+      'Win one trick that has both an Ace and a 9 in it, of any suits. Whoever plays them doesn’t matter, as long as you win the trick.',
+  'Win a trick with exactly two Court Cards in it':
+      'Take a trick that holds two Court Cards and no more: one beats the other, and the trick is yours. You win both Court Cards with it.',
+  'Win a trick with three different suits in it':
+      'Take a trick holding cards of at least three different suits. Court Cards count as a suit of their own. That means at least two players couldn’t follow suit, so it tends to happen late in the round, or when a Court Card is led.',
+  'Win a trick where no one followed suit':
+      'Take a trick where the card led was a plain card and nobody else played its suit: everyone was out of it, or played a Court Card. The lead can be yours or anyone’s. Lead a suit the others have run out of.',
+  'Win a trick with a card just one above the card led':
+      'Win a trick by a whisker: your winning card is the same suit as the card led and exactly one higher than it, with no Court Card played. You can’t do it on a trick you lead.',
+  'Win two tricks with cards of the same rank':
+      'Win two tricks whose winning cards have the same number: a 7♥ one trick and a 7♣ another, say. Court Cards don’t count. The two tricks needn’t be in a row.',
+  'Win a trick you led':
+      'Lead a trick and win it. You lead when you won the trick before, or if you are the King, the first trick. Lead your strongest card of a suit nobody can beat.',
+  'Win a trick as the last to play':
+      'Be the last player to put a card on a trick, and win it. You play last when the player on your right led. By then you can see every card, so you can choose the smallest that takes it.',
+  'Win a trick the King leads':
+      'Win a trick that the King led: the first trick, or any trick after the King wins one. The King can’t take this task.',
+  'Win the trick right after the King wins one':
+      'Whenever the King wins a trick, the King leads the next one: win that next trick. Any time in the round will do. The King can’t take this task.',
+  'Win the trick after the Queen is played':
+      'Watch for the Queen. The trick played straight after the one she falls in must be yours. If she falls in the last trick, there is no trick after it and the task fails.',
   'Win the first trick':
       'Win trick one. The King leads it, so if you’re not the King you’ll need the highest card of the suit led, or a Court Card when you can’t follow.',
+  'Win the first trick with a Court Card':
+      'Take the very first trick of the round by playing a Court Card on it. The King leads the first trick, so unless you are the King you’ll need to beat whatever is led. You need a Court Card in your hand.',
+  'Win the last trick':
+      'Win the final trick of the round. Keep a strong card back for the end.',
+  'Win the last trick with a Court Card':
+      'Take the final trick of the round by playing a Court Card on it. Keep a Court Card back to the very end. You need one in your hand.',
+  'Win the second-to-last trick':
+      'Win the trick before the last one, so that you lead the final trick. Save a strong card for it.',
   'Win the first and the last trick':
       'Win trick one and the final trick of the round. What happens in between doesn’t matter.',
   'Win only the last trick':
       'Lose every trick except the very last one, which you must win.',
-  'Win only the first trick':
-      'Win trick one, then lose every trick after it.',
-  'Win two tricks in a row': 'At some point, win two tricks one straight after the other.',
+  'Win two tricks in a row':
+      'At some point, win two tricks one straight after the other.',
   'Win three tricks in a row':
       'At some point, win three tricks one straight after another.',
-  "Win exactly three tricks, and they're in a row":
-      'Win three tricks in the round, no more and no fewer, and they must come one straight after another.',
-  "Win exactly two tricks, and they're in a row":
-      'Win two tricks in the round, no more and no fewer, one straight after the other.',
-  'Win exactly X tricks, said out loud before the first trick':
+  'Win exactly X tricks, named before the first trick':
       'Before the first trick, choose a number (X) and tell everyone. You must then win exactly that many tricks.',
-  'Win exactly X tricks, written down in secret before the first trick':
-      'Before the first trick, choose a number (X) and keep it to yourself (write it down at a real table). You must then win exactly that many tricks.',
-  'Win as many ♠ cards as ♣ cards (at least one of each)':
-      'By the end of the round, your tricks must hold the same number of ♠ cards as ♣ cards, and at least one of each.',
-  'Win a trick with as many ♥ cards as ♣ cards (at least one of each)':
-      'Win one trick that has the same number of ♥ cards as ♣ cards in it, with at least one of each.',
-  'Win a trick with as many ♦ cards as ♠ cards (at least one of each)':
-      'Win one trick that has the same number of ♦ cards as ♠ cards in it, with at least one of each.',
-  'Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)':
-      'By the end of the round, your tricks must hold more ♠ cards than ♥ cards.',
-  'Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)':
-      'By the end of the round, your tricks must hold more ♣ cards than ♦ cards.',
+  'Win the Queen':
+      'The Queen must end up in a trick you win. Only the King card beats her, so whoever holds the King card matters.',
+  'Win the Joker':
+      'The Joker must end up in a trick you win. If you hold it, play it where only a higher Court Card could beat it; if someone else does, be ready with the Jack, Queen or King when it falls.',
+  'Win the Jack':
+      'The Jack must end up in a trick you win. Only the Queen and the King beat it, so if you hold it, it is nearly yours already.',
+  'Win the Jack and the Queen':
+      'Both the Jack and the Queen must end up in tricks you win, in one trick or two. Whoever plays them, the tricks they fall in must be yours.',
+  'Win the Joker, the Jack and the Queen':
+      'Every Court Card but the King must end up in tricks you win. Only the King card can take any of them from you.',
   'Win at least two Aces':
       'Win two or more Aces, of any suit, in the tricks you win. Aces are the lowest card of each suit, so they usually fall to whoever wins the trick they’re played in.',
-  'Win a trick containing an Ace and a 9':
-      'Win one trick that has both an Ace and a 9 in it, of any suits. Whoever plays them doesn’t matter, as long as you win the trick.',
-  'Win a trick led with a Court Card':
-      'Win one trick whose first card was a Court Card (Joker, Jack, Queen or King). Everyone must answer a Court Card lead with a Court Card if they can, so the highest Court Card played takes it. You need a Court Card in your hand.',
-  'Win a 9 with a Court Card':
-      'Win a trick with a Court Card as your winning card, in a trick that also has a 9 in it (any suit). Usually someone leads a suit you have none of, so you can play a Court Card on their 9. You need a Court Card in your hand.',
-  'Win a mixed-suit trick with no Court Cards':
-      'Win one trick that has cards from at least two suits in it, and no Court Cards. It happens when someone can’t follow suit.',
+  'Win three tricks led with a ♥':
+      'Win three tricks in which the first card played was a ♥, whoever led it. There are nine hearts, so at most nine such tricks; lead hearts yourself when you can win them.',
+  'Win no ♠ cards':
+      'None of the tricks you win may contain a ♠ card, whoever played it.',
+  'Win no Court Cards':
+      'None of the tricks you win may contain a Court Card (Joker, Jack, Queen or King), whoever played it.',
+  'Win exactly one Court Card':
+      'Your tricks must hold exactly one Court Card (Joker, Jack, Queen or King) by the end of the round.',
+  "Don't win any tricks":
+      'Get through the whole round without winning a single trick. Play low, and keep your Court Cards for when you can’t follow suit and someone else is sure to win anyway.',
+  "Don't lead a trick with a Court Card":
+      'Whenever you lead a trick, lead a plain card, never the Joker, Jack, Queen or King. Play your Court Cards on other people’s leads instead. If Court Cards are all you have left when you lead, the task fails.',
+  'Win no tricks until the King has won one':
+      'Win nothing until the King has taken a trick; after that you’re free. The King leads the first trick, so it may be over quickly, or the King may be ducking. The King can’t take this task.',
 };
 
 String _tricks(int n) => n == 1 ? '1 trick' : '$n tricks';

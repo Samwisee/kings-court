@@ -12,8 +12,8 @@ Every task falls into a tier by *how it can go wrong*
 | Tier | Example | Why it's risky | Deal rule |
 | --- | --- | --- | --- |
 | capture | Win the 3♥, Win at least two Aces | Only by competing for the same cards | Never two that need more of a card/rank/suit than exists (`clash`) |
-| trick | Win a trick with a 6, Win the first trick | Same, plus timing | Same; two tasks can't both need the same trick |
-| avoid | Don't win any 6s, Win no ♠ cards | Someone else must take what you avoid | No card may be avoided by every player (`overAvoided`) |
+| trick | Win a trick with a 5, Win the first trick | Same, plus timing | Same; two tasks can't both need the same trick |
+| avoid | Don't win any 9s, Win no ♠ cards | Someone else must take what you avoid | No card may be avoided by every player (`overAvoided`) |
 | race | Win more tricks than the King | Measured against other players | At most 2 a round |
 | precise | Win exactly two tricks, Win only the last trick | Too many *and* too few both fail, so it fights everything | At most 1 a round, drawn half as often |
 

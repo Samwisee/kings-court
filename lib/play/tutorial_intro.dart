@@ -460,10 +460,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
           children: [
             _task('Win the 3♥', width: 150),
             _task('Win fewer tricks than the King', width: 150),
-            _task('Win a trick of only even cards: 2s, 4s, 6s and 8s', width: 150),
-            _task(GameState.taskPool
-                .firstWhere((t) => t.description.startsWith('Win the Joker and no'))
-                .description, width: 150),
+            _task("Don't win any ♥ cards", width: 150),
+            _task('Win the trick after the Queen is played', width: 150),
           ],
         );
       case IntroArt.courtCards:

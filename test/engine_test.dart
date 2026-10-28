@@ -101,13 +101,13 @@ void main() {
     expect(none(view([t1]), 1, null), Verdict.pending);
     expect(none(view([t1], total: 1), 1, null), Verdict.done);
 
-    final x = taskRules['Win exactly X tricks, said out loud before the first trick']!;
+    final x = taskRules['Win exactly X tricks, named before the first trick']!;
     expect(x(view([t1], total: 1), 2, 1), Verdict.done);
     expect(x(view([t1], total: 1), 2, 0), Verdict.failed);
 
-    final withSix = taskRules['Win a trick with a 6']!;
-    final t2 = Trick(0, [0, 1, 2, 3], [c('6♣'), c('2♣'), c('9♦'), c('A♣')], 0);
-    expect(withSix(view([t2]), 0, null), Verdict.done);
+    final withFive = taskRules['Win a trick with a 5']!;
+    final t2 = Trick(0, [0, 1, 2, 3], [c('5♣'), c('2♣'), c('9♦'), c('A♣')], 0);
+    expect(withFive(view([t2]), 0, null), Verdict.done);
   });
 
   test('Every rule reaches a verdict by the end of the round', () {
@@ -191,27 +191,23 @@ void main() {
   });
 
   test('Clashing tasks are spotted', () {
-    expect(clash('Win the 2♦', 'Win all four 2s'), isTrue);
-    expect(clash('Win a trick with a 2', 'Win all four 2s'), isTrue);
+    expect(clash('Win the A♦', 'Win all four Aces'), isTrue);
+    expect(clash('Win a trick with an Ace', 'Win all four Aces'), isTrue);
     expect(clash('Win the first trick', 'Win the first two tricks'), isTrue);
     expect(clash('Win more tricks than anyone else',
         'Win more tricks than the rest of the court put together'), isTrue);
-    expect(clash('Win exactly three Court Cards (redeal if one player has all four)',
-        'Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)'), isTrue);
-    expect(clash('Win the 3♥', 'Win the 4♠'), isFalse);
+    expect(clash('Win the Joker, the Jack and the Queen', 'Win exactly two Court Cards'), isTrue);
+    expect(clash('Win the Jack and the Queen', 'Win the Queen'), isTrue);
+    expect(clash('Win the 3♥', 'Win the 9♠'), isFalse);
     expect(selfClash('Win no ♠ cards', 'Win the 9♠'), isTrue);
     expect(selfClash("Don't win any tricks", 'Win the last trick'), isTrue);
-    // A whole suit to one player leaves none of it for a task needing all four.
-    expect(clash('Win all nine cards of any one suit', 'Win a card of every suit (Court Cards don\'t count)'), isTrue);
-    expect(clash('Win all four 8s', 'Win all nine cards of any one suit'), isTrue);
-    expect(clash('Win all nine cards of any one suit', 'Win the 3♥'), isFalse);
     // Every task that needs a win, profiled or not.
     for (final d in [
-      'Win a trick with as many ♦ cards as ♠ cards (at least one of each)',
+      'Win a trick with three different suits in it',
       'Win two tricks in a row',
       'Win more tricks than the King',
-      'Win a mixed-suit trick with no Court Cards',
-      'Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)',
+      'Win a trick you led',
+      'Win the trick after the Queen is played',
     ]) {
       expect(selfClash("Don't win any tricks", d), isTrue, reason: d);
       expect(selfClash(d, "Don't win any tricks"), isTrue, reason: d);
@@ -219,14 +215,14 @@ void main() {
     for (final d in [
       'Win no ♠ cards',
       'Win fewer tricks than anyone else',
-      "Don't win two tricks in a row",
-      "Don't lead a trick with a ♦ or ♠ card",
-      'Win exactly X tricks, said out loud before the first trick',
+      'Win no tricks until the King has won one',
+      "Don't lead a trick with a Court Card",
+      'Win exactly X tricks, named before the first trick',
     ]) {
       expect(selfClash("Don't win any tricks", d), isFalse, reason: d);
     }
     expect(selfClash('Win exactly one trick', 'Win exactly two tricks'), isTrue);
-    expect(selfClash('Win the 3♥', 'Win the 4♠'), isFalse);
+    expect(selfClash('Win the 3♥', 'Win the 9♠'), isFalse);
   });
 
   test('Rounds never deal tasks that clash', () {
@@ -244,14 +240,14 @@ void main() {
   });
 
   test('Avoiding something clashes with needing enough of it', () {
-    expect(selfClash("Don't win any 7s or 8s", 'Win at least three 7s'), isTrue);
-    expect(selfClash("Don't win any ♥ or ♣ cards", 'Win at least six ♣ cards'), isTrue);
-    expect(selfClash('Win no Court Cards', 'Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)'), isTrue);
-    expect(selfClash("Don't win any 6s", 'Win at least three 4s'), isFalse);
+    expect(selfClash("Don't win any 9s", 'Win at least five ♦ cards'), isFalse);
+    expect(selfClash("Don't win any ♣ cards", 'Win at least five ♣ cards'), isTrue);
+    expect(selfClash('Win no Court Cards', 'Win exactly two Court Cards'), isTrue);
+    expect(selfClash("Don't win any 5s", 'Win at least three 6s'), isFalse);
   });
 
   test('No card is avoided by every player', () {
-    const a = "Don't win any ♦ cards", b = "Don't win any ♦ or ♠ cards";
+    const a = "Don't win any 9s", b = "Don't win any ♦ or ♠ cards";
     expect(overAvoided([a, b], "Don't win any tricks", 3), isTrue);
     expect(overAvoided([a], b, 3), isFalse);
     expect(overAvoided([a, b], 'Win the 3♥', 3), isFalse);
@@ -260,10 +256,13 @@ void main() {
   test('Every task has a tier, and deals keep within the tier limits', () {
     expect(tierOf('Win exactly two tricks'), TaskTier.precise);
     expect(tierOf('Win only the last trick'), TaskTier.precise);
-    expect(tierOf("Don't win any 6s"), TaskTier.avoid);
+    expect(tierOf("Don't win any 9s"), TaskTier.avoid);
     expect(tierOf('Win more tricks than the King'), TaskTier.race);
     expect(tierOf('Win the 3♥'), TaskTier.capture);
-    expect(tierOf('Win a trick with a 6'), TaskTier.trick);
+    expect(tierOf('Win a trick with a 5'), TaskTier.trick);
+    expect(tierOf('Win a trick the King leads'), TaskTier.trick);
+    expect(tierOf('Win more Court Cards than the King'), TaskTier.race);
+    expect(tierOf('Win exactly as many tricks as the player on your left'), TaskTier.precise);
     for (int i = 0; i < 400; i++) {
       final players = 3 + i % 3;
       final g = GameState()..addTasksUntilTarget(players, 6 + i % 25);
@@ -301,9 +300,9 @@ void main() {
         ],
         totalTricks: 10,
         inPlay: fullDeck().toSet());
-    expect(taskProgress('Win all four 2s', v, 2, null), '2/4');
+    expect(taskProgress('Win exactly two 4s', v, 2, null), '0/2');
     expect(taskProgress('Win at least five ♦ cards', v, 2, null), '3/5');
-    expect(taskProgress('Win exactly X tricks, said out loud before the first trick', v, 2, 2),
+    expect(taskProgress('Win exactly X tricks, named before the first trick', v, 2, 2),
         '1/2');
     expect(taskProgress('Win the 3♥', v, 2, null), isNull);
   });

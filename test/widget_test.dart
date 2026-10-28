@@ -489,7 +489,7 @@ void main() {
     const width = 140.0;
     final short = TableCard.sizeFor('Win the 3♥', width);
     final long = TableCard.sizeFor(
-        'Win a trick where every card is lower than 7, with no Court Cards',
+        'Win a trick with a card just one above the card led',
         width);
     expect(short.height, TableCard.heightFor(width));
     expect(long.height, greaterThan(short.height));
