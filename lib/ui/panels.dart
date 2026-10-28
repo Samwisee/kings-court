@@ -383,7 +383,7 @@ class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _still = MediaQuery.of(context).disableAnimations || !CharacterToken.alive || _underTest;
+    _still = MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || _underTest;
     if (_still) {
       _c.stop();
     } else if (!_c.isAnimating) {

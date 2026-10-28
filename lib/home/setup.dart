@@ -614,7 +614,7 @@ class _SetupPanelState extends State<_SetupPanel> {
       _forward = step > _shownStep;
       _shownStep = step;
     }
-    final still = MediaQuery.of(context).disableAnimations;
+    final still = MediaQuery.disableAnimationsOf(context);
 
     // Fills the screen: progress at the top, the step in the middle, and
     // the buttons fixed in the bottom corners so they never move. Every

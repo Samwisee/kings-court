@@ -60,7 +60,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
   @override
   Widget build(BuildContext context) {
     final p = pages[page];
-    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       backgroundColor: Palette.feltDeep,
       body: DecoratedBox(

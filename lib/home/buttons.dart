@@ -25,7 +25,7 @@ class _GlowButtonState extends State<_GlowButton>
     super.didChangeDependencies();
     // No movement for reduced motion (or in tests, where it would never
     // settle).
-    final still = MediaQuery.of(context).disableAnimations ||
+    final still = MediaQuery.disableAnimationsOf(context) ||
         !CharacterToken.alive;
     if (still) {
       _pulse.stop();

@@ -4443,7 +4443,7 @@ class _HomePageState extends State<HomePage>
       vsync: this, duration: const Duration(milliseconds: 1500));
 
   void _startFromSetup(_SetupResult r) {
-    if (MediaQuery.of(context).disableAnimations || !CharacterToken.alive) {
+    if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive) {
       _beginFromSetup(r);
       return;
     }

@@ -55,7 +55,7 @@ class _WelcomeIntroState extends State<_WelcomeIntro> {
     final handTop = cardH * 0.12;
     final stageH = handTop + cardH + 10;
     // With reduced motion asked for, the flourish is skipped.
-    final still = MediaQuery.of(context).disableAnimations;
+    final still = MediaQuery.disableAnimationsOf(context);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: still ? 1 : 0, end: 1),
       duration: Duration(milliseconds: (2400 / (1 - _wait)).round()),
