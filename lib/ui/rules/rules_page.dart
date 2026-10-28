@@ -8,7 +8,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// Which games a section of the rules is about.
@@ -178,19 +178,20 @@ class _RulesPageState extends State<RulesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final g = widget.game;
     final shown = [
       for (int i = 0; i < _sections.length; i++)
         if (_all || _applies(_sections[i], g) || _leaving.contains(i)) i
     ];
     return Scaffold(
-      backgroundColor: Palette.feltDeep,
+      backgroundColor: skin.feltDeep,
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
-            center: Alignment(0, -0.4),
+            center: const Alignment(0, -0.4),
             radius: 1.2,
-            colors: [Palette.felt, Palette.feltDeep],
+            colors: [skin.felt, skin.feltDeep],
           ),
         ),
         child: SafeArea(
@@ -208,21 +209,21 @@ class _RulesPageState extends State<RulesPage> {
                 decoration: BoxDecoration(
                   border: Border(
                       bottom: BorderSide(
-                          color: Palette.gold.withValues(alpha: 0.8), width: 1.5)),
+                          color: skin.gold.withValues(alpha: 0.8), width: 1.5)),
                 ),
                 child: Row(
                   children: [
                     const SizedBox(width: 56),
-                    const Expanded(
+                    Expanded(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text('How to Play',
                             style: TextStyle(
-                                fontFamily: displayFont,
+                                fontFamily: skin.displayFont,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 26,
-                                color: Palette.gold,
-                                shadows: [
+                                color: skin.gold,
+                                shadows: const [
                                   Shadow(color: Colors.black54, blurRadius: 12)
                                 ])),
                       ),
@@ -234,8 +235,8 @@ class _RulesPageState extends State<RulesPage> {
                         onPressed: () => Navigator.pop(context),
                         style: IconButton.styleFrom(
                             overlayColor: Colors.transparent),
-                        icon: const Icon(Icons.close_rounded,
-                            color: Palette.gold, size: 30, shadows: _shadow),
+                        icon: Icon(Icons.close_rounded,
+                            color: skin.gold, size: 30, shadows: _shadow),
                       ),
                     ),
                   ],
@@ -316,7 +317,7 @@ class _RulesPageState extends State<RulesPage> {
                                   }
                                 }),
                                 style: TextButton.styleFrom(
-                                    foregroundColor: Palette.gold,
+                                    foregroundColor: skin.gold,
                                     overlayColor: Colors.transparent),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -387,6 +388,7 @@ class _RulesPageState extends State<RulesPage> {
 
   /// What's in play right now.
   Widget _thisGame(RulesContext g) {
+    final skin = context.skin;
     final lines = [
       '${g.modeName} · ${g.onScreen ? 'on screen' : 'with a real deck'} · ${g.players} players',
       if (g.points != null) 'Points target: ${g.points}',
@@ -405,13 +407,13 @@ class _RulesPageState extends State<RulesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('This game',
+          Text('This game',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: displayFont,
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 19,
-                  color: Palette.gold,
+                  color: skin.gold,
                   shadows: _shadow)),
           const SizedBox(height: 6),
           for (final l in lines)
@@ -432,20 +434,20 @@ class _Tab extends StatelessWidget {
   Widget build(BuildContext context) => Material(
         color: const Color(0x33000000),
         shape: StadiumBorder(
-            side: BorderSide(color: Palette.gold.withValues(alpha: 0.7), width: 1.4)),
+            side: BorderSide(color: context.skin.gold.withValues(alpha: 0.7), width: 1.4)),
         child: InkWell(
           customBorder: const StadiumBorder(),
           onTap: onTap,
-          splashColor: Palette.gold.withValues(alpha: 0.2),
+          splashColor: context.skin.gold.withValues(alpha: 0.2),
           highlightColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Text(label,
-                style: const TextStyle(
-                    fontFamily: displayFont,
+                style: TextStyle(
+                    fontFamily: context.skin.displayFont,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: Palette.gold,
+                    color: context.skin.gold,
                     shadows: _shadow)),
           ),
         ),
@@ -469,7 +471,7 @@ class _Panel extends StatelessWidget {
             colors: [Color(0x40000000), Color(0x26000000)],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Palette.gold.withValues(alpha: 0.45), width: 1.4),
+          border: Border.all(color: context.skin.gold.withValues(alpha: 0.45), width: 1.4),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,11 +479,11 @@ class _Panel extends StatelessWidget {
             Semantics(
               header: true,
               child: Text(title,
-                  style: const TextStyle(
-                      fontFamily: displayFont,
+                  style: TextStyle(
+                      fontFamily: context.skin.displayFont,
                       fontWeight: FontWeight.w700,
                       fontSize: 21,
-                      color: Palette.gold,
+                      color: context.skin.gold,
                       shadows: _shadow)),
             ),
             Container(
@@ -489,8 +491,8 @@ class _Panel extends StatelessWidget {
               height: 1.4,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  Palette.gold.withValues(alpha: 0.8),
-                  Palette.gold.withValues(alpha: 0),
+                  context.skin.gold.withValues(alpha: 0.8),
+                  context.skin.gold.withValues(alpha: 0),
                 ]),
               ),
             ),

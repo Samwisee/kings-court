@@ -6,7 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import 'character_token.dart';
 
 /// The court's on/off mark: a gold ring, filled with a gold jewel when on.
@@ -19,7 +19,8 @@ class GoldPip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gold = enabled ? Palette.gold : Palette.gold.withValues(alpha: 0.4);
+    final skin = context.skin;
+    final gold = enabled ? skin.gold : skin.gold.withValues(alpha: 0.4);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       width: size,
@@ -28,7 +29,7 @@ class GoldPip extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: gold, width: 2),
         boxShadow: on && enabled
-            ? [BoxShadow(color: Palette.gold.withValues(alpha: 0.45), blurRadius: 8)]
+            ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 8)]
             : null,
       ),
       padding: EdgeInsets.all(size * 0.17),
@@ -41,7 +42,7 @@ class GoldPip extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
                 center: const Alignment(-0.3, -0.4),
-                colors: [Palette.goldPale, gold]),
+                colors: [skin.goldPale, gold]),
           ),
         ),
       ),
@@ -65,6 +66,7 @@ class PipTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final enabled = onChanged != null;
     return Semantics(
       toggled: value,
@@ -72,9 +74,9 @@ class PipTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         // A faint gold wash when pressed, never a white flash.
-        highlightColor: Palette.gold.withValues(alpha: 0.08),
-        splashColor: Palette.gold.withValues(alpha: 0.12),
-        hoverColor: Palette.gold.withValues(alpha: 0.06),
+        highlightColor: skin.gold.withValues(alpha: 0.08),
+        splashColor: skin.gold.withValues(alpha: 0.12),
+        hoverColor: skin.gold.withValues(alpha: 0.06),
         onTap: enabled ? () => onChanged!(!value) : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),

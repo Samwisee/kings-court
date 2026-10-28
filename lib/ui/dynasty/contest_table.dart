@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../engine/contest.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../cards/card_view.dart';
 
 /// The Trial of Hearts: a round of hearts that settles a divided court.
@@ -90,6 +90,7 @@ class ContestTableState extends State<ContestTable> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final others = [for (int s = 0; s < c.players; s++) if (s != widget.you) s];
     final yourTurn = !c.over && _shown == null && c.turn == widget.you;
     final onTable = _shown ?? Trick(c.leader, c.seats, c.current, -1);
@@ -101,7 +102,7 @@ class ContestTableState extends State<ContestTable> {
                 ? (c.current.isEmpty ? 'Your lead' : 'Your turn: follow ${c.current.first.isCourt ? 'Court Cards' : c.current.first.suit.name} if you can')
                 : '${widget.names[c.turn]} is thinking';
     return ColoredBox(
-      color: Palette.feltDeep,
+      color: skin.feltDeep,
       child: SafeArea(
         child: LayoutBuilder(builder: (context, box) {
           final w = box.maxWidth;
@@ -110,12 +111,12 @@ class ContestTableState extends State<ContestTable> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Column(
               children: [
-                const Text('Trial of Hearts',
+                Text('Trial of Hearts',
                     style: TextStyle(
-                        fontFamily: displayFont,
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 26,
-                        color: Palette.gold)),
+                        color: skin.gold)),
                 const Text(
                     'Court Cards are just a suit here: only the suit led can win. Every ♥ you win is a mark of shame, and the Queen is five. Hearts can\u2019t be led until one falls. Sides stay secret: fewest marks per courtier wins, and a tie goes to the King.',
                     textAlign: TextAlign.center,
@@ -165,10 +166,10 @@ class ContestTableState extends State<ContestTable> {
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                      fontFamily: bodyFont,
+                      fontFamily: skin.bodyFont,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: yourTurn || c.over ? Palette.gold : Colors.white70),
+                      color: yourTurn || c.over ? skin.gold : Colors.white70),
                   child: Text(status, textAlign: TextAlign.center),
                 ),
                 const SizedBox(height: 8),
@@ -187,8 +188,8 @@ class ContestTableState extends State<ContestTable> {
                   FilledButton(
                     onPressed: widget.onDone,
                     style: FilledButton.styleFrom(
-                        backgroundColor: Palette.gold,
-                        foregroundColor: Palette.ink),
+                        backgroundColor: skin.gold,
+                        foregroundColor: skin.ink),
                     child: const Text('Let it be done'),
                   )
                 else
@@ -234,6 +235,7 @@ class ContestTableState extends State<ContestTable> {
   }
 
   Widget _score(bool a) {
+    final skin = context.skin;
     final avg = c.sideShame(a);
     final winning = c.over && c.aWins == a;
     return AnimatedContainer(
@@ -242,7 +244,7 @@ class ContestTableState extends State<ContestTable> {
       decoration: BoxDecoration(
         color: winning ? const Color(0x33F2C14E) : Colors.black26,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: winning ? Palette.gold : Colors.white24),
+        border: Border.all(color: winning ? skin.gold : Colors.white24),
       ),
       child: Column(children: [
         Text('${a ? 'A' : 'B'}. ${a ? widget.labelA : widget.labelB}',
@@ -258,11 +260,11 @@ class ContestTableState extends State<ContestTable> {
                     ? avg.toInt().toString()
                     : avg.toStringAsFixed(1))
                 : '?',
-            style: const TextStyle(
-                fontFamily: displayFont,
+            style: TextStyle(
+                fontFamily: skin.displayFont,
                 fontWeight: FontWeight.w900,
                 fontSize: 28,
-                color: Palette.gold)),
+                color: skin.gold)),
       ]),
     );
   }
@@ -276,13 +278,13 @@ class ContestTableState extends State<ContestTable> {
   Widget _sideChip(int seat, {bool always = false}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: Palette.ink,
+          color: context.skin.ink,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Palette.gold),
+          border: Border.all(color: context.skin.gold),
         ),
         child: Text(always || c.over ? (c.sideA[seat] ? 'A' : 'B') : '?',
-            style: const TextStyle(
-                fontWeight: FontWeight.w900, fontSize: 12, color: Palette.gold)),
+            style: TextStyle(
+                fontWeight: FontWeight.w900, fontSize: 12, color: context.skin.gold)),
       );
 
   Widget _seat(int s, {required bool active}) => Column(

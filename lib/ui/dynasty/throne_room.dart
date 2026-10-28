@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
 import '../../game/state.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 import 'hall_pieces.dart';
 
@@ -127,8 +127,9 @@ class _ThroneRoomState extends State<ThroneRoom> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Material(
-      color: Palette.feltDeep,
+      color: skin.feltDeep,
       child: SafeArea(
         child: LayoutBuilder(builder: (context, box) {
           final w = box.maxWidth, h = box.maxHeight;
@@ -136,7 +137,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
             behavior: HitTestBehavior.opaque,
             onTap: _done ? widget.onContinue : _next,
             child: Stack(children: [
-              Positioned.fill(child: CustomPaint(painter: HallPainter())),
+              Positioned.fill(child: CustomPaint(painter: HallPainter(context.skin))),
               // The court about the hall.
               ..._figures(w, h),
               // Who is speaking, and what they say.
@@ -163,19 +164,19 @@ class _ThroneRoomState extends State<ThroneRoom> {
                     style: const TextStyle(fontSize: 13, color: Colors.white60)),
                 Text(widget.title,
                     maxLines: 2,
-                    style: const TextStyle(
-                        fontFamily: displayFont,
+                    style: TextStyle(
+                        fontFamily: context.skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 22,
                         height: 1.1,
-                        color: Palette.gold)),
+                        color: context.skin.gold)),
               ],
             ),
           ),
           for (int i = 0; i < widget.wounds; i++)
-            const Padding(
-              padding: EdgeInsets.only(right: 2),
-              child: Icon(Icons.water_drop, size: 16, color: Palette.lost),
+            Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: Icon(Icons.water_drop, size: 16, color: context.skin.lost),
             ),
           const SizedBox(width: 8),
           Coffers(widget.coffers),
@@ -276,7 +277,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
           decoration: BoxDecoration(
             color: f.color,
             shape: BoxShape.circle,
-            border: Border.all(color: Palette.gold, width: 2),
+            border: Border.all(color: context.skin.gold, width: 2),
           ),
           child: Icon(Icons.person_rounded, size: size * 0.62, color: Colors.white),
         )
@@ -284,7 +285,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
         shape: f.role!.shape,
         size: size,
         color: f.color,
-        ring: Palette.gold,
+        ring: context.skin.gold,
         child: OutlinedLabel(seatLabels([Player(f.role!.title, colorValue: f.color.toARGB32())]).first,
             fontSize: size * 0.36, strokeWidth: size * 0.07),
       );
@@ -347,7 +348,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
             width: 116,
             height: 130,
             child: Stack(alignment: Alignment.bottomCenter, children: [
-              Positioned.fill(child: CustomPaint(painter: ThronePainter())),
+              Positioned.fill(child: CustomPaint(painter: ThronePainter(context.skin))),
               Positioned(
                 bottom: 30,
                 child: !_done && widget.lines[_line].who == ThroneRoom.kingId

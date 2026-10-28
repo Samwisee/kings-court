@@ -9,20 +9,22 @@ import '../../engine/decrees.dart';
 import '../../engine/round.dart';
 import '../../engine/task_help.dart';
 import '../../game/state.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../cards/task_chip.dart';
 import '../widgets.dart';
 
 /// The marks a task card carries beside its points (the same as on the
 /// table), each with what it means.
-List<(Widget, String)> taskMarks(RoundTask task, double size) => [
+List<(Widget, String)> taskMarks(Skin skin, RoundTask task, double size) => [
       if (task.noCourtCards)
         (NoCourtIcon(size: size), 'The trick can\u2019t have any Court Cards in it.'),
       if (task.kingCantTake)
-        (Icon(Icons.block, size: size, color: Palette.inkSoft),
+        (Icon(Icons.block, size: size, color: skin.inkSoft),
             'The King can\u2019t take this task.'),
       for (final n in task.notes)
-        (Icon(Icons.info_outline, size: size, color: Palette.inkSoft), n),
+        (Icon(Icons.info_outline, size: size, color: skin.inkSoft), n),
       if (task.seal != null)
         (WaxSeal(seal: task.seal!, size: size + 3), Seals.describe(task.seal!)),
     ];
@@ -75,13 +77,14 @@ class TaskCloseUp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final owner = task.owner == null ? null : players[task.owner!];
     return RotatedBox(
         quarterTurns: quarterTurns,
         child: AlertDialog(
-        backgroundColor: task.isFailed ? Palette.failedCard : DialogStyle.paper,
+        backgroundColor: task.isFailed ? skin.failedCard : skin.paper,
         // Whose it is shows as on the table: their colour, edged in dark.
-        shape: HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
+        shape: HighVisBorder(task.isFailed ? skin.lost : owner?.color, context.skin),
         scrollable: true,
         contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -96,17 +99,17 @@ class TaskCloseUp extends StatelessWidget {
               Row(
                 children: [
                   Text('${task.points(players.length)}',
-                      style: const TextStyle(
-                          fontFamily: displayFont,
+                      style: TextStyle(
+                          fontFamily: skin.displayFont,
                           fontWeight: FontWeight.w900,
                           fontSize: 28,
                           height: 1,
-                          color: Palette.ink)),
+                          color: skin.ink)),
                   const SizedBox(width: 3),
-                  const CrownIcon(size: 19, color: Palette.goldDeep),
+                  CrownIcon(size: 19, color: skin.goldDeep),
                   // The same marks as the card on the table, each
                   // explained under the words.
-                  for (final (icon, _) in taskMarks(task, 21)) ...[
+                  for (final (icon, _) in taskMarks(skin, task, 21)) ...[
                     const SizedBox(width: 7),
                     icon,
                   ],
@@ -115,28 +118,28 @@ class TaskCloseUp extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Palette.ink,
+                        color: skin.ink,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(p,
-                          style: const TextStyle(
-                              fontFamily: bodyFont,
+                          style: TextStyle(
+                              fontFamily: skin.bodyFont,
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: Palette.gold)),
+                              color: skin.gold)),
                     ),
                 ],
               ),
               const SizedBox(height: 6),
               SuitText(task.fullText(players.length),
                   struck: struck,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 19,
                       height: 1.3,
                       fontWeight: FontWeight.w600,
-                      color: Palette.ink)),
+                      color: skin.ink)),
               // What each mark by the points means.
-              for (final (icon, words) in taskMarks(task, 16))
+              for (final (icon, words) in taskMarks(skin, task, 16))
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Row(
@@ -150,8 +153,8 @@ class TaskCloseUp extends StatelessWidget {
                           )),
                       Expanded(
                         child: SuitText(words,
-                            style: const TextStyle(
-                                fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
+                            style: TextStyle(
+                                fontSize: 14.5, height: 1.35, color: skin.inkSoft)),
                       ),
                     ],
                   ),
@@ -169,7 +172,7 @@ class TaskCloseUp extends StatelessWidget {
                             fontSize: 15,
                             height: 1.35,
                             fontWeight: FontWeight.w700,
-                            color: task.isCompleted ? Palette.won : Palette.lost)),
+                            color: task.isCompleted ? skin.won : skin.lost)),
                   ),
                 ),
               // The cards it's about, and what's become of them.
@@ -189,7 +192,7 @@ class TaskCloseUp extends StatelessWidget {
             ? [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(foregroundColor: Palette.ink),
+                  style: TextButton.styleFrom(foregroundColor: skin.ink),
                   child: const Text('Close'),
                 ),
                 // Your pick: take it from here too.
@@ -213,8 +216,8 @@ class TaskCloseUp extends StatelessWidget {
             icon: const Icon(Icons.close_rounded),
             label: Text(task.isFailed ? 'Not failed' : 'Failed'),
             style: OutlinedButton.styleFrom(
-                foregroundColor: Palette.lost,
-                side: const BorderSide(color: Palette.lost)),
+                foregroundColor: skin.lost,
+                side: BorderSide(color: skin.lost)),
           ),
           FilledButton.icon(
             onPressed: () async {
@@ -233,7 +236,7 @@ class TaskCloseUp extends StatelessWidget {
             icon: const Icon(Icons.check_rounded),
             label: Text(task.isCompleted ? 'Not done' : 'Done'),
             style: FilledButton.styleFrom(
-                backgroundColor: Palette.won, foregroundColor: Colors.white),
+                backgroundColor: skin.won, foregroundColor: Colors.white),
           ),
         ],
         ),
@@ -244,27 +247,28 @@ class TaskCloseUp extends StatelessWidget {
 /// Asks what to do about a seal completed out of order: null or false to
 /// go back, true to fail the round.
 Future<bool?> confirmSealBreak(BuildContext context, String problem, int quarterTurns) {
+  final skin = context.skin;
   return showDialog<bool>(
     context: context,
     builder: (context) => RotatedBox(
       quarterTurns: quarterTurns,
       child: AlertDialog(
-        backgroundColor: DialogStyle.paper,
-        shape: const HighVisBorder(null),
-        title: const Text('A seal is broken', style: DialogStyle.paperTitle),
+        backgroundColor: skin.paper,
+        shape: HighVisBorder(null, context.skin),
+        title: Text('A seal is broken', style: skin.paperTitle),
         content: Text(
             '$problem\n\nIf this task really was done out of order, the round is lost.',
-            style: const TextStyle(fontSize: 16, height: 1.4, color: Palette.ink)),
+            style: TextStyle(fontSize: 16, height: 1.4, color: skin.ink)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(foregroundColor: Palette.ink),
+            style: TextButton.styleFrom(foregroundColor: skin.ink),
             child: const Text('Go back'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-                backgroundColor: Palette.lost, foregroundColor: Colors.white),
+                backgroundColor: skin.lost, foregroundColor: Colors.white),
             child: const Text('It was: fail the round'),
           ),
         ],

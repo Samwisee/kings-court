@@ -40,6 +40,7 @@ import '../net/table_link.dart';
 import '../platform/analytics.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
+import '../skin/skin_scope.dart';
 import '../skin/theme.dart';
 import 'bug_report.dart';
 import 'cards/card_view.dart';
@@ -787,7 +788,8 @@ class HomePageState extends State<HomePage>
       players: game.players.length,
       textOf: (t) => t.boardText(game.players.length),
       upright: _upright || game.digital,
-      dealId: game.dealId);
+      dealId: game.dealId,
+      skin: context.skin);
 
   // --------------------------------------------------------- on-screen cards
   //
@@ -1167,7 +1169,7 @@ class HomePageState extends State<HomePage>
   void _passNow(int seat) {
     if (seat != _you) {
       _quip(seat, 'I\u2019ll pass for now.');
-      _showSnack('${game.players[seat].name} passes', Palette.feltDeep);
+      _showSnack('${game.players[seat].name} passes', context.skin.feltDeep);
     }
     setState(() => _round.apply(Pass(seat)));
   }
@@ -1463,6 +1465,7 @@ class HomePageState extends State<HomePage>
   double _gameHeight = 800;
 
   Widget _buildHand() {
+    final skin = context.skin;
     final c = _round;
     // Once a suit is led you may choose your card early; it's played as
     // soon as your turn comes.
@@ -1488,9 +1491,9 @@ class HomePageState extends State<HomePage>
       width: double.infinity,
       // Room below the cards so they clear the brass trim.
       padding: const EdgeInsets.fromLTRB(14, 2, 14, 16),
-      decoration: const BoxDecoration(
-        color: Palette.feltDeep,
-        border: Border(top: BorderSide(color: Color(0x66D4A63A))),
+      decoration: BoxDecoration(
+        color: skin.feltDeep,
+        border: const Border(top: BorderSide(color: Color(0x66D4A63A))),
       ),
       child: Center(
         child: ConstrainedBox(
@@ -1518,12 +1521,12 @@ class HomePageState extends State<HomePage>
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.right,
-                                style: const TextStyle(
-                                    fontFamily: bodyFont,
+                                style: TextStyle(
+                                    fontFamily: skin.bodyFont,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    shadows: _feltShadow,
-                                    color: Palette.gold)),
+                                    shadows: context.skin.feltShadow,
+                                    color: skin.gold)),
                           ),
                           const SizedBox(width: 8),
                           KeyedSubtree(
@@ -1545,12 +1548,12 @@ class HomePageState extends State<HomePage>
                     : AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                      fontFamily: bodyFont,
+                      fontFamily: skin.bodyFont,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      shadows: _feltShadow,
+                      shadows: context.skin.feltShadow,
                       color: yourTurn || _yourPick || _revealing
-                          ? Palette.gold
+                          ? skin.gold
                           : Colors.white70),
                   child: SuitText(
                       _toast != null
@@ -1564,7 +1567,7 @@ class HomePageState extends State<HomePage>
                               : _cardStatus,
                       style: TextStyle(
                           color: yourTurn || _yourPick || _revealing
-                              ? Palette.gold
+                              ? skin.gold
                               : Colors.white70),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1599,14 +1602,14 @@ class HomePageState extends State<HomePage>
                           ? _speak
                           : null,
                   icon: _revealing || _speakPromptDue
-                      ? const Icon(Icons.close_rounded, color: Palette.gold)
+                      ? Icon(Icons.close_rounded, color: skin.gold)
                       : ShowCardIcon(
                           size: 28,
                           used: _round.spoke.length > _you && _round.spoke[_you],
                           color: _wantsToSpeak
                               ? Colors.white
                               : _mayAskToSpeak
-                                  ? Palette.gold
+                                  ? skin.gold
                                   : Colors.white24),
                 ),
               ),
@@ -1687,7 +1690,7 @@ class HomePageState extends State<HomePage>
                           if (_round.revealFor(_you, card) == null) {
                             _showSnack(
                                 'Only your highest, lowest or only card of a suit can be shown, never a Court Card',
-                                Palette.feltDeep);
+                                skin.feltDeep);
                             return false;
                           }
                           final opening = _speakPromptDue;
@@ -1703,7 +1706,7 @@ class HomePageState extends State<HomePage>
                                 led.isCourt
                                     ? 'You must follow with a Court Card'
                                     : 'You must follow ${led.suit.name}',
-                                Palette.feltDeep);
+                                skin.feltDeep);
                             return false;
                           }
                           setState(() => _queued = _queued == card ? null : card);
@@ -1716,7 +1719,7 @@ class HomePageState extends State<HomePage>
                               led.isCourt
                                   ? 'You must follow with a Court Card'
                                   : 'You must follow ${led.suit.name}',
-                              Palette.feltDeep);
+                              skin.feltDeep);
                           return false;
                         }
                         final area = _rectOn(_handKey);
@@ -1926,11 +1929,11 @@ class HomePageState extends State<HomePage>
           continue;
         }
         final style = _miniStyle[t] ?? (to.width, 12.0);
-        final flight = Flight(t, from, to, _points(t), _cardText(t),
+        final flight = Flight(skin: context.skin, t, from, to, _points(t), _cardText(t),
             fromFont: _openFontSize,
             toFont: style.$2,
             toColor: t.owner == null
-                ? Palette.inkSoft
+                ? context.skin.inkSoft
                 : game.players[t.owner!].color);
         _flights.add(flight);
         _flightTimers.add(Timer(Flight.duration, () {
@@ -2046,6 +2049,7 @@ class HomePageState extends State<HomePage>
   /// taken, but kept hidden while its flying copy travels there: the
   /// flight lands exactly on it, then it shows, so nothing jumps.
   Widget _miniTask(RoundTask t, double width, {double fontSize = 12}) {
+    final skin = context.skin;
     _miniStyle[t] = (width, fontSize);
     return Opacity(
         key: ValueKey('mini-${t.description}'),
@@ -2059,7 +2063,7 @@ class HomePageState extends State<HomePage>
             points: _points(t),
             text: _cardText(t),
             color: t.owner == null
-                ? Palette.inkSoft
+                ? skin.inkSoft
                 : game.players[t.owner!].color,
             width: width,
             fontSize: fontSize,
@@ -2151,8 +2155,8 @@ class HomePageState extends State<HomePage>
                         roleAt(seat)?.short ?? game.players[seat].name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, color: Colors.white70, shadows: _feltShadow)),
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.white70, shadows: context.skin.feltShadow)),
                     // Trick counts once the tricks begin. Their room is
                     // kept from the start, so nothing shifts when they
                     // appear.
@@ -2238,6 +2242,7 @@ class HomePageState extends State<HomePage>
 
   /// A card shown with the speech token, while it's still in hand.
   Widget? _revealedView(int seat, {double height = 40}) {
+    final skin = context.skin;
     final c = _round;
     final card = c.revealed[seat];
     if (card == null || !c.hasCards || !c.holds(seat, card)) return null;
@@ -2253,7 +2258,7 @@ class HomePageState extends State<HomePage>
           decoration: BoxDecoration(
             color: const Color(0xFF14100A),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Palette.gold),
+            border: Border.all(color: skin.gold),
           ),
           // One short word: high, low or only.
           child: Text(
@@ -2264,8 +2269,8 @@ class HomePageState extends State<HomePage>
               },
               maxLines: 1,
               softWrap: false,
-              style: const TextStyle(
-                  fontSize: 11.5, fontWeight: FontWeight.w800, color: Palette.gold)),
+              style: TextStyle(
+                  fontSize: 11.5, fontWeight: FontWeight.w800, color: skin.gold)),
         ),
       ],
     );
@@ -2276,6 +2281,7 @@ class HomePageState extends State<HomePage>
   final _middleTasksKey = GlobalKey(debugLabel: 'middle tasks');
 
   Widget _digiMiddle(double width) {
+    final skin = context.skin;
     if (_choosingKing) return const SizedBox.expand();
     final open = [for (final t in game.tasks) if (t.owner == null) t];
     if (open.isEmpty && _landing.isEmpty && _flights.isEmpty) {
@@ -2365,7 +2371,7 @@ class HomePageState extends State<HomePage>
                     points: _points(t),
                     text: _cardText(t),
                     color: only == null
-                        ? Palette.inkSoft
+                        ? skin.inkSoft
                         : game.players[only].color,
                     width: w,
                     fontSize: big ? 16 : 13,
@@ -2435,7 +2441,7 @@ class HomePageState extends State<HomePage>
                                   colors: [Color(0xFF7A1F2C), Color(0xFF3E0C14)],
                                 ),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Palette.gold, width: 1.5),
+                                border: Border.all(color: skin.gold, width: 1.5),
                                 boxShadow: const [
                                   BoxShadow(
                                       color: Colors.black45,
@@ -2482,7 +2488,7 @@ class HomePageState extends State<HomePage>
   Future<void> _takeTask(RoundTask t) async {
     if (_round.decree != Decree.kingsCommand) {
       if (!_round.mayTake(t, _you)) {
-        _showSnack(_round.whyCantTake(t, _you)!, Palette.feltDeep);
+        _showSnack(_round.whyCantTake(t, _you)!, context.skin.feltDeep);
         return;
       }
       _assignTask(t, _you);
@@ -2657,7 +2663,7 @@ class HomePageState extends State<HomePage>
     if (!_round.hands[_you].any((c) => _round.revealFor(_you, c) != null)) {
       _showSnack(
           'Nothing you may show: only your highest, lowest or only card of a suit',
-          Palette.feltDeep);
+          context.skin.feltDeep);
       return;
     }
     setState(() => _revealing = true);
@@ -2687,12 +2693,12 @@ class HomePageState extends State<HomePage>
       no = '$name can show a card once this trick is over';
     }
     if (no != null) {
-      _showSnack(no, Palette.feltDeep);
+      _showSnack(no, context.skin.feltDeep);
       return;
     }
     final showable = [for (final card in c.hands[seat]) if (c.revealFor(seat, card) != null) card];
     if (showable.isEmpty) {
-      _showSnack('$name has no card they may show', Palette.feltDeep);
+      _showSnack('$name has no card they may show', context.skin.feltDeep);
       return;
     }
     int score(PlayingCard card) {
@@ -2901,7 +2907,7 @@ class HomePageState extends State<HomePage>
     final action = Speak(seat, on: !_round.spoke[seat]);
     final why = game.problem(action);
     if (why != null) {
-      _showSnack(why, Palette.feltDeep);
+      _showSnack(why, context.skin.feltDeep);
       return;
     }
     _haptic(HapticFeedback.selectionClick);
@@ -2984,7 +2990,7 @@ class HomePageState extends State<HomePage>
                       : !_round.mayTake(t, seat)
                           ? _round.whyCantTake(t, seat)!
                           : 'Take tasks onto your own seat',
-              Palette.feltDeep);
+              context.skin.feltDeep);
         }
         return;
       }
@@ -3018,7 +3024,7 @@ class HomePageState extends State<HomePage>
     }
     if (seat != null && !taken) {
       _haptic(HapticFeedback.heavyImpact);
-      _showSnack(_round.whyCantTake(t, seat)!, Palette.lost);
+      _showSnack(_round.whyCantTake(t, seat)!, context.skin.lost);
     }
   }
 
@@ -3262,6 +3268,7 @@ class HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     // One page: the felt is always there. Before a game it shows the
     // crown and the main buttons; New Game opens its panel on the table.
     // On a wide screen the on-screen table sits in the middle with room
@@ -3379,7 +3386,7 @@ class HomePageState extends State<HomePage>
                       : ColoredBox(
                           key: const ValueKey('setup'),
                           // In a game, wash the table out so the setup reads.
-                          color: _inGame ? Palette.felt : Colors.transparent,
+                          color: _inGame ? skin.felt : Colors.transparent,
                           child: Center(child: _buildSetupPanel()),
                         ),
                 ),
@@ -3663,6 +3670,7 @@ class HomePageState extends State<HomePage>
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final skin = context.skin;
     return AppBar(
       toolbarHeight: 60,
       titleSpacing: 28,
@@ -3683,12 +3691,12 @@ class HomePageState extends State<HomePage>
                       : 'Round ${game.roundNumber}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontFamily: displayFont,
+              style: TextStyle(
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 22,
-                  color: Palette.gold,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 10)])),
+                  color: skin.gold,
+                  shadows: const [Shadow(color: Colors.black54, blurRadius: 10)])),
           ),
               if (_choosingKing) ...[
                 const SizedBox(width: 12),
@@ -3709,7 +3717,7 @@ class HomePageState extends State<HomePage>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Palette.cardRed,
+                      color: skin.cardRed,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(_round.decree!.title,
@@ -3734,7 +3742,7 @@ class HomePageState extends State<HomePage>
             message: '${game.players[_round.pickTurn!].name} passes the pick on (once a round)',
             child: TextButton(
               onPressed: () => _pass(_round.pickTurn!),
-              style: TextButton.styleFrom(foregroundColor: Palette.gold),
+              style: TextButton.styleFrom(foregroundColor: skin.gold),
               child: const Text('Pass'),
             ),
           ),
@@ -3748,13 +3756,13 @@ class HomePageState extends State<HomePage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('${game.target}',
-                      style: const TextStyle(
-                          fontFamily: displayFont,
+                      style: TextStyle(
+                          fontFamily: skin.displayFont,
                           fontWeight: FontWeight.w900,
                           fontSize: 22,
                           height: 1,
-                          color: Palette.gold,
-                          shadows: [Shadow(blurRadius: 6)])),
+                          color: skin.gold,
+                          shadows: const [Shadow(blurRadius: 6)])),
                   const SizedBox(width: 5),
                   const CrownIcon(size: 18),
                 ],
@@ -3896,6 +3904,3 @@ class HomePageState extends State<HomePage>
   }
 
 }
-
-/// The soft shadow under words on the felt, as on the front page.
-const _feltShadow = feltShadow;

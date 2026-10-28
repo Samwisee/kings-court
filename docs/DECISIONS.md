@@ -243,3 +243,19 @@ throne room) stay literals for now: they are shades of the look rather
 than the look, naming ninety of them is a design job of its own, and the
 Plain skin changes the look without them. The skin test lists the files
 with such literals as the next debt.
+- **The sweep landed as one commit.** The plan said a family of files per
+  commit, but the constructors that change cross families (the spark and
+  confetti painters, the high-visibility and ornate borders, the task
+  card's measure and the table geometry that calls it, the flight), so no
+  family compiles without the others, and without an SDK here a file
+  can't be staged in part. It is mechanical (a script: `final skin =
+  context.skin;` where a build reads the look, `context.skin` in other
+  State methods, the skin passed into painters, `const` taken off what
+  now reads it, then `dart fix`), and the screenshots prove it changes no
+  pixel. A `fix` workflow (`fix.yml`) was added to run `dart fix` without
+  the SDK. The Court Cards' cloth and the emblems' gold stay literal
+  colours: they are the court skin's art, drawn the same in every skin
+  for now (the Plain skin keeps the court's cards).
+- The task card's text style (which the card's size is measured in) is
+  the skin's (`Skin.taskText`), so `TableCard.sizeFor` and the table
+  geometry take the skin, and the size cache is keyed by it.

@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
+import '../../skin/skin.dart';
 import '../widgets.dart';
 
 /// Where everything sits on the table for a given screen size. The phone
@@ -13,7 +14,7 @@ import '../widgets.dart';
 /// edge and turned to face the player sitting there.
 class TableGeometry {
   TableGeometry(this.size, this.players, this.textOf,
-      {double? fixedCardWidth, this.upright = false})
+      {double? fixedCardWidth, this.upright = false, required this.skin})
       : seatSize = clampD(math.min(size.width, size.height) * 0.13, 36, 64) {
     seatExtent = seatSize + 32; // token, with room for the crown
     rx = size.width / 2 - seatExtent / 2 - trimInset;
@@ -26,6 +27,9 @@ class TableGeometry {
 
   final Size size;
   final int players;
+
+  /// The look, whose task text sets how tall a card is.
+  final Skin skin;
 
   /// Laptop view: nothing turns to face its seat; everything reads the
   /// right way up for one screen.
@@ -54,8 +58,8 @@ class TableGeometry {
   Size cardSize(RoundTask t) {
     final text = textOf(t);
     final sealed = t.seal != null;
-    return _sizeCache.putIfAbsent('$cardWidth|$sealed|$text',
-        () => TableCard.sizeFor(text, cardWidth, sealed: sealed));
+    return _sizeCache.putIfAbsent('${skin.id}|$cardWidth|$sealed|$text',
+        () => TableCard.sizeFor(skin, text, cardWidth, sealed: sealed));
   }
 
   /// Seat 0 sits at the bottom edge (whoever is holding the phone); the

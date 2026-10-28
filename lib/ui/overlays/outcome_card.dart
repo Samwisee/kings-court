@@ -13,7 +13,7 @@ import '../../engine/round.dart';
 import '../../game/state.dart';
 import '../../modes/chronicle/chapters.dart';
 import '../../modes/tutorial/lessons.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// The outcome card's arrival over the table: [animation] runs from 0 to
@@ -72,7 +72,7 @@ class OutcomeOverlay extends StatelessWidget {
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
-                    painter: CrownConfetti(progress: t, seed: dealId),
+                    painter: CrownConfetti(skin: context.skin, progress: t, seed: dealId),
                   ),
                 ),
               ),
@@ -133,9 +133,10 @@ class _OutcomeCardState extends State<OutcomeCard> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final game = widget.game;
     final won = widget.won;
-    final fg = won ? Palette.ink : Colors.white;
+    final fg = won ? skin.ink : Colors.white;
     final you = widget.you;
     final onScreen = widget.onScreen;
     final crowns = widget.crowns;
@@ -155,18 +156,18 @@ class _OutcomeCardState extends State<OutcomeCard> {
             Text('Chapter ${chapter + 1}: ${chronicle[chapter].title}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontFamily: displayFont,
+                    fontFamily: skin.displayFont,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: won ? Palette.ink : Palette.gold)),
+                    color: won ? skin.ink : skin.gold)),
           Text(won ? 'Round won' : 'Round lost',
               style: TextStyle(
-                  fontFamily: displayFont,
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w900,
                   fontSize: 32,
                   color: fg)),
           OrnateDivider(
-              color: won ? Palette.goldInk : Palette.gold),
+              color: won ? skin.goldInk : skin.gold),
           Text(
             won
                 ? 'Every task is done. The court rejoices.'
@@ -222,7 +223,7 @@ class _OutcomeCardState extends State<OutcomeCard> {
                     child: CrownIcon(
                         size: 28,
                         color: i < crowns
-                            ? Palette.ink
+                            ? skin.ink
                             : const Color(0x33000000)),
                   ),
               ],
@@ -235,7 +236,7 @@ class _OutcomeCardState extends State<OutcomeCard> {
                   ? 'Win streak ${game.streak}, best ${game.bestStreak}'
                   : 'Won ${game.wins}, lost ${game.losses} so far',
               style: TextStyle(
-                  fontSize: 15, color: won ? Palette.ink : Colors.white70)),
+                  fontSize: 15, color: won ? skin.ink : Colors.white70)),
           const SizedBox(height: 16),
           if (chapter == null) ...[
           Row(
@@ -245,18 +246,18 @@ class _OutcomeCardState extends State<OutcomeCard> {
               const Spacer(),
               Text('$nextTarget',
                   style: TextStyle(
-                      fontFamily: displayFont,
+                      fontFamily: skin.displayFont,
                       fontWeight: FontWeight.w900,
                       fontSize: 22,
-                      color: won ? Palette.ink : Palette.gold)),
+                      color: won ? skin.ink : skin.gold)),
               const SizedBox(width: 4),
-              CrownIcon(color: won ? Palette.ink : Palette.gold),
+              CrownIcon(color: won ? skin.ink : skin.gold),
             ],
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: won ? Palette.ink : Palette.gold,
-              thumbColor: won ? Palette.ink : Palette.gold,
+              activeTrackColor: won ? skin.ink : skin.gold,
+              thumbColor: won ? skin.ink : skin.gold,
               inactiveTrackColor: won ? Colors.black26 : Colors.white24,
             ),
             child: Slider(
@@ -280,15 +281,15 @@ class _OutcomeCardState extends State<OutcomeCard> {
                   style: OutlinedButton.styleFrom(
                       foregroundColor: fg,
                       side: BorderSide(
-                          color: won ? Palette.ink : Colors.white54)),
+                          color: won ? skin.ink : Colors.white54)),
                   child: Text(won ? 'Replay chapter' : 'Try again'),
                 ),
                 if (won && hasNext)
                   FilledButton(
                     onPressed: () => widget.onChapter(chapter + 1),
                     style: FilledButton.styleFrom(
-                        backgroundColor: Palette.ink,
-                        foregroundColor: Palette.gold),
+                        backgroundColor: skin.ink,
+                        foregroundColor: skin.gold),
                     child: const Text('Next chapter'),
                   ),
               ] else ...[
@@ -297,15 +298,15 @@ class _OutcomeCardState extends State<OutcomeCard> {
                 style: OutlinedButton.styleFrom(
                     foregroundColor: fg,
                     side: BorderSide(
-                        color: won ? Palette.ink : Colors.white54)),
+                        color: won ? skin.ink : Colors.white54)),
                 child: const Text('Retry'),
               ),
               FilledButton(
                 onPressed: () => widget.onDeal(nextTarget),
                 style: won
                     ? FilledButton.styleFrom(
-                        backgroundColor: Palette.ink,
-                        foregroundColor: Palette.gold)
+                        backgroundColor: skin.ink,
+                        foregroundColor: skin.gold)
                     : null,
                 child: const Text('Deal'),
               ),
@@ -316,7 +317,7 @@ class _OutcomeCardState extends State<OutcomeCard> {
             TextButton(
               onPressed: widget.onUndo,
               style: TextButton.styleFrom(
-                  foregroundColor: won ? Palette.ink : Colors.white70),
+                  foregroundColor: won ? skin.ink : Colors.white70),
               child: const Text('Undo last mark'),
             ),
         ],
@@ -342,7 +343,8 @@ class LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = won ? Palette.ink : Colors.white;
+    final skin = context.skin;
+    final fg = won ? skin.ink : Colors.white;
     final l = lessons[math.min(lesson, lessons.length - 1)];
     final last = lesson >= lessons.length - 1;
     return OrnateCard(
@@ -356,17 +358,17 @@ class LessonCard extends StatelessWidget {
           Text('Lesson ${lesson + 1}: ${l.title}',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: displayFont,
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
-                  color: won ? Palette.ink : Palette.gold)),
+                  color: won ? skin.ink : skin.gold)),
           Text(
               won
                   ? (last ? 'Tutorial complete' : 'Lesson complete')
                   : 'Not quite',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: displayFont,
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w900,
                   fontSize: 30,
                   color: fg)),
@@ -384,15 +386,15 @@ class LessonCard extends StatelessWidget {
                 onPressed: onRetry,
                 style: OutlinedButton.styleFrom(
                     foregroundColor: fg,
-                    side: BorderSide(color: won ? Palette.ink : Colors.white54)),
+                    side: BorderSide(color: won ? skin.ink : Colors.white54)),
                 child: Text(won ? 'Replay lesson' : 'Try again'),
               ),
               FilledButton(
                 onPressed: onNext,
                 style: won
                     ? FilledButton.styleFrom(
-                        backgroundColor: Palette.ink,
-                        foregroundColor: Palette.gold)
+                        backgroundColor: skin.ink,
+                        foregroundColor: skin.gold)
                     : null,
                 child: Text(last
                     ? 'Finish'

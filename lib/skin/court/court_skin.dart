@@ -83,6 +83,8 @@ class CourtSkin extends Skin {
   String get bodyFont => court.bodyFont;
   @override
   List<Shadow> get feltShadow => court.feltShadow;
+  @override
+  TextStyle get taskText => court.taskTextStyle;
 
   @override
   Color get outlineColour => court.outlineColour;

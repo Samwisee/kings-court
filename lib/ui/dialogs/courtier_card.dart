@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../engine/round.dart';
 import '../../game/courtiers.dart';
 import '../../game/state.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
 import '../widgets/house_banner.dart';
@@ -51,6 +52,7 @@ class CourtierCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final isKing = round.king == seat;
     return StatefulBuilder(
         builder: (context, setDialogState) {
@@ -60,11 +62,11 @@ class CourtierCard extends StatelessWidget {
           return RotatedBox(
             quarterTurns: quarterTurns,
             child: Dialog(
-              backgroundColor: DialogStyle.paper,
+              backgroundColor: skin.paper,
               surfaceTintColor: Colors.transparent,
               clipBehavior: Clip.antiAlias,
               // Edged in the player's colour, like their tasks.
-              shape: HighVisBorder(player.color),
+              shape: HighVisBorder(player.color, context.skin),
               insetPadding: const EdgeInsets.all(20),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 380),
@@ -82,15 +84,15 @@ class CourtierCard extends StatelessWidget {
                       // A gilt band between the banner and the card.
                       Container(
                         height: 5,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(colors: [
-                            Palette.goldDeep,
-                            Palette.goldLight,
-                            Palette.gold,
-                            Palette.goldDeep,
+                            skin.goldDeep,
+                            skin.goldLight,
+                            skin.gold,
+                            skin.goldDeep,
                           ]),
                           border: Border(
-                              bottom: BorderSide(color: outlineColour)),
+                              bottom: BorderSide(color: skin.outlineColour)),
                         ),
                       ),
                       Padding(
@@ -99,11 +101,11 @@ class CourtierCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(courtier.story,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 15,
                                     height: 1.4,
                                     fontStyle: FontStyle.italic,
-                                    color: Palette.inkSoft)),
+                                    color: skin.inkSoft)),
                             if (onScreen && !choosingKing) ...[
                               const SizedBox(height: 8),
                               if (seat == you)
@@ -118,16 +120,16 @@ class CourtierCard extends StatelessWidget {
                                     icon: const Icon(Icons.record_voice_over),
                                     label: Text(spoke ? 'Card shown' : 'Show a card'),
                                     style: OutlinedButton.styleFrom(
-                                        foregroundColor: Palette.ink,
-                                        disabledForegroundColor: Palette.inkSoft,
-                                        side: const BorderSide(color: Palette.ink)),
+                                        foregroundColor: skin.ink,
+                                        disabledForegroundColor: skin.inkSoft,
+                                        side: BorderSide(color: skin.ink)),
                                   ),
                                 ])
                               else
                                 Text(
                                     spoke ? 'Has shown a card.' : 'Hasn\u2019t shown a card.',
-                                    style: const TextStyle(
-                                        fontSize: 15, color: Palette.inkSoft)),
+                                    style: TextStyle(
+                                        fontSize: 15, color: skin.inkSoft)),
                             ],
                             if (!choosingKing && !onScreen) ...[
                               const Divider(height: 26),
@@ -144,8 +146,8 @@ class CourtierCard extends StatelessWidget {
                                           : spoke
                                               ? 'Card reveal used'
                                               : 'Card reveal available',
-                                      style: const TextStyle(
-                                          fontSize: 15, color: Palette.ink)),
+                                      style: TextStyle(
+                                          fontSize: 15, color: skin.ink)),
                                 ),
                                 MouseRegion(cursor: canSpeak ? SystemMouseCursors.click : MouseCursor.defer, child: GestureDetector(
                                   onTap: !canSpeak
@@ -173,7 +175,7 @@ class CourtierCard extends StatelessWidget {
                             TextButton(
                               onPressed: () => Navigator.pop(context),
                               style: TextButton.styleFrom(
-                                  foregroundColor: Palette.ink),
+                                  foregroundColor: skin.ink),
                               child: const Text('Close'),
                             ),
                           ],

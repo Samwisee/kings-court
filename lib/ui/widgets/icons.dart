@@ -7,18 +7,21 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../skin/court/suits.g.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 
 /// A small five-point crown, drawn so it looks the same on every platform.
 class CrownIcon extends StatelessWidget {
-  const CrownIcon({super.key, this.size = 16, this.color = Palette.gold});
+  const CrownIcon({super.key, this.size = 16, this.color});
   final double size;
-  final Color color;
+
+  /// The skin's gold unless given.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
         size: Size(size, size * 0.75),
-        painter: _CrownPainter(color),
+        painter: _CrownPainter(color ?? context.skin.gold),
       );
 }
 
@@ -49,13 +52,15 @@ class _CrownPainter extends CustomPainter {
 /// The card tracker's icon: a small grid of cards, like the tracker's own
 /// rows of the deck, some of them played (filled) and some still to come.
 class TrackerIcon extends StatelessWidget {
-  const TrackerIcon({super.key, this.size = 26, this.color = Palette.gold});
+  const TrackerIcon({super.key, this.size = 26, this.color});
   final double size;
-  final Color color;
+
+  /// The skin's gold unless given.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _TrackerPainter(color));
+      CustomPaint(size: Size.square(size), painter: _TrackerPainter(color ?? context.skin.gold));
 }
 
 class _TrackerPainter extends CustomPainter {
@@ -88,17 +93,20 @@ class _TrackerPainter extends CustomPainter {
 /// Court Cards fanned out, the front one gold with a crown; struck out by
 /// [NoCourtIcon] for "no Court Cards".
 class CardFanIcon extends StatelessWidget {
-  const CardFanIcon({super.key, this.size = 26, this.color = Palette.gold});
+  const CardFanIcon({super.key, this.size = 26, this.color});
   final double size;
-  final Color color;
+
+  /// The skin's gold unless given.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _CardFanPainter(color));
+      CustomPaint(size: Size.square(size), painter: _CardFanPainter(color ?? context.skin.gold, context.skin));
 }
 
 class _CardFanPainter extends CustomPainter {
-  _CardFanPainter(this.color);
+  _CardFanPainter(this.color, this.skin);
+  final Skin skin;
   final Color color;
 
   @override
@@ -111,7 +119,7 @@ class _CardFanPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = s * 0.07
       ..color = color;
-    final back = Paint()..color = Palette.feltDeep;
+    final back = Paint()..color = skin.feltDeep;
     for (final (i, a) in [(-1, -0.42), (0, 0.0), (1, 0.42)].map((e) => (e.$1, e.$2))) {
       canvas.save();
       canvas.translate(s / 2, s * 0.88);
@@ -139,21 +147,23 @@ class _CardFanPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CardFanPainter old) => old.color != color;
+  bool shouldRepaint(_CardFanPainter old) => old.color != color || old.skin != skin;
 }
 
 /// The icon for showing a card: a card held up, with rays around it. Once
 /// used, the rays are gone and a line crosses it out.
 class ShowCardIcon extends StatelessWidget {
   const ShowCardIcon(
-      {super.key, this.size = 26, this.color = Palette.gold, this.used = false});
+      {super.key, this.size = 26, this.color, this.used = false});
   final double size;
-  final Color color;
+
+  /// The skin's gold unless given.
+  final Color? color;
   final bool used;
 
   @override
   Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _ShowCardPainter(color, used));
+      CustomPaint(size: Size.square(size), painter: _ShowCardPainter(color ?? context.skin.gold, used));
 }
 
 class _ShowCardPainter extends CustomPainter {
@@ -244,13 +254,15 @@ class _SuitPainter extends CustomPainter {
 
 /// A Court Card: a card with a crown on it.
 class CourtCardIcon extends StatelessWidget {
-  const CourtCardIcon({super.key, required this.size, this.color = Palette.goldDeep});
+  const CourtCardIcon({super.key, required this.size, this.color});
   final double size;
-  final Color color;
+
+  /// The skin's goldDeep unless given.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-      size: Size(size * 0.78, size), painter: _CourtCardPainter(color));
+      size: Size(size * 0.78, size), painter: _CourtCardPainter(color ?? context.skin.goldDeep));
 }
 
 class _CourtCardPainter extends CustomPainter {
@@ -291,23 +303,26 @@ class _CourtCardPainter extends CustomPainter {
 
 /// No Court Cards: the Court Card icon, struck through.
 class NoCourtIcon extends StatelessWidget {
-  const NoCourtIcon({super.key, required this.size, this.color = Palette.goldDeep});
+  const NoCourtIcon({super.key, required this.size, this.color});
   final double size;
-  final Color color;
+
+  /// The skin's goldDeep unless given.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => SizedBox(
         width: size,
         height: size,
         child: Stack(alignment: Alignment.center, children: [
-          CourtCardIcon(size: size, color: color),
-          CustomPaint(size: Size.square(size), painter: _SlashPainter(color)),
+          CourtCardIcon(size: size, color: color ?? context.skin.goldDeep),
+          CustomPaint(size: Size.square(size), painter: _SlashPainter(color ?? context.skin.goldDeep, context.skin)),
         ]),
       );
 }
 
 class _SlashPainter extends CustomPainter {
-  _SlashPainter(this.color);
+  _SlashPainter(this.color, this.skin);
+  final Skin skin;
   final Color color;
 
   @override
@@ -316,11 +331,11 @@ class _SlashPainter extends CustomPainter {
         Offset(size.width * 0.1, size.height * 0.92),
         Offset(size.width * 0.9, size.height * 0.08),
         Paint()
-          ..color = Palette.lost
+          ..color = skin.lost
           ..strokeWidth = size.height * 0.1
           ..strokeCap = StrokeCap.round);
   }
 
   @override
-  bool shouldRepaint(_SlashPainter old) => old.color != color;
+  bool shouldRepaint(_SlashPainter old) => old.color != color || old.skin != skin;
 }

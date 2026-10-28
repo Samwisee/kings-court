@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 
 /// The felt set into a royal-red table: round the edge of the screen the
 /// table shows, then a thin double brass rule where the felt begins, like
@@ -29,7 +30,7 @@ class TableTrim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (table) return const CustomPaint(painter: _TablePainter(), size: Size.infinite);
+    if (table) return CustomPaint(painter: _TablePainter(context.skin), size: Size.infinite);
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -48,7 +49,8 @@ class TableTrim extends StatelessWidget {
 }
 
 class _TablePainter extends CustomPainter {
-  const _TablePainter();
+  const _TablePainter(this.skin);
+  final Skin skin;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -79,7 +81,7 @@ class _TablePainter extends CustomPainter {
     canvas.restore();
 
     // The table: plain royal red.
-    canvas.drawPath(table, Paint()..color = Palette.table);
+    canvas.drawPath(table, Paint()..color = skin.table);
 
     canvas.drawRRect(
         felt,
@@ -96,13 +98,14 @@ class _TablePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TablePainter old) => false;
+  bool shouldRepaint(_TablePainter old) => false || old.skin != skin;
 }
 
 /// A ring of gold and white sparks flying out from [origin] and fading as
 /// [progress] runs from 0 to 1. Used when the crown lands.
 class SparkBurst extends CustomPainter {
-  SparkBurst({required this.origin, required this.progress});
+  SparkBurst({required this.skin, required this.origin, required this.progress});
+  final Skin skin;
   final Offset origin;
   final double progress;
 
@@ -114,7 +117,7 @@ class SparkBurst extends CustomPainter {
       final a = k * 2 * math.pi / 14;
       final r = 10 + 48 * ease * (k.isEven ? 1 : 0.7);
       final p = origin + Offset(math.cos(a), math.sin(a)) * r;
-      final color = k.isEven ? Palette.gold : Colors.white;
+      final color = k.isEven ? skin.gold : Colors.white;
       canvas.drawCircle(
         p,
         (k.isEven ? 3.5 : 2.5) * (1 - ease * 0.5),
@@ -126,20 +129,21 @@ class SparkBurst extends CustomPainter {
       origin,
       18 + 20 * ease,
       Paint()
-        ..color = Palette.gold.withAlpha((90 * fade).round())
+        ..color = skin.gold.withAlpha((90 * fade).round())
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
     );
   }
 
   @override
   bool shouldRepaint(SparkBurst old) =>
-      old.progress != progress || old.origin != origin;
+      old.progress != progress || old.origin != origin || old.skin != skin;
 }
 
 /// Gold crowns and confetti tumbling down the table when a round is won.
 /// [progress] runs 0 to 1; [seed] keeps the pattern steady for one win.
 class CrownConfetti extends CustomPainter {
-  CrownConfetti({required this.progress, required this.seed});
+  CrownConfetti({required this.skin, required this.progress, required this.seed});
+  final Skin skin;
   final double progress;
   final int seed;
 
@@ -169,10 +173,10 @@ class CrownConfetti extends CustomPainter {
       final y = -30 + t * speed * (size.height + 60);
       final x = x0 + math.sin(t * 6 + i) * sway;
       final color = switch (i % 4) {
-        0 => Palette.gold,
+        0 => skin.gold,
         1 => Colors.white,
-        2 => Palette.goldDeep,
-        _ => Palette.cardRed,
+        2 => skin.goldDeep,
+        _ => skin.cardRed,
       };
       final paint = Paint()..color = color.withAlpha((255 * fade).round());
       canvas.save();
@@ -181,7 +185,7 @@ class CrownConfetti extends CustomPainter {
       if (isCrown) {
         canvas.scale(18);
         canvas.translate(-0.5, -0.4);
-        canvas.drawPath(_crownPath, Paint()..color = Palette.gold.withAlpha((255 * fade).round()));
+        canvas.drawPath(_crownPath, Paint()..color = skin.gold.withAlpha((255 * fade).round()));
       } else {
         canvas.drawRect(const Rect.fromLTWH(-4, -2.5, 8, 5), paint);
       }
@@ -191,7 +195,7 @@ class CrownConfetti extends CustomPainter {
 
   @override
   bool shouldRepaint(CrownConfetti old) =>
-      old.progress != progress || old.seed != seed;
+      old.progress != progress || old.seed != seed || old.skin != skin;
 }
 
 /// White Cinzel lettering with a solid black outline, readable on any seat
@@ -205,11 +209,12 @@ class OutlinedLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     // Seat numbers use the plain face: Cinzel's old-style 1 reads as a
     // Roman I, which clashes with the wax seals.
     final numeric = RegExp(r'^\d+$').hasMatch(text);
     TextStyle style(Paint? stroke) => TextStyle(
-          fontFamily: numeric ? bodyFont : displayFont,
+          fontFamily: numeric ? skin.bodyFont : skin.displayFont,
           fontWeight: numeric ? FontWeight.w700 : FontWeight.w900,
           fontSize: fontSize,
           height: 1,

@@ -15,7 +15,7 @@ import '../../../engine/task_help.dart';
 import '../../../game/courtiers.dart';
 import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
-import '../../../skin/theme.dart';
+import '../../../skin/skin_scope.dart';
 import '../../cards/card_view.dart';
 import '../../widgets.dart';
 
@@ -59,16 +59,17 @@ class _TutorialIntroState extends State<TutorialIntro> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final p = pages[page];
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
-      backgroundColor: Palette.feltDeep,
+      backgroundColor: skin.feltDeep,
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
-            center: Alignment(0, -0.4),
+            center: const Alignment(0, -0.4),
             radius: 1.2,
-            colors: [Palette.felt, Palette.feltDeep],
+            colors: [skin.felt, skin.feltDeep],
           ),
         ),
         child: SafeArea(
@@ -85,7 +86,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                       decoration: BoxDecoration(
                         border: Border(
                             bottom: BorderSide(
-                                color: Palette.gold.withValues(alpha: 0.8), width: 1.5)),
+                                color: skin.gold.withValues(alpha: 0.8), width: 1.5)),
                       ),
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
                       SizedBox(height: 56, child: Row(children: [
@@ -94,11 +95,11 @@ class _TutorialIntroState extends State<TutorialIntro> {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(widget.heading,
-                                style: const TextStyle(
-                                    fontFamily: displayFont,
+                                style: TextStyle(
+                                    fontFamily: skin.displayFont,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 22,
-                                    color: Palette.gold,
+                                    color: skin.gold,
                                     shadows: _shadow)),
                           ),
                         ),
@@ -108,8 +109,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
                             tooltip: 'Leave the tutorial',
                             onPressed: () => Navigator.pop(context, 'quit'),
                             style: IconButton.styleFrom(overlayColor: Colors.transparent),
-                            icon: const Icon(Icons.close_rounded,
-                                color: Palette.gold, size: 28, shadows: _shadow),
+                            icon: Icon(Icons.close_rounded,
+                                color: skin.gold, size: 28, shadows: _shadow),
                           ),
                         ),
                       ])),
@@ -131,7 +132,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                                   curve: Curves.easeOutCubic,
                                   child: TweenAnimationBuilder<Color?>(
                                     tween: ColorTween(
-                                        end: i <= page ? Palette.gold : Colors.white24),
+                                        end: i <= page ? skin.gold : Colors.white24),
                                     duration: const Duration(milliseconds: 300),
                                     builder: (context, c, _) =>
                                         CrownIcon(size: 13, color: c ?? Colors.white24),
@@ -167,12 +168,12 @@ class _TutorialIntroState extends State<TutorialIntro> {
                                     header: true,
                                     child: Text(p.title,
                                         textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                            fontFamily: displayFont,
+                                        style: TextStyle(
+                                            fontFamily: skin.displayFont,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 27,
-                                            color: Palette.gold,
-                                            shadows: [
+                                            color: skin.gold,
+                                            shadows: const [
                                               Shadow(color: Colors.black54, blurRadius: 12)
                                             ])),
                                   ),
@@ -210,7 +211,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                               TextButton(
                                 onPressed: _back,
                                 style: TextButton.styleFrom(
-                                    foregroundColor: Palette.gold,
+                                    foregroundColor: skin.gold,
                                     overlayColor: Colors.transparent),
                                 child: const Text('Back',
                                     style: TextStyle(fontSize: 16, shadows: _shadow)),
@@ -249,16 +250,16 @@ class _TutorialIntroState extends State<TutorialIntro> {
       if (task.noCourtCards)
         (const NoCourtIcon(size: 16), 'The trick can\u2019t have any Court Cards in it.'),
       if (task.kingCantTake)
-        (const Icon(Icons.block, size: 16, color: Palette.inkSoft),
+        (Icon(Icons.block, size: 16, color: context.skin.inkSoft),
             'The King can\u2019t take this task.'),
       for (final n in task.notes)
-        (const Icon(Icons.info_outline, size: 16, color: Palette.inkSoft), n),
+        (Icon(Icons.info_outline, size: 16, color: context.skin.inkSoft), n),
     ];
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: DialogStyle.paper,
-        shape: const HighVisBorder(null),
+        backgroundColor: context.skin.paper,
+        shape: HighVisBorder(null, context.skin),
         scrollable: true,
         contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -270,14 +271,14 @@ class _TutorialIntroState extends State<TutorialIntro> {
             children: [
               Row(children: [
                 Text('${task.getPointsForPlayerCount(3)}',
-                    style: const TextStyle(
-                        fontFamily: displayFont,
+                    style: TextStyle(
+                        fontFamily: context.skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 28,
                         height: 1,
-                        color: Palette.ink)),
+                        color: context.skin.ink)),
                 const SizedBox(width: 3),
-                const CrownIcon(size: 19, color: Palette.goldDeep),
+                CrownIcon(size: 19, color: context.skin.goldDeep),
                 for (final (icon, _) in marks) ...[
                   const SizedBox(width: 7),
                   icon,
@@ -285,11 +286,11 @@ class _TutorialIntroState extends State<TutorialIntro> {
               ]),
               const SizedBox(height: 6),
               SuitText(task.fullText(3),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 19,
                       height: 1.3,
                       fontWeight: FontWeight.w600,
-                      color: Palette.ink)),
+                      color: context.skin.ink)),
               for (final (icon, words) in marks)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -297,21 +298,21 @@ class _TutorialIntroState extends State<TutorialIntro> {
                     SizedBox(width: 26, child: Align(alignment: Alignment.topLeft, child: icon)),
                     Expanded(
                       child: SuitText(words,
-                          style: const TextStyle(
-                              fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
+                          style: TextStyle(
+                              fontSize: 14.5, height: 1.35, color: context.skin.inkSoft)),
                     ),
                   ]),
                 ),
               const SizedBox(height: 12),
               SuitText(explainTask(task.description),
-                  style: const TextStyle(fontSize: 15, height: 1.4, color: Palette.ink)),
+                  style: TextStyle(fontSize: 15, height: 1.4, color: context.skin.ink)),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(foregroundColor: Palette.ink),
+            style: TextButton.styleFrom(foregroundColor: context.skin.ink),
             child: const Text('Close'),
           ),
         ],
@@ -344,9 +345,10 @@ class _TutorialIntroState extends State<TutorialIntro> {
 
   /// A task card as on the table; tap it for its close-up.
   Widget _task(String description, {double width = 150, int? owner}) {
+    final skin = context.skin;
     final task = RoundTask(taskByDescription(description));
     final text = task.boardText(3);
-    final size = TableCard.sizeFor(text, width);
+    final size = TableCard.sizeFor(skin, text, width);
     return Semantics(
       button: true,
       label: 'Task: ${task.fullText(3)}. Tap to read it.',
@@ -358,7 +360,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
             points: task.points(3),
             owner: owner == null
                 ? null
-                : Player(tutorialCourtiers[owner], colorValue: Palette.players[owner].toARGB32()),
+                : Player(tutorialCourtiers[owner], colorValue: skin.players[owner].toARGB32()),
             width: size.width,
             height: size.height),
       )),
@@ -370,7 +372,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
   Widget _token(int seat, String label, double size, {TokenShape? shape}) =>
       IgnorePointer(
         child: SeatToken(
-          player: Player(label, colorValue: Palette.players[seat].toARGB32()),
+          player: Player(label, colorValue: context.skin.players[seat].toARGB32()),
           label: label,
           size: size,
           shape: shape ?? tutorialHouses[seat].shape,
@@ -378,6 +380,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
       );
 
   Widget _art(IntroArt art) {
+    final skin = context.skin;
     switch (art) {
       case IntroArt.court:
         return Column(children: [
@@ -423,12 +426,12 @@ class _TutorialIntroState extends State<TutorialIntro> {
           alignment: WrapAlignment.center,
           children: [
             _task('Win the first trick', owner: 0),
-            _labelled(_card('9♠', glow: true), 'Lead your 9♠', color: Palette.gold),
+            _labelled(_card('9♠', glow: true), 'Lead your 9♠', color: skin.gold),
           ],
         );
       case IntroArt.follow:
         return Column(children: [
-          _labelled(_card('6♥', edge: Palette.players[1]), '♥ was led'),
+          _labelled(_card('6♥', edge: skin.players[1]), '♥ was led'),
           const SizedBox(height: 10),
           Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [
             _card('2♥', width: 50),
@@ -448,7 +451,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
           ]),
           const SizedBox(height: 12),
           _task('Win the 3♥', owner: 0),
-          _caption('Your trick holds the 3♥: the task is done.', color: Palette.gold),
+          _caption('Your trick holds the 3♥: the task is done.', color: skin.gold),
         ]);
       case IntroArt.tasks:
         return Wrap(
@@ -491,7 +494,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                 if (i == 0) const CrownIcon(size: 20) else const SizedBox(height: 15),
                 _token(i, name[0] == 'Y' ? 'Y' : name[0], 46),
                 _caption(name),
-                _caption('picks $n', color: Palette.gold),
+                _caption('picks $n', color: skin.gold),
               ]),
             ),
         ]));
@@ -500,8 +503,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
           _token(1, 'D', 52),
           const SizedBox(width: 10),
           Column(mainAxisSize: MainAxisSize.min, children: [
-            _card('7♠', width: 40, edge: Palette.players[1]),
-            _caption('highest', color: Palette.gold),
+            _card('7♠', width: 40, edge: skin.players[1]),
+            _caption('highest', color: skin.gold),
           ]),
           const SizedBox(width: 22),
           const ShowCardIcon(size: 44),
@@ -522,7 +525,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
               _card(c,
                   width: 40,
                   dimmed: played,
-                  edge: seat == null ? null : Palette.players[seat]),
+                  edge: seat == null ? null : skin.players[seat]),
           ]),
           _caption('Played: shaded, in the player’s colour. In your hand: bright, in your colour. Still to come: plain.'),
         ]);
@@ -548,9 +551,9 @@ class _TutorialIntroState extends State<TutorialIntro> {
               width: 220,
               height: 140,
               decoration: BoxDecoration(
-                color: Palette.feltDeep,
+                color: skin.feltDeep,
                 borderRadius: BorderRadius.circular(70),
-                border: Border.all(color: Palette.gold, width: 2),
+                border: Border.all(color: skin.gold, width: 2),
               ),
             ),
             Container(
@@ -581,12 +584,12 @@ class _TutorialIntroState extends State<TutorialIntro> {
           ]),
         );
       case IntroArt.ready:
-        return const Column(children: [
-          CrownIcon(size: 64),
-          SizedBox(height: 12),
+        return Column(children: [
+          const CrownIcon(size: 64),
+          const SizedBox(height: 12),
           Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.center, children: [
-            WaxSeal(seal: 1, size: 34),
-            Icon(Icons.history_edu_rounded, size: 34, color: Palette.gold),
+            const WaxSeal(seal: 1, size: 34),
+            Icon(Icons.history_edu_rounded, size: 34, color: skin.gold),
           ]),
         ]);
     }
@@ -600,8 +603,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
         alignment: WrapAlignment.center,
         children: [
           for (final (card, seat, words, wins) in plays)
-            _labelled(_card(card, glow: wins, edge: Palette.players[seat]), words,
-                color: wins ? Palette.gold : Colors.white70),
+            _labelled(_card(card, glow: wins, edge: context.skin.players[seat]), words,
+                color: wins ? context.skin.gold : Colors.white70),
         ],
       );
 }

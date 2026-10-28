@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import '../../game/state.dart';
 import '../../modes/chronicle/chapters.dart';
 import '../../platform/sfx.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../menu/menu.dart';
 import '../widgets.dart';
 import 'chapter_picker.dart';
@@ -179,20 +180,20 @@ class _SetupPanelState extends State<SetupPanel> {
       : setState(() => step++);
   void _back() => step == 0 ? widget.onCancel() : setState(() => step--);
 
-  static const _heading = TextStyle(
-      fontFamily: displayFont,
+  static TextStyle _heading(Skin skin) => TextStyle(
+      fontFamily: skin.displayFont,
       fontWeight: FontWeight.w700,
       fontSize: 26,
-      color: Palette.gold,
+      color: skin.gold,
       // The same soft shadow as the title on the front page.
-      shadows: [Shadow(color: Colors.black54, blurRadius: 12)]);
+      shadows: const [Shadow(color: Colors.black54, blurRadius: 12)]);
 
   Widget _modeStep() {
     return Column(
       key: const ValueKey('mode'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('Which game?', textAlign: TextAlign.center, style: _heading),
+        Text('Which game?', textAlign: TextAlign.center, style: _heading(context.skin)),
         const SizedBox(height: 12),
         for (final m in [
           GameMode.free,
@@ -247,7 +248,7 @@ class _SetupPanelState extends State<SetupPanel> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.saves.isNotEmpty) ...[
-          const Text('Your games', textAlign: TextAlign.center, style: _heading),
+          Text('Your games', textAlign: TextAlign.center, style: _heading(context.skin)),
           const SizedBox(height: 12),
           for (final s in widget.saves)
             Padding(
@@ -261,8 +262,8 @@ class _SetupPanelState extends State<SetupPanel> {
               ),
             ),
         ] else ...[
-        const Text('How will you play?',
-            textAlign: TextAlign.center, style: _heading),
+        Text('How will you play?',
+            textAlign: TextAlign.center, style: _heading(context.skin)),
         const SizedBox(height: 12),
         // A first-timer is pointed here first.
         tile('Tutorial', 'New to the court? Learn the rules step by step.',
@@ -294,12 +295,13 @@ class _SetupPanelState extends State<SetupPanel> {
   }
 
   Widget _countStep() {
+    final skin = context.skin;
     return Column(
       key: const ValueKey('count'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('How many players?',
-            textAlign: TextAlign.center, style: _heading),
+        Text('How many players?',
+            textAlign: TextAlign.center, style: _heading(context.skin)),
         const SizedBox(height: 18),
         Wrap(
             alignment: WrapAlignment.center,
@@ -322,17 +324,17 @@ class _SetupPanelState extends State<SetupPanel> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white24),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Setting up the deck',
                     style: TextStyle(
-                        fontFamily: displayFont,
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
-                        color: Palette.gold)),
-                SizedBox(height: 6),
-                SuitText(
+                        color: skin.gold)),
+                const SizedBox(height: 6),
+                const SuitText(
                     '1. From an ordinary pack, keep the Ace to 9 of ♥ ♦ ♠ ♣ (Aces count as 1). Put the 10s and picture cards aside.\n'
                     '2. Add four Court Cards: a Joker, a Jack, a Queen and a King. They are their own suit and beat every other card, Joker lowest, King highest.\n'
                     '3. That makes 40 cards. Shuffle and deal them all out; some players may get one more card than others.\n'
@@ -363,12 +365,13 @@ class _SetupPanelState extends State<SetupPanel> {
   }
 
   Widget _namesStep() {
+    final skin = context.skin;
     return Column(
       key: const ValueKey('names'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('Who sits at the table?',
-            textAlign: TextAlign.center, style: _heading),
+        Text('Who sits at the table?',
+            textAlign: TextAlign.center, style: _heading(context.skin)),
         const SizedBox(height: 6),
         const Text('Optional. Names give each seat its initials.',
             style: TextStyle(color: Colors.white70)),
@@ -384,7 +387,7 @@ class _SetupPanelState extends State<SetupPanel> {
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(12),
                   child:
-                      CircleAvatar(radius: 8, backgroundColor: Palette.players[i]),
+                      CircleAvatar(radius: 8, backgroundColor: skin.players[i]),
                 ),
                 prefixIconConstraints: const BoxConstraints(minWidth: 40),
                 isDense: true,
@@ -423,9 +426,9 @@ class _SetupPanelState extends State<SetupPanel> {
                   margin: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(colors: [
-                      Palette.gold.withValues(alpha: 0),
-                      Palette.gold.withValues(alpha: 0.35),
-                      Palette.gold.withValues(alpha: 0),
+                      context.skin.gold.withValues(alpha: 0),
+                      context.skin.gold.withValues(alpha: 0.35),
+                      context.skin.gold.withValues(alpha: 0),
                     ]),
                   ),
                 ),
@@ -465,13 +468,14 @@ class _SetupPanelState extends State<SetupPanel> {
       );
 
   Widget _finalStep() {
+    final skin = context.skin;
     switch (mode) {
       case GameMode.chronicle:
         return Column(
           key: const ValueKey('chapter'),
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Which chapter?', style: _heading),
+            Text('Which chapter?', style: _heading(context.skin)),
             const SizedBox(height: 14),
             ChapterPicker(
               progress: widget.progress,
@@ -482,7 +486,7 @@ class _SetupPanelState extends State<SetupPanel> {
               onPressed: _browseChapters,
               icon: const CrownIcon(size: 14),
               label: Text('All chapters (${widget.progress.totalCrowns} crowns)'),
-              style: TextButton.styleFrom(foregroundColor: Palette.gold),
+              style: TextButton.styleFrom(foregroundColor: skin.gold),
             ),
             _settingsPanel([if (digital) _playersRow(), _soundSwitch()]),
           ],
@@ -497,7 +501,7 @@ class _SetupPanelState extends State<SetupPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(child: Text('Setup', style: _heading)),
+            Center(child: Text('Setup', style: _heading(context.skin))),
             const SizedBox(height: 4),
             _settingsPanel([
             if (digital) _playersRow(),
@@ -507,11 +511,11 @@ class _SetupPanelState extends State<SetupPanel> {
                 const Text('Points target', style: TextStyle(fontSize: 16)),
                 const Spacer(),
                 Text('$target',
-                    style: const TextStyle(
-                        fontFamily: displayFont,
+                    style: TextStyle(
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 26,
-                        color: Palette.gold)),
+                        color: skin.gold)),
                 const SizedBox(width: 4),
                 const CrownIcon(size: 18),
               ],
@@ -545,6 +549,7 @@ class _SetupPanelState extends State<SetupPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final body = switch (_flow[math.min(step, _steps - 1)]) {
       'how' => _howStep(),
       'mode' => _modeStep(),
@@ -564,7 +569,7 @@ class _SetupPanelState extends State<SetupPanel> {
     // the buttons fixed in the bottom corners so they never move. Every
     // word on the felt has the front page's soft shadow.
     return DefaultTextStyle.merge(
-      style: const TextStyle(shadows: feltShadow),
+      style: TextStyle(shadows: skin.feltShadow),
       child: SizedBox.expand(
       child: Padding(
         // Clear of the table's edge and brass inlay all round.
@@ -606,7 +611,7 @@ class _SetupPanelState extends State<SetupPanel> {
                             curve: Curves.easeOutCubic,
                             child: TweenAnimationBuilder<Color?>(
                               tween: ColorTween(
-                                  end: i <= step ? Palette.gold : Colors.white24),
+                                  end: i <= step ? skin.gold : Colors.white24),
                               duration: const Duration(milliseconds: 360),
                               builder: (context, c, _) =>
                                   CrownIcon(size: 14, color: c ?? Colors.white24),
@@ -743,13 +748,14 @@ class _ModeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Semantics(
       button: true,
       selected: selected,
       child: Material(
       color: selected ? const Color(0x33D4A63A) : const Color(0x22000000),
       // Gold double rule with a jewel in each corner, like the menus.
-      shape: const OrnateBorder(radius: 12, gems: false),
+      shape: OrnateBorder(skin: context.skin, radius: 12, gems: false),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -757,7 +763,7 @@ class _ModeTile extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 9, 12, 10),
           child: Row(children: [
             if (icon != null) ...[
-              Icon(icon, color: Palette.gold, size: 28),
+              Icon(icon, color: skin.gold, size: 28),
               const SizedBox(width: 14),
             ],
             Expanded(
@@ -769,10 +775,10 @@ class _ModeTile extends StatelessWidget {
                   Flexible(
                     child: Text(title,
                         style: TextStyle(
-                            fontFamily: displayFont,
+                            fontFamily: skin.displayFont,
                             fontWeight: FontWeight.w700,
                             fontSize: 18,
-                            color: selected ? Palette.gold : Colors.white)),
+                            color: selected ? skin.gold : Colors.white)),
                   ),
                   if (badge != null) ...[
                     const SizedBox(width: 8),
@@ -780,7 +786,7 @@ class _ModeTile extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: badgeGold ? Palette.gold : Colors.white70)),
+                            color: badgeGold ? skin.gold : Colors.white70)),
                   ],
                 ],
               ),
@@ -791,7 +797,7 @@ class _ModeTile extends StatelessWidget {
             ],
           ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Palette.gold),
+            Icon(Icons.chevron_right_rounded, color: skin.gold),
           ]),
         ),
       ),
@@ -810,6 +816,7 @@ class _CountChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Semantics(
       button: true,
       selected: selected,
@@ -827,9 +834,9 @@ class _CountChip extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: const Color(0x22000000),
-            border: Border.all(color: Palette.gold, width: 2.5),
+            border: Border.all(color: skin.gold, width: 2.5),
             boxShadow: selected
-                ? [BoxShadow(color: Palette.gold.withValues(alpha: 0.45), blurRadius: 12)]
+                ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 12)]
                 : null,
           ),
           child: AnimatedContainer(
@@ -838,20 +845,20 @@ class _CountChip extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: selected
-                  ? const RadialGradient(
-                      center: Alignment(-0.3, -0.4),
-                      colors: [Palette.goldPale, Palette.gold])
+                  ? RadialGradient(
+                      center: const Alignment(-0.3, -0.4),
+                      colors: [skin.goldPale, skin.gold])
                   : null,
             ),
             child: Text('$n',
                 textHeightBehavior: const TextHeightBehavior(
                     applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
                 style: TextStyle(
-                    fontFamily: displayFont,
+                    fontFamily: skin.displayFont,
                     fontWeight: FontWeight.w900,
                     fontSize: 24,
                     height: 1,
-                    color: selected ? Palette.ink : Colors.white,
+                    color: selected ? skin.ink : Colors.white,
                     shadows: selected
                         ? null
                         : const [Shadow(color: Colors.black54, blurRadius: 8)])),

@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/task_help.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import 'court_dialog.dart';
 import 'icons.dart';
 import 'pips.dart';
@@ -59,8 +59,9 @@ class OrnateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final edge = this.edge ?? (court ? Palette.gold : won ? Palette.goldInk : Palette.lost);
-    final ink = won && !court ? Palette.goldInk : Palette.gold;
+    final skin = context.skin;
+    final edge = this.edge ?? (court ? skin.gold : won ? skin.goldInk : skin.lost);
+    final ink = won && !court ? skin.goldInk : skin.gold;
     return Container(
       margin: margin,
       constraints: BoxConstraints(maxWidth: maxWidth),
@@ -71,7 +72,7 @@ class OrnateCard extends StatelessWidget {
           colors: court
               ? const [Color(0xFF15583A), Color(0xFF0C3A25), Color(0xFF07291A)]
               : won
-              ? const [Palette.goldLight, Palette.gold, Color(0xFFB98A24)]
+              ? [skin.goldLight, skin.gold, const Color(0xFFB98A24)]
               : const [Color(0xFF3A1218), Color(0xFF1C0A0E), Color(0xFF12080A)],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -79,7 +80,7 @@ class OrnateCard extends StatelessWidget {
         boxShadow: [
           const BoxShadow(color: Colors.black54, blurRadius: 28, offset: Offset(0, 8)),
           BoxShadow(
-              color: (won || court ? Palette.gold : Palette.lost)
+              color: (won || court ? skin.gold : skin.lost)
                   .withValues(alpha: court ? 0.2 : 0.35),
               blurRadius: 40,
               spreadRadius: 2),
@@ -126,16 +127,16 @@ class OrnateCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: court
-                        ? const [Color(0xFF1E6B47), Palette.feltDeep]
+                        ? [const Color(0xFF1E6B47), skin.feltDeep]
                         : won
-                        ? const [Palette.goldPale, Palette.gold]
+                        ? [skin.goldPale, skin.gold]
                         : const [Color(0xFF5A1A22), Color(0xFF2A0E12)],
                   ),
                   border: Border.all(color: edge, width: 2.5),
                   boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],
                 ),
                 alignment: Alignment.center,
-                child: CrownIcon(size: 30, color: won && !court ? Palette.ink : Palette.gold),
+                child: CrownIcon(size: 30, color: won && !court ? skin.ink : skin.gold),
               ),
             ),
           ),
@@ -282,6 +283,6 @@ Future<void> showTermDialog(BuildContext context, String term) => showDialog<voi
           ),
         ],
         child: SuitText(glossary[term] ?? '',
-            keywords: false, textAlign: TextAlign.center, style: DialogStyle.body),
+            keywords: false, textAlign: TextAlign.center, style: context.skin.dialogBody),
       ),
     );

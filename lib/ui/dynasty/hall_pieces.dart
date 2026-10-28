@@ -4,7 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// Someone in the throne room.
@@ -81,18 +82,18 @@ class HeraldScroll extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
           decoration: BoxDecoration(
-            color: Palette.parchment,
+            color: context.skin.parchment,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Palette.goldDeep, width: 2),
+            border: Border.all(color: context.skin.goldDeep, width: 2),
             boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 14)],
           ),
           child: Text(text,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 17,
                   height: 1.4,
                   fontStyle: FontStyle.italic,
-                  color: Palette.ink)),
+                  color: context.skin.ink)),
         ),
       );
 }
@@ -103,10 +104,11 @@ class ChoiceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Material(
-        color: c.enabled ? Palette.gold : const Color(0xFF6B5A2E),
+        color: c.enabled ? skin.gold : const Color(0xFF6B5A2E),
         borderRadius: BorderRadius.circular(14),
         shadowColor: Colors.black54,
         elevation: 2,
@@ -118,11 +120,11 @@ class ChoiceButton extends StatelessWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(c.label,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       height: 1.25,
                       fontWeight: FontWeight.w800,
-                      color: Palette.ink)),
+                      color: skin.ink)),
               if (c.cost != 0) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -130,7 +132,7 @@ class ChoiceButton extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: c.cost > 0 ? Palette.lost : const Color(0xFF2E6B2E))),
+                        color: c.cost > 0 ? skin.lost : const Color(0xFF2E6B2E))),
               ],
               if (c.backers.isNotEmpty) ...[
                 const SizedBox(height: 6),
@@ -141,7 +143,7 @@ class ChoiceButton extends StatelessWidget {
                         shape: b.role!.shape,
                         size: 20,
                         color: b.color,
-                        ring: Palette.ink,
+                        ring: skin.ink,
                         ringWidth: 1.5),
                 ]),
               ],
@@ -167,17 +169,17 @@ class Coffers extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black38,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Palette.goldDeep),
+            border: Border.all(color: context.skin.goldDeep),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.paid_rounded, size: 18, color: Palette.gold),
+            Icon(Icons.paid_rounded, size: 18, color: context.skin.gold),
             const SizedBox(width: 5),
             Text('${v.round()}',
                 style: TextStyle(
-                    fontFamily: displayFont,
+                    fontFamily: context.skin.displayFont,
                     fontWeight: FontWeight.w900,
                     fontSize: 17,
-                    color: gold < 0 ? Palette.lost : Palette.gold)),
+                    color: gold < 0 ? context.skin.lost : context.skin.gold)),
           ]),
         ),
       );
@@ -186,16 +188,19 @@ class Coffers extends StatelessWidget {
 /// The felt of the table, become a hall: a red carpet to the throne,
 /// banners, and candlelight.
 class HallPainter extends CustomPainter {
+  HallPainter(this.skin);
+  final Skin skin;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     canvas.drawRect(
         Offset.zero & size,
         Paint()
-          ..shader = const RadialGradient(
-            center: Alignment(0, 0.2),
+          ..shader = RadialGradient(
+            center: const Alignment(0, 0.2),
             radius: 1.1,
-            colors: [Palette.felt, Palette.feltDeep],
+            colors: [skin.felt, skin.feltDeep],
           ).createShader(Offset.zero & size));
     // The brass lines of the table, as the edge of the stage.
     canvas.drawRRect(
@@ -245,19 +250,22 @@ class HallPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(HallPainter old) => false;
+  bool shouldRepaint(HallPainter old) => false || old.skin != skin;
 }
 
 /// A tall gilt throne with a crimson back.
 class ThronePainter extends CustomPainter {
+  ThronePainter(this.skin);
+  final Skin skin;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final gold = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Palette.goldLight, Palette.gold, Color(0xFF9C7420)],
+        colors: [skin.goldLight, skin.gold, const Color(0xFF9C7420)],
       ).createShader(Offset.zero & size);
     // Back, with a pointed crest.
     final back = Path()
@@ -285,5 +293,5 @@ class ThronePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ThronePainter old) => false;
+  bool shouldRepaint(ThronePainter old) => false || old.skin != skin;
 }

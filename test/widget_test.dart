@@ -19,6 +19,7 @@ import 'package:kings_court/modes/free/free_play.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/analytics.dart';
 import 'package:kings_court/platform/sfx.dart';
+import 'package:kings_court/skin/court/court_skin.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/dynasty/contest_table.dart';
 import 'package:kings_court/ui/table_page.dart';
@@ -477,8 +478,8 @@ void main() {
   testWidgets('Long tasks get taller cards instead of tiny text',
       (tester) async {
     const width = 140.0;
-    final short = TableCard.sizeFor('Win the 3♥', width);
-    final long = TableCard.sizeFor(
+    final short = TableCard.sizeFor(const CourtSkin(), 'Win the 3♥', width);
+    final long = TableCard.sizeFor(const CourtSkin(), 
         'Win a trick with a card just one above the card led',
         width);
     expect(short.height, TableCard.heightFor(width));

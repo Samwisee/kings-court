@@ -4,7 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import 'clamp.dart';
 import 'icons.dart';
 
@@ -16,6 +16,7 @@ class WaxSeal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final label = Seals.label(seal);
     return Tooltip(
       message: Seals.describe(seal),
@@ -25,10 +26,10 @@ class WaxSeal extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            center: Alignment(-0.3, -0.4),
-            colors: [Color(0xFFD23A4C), Palette.cardRed, Color(0xFF7A0B1C)],
-            stops: [0, 0.55, 1],
+          gradient: RadialGradient(
+            center: const Alignment(-0.3, -0.4),
+            colors: [const Color(0xFFD23A4C), skin.cardRed, const Color(0xFF7A0B1C)],
+            stops: const [0, 0.55, 1],
           ),
           border: Border.all(color: const Color(0xFF7A0B1C)),
           boxShadow: const [
@@ -37,7 +38,7 @@ class WaxSeal extends StatelessWidget {
         ),
         child: Text(label,
             style: TextStyle(
-                fontFamily: displayFont,
+                fontFamily: skin.displayFont,
                 fontWeight: FontWeight.w900,
                 fontSize: size * (label.length > 2 ? 0.38 : 0.5),
                 height: 1,
@@ -59,6 +60,7 @@ class DecreeScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 700),
@@ -73,50 +75,50 @@ class DecreeScroll extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 14),
         constraints: const BoxConstraints(maxWidth: 360),
         decoration: BoxDecoration(
-          color: Palette.parchment, // parchment
+          color: skin.parchment, // parchment
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Palette.goldDeep, width: 2),
+          border: Border.all(color: skin.goldDeep, width: 2),
           boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CrownIcon(size: 26, color: Palette.goldDeep),
+            CrownIcon(size: 26, color: skin.goldDeep),
             const SizedBox(height: 4),
-            const Text('Royal Decree',
+            Text('Royal Decree',
                 style: TextStyle(
-                    fontFamily: displayFont,
+                    fontFamily: skin.displayFont,
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: Palette.inkSoft)),
+                    color: skin.inkSoft)),
             Text(decree.title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontFamily: displayFont,
+                style: TextStyle(
+                    fontFamily: skin.displayFont,
                     fontWeight: FontWeight.w900,
                     fontSize: 30,
-                    color: Palette.cardRed)),
+                    color: skin.cardRed)),
             const SizedBox(height: 8),
             Text(decree.rule,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 17, height: 1.35, color: Palette.ink)),
+                style: TextStyle(
+                    fontSize: 17, height: 1.35, color: skin.ink)),
             if (detail != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(detail!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: Palette.ink)),
+                        color: skin.ink)),
               ),
             const SizedBox(height: 12),
             if (onAccept != null)
               FilledButton(
                 onPressed: onAccept,
                 style: FilledButton.styleFrom(
-                    backgroundColor: Palette.cardRed,
+                    backgroundColor: skin.cardRed,
                     foregroundColor: Colors.white),
                 child: const Text('So be it'),
               ),

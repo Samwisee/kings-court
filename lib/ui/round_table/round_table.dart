@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
 import '../../game/state.dart';
+import '../../skin/skin.dart';
 import '../overlays/crowning.dart';
 import '../overlays/king_prompt.dart';
 import '../overlays/play_flourish.dart';
@@ -82,9 +83,12 @@ class RoundTableController {
           {required int players,
           required String Function(RoundTask) textOf,
           required bool upright,
-          required int dealId}) =>
+          required int dealId,
+          required Skin skin}) =>
       TableGeometry(tableSize, players, textOf,
-          fixedCardWidth: dealtFor == dealId ? cardWidth : null, upright: upright);
+          fixedCardWidth: dealtFor == dealId ? cardWidth : null,
+          upright: upright,
+          skin: skin);
 
   /// Clears the table for a new deal.
   void reset() {

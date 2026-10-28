@@ -3,14 +3,17 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import 'panels.dart';
 
 /// A dialog's edge in a player's colour with a dark line either side, like
 /// a task card's outline on the table; just the dark line for nobody's.
 class HighVisBorder extends RoundedRectangleBorder {
-  const HighVisBorder(this.colour)
+  const HighVisBorder(this.colour, this.skin)
       : super(borderRadius: const BorderRadius.all(Radius.circular(24)));
+  final Skin skin;
   final Color? colour;
 
   @override
@@ -24,12 +27,12 @@ class HighVisBorder extends RoundedRectangleBorder {
       ..strokeWidth = w
       ..color = c;
     if (colour == null) {
-      canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
+      canvas.drawRRect(r.deflate(1), line(skin.outlineColour, 2));
       return;
     }
     canvas.drawRRect(r.deflate(4.5), line(colour!, 6));
-    canvas.drawRRect(r.deflate(1), line(outlineColour, 2));
-    canvas.drawRRect(r.deflate(8.5), line(outlineColour, 1.5));
+    canvas.drawRRect(r.deflate(1), line(skin.outlineColour, 2));
+    canvas.drawRRect(r.deflate(8.5), line(skin.outlineColour, 1.5));
   }
 }
 
@@ -75,13 +78,13 @@ class CourtDialog extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(
               26, ornament == Ornament.low ? 24 : 38, 26, 14),
           child: DefaultTextStyle.merge(
-            style: DialogStyle.body,
+            style: context.skin.dialogBody,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (title != null) ...[
-                  Text(title!, textAlign: TextAlign.center, style: DialogStyle.title),
+                  Text(title!, textAlign: TextAlign.center, style: context.skin.dialogTitle),
                   const SizedBox(height: 12),
                 ],
                 Column(
@@ -107,7 +110,7 @@ class CourtDialog extends StatelessWidget {
 /// The ring round whatever the arrow keys have chosen (a task, a button):
 /// pale gold with a dark line outside it, drawn just outside [child] so
 /// nothing moves when it comes and goes. One look for every keyboard
-/// choice; a skin changes [KeyFocusRing.colour].
+/// choice, in the skin's pale gold.
 class KeyFocusRing extends StatelessWidget {
   const KeyFocusRing(
       {super.key, required this.on, required this.child, this.radius = 10, this.gap = 3});
@@ -116,17 +119,17 @@ class KeyFocusRing extends StatelessWidget {
   final double gap;
   final Widget child;
 
-  static const colour = Palette.goldPale;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-        foregroundPainter: on ? _FocusRingPainter(radius, gap) : null,
+        foregroundPainter: on ? _FocusRingPainter(radius, gap, context.skin) : null,
         child: child,
       );
 }
 
 class _FocusRingPainter extends CustomPainter {
-  const _FocusRingPainter(this.radius, this.gap);
+  const _FocusRingPainter(this.radius, this.gap, this.skin);
+  final Skin skin;
   final double radius;
   final double gap;
 
@@ -139,15 +142,15 @@ class _FocusRingPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
-          ..color = outlineColour);
+          ..color = skin.outlineColour);
     canvas.drawRRect(
         r,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
-          ..color = KeyFocusRing.colour);
+          ..color = skin.goldPale);
   }
 
   @override
-  bool shouldRepaint(_FocusRingPainter old) => old.radius != radius || old.gap != gap;
+  bool shouldRepaint(_FocusRingPainter old) => old.radius != radius || old.gap != gap || old.skin != skin;
 }

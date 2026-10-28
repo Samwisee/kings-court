@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
 import '../../game/state.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import 'clamp.dart';
 import 'icons.dart';
@@ -69,13 +71,14 @@ class SeatToken extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final initial = label ??
         (player.name.trim().isEmpty ? '?' : player.name.trim()[0].toUpperCase());
     final ring = isKing || highlighted || picking
-        ? Palette.gold
+        ? skin.gold
         : prompting
             ? Colors.white70
-            : Palette.feltDeep;
+            : skin.feltDeep;
     final badge = clampD(size * 0.46, 20, 26);
 
     final labelText = OutlinedLabel(initial,
@@ -96,7 +99,7 @@ class SeatToken extends StatelessWidget {
               border: Border.all(color: ringColor, width: ringWidth),
               boxShadow: [
                 if (highlighted)
-                  const BoxShadow(color: Palette.gold, blurRadius: 14)
+                  BoxShadow(color: skin.gold, blurRadius: 14)
                 else
                   const BoxShadow(
                       color: Colors.black38,
@@ -109,7 +112,7 @@ class SeatToken extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: outlineColour, width: 1.3),
+                border: Border.all(color: skin.outlineColour, width: 1.3),
               ),
               child: labelText,
             ),
@@ -144,7 +147,7 @@ class SeatToken extends StatelessWidget {
               child: isKing
                   ? const CrownIcon(size: 18)
                   : exiled
-                      ? const Icon(Icons.block, size: 14, color: Palette.lost)
+                      ? Icon(Icons.block, size: 14, color: skin.lost)
                       : null,
             ),
             const SizedBox(height: 2),
@@ -227,6 +230,7 @@ class _PulseRingState extends State<PulseRing>
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return IgnorePointer(
       child: RepaintBoundary(child: AnimatedBuilder(
         animation: _c,
@@ -241,7 +245,7 @@ class _PulseRingState extends State<PulseRing>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Palette.gold.withAlpha((230 * (1 - t)).round()),
+                  color: skin.gold.withAlpha((230 * (1 - t)).round()),
                   width: 3,
                 ),
               ),
@@ -266,6 +270,7 @@ class SpeakToken extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Tooltip(
       message: locked
           ? 'No card reveals allowed yet'
@@ -288,9 +293,9 @@ class SpeakToken extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: back || locked ? const Color(0xFF55524C) : Palette.card,
+                color: back || locked ? const Color(0xFF55524C) : skin.card,
                 border: Border.all(
-                    color: back || locked ? Colors.white38 : Palette.gold,
+                    color: back || locked ? Colors.white38 : skin.gold,
                     width: 1.5),
               ),
               child: Icon(
@@ -300,7 +305,7 @@ class SpeakToken extends StatelessWidget {
                         ? Icons.voice_over_off
                         : Icons.record_voice_over,
                 size: size * 0.6,
-                color: back || locked ? Colors.white54 : Palette.ink,
+                color: back || locked ? Colors.white54 : skin.ink,
               ),
             ),
           );
@@ -338,7 +343,7 @@ class ShapedToken extends StatelessWidget {
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _TokenPainter(shape, color, ring, ringWidth, glow),
+        painter: _TokenPainter(shape, color, ring, ringWidth, glow, context.skin),
         child: Center(child: child),
       ),
     );
@@ -346,7 +351,8 @@ class ShapedToken extends StatelessWidget {
 }
 
 class _TokenPainter extends CustomPainter {
-  _TokenPainter(this.shape, this.color, this.ring, this.ringWidth, this.glow);
+  _TokenPainter(this.shape, this.color, this.ring, this.ringWidth, this.glow, this.skin);
+  final Skin skin;
   final TokenShape shape;
   final Color color;
   final Color ring;
@@ -366,7 +372,7 @@ class _TokenPainter extends CustomPainter {
       canvas.drawPath(
         path,
         Paint()
-          ..color = Palette.gold
+          ..color = skin.gold
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
     }
@@ -381,7 +387,7 @@ class _TokenPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = ringWidth + 2.6
         ..strokeJoin = StrokeJoin.round
-        ..color = outlineColour,
+        ..color = skin.outlineColour,
     );
     canvas.restore();
     canvas.drawPath(
@@ -400,5 +406,5 @@ class _TokenPainter extends CustomPainter {
       old.color != color ||
       old.ring != ring ||
       old.ringWidth != ringWidth ||
-      old.glow != glow;
+      old.glow != glow || old.skin != skin;
 }

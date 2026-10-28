@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/game/state.dart';
+import 'package:kings_court/skin/court/court_skin.dart';
 import 'package:kings_court/ui/overlays/king_prompt.dart';
 import 'package:kings_court/ui/round_table/geometry.dart';
 import 'package:kings_court/ui/round_table/round_table.dart';
@@ -25,7 +26,8 @@ TableGeometry geoFor(RoundTableController table, GameState g) => table.geometry(
     players: g.players.length,
     textOf: (t) => t.boardText(g.players.length),
     upright: false,
-    dealId: g.dealId);
+    dealId: g.dealId,
+    skin: const CourtSkin());
 
 void main() {
   testWidgets('The controller deals the cards out, stacks owned ones and follows a drag', (tester) async {

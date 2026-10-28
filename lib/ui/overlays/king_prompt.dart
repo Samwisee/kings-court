@@ -4,7 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 class KingPrompt extends StatelessWidget {
@@ -24,6 +24,7 @@ class KingPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Column(
@@ -31,10 +32,10 @@ class KingPrompt extends StatelessWidget {
         children: [
           DeckStack(width: cardWidth * 0.75),
           const SizedBox(height: 18),
-          const Text('Who holds the King card?',
+          Text('Who holds the King card?',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: displayFont,
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 26,
                   color: Colors.white)),

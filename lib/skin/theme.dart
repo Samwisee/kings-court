@@ -104,6 +104,15 @@ const bodyFont = 'AlegreyaSans';
 // and the look of every dialog and pop-up below. A new skin for the game
 // changes these, and every screen follows.
 
+/// A task's words on its card (and what its card's size is measured by).
+const taskTextStyle = TextStyle(
+  fontFamily: bodyFont,
+  fontSize: 13.5,
+  height: 1.15,
+  fontWeight: FontWeight.w500,
+  color: Palette.ink,
+);
+
 /// The soft shadow under words and icons on the felt.
 const feltShadow = [Shadow(color: Colors.black54, blurRadius: 10)];
 
