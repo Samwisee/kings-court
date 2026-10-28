@@ -8,7 +8,6 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
-import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/seats.dart';
 import 'package:kings_court/game/setup.dart';
 import 'package:kings_court/models.dart';
@@ -54,15 +53,14 @@ void main() {
 
   test('A game is played through the room’s links', () async {
     final rooms = InMemoryRooms(
-        rand: Random(2), network: () => FakeNetwork(rand: Random(2), maxLatency: 2));
+        rand: Random(2), network: () => FakeNetwork(rand: Random(2)));
     final room = await rooms.create(setup, ann);
     await rooms.join(room.code, ben);
     room.start();
     final rules = modeOf(GameMode.free).rules;
-    final gameA = setup.start(rules, you: 0);
+    final gameA = setup.start(rules);
     final gameB = setup.start(rules, you: 1);
-    final a = HeadlessTable(gameA, room.linkFor(ann), rules,
-        you: 0, seats: room.seats, bot: Bot()..budget = 24);
+    final a = HeadlessTable(gameA, room.linkFor(ann), rules, you: 0, seats: room.seats, bot: Bot()..budget = 24);
     final b = HeadlessTable(gameB, room.linkFor(ben), rules,
         you: 1, seats: room.seats, host: false, bot: Bot()..budget = 24);
     final net = (room as InMemoryRoom).network;

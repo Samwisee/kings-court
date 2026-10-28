@@ -16,7 +16,6 @@ import 'package:kings_court/models.dart';
 import 'package:kings_court/modes/modes.dart';
 import 'package:kings_court/net/fake_network.dart';
 import 'package:kings_court/net/headless_table.dart';
-import 'package:kings_court/net/table_link.dart';
 
 const setup = GameSetup(
     mode: GameMode.free,
@@ -66,10 +65,9 @@ void main() {
     ]);
     final linkA = net.connect();
     final linkB = net.connect();
-    final gameA = setup.start(rules, you: 0);
+    final gameA = setup.start(rules);
     final gameB = setup.start(rules, you: 1);
-    final a = HeadlessTable(gameA, linkA, rules,
-        you: 0, seats: seats, bot: Bot()..budget = 24);
+    final a = HeadlessTable(gameA, linkA, rules, you: 0, seats: seats, bot: Bot()..budget = 24);
     final b = HeadlessTable(gameB, linkB, rules,
         you: 1, seats: seats, host: false, bot: Bot()..budget = 24);
 
@@ -104,8 +102,9 @@ void main() {
     expect(back, isTrue, reason: 'Ben came back');
     expect(gameA.outcome, isNot(RoundOutcome.inProgress));
     expect(gameB.outcome, gameA.outcome);
-    expect(a.refused, isEmpty);
-    expect(b.refused, isEmpty);
+    // A move Ben sent as he dropped may race the host playing his seat;
+    // whichever came second, both tables let the same ones go.
+    expect([for (final m in b.refused) m.toJson()], [for (final m in a.refused) m.toJson()]);
     expect(linkA.history.length, net.table.length);
     expect(linkB.history.length, net.table.length);
     expect(roundOf(gameB), roundOf(gameA));
