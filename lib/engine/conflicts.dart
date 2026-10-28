@@ -58,8 +58,6 @@ Set<PlayingCard> _rank(int r) => {
 
 final Map<String, TaskProfile> _profiles = {
   'Win more tricks than anyone else': const TaskProfile(mostTricks: true),
-  'Win more tricks than the rest of the court put together': const TaskProfile(mostTricks: true),
-  'Win a trick with a 3': const TaskProfile(ranks: {3: 1}),
   'Win a trick with a 5': const TaskProfile(ranks: {5: 1}),
   'Win a trick with a 7': const TaskProfile(ranks: {7: 1}),
   'Win a trick with the Joker': TaskProfile(cards: {PlayingCard.joker}, courts: 1),
@@ -76,12 +74,9 @@ final Map<String, TaskProfile> _profiles = {
   'Win the last trick': const TaskProfile(tricks: {-1}),
   'Win the last trick with a Court Card': const TaskProfile(tricks: {-1}, courts: 1),
   'Win the second-to-last trick': const TaskProfile(tricks: {-2}),
-  'Win the first and the last trick': const TaskProfile(tricks: {0, -1}),
-  'Win only the last trick': const TaskProfile(tricks: {-1}, maxTricks: 1),
   'Win exactly one trick': const TaskProfile(maxTricks: 1),
   'Win exactly two tricks': const TaskProfile(maxTricks: 2),
   'Win exactly three tricks': const TaskProfile(maxTricks: 3),
-  'Win exactly four tricks': const TaskProfile(maxTricks: 4),
   'Win the 3♥': TaskProfile(cards: _cs(['3♥'])),
   'Win the A♦': TaskProfile(cards: _cs(['A♦'])),
   'Win the 6♣': TaskProfile(cards: _cs(['6♣'])),
@@ -122,8 +117,6 @@ final Map<String, TaskProfile> _profiles = {
   "Don't win any 5s": TaskProfile(forbidCard: (c) => !c.isCourt && c.rank == 5),
   "Don't win any of the first three tricks": const TaskProfile(forbidTricks: {0, 1, 2}),
   "Don't win any tricks": const TaskProfile(maxTricks: 0),
-  'Win the Joker with the Jack': TaskProfile(cards: {PlayingCard.joker}, courts: 2),
-  'Win the Jack with the Queen': TaskProfile(cards: {PlayingCard.jack}, courts: 2),
   'Win two tricks that each hold a Court Card': const TaskProfile(courts: 2),
   'Win the first trick a Court Card falls in': const TaskProfile(courts: 1),
   'Win the last trick a Court Card falls in': const TaskProfile(courts: 1),
@@ -134,7 +127,6 @@ final Map<String, TaskProfile> _profiles = {
   'Win the A♠': TaskProfile(cards: _cs(['A♠'])),
   'Win the 2♣ and the 8♠': TaskProfile(cards: _cs(['2♣', '8♠'])),
   'Win the 6♥ and the 4♦': TaskProfile(cards: _cs(['6♥', '4♦'])),
-  'Win all four 9s': TaskProfile(cards: _rank(9)),
   'Win at least three 8s': const TaskProfile(ranks: {8: 3}),
   'Win exactly one ♣ card': const TaskProfile(suits: {Suit.clubs: 1}),
   'Win at least six ♥ cards': const TaskProfile(suits: {Suit.hearts: 6}),
@@ -235,7 +227,6 @@ bool needsAWin(String d) {
     'Win fewer tricks',
     'Win the same number of tricks',
     'Win exactly X tricks',
-    'Win exactly half as many tricks',
   ];
   return !noneIsFine.any(d.startsWith);
 }
@@ -331,18 +322,6 @@ String? handBlocks(String d, List<PlayingCard> hand) {
   }
   if (d == 'Win a trick with the Jack' && !hand.contains(PlayingCard.jack)) {
     return 'You need the Jack in your hand to win a trick with it';
-  }
-  if (d == 'Win the Joker with the Jack') {
-    if (!hand.contains(PlayingCard.jack)) return 'You need the Jack in your hand for this';
-    if (hand.contains(PlayingCard.joker)) {
-      return 'You hold the Joker: you can’t play it and win it with the Jack in the same trick';
-    }
-  }
-  if (d == 'Win the Jack with the Queen') {
-    if (!hand.contains(PlayingCard.queen)) return 'You need the Queen in your hand for this';
-    if (hand.contains(PlayingCard.jack)) {
-      return 'You hold the Jack: you can’t play it and win it with the Queen in the same trick';
-    }
   }
   if (d == 'Win your first trick with a Court Card' && !hand.any((c) => c.isCourt)) {
     return 'You need a Court Card in your hand for this';

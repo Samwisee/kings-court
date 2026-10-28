@@ -178,8 +178,6 @@ const _special = <String, String>{
       'Win every Ace: the A♥, A♦, A♠ and A♣ must all end up in tricks you win. Aces are the lowest cards, so they fall when their suit is led and their holder has nothing else, or are thrown on tricks their holder can’t follow. If anyone else wins one, the task fails.',
   'Win more tricks than anyone else':
       'At the end of the round, count everyone’s tricks: you must have more than any other single player. A tie doesn’t count.',
-  'Win more tricks than the rest of the court put together':
-      'Win more tricks than all the other players put together: more than half of all the tricks in the round.',
   'Win fewer tricks than anyone else':
       'At the end of the round, every other player must have won more tricks than you. A tie fails.',
   'Win more tricks than the King':
@@ -232,10 +230,6 @@ const _special = <String, String>{
       'Take the final trick of the round by playing a Court Card on it. Keep a Court Card back to the very end. You need one in your hand.',
   'Win the second-to-last trick':
       'Win the trick before the last one, so that you lead the final trick. Save a strong card for it.',
-  'Win the first and the last trick':
-      'Win trick one and the final trick of the round. What happens in between doesn’t matter.',
-  'Win only the last trick':
-      'Lose every trick except the very last one, which you must win.',
   'Win two tricks in a row':
       'At some point, win two tricks one straight after the other.',
   'Win three tricks in a row':
@@ -272,18 +266,12 @@ const _special = <String, String>{
       'Show a card with the speech token (your highest, lowest or only card of a suit), then make sure it ends up in a trick you win. Show a strong card and it nearly wins itself; show a weak one and you’ll need to win the trick it falls in.',
   'Win a card someone else showed':
       'Another player must show a card with the speech token, and that card must end up in a trick you win. Once a card is shown everyone knows where it is, so plan to take the trick it falls in.',
-  'Win a trick led with a shown card':
-      'Someone, you or anyone, leads a trick with the card they showed with the speech token, and you win that trick.',
   'Win the trick right after you show a card':
       'Show a card with the speech token between tricks, then win the very next trick. Show it when you’re holding the card that will take that trick.',
   "Don't win the card you showed":
       'Show a card with the speech token, then make sure someone else wins the trick it falls in. Show a low card and play it under a higher one. You must show a card for this task to be done.',
   "Don't win a trick before you've shown a card":
       'Every trick you win must come after you’ve shown a card with the speech token. Show one early, before the first trick if you can, and you’re free. Winning nothing at all is fine too.',
-  'Win the Joker with the Jack':
-      'The Joker must fall in a trick you take by playing the Jack, with no Queen or King in it. You need the Jack, and not the Joker, in your hand.',
-  'Win the Jack with the Queen':
-      'The Jack must fall in a trick you take by playing the Queen, with the King nowhere in it. You need the Queen, and not the Jack, in your hand.',
   'Win two tricks that each hold a Court Card':
       'Win two different tricks with at least one Court Card in each. There are only four Court Cards, so watch where they fall.',
   'Win the trick before the King card is played':
@@ -318,8 +306,6 @@ const _special = <String, String>{
       'The first trick you win in the round must be won by your Court Card. Until then, lose every trick you play in, or play a Court Card to take it.',
   'Win a trick that holds a 2 and a 9':
       'Take a trick with a 2 and a 9 in it, of any suits. Lead a 9 when someone can throw a 2 on it, or the other way round.',
-  'Win exactly half as many tricks as the King':
-      'At the end of the round the King must have won exactly twice as many tricks as you: one to the King’s two, two to four. Zero each counts too. The King can’t take this task.',
   'Win the trick in which someone first runs out of a suit':
       'Watch for the first trick where someone can’t follow the suit led and plays something else. That trick must be yours.',
 };

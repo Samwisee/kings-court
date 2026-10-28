@@ -208,8 +208,6 @@ final Map<String, TaskRule> taskRules = {
         for (int s = 0; s < v.players; s++)
           if (s != o) s
       ].every((s) => v.tricksWon(o) > v.tricksWon(s))),
-  'Win more tricks than the rest of the court put together': atEnd((v, o) =>
-      v.tricksWon(o) > v.tricks.length - v.tricksWon(o)),
   'Win fewer tricks than anyone else': atEnd((v, o) => [
         for (int s = 0; s < v.players; s++)
           if (s != o) s
@@ -218,7 +216,6 @@ final Map<String, TaskRule> taskRules = {
   'Win fewer tricks than the King': atEnd((v, o) => v.tricksWon(o) < v.tricksWon(v.king)),
   'Win the same number of tricks as the King': atEnd((v, o) => v.tricksWon(o) == v.tricksWon(v.king)),
   'Win exactly as many tricks as the player on your left': atEnd((v, o) => v.tricksWon(o) == v.tricksWon((o + 1) % v.players)),
-  'Win a trick with a 3': winWith(3),
   'Win a trick with a 5': winWith(5),
   'Win a trick with a 7': winWith(7),
   'Win a trick with the Joker': anyTrick((t) => t.winningCard == PlayingCard.joker),
@@ -293,21 +290,9 @@ final Map<String, TaskRule> taskRules = {
     if (v.tricks.length <= i) return Verdict.pending;
     return v.tricks[i].winner == o ? Verdict.done : Verdict.failed;
   },
-  'Win the first and the last trick': (v, o, _) {
-    if (v.tricks.isNotEmpty && v.tricks.first.winner != o) {
-      return Verdict.failed;
-    }
-    return _end(v, v.tricks.isNotEmpty && v.tricks.last.winner == o);
-  },
-  'Win only the last trick': (v, o, _) {
-    final mine = v.wonIndexes(o);
-    if (mine.any((i) => i != v.totalTricks - 1)) return Verdict.failed;
-    return _end(v, mine.length == 1);
-  },
   'Win exactly one trick': exactTricks(1),
   'Win exactly two tricks': exactTricks(2),
   'Win exactly three tricks': exactTricks(3),
-  'Win exactly four tricks': exactTricks(4),
   'Win two tricks in a row': (v, o, _) =>
       v.longestRun(o) >= 2 ? Verdict.done : _end(v, false),
   'Win three tricks in a row': (v, o, _) =>
@@ -380,12 +365,6 @@ final Map<String, TaskRule> taskRules = {
     }
     return _end(v, false);
   },
-  'Win a trick led with a shown card': (v, o, _) {
-    for (final t in v.tricks) {
-      if (t.winner == o && v.shown.values.contains(t.cards.first)) return Verdict.done;
-    }
-    return _end(v, false);
-  },
   'Win the trick right after you show a card': (v, o, _) {
     final at = v.shownAt[o];
     if (at == null) return _end(v, false);
@@ -407,24 +386,6 @@ final Map<String, TaskRule> taskRules = {
       if (v.tricks[i].winner == o) return Verdict.failed;
     }
     return at != null ? Verdict.done : _end(v, true);
-  },
-  'Win the Joker with the Jack': (v, o, _) {
-    for (final t in v.tricks) {
-      if (!t.cards.contains(PlayingCard.joker)) continue;
-      return t.winner == o && t.winningCard == PlayingCard.jack
-          ? Verdict.done
-          : Verdict.failed;
-    }
-    return _end(v, false);
-  },
-  'Win the Jack with the Queen': (v, o, _) {
-    for (final t in v.tricks) {
-      if (!t.cards.contains(PlayingCard.jack)) continue;
-      return t.winner == o && t.winningCard == PlayingCard.queen
-          ? Verdict.done
-          : Verdict.failed;
-    }
-    return _end(v, false);
   },
   'Win two tricks that each hold a Court Card': (v, o, _) {
     final n = v.tricks.where((t) => t.winner == o && t.cards.any(_court)).length;
@@ -489,7 +450,6 @@ final Map<String, TaskRule> taskRules = {
   'Win the A♠': winAll(_cs(['A♠'])),
   'Win the 2♣ and the 8♠': winAll(_cs(['2♣', '8♠'])),
   'Win the 6♥ and the 4♦': winAll(_cs(['6♥', '4♦'])),
-  'Win all four 9s': winAll(_cs(['9♥', '9♦', '9♠', '9♣'])),
   'Win at least three 8s': atLeast(3, _rank(8)),
   'Win exactly one ♣ card': exactly(1, _suit(Suit.clubs)),
   'Win at least six ♥ cards': atLeast(6, _suit(Suit.hearts)),
@@ -526,7 +486,6 @@ final Map<String, TaskRule> taskRules = {
   },
   'Win a trick that holds a 2 and a 9': anyTrick((t) =>
       t.cards.any((c) => _rank(2)(c)) && t.cards.any((c) => _rank(9)(c))),
-  'Win exactly half as many tricks as the King': atEnd((v, o) => v.tricksWon(o) * 2 == v.tricksWon(v.king)),
   'Win the trick in which someone first runs out of a suit': (v, o, _) {
     for (final t in v.tricks) {
       final led = t.cards.first;
@@ -555,7 +514,6 @@ enum TaskTiming {
 }
 
 const _anyTrickTasks = {
-  'Win a trick with a 3',
   'Win a trick with a 5',
   'Win a trick with a 7',
   'Win a trick with the Joker',
@@ -603,10 +561,7 @@ const _anyTrickTasks = {
   'Win two tricks led with a ♥',
   'Win the card you showed',
   'Win a card someone else showed',
-  'Win a trick led with a shown card',
   'Win the trick right after you show a card',
-  'Win the Joker with the Jack',
-  'Win the Jack with the Queen',
   'Win two tricks that each hold a Court Card',
   'Win the trick before the King card is played',
   'Win the first trick a Court Card falls in',
@@ -619,7 +574,6 @@ const _anyTrickTasks = {
   'Win the A♠',
   'Win the 2♣ and the 8♠',
   'Win the 6♥ and the 4♦',
-  'Win all four 9s',
   'Win at least three 8s',
   'Win at least six ♥ cards',
   'Win at least one card of each suit',

@@ -20,7 +20,6 @@ const showTasks = {
 /// they're left out of a round of Silence too.
 const shownCardTasks = {
   'Win a card someone else showed',
-  'Win a trick led with a shown card',
 };
 
 /// Whether a task needs cards shown this round.

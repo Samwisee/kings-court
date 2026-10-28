@@ -122,7 +122,6 @@ void main() {
     expect(taskRules["Don't win the card you showed"]!(v, 0, null), Verdict.failed);
     expect(taskRules['Win the trick right after you show a card']!(v, 0, null), Verdict.done);
     expect(taskRules['Win a card someone else showed']!(v, 1, null), Verdict.pending);
-    expect(taskRules['Win a trick led with a shown card']!(v, 0, null), Verdict.done);
     // Seat 1 showed only after trick 1 and won trick 2: fine.
     final late = shown([t1, t2], {1: c('5♥')}, {1: 1});
     expect(taskRules["Don't win a trick before you've shown a card"]!(late, 1, null), Verdict.done);
@@ -141,7 +140,6 @@ void main() {
     final jj = Trick(0, const [0, 1, 2], [PlayingCard.joker, PlayingCard.jack, c('2♣')], 1);
     expect(taskRules['Win a trick where everyone followed suit']!(view([followed]), 1, null), Verdict.done);
     expect(taskRules['Win the trick in which someone first runs out of a suit']!(view([followed, ran]), 0, null), Verdict.done);
-    expect(taskRules['Win the Joker with the Jack']!(view([jj]), 1, null), Verdict.done);
     expect(taskRules['Win the first trick a Court Card falls in']!(view([followed, jj]), 1, null), Verdict.done);
     expect(taskRules['Win the trick right after you lose one with a Court Card']!(view([jj, ran]), 0, null), Verdict.done);
     expect(taskRules['Win your first trick with a Court Card']!(view([followed]), 1, null), Verdict.failed);
@@ -159,7 +157,7 @@ void main() {
     expect(handBlocks('Win a trick with the Joker', [c('2♣')]), isNotNull);
     expect(handBlocks('Win the Queen with the King', [PlayingCard.king, PlayingCard.queen]), isNotNull);
     expect(handBlocks('Win the Queen with the King', [PlayingCard.king, c('2♣')]), isNull);
-    expect(handBlocks('Win a trick with a 3', [c('3♣')]), isNull);
+    expect(handBlocks('Win a trick with a 5', [c('5♣')]), isNull);
   });
 
   test('A task close-up shows the cards it is about', () {
