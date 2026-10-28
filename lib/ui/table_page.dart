@@ -63,6 +63,7 @@ import 'round_table/geometry.dart';
 import 'round_table/round_table.dart';
 import 'setup/saves.dart';
 import 'setup/setup_panel.dart';
+import 'table/trick_view.dart';
 import 'tracker/card_tracker.dart';
 import 'welcome/welcome.dart';
 import 'widgets/buttons.dart';
@@ -1971,7 +1972,7 @@ class HomePageState extends State<HomePage>
                       clampD(
                           c.maxHeight -
                               120 -
-                              PlayingCardView.heightFor(_trickCardWidth(
+                              PlayingCardView.heightFor(trickCardWidth(
                                   width, game.players.length)),
                           110,
                           math.max(110.0, c.maxHeight * 0.6))),
@@ -2594,26 +2595,9 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  /// How wide trick cards are for a table [width] across with [n] players.
-  static double _trickCardWidth(double width, int n) =>
-      clampD((width - 8 * n) / n, 34, width > 600 ? 100 : 64);
-
-  /// The trick in the middle of the table: each card glides in from
-  /// whoever played it, and once won the trick sweeps off to the winner.
+  /// The trick in the middle of the table (ui/table/trick_view.dart),
+  /// each card from where it was played: your hand, or a courtier's seat.
   List<Widget> _trickCards(Size area) {
-    if (!_round.hasCards) return [];
-    final c = _round;
-    final trick = _lastTrick;
-    final seats = trick?.seats ?? c.currentSeats;
-    final cards = trick?.cards ?? c.current;
-    if (cards.isEmpty) return [];
-    final number = trick != null ? c.tricks.length - 1 : c.tricks.length;
-    final n = c.players;
-    // The same size every trick: set by the table's width, shrinking only
-    // if the middle is truly short of room.
-    final cardW = clampD(math.min(_trickCardWidth(area.width, n),
-        (area.height - 4) / 1.42), 34, 100);
-    final cardH = PlayingCardView.heightFor(cardW);
     // Where the middle sits on the table, to work out where cards come
     // from; if it isn't known yet the cards simply fade in.
     final middle = _rectOn(_middleKey);
@@ -2626,66 +2610,13 @@ class HomePageState extends State<HomePage>
       return p == null ? null : p - middle.topLeft;
     }
 
-    Offset topLeft(Offset centre) => centre - Offset(cardW / 2, cardH / 2);
-    return [
-      for (int i = 0; i < cards.length; i++)
-        () {
-          final target = Offset(
-              area.width / 2 + (i - (n - 1) / 2) * (cardW + 8),
-              area.height / 2);
-          final seat = seats[i];
-          final view = PlayingCardView(
-            card: cards[i],
-            width: cardW,
-            // Edged in the colour of whoever played it.
-            edge: game.players[seat].color,
-            glow: trick != null && trick.winner == seat,
-          );
-          if (trick != null && _collecting) {
-            final to = origin(trick.winner, cards[i]) ?? target;
-            return TweenAnimationBuilder<double>(
-              key: ValueKey('collect-$number-${cards[i].id}'),
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 420),
-              curve: Curves.easeInCubic,
-              builder: (context, t, child) {
-                final p = topLeft(Offset.lerp(target, to, t)!);
-                return Positioned(
-                  left: p.dx,
-                  top: p.dy,
-                  child: IgnorePointer(
-                    child: Opacity(
-                      opacity: clampD(1 - t, 0, 1),
-                      child: Transform.scale(scale: 1 - 0.5 * t, child: child),
-                    ),
-                  ),
-                );
-              },
-              child: view,
-            );
-          }
-          final from = origin(seat, cards[i]);
-          return TweenAnimationBuilder<double>(
-            key: ValueKey('play-$number-${cards[i].id}'),
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 380),
-            curve: Curves.easeOutCubic,
-            builder: (context, t, child) {
-              final p = topLeft(Offset.lerp(from ?? target, target, t)!);
-              return Positioned(
-                left: p.dx,
-                top: p.dy,
-                child: IgnorePointer(
-                  child: Opacity(
-                      opacity: from == null ? clampD(t * 2, 0, 1) : 1,
-                      child: child),
-                ),
-              );
-            },
-            child: view,
-          );
-        }(),
-    ];
+    return trickCards(
+        area: area,
+        round: _round,
+        trick: _lastTrick,
+        collecting: _collecting,
+        players: game.players,
+        origin: origin);
   }
 
   // ------------------------------------------- powers and reveals on screen

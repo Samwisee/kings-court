@@ -101,6 +101,7 @@ headers. Everything that isn't that state is a library of its own under
 | `ui/cards/mini_card.dart` | Small cards (tracker, close-ups, shown cards). |
 | `ui/widgets/house_banner.dart` | A courtier card's banner. |
 | `ui/widgets/buttons.dart` | Glowing buttons, key caps and the shortcuts card. |
+| `ui/table/trick_view.dart` | The trick in the middle of the on-screen table. |
 | `ui/setup/transitions.dart` | How setup pages turn. |
 | `ui/setup/saves.dart` | Saved games, one per way to play. |
 
