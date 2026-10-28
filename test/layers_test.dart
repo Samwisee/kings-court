@@ -49,7 +49,6 @@ const knownDebts = {
   // the tutorial's scripts reach the bots through an interface (step 4).
   'lib/models.dart → lib/chronicle.dart',
   'lib/models.dart → lib/courtiers.dart',
-  'lib/models.dart → lib/story.dart',
   'lib/models.dart → lib/tutorial.dart',
   'lib/game/bot_turn.dart → lib/chronicle.dart',
   'lib/game/bot_turn.dart → lib/tutorial.dart',

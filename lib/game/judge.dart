@@ -10,6 +10,7 @@ import '../engine/cards.dart';
 import '../engine/match.dart';
 import '../engine/rules.dart';
 import '../models.dart';
+import '../task_help.dart';
 
 /// A task the tricks have settled: done, or failed and why.
 class TaskFlip {
