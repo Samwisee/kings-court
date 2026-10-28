@@ -543,12 +543,13 @@ class _HomePageState extends State<HomePage>
     final handled = [
       LogicalKeyboardKey.space,
       LogicalKeyboardKey.keyS,
-      LogicalKeyboardKey.keyT,
-      LogicalKeyboardKey.escape,
       LogicalKeyboardKey.arrowLeft,
       LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
       LogicalKeyboardKey.enter,
       LogicalKeyboardKey.numpadEnter,
+      ..._cardKeys,
     ];
     if (!handled.contains(key)) return false;
     // Not while typing (player names), or off the on-screen game.
@@ -562,11 +563,6 @@ class _HomePageState extends State<HomePage>
         _cards.dealId != game.dealId) {
       return false;
     }
-    if (key == LogicalKeyboardKey.escape) {
-      if (!_trackerOpen) return false;
-      _closeTracker();
-      return true;
-    }
     if (key == LogicalKeyboardKey.space && _trackerOpen) {
       // Held past a moment: hide it to see the table, until let go.
       _spaceTimer?.cancel();
@@ -575,7 +571,7 @@ class _HomePageState extends State<HomePage>
       });
       return true;
     }
-    if (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyT) {
+    if (key == LogicalKeyboardKey.space) {
       _showCardTracker();
       return true;
     }
@@ -586,22 +582,95 @@ class _HomePageState extends State<HomePage>
       return true;
     }
     final hand = _cards.hands.length > _you ? _cards.hands[_you] : const <PlayingCard>[];
-    if (hand.isEmpty) return false;
+    // A card by its key: 1 to 9, 0, - and = along the top row, then Q W E.
+    final keyAt = _cardKeys.indexOf(key);
+    if (keyAt >= 0) {
+      if (keyAt >= hand.length) return false;
+      final play = _handPlays[hand[keyAt]];
+      if (play == null) return false;
+      setState(() {
+        _kbRow = 0;
+        _kbCard = hand[keyAt];
+      });
+      play();
+      return true;
+    }
+    // Up to the tasks on the table, down to your hand.
+    final open = [
+      for (final t in game.tasks)
+        if (t.assignedPlayerIndex == null && !game.isCharged(t)) t
+    ];
+    if (key == LogicalKeyboardKey.arrowUp) {
+      if (open.isEmpty) return false;
+      setState(() {
+        _kbRow = 1;
+        if (!open.contains(_kbTask)) _kbTask = open.first;
+      });
+      return true;
+    }
+    if (key == LogicalKeyboardKey.arrowDown) {
+      setState(() => _kbRow = 0);
+      return true;
+    }
     if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
-      final at = _kbCard == null ? -1 : hand.indexOf(_kbCard!);
       final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
+      if (_kbRow == 1 && open.isNotEmpty) {
+        final at = open.indexOf(_kbTask ?? open.first);
+        setState(() => _kbTask = open[(at + step).clamp(0, open.length - 1)]);
+        return true;
+      }
+      if (hand.isEmpty) return false;
+      final at = _kbCard == null ? -1 : hand.indexOf(_kbCard!);
       final next = at < 0
           ? (step > 0 ? 0 : hand.length - 1)
           : (at + step).clamp(0, hand.length - 1);
-      setState(() => _kbCard = hand[next]);
+      setState(() {
+        _kbRow = 0;
+        _kbCard = hand[next];
+      });
       return true;
     }
-    // Enter: play (or show) the chosen card.
+    // Enter: open the chosen task (its Take button is ready for Enter), or
+    // play (or show) the chosen card.
+    if (_kbRow == 1 && _kbTask != null && open.contains(_kbTask)) {
+      _showTaskDetail(_kbTask!, Offset.zero);
+      return true;
+    }
     final play = _kbCard == null ? null : _handPlays[_kbCard!];
     if (play == null) return false;
     play();
     return true;
   }
+
+  /// The keys that play the cards in your hand, left to right.
+  static final _cardKeys = [
+    LogicalKeyboardKey.digit1,
+    LogicalKeyboardKey.digit2,
+    LogicalKeyboardKey.digit3,
+    LogicalKeyboardKey.digit4,
+    LogicalKeyboardKey.digit5,
+    LogicalKeyboardKey.digit6,
+    LogicalKeyboardKey.digit7,
+    LogicalKeyboardKey.digit8,
+    LogicalKeyboardKey.digit9,
+    LogicalKeyboardKey.digit0,
+    LogicalKeyboardKey.minus,
+    LogicalKeyboardKey.equal,
+    LogicalKeyboardKey.keyQ,
+    LogicalKeyboardKey.keyW,
+    LogicalKeyboardKey.keyE,
+  ];
+
+  /// What's printed on each of those keys.
+  static const _cardKeyLabels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Q', 'W', 'E'];
+
+  /// Where the arrow keys are: your hand (0) or the tasks on the table (1).
+  int _kbRow = 0;
+  Task? _kbTask;
+
+  /// The shortcuts are shown (the menu setting, on a computer with room).
+  bool get _keysShown =>
+      _showKeys && _desktop && MediaQuery.sizeOf(context).width >= 700;
 
   /// The card chosen in your hand with the arrow keys.
   PlayingCard? _kbCard;
@@ -1850,7 +1919,7 @@ class _HomePageState extends State<HomePage>
                       final left = (width - total) / 2 + i * step;
                       // The card chosen with the arrow keys stands up a
                       // little higher.
-                      final chosen = _kbCard == card;
+                      final chosen = _kbCard == card && _kbRow == 0;
                       final top = chosen
                           ? -8.0
                           : legal.contains(card) || _queued == card
@@ -1946,15 +2015,25 @@ class _HomePageState extends State<HomePage>
                                   t: f,
                                   front: child!,
                                   back: CardBack(width: cardW)),
-                              child: PlayingCardView(
-                                card: card,
-                                width: cardW,
-                                dimmed: yourTurn && !legal.contains(card),
-                                glow: (yourTurn && card == _tutorialHint) ||
-                                    _queued == card ||
-                                    chosen,
-                                marks: _marksFor(card),
-                              ),
+                              child: Stack(clipBehavior: Clip.none, children: [
+                                PlayingCardView(
+                                  card: card,
+                                  width: cardW,
+                                  dimmed: yourTurn && !legal.contains(card),
+                                  glow: (yourTurn && card == _tutorialHint) ||
+                                      _queued == card ||
+                                      chosen,
+                                  marks: _marksFor(card),
+                                ),
+                                // With the shortcuts showing: the key that
+                                // plays it, in the card's bottom corner.
+                                if (_keysShown && i < _cardKeyLabels.length)
+                                  Positioned(
+                                    left: cardW * 0.08,
+                                    bottom: cardW * 0.08,
+                                    child: _KeyCap(_cardKeyLabels[i], size: cardW * 0.2),
+                                  ),
+                              ]),
                             ),
                           ),
                         ),
@@ -2648,6 +2727,7 @@ class _HomePageState extends State<HomePage>
                         : game.players[only].color,
                     width: w,
                     fontSize: big ? 16 : 13,
+                    focused: _kbRow == 1 && _kbTask == t,
                     // A tap reads it; press and hold to take it, so taking
                     // a task is always meant.
                     onTap: () => _showTaskDetail(t, Offset.zero),
@@ -4462,11 +4542,13 @@ class _HomePageState extends State<HomePage>
                     task.assignedPlayerIndex == null &&
                     _mayTake(task))
                   FilledButton(
+                    // Ready for Enter, when chosen with the keys.
+                    autofocus: true,
                     onPressed: () {
                       Navigator.pop(context);
                       _takeTask(task);
                     },
-                    child: const Text('Take this task'),
+                    child: const Text('Take'),
                   ),
               ]
             : [
@@ -4947,7 +5029,7 @@ class _HomePageState extends State<HomePage>
       const Positioned.fill(
           child: IgnorePointer(child: SafeArea(child: TableTrim()))),
       // Keyboard shortcuts, when asked for, beside the table.
-      if (_showKeys && _desktop && _inGame && _setupArgs == null && _digital)
+      if (_keysShown && _inGame && _setupArgs == null && _digital)
         const Positioned(
           right: 22,
           bottom: 22,
@@ -4988,16 +5070,16 @@ class _HomePageState extends State<HomePage>
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                              maxWidth: 470,
+                              maxWidth: 400,
                               maxHeight: MediaQuery.sizeOf(context).height * 0.88),
                           child: Material(
                             type: MaterialType.transparency,
                             child: OrnateCard(
                               won: false,
                               court: true,
-                              maxWidth: 470,
+                              maxWidth: 400,
                               margin: const EdgeInsets.only(top: 34),
-                              padding: const EdgeInsets.fromLTRB(16, 30, 16, 14),
+                              padding: const EdgeInsets.fromLTRB(12, 26, 12, 12),
                               child: _CardTracker(
                                 cards: _cards,
                                 you: _you,
@@ -9217,7 +9299,11 @@ class _TaskChip extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.struck = const {},
+    this.focused = false,
   });
+
+  /// Chosen with the arrow keys: it glows gold.
+  final bool focused;
 
   final Task task;
   final int points;
@@ -9335,8 +9421,11 @@ class _TaskChip extends StatelessWidget {
         border: Border.all(
             color: failed ? Palette.lost : neutral ? Palette.card : color,
             width: 2.5 + 2 * outlineWidth),
-        boxShadow: const [
-          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
+        boxShadow: [
+          const BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
+          if (focused)
+            BoxShadow(
+                color: Palette.gold.withValues(alpha: 0.9), blurRadius: 12, spreadRadius: 2),
         ],
       ),
       foregroundDecoration: BoxDecoration(
@@ -9520,7 +9609,7 @@ class _MoreAboutState extends State<_MoreAbout> {
           style: TextButton.styleFrom(
               foregroundColor: Palette.goldDeep,
               padding: const EdgeInsets.symmetric(horizontal: 4)),
-          icon: Icon(_open ? Icons.expand_less_rounded : Icons.info_outline_rounded,
+          icon: Icon(_open ? Icons.expand_less_rounded : Icons.expand_more_rounded,
               size: 20),
           label: Text(_open ? 'Less' : 'What does this task mean?'),
         ),
@@ -9681,10 +9770,10 @@ class _CardTrackerState extends State<_CardTracker> {
             highlightColor: Colors.transparent,
             onTap: () => setState(() => _seat = null),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Text('Deck',
                   style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: on ? Palette.ink : Colors.white,
                       shadows: on ? null : _feltShadow)),
@@ -9698,18 +9787,18 @@ class _CardTrackerState extends State<_CardTracker> {
       final p = players[seat];
       final picked = _seat == seat;
       final label = Row(mainAxisSize: MainAxisSize.min, children: [
-        swatch(p),
-        const SizedBox(width: 7),
+        swatch(p, size: 12),
+        const SizedBox(width: 5),
         Text(seat == you ? 'You' : p.name.replaceFirst('The ', ''),
             style: TextStyle(
-                fontSize: 14,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: picked ? Palette.ink : Colors.white,
                 shadows: picked ? null : _feltShadow)),
       ]);
       if (seat == you) {
         return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
             child: label);
       }
       return Semantics(
@@ -9726,7 +9815,7 @@ class _CardTrackerState extends State<_CardTracker> {
             splashColor: Palette.gold.withValues(alpha: 0.2),
             onTap: () => setState(() => _seat = seat),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               child: label,
             ),
           ),
@@ -9786,7 +9875,7 @@ class _CardTrackerState extends State<_CardTracker> {
 
     final picked = [for (final g in guesses) if (g.seat == _seat) g];
     return LayoutBuilder(builder: (context, box) {
-      final w = math.min(40.0, (box.maxWidth - 8 * 4 - 1) / 9);
+      final w = math.min(34.0, (box.maxWidth - 8 * 3 - 1) / 9);
       final small = clampD(w * 0.7, 20, 34);
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -9800,9 +9889,9 @@ class _CardTrackerState extends State<_CardTracker> {
                 onPointerUp: (_) => widget.onPeek?.call(false),
                 onPointerCancel: (_) => widget.onPeek?.call(false),
                 child: const Padding(
-                  padding: EdgeInsets.all(8),
+                  padding: EdgeInsets.all(6),
                   child: Icon(Icons.visibility_rounded,
-                      color: Palette.gold, size: 24, shadows: _feltShadow),
+                      color: Palette.gold, size: 21, shadows: _feltShadow),
                 ),
               ),
             ),
@@ -9812,29 +9901,30 @@ class _CardTrackerState extends State<_CardTracker> {
                   style: TextStyle(
                       fontFamily: displayFont,
                       fontWeight: FontWeight.w700,
-                      fontSize: 21,
+                      fontSize: 18,
                       color: Palette.gold,
                       shadows: _feltShadow)),
             ),
             IconButton(
               tooltip: 'Close',
               onPressed: widget.onClose,
+              visualDensity: VisualDensity.compact,
               style: IconButton.styleFrom(overlayColor: Colors.transparent),
               icon: const Icon(Icons.close_rounded,
-                  color: Palette.gold, size: 26, shadows: _feltShadow),
+                  color: Palette.gold, size: 22, shadows: _feltShadow),
             ),
           ]),
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
           Wrap(
             alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 4,
+            runSpacing: 4,
             children: [
               deckChip(),
               for (int s = 0; s < players.length; s++) key(s),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // The deck, or the chosen player's possible hand in its place.
           Flexible(
             child: SingleChildScrollView(
@@ -9855,11 +9945,11 @@ class _CardTrackerState extends State<_CardTracker> {
                           children: [
                             for (final suit in suits)
                               Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
+                                padding: const EdgeInsets.only(bottom: 3),
                                 child: Wrap(
                                   alignment: WrapAlignment.center,
-                                  spacing: 4,
-                                  runSpacing: 4,
+                                  spacing: 3,
+                                  runSpacing: 3,
                                   children: [
                                     for (final c in deck)
                                       if (c.suit == suit) cell(c, w)
@@ -10300,55 +10390,85 @@ class _ShortcutsCard extends StatelessWidget {
   const _ShortcutsCard();
 
   static const _keys = [
-    ('← →', 'Choose a card'),
-    ('Enter', 'Play it'),
-    ('S', 'Show a card'),
-    ('T', 'Card tracker'),
-    ('Space', 'Card tracker; hold to peek'),
-    ('Esc', 'Put the tracker away'),
+    (['1', '2', '…'], 'Play the card with that key'),
+    (['←', '→'], 'Choose a card or a task'),
+    (['↑', '↓'], 'Between your hand and the tasks'),
+    (['Enter'], 'Play the card, or open the task'),
+    (['S'], 'Show a card'),
+    (['Space'], 'Card tracker; hold to peek'),
   ];
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        decoration: BoxDecoration(
-          color: const Color(0xD90A3622),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Palette.gold.withValues(alpha: 0.6), width: 1.2),
-          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 10)],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Keyboard',
-                style: TextStyle(
-                    fontFamily: displayFont,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Palette.gold)),
-            const SizedBox(height: 6),
-            for (final (k, what) in _keys)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2.5),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    constraints: const BoxConstraints(minWidth: 44),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: Palette.gold, width: 1.2),
+  Widget build(BuildContext context) => Material(
+        type: MaterialType.transparency,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 10, 16, 12),
+          decoration: BoxDecoration(
+            color: const Color(0xE60A3622),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: DialogStyle.edge, width: 1.2),
+            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 12)],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Keyboard',
+                  style: TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: Palette.gold,
+                      shadows: feltShadow)),
+              const SizedBox(height: 8),
+              for (final (caps, what) in _keys)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    SizedBox(
+                      width: 92,
+                      child: Wrap(spacing: 3, children: [
+                        for (final c in caps) _KeyCap(c, size: 20),
+                      ]),
                     ),
-                    child: Text(k,
+                    Text(what,
                         style: const TextStyle(
-                            fontSize: 12.5, fontWeight: FontWeight.w800, color: Palette.gold)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(what, style: const TextStyle(fontSize: 13, color: Colors.white70)),
-                ]),
-              ),
-          ],
+                            fontFamily: bodyFont, fontSize: 13.5, color: Colors.white)),
+                  ]),
+                ),
+            ],
+          ),
         ),
+      );
+}
+
+/// A key on the keyboard, drawn as a small gold key cap.
+class _KeyCap extends StatelessWidget {
+  const _KeyCap(this.label, {required this.size});
+  final String label;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: BoxConstraints(minWidth: size, minHeight: size),
+        padding: EdgeInsets.symmetric(horizontal: size * 0.25),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF9E08C), Palette.gold]),
+          borderRadius: BorderRadius.circular(size * 0.22),
+          border: Border.all(color: const Color(0xFF7A5A12), width: 1),
+          boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 1.5))],
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontFamily: bodyFont,
+                fontSize: size * 0.62,
+                height: 1,
+                fontWeight: FontWeight.w800,
+                color: Palette.ink,
+                decoration: TextDecoration.none)),
       );
 }

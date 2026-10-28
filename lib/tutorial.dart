@@ -142,6 +142,7 @@ const _beforeLead = <IntroPage>[
     'The old King is gone, and the great houses gather in the throne hall. In King’s Court, you and your courtiers play cards together to keep the realm in order.',
     'Everyone is on the same side. You win together or lose together, round by round.',
     'It’s a trick-taking card game, like Hearts, Spades or Bridge, inspired by The Crew. Never played one? That’s fine. The tutorial teaches a few rules at a time, and after each part you play a short round that uses them.',
+    'Game words are in gold, like trick, suit or Court Cards. Tap one at any time, anywhere in the game, to see what it means.',
   ], IntroArt.court),
   IntroPage('The goal', [
     'Every round, the court is dealt tasks, such as “Win the 3♥” or “Win the first trick”.',
@@ -210,10 +211,10 @@ const _beforeHelp = <IntroPage>[
   IntroPage('Showing a card', [
     'Once a round, each player may show one card to everyone: their highest, lowest or only card of a suit, saying which. It stays in their hand, face up, until it’s played. Court Cards can never be shown.',
     'For example: the Duke shows the 7♠ as his highest ♠. Now everyone knows the 8♠ and 9♠ are with someone else.',
-    'To show a card, tap the speech button at the right of your hand, then the card. The table pauses for this before the first pick, and you can also do it before or between tricks.',
+    'To show a card, tap the speech button \uE002 at the right of your hand, then the card. The table pauses for this before the first pick, and you can also do it before or between tricks.',
   ], IntroArt.speak),
   IntroPage('Keeping count', [
-    'The card tracker button beside your hand shows every card in the deck in rows by suit. A card that’s been played is shaded and outlined in the colour of whoever played it, with the number of the trick it fell in. Cards in your hand are outlined in your colour.',
+    'The card tracker button \uE003 beside your hand shows every card in the deck in rows by suit. A card that’s been played is shaded and outlined in the colour of whoever played it, with the number of the trick it fell in. Cards in your hand are outlined in your colour.',
     'Tap a player in the key at the top to see what they may still hold instead, worked out from what they’ve played and shown: bright cards they certainly hold, faint ones they may. Tap Deck to see every card again.',
     'Hold the eye at the top, or the space bar, to see the table behind it for a moment. A tap of the space bar puts it away.',
   ], IntroArt.tracker),

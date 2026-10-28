@@ -101,12 +101,53 @@ class SuitText extends StatelessWidget {
   /// Cards named in the text that are already won ("A♥"), crossed out.
   final Set<String> struck;
 
-  static final _marked = RegExp(r'([A2-9])([♥♦♠♣])|[♥♦♠♣]|\uE000|\uE001|\bcourt cards?\b',
+  static final _marked = RegExp(r'([A2-9])([♥♦♠♣])|[♥♦♠♣]|\uE000|\uE001|\uE002|\uE003|\bcourt cards?\b',
       caseSensitive: false);
 
   /// Markers [Task.boardText] uses: no Court Cards, and a Court Card.
   static const noCourt = '\uE000';
   static const court = '\uE001';
+
+  /// Markers for the buttons by your hand, drawn as they look there: show a
+  /// card, and the card tracker.
+  static const showButton = '\uE002';
+  static const trackerButton = '\uE003';
+
+  /// A card named on the felt: a little card of its own, rank and suit in
+  /// the colours the card is printed in, so the words match the cards.
+  InlineSpan _cardChip(String? rank, String symbol, bool done) {
+    final fs = style.fontSize ?? 14;
+    final suit = Suit.values.firstWhere((s) => s.symbol == symbol);
+    final colour = Palette.suitColour(suit);
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Opacity(
+        opacity: done ? 0.5 : 1,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: fs * 0.08),
+          padding: EdgeInsets.fromLTRB(fs * 0.22, fs * 0.04, fs * 0.22, fs * 0.06),
+          decoration: BoxDecoration(
+            color: Palette.card,
+            borderRadius: BorderRadius.circular(fs * 0.22),
+            border: Border.all(color: outlineColour, width: 1),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (rank != null)
+              Text(rank,
+                  style: TextStyle(
+                      fontFamily: bodyFont,
+                      fontSize: fs * 0.88,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      color: colour,
+                      shadows: const [],
+                      decoration: done ? TextDecoration.lineThrough : null)),
+            SuitIcon(suit, size: fs * 0.74, color: colour),
+          ]),
+        ),
+      ),
+    );
+  }
 
   /// A game word in gold, a little bolder; tap it to read what it means.
   InlineSpan _keyword(
@@ -179,7 +220,9 @@ class SuitText extends StatelessWidget {
     for (final m in _marked.allMatches(text)) {
       if (m.start > last) words(text.substring(last, m.start));
       final token = m.group(0)!;
-      if (m.group(1) != null) {
+      if (m.group(1) != null && dark) {
+        spans.add(_cardChip(m.group(1), m.group(2)!, struck.contains(token)));
+      } else if (m.group(1) != null) {
         // A named card: its rank, then its suit in colour; crossed out once
         // it's been won.
         final done = struck.contains(token);
@@ -206,6 +249,19 @@ class SuitText extends StatelessWidget {
                   ? NoCourtIcon(size: size)
                   : CourtCardIcon(size: size * 1.05),
             )));
+      } else if (token == showButton || token == trackerButton) {
+        final size = (style.fontSize ?? 14) * 1.25;
+        final c = dark ? Palette.gold : Palette.goldDeep;
+        spans.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: size * 0.08),
+              child: token == showButton
+                  ? ShowCardIcon(size: size, color: c)
+                  : TrackerIcon(size: size, color: c),
+            )));
+      } else if (token.length == 1 && dark) {
+        spans.add(_cardChip(null, token, false));
       } else if (token.length == 1) {
         spans.add(_suit(token, suitColour(token)));
       } else {

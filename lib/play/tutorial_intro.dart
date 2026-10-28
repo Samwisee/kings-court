@@ -81,13 +81,14 @@ class _TutorialIntroState extends State<TutorialIntro> {
                     // The part's name in the middle, a cross to leave the
                     // tutorial, and a brass rule underneath.
                     Container(
-                      height: 64,
+                      padding: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
                         border: Border(
                             bottom: BorderSide(
                                 color: Palette.gold.withValues(alpha: 0.8), width: 1.5)),
                       ),
-                      child: Row(children: [
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      SizedBox(height: 56, child: Row(children: [
                         const SizedBox(width: 56),
                         Expanded(
                           child: FittedBox(
@@ -111,11 +112,10 @@ class _TutorialIntroState extends State<TutorialIntro> {
                                 color: Palette.gold, size: 28, shadows: _shadow),
                           ),
                         ),
-                      ]),
-                    ),
-                    // A crown for each page: gold once reached.
+                      ])),
+                      // A crown for each page: gold once reached.
                     Padding(
-                      padding: const EdgeInsets.only(top: 12),
+                      padding: const EdgeInsets.only(top: 2),
                       child: Semantics(
                         label: 'Page ${page + 1} of ${pages.length}',
                         excludeSemantics: true,
@@ -141,6 +141,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
                           ],
                         ),
                       ),
+                    ),
+                      ]),
                     ),
                     Expanded(
                       child: AnimatedSwitcher(

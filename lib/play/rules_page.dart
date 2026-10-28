@@ -80,13 +80,13 @@ const _sections = <_Section>[
     'You sit at the bottom; the courtiers are bots who play with you, not against you.',
     'Tap a card in your hand to play it. Cards you may play stand up. Once a suit is led you can tap your card early: it’s played as soon as your turn comes.',
     'Tasks, seals and schemes are judged by the cards as the tricks fall. A few cards may be set aside unseen so everyone holds the same number.',
-    'The grid button beside your hand opens the card tracker: every card, which have been played (by whom, in which trick), and what can be worked out about the others’ hands.',
+    'The card tracker button \uE003 beside your hand opens the card tracker: every card, which have been played (by whom, in which trick), and what can be worked out about the others’ hands.',
     'Tap any task to see whose it is, how it’s going, the cards it’s about and what it means.',
   ], RulesFor.onScreen),
   _Section('Showing a card', [
     'You may not say what’s in your hand or suggest what anyone should play.',
     'Once a round, you may show one card: your highest, lowest or only card of a suit, saying which. It stays in your hand, face up, until played. Court Cards can’t be shown.',
-    'On screen: tap the speech button, then the card. You can show a card while tasks are chosen, before a trick or between tricks; tap mid-trick and you’ll show it once the trick ends.',
+    'On screen: tap the speech button \uE002, then the card. You can show a card while tasks are chosen, before a trick or between tricks; tap mid-trick and you’ll show it once the trick ends.',
     'At a real table: lay the card face up and tap your seat to flip your speech token (with courtly roles, mark it on your courtier’s card).',
   ]),
   _Section('Reading tasks', [
