@@ -147,6 +147,10 @@ void main() {
     Analytics.sent.clear();
     await dealGame(tester, 4);
     expect(Analytics.sent, contains(startsWith('start/free/4p/table')));
+    // Let the debounced save finish before the test ends.
+    await tester.tap(find.byType(SeatToken).first);
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2));
   });
 
   testWidgets('How to play opens as a dialog with the 2-player rules',
