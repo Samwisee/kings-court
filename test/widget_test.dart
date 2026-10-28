@@ -1300,8 +1300,9 @@ void main() {
     });
   }
 
-  testWidgets('The arrow keys reach the Skip button, and S skips too', (tester) async {
-    for (final bySKey in [false, true]) {
+  for (final bySKey in [false, true]) {
+  testWidgets(bySKey ? 'S skips showing a card' : 'The arrow keys reach the Skip button', (tester) async {
+    {
       setPhoneSize(tester);
       HomePageTestHooks.fast();
       SharedPreferences.setMockInitialValues({});
@@ -1341,6 +1342,7 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     }
   });
+  }
 
   testWidgets('The tutorial plays through every lesson, following the coach',
       (tester) async {
