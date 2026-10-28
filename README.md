@@ -159,6 +159,13 @@ these, and every screen follows.
    browser bars. They can't read Dart, so change them along with the
    palette.
 5. **Sounds**: `assets/sounds`, played through `lib/sfx.dart`.
+6. **Mouse pointers**: `web/cursors/` (a gilt arrow, and a gilt hand over
+   anything you can press). The art is `arrow.svg` and `hand.svg`; the
+   PNGs (1x and 2x) are drawn from them, and `web/index.html` puts them
+   on the page. Anything tappable that isn't a button needs
+   `MouseRegion(cursor: SystemMouseCursors.click)` to get the hand.
+7. **Keyboard choice**: `KeyFocusRing` (`lib/ui/panels.dart`) is the ring
+   round whatever the arrow keys have chosen.
 
 Today a skin is a code change and a new build. To switch skins inside the
 app, `Palette`'s constants would become an instance chosen at start-up (an
@@ -218,10 +225,13 @@ Still to move onto the link: taking tasks and passing, which go through
   `ValueNotifier` read by a `Transform`, so the page doesn't rebuild each
   frame. A card let go short of the table slides back on its own
   animation.
-- What's left: dragging a task on a real table still rebuilds the page
-  each frame (cheaply, through `_ui`). The next step would be the same
-  notifier trick for task positions, and parts of the table listening to
-  the controller instead of the whole page.
+- Dragging a task on a real table redraws only that task: each task
+  card listens to a notifier, and only the dragged one listens to the
+  drag. The page rebuilds only when the seat under the card changes.
+- Still possible later: parts of the table (the hand, the status bar)
+  listening to the controller directly, so a move redraws only what it
+  touches. Game moves are a few a second at most, so this matters less
+  than the per-frame cases above, which are done.
 
 ---
 
