@@ -13,6 +13,7 @@ import '../engine/cards.dart';
 import '../engine/match.dart';
 import '../engine/conflicts.dart';
 import '../engine/rules.dart';
+import '../engine/showing.dart';
 import '../models.dart';
 import '../tutorial.dart';
 
@@ -107,7 +108,9 @@ Future<BotDecision?> botDecision(GameState game, MatchState view, Bot bot,
     if (shown != null) return BotShows(picker, shown);
     final pick = await bot.choosePickAsync(view, picker);
     // Nothing suits their hand: pass the pick on, once a round.
-    if (game.canPass(picker) && bot.lastPickScore < 0.12) {
+    // (Fair courtiers see only their own hand, so they rate every pick
+    // lower than all-seeing ones did; the bar is set to match.)
+    if (game.canPass(picker) && bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) {
       return BotPasses(picker);
     }
     return BotPicks(picker, pick);
@@ -151,6 +154,12 @@ PlayingCard? botShows(GameState game, MatchState view, int seat) {
   if (game.spoke[seat] || !game.canSpeak(seat) || view.current.isNotEmpty) {
     return null;
   }
+  // A task of its own that asks it to show a card comes first.
+  final own = intendedShow(view, seat, [
+    for (final t in game.tasks)
+      if (t.assignedPlayerIndex == seat && t.status == TaskStatus.pending) t.description
+  ]);
+  if (own != null) return own;
   for (final card in view.hands[seat]) {
     if (view.revealFor(seat, card) == null) continue;
     final needed = game.tasks.any((t) =>

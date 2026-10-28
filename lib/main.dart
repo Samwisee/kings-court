@@ -1485,7 +1485,9 @@ class _HomePageState extends State<HomePage>
         king: game.kingIndex ?? c.king,
         tricks: c.tricks,
         totalTricks: c.totalTricks,
-        inPlay: c.inPlay);
+        inPlay: c.inPlay,
+        shown: c.revealed,
+        shownAt: c.revealedAt);
   }
 
   /// The round as the table shows it: a trick still lying on the table
@@ -1499,7 +1501,9 @@ class _HomePageState extends State<HomePage>
         king: game.kingIndex ?? c.king,
         tricks: pending ? c.tricks.sublist(0, c.tricks.length - 1) : c.tricks,
         totalTricks: c.totalTricks,
-        inPlay: c.inPlay);
+        inPlay: c.inPlay,
+        shown: c.revealed,
+        shownAt: c.revealedAt);
   }
 
   /// Tricks [seat] has won, as the table shows them (see [_shownView]).
@@ -3198,6 +3202,7 @@ class _HomePageState extends State<HomePage>
     setState(() {
       _cards.revealed[seat] = card;
       _cards.revealHint[seat] = hint;
+      _cards.revealedAt[seat] = _cards.tricks.length;
       if (!game.spoke[seat]) game.toggleSpoke(seat);
       if (seat == _you) _revealing = false;
     });

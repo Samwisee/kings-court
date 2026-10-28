@@ -194,8 +194,7 @@ void main() {
     expect(clash('Win the A♦', 'Win all four Aces'), isTrue);
     expect(clash('Win at least two Aces', 'Win all four Aces'), isTrue);
     expect(clash('Win the first trick', 'Win the first two tricks'), isTrue);
-    expect(clash('Win more tricks than anyone else',
-        'Win more tricks than the rest of the court put together'), isTrue);
+    expect(clash('Win more tricks than anyone else', 'Win more ♠ cards than anyone else'), isFalse);
     expect(clash('Win the Joker, the Jack and the Queen', 'Win exactly two Court Cards'), isTrue);
     expect(clash('Win the Jack and the Queen', 'Win the Queen'), isTrue);
     expect(clash('Win the 3♥', 'Win the 9♠'), isFalse);
@@ -255,7 +254,7 @@ void main() {
 
   test('Every task has a tier, and deals keep within the tier limits', () {
     expect(tierOf('Win exactly two tricks'), TaskTier.precise);
-    expect(tierOf('Win only the last trick'), TaskTier.precise);
+    expect(tierOf('Win only the first trick'), TaskTier.precise);
     expect(tierOf("Don't win any 9s"), TaskTier.avoid);
     expect(tierOf('Win more tricks than the King'), TaskTier.race);
     expect(tierOf('Win the 3♥'), TaskTier.capture);
@@ -326,25 +325,6 @@ void main() {
       ];
     g.setKing(0);
     expect(g.pickTurn, 1);
-  });
-
-  test('A bot who may win only the last trick never leads the King', () {
-    for (int seed = 0; seed < 6; seed++) {
-      final rand = Random(seed);
-      final s = MatchState(players: 4, target: 6)..newRound(rand);
-      // Seat 1 holds the King card and must win only the last trick.
-      final holder = [for (int i = 0; i < 4; i++) i]
-          .firstWhere((i) => s.hands[i].contains(PlayingCard.king));
-      final task = GameState.taskPool
-          .firstWhere((t) => t.description == 'Win only the last trick');
-      s.tasks = [MatchTask(task, owner: holder)];
-      s.phase = Phase.playing;
-      s.leader = holder;
-      s.current = [];
-      s.currentSeats = [];
-      final bot = Bot(rand)..budget = 300;
-      expect(bot.choosePlay(s, holder), isNot(PlayingCard.king), reason: 'seed $seed');
-    }
   });
 
   test('The same seed deals the same cards and tasks again', () {

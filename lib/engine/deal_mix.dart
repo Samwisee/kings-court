@@ -36,7 +36,9 @@ TaskTier tierOf(String d) {
       d.contains('than the King')) {
     return TaskTier.race;
   }
-  if (d.startsWith("Don't") || d.startsWith('Win no ')) return TaskTier.avoid;
+  if (d.startsWith("Don't") || d.startsWith('Win no ') || d.startsWith('Never ')) {
+    return TaskTier.avoid;
+  }
   if (d.startsWith('Win a trick') ||
       d.contains(' with a ') ||
       d.contains(' with another ') ||

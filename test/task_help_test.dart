@@ -109,6 +109,44 @@ void main() {
     expect(taskRules['Win a trick where no one followed suit']!(view([t1]), 0, null), Verdict.pending);
   });
 
+  test('Tasks about shown cards judge what was shown, and when', () {
+    PlayingCard c(String l) => PlayingCard.parse(l)!;
+    final t1 = Trick(0, const [0, 1, 2], [c('9♠'), c('2♠'), c('3♠')], 0);
+    final t2 = Trick(0, const [0, 1, 2], [c('4♥'), c('5♥'), c('2♥')], 1);
+    RoundView shown(List<Trick> tricks, Map<int, PlayingCard> s, Map<int, int> at) => RoundView(
+        players: 3, king: 0, tricks: tricks, totalTricks: 13,
+        inPlay: fullDeck().toSet(), shown: s, shownAt: at);
+    // Seat 0 showed the 9♠ before the first trick, and won it.
+    final v = shown([t1, t2], {0: c('9♠')}, {0: 0});
+    expect(taskRules['Win the card you showed']!(v, 0, null), Verdict.done);
+    expect(taskRules["Don't win the card you showed"]!(v, 0, null), Verdict.failed);
+    expect(taskRules['Win the trick right after you show a card']!(v, 0, null), Verdict.done);
+    expect(taskRules['Win a card someone else showed']!(v, 1, null), Verdict.pending);
+    // Seat 1 showed only after trick 1 and won trick 2: fine.
+    final late = shown([t1, t2], {1: c('5♥')}, {1: 1});
+    expect(taskRules["Don't win a trick before you've shown a card"]!(late, 1, null), Verdict.done);
+    // Seat 0 won trick 1 before showing anything.
+    expect(taskRules["Don't win a trick before you've shown a card"]!(late, 0, null), Verdict.failed);
+    // Nothing shown: these can't be done yet.
+    final none = shown([t1], {}, {});
+    expect(taskRules['Win the card you showed']!(none, 0, null), Verdict.pending);
+    expect(selfClash('Win the card you showed', "Don't win the card you showed"), isTrue);
+  });
+
+  test('More of the court’s tasks judge the tricks right', () {
+    PlayingCard c(String l) => PlayingCard.parse(l)!;
+    final followed = Trick(0, const [0, 1, 2], [c('4♥'), c('5♥'), c('2♥')], 1);
+    final ran = Trick(1, const [1, 2, 0], [c('3♣'), c('9♦'), c('7♣')], 0);
+    final jj = Trick(0, const [0, 1, 2], [PlayingCard.joker, PlayingCard.jack, c('2♣')], 1);
+    expect(taskRules['Win a trick where everyone followed suit']!(view([followed]), 1, null), Verdict.done);
+    expect(taskRules['Win the trick in which someone first runs out of a suit']!(view([followed, ran]), 0, null), Verdict.done);
+    expect(taskRules['Win the first trick a Court Card falls in']!(view([followed, jj]), 1, null), Verdict.done);
+    expect(taskRules['Win the trick right after you lose one with a Court Card']!(view([jj, ran]), 0, null), Verdict.done);
+    expect(taskRules['Win your first trick with a Court Card']!(view([followed]), 1, null), Verdict.failed);
+    expect(taskRules['Win your first trick with a Court Card']!(view([jj]), 1, null), Verdict.done);
+    expect(taskRules['Never win two tricks in a row']!(view([followed, followed]), 1, null), Verdict.failed);
+  });
+
   test('Your own hand can rule a task out', () {
     PlayingCard c(String l) => PlayingCard.parse(l)!;
     expect(handBlocks('Win the 7♥ with a Court Card', [c('7♥'), PlayingCard.jack]),
@@ -119,7 +157,7 @@ void main() {
     expect(handBlocks('Win a trick with the Joker', [c('2♣')]), isNotNull);
     expect(handBlocks('Win the Queen with the King', [PlayingCard.king, PlayingCard.queen]), isNotNull);
     expect(handBlocks('Win the Queen with the King', [PlayingCard.king, c('2♣')]), isNull);
-    expect(handBlocks('Win a trick with a 3', [c('3♣')]), isNull);
+    expect(handBlocks('Win a trick with a 5', [c('5♣')]), isNull);
   });
 
   test('A task close-up shows the cards it is about', () {

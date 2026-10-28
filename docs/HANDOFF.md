@@ -7,7 +7,7 @@ Read this first, then `docs/ONLINE.md` if the work touches multiplayer.
 A cooperative trick-taking card game for 2 to 6 players, in the family of *The Crew* (its inspiration; the tasks are the court's own, see docs/adding-tasks.md). Everyone plays together. Each round deals **tasks** ("Win the 3♥", "Win the first trick", "Win no Court Cards"), players take them in turn, then play tricks until every task is done (round won) or one fails (round lost).
 
 - **The deck:** 40 cards, Ace (1) to 9 in ♥ ♦ ♠ ♣, plus four **Court Cards** (Joker < Jack < Queen < King). Court Cards are their own suit and beat every suit. Whoever holds the King card is **the King**, picks the first task and leads the first trick. Players must follow the suit led if they can.
-- **The tasks** (`lib/tasks.dart`, 85 of them) are the court's own: tasks about the King, the Court Cards and how a trick is won, plus the plain goals every trick-taking game shares. Their points, per table size, come from the balance report (`tool/balance`), not from any other game.
+- **The tasks** (`lib/tasks.dart`, about 120 of them) are the court's own: tasks about the King, the Court Cards and how a trick is won, plus the plain goals every trick-taking game shares. Their points, per table size, come from the balance report (`tool/balance`), not from any other game.
 
 ### Ways to play (`GameMode` in `lib/models.dart`)
 

@@ -1259,6 +1259,10 @@ void main() {
       final total = hands.first.length;
       final tricks = <Trick>[];
       var leader = 0;
+      // Everyone shows a card before the first trick (for the tasks about
+      // shown cards).
+      final shown = {for (int s = 0; s < players; s++) s: hands[s][r % hands[s].length]};
+      final shownAt = {for (int s = 0; s < players; s++) s: 0};
       while (tricks.length < total - 1) {
         final seats = <int>[], cards = <PlayingCard>[];
         for (int i = 0; i < players; i++) {
@@ -1278,7 +1282,9 @@ void main() {
             king: 0,
             tricks: tricks,
             totalTricks: total,
-            inPlay: inPlay);
+            inPlay: inPlay,
+            shown: shown,
+            shownAt: shownAt);
         for (final e in taskRules.entries) {
           for (int o = 0; o < players; o++) {
             if (e.value(v, o, 1) == Verdict.done) early.add(e.key);
@@ -1656,6 +1662,6 @@ void main() {
     for (final t in GameState.taskPool) {
       expect(t.sixPlayerPoints, greaterThan(0), reason: t.description);
     }
-    expect(GameState.taskPool.length, 83);
+    expect(GameState.taskPool.length, 113);
   });
 }

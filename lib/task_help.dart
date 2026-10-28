@@ -65,6 +65,7 @@ List<String> termsIn(String d) {
   }
   if (lower.contains('ace') || RegExp(r'A[♥♦♠♣]').hasMatch(d)) words.add('Ace');
   if (d.contains('the King')) words.add('The King');
+  if (lower.contains('show')) words.add('Show a card');
   if (lower.contains('in a row')) words.add('In a row');
   if (lower.contains('total')) words.add('Total');
   return words;
@@ -76,6 +77,7 @@ const _numbers = {
   'three': 3,
   'four': 4,
   'five': 5,
+  'six': 6,
   'seven': 7,
 };
 
@@ -176,8 +178,6 @@ const _special = <String, String>{
       'Win every Ace: the A♥, A♦, A♠ and A♣ must all end up in tricks you win. Aces are the lowest cards, so they fall when their suit is led and their holder has nothing else, or are thrown on tricks their holder can’t follow. If anyone else wins one, the task fails.',
   'Win more tricks than anyone else':
       'At the end of the round, count everyone’s tricks: you must have more than any other single player. A tie doesn’t count.',
-  'Win more tricks than the rest of the court put together':
-      'Win more tricks than all the other players put together: more than half of all the tricks in the round.',
   'Win fewer tricks than anyone else':
       'At the end of the round, every other player must have won more tricks than you. A tie fails.',
   'Win more tricks than the King':
@@ -230,10 +230,6 @@ const _special = <String, String>{
       'Take the final trick of the round by playing a Court Card on it. Keep a Court Card back to the very end. You need one in your hand.',
   'Win the second-to-last trick':
       'Win the trick before the last one, so that you lead the final trick. Save a strong card for it.',
-  'Win the first and the last trick':
-      'Win trick one and the final trick of the round. What happens in between doesn’t matter.',
-  'Win only the last trick':
-      'Lose every trick except the very last one, which you must win.',
   'Win two tricks in a row':
       'At some point, win two tricks one straight after the other.',
   'Win three tricks in a row':
@@ -266,6 +262,52 @@ const _special = <String, String>{
       'Whenever you lead a trick, lead a plain card, never the Joker, Jack, Queen or King. Play your Court Cards on other people’s leads instead. If Court Cards are all you have left when you lead, the task fails.',
   'Win no tricks until the King has won one':
       'Win nothing until the King has taken a trick; after that you’re free. The King leads the first trick, so it may be over quickly, or the King may be ducking. The King can’t take this task.',
+  'Win the card you showed':
+      'Show a card with the speech token (your highest, lowest or only card of a suit), then make sure it ends up in a trick you win. Show a strong card and it nearly wins itself; show a weak one and you’ll need to win the trick it falls in.',
+  'Win a card someone else showed':
+      'Another player must show a card with the speech token, and that card must end up in a trick you win. Once a card is shown everyone knows where it is, so plan to take the trick it falls in.',
+  'Win the trick right after you show a card':
+      'Show a card with the speech token between tricks, then win the very next trick. Show it when you’re holding the card that will take that trick.',
+  "Don't win the card you showed":
+      'Show a card with the speech token, then make sure someone else wins the trick it falls in. Show a low card and play it under a higher one. You must show a card for this task to be done.',
+  "Don't win a trick before you've shown a card":
+      'Every trick you win must come after you’ve shown a card with the speech token. Show one early, before the first trick if you can, and you’re free. Winning nothing at all is fine too.',
+  'Win two tricks that each hold a Court Card':
+      'Win two different tricks with at least one Court Card in each. There are only four Court Cards, so watch where they fall.',
+  'Win the trick before the King card is played':
+      'The King card always wins the trick it’s played in. Win the trick just before that one. If the King card comes out in the first trick, the task fails, so ask the King to wait.',
+  'Win the first trick a Court Card falls in':
+      'Watch for the first Court Card (Joker, Jack, Queen or King) to be played. The trick it falls in must be yours.',
+  'Win the last trick a Court Card falls in':
+      'Of all the tricks with a Court Card in them, the last one must be yours. Count the Court Cards as they fall: once the fourth has been played, it’s settled.',
+  "Don't win any trick the King leads":
+      'Whenever the King leads, someone other than you must win the trick. The King leads the first trick, and again after every trick the King wins. The King can’t take this task.',
+  'Win a trick where everyone followed suit':
+      'Take a trick in which every card is of the suit led: nobody was out of it, and no Court Card was played. Easiest early in the round, when everyone still has every suit.',
+  'Win two tricks in a row led with the same suit':
+      'Win two tricks one straight after the other, both led with the same suit. Win the first and you lead the second: lead the same suit again.',
+  'Win tricks led with three different suits':
+      'Among the tricks you win, the cards led must cover at least three of the four suits (♥ ♦ ♠ ♣). A trick led with a Court Card doesn’t count toward this.',
+  'Win the trick right after you lose one with a Court Card':
+      'Play a Court Card and have it beaten by a higher one, then win the very next trick. Your Joker under someone’s Queen, say, then take the trick after.',
+  'Win the last trick with a plain card':
+      'Take the final trick of the round with an ordinary card: no Court Card may win it. Keep a high card of a suit back to the end, and hope no Court Card is left.',
+  'Win no ♦ cards':
+      'None of the tricks you win may contain a ♦ card, whoever played it.',
+  'Win only the first trick':
+      'Win the first trick of the round, and no other. The King leads the first trick; after it, play low and let everyone else take the rest.',
+  'Win at least one card of each suit':
+      'The tricks you win must hold at least one ♥, one ♦, one ♠ and one ♣, whoever played them. Court Cards don’t count as any suit.',
+  'Never win two tricks in a row':
+      'You may win as many tricks as you like, but never two one straight after the other. When you win a trick you lead the next, so lead something you’ll lose.',
+  'Win more ♠ cards than anyone else':
+      'At the end of the round, count the ♠ cards in everyone’s tricks: you must have more than any other single player. A tie fails.',
+  'Win your first trick with a Court Card':
+      'The first trick you win in the round must be won by your Court Card. Until then, lose every trick you play in, or play a Court Card to take it.',
+  'Win a trick that holds a 2 and a 9':
+      'Take a trick with a 2 and a 9 in it, of any suits. Lead a 9 when someone can throw a 2 on it, or the other way round.',
+  'Win the trick in which someone first runs out of a suit':
+      'Watch for the first trick where someone can’t follow the suit led and plays something else. That trick must be yours.',
 };
 
 String _tricks(int n) => n == 1 ? '1 trick' : '$n tricks';
@@ -473,12 +515,7 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
       if (t.winner != owner) continue;
       final rule = taskRules[d];
       // The first trick after which the task had failed.
-      final upTo = RoundView(
-          players: v.players,
-          king: v.king,
-          tricks: v.tricks.sublist(0, i + 1),
-          totalTricks: v.totalTricks,
-          inPlay: v.inPlay);
+      final upTo = v.upTo(i + 1);
       if (rule != null && rule(upTo, owner, x) == Verdict.failed) {
         return '$me won trick ${i + 1}, and it held ${t.cards.map((c) => c.label).join(', ')}.';
       }
@@ -489,7 +526,7 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
     final mine = v.wonIndexes(owner);
     if (mine.isNotEmpty) return '$me won trick ${mine.first + 1}.';
   }
-  if (d == "Don't win two tricks in a row") {
+  if (d == 'Never win two tricks in a row') {
     final mine = v.wonIndexes(owner);
     for (int k = 1; k < mine.length; k++) {
       if (mine[k] == mine[k - 1] + 1) {
@@ -501,17 +538,7 @@ String failReason(String d, RoundView v, int owner, int? x, List<String> names) 
     for (int i = 0; i < v.tricks.length; i++) {
       final t = v.tricks[i];
       if (t.leader == owner) {
-        final upTo = v.tricks.sublist(0, i + 1);
-        if (taskRules[d]!(
-                RoundView(
-                    players: v.players,
-                    king: v.king,
-                    tricks: upTo,
-                    totalTricks: v.totalTricks,
-                    inPlay: v.inPlay),
-                owner,
-                x) ==
-            Verdict.failed) {
+        if (taskRules[d]!(v.upTo(i + 1), owner, x) == Verdict.failed) {
           return '$me led the ${t.led.label} in trick ${i + 1}.';
         }
       }

@@ -9,6 +9,7 @@ import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/conflicts.dart';
 import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/rules.dart';
+import 'package:kings_court/engine/showing.dart';
 import 'package:kings_court/models.dart';
 
 /// Plays one round with bots; returns whether it was won, which tasks
@@ -41,6 +42,15 @@ import 'package:kings_court/models.dart';
     if (!showing || s.current.isNotEmpty) return;
     for (int seat = 0; seat < players; seat++) {
       if (s.revealed.containsKey(seat)) continue;
+      // A task of its own that asks it to show a card comes first.
+      final own = intendedShow(s, seat, [
+        for (final t in s.tasks)
+          if (t.owner == seat && t.verdict == Verdict.pending) t.description
+      ]);
+      if (own != null) {
+        s.apply(ShowCard(seat, own));
+        continue;
+      }
       for (final card in s.hands[seat]) {
         if (s.revealFor(seat, card) == null) continue;
         final needed = s.tasks.any((t) =>

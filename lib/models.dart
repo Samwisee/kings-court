@@ -6,6 +6,7 @@ import 'engine/match.dart';
 import 'engine/conflicts.dart';
 import 'engine/deal_mix.dart';
 import 'engine/rules.dart';
+import 'engine/showing.dart';
 import 'tasks.dart';
 import 'engine/task.dart';
 
@@ -729,6 +730,9 @@ class GameState {
     if (t?.decree != null) {
       decree = t!.decree;
       if (decree == Decree.exile && players.length < 3) decree = null;
+      // Silence arriving with the news: tasks that need a card shown give
+      // way to others of about the same worth.
+      if (decree == Decree.silence) _swapShowingTasks();
     }
     // The King's own charge comes first; otherwise the tidings'.
     final byKing = pendingCharge == null ? -1 : courtiers.indexOf(pendingCharge!);
@@ -1387,6 +1391,26 @@ class GameState {
     _placeSeals(rand);
   }
 
+  /// Swaps any task that needs a card shown (and isn't taken yet) for one
+  /// of about the same worth that doesn't, under Silence.
+  void _swapShowingTasks() {
+    final rand = dealRandom(3);
+    final n = players.length;
+    for (int i = 0; i < tasks.length; i++) {
+      final t = tasks[i];
+      if (!needsShowing(t.description) || t.assignedPlayerIndex != null) continue;
+      final names = tasks.map((x) => x.description).toSet();
+      final pts = t.getPointsForPlayerCount(n);
+      final swap = (List.of(taskPool)..shuffle(rand)).where((p) =>
+          !names.contains(p.description) &&
+          !needsShowing(p.description) &&
+          (p.getPointsForPlayerCount(n) - pts).abs() <= 1 &&
+          fitsDeal([for (final o in tasks) if (o != t) o.description], p.description,
+              n < 3 ? 3 : n)).firstOrNull;
+      if (swap != null) tasks[i] = swap.freshCopy()..seal = t.seal;
+    }
+  }
+
   /// A seal orders tasks by when they're done, so it only goes on a task
   /// that can be done on any trick (see [TaskTiming]).
   static bool _sealable(Task t) =>
@@ -1404,6 +1428,8 @@ class GameState {
       if (currentTotal >= targetPoints) break;
       final points = task.getPointsForPlayerCount(playerCount);
       if (currentTotal + points > targetPoints) continue;
+      // Nobody may show a card under Silence.
+      if (decree == Decree.silence && needsShowing(task.description)) continue;
       // Never deal tasks that can't all be done (see deal_mix.dart).
       if (!fitsDeal([for (final t in drawn) t.description], task.description, hands)) {
         continue;

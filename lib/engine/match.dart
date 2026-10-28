@@ -140,6 +140,9 @@ class MatchState {
   Map<int, PlayingCard> revealed = {};
   Map<int, String> revealHint = {};
 
+  /// How many tricks had been played when each seat showed its card.
+  Map<int, int> revealedAt = {};
+
   /// What may be said about [card] in [seat]'s hand, or null if it can't
   /// be shown (Court Cards, or a card in the middle of its suit).
   String? revealFor(int seat, PlayingCard card) {
@@ -187,7 +190,9 @@ class MatchState {
       king: king,
       tricks: tricks,
       totalTricks: totalTricks,
-      inPlay: inPlay);
+      inPlay: inPlay,
+      shown: revealed,
+      shownAt: revealedAt);
 
   // --------------------------------------------------------------- rounds
 
@@ -273,6 +278,7 @@ class MatchState {
     announced = {};
     revealed = {};
     revealHint = {};
+    revealedAt = {};
     won = null;
   }
 
@@ -354,6 +360,7 @@ class MatchState {
       case ShowCard(:final seat, :final card):
         revealHint[seat] = revealFor(seat, card)!;
         revealed[seat] = card;
+        revealedAt[seat] = tricks.length;
         return null;
       case PlayCard(:final seat, :final card):
         hands[seat].remove(card);
@@ -434,6 +441,7 @@ class MatchState {
         'announced': announced,
         'revealed': {for (final e in revealed.entries) '${e.key}': e.value.id},
         'revealHint': {for (final e in revealHint.entries) '${e.key}': e.value},
+        'revealedAt': {for (final e in revealedAt.entries) '${e.key}': e.value},
       };
 
   static MatchState fromJson(Map<String, dynamic> j) {
@@ -477,6 +485,10 @@ class MatchState {
       ..revealHint = {
         for (final e in ((j['revealHint'] as Map?) ?? const {}).entries)
           int.parse(e.key as String): e.value as String
+      }
+      ..revealedAt = {
+        for (final e in ((j['revealedAt'] as Map?) ?? const {}).entries)
+          int.parse(e.key as String): e.value as int
       };
   }
 }
