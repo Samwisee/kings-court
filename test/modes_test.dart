@@ -84,9 +84,9 @@ void main() {
 
   test('Endless adds a point to the target after a win, up to the most', () {
     final mode = modeOf(GameMode.endless);
-    final won = game(GameMode.endless, target: 6);
+    final won = game(GameMode.endless);
     expect(mode.afterRound(won, finish(won, won: true), Progress()).nextTarget, 7);
-    final lost = game(GameMode.endless, target: 6);
+    final lost = game(GameMode.endless);
     expect(mode.afterRound(lost, finish(lost, won: false), Progress()).nextTarget, 6);
     final top = game(GameMode.endless, target: maxTarget);
     expect(mode.afterRound(top, finish(top, won: true), Progress()).nextTarget, maxTarget);

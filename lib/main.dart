@@ -5385,4 +5385,3 @@ class HomePageState extends State<HomePage>
 
 /// The soft shadow under words on the felt, as on the front page.
 const _feltShadow = feltShadow;
-

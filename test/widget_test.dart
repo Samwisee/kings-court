@@ -15,6 +15,7 @@ import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/modes/chronicle/chapters.dart';
 import 'package:kings_court/modes/dynasty/data/dilemmas.dart';
+import 'package:kings_court/modes/dynasty/data/lines.dart';
 import 'package:kings_court/modes/dynasty/data/story.dart';
 import 'package:kings_court/modes/free/free_play.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';

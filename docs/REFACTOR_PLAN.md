@@ -1,8 +1,9 @@
 # The refactor: target structure and migration plan
 
-This is checkpoint 1 of the refactor (see the brief in the chat): the shape
-the code is moving to, and the order it moves in. Nothing has moved yet.
-When the work is done this file becomes `docs/ARCHITECTURE.md`.
+This is the plan agreed at checkpoint 1 of the refactor (see the brief in
+the chat): the shape the code is moving to, and the order it moves in. The
+decisions taken on the questions at the end are recorded there. When the
+work is done this file becomes `docs/ARCHITECTURE.md`.
 
 ## Where we start
 
@@ -80,7 +81,6 @@ lib/
                                  auto-plays a won round out, with holds the UI can take
                                  while it animates. Online, the server is the host.
     bot_turn.dart                botDecision (as now).
-    powers.dart                  What each courtier's power may do, and does.
     dice.dart                    Dice(seed): every random choice in a game, by purpose.
     saves.dart                   SavedGame, slots, JSON; loads saves from before the refactor.
     setup.dart                   GameSetup: everything the setup panel decides; Game.start.
@@ -100,7 +100,7 @@ lib/
     tutorial/lessons.dart        Lessons, rigged deals, scripts, intro pages (data).
     tutorial/tutorial.dart       The scripted courtiers; the lesson flow.
     dynasty/data/                Dilemmas, courtier lines, tidings, story arcs (data, kept).
-    dynasty/                     Later: the roguelike. (The old flow: see question 1.)
+    dynasty/                     Later: the roguelike (the old flow is gone: question 1).
   platform/
     settings.dart                Preferences (sound, upright, four-colour suits, keys, skin…).
     sfx.dart, analytics.dart, crash_reports.dart, bug_report.dart (the sending half),
@@ -215,11 +215,9 @@ the link and applied when it comes back:
 
 | Family | Actions |
 |---|---|
-| Within a round | `PickTask`, `Pass`, `Announce`, `PlayCard`, `ShowCard` (as now), `Speak`/`Unspeak` (the speech token at a real table), `MarkTask(task, status)` and `UndoMark` (a real table), `Absolve(task, penance)` |
+| Within a round | `PickTask`, `Pass`, `Announce`, `PlayCard`, `ShowCard` (as now), `Speak`/`Unspeak` (the speech token at a real table), `MarkTask(task, status)` and `UndoMark` (a real table) |
 | Crowning and the King | `Crown(seat)` (the King card on screen, a tap at a real table), `GiveTask(task, seat)` (King's Command), `ReadDecree` is screen-only and stays off the link |
 | The table | `NextRound`, `Shuffle`, `Retry`, `Redeal`, `Resign` |
-| Powers | `Command(task, seat)`, `Vanguard`, `Whisper(seat, suit)`, `Trade(card, seat)`, `Jest(a, b)` (behind the same flag as today: see question 2) |
-| Dynasty | `Vote(forA)`, `Decide(choice)`, `TrialPlay(card)`, `AcceptTidings` (only if the old flow stays: question 1) |
 
 Deterministic: `Dice(seed)` gives every random choice in a game from the
 seed and a purpose (the deal, task draw, seals, swaps, the bots' decision
@@ -330,9 +328,8 @@ calling it, so nothing on screen changes)
 - 3b `_syncCards` → `game/dealer.dart` (the deal from the seed, the King, impossible-task swaps); `_possible` → `engine/judge.dart`.
 - 3c `_judgeTasks` → `engine/judge.dart`: verdicts in seal order, why a task failed, traitors' schemes. The page applies the flips with its stagger and the absolution prompt.
 - 3d `_maybeAutoFinish`'s decision → `game/host.dart` (`canPlayOut`); only the timer stays on the page.
-- 3e Powers' effects and checks → `game/powers.dart`; the dialogs stay.
 - 3f `_startGame` → `game/setup.dart` (`GameSetup`, `Game.start`); `_readSaves`/`_continueSaved` → `game/saves.dart`; settings → `platform/settings.dart`.
-- 3g The old Dynasty flow's logic (sides, trials, verdict lines, next round) → `modes/dynasty/` or deleted (question 1).
+- 3g The old Dynasty flow's logic (sides, trials, verdict lines, next round) deleted (question 1); its content kept as data.
 - 3h The bots' turn (`_scheduleBot`, `_botStep`, `_botThink`, `_startChoosing`) → `game/host.dart`: the host decides and sends; the page holds the host while it animates.
 
 **Step 4: the round component**
@@ -353,22 +350,23 @@ calling it, so nothing on screen changes)
 - 5f `FakeNetwork`, the two-devices test, `replay` and its test.
 - 5g `Rooms`/`Room`/`InMemoryRooms` and a test; `ONLINE.md` rewritten around them.
 
-**Step 6: skins**
+**Step 6: the state and the page in pieces** (swapped with the skins at
+checkpoint 1: the skin sweep is easier once the page is in parts)
 
-- 6a `Skin`, `CourtSkin` built from today's `theme.dart` constants, `SkinScope`, `context.skin`.
-- 6b Every widget reads the skin (about 800 references, mechanical); `skin_test.dart` guards it; pixels identical.
-- 6c `PlainSkin`; 6d the switcher in the menu, saved; 6e `Entitlements`; 6f `Strings`; 6g screenshots per skin.
+- 6a `Game` split by concern: core play; `ChronicleRun`, `EndlessRun`, `TutorialRun`, (`DynastyRun`) as `ModeState` with their own JSON; the loader still reads old saves.
+- 6b `_HomePageState` into the `ui/` tree above, one component at a time (the hand, the opponents, the middle, the trick, the round table, the overlays, the menu, setup, the tracker, the dialogs, the keyboard), each its own widget with its own small state; `part` files become libraries with explicit imports; `TableUi` for screen-only state.
 
-**Step 7: the state and the page in pieces**
+**Step 7: skins**
 
-- 7a `Game` split by concern: core play; `ChronicleRun`, `EndlessRun`, `TutorialRun`, (`DynastyRun`) as `ModeState` with their own JSON; the loader still reads old saves.
-- 7b `_HomePageState` into the `ui/` tree above, one component at a time (the hand, the opponents, the middle, the trick, the round table, the overlays, the menu, setup, the tracker, the dialogs, the keyboard), each its own widget with its own small state; `part` files become libraries with explicit imports; `TableUi` for screen-only state.
+- 7a `Skin`, `CourtSkin` built from today's `theme.dart` constants, `SkinScope`, `context.skin`.
+- 7b Every widget reads the skin (about 800 references, mechanical); `skin_test.dart` guards it; pixels identical.
+- 7c `PlainSkin`; 7d the switcher in the menu, saved; 7e `Entitlements`; 7f `Strings`; 7g screenshots per skin.
 
 **Step 8:** dead code (stale flags, unused members), `docs/ARCHITECTURE.md`,
 the README map, `HANDOFF.md`, `ONLINE.md`, and the report against every
 "done means" point with before and after sizes.
 
-About 50 commits. The two big ones are 4b and 7b; the screenshots and the
+About 50 commits. The two big ones are 4b and 6b; the screenshots and the
 save fixtures carry the risk there.
 
 ### What changes on purpose, though not for the player
@@ -380,7 +378,14 @@ save fixtures carry the risk there.
   UI shows the flip at the same moment as today.
 - `part` files become libraries.
 
-## Questions before code moves
+## Questions before code moves, and the answers (checkpoint 1)
+
+Decided: **1A** (the old Dynasty flow deleted, its content kept as data,
+`pre-dynasty-removal` marks the commit before); **2: the powers go too**
+(each house keeps its power's name and rule text as data; `powersComingSoon`
+and `dynastyComingSoon` with them); **3 yes**; **4 yes**; **5 swapped**
+(the page split before the skins; steps 6 and 7 above are in the new
+order).
 
 1. **The old Dynasty flow** (dilemmas, votes, trials, verdicts, deaths,
    endings, tidings, charges, schemes, the throne room scenes: about 1,700
