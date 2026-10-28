@@ -63,7 +63,7 @@ const _sections = <_Section>[
     'Before anyone picks, you may show a card (see Showing a card): tap it in your hand, or tap Skip.',
     'Picking goes round from the King. When it’s your pick, tap a task to take it.',
     'Once a round you may pass instead, with Pass beside the status line: the pick moves on. Courtiers may pass too, and say so.',
-    'A task outlined in a player’s colour can only be taken by them. Some tasks can’t be taken: the King can’t take a task marked 🚫, no one may hold two tasks that work against each other, and your own hand can rule a task out (you can’t win the 7♥ with a Court Card if you hold the 7♥).',
+    'A task outlined in a player’s colour can only be taken by them. Some tasks can’t be taken: the King can’t take a task marked with a barred circle, no one may hold two tasks that work against each other, and your own hand can rule a task out (you can’t win the 7♥ with a Court Card if you hold the 7♥).',
   ], RulesFor.onScreen),
   _Section('Choosing tasks', [
     'Look at your hand. Then, starting with the King and going clockwise, each player takes one task until all are taken: drag it onto your seat. A glowing ring shows whose pick it is.',
@@ -90,7 +90,7 @@ const _sections = <_Section>[
     'At a real table: lay the card face up and tap your seat to flip your speech token (with courtly roles, mark it on your courtier’s card).',
   ]),
   _Section('Reading tasks', [
-    'The number on a task is how hard it is, in crowns. 🚫 means the King can’t take it; ⓘ means there’s an extra condition (tap to read it).',
+    'The number on a task is how hard it is, in crowns. A barred circle means the King can’t take it; an i in a circle means there’s an extra condition; a struck-out Court Card means the trick can’t hold any Court Cards. Tap a task to read its marks.',
     'On screen, many tasks keep count in the corner (“2/4”, “safe 1/3”, “6s: 3 left”), and cards a task needs are crossed out once won.',
     'At a real table: tap a task to mark it done or failed. Mark it failed as soon as it can’t be done; the round ends there. Press and hold the felt to turn every task towards you.',
   ]),

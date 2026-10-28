@@ -180,7 +180,7 @@ const _beforeCard = <IntroPage>[
     'That’s lesson 2: lead the suit of the card you want, and make whoever holds it follow suit.',
   ], IntroArt.winCards),
   IntroPage('Reading a task', [
-    'The number by the crown is how hard a task is. Marks beside it add rules: a barred circle means the King can’t take it, ⓘ has small print, and a struck-out Court Card means the trick can’t hold any Court Cards.',
+    'The number by the crown is how hard a task is. Marks beside it add rules: a barred circle means the King can’t take it, an i in a circle means there’s small print, and a struck-out Court Card means the trick can’t hold any Court Cards.',
     '“Win” means the card or trick must end up with you. “Win no …” or “Win none …” means it must go to someone else.',
     'During a round, many tasks count up in the corner, like “1/3” or “safe 2/5”, and cards a task needs are crossed out once won.',
     'Tap any of these tasks to see its close-up: what it means, its marks explained and the cards it’s about.',
