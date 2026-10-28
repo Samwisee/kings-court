@@ -2246,7 +2246,10 @@ class _HomePageState extends State<HomePage>
     final entries = _tableEntries();
     // Anyone no longer at the table walks away.
     final roles = [for (final (r, _) in entries) if (r != null) r];
-    for (final r in _lastRoles) {
+    // Only in the Dynasty story: anywhere else a new game simply seats
+    // whoever is playing, with no one from the last game walking off.
+    if (!game.solo) _walkingOff.clear();
+    for (final r in game.solo ? _lastRoles : const <Courtier>[]) {
       if (!roles.contains(r) && !_walkingOff.containsKey(r)) {
         _walkingOff[r] = game.colorOf(r);
         _trickTimers.add(Timer(const Duration(milliseconds: 1500), () {
@@ -8472,25 +8475,15 @@ class _SetupPanelState extends State<_SetupPanel> {
             style: TextStyle(color: Colors.white70)),
       );
 
-  /// The last step's choices, on a dark panel edged in gold like the
-  /// rules, with a faint rule between them.
-  Widget _settingsPanel(List<Widget> rows) => Container(
-        margin: const EdgeInsets.only(top: 18),
-        padding: const EdgeInsets.fromLTRB(18, 10, 14, 10),
-        decoration: BoxDecoration(
-          color: const Color(0x30000000),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Palette.gold.withValues(alpha: 0.45), width: 1.4),
-        ),
+  /// The last step's choices, with room to breathe between them and in
+  /// from the sides.
+  Widget _settingsPanel(List<Widget> rows) => Padding(
+        padding: const EdgeInsets.fromLTRB(10, 18, 10, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (final (i, r) in rows.indexed) ...[
-              if (i > 0)
-                Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    color: Palette.gold.withValues(alpha: 0.18)),
+              if (i > 0) const SizedBox(height: 10),
               r,
             ],
           ],

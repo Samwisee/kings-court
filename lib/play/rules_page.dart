@@ -257,7 +257,12 @@ class _RulesPageState extends State<RulesPage> {
                             runSpacing: 8,
                             children: [
                               for (final i in shown)
-                                _Tab(_sections[i].title, () => _jump(i)),
+                                _Reveal(
+                                  key: ValueKey('tab-$i'),
+                                  animate: _revealing.contains(i),
+                                  grow: false,
+                                  child: _Tab(_sections[i].title, () => _jump(i)),
+                                ),
                             ],
                           ),
                           if (g != null)
@@ -459,9 +464,14 @@ class _Panel extends StatelessWidget {
 
 /// A section that opens up and fades in as it arrives (when [animate]).
 class _Reveal extends StatefulWidget {
-  const _Reveal({super.key, required this.animate, required this.child});
+  const _Reveal(
+      {super.key, required this.animate, required this.child, this.grow = true});
   final bool animate;
   final Widget child;
+
+  /// Opens up from nothing (a section); otherwise pops softly into its
+  /// place (an index tab).
+  final bool grow;
 
   @override
   State<_Reveal> createState() => _RevealState();
@@ -486,7 +496,13 @@ class _RevealState extends State<_Reveal> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => SizeTransition(
+  Widget build(BuildContext context) => !widget.grow
+      ? FadeTransition(
+          opacity: _ease,
+          child: ScaleTransition(
+              scale: Tween(begin: 0.8, end: 1.0).animate(_ease), child: widget.child),
+        )
+      : SizeTransition(
         sizeFactor: _ease,
         axisAlignment: -1,
         child: FadeTransition(
