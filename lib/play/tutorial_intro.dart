@@ -514,10 +514,20 @@ class _TutorialIntroState extends State<TutorialIntro> {
           const TrackerIcon(size: 48),
           const SizedBox(height: 12),
           Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [
-            for (final (c, seat) in const [('A♠', null), ('2♠', 2), ('3♠', null), ('4♠', 1), ('5♠', null), ('9♠', 0)])
-              _card(c, width: 40, dimmed: seat != null, edge: seat == null ? null : Palette.players[seat]),
+            for (final (c, seat, played) in const [
+              ('A♠', null, false),
+              ('2♠', 2, true),
+              ('3♠', null, false),
+              ('4♠', 1, true),
+              ('6♠', 0, false),
+              ('9♠', 0, true),
+            ])
+              _card(c,
+                  width: 40,
+                  dimmed: played,
+                  edge: seat == null ? null : Palette.players[seat]),
           ]),
-          _caption('Played cards are shaded, outlined in their player’s colour.'),
+          _caption('Played: shaded, in the player’s colour. In your hand: bright, in your colour. Still to come: plain.'),
         ]);
       case IntroArt.help:
         return Wrap(

@@ -483,6 +483,17 @@ class _HomePageState extends State<HomePage>
   static const _soundKey = 'kingsCourt.sound';
   static const _uprightKey = 'kingsCourt.upright';
   static const _suitsKey = 'kingsCourt.fourColourSuits';
+  static const _keysKey = 'kingsCourt.showShortcuts';
+
+  /// Desktop: the keyboard shortcuts shown beside the table.
+  bool _showKeys = false;
+
+  /// A computer with a keyboard (not a phone or tablet).
+  static bool get _desktop => const {
+        TargetPlatform.macOS,
+        TargetPlatform.windows,
+        TargetPlatform.linux,
+      }.contains(defaultTargetPlatform);
 
   /// Laptop view: everything upright instead of turned to each seat.
   bool _upright = false;
@@ -507,14 +518,35 @@ class _HomePageState extends State<HomePage>
     HardwareKeyboard.instance.addHandler(_onKey);
   }
 
-  /// Keys: the space bar brings the card tracker up and puts it away; S
-  /// starts (or cancels) showing a card.
+  /// Keys (see [_shortcuts]): ← and → choose a card in your hand and
+  /// Enter plays it; S starts (or cancels) showing a card; T or the space
+  /// bar brings up the card tracker, and while it's up, holding the space
+  /// bar hides it to see the table; Escape puts it away.
   bool _onKey(KeyEvent e) {
-    if (e is! KeyDownEvent) return false;
     final key = e.logicalKey;
-    if (key != LogicalKeyboardKey.space && key != LogicalKeyboardKey.keyS) return false;
+    if (e is KeyUpEvent) {
+      if (key == LogicalKeyboardKey.space && _trackerPeek) {
+        setState(() => _trackerPeek = false);
+        return true;
+      }
+      return false;
+    }
+    if (e is! KeyDownEvent) return false;
+    const handled = {
+      LogicalKeyboardKey.space,
+      LogicalKeyboardKey.keyS,
+      LogicalKeyboardKey.keyT,
+      LogicalKeyboardKey.escape,
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.enter,
+      LogicalKeyboardKey.numpadEnter,
+    };
+    if (!handled.contains(key)) return false;
     // Not while typing (player names), or off the on-screen game.
     if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) return false;
+    // Nor under a dialog or another page.
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return false;
     if (!mounted ||
         !_inGame ||
         _setupArgs != null ||
@@ -522,14 +554,48 @@ class _HomePageState extends State<HomePage>
         _cards.dealId != game.dealId) {
       return false;
     }
+    if (key == LogicalKeyboardKey.escape) {
+      if (!_trackerOpen) return false;
+      _closeTracker();
+      return true;
+    }
+    if (key == LogicalKeyboardKey.space && _trackerOpen) {
+      setState(() => _trackerPeek = true);
+      return true;
+    }
+    if (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyT) {
+      _showCardTracker();
+      return true;
+    }
+    if (_trackerOpen) return false;
     if (key == LogicalKeyboardKey.keyS) {
       if (!(_mayAskToSpeak || _revealing)) return false;
       _speak();
       return true;
     }
-    _showCardTracker();
+    final hand = _cards.hands.length > _you ? _cards.hands[_you] : const <PlayingCard>[];
+    if (hand.isEmpty) return false;
+    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
+      final at = _kbCard == null ? -1 : hand.indexOf(_kbCard!);
+      final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
+      final next = at < 0
+          ? (step > 0 ? 0 : hand.length - 1)
+          : (at + step).clamp(0, hand.length - 1);
+      setState(() => _kbCard = hand[next]);
+      return true;
+    }
+    // Enter: play (or show) the chosen card.
+    final play = _kbCard == null ? null : _handPlays[_kbCard!];
+    if (play == null) return false;
+    play();
     return true;
   }
+
+  /// The card chosen in your hand with the arrow keys.
+  PlayingCard? _kbCard;
+
+  /// What tapping each card in your hand does, for the Enter key.
+  final Map<PlayingCard, VoidCallback> _handPlays = {};
 
   Future<void> _loadSaved() async {
     try {
@@ -543,6 +609,7 @@ class _HomePageState extends State<HomePage>
       Sfx.enabled = prefs.getBool(_soundKey) ?? true;
       _upright = prefs.getBool(_uprightKey) ?? false;
       Palette.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
+      _showKeys = prefs.getBool(_keysKey) ?? false;
       final saves = await _readSaves(prefs);
       if (!mounted) return;
       setState(() {
@@ -635,6 +702,7 @@ class _HomePageState extends State<HomePage>
       await prefs.setBool(_soundKey, Sfx.enabled);
       await prefs.setBool(_uprightKey, _upright);
       await prefs.setBool(_suitsKey, Palette.fourColourSuits);
+      await prefs.setBool(_keysKey, _showKeys);
     } catch (_) {}
   }
 
@@ -1443,17 +1511,22 @@ class _HomePageState extends State<HomePage>
   /// Moving up or down (it's hidden when neither open nor moving).
   bool _trackerSliding = false;
 
+  /// Hidden for a moment (its eye, or the space bar, held down) to see
+  /// the table behind it.
+  bool _trackerPeek = false;
+
   void _showCardTracker() {
     if (_trackerOpen) {
       _closeTracker();
       return;
     }
     _trackerTimer?.cancel();
-    // First drawn just below the screen (the slow frame, if there is one),
-    // and only then slid up, so the slide itself runs at full speed.
+    // First built unseen (the slow frame, if there is one), then faded in,
+    // so the fade itself runs smoothly.
     setState(() {
       _trackerMounted = true;
       _trackerSliding = true;
+      _trackerPeek = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1465,11 +1538,17 @@ class _HomePageState extends State<HomePage>
   void _closeTracker() {
     setState(() {
       _trackerOpen = false;
+      _trackerPeek = false;
       _trackerSliding = true;
     });
     _trackerTimer?.cancel();
     _trackerTimer = Timer(_trackerSlide + const Duration(milliseconds: 40), () {
-      if (mounted && !_trackerOpen) setState(() => _trackerSliding = false);
+      if (mounted && !_trackerOpen) {
+        setState(() {
+          _trackerSliding = false;
+          _trackerMounted = false;
+        });
+      }
     });
   }
 
@@ -1707,7 +1786,7 @@ class _HomePageState extends State<HomePage>
               // Every card: which are played, which are still to come.
               if (_cards.dealId == game.dealId && !_storyActive)
                 IconButton(
-                  tooltip: 'Cards played and still to come',
+                  tooltip: 'Card tracker',
                   onPressed: _showCardTracker,
                   icon: const TrackerIcon(size: 26),
                 ),
@@ -1759,9 +1838,14 @@ class _HomePageState extends State<HomePage>
                       final card = hand[i];
                       final dragging = _handDragCard == card.id;
                       final left = (width - total) / 2 + i * step;
-                      final top = legal.contains(card) || _queued == card
-                          ? 0.0
-                          : 12.0;
+                      // The card chosen with the arrow keys stands up a
+                      // little higher.
+                      final chosen = _kbCard == card;
+                      final top = chosen
+                          ? -8.0
+                          : legal.contains(card) || _queued == card
+                              ? 0.0
+                              : 12.0;
                       void play() {
                         if (_revealing || _speakPromptDue) {
                           if (_cards.revealFor(_you, card) == null) {
@@ -1807,6 +1891,7 @@ class _HomePageState extends State<HomePage>
                         }
                         _playCard(_you, card);
                       }
+                      _handPlays[card] = play;
 
                       return AnimatedPositioned(
                         key: ValueKey(card.id),
@@ -1856,7 +1941,8 @@ class _HomePageState extends State<HomePage>
                                 width: cardW,
                                 dimmed: yourTurn && !legal.contains(card),
                                 glow: (yourTurn && card == _tutorialHint) ||
-                                    _queued == card,
+                                    _queued == card ||
+                                    chosen,
                                 marks: _marksFor(card),
                               ),
                             ),
@@ -4911,79 +4997,73 @@ class _HomePageState extends State<HomePage>
       // so it sits the same distance from every edge.
       const Positioned.fill(
           child: IgnorePointer(child: SafeArea(child: TableTrim()))),
-      // While the tracker is up, a tap anywhere else on the table puts it
-      // away.
-      if (_trackerOpen)
-        Positioned.fill(
-          // Keyed, as is the tracker: without keys, adding this layer
-          // would be mistaken for the tracker, which would then be built
-          // afresh, already open, and pop up instead of sliding.
-          key: const ValueKey('tracker-dismiss'),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _closeTracker,
-          ),
+      // Keyboard shortcuts, when asked for, beside the table.
+      if (_showKeys && _desktop && _inGame && _setupArgs == null && _digital)
+        const Positioned(
+          right: 22,
+          bottom: 22,
+          child: IgnorePointer(child: _ShortcutsCard()),
         ),
-      // The card tracker, docked over the lower half, above the inlay. It
-      // slides up and down; it's only built while it's showing.
+      // The card tracker: a panel in the middle of the screen over a dimmed
+      // table (tap outside to put it away). Holding its eye, or the space
+      // bar, hides it for a moment to see the table behind.
       if (_trackerMounted &&
           _inGame &&
           _setupArgs == null &&
           _digital &&
           _cards.dealId == game.dealId)
-        Positioned(
+        Positioned.fill(
           key: const ValueKey('tracker'),
-          // On a tablet or wider it's a dock in the middle, with the table
-          // showing either side: tap there to put it away.
-          left: _trackerInset(context),
-          right: _trackerInset(context),
-          bottom: 0,
-          height: MediaQuery.sizeOf(context).height * 0.5,
-          child: Offstage(
-            offstage: !_trackerOpen && !_trackerSliding,
-            child: AnimatedSlide(
-            offset: _trackerOpen ? Offset.zero : const Offset(0, 1.05),
-            // Up at an easy pace; away briskly.
-            duration: _trackerOpen ? _trackerSlide : const Duration(milliseconds: 200),
-            curve: _trackerOpen ? Curves.easeOutCubic : Curves.easeInCubic,
-            child: RepaintBoundary(
-              // No shadow or rounded clipping: both are slow to draw on
-              // the web on every frame of the slide.
-              child: Material(
-                color: Palette.feltDeep,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                child: Stack(children: [
-                  Positioned.fill(
-                    // Inside the inlay, so nothing scrolls over the brass.
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          _CardTracker.sidePad - 10, 12, _CardTracker.sidePad - 10, 0),
-                      child: ClipRect(
-                      child: SafeArea(
-                      top: false,
-                      child: _CardTracker(
-                        cards: _cards,
-                        you: _you,
-                        players: game.players,
-                        onClose: _closeTracker,
+          child: IgnorePointer(
+            ignoring: !_trackerOpen,
+            child: AnimatedOpacity(
+              opacity: _trackerOpen && !_trackerPeek ? 1 : 0,
+              duration: Duration(milliseconds: _trackerPeek ? 120 : 220),
+              curve: Curves.easeOut,
+              child: Stack(children: [
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _closeTracker,
+                    child: const ColoredBox(color: Colors.black54),
+                  ),
+                ),
+                SafeArea(
+                  child: Center(
+                    child: AnimatedScale(
+                      scale: _trackerOpen ? 1 : 0.95,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxWidth: 660,
+                              maxHeight: MediaQuery.sizeOf(context).height * 0.88),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: OrnateCard(
+                              won: false,
+                              court: true,
+                              maxWidth: 660,
+                              margin: const EdgeInsets.only(top: 34),
+                              padding: const EdgeInsets.fromLTRB(18, 34, 18, 16),
+                              child: _CardTracker(
+                                cards: _cards,
+                                you: _you,
+                                players: game.players,
+                                onClose: _closeTracker,
+                                onPeek: (on) => setState(() => _trackerPeek = on),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    ),
-                    ),
                   ),
-                  // Its own brass inlay, like the table's, down the sides and
-                  // across the top (it runs on past the bottom edge).
-                  const Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    bottom: -40,
-                    child: IgnorePointer(child: TableTrim(table: false)),
-                  ),
-                ]),
-              ),
+                ),
+              ]),
             ),
-          ),
           ),
         ),
     ]);
@@ -5075,6 +5155,9 @@ class _HomePageState extends State<HomePage>
           case 'sound':
             setState(() => Sfx.enabled = !Sfx.enabled);
             _saveSettings();
+          case 'keys':
+            setState(() => _showKeys = !_showKeys);
+            _saveSettings();
           case 'suits':
             setState(() => Palette.fourColourSuits = !Palette.fourColourSuits);
             // Every card on screen repaints in the new colours, even ones
@@ -5112,6 +5195,10 @@ class _HomePageState extends State<HomePage>
         // For colour-blind players: no two suits share a colour.
         _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
             on: Palette.fourColourSuits),
+        // On a computer: the keyboard shortcuts, beside the table.
+        if (_desktop)
+          _menuItem('keys', Icons.keyboard_outlined, 'Keyboard shortcuts',
+              on: _showKeys),
       ];
 
   PreferredSizeWidget _buildAppBar() {
@@ -7729,7 +7816,7 @@ class _OrnateMenu extends StatefulWidget {
 
 class _OrnateMenuState extends State<_OrnateMenu> {
   /// Settings, which change in place without closing the menu.
-  static const _toggles = {'sound', 'suits', 'upright'};
+  static const _toggles = {'sound', 'suits', 'upright', 'keys'};
 
   @override
   Widget build(BuildContext context) {
@@ -9584,20 +9671,50 @@ class _MoreAboutState extends State<_MoreAbout> {
 }
 
 
-/// Every card in the deck, row by suit, outlined in the colour of whoever
-/// played it (with its trick number), or of whoever holds it if that's
-/// known; then what can be worked out about each other player's hand. For
-/// keeping count on the harder rounds.
-class _CardTracker extends StatelessWidget {
+/// The card tracker: every card in the deck, row by suit, outlined in the
+/// colour of whoever played it (with its trick number), or of whoever
+/// holds it if that's known. Tap a player in the key above it to see what
+/// they may still hold.
+class _CardTracker extends StatefulWidget {
   const _CardTracker(
       {required this.cards,
       required this.you,
       required this.players,
-      this.onClose});
+      this.onClose,
+      this.onPeek});
   final VoidCallback? onClose;
+
+  /// Held down (true) and let go (false): hide the tracker to see the table.
+  final ValueChanged<bool>? onPeek;
   final MatchState cards;
   final int you;
   final List<Player> players;
+
+  /// Width of a card in the grid, for a tracker [width] x [height]: the
+  /// whole deck fits in view at once, five rows, as big as the space allows.
+  static double cellWidth(double width, double height) => _CardTrackerState.cellWidth(width, height);
+
+  /// The grid's width: nine cards and the gaps between them.
+  static double gridWidth(double cell) => 9 * cell + 8 * 4 + 1;
+
+  /// Room the tracker needs round its grid: the inlay and a little air.
+  static const sidePad = 22.0;
+
+  /// The grid's card width on a screen of [screen] size.
+  static double cellFor(Size screen) =>
+      cellWidth(screen.width - 2 * sidePad, screen.height * 0.5 - 18);
+
+  @override
+  State<_CardTracker> createState() => _CardTrackerState();
+}
+
+class _CardTrackerState extends State<_CardTracker> {
+  /// The player whose possible hand is shown under the grid.
+  int? _seat;
+
+  MatchState get cards => widget.cards;
+  int get you => widget.you;
+  List<Player> get players => widget.players;
 
   @override
   Widget build(BuildContext context) {
@@ -9621,9 +9738,6 @@ class _CardTracker extends StatelessWidget {
         for (final c in g.certain) c: g.seat,
     };
     final deck = fullDeck();
-    final toCome = deck
-        .where((c) => !playedIn.containsKey(c) && !mine.contains(c))
-        .length;
     const suits = [Suit.hearts, Suit.diamonds, Suit.spades, Suit.clubs, Suit.court];
 
     Widget cell(PlayingCard c, double w) {
@@ -9656,21 +9770,8 @@ class _CardTracker extends StatelessWidget {
             color: Palette.card,
             borderRadius: BorderRadius.circular(3),
             border: Border.all(color: p.color, width: 3),
-            // Ringed in black so the colour stands out on the felt.
-            boxShadow: const [
-              BoxShadow(color: Colors.black, spreadRadius: 1.2),
-            ],
+            boxShadow: const [BoxShadow(color: Colors.black, spreadRadius: 1.2)],
           ),
-        );
-
-    Widget heading(String text) => Padding(
-          padding: const EdgeInsets.only(top: 14, bottom: 6),
-          child: Text(text,
-              style: const TextStyle(
-                  fontFamily: displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 19,
-                  color: Palette.gold)),
         );
 
     Widget suitLabel(Suit suit) => SizedBox(
@@ -9678,8 +9779,56 @@ class _CardTracker extends StatelessWidget {
           child: suit == Suit.court
               ? const CrownIcon(size: 14)
               : SuitText(suit.symbol,
+                  keywords: false,
                   style: const TextStyle(fontSize: 16, color: Colors.white)),
         );
+
+    // The key: everyone's colour. Tap someone else to see what they may
+    // hold.
+    Widget key(int seat) {
+      final p = players[seat];
+      final picked = _seat == seat;
+      final label = Row(mainAxisSize: MainAxisSize.min, children: [
+        swatch(p),
+        const SizedBox(width: 7),
+        Text(seat == you ? 'You' : p.name.replaceFirst('The ', ''),
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: picked ? Palette.ink : Colors.white,
+                shadows: picked ? null : _feltShadow)),
+        if (seat != you) ...[
+          const SizedBox(width: 4),
+          Icon(picked ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+              size: 18, color: picked ? Palette.ink : Palette.gold),
+        ],
+      ]);
+      if (seat == you) {
+        return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            child: label);
+      }
+      return Semantics(
+        button: true,
+        selected: picked,
+        label: 'What ${p.name} may hold',
+        child: Material(
+          color: picked ? Palette.gold : const Color(0x33000000),
+          shape: StadiumBorder(
+              side: BorderSide(color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            highlightColor: Colors.transparent,
+            splashColor: Palette.gold.withValues(alpha: 0.2),
+            onTap: () => setState(() => _seat = picked ? null : seat),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: label,
+            ),
+          ),
+        ),
+      );
+    }
 
     Widget guessBox(HandGuess g, double small) {
       Widget suitRow(Suit suit) {
@@ -9695,18 +9844,14 @@ class _CardTracker extends StatelessWidget {
               child: g.voids.contains(suit) || cs.isEmpty
                   ? Text(g.voids.contains(suit) ? 'none' : 'none left',
                       style: const TextStyle(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.white54))
+                          fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white54))
                   : Wrap(spacing: 3, runSpacing: 3, children: [
                       for (final c in cs)
                         _MiniCard(
                             card: c,
                             width: small,
                             faint: !g.certain.contains(c),
-                            edge: g.certain.contains(c)
-                                ? players[g.seat].color
-                                : null),
+                            edge: g.certain.contains(c) ? players[g.seat].color : null),
                     ]),
             ),
           ]),
@@ -9714,7 +9859,8 @@ class _CardTracker extends StatelessWidget {
       }
 
       return Container(
-        margin: const EdgeInsets.only(top: 10),
+        key: ValueKey('guess-${g.seat}'),
+        margin: const EdgeInsets.only(top: 12),
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
         decoration: BoxDecoration(
           color: const Color(0x22000000),
@@ -9724,87 +9870,103 @@ class _CardTracker extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              swatch(players[g.seat], size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                    '${players[g.seat].name} · ${g.size} card${g.size == 1 ? '' : 's'}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: Colors.white)),
-              ),
-            ]),
-            const SizedBox(height: 6),
+            Text(
+                '${players[g.seat].name} holds ${g.size} card${g.size == 1 ? '' : 's'}. '
+                'Bright ones they certainly hold; faint ones they may.',
+                style: const TextStyle(fontSize: 14, height: 1.3, color: Colors.white70)),
+            const SizedBox(height: 8),
             for (final suit in suits) suitRow(suit),
           ],
         ),
       );
     }
 
-    return RepaintBoundary(
-      child: LayoutBuilder(builder: (context, box) {
-        // The same size the dock was made for, so the two line up.
-        final w = math.min(cellFor(MediaQuery.sizeOf(context)),
-            (box.maxWidth - 8 * 4 - 1) / 9);
-        // Everything lines up with the grid, which sets the dock's width.
-        final width = gridWidth(w);
-        final small = clampD(w * 0.7, 20, 34);
-        Widget centred(Widget child) =>
-            Center(child: SizedBox(width: width, child: child));
-        // A list, so only what's in view is built and drawn, and the legend
-        // scrolls away with the rest.
-        return ScrollConfiguration(
-          // No scrollbar: it scrolls by touch, and a bar would crowd the grid.
-          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-          child: ListView(
-          padding: const EdgeInsets.only(top: 6, bottom: 16),
-          children: [
-            centred(Row(children: [
-              for (final p in players) ...[
-                swatch(p),
-                const SizedBox(width: 5),
-                Flexible(
-                  child: Text(p.name.replaceFirst('The ', ''),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12.5, color: Colors.white70)),
+    final picked = [for (final g in guesses) if (g.seat == _seat) g];
+    return LayoutBuilder(builder: (context, box) {
+      final w = math.min(54.0, (box.maxWidth - 8 * 4 - 1) / 9);
+      final small = clampD(w * 0.7, 20, 34);
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // The title, an eye to hold for a look at the table, and a cross.
+          Row(children: [
+            Tooltip(
+              message: 'Hold to see the table',
+              child: Listener(
+                onPointerDown: (_) => widget.onPeek?.call(true),
+                onPointerUp: (_) => widget.onPeek?.call(false),
+                onPointerCancel: (_) => widget.onPeek?.call(false),
+                child: const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(Icons.visibility_rounded,
+                      color: Palette.gold, size: 24, shadows: _feltShadow),
                 ),
-                const SizedBox(width: 10),
-              ],
-            ])),
-            const SizedBox(height: 10),
-            for (final suit in suits)
-              centred(Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    for (final c in deck)
-                      if (c.suit == suit) cell(c, w)
-                  ],
-                ),
-              )),
-            centred(heading('What the others may hold')),
-            centred(Text(
-                '$toCome cards still to come in other hands'
-                '${cards.setAside.isNotEmpty ? ' (one set aside, unseen)' : ''}. '
-                'Bright cards are certain; faint ones are possible.',
-                style: const TextStyle(
-                    fontSize: 14, height: 1.35, color: Colors.white70))),
-            for (final g in guesses) centred(guessBox(g, small)),
-          ],
-        ),
-        );
-      }),
-    );
+              ),
+            ),
+            const Expanded(
+              child: Text('Card tracker',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontFamily: displayFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 21,
+                      color: Palette.gold,
+                      shadows: _feltShadow)),
+            ),
+            IconButton(
+              tooltip: 'Close',
+              onPressed: widget.onClose,
+              style: IconButton.styleFrom(overlayColor: Colors.transparent),
+              icon: const Icon(Icons.close_rounded,
+                  color: Palette.gold, size: 26, shadows: _feltShadow),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [for (int s = 0; s < players.length; s++) key(s)],
+          ),
+          const SizedBox(height: 12),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final suit in suits)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          for (final c in deck)
+                            if (c.suit == suit) cell(c, w)
+                        ],
+                      ),
+                    ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: picked.isEmpty
+                          ? const SizedBox(width: double.infinity)
+                          : guessBox(picked.single, small),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
-  /// Width of a card in the grid, for a tracker [width] x [height]: the
-  /// whole deck fits in view at once, five rows, as big as the space allows.
   static double cellWidth(double width, double height) {
     final across = math.min(width, 720.0) - 24;
     const header = 40.0; // the legend above the grid
@@ -9813,15 +9975,6 @@ class _CardTracker extends StatelessWidget {
     return math.max(16.0, math.min(byWidth, byHeight)) - 0.5;
   }
 
-  /// The grid's card width on a screen of [screen] size.
-  static double cellFor(Size screen) =>
-      cellWidth(screen.width - 2 * sidePad, screen.height * 0.5 - 18);
-
-  /// The grid's width: nine cards and the gaps between them.
-  static double gridWidth(double cell) => 9 * cell + 8 * 4 + 1;
-
-  /// Room the tracker needs round its grid: the inlay and a little air.
-  static const sidePad = 22.0;
 }
 
 /// The soft shadow under words on the felt, as on the front page.
@@ -10230,3 +10383,62 @@ class _GlowButtonState extends State<_GlowButton>
 }
 
 
+
+
+/// The keyboard shortcuts, as small gold key caps with what each does.
+class _ShortcutsCard extends StatelessWidget {
+  const _ShortcutsCard();
+
+  static const _keys = [
+    ('← →', 'Choose a card'),
+    ('Enter', 'Play it'),
+    ('S', 'Show a card'),
+    ('T', 'Card tracker'),
+    ('Space', 'Card tracker; hold to peek'),
+    ('Esc', 'Put the tracker away'),
+  ];
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: const Color(0xD90A3622),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Palette.gold.withValues(alpha: 0.6), width: 1.2),
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 10)],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Keyboard',
+                style: TextStyle(
+                    fontFamily: displayFont,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Palette.gold)),
+            const SizedBox(height: 6),
+            for (final (k, what) in _keys)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.5),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: Palette.gold, width: 1.2),
+                    ),
+                    child: Text(k,
+                        style: const TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.w800, color: Palette.gold)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(what, style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                ]),
+              ),
+          ],
+        ),
+      );
+}

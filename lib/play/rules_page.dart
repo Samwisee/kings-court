@@ -264,21 +264,38 @@ class _RulesPageState extends State<RulesPage> {
                         children: [
                           if (g != null) _thisGame(g),
                           // The index: tap a section to jump to it.
+                          // This game's sections; every other section's tabs
+                          // open below them as a block, row by row.
                           Wrap(
                             alignment: WrapAlignment.center,
                             spacing: 8,
                             runSpacing: 8,
                             children: [
                               for (final i in shown)
-                                _Reveal(
-                                  key: ValueKey('tab-$i'),
-                                  animate: _revealing.contains(i),
-                                  leaving: _leaving.contains(i),
-                                  grow: false,
-                                  child: _Tab(_sections[i].title, () => _jump(i)),
-                                ),
+                                if (g == null || _applies(_sections[i], g))
+                                  _Tab(_sections[i].title, () => _jump(i)),
                             ],
                           ),
+                          if (g != null &&
+                              shown.any((i) => !_applies(_sections[i], g)))
+                            _Reveal(
+                              key: const ValueKey('more-tabs'),
+                              animate: _revealing.isNotEmpty,
+                              leaving: _leaving.isNotEmpty,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    for (final i in shown)
+                                      if (!_applies(_sections[i], g))
+                                        _Tab(_sections[i].title, () => _jump(i)),
+                                  ],
+                                ),
+                              ),
+                            ),
                           if (g != null)
                             Center(
                               child: TextButton(
@@ -396,9 +413,12 @@ class _RulesPageState extends State<RulesPage> {
       maxWidth: 620,
       margin: const EdgeInsets.fromLTRB(0, 34, 0, 18),
       padding: const EdgeInsets.fromLTRB(34, 38, 34, 20),
+      // Full width, so every line sits in the middle of the panel.
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text('This game',
+              textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: displayFont,
                   fontWeight: FontWeight.w700,
