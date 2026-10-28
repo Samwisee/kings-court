@@ -28,7 +28,7 @@ class Bot {
 
   /// How often a guided player follows their task rather than playing at
   /// random (the rest keeps the playouts varied).
-  double guidance = 0.75;
+  double guidance = 0.85;
 
   /// The task [seat] should pick.
   int choosePick(MatchState s, int seat) {

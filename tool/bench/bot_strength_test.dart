@@ -13,13 +13,14 @@ import '../balance/play_round.dart';
 
 void main() {
   test('bot strength', () {
-    const rounds = 80;
+    const rounds = 100;
     for (final (players, target) in [(4, 8), (4, 14)]) {
       final line = StringBuffer('$players players, target $target, $rounds rounds:');
-      for (final (name, guided, strength) in [
-        ('random', false, 0.0),
-        ('guided 0.7', true, 0.7),
-        ('guided 0.9', true, 0.9),
+      for (final (name, guided, strength, budget) in [
+        ('random 400', false, 0.0, 400),
+        ('guided 400', true, 0.85, 400),
+        ('random 900', false, 0.0, 900),
+        ('guided 900', true, 0.85, 900),
       ]) {
         // The same deals for both: the seed fixes the tasks and the cards.
         var wins = 0;
@@ -27,7 +28,7 @@ void main() {
         for (int i = 0; i < rounds; i++) {
           final rand = Random(1000 + i);
           final bot = Bot(Random(7))
-            ..budget = 400
+            ..budget = budget
             ..guided = guided
             ..guidance = strength;
           final (won, _, _) = playRound(players, target, rand, bot);
