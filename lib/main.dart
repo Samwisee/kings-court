@@ -1198,6 +1198,8 @@ class _HomePageState extends State<HomePage>
         return true;
       }
     }
+    // Nothing to play (the hand is over, or a new deal is on its way).
+    if (view.legalFor(turn).isEmpty) return false;
     final card = await _bot.choosePlayAsync(view, turn);
     if (!mounted || _moment != before) return true;
     _playCard(turn, card);
