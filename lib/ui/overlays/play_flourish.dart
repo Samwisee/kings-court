@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 class PlayFlourish extends StatelessWidget {
@@ -14,6 +14,7 @@ class PlayFlourish extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return AnimatedBuilder(
       animation: animation,
       builder: (context, _) {
@@ -26,13 +27,13 @@ class PlayFlourish extends StatelessWidget {
             opacity: clampD(opacity, 0, 1),
             child: Transform.scale(
               scale: scale,
-              child: const Text('Play!',
+              child: Text('Play!',
                   style: TextStyle(
-                      fontFamily: displayFont,
+                      fontFamily: skin.displayFont,
                       fontWeight: FontWeight.w900,
                       fontSize: 56,
-                      color: Palette.gold,
-                      shadows: [Shadow(color: Colors.black87, blurRadius: 16)])),
+                      color: skin.gold,
+                      shadows: const [Shadow(color: Colors.black87, blurRadius: 16)])),
             ),
           ),
         );

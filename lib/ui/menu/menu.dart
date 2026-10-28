@@ -5,7 +5,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// A button in the top corner, flat on the felt: just its gold, pressing
@@ -53,7 +54,8 @@ class _GoldBarState extends State<GoldBar> {
 
 /// A gold double rule with a jewel at each corner, for menus and dialogs.
 class OrnateBorder extends ShapeBorder {
-  const OrnateBorder({this.radius = 16, this.gems = true});
+  const OrnateBorder({required this.skin, this.radius = 16, this.gems = true});
+  final Skin skin;
   final double radius;
 
   /// The small diamonds at the inner rule's corners.
@@ -76,7 +78,7 @@ class OrnateBorder extends ShapeBorder {
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
     final gold = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Palette.gold;
+      ..color = skin.gold;
     canvas.drawRRect(_r(rect.deflate(1)), gold..strokeWidth = 2);
     final inner = rect.deflate(7);
     canvas.drawRRect(
@@ -84,10 +86,10 @@ class OrnateBorder extends ShapeBorder {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1
-          ..color = Palette.gold.withValues(alpha: 0.55));
+          ..color = skin.gold.withValues(alpha: 0.55));
     if (!gems) return;
     // A small diamond at each corner of the inner rule.
-    final gem = Paint()..color = Palette.gold;
+    final gem = Paint()..color = skin.gold;
     final o = radius * 0.3 + 6;
     for (final c in [
       inner.topLeft + Offset(o, o),
@@ -107,7 +109,7 @@ class OrnateBorder extends ShapeBorder {
   }
 
   @override
-  ShapeBorder scale(double t) => OrnateBorder(radius: radius * t, gems: gems);
+  ShapeBorder scale(double t) => OrnateBorder(skin: skin, radius: radius * t, gems: gems);
 }
 
 typedef MenuEntry = ({String value, IconData icon, String title, bool? on});
@@ -129,6 +131,7 @@ class _OrnateMenuState extends State<OrnateMenu> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final entries = widget.entries();
     return SafeArea(
       child: Align(
@@ -153,12 +156,12 @@ class _OrnateMenuState extends State<OrnateMenu> {
                       Container(
                           height: 1,
                           margin: const EdgeInsets.symmetric(horizontal: 10),
-                          color: Palette.gold.withValues(alpha: 0.22)),
+                          color: skin.gold.withValues(alpha: 0.22)),
                     InkWell(
                       borderRadius: BorderRadius.circular(10),
-                      highlightColor: Palette.gold.withValues(alpha: 0.08),
-                      splashColor: Palette.gold.withValues(alpha: 0.12),
-                      hoverColor: Palette.gold.withValues(alpha: 0.06),
+                      highlightColor: skin.gold.withValues(alpha: 0.08),
+                      splashColor: skin.gold.withValues(alpha: 0.12),
+                      hoverColor: skin.gold.withValues(alpha: 0.06),
                       onTap: () {
                         if (_toggles.contains(e.value)) {
                           widget.onToggle(e.value);
@@ -175,16 +178,16 @@ class _OrnateMenuState extends State<OrnateMenu> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: Row(children: [
-                              Icon(e.icon, color: Palette.gold, size: 22),
+                              Icon(e.icon, color: skin.gold, size: 22),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Text(e.title,
-                                    style: const TextStyle(
-                                        fontFamily: displayFont,
+                                    style: TextStyle(
+                                        fontFamily: skin.displayFont,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 16,
                                         letterSpacing: 0.3,
-                                        color: Palette.goldOnFelt)),
+                                        color: skin.goldOnFelt)),
                               ),
                               if (e.on != null) ...[
                                 const SizedBox(width: 10),
@@ -220,12 +223,13 @@ class OrnateMenuIcon extends StatelessWidget {
         duration: const Duration(milliseconds: 320),
         curve: Curves.easeInOutCubic,
         builder: (context, t, _) =>
-            CustomPaint(size: const Size.square(size), painter: _OrnateMenuPainter(t)),
+            CustomPaint(size: const Size.square(size), painter: _OrnateMenuPainter(t, context.skin)),
       );
 }
 
 class _OrnateMenuPainter extends CustomPainter {
-  _OrnateMenuPainter(this.t);
+  _OrnateMenuPainter(this.t, this.skin);
+  final Skin skin;
 
   /// 0: three bars; 1: a cross with a jewel at its heart.
   final double t;
@@ -234,10 +238,10 @@ class _OrnateMenuPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final bar = Paint()
-      ..color = Palette.gold
+      ..color = skin.gold
       ..strokeWidth = h * 0.09
       ..strokeCap = StrokeCap.round;
-    final gem = Paint()..color = Palette.gold;
+    final gem = Paint()..color = skin.gold;
     void diamond(Offset c, double r) => canvas.drawPath(
         Path()
           ..moveTo(c.dx, c.dy - r)
@@ -269,5 +273,5 @@ class _OrnateMenuPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_OrnateMenuPainter old) => old.t != t;
+  bool shouldRepaint(_OrnateMenuPainter old) => old.t != t || old.skin != skin;
 }

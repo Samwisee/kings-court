@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// A button that softly pulses with a gold glow, to draw the eye.
@@ -59,6 +59,7 @@ class _GlowButtonState extends State<GlowButton>
   Widget build(BuildContext context) => RepaintBoundary(child: _build(context));
 
   Widget _build(BuildContext context) {
+    final skin = context.skin;
     final shape = Theme.of(context).filledButtonTheme.style?.shape?.resolve({}) ??
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
     return Padding(
@@ -73,7 +74,7 @@ class _GlowButtonState extends State<GlowButton>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                    color: Palette.gold.withValues(alpha: 0.3 + 0.5 * _pulse.value),
+                    color: skin.gold.withValues(alpha: 0.3 + 0.5 * _pulse.value),
                     blurRadius: 10 + 12 * _pulse.value,
                     spreadRadius: 1.5),
               ],
@@ -148,13 +149,13 @@ class ShortcutsCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Keyboard',
+              Text('Keyboard',
                   style: TextStyle(
-                      fontFamily: displayFont,
+                      fontFamily: context.skin.displayFont,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
-                      color: Palette.gold,
-                      shadows: feltShadow)),
+                      color: context.skin.gold,
+                      shadows: context.skin.feltShadow)),
               const SizedBox(height: 8),
               for (final (caps, what) in _keys)
                 Padding(
@@ -171,8 +172,8 @@ class ShortcutsCard extends StatelessWidget {
                     Flexible(
                       child: Text(what,
                           softWrap: true,
-                          style: const TextStyle(
-                              fontFamily: bodyFont,
+                          style: TextStyle(
+                              fontFamily: context.skin.bodyFont,
                               fontSize: 13.5,
                               height: 1.25,
                               color: Colors.white)),
@@ -196,22 +197,22 @@ class KeyCap extends StatelessWidget {
         constraints: BoxConstraints(minWidth: size, minHeight: size),
         padding: EdgeInsets.symmetric(horizontal: size * 0.25, vertical: size * 0.16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Palette.goldLight, Palette.gold]),
+              colors: [context.skin.goldLight, context.skin.gold]),
           borderRadius: BorderRadius.circular(size * 0.22),
-          border: Border.all(color: Palette.goldRim),
+          border: Border.all(color: context.skin.goldRim),
           boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 1.5))],
         ),
         child: Text(label,
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontFamily: bodyFont,
+                fontFamily: context.skin.bodyFont,
                 fontSize: size * 0.62,
                 height: 1,
                 fontWeight: FontWeight.w800,
-                color: Palette.ink,
+                color: context.skin.ink,
                 decoration: TextDecoration.none)),
       );
 }

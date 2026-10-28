@@ -107,6 +107,9 @@ abstract class Skin {
   /// The soft shadow under words and icons on the felt.
   List<Shadow> get feltShadow;
 
+  /// A task's words on its card; the card's size is measured in it.
+  TextStyle get taskText;
+
   // -------------------------------------------------------------- cards
 
   /// The crisp line round every card and task card.

@@ -4,7 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import 'icons.dart';
 import 'panels.dart';
 
@@ -68,10 +69,10 @@ class SuitText extends StatelessWidget {
 
   /// A card named on the felt: a little card of its own, rank and suit in
   /// the colours the card is printed in, so the words match the cards.
-  InlineSpan _cardChip(String? rank, String symbol, bool done) {
+  InlineSpan _cardChip(Skin skin, String? rank, String symbol, bool done) {
     final fs = style.fontSize ?? 14;
     final suit = Suit.values.firstWhere((s) => s.symbol == symbol);
-    final colour = Palette.suitColour(suit);
+    final colour = skin.suitColour(suit);
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
       child: Opacity(
@@ -80,15 +81,15 @@ class SuitText extends StatelessWidget {
           margin: EdgeInsets.symmetric(horizontal: fs * 0.08),
           padding: EdgeInsets.fromLTRB(fs * 0.22, fs * 0.04, fs * 0.22, fs * 0.06),
           decoration: BoxDecoration(
-            color: Palette.card,
+            color: skin.card,
             borderRadius: BorderRadius.circular(fs * 0.22),
-            border: Border.all(color: outlineColour),
+            border: Border.all(color: skin.outlineColour),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (rank != null)
               Text(rank,
                   style: TextStyle(
-                      fontFamily: bodyFont,
+                      fontFamily: skin.bodyFont,
                       fontSize: fs * 0.88,
                       height: 1.1,
                       fontWeight: FontWeight.w800,
@@ -116,7 +117,7 @@ class SuitText extends StatelessWidget {
             onTap: () => showTermDialog(context, term),
             child: Text(word,
                 style: base.copyWith(
-                    color: dark ? Palette.gold : Palette.goldDeep,
+                    color: dark ? context.skin.gold : context.skin.goldDeep,
                     fontWeight: FontWeight.w700)),
           )),
         ),
@@ -135,6 +136,7 @@ class SuitText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final spans = <InlineSpan>[];
     // On a dark background, suits are printed in lighter colours so they
     // keep their contrast.
@@ -165,8 +167,8 @@ class SuitText extends StatelessWidget {
     Color suitColour(String symbol) {
       final suit = Suit.values.firstWhere((s) => s.symbol == symbol);
       return dark
-          ? Palette.suitColourOnDark(suit, style.color!)
-          : Palette.suitColour(suit);
+          ? skin.suitColourOnDark(suit, style.color!)
+          : skin.suitColour(suit);
     }
 
     var last = 0;
@@ -174,7 +176,7 @@ class SuitText extends StatelessWidget {
       if (m.start > last) words(text.substring(last, m.start));
       final token = m.group(0)!;
       if (m.group(1) != null && dark) {
-        spans.add(_cardChip(m.group(1), m.group(2)!, struck.contains(token)));
+        spans.add(_cardChip(skin, m.group(1), m.group(2)!, struck.contains(token)));
       } else if (m.group(1) != null) {
         // A named card: its rank, then its suit in colour; crossed out once
         // it's been won.
@@ -185,11 +187,11 @@ class SuitText extends StatelessWidget {
         final mark = TextStyle(
             decoration: cross,
             decorationThickness: 2.5,
-            decorationColor: style.color ?? Palette.ink);
+            decorationColor: style.color ?? skin.ink);
         spans.add(TextSpan(
             text: m.group(1),
             style: mark.copyWith(
-                color: done ? (style.color ?? Palette.ink).withValues(alpha: 0.5) : null)));
+                color: done ? (style.color ?? skin.ink).withValues(alpha: 0.5) : null)));
         spans.add(_suit(m.group(2)!,
             done ? suitColour(m.group(2)!).withValues(alpha: 0.5) : suitColour(m.group(2)!)));
       } else if (token == noCourt || token == court) {
@@ -204,7 +206,7 @@ class SuitText extends StatelessWidget {
             )));
       } else if (token == showButton || token == trackerButton) {
         final size = (style.fontSize ?? 14) * 1.25;
-        final c = dark ? Palette.gold : Palette.goldDeep;
+        final c = dark ? skin.gold : skin.goldDeep;
         spans.add(WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: Padding(

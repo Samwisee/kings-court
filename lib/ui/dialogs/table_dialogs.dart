@@ -6,11 +6,12 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../game/state.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// Chooses a points target, starting from [current]; null when cancelled.
 Future<int?> showPointsDialog(BuildContext context, {required int current}) async {
+  final skin = context.skin;
   var target = current;
   final apply = await showDialog<bool>(
     context: context,
@@ -31,23 +32,23 @@ Future<int?> showPointsDialog(BuildContext context, {required int current}) asyn
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Points target',
+                Text('Points target',
                     style: TextStyle(
-                        fontFamily: displayFont,
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w700,
                         fontSize: 24,
-                        color: Palette.goldOnFelt)),
+                        color: skin.goldOnFelt)),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('$target',
-                        style: const TextStyle(
-                            fontFamily: displayFont,
+                        style: TextStyle(
+                            fontFamily: skin.displayFont,
                             fontWeight: FontWeight.w900,
                             fontSize: 52,
                             height: 1.1,
-                            color: Palette.gold)),
+                            color: skin.gold)),
                     const SizedBox(width: 8),
                     const CrownIcon(size: 32),
                   ],
@@ -86,6 +87,7 @@ Future<int?> showPointsDialog(BuildContext context, {required int current}) asyn
 /// It can't be dismissed: the number is announced.
 Future<int> showAnnounceDialog(BuildContext context,
     {required String text, required int least, required int totalTricks}) async {
+  final skin = context.skin;
   var x = 1;
   final chosen = await showDialog<int>(
     context: context,
@@ -116,11 +118,11 @@ Future<int> showAnnounceDialog(BuildContext context,
                   width: 70,
                   child: Text('$x',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontFamily: bodyFont,
+                      style: TextStyle(
+                          fontFamily: skin.bodyFont,
                           fontWeight: FontWeight.w800,
                           fontSize: 40,
-                          color: Palette.gold)),
+                          color: skin.gold)),
                 ),
                 IconButton.outlined(
                   onPressed: x < totalTricks
@@ -165,6 +167,7 @@ Future<int?> showWhoTakesDialog(BuildContext context,
 
 /// After the tutorial: play a game now (true), or not now.
 Future<bool?> showReadyDialog(BuildContext context) {
+  final skin = context.skin;
   return showDialog<bool>(
     context: context,
     builder: (context) => CourtDialog(
@@ -178,10 +181,10 @@ Future<bool?> showReadyDialog(BuildContext context) {
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Not now')),
       ],
-      child: const SuitText(
+      child: SuitText(
           'Set up a game of your own now? How to Play in the menu has every rule whenever you need it.',
           textAlign: TextAlign.center,
-          style: DialogStyle.body),
+          style: skin.dialogBody),
     ),
   );
 }

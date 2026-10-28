@@ -7,7 +7,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import 'clamp.dart';
 
 /// How a character token is behaving.
@@ -122,6 +123,7 @@ class _CharacterTokenState extends State<CharacterToken>
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     // Its own layer: a breathing token repaints alone, never the table.
     return RepaintBoundary(child: AnimatedBuilder(
       animation: Listenable.merge([_once, _breath]),
@@ -132,7 +134,7 @@ class _CharacterTokenState extends State<CharacterToken>
         final s = widget.size;
         var dx = 0.0, dy = 0.0, scale = 1.0, angle = 0.0, opacity = 1.0;
         IconData? mark;
-        var markColor = Palette.gold;
+        var markColor = skin.gold;
         // A white wash for ghosts, a gold halo for holy arrivals.
         var wash = 0.0, halo = 0.0;
         final e = Curves.easeOutCubic.transform(t);
@@ -159,7 +161,7 @@ class _CharacterTokenState extends State<CharacterToken>
               }
               if (t < 0.4) {
                 mark = Icons.gavel_rounded;
-                markColor = Palette.lost;
+                markColor = skin.lost;
               }
             case Exit.walk:
               if (t < 0.3) {
@@ -230,7 +232,7 @@ class _CharacterTokenState extends State<CharacterToken>
           case CharacterMood.angry:
             dx = math.sin(t * math.pi * 8) * s * 0.1 * (1 - t);
             mark = Icons.priority_high_rounded;
-            markColor = Palette.lost;
+            markColor = skin.lost;
           case CharacterMood.leaving:
             scale = 1 - 0.35 * Curves.easeIn.transform(t);
             opacity = 1 - 0.65 * t;
@@ -249,8 +251,8 @@ class _CharacterTokenState extends State<CharacterToken>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(colors: [
-                    Palette.gold.withValues(alpha: 0.6 * halo),
-                    Palette.gold.withValues(alpha: 0),
+                    skin.gold.withValues(alpha: 0.6 * halo),
+                    skin.gold.withValues(alpha: 0),
                   ]),
                 ),
               ),
@@ -341,6 +343,7 @@ class _SpeechBubbleState extends State<SpeechBubble>
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return AnimatedBuilder(
       animation: _c,
       builder: (context, child) {
@@ -352,7 +355,7 @@ class _SpeechBubbleState extends State<SpeechBubble>
         );
       },
       child: CustomPaint(
-        painter: _BubbleTail(below: widget.tailBelow, above: widget.tailAbove),
+        painter: _BubbleTail(skin: context.skin, below: widget.tailBelow, above: widget.tailAbove),
         child: Container(
           margin: widget.tailBelow
               ? const EdgeInsets.only(bottom: 9)
@@ -361,7 +364,7 @@ class _SpeechBubbleState extends State<SpeechBubble>
                   : const EdgeInsets.only(left: 8),
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           decoration: BoxDecoration(
-            color: Palette.ivory,
+            color: skin.ivory,
             borderRadius: BorderRadius.circular(14),
             boxShadow: const [
               BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 2)),
@@ -373,14 +376,14 @@ class _SpeechBubbleState extends State<SpeechBubble>
             children: [
               if (widget.who != null)
                 Text(widget.who!,
-                    style: const TextStyle(
-                        fontFamily: displayFont,
+                    style: TextStyle(
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: Palette.goldDeep)),
+                        color: skin.goldDeep)),
               Text(widget.text,
-                  style: const TextStyle(
-                      fontSize: 16, height: 1.4, color: Palette.ink)),
+                  style: TextStyle(
+                      fontSize: 16, height: 1.4, color: skin.ink)),
             ],
           ),
         ),
@@ -390,7 +393,8 @@ class _SpeechBubbleState extends State<SpeechBubble>
 }
 
 class _BubbleTail extends CustomPainter {
-  _BubbleTail({this.below = false, this.above = false});
+  _BubbleTail({required this.skin, this.below = false, this.above = false});
+  final Skin skin;
   final bool below;
   final bool above;
 
@@ -404,7 +408,7 @@ class _BubbleTail extends CustomPainter {
             ..lineTo(x + 9, size.height - 10)
             ..lineTo(x, size.height)
             ..close(),
-          Paint()..color = Palette.ivory);
+          Paint()..color = skin.ivory);
       return;
     }
     if (above) {
@@ -415,7 +419,7 @@ class _BubbleTail extends CustomPainter {
             ..lineTo(x + 9, 10)
             ..lineTo(x, 0)
             ..close(),
-          Paint()..color = Palette.ivory);
+          Paint()..color = skin.ivory);
       return;
     }
     final y = math.min(22.0, size.height / 2);
@@ -424,9 +428,9 @@ class _BubbleTail extends CustomPainter {
       ..lineTo(10, y - 7)
       ..lineTo(10, y + 7)
       ..close();
-    canvas.drawPath(path, Paint()..color = Palette.ivory);
+    canvas.drawPath(path, Paint()..color = skin.ivory);
   }
 
   @override
-  bool shouldRepaint(_BubbleTail old) => old.below != below || old.above != above;
+  bool shouldRepaint(_BubbleTail old) => old.below != below || old.above != above || old.skin != skin;
 }

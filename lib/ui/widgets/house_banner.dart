@@ -4,7 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// The top of a courtier's card: a wash of their colour with their sigil
@@ -25,6 +25,7 @@ class HouseBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final deep = Color.lerp(color, const Color(0xFF0A0A0A), 0.55)!;
     return Container(
       constraints: const BoxConstraints(minHeight: 128),
@@ -66,7 +67,7 @@ class HouseBanner extends StatelessWidget {
                       shape: courtier.shape,
                       size: 52,
                       color: color,
-                      ring: Palette.gold,
+                      ring: skin.gold,
                       ringWidth: 2.5),
                 ]),
                 const SizedBox(width: 14),
@@ -85,18 +86,18 @@ class HouseBanner extends StatelessWidget {
                             style: const TextStyle(
                                 fontSize: 14, color: Colors.white70)),
                       Text(courtier.title,
-                          style: const TextStyle(
-                              fontFamily: displayFont,
+                          style: TextStyle(
+                              fontFamily: skin.displayFont,
                               fontWeight: FontWeight.w900,
                               fontSize: 22,
                               height: 1.1,
                               color: Colors.white)),
                       Text(courtier.house,
-                          style: const TextStyle(
-                              fontFamily: displayFont,
+                          style: TextStyle(
+                              fontFamily: skin.displayFont,
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
-                              color: Palette.gold)),
+                              color: skin.gold)),
                       const SizedBox(height: 2),
                       Text('“${courtier.motto}”',
                           style: const TextStyle(

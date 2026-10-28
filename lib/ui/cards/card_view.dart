@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../skin/court/emblems.g.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
 
@@ -46,37 +48,38 @@ class PlayingCardView extends StatelessWidget {
     [Color(0xFF5A2F87), Color(0xFF241238)],
     [Color(0xFF13734A), Color(0xFF062A1B)],
     [Color(0xFF2849A8), Color(0xFF0B1A45)],
-    [Color(0xFF9A1E31), Palette.traitor],
+    [Color(0xFF9A1E31), Color(0xFF3A0610)],
   ];
 
   bool get _isKing => card == PlayingCard.king;
 
-  Color get _inkColour => Palette.suitColour(card.suit);
+  Color _inkColour(Skin skin) => skin.suitColour(card.suit);
 
   // Its own layer: the emblems are costly to draw, so a card is drawn once and kept while things move around it.
   @override
   Widget build(BuildContext context) => RepaintBoundary(child: _build(context));
 
   Widget _build(BuildContext context) {
+    final skin = context.skin;
     final h = heightFor(width);
     final outer = width * 0.1;
-    final r = BorderRadius.circular(outer - outlineWidth);
+    final r = BorderRadius.circular(outer - skin.outlineWidth);
     final corner = TextStyle(
-        fontFamily: card.isCourt ? displayFont : bodyFont,
+        fontFamily: card.isCourt ? skin.displayFont : skin.bodyFont,
         fontWeight: FontWeight.w900,
         fontSize: width * (card.isCourt ? 0.3 : 0.26),
         height: 1,
-        color: _inkColour);
+        color: _inkColour(skin));
     final borderColour = edge ??
         (marks.isNotEmpty
             ? marks.first
             : glow
-                ? Palette.gold
+                ? skin.gold
                 : card.isCourt
-                    ? Palette.gold
+                    ? skin.gold
                     // Number cards keep the same band in their own white,
                     // so their lines sit where a player's colour would.
-                    : Palette.card);
+                    : skin.card);
     final thick = glow || edge != null || marks.isNotEmpty || card.isCourt;
     // A player's colour (or the gold of a suggested card) round the edge:
     // dark lines touch it on both sides, so it reads against anything.
@@ -94,7 +97,7 @@ class PlayingCardView extends StatelessWidget {
         radius: outer,
         shadows: [
           if (glow)
-            const BoxShadow(color: Palette.gold, blurRadius: 14)
+            BoxShadow(color: skin.gold, blurRadius: 14)
           else if (marks.isNotEmpty)
             BoxShadow(color: marks.first.withValues(alpha: 0.85), blurRadius: 10)
           else if (_isKing)
@@ -104,7 +107,7 @@ class PlayingCardView extends StatelessWidget {
         ],
         child: Container(
         decoration: BoxDecoration(
-          color: card.isCourt ? null : Palette.card,
+          color: card.isCourt ? null : skin.card,
           gradient: card.isCourt
               ? LinearGradient(
                   begin: Alignment.topLeft,
@@ -142,8 +145,8 @@ class PlayingCardView extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(
-                          math.max(0.0, outer - outlineWidth - borderWidth)),
-                      border: Border.all(color: outlineColour, width: outlineWidth),
+                          math.max(0.0, outer - skin.outlineWidth - borderWidth)),
+                      border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
                     ),
                   ),
                 ),
@@ -160,7 +163,7 @@ class PlayingCardView extends StatelessWidget {
                   border: Border.all(
                       color: card.isCourt
                           ? const Color(0x99D4A63A)
-                          : outlineColour.withValues(alpha: 0.45)),
+                          : skin.outlineColour.withValues(alpha: 0.45)),
                 ),
               ),
             ),
@@ -172,7 +175,7 @@ class PlayingCardView extends StatelessWidget {
               Center(
                 child: Padding(
                   padding: EdgeInsets.only(top: width * 0.18),
-                  child: _face(),
+                  child: _face(skin),
                 ),
               ),
             Positioned(
@@ -187,7 +190,7 @@ class PlayingCardView extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.only(top: width * 0.02),
                       child: SuitIcon(card.suit,
-                          size: width * 0.18, color: corner.color ?? _inkColour),
+                          size: width * 0.18, color: corner.color ?? _inkColour(skin)),
                     ),
                 ],
               ),
@@ -208,7 +211,7 @@ class PlayingCardView extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: m,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Palette.ink, width: 1.2),
+                          border: Border.all(color: skin.ink, width: 1.2),
                         ),
                         child: Icon(Icons.flag_rounded,
                             size: width * 0.13, color: Colors.white),
@@ -224,11 +227,12 @@ class PlayingCardView extends StatelessWidget {
     );
   }
 
-  Widget _face() => SuitIcon(card.suit, size: width * 0.44, color: _inkColour);
+  Widget _face(Skin skin) => SuitIcon(card.suit, size: width * 0.44, color: _inkColour(skin));
 }
 
-const _goldLight = Palette.goldLight;
-const _goldMid = Palette.gold;
+// The emblems' gold: the court skin's art (skin/court).
+const _goldLight = Color(0xFFF9E08C);
+const _goldMid = Color(0xFFD4A63A);
 
 /// The printed card is 63 mm wide; the app's card is [width] wide. Sizes
 /// below are the printed deck's, in millimetres, scaled to the card.
@@ -417,20 +421,21 @@ class CardBack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Container(
       width: width,
       height: PlayingCardView.heightFor(width),
       decoration: BoxDecoration(
         color: const Color(0xFF5A1620),
         borderRadius: BorderRadius.circular(width * 0.1),
-        border: Border.all(color: Palette.gold, width: 1.5 + outlineWidth),
+        border: Border.all(color: skin.gold, width: 1.5 + skin.outlineWidth),
         boxShadow: const [
           BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(width * 0.1),
-        border: Border.all(color: outlineColour, width: outlineWidth),
+        border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
       ),
       alignment: Alignment.center,
       child: CrownIcon(size: width * 0.5),

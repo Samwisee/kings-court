@@ -6,6 +6,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../cards/card_view.dart';
 import '../overlays/crowning.dart';
@@ -58,6 +60,7 @@ class _WelcomeIntroState extends State<WelcomeIntro> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final stageW = crownSize * 2;
     final cardW = crownSize * 0.6;
     final cardH = PlayingCardView.heightFor(cardW);
@@ -96,7 +99,7 @@ class _WelcomeIntroState extends State<WelcomeIntro> {
                     child: IgnorePointer(
                       child: CustomPaint(
                         painter: spark > 0 && spark < 1
-                            ? IntroSparks(
+                            ? IntroSparks(skin: context.skin, 
                                 origin: Offset(stageW / 2, handTop + cardH * 0.45),
                                 progress: spark,
                                 scale: crownSize / 100)
@@ -132,10 +135,10 @@ class _WelcomeIntroState extends State<WelcomeIntro> {
             const SizedBox(height: 14),
             Opacity(
               opacity: sub,
-              child: const Text(
+              child: Text(
                   'A cooperative trick-taking game for 2 to 6 players.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.white70, shadows: feltShadow)),
+                  style: TextStyle(fontSize: 18, color: Colors.white70, shadows: skin.feltShadow)),
             ),
             const SizedBox(height: 36),
             SizedBox(
@@ -181,18 +184,18 @@ class ReachRight extends CustomClipper<Rect> {
 class _CrownedTitle extends StatelessWidget {
   const _CrownedTitle();
 
-  static const _style = TextStyle(
-      fontFamily: displayFont,
+  static TextStyle _style(Skin skin) => TextStyle(
+      fontFamily: skin.displayFont,
       fontWeight: FontWeight.w900,
       fontSize: 44,
       height: 1.05,
-      color: Palette.gold,
-      shadows: [Shadow(color: Colors.black54, blurRadius: 12)]);
+      color: skin.gold,
+      shadows: const [Shadow(color: Colors.black54, blurRadius: 12)]);
 
   @override
   Widget build(BuildContext context) {
     return Text.rich(
-      TextSpan(style: _style, children: [
+      TextSpan(style: _style(context.skin), children: [
         const TextSpan(text: 'The K'),
         WidgetSpan(
           alignment: PlaceholderAlignment.baseline,
@@ -201,21 +204,21 @@ class _CrownedTitle extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.topCenter,
             children: [
-              const Text('i', style: _style),
+              Text('i', style: _style(context.skin)),
               // Just over the I, a hair left of the glyph's box to sit on
               // its stroke, with the same soft shadow as the letters.
               Positioned(
-                top: -_style.fontSize! * 0.36,
-                left: -_style.fontSize! * 0.3 + _style.fontSize! * 0.045,
-                right: -_style.fontSize! * 0.3,
+                top: -_style(context.skin).fontSize! * 0.36,
+                left: -_style(context.skin).fontSize! * 0.3 + _style(context.skin).fontSize! * 0.045,
+                right: -_style(context.skin).fontSize! * 0.3,
                 child: Center(
                   child: Stack(clipBehavior: Clip.none, children: [
                     ImageFiltered(
                       imageFilter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
                       child: CrownIcon(
-                          size: _style.fontSize! * 0.5, color: Colors.black54),
+                          size: _style(context.skin).fontSize! * 0.5, color: Colors.black54),
                     ),
-                    CrownIcon(size: _style.fontSize! * 0.5),
+                    CrownIcon(size: _style(context.skin).fontSize! * 0.5),
                   ]),
                 ),
               ),

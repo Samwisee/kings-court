@@ -9,6 +9,8 @@ import '../../engine/cards.dart';
 import '../../engine/inference.dart';
 import '../../engine/round.dart';
 import '../../game/state.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../cards/mini_card.dart';
 import '../widgets.dart';
@@ -55,6 +57,7 @@ class CardTrackerState extends State<CardTracker> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
     for (var i = 0; i < cards.tricks.length; i++) {
       final t = cards.tricks[i];
@@ -105,7 +108,7 @@ class CardTrackerState extends State<CardTracker> {
           width: size * 0.72,
           height: size,
           decoration: BoxDecoration(
-            color: Palette.card,
+            color: skin.card,
             borderRadius: BorderRadius.circular(3),
             border: Border.all(color: p.color, width: 3),
             boxShadow: const [BoxShadow(spreadRadius: 1.2)],
@@ -130,9 +133,9 @@ class CardTrackerState extends State<CardTracker> {
         selected: on,
         label: 'Every card',
         child: Material(
-          color: on ? Palette.gold : const Color(0x33000000),
+          color: on ? skin.gold : const Color(0x33000000),
           shape: StadiumBorder(
-              side: BorderSide(color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
+              side: BorderSide(color: skin.gold.withValues(alpha: 0.7), width: 1.3)),
           child: InkWell(
             customBorder: const StadiumBorder(),
             highlightColor: Colors.transparent,
@@ -143,8 +146,8 @@ class CardTrackerState extends State<CardTracker> {
                   style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: on ? Palette.ink : Colors.white,
-                      shadows: on ? null : feltShadow)),
+                      color: on ? skin.ink : Colors.white,
+                      shadows: on ? null : skin.feltShadow)),
             ),
           ),
         ),
@@ -161,8 +164,8 @@ class CardTrackerState extends State<CardTracker> {
             style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: picked ? Palette.ink : Colors.white,
-                shadows: picked ? null : feltShadow)),
+                color: picked ? skin.ink : Colors.white,
+                shadows: picked ? null : skin.feltShadow)),
       ]);
       if (seat == you) {
         return Padding(
@@ -174,13 +177,13 @@ class CardTrackerState extends State<CardTracker> {
         selected: picked,
         label: 'What ${p.name} may hold',
         child: Material(
-          color: picked ? Palette.gold : const Color(0x33000000),
+          color: picked ? skin.gold : const Color(0x33000000),
           shape: StadiumBorder(
-              side: BorderSide(color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
+              side: BorderSide(color: skin.gold.withValues(alpha: 0.7), width: 1.3)),
           child: InkWell(
             customBorder: const StadiumBorder(),
             highlightColor: Colors.transparent,
-            splashColor: Palette.gold.withValues(alpha: 0.2),
+            splashColor: skin.gold.withValues(alpha: 0.2),
             onTap: () => setState(() => _seat = seat),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -247,7 +250,7 @@ class CardTrackerState extends State<CardTracker> {
       final deckHeight = 5 * (w * 1.3 + 3);
       // Its edge turns the colour of whoever's hand is shown.
       return TweenAnimationBuilder<Color?>(
-        tween: ColorTween(end: _seat == null ? Palette.gold : players[_seat!].color),
+        tween: ColorTween(end: _seat == null ? skin.gold : players[_seat!].color),
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOut,
         builder: (context, edge, child) => OrnateCard(
@@ -264,15 +267,15 @@ class CardTrackerState extends State<CardTracker> {
           // The title and a cross.
           Row(children: [
             const SizedBox(width: 36),
-            const Expanded(
+            Expanded(
               child: Text('Card tracker',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontFamily: displayFont,
+                      fontFamily: skin.displayFont,
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
-                      color: Palette.gold,
-                      shadows: feltShadow)),
+                      color: skin.gold,
+                      shadows: skin.feltShadow)),
             ),
             SizedBox(
               width: 36,
@@ -281,8 +284,8 @@ class CardTrackerState extends State<CardTracker> {
                 onPressed: widget.onClose,
                 visualDensity: VisualDensity.compact,
                 style: IconButton.styleFrom(overlayColor: Colors.transparent),
-                icon: const Icon(Icons.close_rounded,
-                    color: Palette.gold, size: 22, shadows: feltShadow),
+                icon: Icon(Icons.close_rounded,
+                    color: skin.gold, size: 22, shadows: skin.feltShadow),
               ),
             ),
           ]),
@@ -360,14 +363,14 @@ class CardTrackerState extends State<CardTracker> {
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: CustomPaint(
-                      painter: _CornerNotch(held: _peekHeld),
-                      child: const SizedBox(
+                      painter: _CornerNotch(skin: context.skin, held: _peekHeld),
+                      child: SizedBox(
                         width: 54,
                         height: 42,
                         child: Padding(
-                          padding: EdgeInsets.only(left: 3, top: 3),
+                          padding: const EdgeInsets.only(left: 3, top: 3),
                           child: Icon(Icons.visibility_rounded,
-                              color: Palette.gold, size: 20),
+                              color: skin.gold, size: 20),
                         ),
                       ),
                     ),
@@ -395,7 +398,8 @@ class CardTrackerState extends State<CardTracker> {
 /// rounded corner, with a bronze line along its top and left only, curved
 /// like the panel's own rule ([OrnateCard.ruleRadius]).
 class _CornerNotch extends CustomPainter {
-  const _CornerNotch({required this.held});
+  const _CornerNotch({required this.skin, required this.held});
+  final Skin skin;
   final bool held;
 
   @override
@@ -415,9 +419,9 @@ class _CornerNotch extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = OrnateCard.ruleWidth
-          ..color = OrnateCard.ruleColour(Palette.gold));
+          ..color = OrnateCard.ruleColour(skin.gold));
   }
 
   @override
-  bool shouldRepaint(_CornerNotch old) => old.held != held;
+  bool shouldRepaint(_CornerNotch old) => old.held != held || old.skin != skin;
 }

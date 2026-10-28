@@ -9,7 +9,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// The crown flies from [from] to the new King at [to] and lands in a
@@ -46,6 +47,7 @@ class CrowningScene extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return AnimatedBuilder(
       animation: animation,
       builder: (context, _) {
@@ -72,14 +74,14 @@ class CrowningScene extends StatelessWidget {
             Center(
               child: Opacity(
                 opacity: glow,
-                child: const Text('Long live the King',
+                child: Text('Long live the King',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontFamily: displayFont,
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 30,
-                        color: Palette.gold,
-                        shadows: [
+                        color: skin.gold,
+                        shadows: const [
                           Shadow(color: Colors.black54, blurRadius: 12),
                         ])),
               ),
@@ -87,13 +89,13 @@ class CrowningScene extends StatelessWidget {
             if (land > 0)
               Positioned.fill(
                 child: CustomPaint(
-                    painter: SparkBurst(origin: to, progress: land)),
+                    painter: SparkBurst(skin: context.skin, origin: to, progress: land)),
               ),
             // The rest of the court sounds a fanfare: a trumpet at every
             // other seat, pointed at the new King, with notes floating out.
             for (final e in seats.entries)
               if (e.key != king)
-                ..._trumpet(e.value, seatSize, e.key, to, t),
+                ..._trumpet(e.value, seatSize, e.key, to, t, skin.gold),
             Positioned(
               left: p.dx - size / 2,
               top: p.dy - size * 0.375,
@@ -111,7 +113,8 @@ class CrowningScene extends StatelessWidget {
 
 /// One player's trumpet in the crowning fanfare. It pops up just before
 /// the crown lands, toots (a little kick) and blows notes towards the King.
-List<Widget> _trumpet(Offset seat, double seatSize, int j, Offset king, double t) {
+List<Widget> _trumpet(
+    Offset seat, double seatSize, int j, Offset king, double t, Color gold) {
   // Each trumpet starts a moment after the last, like a ragged fanfare.
   final start = 0.45 + 0.04 * j;
   final local = clampD((t - start) / (1 - start), 0, 1);
@@ -139,7 +142,7 @@ List<Widget> _trumpet(Offset seat, double seatSize, int j, Offset king, double t
             scaleX: pop,
             child: Icon(Icons.campaign_rounded,
                 size: size,
-                color: Palette.gold,
+                color: gold,
                 shadows: const [Shadow(color: Colors.black54, blurRadius: 6)]),
           ),
         ),
@@ -159,10 +162,10 @@ List<Widget> _trumpet(Offset seat, double seatSize, int j, Offset king, double t
           child: Opacity(
             opacity: clampD(1 - nt, 0, 1),
             child: Text(k.isEven ? '♪' : '♫',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 18,
-                    color: Palette.gold,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
+                    color: gold,
+                    shadows: const [Shadow(color: Colors.black54, blurRadius: 4)])),
           ),
         );
       }(),
@@ -206,10 +209,10 @@ class CoronationOverlay extends StatelessWidget {
               Positioned.fill(
                 child: Opacity(
                   opacity: cover,
-                  child: const DecoratedBox(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
-                          radius: 0.9, colors: [Color(0xFF176141), Palette.feltDeep]),
+                          radius: 0.9, colors: [const Color(0xFF176141), context.skin.feltDeep]),
                     ),
                   ),
                 ),
@@ -217,7 +220,7 @@ class CoronationOverlay extends StatelessWidget {
               Positioned.fill(
                 child: CustomPaint(
                   painter: spark > 0 && spark < 1
-                      ? IntroSparks(
+                      ? IntroSparks(skin: context.skin, 
                           origin: centre, progress: spark, scale: crown / 70)
                       : null,
                 ),
@@ -233,7 +236,7 @@ class CoronationOverlay extends StatelessWidget {
                       child: DecoratedBox(
                         decoration: BoxDecoration(boxShadow: [
                           BoxShadow(
-                              color: Palette.gold.withValues(alpha: 0.35 * grow),
+                              color: context.skin.gold.withValues(alpha: 0.35 * grow),
                               blurRadius: crown * 0.5,
                               spreadRadius: crown * 0.05),
                         ]),
@@ -251,7 +254,8 @@ class CoronationOverlay extends StatelessWidget {
 /// A ring of gold and white sparks, sized to the crown.
 class IntroSparks extends CustomPainter {
   IntroSparks(
-      {required this.origin, required this.progress, required this.scale});
+      {required this.skin, required this.origin, required this.progress, required this.scale});
+  final Skin skin;
   final Offset origin;
   final double progress;
   final double scale;
@@ -264,11 +268,11 @@ class IntroSparks extends CustomPainter {
       final a = k * 2 * math.pi / 18 + 0.2;
       final r = (30 + 70 * ease * (k.isEven ? 1 : 0.65)) * scale;
       final p = origin + Offset(math.cos(a), math.sin(a)) * r;
-      final color = (k.isEven ? Palette.gold : Colors.white).withValues(alpha: fade);
+      final color = (k.isEven ? skin.gold : Colors.white).withValues(alpha: fade);
       canvas.drawCircle(p, (k.isEven ? 3.2 : 2.2) * scale, Paint()..color = color);
     }
   }
 
   @override
-  bool shouldRepaint(IntroSparks old) => old.progress != progress;
+  bool shouldRepaint(IntroSparks old) => old.progress != progress || old.skin != skin;
 }

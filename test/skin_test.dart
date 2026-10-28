@@ -16,44 +16,7 @@ final named = RegExp(
 
 /// Files under lib/ui still naming the look, to be swept (step 7 of the
 /// refactor); the list only shrinks.
-const unswept = {
-  'lib/ui/cards/card_view.dart',
-  'lib/ui/cards/mini_card.dart',
-  'lib/ui/cards/task_chip.dart',
-  'lib/ui/dialogs/courtier_card.dart',
-  'lib/ui/dialogs/table_dialogs.dart',
-  'lib/ui/dialogs/task_close_up.dart',
-  'lib/ui/dynasty/contest_table.dart',
-  'lib/ui/dynasty/hall_pieces.dart',
-  'lib/ui/dynasty/throne_room.dart',
-  'lib/ui/menu/menu.dart',
-  'lib/ui/modes/tutorial/coach.dart',
-  'lib/ui/modes/tutorial/tutorial_intro.dart',
-  'lib/ui/overlays/crowning.dart',
-  'lib/ui/overlays/king_prompt.dart',
-  'lib/ui/overlays/outcome_card.dart',
-  'lib/ui/overlays/play_flourish.dart',
-  'lib/ui/rules/rules_page.dart',
-  'lib/ui/setup/chapter_picker.dart',
-  'lib/ui/setup/setup_panel.dart',
-  'lib/ui/setup/transitions.dart',
-  'lib/ui/table_page.dart',
-  'lib/ui/tracker/card_tracker.dart',
-  'lib/ui/welcome/welcome.dart',
-  'lib/ui/widgets/buttons.dart',
-  'lib/ui/widgets/candles.dart',
-  'lib/ui/widgets/character_token.dart',
-  'lib/ui/widgets/court_dialog.dart',
-  'lib/ui/widgets/house_banner.dart',
-  'lib/ui/widgets/icons.dart',
-  'lib/ui/widgets/panels.dart',
-  'lib/ui/widgets/pips.dart',
-  'lib/ui/widgets/seals.dart',
-  'lib/ui/widgets/suit_text.dart',
-  'lib/ui/widgets/table.dart',
-  'lib/ui/widgets/task_card.dart',
-  'lib/ui/widgets/tokens.dart',
-};
+const unswept = <String>{};
 
 void main() {
   final files = Directory('lib/ui')

@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
 import '../../game/state.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import 'clamp.dart';
 import 'icons.dart';
@@ -21,6 +23,7 @@ class TaskPips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Wrap(
       spacing: 4,
       runSpacing: 4,
@@ -33,8 +36,8 @@ class TaskPips extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: switch (t.status) {
-                TaskStatus.completed => Palette.won,
-                TaskStatus.failed => Palette.lost,
+                TaskStatus.completed => skin.won,
+                TaskStatus.failed => skin.lost,
                 TaskStatus.pending => const Color(0x33FFFFFF),
               },
               border: Border.all(
@@ -90,15 +93,8 @@ class TableCard extends StatelessWidget {
   /// Shows the deck back, e.g. while the card is being dealt.
   final bool faceDown;
 
-  static const textStyle = TextStyle(
-    fontFamily: bodyFont,
-    fontSize: 13.5,
-    height: 1.15,
-    fontWeight: FontWeight.w500,
-    color: Palette.ink,
-  );
-
-  /// Smallest size the task text may shrink to, relative to [textStyle].
+  /// Smallest size the task text may shrink to, relative to the skin's
+  /// task text.
   static const minTextScale = 12 / 13.5;
 
   // The same look as the task cards in on-screen games: points and
@@ -110,10 +106,10 @@ class TableCard extends StatelessWidget {
 
   /// Card size for [text] at [width]: the usual shape, but taller when the
   /// task needs it so its text never shrinks below [minTextScale].
-  static Size sizeFor(String text, double width, {bool sealed = false}) {
+  static Size sizeFor(Skin skin, String text, double width, {bool sealed = false}) {
     final textWidth = width - 2 * _pad;
     final painter = TextPainter(
-      text: TextSpan(text: text, style: textStyle),
+      text: TextSpan(text: text, style: skin.taskText),
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: textWidth / minTextScale);
     final needed = painter.height * minTextScale +
@@ -129,6 +125,7 @@ class TableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return TweenAnimationBuilder<double>(
       tween: Tween(end: faceDown || task.isCompleted ? math.pi : 0),
       duration: const Duration(milliseconds: 700),
@@ -146,21 +143,21 @@ class TableCard extends StatelessWidget {
                   transform: Matrix4.identity()..rotateY(math.pi),
                   // Only a done task shows the seal; anything else (e.g. a
                   // card turning over as it's dealt) shows the deck back.
-                  child: task.isCompleted && !faceDown ? _back() : _deckBack(),
+                  child: task.isCompleted && !faceDown ? _back(skin) : _deckBack(skin),
                 )
-              : _front(),
+              : _front(skin),
         );
       },
     );
   }
 
-  BoxDecoration _frame(Color color, {Color? border, double borderWidth = 1}) =>
+  BoxDecoration _frame(Skin skin, Color color, {Color? border, double borderWidth = 1}) =>
       BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: border ?? const Color(0xFFE6E0D4),
-          width: borderWidth + 2 * outlineWidth,
+          width: borderWidth + 2 * skin.outlineWidth,
         ),
         boxShadow: [
           BoxShadow(
@@ -173,18 +170,18 @@ class TableCard extends StatelessWidget {
 
   /// The dark outline, drawn over the outer edge of the frame so it's the
   /// same width all the way round.
-  static final _edge = BoxDecoration(
+  static BoxDecoration _edge(Skin skin) => BoxDecoration(
     borderRadius: BorderRadius.circular(8),
-    border: Border.all(color: outlineColour, width: outlineWidth),
+    border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
   );
 
   /// A dark line just inside the coloured border, so the colour has dark
   /// on both sides.
-  static Widget _innerEdged(Widget child) => CustomPaint(
-      foregroundPainter: const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
+  static Widget _innerEdged(Skin skin, Widget child) => CustomPaint(
+      foregroundPainter: InnerEdge(radius: 8, inset: 2.5 + skin.outlineWidth),
       child: child);
 
-  Widget _ownerBadge() {
+  Widget _ownerBadge(Skin skin) {
     final o = owner;
     if (o == null || ownerLabel == null) return const SizedBox.shrink();
     return Positioned(
@@ -204,7 +201,7 @@ class TableCard extends StatelessWidget {
     );
   }
 
-  Widget _front() {
+  Widget _front(Skin skin) {
     final indexSize = _indexSize(width);
     final iconSize = indexSize * 0.8;
     final failed = task.isFailed;
@@ -217,19 +214,19 @@ class TableCard extends StatelessWidget {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Text('$points',
                   style: TextStyle(
-                      fontFamily: displayFont,
+                      fontFamily: skin.displayFont,
                       fontWeight: FontWeight.w900,
                       fontSize: indexSize,
                       height: 1,
-                      color: Palette.ink)),
+                      color: skin.ink)),
               const SizedBox(width: 2),
-              CrownIcon(size: indexSize * 0.7, color: Palette.goldDeep),
+              CrownIcon(size: indexSize * 0.7, color: skin.goldDeep),
               // Conditions that don't fit in words: tap the card to read.
               if (task.kingCantTake) ...[
                 const SizedBox(width: 4),
                 Tooltip(
                   message: "The King can't take this task",
-                  child: Icon(Icons.block, size: iconSize, color: Palette.inkSoft),
+                  child: Icon(Icons.block, size: iconSize, color: skin.inkSoft),
                 ),
               ],
               if (task.noCourtCards) ...[
@@ -244,7 +241,7 @@ class TableCard extends StatelessWidget {
                 Tooltip(
                   message: task.notes.join(' '),
                   child: Icon(Icons.info_outline,
-                      size: iconSize, color: Palette.inkSoft),
+                      size: iconSize, color: skin.inkSoft),
                 ),
               ],
               if (task.seal != null) ...[
@@ -255,7 +252,7 @@ class TableCard extends StatelessWidget {
           ),
         ),
         if (failed)
-          Icon(Icons.cancel, size: iconSize + 2, color: Palette.lost)
+          Icon(Icons.cancel, size: iconSize + 2, color: skin.lost)
         else if (progress != null && !task.isCompleted)
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: width * 0.55),
@@ -265,16 +262,16 @@ class TableCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Palette.ink,
+                  color: skin.ink,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(progress!,
-                    style: const TextStyle(
-                        fontFamily: bodyFont,
+                    style: TextStyle(
+                        fontFamily: skin.bodyFont,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
-                        color: Palette.gold)),
+                        color: skin.gold)),
               ),
             ),
           ),
@@ -286,10 +283,10 @@ class TableCard extends StatelessWidget {
     final card = Container(
       width: width,
       height: _height,
-      foregroundDecoration: _edge,
-      decoration: _frame(
-        failed ? Palette.failedCard : Palette.card,
-        border: failed ? Palette.lost : owner?.color ?? Palette.card,
+      foregroundDecoration: _edge(skin),
+      decoration: _frame(skin, 
+        failed ? skin.failedCard : skin.card,
+        border: failed ? skin.lost : owner?.color ?? skin.card,
         borderWidth: 2.5,
       ),
       child: Stack(
@@ -312,7 +309,7 @@ class TableCard extends StatelessWidget {
                           width: c.maxWidth,
                           child: SuitText(text ?? task.description,
                               keywords: false,
-                              style: textStyle.copyWith(fontWeight: FontWeight.w600)),
+                              style: skin.taskText.copyWith(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
@@ -321,20 +318,20 @@ class TableCard extends StatelessWidget {
               ],
             ),
           ),
-          _ownerBadge(),
+          _ownerBadge(skin),
         ],
       ),
     );
-    return neutral ? card : _innerEdged(card);
+    return neutral ? card : _innerEdged(skin, card);
   }
 
   /// The plain deck back, as dealt.
-  Widget _deckBack() {
+  Widget _deckBack(Skin skin) {
     return Container(
       width: width,
       height: _height,
-      foregroundDecoration: _edge,
-      decoration: _frame(Palette.feltDeep, border: Palette.gold, borderWidth: 1.5),
+      foregroundDecoration: _edge(skin),
+      decoration: _frame(skin, skin.feltDeep, border: skin.gold, borderWidth: 1.5),
       child: Container(
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
@@ -349,14 +346,14 @@ class TableCard extends StatelessWidget {
 
   /// The back of a done task: the deck's design, a gold inlay and a seal
   /// with a check.
-  Widget _back() {
+  Widget _back(Skin skin) {
     final seal = clampD(width * 0.3, 22, 34);
-    return _innerEdged(Container(
+    return _innerEdged(skin, Container(
       width: width,
       height: _height,
-      foregroundDecoration: _edge,
-      decoration: _frame(Palette.feltDeep,
-          border: owner?.color ?? Palette.gold, borderWidth: 2.5),
+      foregroundDecoration: _edge(skin),
+      decoration: _frame(skin, skin.feltDeep,
+          border: owner?.color ?? skin.gold, borderWidth: 2.5),
       child: Stack(
         children: [
           Positioned.fill(
@@ -379,8 +376,8 @@ class TableCard extends StatelessWidget {
                   height: seal,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Palette.won,
-                    border: Border.all(color: Palette.gold, width: 2),
+                    color: skin.won,
+                    border: Border.all(color: skin.gold, width: 2),
                   ),
                   child: Icon(Icons.check_rounded,
                       size: seal * 0.7, color: Colors.white),
@@ -388,7 +385,7 @@ class TableCard extends StatelessWidget {
               ],
             ),
           ),
-          _ownerBadge(),
+          _ownerBadge(skin),
         ],
       ),
     ));
@@ -402,6 +399,7 @@ class DeckStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final h = TableCard.heightFor(width);
     return SizedBox(
       width: width + 12,
@@ -416,9 +414,9 @@ class DeckStack extends StatelessWidget {
                 width: width,
                 height: h,
                 decoration: BoxDecoration(
-                  color: Palette.feltDeep,
+                  color: skin.feltDeep,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Palette.gold, width: 1.5),
+                  border: Border.all(color: skin.gold, width: 1.5),
                   boxShadow: const [
                     BoxShadow(color: Colors.black38, blurRadius: 4),
                   ],

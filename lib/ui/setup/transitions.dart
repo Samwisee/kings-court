@@ -5,7 +5,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 
 /// The ways a setup page can turn to the next. [fade] is the one in use:
 /// the old page fades out, then the new one fades in. The others were
@@ -37,6 +37,7 @@ class PageTurn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return AnimatedBuilder(
       animation: animation,
       child: child,
@@ -84,10 +85,10 @@ class PageTurn extends StatelessWidget {
                     bottom: 0,
                     left: dir > 0 ? edge - 1 : box.maxWidth - edge - 1,
                     width: 2,
-                    child: const DecoratedBox(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Palette.gold,
-                        boxShadow: [BoxShadow(color: Color(0xAAD4A63A), blurRadius: 10)],
+                        color: skin.gold,
+                        boxShadow: const [BoxShadow(color: Color(0xAAD4A63A), blurRadius: 10)],
                       ),
                     ),
                   ),
@@ -112,9 +113,9 @@ class PageTurn extends StatelessWidget {
                                 begin: Alignment(-1.6 + 3.2 * t, -1),
                                 end: Alignment(-0.9 + 3.2 * t, 1),
                                 colors: [
-                                  Palette.gold.withValues(alpha: 0),
-                                  Palette.gold.withValues(alpha: 0.12 * glint),
-                                  Palette.gold.withValues(alpha: 0),
+                                  skin.gold.withValues(alpha: 0),
+                                  skin.gold.withValues(alpha: 0.12 * glint),
+                                  skin.gold.withValues(alpha: 0),
                                 ],
                               ),
                             ),

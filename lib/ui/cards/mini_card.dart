@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// A plain card face for the card tracker: just its number and suit (or
@@ -43,17 +43,18 @@ class MiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final court = card.isCourt;
-    const felt = Palette.feltDeep;
+    final felt = skin.feltDeep;
     final fade = faint ? 0.55 : 0.0;
     final ink = Color.lerp(
-        court ? Palette.gold : Palette.suitColour(card.suit), felt, fade)!;
+        court ? skin.gold : skin.suitColour(card.suit), felt, fade)!;
     final face = Color.lerp(
         court
             ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.5 : 0)!
             : dimmed
                 ? const Color(0xFFB4AFA4)
-                : Palette.card,
+                : skin.card,
         felt,
         fade)!;
     final r = width * 0.14;
@@ -70,7 +71,7 @@ class MiniCard extends StatelessWidget {
               TextSpan(
                   text: card.rankLabel,
                   style: TextStyle(
-                      fontFamily: court ? displayFont : bodyFont,
+                      fontFamily: court ? skin.displayFont : skin.bodyFont,
                       fontWeight: FontWeight.w900,
                       fontSize: width * 0.5)),
               if (!court) ...[
@@ -95,7 +96,7 @@ class MiniCard extends StatelessWidget {
       width: width,
       height: width * 1.3,
       decoration: BoxDecoration(
-        color: outlineColour,
+        color: skin.outlineColour,
         borderRadius: BorderRadius.circular(r),
       ),
       padding: EdgeInsets.all(edge != null ? 1.2 : 0),
@@ -105,7 +106,7 @@ class MiniCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(r - 1),
           border: Border.all(
               color: edge ??
-                  Color.lerp(court ? Palette.gold : const Color(0xFFD9D2C3),
+                  Color.lerp(court ? skin.gold : const Color(0xFFD9D2C3),
                       felt, fade)!,
               width: edgeW),
         ),
@@ -113,7 +114,7 @@ class MiniCard extends StatelessWidget {
           decoration: edge != null
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(math.max(0, r - edgeW)),
-                  border: Border.all(color: outlineColour),
+                  border: Border.all(color: skin.outlineColour),
                 )
               : const BoxDecoration(),
           child: Stack(children: [

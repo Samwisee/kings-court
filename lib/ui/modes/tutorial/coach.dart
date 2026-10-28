@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../engine/cards.dart';
 import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
-import '../../../skin/theme.dart';
+import '../../../skin/skin_scope.dart';
 import '../../widgets.dart';
 
 /// What the tutorial's coach says right now: nothing outside a tutorial
@@ -67,6 +67,7 @@ class Coach extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final line = this.line;
     final l = lessons[math.min(lesson, lessons.length - 1)];
     return AnimatedSize(
@@ -82,7 +83,7 @@ class Coach extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xF20A3622),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Palette.gold.withValues(alpha: 0.7), width: 1.4),
+                border: Border.all(color: skin.gold.withValues(alpha: 0.7), width: 1.4),
                 boxShadow: const [
                   BoxShadow(
                       color: Colors.black45, blurRadius: 10, offset: Offset(0, 3))
@@ -100,18 +101,18 @@ class Coach extends StatelessWidget {
                           'Lesson ${lesson + 1} of ${lessons.length} · ${l.title}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontFamily: displayFont,
+                          style: TextStyle(
+                              fontFamily: skin.displayFont,
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
-                              color: Palette.gold,
-                              shadows: feltShadow)),
+                              color: skin.gold,
+                              shadows: skin.feltShadow)),
                     ),
                     // Back to this lesson's reading, or on to the next.
                     TextButton(
                       onPressed: onBack,
                       style: TextButton.styleFrom(
-                          foregroundColor: Palette.gold,
+                          foregroundColor: skin.gold,
                           overlayColor: Colors.transparent,
                           visualDensity: VisualDensity.compact),
                       child: const Text('Back'),
@@ -119,7 +120,7 @@ class Coach extends StatelessWidget {
                     TextButton(
                       onPressed: onSkip,
                       style: TextButton.styleFrom(
-                          foregroundColor: Palette.gold,
+                          foregroundColor: skin.gold,
                           overlayColor: Colors.transparent,
                           visualDensity: VisualDensity.compact),
                       child: const Text('Skip'),
@@ -137,11 +138,11 @@ class Coach extends StatelessWidget {
                         constraints: const BoxConstraints(minHeight: 64),
                         alignment: Alignment.topLeft,
                         child: SuitText(line,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15.5,
                                 height: 1.35,
                                 color: Colors.white,
-                                shadows: feltShadow)),
+                                shadows: skin.feltShadow)),
                       ),
                     ),
                   ),

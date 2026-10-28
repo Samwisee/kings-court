@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../engine/round.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
 import 'card_view.dart';
@@ -16,7 +18,8 @@ import 'mini_card.dart';
 /// shrinking as it goes.
 class Flight {
   Flight(this.task, this.from, this.to, this.points, this.text,
-      {this.fromFont = 13, this.toFont = 12, this.toColor = Palette.inkSoft});
+      {required this.skin, this.fromFont = 13, this.toFont = 12, this.toColor});
+  final Skin skin;
   final RoundTask task;
   final Rect from;
   final Rect to;
@@ -24,7 +27,7 @@ class Flight {
   final String text;
   final double fromFont;
   final double toFont;
-  final Color toColor;
+  final Color? toColor;
 
   static const duration = Duration(milliseconds: 520);
 
@@ -59,8 +62,8 @@ class Flight {
           rect: rect.translate(0, -lift),
           child: IgnorePointer(
             child: Stack(fit: StackFit.expand, children: [
-              Opacity(opacity: 1 - t, child: _look(from, fromFont, Palette.inkSoft)),
-              Opacity(opacity: t, child: _look(to, toFont, toColor)),
+              Opacity(opacity: 1 - t, child: _look(from, fromFont, skin.inkSoft)),
+              Opacity(opacity: t, child: _look(to, toFont, toColor ?? skin.inkSoft)),
             ]),
           ),
         );
@@ -107,6 +110,7 @@ class TaskChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final done = task.isCompleted, failed = task.isFailed;
     // Along the top: points, conditions, and the tracker on the right. On
     // a very narrow chip the small condition icons give way (they're in
@@ -122,18 +126,18 @@ class TaskChip extends StatelessWidget {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
         Text('$points',
             style: TextStyle(
-                fontFamily: displayFont,
+                fontFamily: skin.displayFont,
                 fontWeight: FontWeight.w900,
                 fontSize: fontSize + 3,
                 height: 1,
-                color: Palette.ink)),
+                color: skin.ink)),
         const SizedBox(width: 2),
-        CrownIcon(size: fontSize * 0.85, color: Palette.goldDeep),
+        CrownIcon(size: fontSize * 0.85, color: skin.goldDeep),
         if (task.kingCantTake && !narrow) ...[
           const SizedBox(width: 4),
           Tooltip(
               message: "The King can't take this task",
-              child: Icon(Icons.block, size: fontSize + 1, color: Palette.inkSoft)),
+              child: Icon(Icons.block, size: fontSize + 1, color: skin.inkSoft)),
         ],
         // Always shown: the words leave "with no Court Cards" to it.
         if (task.noCourtCards) ...[
@@ -147,7 +151,7 @@ class TaskChip extends StatelessWidget {
           Tooltip(
               message: task.notes.join(' '),
               child: Icon(Icons.info_outline,
-                  size: fontSize + 1, color: Palette.inkSoft)),
+                  size: fontSize + 1, color: skin.inkSoft)),
         ],
         if (task.seal != null) ...[
           const SizedBox(width: 3),
@@ -157,7 +161,7 @@ class TaskChip extends StatelessWidget {
           ),
         ),
         if (failed)
-          Icon(Icons.cancel, size: fontSize + 3, color: Palette.lost)
+          Icon(Icons.cancel, size: fontSize + 3, color: skin.lost)
         else if (progress != null)
           // Tucked into the top right corner; shrinks to fit a narrow chip
           // rather than overflowing.
@@ -169,16 +173,16 @@ class TaskChip extends StatelessWidget {
               child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
             decoration: BoxDecoration(
-              color: Palette.ink,
+              color: skin.ink,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(progress!,
                 style: TextStyle(
-                    fontFamily: bodyFont,
+                    fontFamily: skin.bodyFont,
                     fontSize: fontSize - 1,
                     fontWeight: FontWeight.w800,
                     height: 1.1,
-                    color: Palette.gold)),
+                    color: skin.gold)),
           ),
             ),
           ),
@@ -187,30 +191,30 @@ class TaskChip extends StatelessWidget {
     // Nobody's yet: just the card in its dark outline (the band is there,
     // in the card's own colour, so nothing shifts once it's taken). A
     // player's colour gets dark lines on both sides.
-    final neutral = !failed && color == Palette.inkSoft;
+    final neutral = !failed && color == skin.inkSoft;
     final front = CustomPaint(
       foregroundPainter:
-          neutral ? null : const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
+          neutral ? null : InnerEdge(radius: 8, inset: 2.5 + skin.outlineWidth),
       child: AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: width,
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
       decoration: BoxDecoration(
-        color: failed ? Palette.failedCard : Palette.card,
+        color: failed ? skin.failedCard : skin.card,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: failed ? Palette.lost : neutral ? Palette.card : color,
-            width: 2.5 + 2 * outlineWidth),
+            color: failed ? skin.lost : neutral ? skin.card : color,
+            width: 2.5 + 2 * skin.outlineWidth),
         boxShadow: [
           const BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
           if (focused)
             BoxShadow(
-                color: Palette.gold.withValues(alpha: 0.9), blurRadius: 12, spreadRadius: 2),
+                color: skin.gold.withValues(alpha: 0.9), blurRadius: 12, spreadRadius: 2),
         ],
       ),
       foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: outlineColour, width: outlineWidth),
+        border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -225,7 +229,7 @@ class TaskChip extends StatelessWidget {
                   fontSize: fontSize,
                   height: 1.15,
                   fontWeight: FontWeight.w600,
-                  color: Palette.ink)),
+                  color: skin.ink)),
         ],
       ),
     ),
@@ -253,16 +257,16 @@ class TaskChip extends StatelessWidget {
             Opacity(opacity: 0, child: front),
             Positioned.fill(
               child: CustomPaint(
-              foregroundPainter: const InnerEdge(radius: 8, inset: 2.5 + outlineWidth),
+              foregroundPainter: InnerEdge(radius: 8, inset: 2.5 + skin.outlineWidth),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Palette.feltDeep,
+                  color: skin.feltDeep,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: color, width: 2.5 + 2 * outlineWidth),
+                  border: Border.all(color: color, width: 2.5 + 2 * skin.outlineWidth),
                 ),
                 foregroundDecoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: outlineColour, width: outlineWidth),
+                  border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
                 ),
                 alignment: Alignment.center,
                 child: Row(
@@ -271,10 +275,10 @@ class TaskChip extends StatelessWidget {
                     // Done: just what it was worth.
                     Text('$points',
                         style: TextStyle(
-                            fontFamily: displayFont,
+                            fontFamily: skin.displayFont,
                             fontWeight: FontWeight.w900,
                             fontSize: fontSize * 2.2,
-                            color: Palette.gold)),
+                            color: skin.gold)),
                     const SizedBox(width: 4),
                     CrownIcon(size: fontSize * 1.5),
                   ],
@@ -345,6 +349,7 @@ class _MoreAboutState extends State<MoreAbout> {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,7 +357,7 @@ class _MoreAboutState extends State<MoreAbout> {
         TextButton.icon(
           onPressed: () => setState(() => _open = !_open),
           style: TextButton.styleFrom(
-              foregroundColor: Palette.goldDeep,
+              foregroundColor: skin.goldDeep,
               padding: const EdgeInsets.symmetric(horizontal: 4)),
           icon: Icon(_open ? Icons.expand_less_rounded : Icons.expand_more_rounded,
               size: 20),
@@ -367,14 +372,14 @@ class _MoreAboutState extends State<MoreAbout> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SuitText(widget.explanation,
-                        style: const TextStyle(
-                            fontSize: 15, height: 1.4, color: Palette.ink)),
+                        style: TextStyle(
+                            fontSize: 15, height: 1.4, color: skin.ink)),
                     for (final n in widget.notes)
                       Padding(
                         padding: const EdgeInsets.only(top: 6),
                         child: SuitText(n,
-                            style: const TextStyle(
-                                fontSize: 14.5, height: 1.35, color: Palette.inkSoft)),
+                            style: TextStyle(
+                                fontSize: 14.5, height: 1.35, color: skin.inkSoft)),
                       ),
                   ],
                 ),

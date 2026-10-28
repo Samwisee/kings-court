@@ -5,7 +5,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/theme.dart';
+import '../../skin/skin.dart';
+import '../../skin/skin_scope.dart';
 
 /// A courtier's loyalty as a candle: the flame burns taller the more loyal
 /// they are and gutters out at nothing. It flickers when loyalty changes,
@@ -21,6 +22,7 @@ class LoyaltyCandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final candle = TweenAnimationBuilder<double>(
       // A new key restarts the flicker every time loyalty changes.
       key: ValueKey(loyalty),
@@ -28,7 +30,7 @@ class LoyaltyCandle extends StatelessWidget {
       duration: const Duration(milliseconds: 1400),
       builder: (context, t, _) => CustomPaint(
         size: Size.square(size),
-        painter: _CandlePainter(loyalty: loyalty, flicker: t),
+        painter: _CandlePainter(skin: context.skin, loyalty: loyalty, flicker: t),
       ),
     );
     if (!badge) return candle;
@@ -39,9 +41,9 @@ class LoyaltyCandle extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Palette.ink,
+          color: skin.ink,
           border: Border.all(
-              color: loyalty <= 0 ? Palette.lost : const Color(0x88D4A63A),
+              color: loyalty <= 0 ? skin.lost : const Color(0x88D4A63A),
               width: 1.5),
         ),
         child: candle,
@@ -64,7 +66,7 @@ class LoyaltyCandles extends StatelessWidget {
         for (int i = 0; i < 5; i++)
           CustomPaint(
             size: Size(size * 0.8, size),
-            painter: _CandlePainter(loyalty: i < loyalty ? 4 : 0, flicker: 1),
+            painter: _CandlePainter(skin: context.skin, loyalty: i < loyalty ? 4 : 0, flicker: 1),
           ),
       ],
     );
@@ -72,7 +74,8 @@ class LoyaltyCandles extends StatelessWidget {
 }
 
 class _CandlePainter extends CustomPainter {
-  _CandlePainter({required this.loyalty, required this.flicker});
+  _CandlePainter({required this.skin, required this.loyalty, required this.flicker});
+  final Skin skin;
   final int loyalty;
 
   /// 0 to 1 through the flicker after a change; 1 is steady.
@@ -88,10 +91,10 @@ class _CandlePainter extends CustomPainter {
     canvas.drawRRect(
         RRect.fromLTRBR(cx - bodyW / 2, bodyTop, cx + bodyW / 2, bodyBottom,
             Radius.circular(bodyW * 0.2)),
-        Paint()..color = Palette.card);
+        Paint()..color = skin.card);
     canvas.drawLine(Offset(cx, bodyTop), Offset(cx, bodyTop - h * 0.05),
         Paint()
-          ..color = Palette.inkSoft
+          ..color = skin.inkSoft
           ..strokeWidth = math.max(1.0, w * 0.03));
     if (loyalty <= 0) {
       // Snuffed: a curl of smoke.
@@ -112,7 +115,7 @@ class _CandlePainter extends CustomPainter {
     final flameH = h * (0.14 + 0.26 * level) * wobble;
     final flameW = w * (0.13 + 0.07 * level);
     final base = Offset(cx, bodyTop - h * 0.04);
-    final color = Color.lerp(const Color(0xFFB4541C), Palette.gold, level)!;
+    final color = Color.lerp(const Color(0xFFB4541C), skin.gold, level)!;
     // Glow, brighter while flickering.
     canvas.drawCircle(
         base.translate(0, -flameH * 0.45),
@@ -134,5 +137,5 @@ class _CandlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CandlePainter old) =>
-      old.loyalty != loyalty || old.flicker != flicker;
+      old.loyalty != loyalty || old.flicker != flicker || old.skin != skin;
 }

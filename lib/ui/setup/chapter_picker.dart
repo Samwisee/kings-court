@@ -4,7 +4,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../modes/chronicle/chapters.dart';
-import '../../skin/theme.dart';
+import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
 /// The rules, available from the welcome screen and during a game.
@@ -22,13 +22,14 @@ class ChapterPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     final c = chronicle[chapter];
     final crowns = progress.crowns[chapter] ?? 0;
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Palette.feltLine),
+        border: Border.all(color: skin.feltLine),
       ),
       child: Row(
         children: [
@@ -41,15 +42,15 @@ class ChapterPicker extends StatelessWidget {
             child: Column(
               children: [
                 Text('Chapter ${chapter + 1}',
-                    style: const TextStyle(
-                        fontFamily: displayFont,
+                    style: TextStyle(
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
-                        color: Palette.gold)),
+                        color: skin.gold)),
                 Text(c.title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontFamily: displayFont,
+                    style: TextStyle(
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 20)),
                 const SizedBox(height: 4),
@@ -90,6 +91,7 @@ class CrownRating extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -98,7 +100,7 @@ class CrownRating extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: CrownIcon(
                 size: size,
-                color: i < crowns ? Palette.gold : const Color(0x44FFFFFF)),
+                color: i < crowns ? skin.gold : const Color(0x44FFFFFF)),
           ),
       ],
     );
@@ -109,27 +111,28 @@ class CrownRating extends StatelessWidget {
 /// Returns the chapter the players chose to begin, if any.
 Future<int?> showChronicleDialog(
     BuildContext context, ChronicleProgress progress) {
+  final skin = context.skin;
   return showDialog<int>(
     context: context,
     builder: (context) => AlertDialog(
       title: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text('The Chronicle',
                 style: TextStyle(
-                    fontFamily: displayFont,
+                    fontFamily: skin.displayFont,
                     fontWeight: FontWeight.w900,
                     fontSize: 26,
-                    color: Palette.gold)),
+                    color: skin.gold)),
           ),
           const CrownIcon(),
           const SizedBox(width: 4),
           Text('${progress.totalCrowns}/${chronicle.length * 3}',
-              style: const TextStyle(
-                  fontFamily: displayFont,
+              style: TextStyle(
+                  fontFamily: skin.displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
-                  color: Palette.gold)),
+                  color: skin.gold)),
         ],
       ),
       content: SizedBox(
@@ -138,7 +141,7 @@ Future<int?> showChronicleDialog(
         child: ListView.separated(
           itemCount: chronicle.length,
           separatorBuilder: (_, __) =>
-              const Divider(height: 1, color: Palette.feltLine),
+              Divider(height: 1, color: skin.feltLine),
           itemBuilder: (context, i) {
             final c = chronicle[i];
             final unlocked = progress.isUnlocked(i);
@@ -150,14 +153,14 @@ Future<int?> showChronicleDialog(
                 child: Text('${i + 1}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontFamily: displayFont,
+                        fontFamily: skin.displayFont,
                         fontWeight: FontWeight.w900,
                         fontSize: 22,
-                        color: unlocked ? Palette.gold : Colors.white24)),
+                        color: unlocked ? skin.gold : Colors.white24)),
               ),
               title: Text(c.title,
-                  style: const TextStyle(
-                      fontFamily: displayFont,
+                  style: TextStyle(
+                      fontFamily: skin.displayFont,
                       fontWeight: FontWeight.w700,
                       fontSize: 16)),
               subtitle: Text(chapterSummary(c),
