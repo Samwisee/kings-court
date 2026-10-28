@@ -1320,8 +1320,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pump();
-      for (int i = 0; i < 300 && find.text('Skip').evaluate().isEmpty; i++) {
+      for (int i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 30));
+        for (final go in ['So it begins', 'Got it', 'So be it']) {
+          if (find.text(go).hitTestable().evaluate().isNotEmpty) {
+            await tester.tap(find.text(go).hitTestable().first);
+          }
+        }
       }
       expect(find.text('Skip'), findsOneWidget);
       // While Skip shows, the show-a-card button beside it is its X.
