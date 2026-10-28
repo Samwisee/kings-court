@@ -286,7 +286,7 @@ class TableCard extends StatelessWidget {
       height: _height,
       foregroundDecoration: _edge,
       decoration: _frame(
-        failed ? const Color(0xFFFBE4E1) : Palette.card,
+        failed ? Palette.failedCard : Palette.card,
         border: failed ? Palette.lost : owner?.color ?? Palette.card,
         borderWidth: 2.5,
       ),
@@ -498,7 +498,7 @@ class DecreeScroll extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 14),
         constraints: const BoxConstraints(maxWidth: 360),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6EBD2), // parchment
+          color: Palette.parchment, // parchment
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: Palette.goldDeep, width: 2),
           boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],

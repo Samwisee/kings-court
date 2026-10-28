@@ -894,7 +894,7 @@ class _CountChip extends StatelessWidget {
               gradient: selected
                   ? const RadialGradient(
                       center: Alignment(-0.3, -0.4),
-                      colors: [Color(0xFFFFF1B8), Palette.gold])
+                      colors: [Palette.goldPale, Palette.gold])
                   : null,
             ),
             child: Text('$n',

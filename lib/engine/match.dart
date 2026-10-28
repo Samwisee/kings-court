@@ -49,6 +49,7 @@ sealed class MatchAction {
         'pick' => PickTask(j['seat'] as int, j['task'] as int),
         'announce' =>
           Announce(j['seat'] as int, j['task'] as int, j['x'] as int),
+        'show' => ShowCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
         _ => PlayCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
       };
 }
@@ -75,6 +76,16 @@ class PlayCard extends MatchAction {
   @override
   Map<String, dynamic> toJson() =>
       {'type': 'play', 'seat': seat, 'card': card.id};
+}
+
+/// Showing a card: a player's highest, lowest or only card of a suit,
+/// face up in their hand until played.
+class ShowCard extends MatchAction {
+  const ShowCard(super.seat, this.card);
+  final PlayingCard card;
+  @override
+  Map<String, dynamic> toJson() =>
+      {'type': 'show', 'seat': seat, 'card': card.id};
 }
 
 class MatchState {
@@ -282,6 +293,8 @@ class MatchState {
         if (phase != Phase.announcing) return 'Nothing to announce';
         if (tasks[task].owner != seat) return 'Not your task';
         if (x < 0 || x > totalTricks) return 'Not a possible number';
+      case ShowCard(:final seat, :final card):
+        if (revealFor(seat, card) == null) return 'That card can’t be shown';
       case PlayCard(:final seat, :final card):
         if (phase != Phase.playing) return 'Not playing yet';
         if (seat != turn) return 'Not your turn';
@@ -321,6 +334,10 @@ class MatchState {
         if (!tasks.any((t) => needsX(t.description) && t.x == null)) {
           phase = Phase.playing;
         }
+        return null;
+      case ShowCard(:final seat, :final card):
+        revealHint[seat] = revealFor(seat, card)!;
+        revealed[seat] = card;
         return null;
       case PlayCard(:final seat, :final card):
         hands[seat].remove(card);

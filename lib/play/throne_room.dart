@@ -436,7 +436,7 @@ class _HeraldScroll extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF6EBD2),
+            color: Palette.parchment,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: Palette.goldDeep, width: 2),
             boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 14)],
@@ -612,7 +612,7 @@ class _ThronePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFFF9E08C), Color(0xFFD4A63A), Color(0xFF9C7420)],
+        colors: [Palette.goldLight, Palette.gold, Color(0xFF9C7420)],
       ).createShader(Offset.zero & size);
     // Back, with a pointed crest.
     final back = Path()

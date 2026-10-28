@@ -28,7 +28,7 @@ class _HouseBanner extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: antagonist
-              ? [const Color(0xFF5A0C18), const Color(0xFF14060A)]
+              ? [const Color(0xFF5A0C18), Palette.traitorDeep]
               : [color, deep],
         ),
       ),
@@ -63,7 +63,7 @@ class _HouseBanner extends StatelessWidget {
                   ShapedToken(
                       shape: courtier.shape,
                       size: 52,
-                      color: antagonist ? const Color(0xFF3A0610) : color,
+                      color: antagonist ? Palette.traitor : color,
                       ring: Palette.gold,
                       ringWidth: 2.5),
                 ]),

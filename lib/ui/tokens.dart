@@ -89,7 +89,7 @@ class SeatToken extends StatelessWidget {
     final ringColor = antagonist ? Palette.lost : ring;
     final ringWidth = isKing || highlighted || picking || antagonist ? 3.0 : 2.0;
     final fill = antagonist
-        ? Color.lerp(player.color, const Color(0xFF3A0610), 0.55)!
+        ? Color.lerp(player.color, Palette.traitor, 0.55)!
         : player.color;
     final Widget token = shape == null
         ? AnimatedContainer(
@@ -263,7 +263,7 @@ class _PulseRingState extends State<PulseRing>
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: AnimatedBuilder(
+      child: RepaintBoundary(child: AnimatedBuilder(
         animation: _c,
         builder: (context, _) {
           if (_done >= _pulses) return const SizedBox.shrink();
@@ -283,7 +283,7 @@ class _PulseRingState extends State<PulseRing>
             ),
           );
         },
-      ),
+      )),
     );
   }
 }
@@ -704,7 +704,8 @@ class _CharacterTokenState extends State<CharacterToken>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
+    // Its own layer: a breathing token repaints alone, never the table.
+    return RepaintBoundary(child: AnimatedBuilder(
       animation: Listenable.merge([_once, _breath]),
       child: widget.child,
       builder: (context, child) {
@@ -868,7 +869,7 @@ class _CharacterTokenState extends State<CharacterToken>
           ],
         );
       },
-    );
+    ));
   }
 }
 
@@ -942,7 +943,7 @@ class _SpeechBubbleState extends State<SpeechBubble>
                   : const EdgeInsets.only(left: 8),
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           decoration: BoxDecoration(
-            color: const Color(0xFFFBF5E6),
+            color: Palette.ivory,
             borderRadius: BorderRadius.circular(14),
             boxShadow: const [
               BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 2)),
@@ -985,7 +986,7 @@ class _BubbleTail extends CustomPainter {
             ..lineTo(x + 9, size.height - 10)
             ..lineTo(x, size.height)
             ..close(),
-          Paint()..color = const Color(0xFFFBF5E6));
+          Paint()..color = Palette.ivory);
       return;
     }
     if (above) {
@@ -996,7 +997,7 @@ class _BubbleTail extends CustomPainter {
             ..lineTo(x + 9, 10)
             ..lineTo(x, 0)
             ..close(),
-          Paint()..color = const Color(0xFFFBF5E6));
+          Paint()..color = Palette.ivory);
       return;
     }
     final y = math.min(22.0, size.height / 2);
@@ -1005,7 +1006,7 @@ class _BubbleTail extends CustomPainter {
       ..lineTo(10, y - 7)
       ..lineTo(10, y + 7)
       ..close();
-    canvas.drawPath(path, Paint()..color = const Color(0xFFFBF5E6));
+    canvas.drawPath(path, Paint()..color = Palette.ivory);
   }
 
   @override

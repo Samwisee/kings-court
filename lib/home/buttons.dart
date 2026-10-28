@@ -45,8 +45,11 @@ class _GlowButtonState extends State<_GlowButton>
     super.dispose();
   }
 
+  // Its own layer: the glow pulses forever, and only it repaints.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => RepaintBoundary(child: _build(context));
+
+  Widget _build(BuildContext context) {
     final shape = Theme.of(context).filledButtonTheme.style?.shape?.resolve({}) ??
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
     return Padding(
@@ -175,9 +178,9 @@ class _KeyCap extends StatelessWidget {
           gradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFFF9E08C), Palette.gold]),
+              colors: [Palette.goldLight, Palette.gold]),
           borderRadius: BorderRadius.circular(size * 0.22),
-          border: Border.all(color: const Color(0xFF7A5A12), width: 1),
+          border: Border.all(color: Palette.goldRim, width: 1),
           boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 1.5))],
         ),
         child: Text(label,

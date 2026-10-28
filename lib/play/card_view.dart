@@ -46,15 +46,18 @@ class PlayingCardView extends StatelessWidget {
     [Color(0xFF5A2F87), Color(0xFF241238)],
     [Color(0xFF13734A), Color(0xFF062A1B)],
     [Color(0xFF2849A8), Color(0xFF0B1A45)],
-    [Color(0xFF9A1E31), Color(0xFF3A0610)],
+    [Color(0xFF9A1E31), Palette.traitor],
   ];
 
   bool get _isKing => card == PlayingCard.king;
 
   Color get _inkColour => Palette.suitColour(card.suit);
 
+  // Its own layer: the emblems are costly to draw, so a card is drawn once and kept while things move around it.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => RepaintBoundary(child: _build(context));
+
+  Widget _build(BuildContext context) {
     final h = heightFor(width);
     final outer = width * 0.1;
     final r = BorderRadius.circular(outer - outlineWidth);
@@ -225,8 +228,8 @@ class PlayingCardView extends StatelessWidget {
   Widget _face() => SuitIcon(card.suit, size: width * 0.44, color: _inkColour);
 }
 
-const _goldLight = Color(0xFFF9E08C);
-const _goldMid = Color(0xFFD4A63A);
+const _goldLight = Palette.goldLight;
+const _goldMid = Palette.gold;
 
 /// The printed card is 63 mm wide; the app's card is [width] wide. Sizes
 /// below are the printed deck's, in millimetres, scaled to the card.

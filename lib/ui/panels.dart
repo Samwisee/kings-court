@@ -40,8 +40,8 @@ class OrnateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final edge = this.edge ?? (court ? Palette.gold : won ? const Color(0xFF6E4E0E) : Palette.lost);
-    final ink = won && !court ? const Color(0xFF6E4E0E) : Palette.gold;
+    final edge = this.edge ?? (court ? Palette.gold : won ? Palette.goldInk : Palette.lost);
+    final ink = won && !court ? Palette.goldInk : Palette.gold;
     return Container(
       margin: margin,
       constraints: BoxConstraints(maxWidth: maxWidth),
@@ -52,7 +52,7 @@ class OrnateCard extends StatelessWidget {
           colors: court
               ? const [Color(0xFF15583A), Color(0xFF0C3A25), Color(0xFF07291A)]
               : won
-              ? const [Color(0xFFF9E08C), Color(0xFFD4A63A), Color(0xFFB98A24)]
+              ? const [Palette.goldLight, Palette.gold, Color(0xFFB98A24)]
               : const [Color(0xFF3A1218), Color(0xFF1C0A0E), Color(0xFF12080A)],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -107,9 +107,9 @@ class OrnateCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: court
-                        ? const [Color(0xFF1E6B47), Color(0xFF0A3622)]
+                        ? const [Color(0xFF1E6B47), Palette.feltDeep]
                         : won
-                        ? const [Color(0xFFFFF1B8), Color(0xFFD4A63A)]
+                        ? const [Palette.goldPale, Palette.gold]
                         : const [Color(0xFF5A1A22), Color(0xFF2A0E12)],
                   ),
                   border: Border.all(color: edge, width: 2.5),
@@ -297,7 +297,7 @@ class GoldPip extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
                 center: const Alignment(-0.3, -0.4),
-                colors: [const Color(0xFFFFF1B8), gold]),
+                colors: [Palette.goldPale, gold]),
           ),
         ),
       ),
@@ -397,8 +397,11 @@ class _GlitterState extends State<_Glitter> with SingleTickerProviderStateMixin 
     super.dispose();
   }
 
+  // Its own layer: the sheen sweeps forever, and only it repaints.
   @override
-  Widget build(BuildContext context) => _still
+  Widget build(BuildContext context) => RepaintBoundary(child: _build(context));
+
+  Widget _build(BuildContext context) => _still
       ? const SizedBox.shrink()
       : AnimatedBuilder(
           animation: _c,

@@ -27,6 +27,7 @@ import 'engine/contest.dart';
 import 'engine/inference.dart';
 import 'engine/match.dart';
 import 'engine/rules.dart';
+import 'net/table_link.dart';
 import 'play/card_view.dart';
 import 'play/contest_table.dart';
 import 'play/throne_room.dart';
@@ -239,6 +240,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    _moves = _link.moves.listen(_onMove);
     // Create the animation controllers now, so dispose never makes one.
     for (final c in [_deal, _crown, _play, _outcome, _outcomeHold, _coronation]) {
       c.value;
@@ -613,6 +615,8 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    _moves.cancel();
+    _link.dispose();
     HardwareKeyboard.instance.removeHandler(_onKey);
     _toastTimer?.cancel();
     _trackerTimer?.cancel();
@@ -1192,9 +1196,38 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  /// Plays a card. When it finishes a trick, the trick stays a moment,
-  /// sweeps to the winner, and then the tasks are judged.
-  void _playCard(int seat, PlayingCard card) {
+  // ------------------------------------------------------------ moves
+  //
+  // Playing and showing cards go through the table link (net/table_link
+  // dart): the move is sent, and played when it comes back. On one device
+  // it comes straight back; online, it would come back from the server, in
+  // the same order on every device.
+
+  /// Where moves go: this device, for now.
+  final TableLink _link = LocalLink();
+  late final StreamSubscription<MatchAction> _moves;
+
+  /// A move coming back from the link: play it on the table.
+  void _onMove(MatchAction move) {
+    if (!mounted) return;
+    switch (move) {
+      case PlayCard(:final seat, :final card):
+        _playCardNow(seat, card);
+      case ShowCard(:final seat, :final card):
+        _revealNow(seat, card);
+      case PickTask() || Announce():
+        // Tasks are still taken through the game state directly; they'll
+        // move here with online play.
+        break;
+    }
+  }
+
+  /// Plays a card: sends the move, which plays it when it comes back.
+  void _playCard(int seat, PlayingCard card) => _link.send(PlayCard(seat, card));
+
+  /// Plays a card on the table. When it finishes a trick, the trick stays
+  /// a moment, sweeps to the winner, and then the tasks are judged.
+  void _playCardNow(int seat, PlayingCard card) {
     final trick = _cards.playCard(seat, card);
     if (trick == null) {
       setState(() {});
@@ -2889,7 +2922,13 @@ class _HomePageState extends State<HomePage>
 
 
   /// Shows [card] for [seat]: it stays in their hand, face up for all.
+  /// Shows a card: sends the move, which shows it when it comes back.
   void _reveal(int seat, PlayingCard card) {
+    if (_cards.revealFor(seat, card) == null) return;
+    _link.send(ShowCard(seat, card));
+  }
+
+  void _revealNow(int seat, PlayingCard card) {
     final hint = _cards.revealFor(seat, card);
     if (hint == null) return;
     setState(() {
@@ -3885,10 +3924,10 @@ class _HomePageState extends State<HomePage>
                         height: 5,
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(colors: [
-                            Color(0xFFA57C1B),
-                            Color(0xFFF9E08C),
-                            Color(0xFFD4A63A),
-                            Color(0xFFA57C1B),
+                            Palette.goldDeep,
+                            Palette.goldLight,
+                            Palette.gold,
+                            Palette.goldDeep,
                           ]),
                           border: Border(
                               bottom: BorderSide(color: outlineColour, width: 1)),
@@ -4113,7 +4152,7 @@ class _HomePageState extends State<HomePage>
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A0810),
+        backgroundColor: Palette.traitorPanel,
         surfaceTintColor: Colors.transparent,
         title: Text('${game.courtiers[seat].title} schemes',
             style: const TextStyle(
@@ -4221,7 +4260,7 @@ class _HomePageState extends State<HomePage>
       builder: (context) => RotatedBox(
         quarterTurns: quarterTurns,
         child: AlertDialog(
-        backgroundColor: task.isFailed ? const Color(0xFFFBE4E1) : DialogStyle.paper,
+        backgroundColor: task.isFailed ? Palette.failedCard : DialogStyle.paper,
         // Whose it is shows as on the table: their colour, edged in dark.
         shape: HighVisBorder(task.isFailed ? Palette.lost : owner?.color),
         scrollable: true,
@@ -4558,7 +4597,7 @@ class _HomePageState extends State<HomePage>
                           fontFamily: displayFont,
                           fontWeight: FontWeight.w700,
                           fontSize: 24,
-                          color: Color(0xFFF3E7C6))),
+                          color: Palette.goldOnFelt)),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -5102,7 +5141,7 @@ class _HomePageState extends State<HomePage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2A0810),
+                        color: Palette.traitorPanel,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Palette.lost),
                       ),
@@ -5496,7 +5535,7 @@ class _HomePageState extends State<HomePage>
           padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
           constraints: const BoxConstraints(maxWidth: 380),
           decoration: BoxDecoration(
-            color: const Color(0xFFF6EBD2),
+            color: Palette.parchment,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: Palette.goldDeep, width: 2),
             boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
@@ -6370,7 +6409,7 @@ class _HomePageState extends State<HomePage>
     final body = TextStyle(fontSize: 17, height: 1.4, color: _ink);
     final pleas = deciding ? _pleasFor(d) : const <Plea>[];
     return _parchmentCard(
-      color: const Color(0xFFF6EBD2),
+      color: Palette.parchment,
       border: Palette.goldDeep,
       children: [
         if (!_onFelt) ...[
@@ -6933,7 +6972,7 @@ class _HomePageState extends State<HomePage>
     final toughness = game.kingToughness;
     final last = game.fallenKings + 1 >= GameState.maxFallenKings;
     return _parchmentCard(
-      color: const Color(0xFF14060A),
+      color: Palette.traitorDeep,
       border: Palette.lost,
       children: [
         // The crown topples.
@@ -7002,7 +7041,7 @@ class _HomePageState extends State<HomePage>
     ];
     final fg = golden && !_onFelt ? Palette.ink : Colors.white;
     return _parchmentCard(
-      color: golden ? Palette.gold : const Color(0xFF14060A),
+      color: golden ? Palette.gold : Palette.traitorDeep,
       border: golden ? null : Palette.lost,
       children: [
         TweenAnimationBuilder<double>(
@@ -7122,7 +7161,7 @@ class _HomePageState extends State<HomePage>
                     fontSize: 32,
                     color: fg)),
             OrnateDivider(
-                color: won ? const Color(0xFF6E4E0E) : Palette.gold),
+                color: won ? Palette.goldInk : Palette.gold),
             Text(
               won
                   ? 'Every task is done. The court rejoices.'

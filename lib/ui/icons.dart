@@ -103,7 +103,7 @@ class _CardFanPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = s * 0.07
       ..color = color;
-    final back = Paint()..color = const Color(0xFF0A3622);
+    final back = Paint()..color = Palette.feltDeep;
     for (final (i, a) in [(-1, -0.42), (0, 0.0), (1, 0.42)].map((e) => (e.$1, e.$2))) {
       canvas.save();
       canvas.translate(s / 2, s * 0.88);

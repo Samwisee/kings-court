@@ -176,7 +176,7 @@ class _OrnateMenuState extends State<_OrnateMenu> {
                                         fontWeight: FontWeight.w700,
                                         fontSize: 16,
                                         letterSpacing: 0.3,
-                                        color: Color(0xFFF3E7C6))),
+                                        color: Palette.goldOnFelt)),
                               ),
                               if (e.on != null) ...[
                                 const SizedBox(width: 10),

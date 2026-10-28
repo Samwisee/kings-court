@@ -190,7 +190,7 @@ class _TaskChip extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
       decoration: BoxDecoration(
-        color: failed ? const Color(0xFFFBE4E1) : Palette.card,
+        color: failed ? Palette.failedCard : Palette.card,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
             color: failed ? Palette.lost : neutral ? Palette.card : color,

@@ -37,14 +37,41 @@ class Palette {
   /// The colour a suit is printed in on the felt or another dark
   /// background, where [text] is the colour of the words around it.
   static Color suitColourOnDark(Suit s, Color text) => switch (s) {
-        Suit.hearts => const Color(0xFFFF8A94),
+        Suit.hearts => redOnDark,
         Suit.diamonds =>
-          fourColourSuits ? const Color(0xFF8DBBFF) : const Color(0xFFFF8A94),
+          fourColourSuits ? const Color(0xFF8DBBFF) : redOnDark,
         Suit.clubs => fourColourSuits ? const Color(0xFF7FD99A) : text,
         Suit.spades || Suit.court => text,
       };
   static const gold = Color(0xFFD4A63A);
   static const goldDeep = Color(0xFFA57C1B);
+
+  /// The gold's highlights: gilt gradients run [goldLight] to [gold].
+  static const goldLight = Color(0xFFF9E08C);
+  static const goldPale = Color(0xFFFFF1B8);
+
+  /// The dark rim round a gold button, and gold ink on a gold ground.
+  static const goldRim = Color(0xFF7A5A12);
+  static const goldInk = Color(0xFF6E4E0E);
+
+  /// Old paper (parchment notes, scrolls) and soft card stock.
+  static const parchment = Color(0xFFF6EBD2);
+  static const ivory = Color(0xFFFBF5E6);
+
+  /// Pale gold words on the dark felt (the menu).
+  static const goldOnFelt = Color(0xFFF3E7C6);
+
+  /// A failed task's card: blush pink, edged in [lost].
+  static const failedCard = Color(0xFFFBE4E1);
+
+  /// Hearts (and four-colour diamonds) on the felt, where card red is too
+  /// dark to read.
+  static const redOnDark = Color(0xFFFF8A94);
+
+  /// A traitor's colours: deep blood red to near black.
+  static const traitor = Color(0xFF3A0610);
+  static const traitorDeep = Color(0xFF14060A);
+  static const traitorPanel = Color(0xFF2A0810);
   static const won = Color(0xFF3FA66A);
   static const lost = Color(0xFFD9483B);
 
