@@ -93,6 +93,7 @@ state is a library of its own under `lib/ui/`:
 | `ui/setup/setup_panel.dart` | New game: how, which way to play, players, names, last choices. |
 | `ui/setup/chapter_picker.dart` | The chapter picker and crown ratings. |
 | `ui/round_table/geometry.dart` | Where seats, cards and dealt tasks sit on the table. |
+| `ui/round_table/round_table.dart` | The round table: seats, the King prompt, the dealt cards and the drag (`RoundTableController` holds where everything lies). |
 | `ui/tracker/card_tracker.dart` | The card tracker. |
 | `ui/cards/task_chip.dart` | Task cards on the on-screen table, flights, close-up parts. |
 | `ui/cards/mini_card.dart` | Small cards (tracker, close-ups, shown cards). |

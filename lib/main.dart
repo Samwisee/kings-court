@@ -57,6 +57,7 @@ import 'ui/overlays/king_prompt.dart';
 import 'ui/overlays/outcome_card.dart';
 import 'ui/overlays/play_flourish.dart';
 import 'ui/round_table/geometry.dart';
+import 'ui/round_table/round_table.dart';
 import 'ui/setup/saves.dart';
 import 'ui/setup/setup_panel.dart';
 import 'ui/tracker/card_tracker.dart';
@@ -125,28 +126,9 @@ class HomePageState extends State<HomePage>
   int _setupCount = 4;
   int _setupTarget = 5;
 
-  /// Card centres as fractions of the table size, so they survive rotation
-  /// and window resizes.
-  final Map<RoundTask, Offset> _pos = {};
-  final Map<RoundTask, double> _tilt = {};
-
-  /// Draw order: the last card is on top.
-  List<RoundTask> _order = [];
-
-  RoundTask? _dragging;
-  int? _hoverSeat;
-
-  /// While someone holds the felt: the seat nearest their finger. Every
-  /// card turns to face that side of the table.
-  int? _readerSeat;
-  int _dealtFor = -1;
-  Size _tableSize = Size.zero;
-  double _cardWidth = 120;
-
-  late final AnimationController _deal = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2200),
-  );
+  /// The round table's layout: where every dealt task lies, the drag, the
+  /// deal.
+  late final _table = RoundTableController(vsync: this);
 
   /// The crown's flight to the new King's seat.
   late final AnimationController _crown = AnimationController(
@@ -196,9 +178,6 @@ class HomePageState extends State<HomePage>
   /// What the round just finished meant to its mode (crowns earned, the
   /// next target), and how to take that back if its last mark is undone.
   RoundEffects? _effects;
-
-
-  final _tableKey = GlobalKey();
 
   /// Games saved from last time, one for each way to play, newest first.
   /// Play on the welcome screen offers them.
@@ -255,18 +234,18 @@ class HomePageState extends State<HomePage>
     _moves = _link.moves.listen((m) => _onAction(m.action));
     // What a save holds beside the game: the real table's layout.
     _ctrl.saveExtras = () => {
-          'cardWidth': _cardWidth,
-          'dealt': _dealtFor == game.dealId,
+          'cardWidth': _table.cardWidth,
+          'dealt': _table.dealtFor == game.dealId,
           'pos': [
             for (final t in game.tasks)
-              if (_pos[t] != null) [_pos[t]!.dx, _pos[t]!.dy] else null,
+              if (_table.pos[t] != null) [_table.pos[t]!.dx, _table.pos[t]!.dy] else null,
           ],
-          'tilt': [for (final t in game.tasks) _tilt[t] ?? 0.0],
+          'tilt': [for (final t in game.tasks) _table.tilt[t] ?? 0.0],
         };
     _ctrl.knownBest = () => _bestStreak;
     WidgetsBinding.instance.addObserver(this);
     // Create the animation controllers now, so dispose never makes one.
-    for (final c in [_deal, _crown, _play, _outcome, _outcomeHold, _coronation]) {
+    for (final c in [_table.deal, _crown, _play, _outcome, _outcomeHold, _coronation]) {
       c.value;
     }
     _loadSaved();
@@ -686,7 +665,7 @@ class HomePageState extends State<HomePage>
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
-    if (_dragging == null && _handDragCard == null && _inGame) _save();
+    if (_table.dragging == null && _handDragCard == null && _inGame) _save();
     if (_digital && _inGame) {
       _syncCards();
       _launchTaskFlights();
@@ -752,15 +731,15 @@ class HomePageState extends State<HomePage>
           pos.length == g.tasks.length &&
           pos.every((p) => p != null);
       if (restored) {
-        _cardWidth = (data['cardWidth'] as num).toDouble();
+        _table.cardWidth = (data['cardWidth'] as num).toDouble();
         for (var i = 0; i < g.tasks.length; i++) {
           final p = pos[i] as List;
-          _pos[g.tasks[i]] = Offset(
+          _table.pos[g.tasks[i]] = Offset(
               (p[0] as num).toDouble(), (p[1] as num).toDouble());
-          _tilt[g.tasks[i]] = (tilt[i] as num).toDouble();
+          _table.tilt[g.tasks[i]] = (tilt[i] as num).toDouble();
         }
-        _order = List.of(g.tasks);
-        _dealtFor = g.dealId; // already on the table: no re-deal
+        _table.order = List.of(g.tasks);
+        _table.dealtFor = g.dealId; // already on the table: no re-deal
       }
       _saves = [for (final s in _saves) if (s.game.mode != g.mode) s];
     });
@@ -781,11 +760,9 @@ class HomePageState extends State<HomePage>
     HardwareKeyboard.instance.removeHandler(_onKey);
     _toastTimer?.cancel();
     _trackerTimer?.cancel();
-    _deal.dispose();
+    _table.dispose();
     _handSnap.dispose();
     _handDragV.dispose();
-    _taskDragTick.dispose();
-    _stillTick.dispose();
     _crown.dispose();
     _coronation.dispose();
     _outcomeHold.dispose();
@@ -818,22 +795,18 @@ class HomePageState extends State<HomePage>
       !_choosingKing &&
       _round.decree != null &&
       _decreeReadFor != game.dealId &&
-      _dealtFor != game.dealId;
+      _table.dealtFor != game.dealId;
 
   bool get _readyToDeal =>
-      !_choosingKing && !_decreePending && _dealtFor != game.dealId;
+      !_choosingKing && !_decreePending && _table.dealtFor != game.dealId;
 
   int _points(RoundTask t) => t.points(game.players.length);
 
-  TableGeometry get _geo => TableGeometry(
-      _tableSize, game.players.length, (t) => t.boardText(game.players.length),
-      fixedCardWidth: _dealtFor == game.dealId ? _cardWidth : null,
-      upright: _upright || game.digital);
-
-  Offset _toPx(Offset f) =>
-      Offset(f.dx * _tableSize.width, f.dy * _tableSize.height);
-  Offset _toFrac(Offset p) =>
-      Offset(p.dx / _tableSize.width, p.dy / _tableSize.height);
+  TableGeometry get _geo => _table.geometry(
+      players: game.players.length,
+      textOf: (t) => t.boardText(game.players.length),
+      upright: _upright || game.digital,
+      dealId: game.dealId);
 
   // --------------------------------------------------------- on-screen cards
   //
@@ -875,7 +848,7 @@ class HomePageState extends State<HomePage>
       _digital &&
       !_choosingKing &&
       !_decreePending &&
-      _dealtFor == game.dealId &&
+      _table.dealtFor == game.dealId &&
       game.outcome == RoundOutcome.inProgress &&
       _round.settled;
 
@@ -931,7 +904,7 @@ class HomePageState extends State<HomePage>
       _digital &&
       !_choosingKing &&
       !_decreePending &&
-      _dealtFor == game.dealId &&
+      _table.dealtFor == game.dealId &&
       _round.pickTurn == _you;
 
   /// Deals hands for a new round (or after a reload with an old deal), and
@@ -946,8 +919,8 @@ class HomePageState extends State<HomePage>
     }
     // No task cards to deal onto a circle: the round is ready once the King
     // is crowned and any decree is read.
-    if (!_choosingKing && !_decreePending && _dealtFor != game.dealId) {
-      _dealtFor = game.dealId;
+    if (!_choosingKing && !_decreePending && _table.dealtFor != game.dealId) {
+      _table.dealtFor = game.dealId;
     }
     if (_choosingKing && _crowning == null && _crownTimer == null) {
       // Long live the King first; the tasks are shuffled out after.
@@ -1049,10 +1022,10 @@ class HomePageState extends State<HomePage>
         (_wantsToSpeak && _playing && _round.current.isEmpty)) {
       return false;
     }
-    if (!Host.ready(game, dealtFor: _dealtFor) ||
+    if (!Host.ready(game, dealtFor: _table.dealtFor) ||
         _crowning != null ||
         _decreePending ||
-        _dragging != null ||
+        _table.dragging != null ||
         _lastTrick != null) {
       return false;
     }
@@ -1140,7 +1113,7 @@ class HomePageState extends State<HomePage>
       case ReturnTask():
         setState(() {
           _round.apply(move);
-          _layoutOwned();
+          _table.layoutOwned(_geo);
         });
     }
   }
@@ -1200,7 +1173,7 @@ class HomePageState extends State<HomePage>
       _round.apply(PickTask(seat, game.tasks.indexOf(t)));
       // The last task taken: play begins.
       if (wasPicking && _round.allTaken) _play.forward(from: 0);
-      _layoutOwned();
+      _table.layoutOwned(_geo);
     });
   }
 
@@ -1996,7 +1969,7 @@ class HomePageState extends State<HomePage>
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.0,
       child: LayoutBuilder(builder: (context, c) {
-        _tableSize = Size(c.maxWidth, c.maxHeight);
+        _table.tableSize = Size(c.maxWidth, c.maxHeight);
         final width = c.maxWidth - 32;
         return Stack(
           key: _digiKey,
@@ -2992,11 +2965,7 @@ class HomePageState extends State<HomePage>
       : null;
 
   void _resetTable() {
-    _pos.clear();
-    _tilt.clear();
-    _order = [];
-    _dealtFor = -1;
-    _deal.reset();
+    _table.reset();
     _landing.clear();
   }
 
@@ -3064,61 +3033,24 @@ class HomePageState extends State<HomePage>
   }
 
   /// Lays the round's cards out from the deck in the middle of the table.
-  void _dealCards() {
-    final geo = _geo;
-    final targets = geo.dealPositions(game.tasks);
-    _cardWidth = geo.cardWidth;
-    final rand = math.Random(game.dealId);
-    _order = List.of(game.tasks);
-    for (var i = 0; i < game.tasks.length; i++) {
-      final t = game.tasks[i];
-      _pos[t] = _toFrac(targets[i]);
-      _tilt[t] = (rand.nextDouble() - 0.5) * 0.08; // a few degrees
-    }
-    _dealtFor = game.dealId;
-    // A task only one player may take is dealt straight to them.
-    if (game.tasks.any((t) => t.owner != null)) _layoutOwned();
-    _deal.forward(from: 0);
-  }
+  void _dealCards() => _table.dealCards(_geo, game.tasks, game.dealId);
 
-  /// Re-stacks every player's cards after one is added or removed.
-  void _layoutOwned() {
-    final geo = _geo;
-    geo.layoutOwned(_order).forEach((t, p) {
-      _pos[t] = _toFrac(geo.clampToTable(p, geo.cardSize(t)));
-    });
-  }
+  void _onDragStart(RoundTask t) => _ui(() => _table.dragStart(t));
 
-  void _onDragStart(RoundTask t) {
-    _ui(() {
-      _dragging = t;
-      _order
-        ..remove(t)
-        ..add(t);
-    });
-  }
-
-  /// Ticks as a task card is dragged; only that card listens (see
-  /// [_buildCards]). The page rebuilds only when the seat under it changes.
-  final _taskDragTick = ValueNotifier(0);
-  final _stillTick = ValueNotifier(0);
-
+  /// The page rebuilds only when the seat under the card changes; otherwise
+  /// the card alone redraws.
   void _onDragUpdate(RoundTask t, Offset delta) {
-    final geo = _geo;
-    final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
-    _pos[t] = _toFrac(p);
-    final seat = geo.seatAt(p);
-    final hover = seat != null && _round.mayTake(t, seat) ? seat : null;
-    if (hover != _hoverSeat) {
-      _ui(() => _hoverSeat = hover);
+    final hover = _table.dragMove(t, delta, _geo, _round.mayTake);
+    if (hover != _table.hoverSeat) {
+      _ui(() => _table.hoverSeat = hover);
     } else {
-      _taskDragTick.value++;
+      _table.taskDragTick.value++;
     }
   }
 
   void _onDragEnd(RoundTask t) {
     if (_digital) {
-      final p = _toPx(_pos[t]!);
+      final p = _table.toPx(_table.pos[t]!);
       final seat = _geo.seatAt(p);
       final kingsCommand = _round.decree == Decree.kingsCommand;
       final allowed = _yourPick &&
@@ -3128,9 +3060,9 @@ class HomePageState extends State<HomePage>
           _round.mayTake(t, seat);
       if (!allowed) {
         setState(() {
-          _dragging = null;
-          _hoverSeat = null;
-          _layoutOwned();
+          _table.dragging = null;
+          _table.hoverSeat = null;
+          _table.layoutOwned(_geo);
         });
         if (seat != null) {
           _showSnack(
@@ -3146,24 +3078,24 @@ class HomePageState extends State<HomePage>
         return;
       }
       setState(() {
-        _dragging = null;
-        _hoverSeat = null;
+        _table.dragging = null;
+        _table.hoverSeat = null;
       });
       _assignTask(t, seat);
       return;
     }
     // A real table: the task goes to the seat it's dropped on, or back
     // onto the table. Either is sent as the move it is.
-    final p = _toPx(_pos[t]!);
-    final seat = _dropSeat(p);
+    final p = _table.toPx(_table.pos[t]!);
+    final seat = _table.dropSeat(_geo, p);
     final i = game.tasks.indexOf(t);
     final taken = seat != null && _round.mayTake(t, seat);
     setState(() {
-      _dragging = null;
-      _hoverSeat = null;
+      _table.dragging = null;
+      _table.hoverSeat = null;
       if (!taken && seat != null) {
         // Dropped on the King, who can't take it: leave it just inside.
-        _pos[t] = _toFrac(_geo.clampToTable(
+        _table.pos[t] = _table.toFrac(_geo.clampToTable(
             Offset.lerp(_geo.seatCenter(seat), _geo.center, 0.45)!));
       }
     });
@@ -3497,7 +3429,7 @@ class HomePageState extends State<HomePage>
                                     you: _you,
                                     settingUp: _choosingKing ||
                                         _crowning != null ||
-                                        _dealtFor != game.dealId,
+                                        _table.dealtFor != game.dealId,
                                     lastTrick: _lastTrick,
                                     yourPlay: _yourPlay),
                                 onBack: () => _openSection(game.lesson),
@@ -3744,7 +3676,7 @@ class HomePageState extends State<HomePage>
           case 'upright':
             setState(() {
               _upright = !_upright;
-              if (_inGame && _dealtFor == game.dealId) _layoutOwned();
+              if (_inGame && _table.dealtFor == game.dealId) _table.layoutOwned(_geo);
             });
             _saveSettings();
           case 'sound':
@@ -3933,243 +3865,33 @@ class HomePageState extends State<HomePage>
   Widget _buildTable() {
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.0,
-      child: _buildTableContent(),
-    );
-  }
-
-  Widget _buildTableContent() {
-    return LayoutBuilder(builder: (context, c) {
-      _tableSize = Size(c.maxWidth, c.maxHeight);
-      if (_readyToDeal) {
-        // Deal once the King is crowned, any decree has been read, and the
-        // table size is known.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+      child: RoundTable(
+        table: _table,
+        game: game,
+        geometry: () => _geo,
+        onScreen: _digital,
+        choosingKing: _choosingKing,
+        crowning: _crowning,
+        crownAnimation: _crown,
+        playAnimation: _play,
+        readyToDeal: _readyToDeal,
+        onDeal: () {
           if (mounted && _readyToDeal) setState(_dealCards);
-        });
-      }
-      final geo = _geo;
-      final labels = seatLabels(game.players);
-
-      return Stack(
-        key: _tableKey,
-        clipBehavior: Clip.none,
-        children: [
-          // The felt: press and hold to turn every card towards you.
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onLongPressStart: _choosingKing
-                  ? null
-                  : (d) => _ui(
-                      () => _readerSeat = geo.nearestSeat(d.localPosition)),
-              onLongPressEnd: (_) => _ui(() => _readerSeat = null),
-              onLongPressCancel: () => _ui(() => _readerSeat = null),
-            ),
-          ),
-          for (int i = 0; i < game.players.length; i++)
-            Positioned(
-              left: geo.seatCenter(i).dx,
-              top: geo.seatCenter(i).dy,
-              child: FractionalTranslation(
-                translation: const Offset(-0.5, -0.5),
-                child: Transform.rotate(
-                  angle: geo.facing(i),
-                  child: SeatToken(
-                    player: game.players[i],
-                    label: labels[i],
-                    isKing: _round.king == i,
-                    size: geo.seatSize,
-                    highlighted: _hoverSeat == i,
-                    prompting: _choosingKing && _crowning == null,
-                    picking: !_choosingKing &&
-                        _dealtFor == game.dealId &&
-                        _round.pickTurn == i,
-                    exiled: _round.exiledSeat == i,
-                    speakLocked: !_round.canSpeak(i),
-                    shape: game.hasRoles && i < game.courtiers.length
-                        ? game.courtiers[i].shape
-                        : null,
-                    spoke: _choosingKing || _digital ? null : _round.spoke[i],
-                    // While choosing the King a tap crowns. During play a
-                    // tap opens the courtier's card, or with no roles just
-                    // flips the card-reveal token.
-                    onTap: _choosingKing
-                        ? (_digital ? null : () => _sendCrown(i))
-                        : game.hasRoles
-                            ? () => _showCourtier(i)
-                            : () => _toggleSpoke(i),
-                  ),
-                ),
-              ),
-            ),
-          if (_choosingKing)
-            Center(
-              child: AnimatedOpacity(
-                opacity: _crowning == null ? 1 : 0,
-                duration: const Duration(milliseconds: 200),
-                child: KingPrompt(
-                    maxWidth: math.max(160, geo.size.width - 2 * geo.seatExtent),
-                    cardWidth: geo.cardWidth,
-                    onScreen: _digital,
-                    players: game.players.length),
-              ),
-            )
-          else if (_dealtFor == game.dealId)
-            Positioned.fill(child: _buildCards(geo)),
-          if (_crowning != null)
-            Positioned.fill(
-                child: IgnorePointer(child: _buildCrowning(geo, _crowning!))),
-
-          // "Play!" once every task has an owner.
-          Positioned.fill(child: IgnorePointer(child: PlayFlourish(animation: _play))),
-
-        ],
-      );
-    });
-  }
-
-  /// The crowning: the crown rises from the deck, arcs to the new King's
-  /// seat and lands with a bounce and a ring of gold sparks, while "Long
-  /// live the King" glows in the middle of the table.
-  Widget _buildCrowning(TableGeometry geo, int seat) {
-    final a = geo.facing(seat);
-    final up = Offset(math.sin(a), -math.cos(a));
-    return CrowningScene(
-      animation: _crown,
-      from: geo.center,
-      to: geo.seatCenter(seat) + up * (geo.seatSize / 2 + 9),
-      spinTo: a,
-      seatSize: geo.seatSize,
-      king: seat,
-      seats: {
-        for (int j = 0; j < game.players.length; j++) j: geo.seatCenter(j)
-      },
-    );
-  }
-
-  Offset? _lastPointer;
-
-  /// Where the finger was when a card was let go.
-  Offset? _dropAt;
-
-  /// The seat a dragged card was dropped on: under the finger if there's
-  /// one there (a card near the edge is held back from the edge, but the
-  /// finger isn't), otherwise under the card.
-  int? _dropSeat(Offset cardCentre) {
-    final box = _tableKey.currentContext?.findRenderObject() as RenderBox?;
-    final at = _dropAt;
-    _dropAt = null;
-    if (box != null && at != null) {
-      final seat = _geo.seatAt(box.globalToLocal(at));
-      if (seat != null) return seat;
-    }
-    return _geo.seatAt(cardCentre);
-  }
-
-  Widget _buildCards(TableGeometry geo) {
-    return AnimatedBuilder(
-      animation: _deal,
-      builder: (context, _) {
-        final n = game.tasks.length;
-        final dealing = _deal.isAnimating;
-
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            for (final t in _order)
-              ValueListenableBuilder<int>(
-                // Only the card being dragged listens to the drag, so moving
-                // it redraws that card alone.
-                key: ObjectKey(t),
-                valueListenable: _dragging == t ? _taskDragTick : _stillTick,
-                builder: (context, tick, child) {
-                // Each card leaves the deck a moment after the one before.
-                final i = game.tasks.indexOf(t);
-                final start = n <= 1 ? 0.0 : i / n * 0.55;
-                final progress = Interval(start, math.min(1.0, start + 0.45),
-                        curve: Curves.easeOutCubic)
-                    .transform(_deal.value);
-                final target = _toPx(_pos[t]!);
-                final p = dealing
-                    ? Offset.lerp(geo.center, target, progress)!
-                    : target;
-                // Cards travel face down and turn over as they land.
-                final faceDown = dealing && progress < 0.98;
-                final owner = t.owner;
-                final lifted = _dragging == t;
-                final cardSize = geo.cardSize(t);
-                final cw = cardSize.width;
-                final ch = cardSize.height;
-                // Holding the felt turns every card towards that side of
-                // the table; otherwise owned cards face their owner.
-                final angle = lifted
-                    ? 0.0
-                    : _readerSeat != null
-                        ? geo.cardFacing(_readerSeat!)
-                        : owner != null
-                            ? geo.cardFacing(owner)
-                            : (_tilt[t] ?? 0.0);
-
-                return AnimatedPositioned(
-                  key: ObjectKey(t),
-                  duration: dealing || lifted
-                      ? Duration.zero
-                      : const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  left: p.dx - cw / 2,
-                  top: p.dy - ch / 2,
-                  width: cw,
-                  height: ch,
-                  child: Opacity(
-                    opacity: dealing ? clampD(progress, 0, 1) : 1.0,
-                    child: AnimatedRotation(
-                      turns: angle / (2 * math.pi),
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeOutCubic,
-                      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
-                        // Measure the drag from where the finger went down,
-                        // so the card doesn't lag behind by the touch slop.
-                        dragStartBehavior: DragStartBehavior.down,
-                        onTapUp: (d) => _showTaskDetail(t, d.globalPosition),
-                        onPanStart: (d) {
-                          _lastPointer = d.globalPosition;
-                          _onDragStart(t);
-                        },
-                        onPanUpdate: (d) {
-                          // Use screen movement, not the card's rotated
-                          // local axes, so the card follows the finger.
-                          final last = _lastPointer ?? d.globalPosition;
-                          _lastPointer = d.globalPosition;
-                          _onDragUpdate(t, d.globalPosition - last);
-                        },
-                        onPanEnd: (_) {
-                          _dropAt = _lastPointer;
-                          _lastPointer = null;
-                          _onDragEnd(t);
-                        },
-                        child: AnimatedScale(
-                          scale: lifted ? 1.08 : 1,
-                          duration: const Duration(milliseconds: 120),
-                          child: TableCard(
-                            task: t,
-                            points: _points(t),
-                            text: _cardText(t),
-                            width: cw,
-                            height: ch,
-                            owner: owner == null ? null : game.players[owner],
-
-                            lifted: lifted,
-                            faceDown: faceDown,
-                          ),
-                        ),
-                      )),
-                    ),
-                  ),
-                );
-              }),
-          ],
-        );
-      },
+        },
+        // While choosing the King a tap crowns. During play a tap opens the
+        // courtier's card, or with no roles just flips the card-reveal
+        // token.
+        seatTap: (i) => _choosingKing
+            ? (_digital ? null : () => _sendCrown(i))
+            : game.hasRoles
+                ? () => _showCourtier(i)
+                : () => _toggleSpoke(i),
+        cardText: _cardText,
+        onTaskTap: _showTaskDetail,
+        onDragStart: _onDragStart,
+        onDragUpdate: _onDragUpdate,
+        onDragEnd: _onDragEnd,
+      ),
     );
   }
 

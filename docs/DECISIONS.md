@@ -177,3 +177,11 @@ Notes as the sequence runs:
   screen knows of the task (progress, crossed-out cards, status, the
   cards' marks) as values when it opens, rather than reading the page
   while open; bots don't move under a dialog, so nothing changes meanwhile.
+- The round table (item 7) keeps its layout in a `RoundTableController`
+  the page owns (positions, tilt, draw order, the drag, which deal is laid
+  out, the deal animation), as a text field keeps its text in a
+  controller: the page still reads `dealtFor` and the geometry in its own
+  logic (when to deal, whose pick it is), and decides what a drop means
+  (the rules, the move to send). The widget draws the seats, prompt, cards
+  and crowning from it and reports taps and drags. The seat someone holds
+  the felt from is the widget's own state, since nothing else reads it.
