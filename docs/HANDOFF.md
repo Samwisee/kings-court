@@ -60,7 +60,8 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 
 | File | What lives there |
 |---|---|
-| `lib/main.dart` (~7.4k lines) | Everything on screen. `_HomePageState` holds the game, the setup panel (`_SetupPanel`), the round-table layout (`_TableGeometry`), the on-screen table and hand, bots' turns (`_scheduleBot`, `_botThink`), Dynasty's end-of-round flow (`_DynastyStep`), outcome cards, How to Play (`showRulesDialog`). Test hooks: `HomePageTestHooks.fast()`, `debugYourMove()`. |
+| `README.md` | The up-to-date map of the codebase, the skin, performance and online play. Start there. |
+| `lib/main.dart` (~7.4k lines) + `lib/home/` | Everything on screen (the widgets it uses are in `lib/home/`, part files). `_HomePageState` holds the game, the setup panel (`_SetupPanel`), the round-table layout (`_TableGeometry`), the on-screen table and hand, bots' turns (`_scheduleBot`, `_botThink`), Dynasty's end-of-round flow (`_DynastyStep`), outcome cards, How to Play (`showRulesDialog`). Test hooks: `HomePageTestHooks.fast()`, `debugYourMove()`. |
 | `lib/models.dart` | `GameState`: players, tasks, King, mode, seals and decrees, Dynasty state (courtiers, loyalty, wounds, reigns, story flags, coffers), JSON save/load. `addTasksUntilTarget` deals each round's tasks. |
 | `lib/engine/cards.dart` | Deck, `deal`, `legalPlays`, `winningPlay`, `Trick`. Pure Dart. |
 | `lib/engine/rules.dart` | `taskRules`: every task as a function of the tricks → `Verdict` (pending/done/failed). |
@@ -71,7 +72,9 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 | `lib/courtiers.dart` | `Courtier` enum (titles, shapes, powers), Dynasty `Dilemma`s and `Choice`/`Effect`s, entrances and exits, and every line courtiers say (chatter, retorts, cheers, task quips). |
 | `lib/story.dart` | Tidings (news that opens a round), story arcs with flags, the main Karsk campaign from harvest to war. |
 | `lib/play/throne_room.dart` | The solo Dynasty throne room: figures, speech bubbles, the felt stage set that lowers in, choices from the throne. |
-| `lib/play/card_view.dart`, `lib/widgets.dart`, `lib/theme.dart` | Cards (Court Card faces), tokens, crowns, the palette and fonts (Cinzel Decorative and Alegreya Sans). |
+| `lib/play/card_view.dart`, `lib/widgets.dart` + `lib/ui/`, `lib/theme.dart` | Cards (Court Card faces), tokens, crowns, panels and dialogs; `theme.dart` is the skin (palette, fonts, dialog style). |
+| `lib/net/table_link.dart` | Where moves go (`LocalLink` today); the seam for online play. |
+| `lib/engine/task.dart` | `Task` and `allTasks`, Flutter-free. |
 | `lib/chronicle.dart` | The 24 chapters, `Seals`, `Decree`. |
 | `lib/tutorial.dart` | Tutorial opening pages (`introPages`) and lessons: fixed tasks, a rigged `deal()`, the courtiers' script, coach lines, the suggested card. |
 | `lib/play/tutorial_intro.dart` | The tutorial's opening pages, each waiting for Continue. |
@@ -117,9 +120,9 @@ There is **no Flutter SDK in the cloud sessions**: the package mirrors and `stor
 
 ## Open threads and ideas
 
-- **Multiplayer/Firebase:** plan in `docs/ONLINE.md`. That doc mentions `lib/play/controller.dart` (`MatchConnection`), which **doesn't exist yet**: it's the planned seam, not current code.
+- **Multiplayer/Firebase:** plan in `docs/ONLINE.md`. The seam is `lib/net/table_link.dart`; card plays and shown cards already go through it.
 - **Tutorial follow-ups:** more lessons for seals, royal decrees, the speech token (showing a card), and a short Dynasty primer.
-- **`main.dart` is very large:** splitting out the on-screen table, setup panel and Dynasty flow into `lib/play/` would make work safer.
+- **`_HomePageState` is very large:** its widgets now live in `lib/home/`; the next step is a controller (`ChangeNotifier`) owning the game, bots and table link (see README).
 - **Flaky test:** "Stacks for neighbouring seats never overlap" sometimes needs its built-in retry.
 - **Card reveals on screen** exist (`_speak`/`_reveal`) but bots only reveal outside the tutorial.
 

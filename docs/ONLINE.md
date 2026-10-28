@@ -8,14 +8,20 @@ rewriting the rules.
 - `lib/engine/cards.dart`: the deck, legal plays and who wins a trick.
 - `lib/engine/rules.dart`: every task as a rule that returns done, failed
   or pending from the tricks so far.
+- `lib/engine/task.dart`: `Task`, and every task in the game (`allTasks`).
 - `lib/engine/match.dart`: `MatchState`, plain data that saves to JSON, and
-  `MatchAction` (`PickTask`, `Announce`, `PlayCard`). `MatchState.apply`
-  is the only thing that changes a game, and `problem()` says why an
-  action isn't allowed.
+  `MatchAction` (`PickTask`, `Announce`, `PlayCard`, `ShowCard`).
+  `MatchState.apply` changes a game, and `problem()` says why an action
+  isn't allowed.
 - `lib/engine/bot.dart`: bot teammates (random playouts).
-- `lib/play/controller.dart`: `MatchConnection` is where actions are sent.
-  `MatchController` is the local one: it applies actions on this device
-  and lets bots take their turns.
+- `lib/net/table_link.dart`: `TableLink` is where moves are sent, and
+  where they come back from. `LocalLink` is the one in use: a move comes
+  straight back. The table (`_onMove` in main.dart) plays card plays and
+  shown cards as they come back; taking tasks and passing still go
+  through `GameState` directly, and are the next to move onto the link.
+
+The whole engine is plain Dart (no Flutter); `test/net_test.dart` checks
+its imports, so it can run on a server as it is.
 
 ## Plan for Firebase
 
@@ -30,10 +36,9 @@ rewriting the rules.
    Function (Dart engine compiled to JS, or ported to TypeScript) checks
    each with `problem()`, applies it, and writes the new state. That keeps
    anyone from playing a card they don't hold.
-5. A `FirestoreConnection implements MatchConnection` sends actions and
-   rebuilds the screen from the room document. Bots can run in the same
-   function for empty seats.
+5. A `FirestoreLink implements TableLink` writes each move to the actions
+   collection and emits the moves the function accepts, in order. Bots can
+   run in the same function for empty seats.
 
-Note: `Task` currently lives in `models.dart`, which imports Flutter for
-colours. Before the engine runs on a server, move `Task` and the task data
-into a Flutter-free file.
+`Task` and the task data are already Flutter-free (`lib/engine/task.dart`,
+`lib/tasks.dart`).
