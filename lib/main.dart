@@ -840,7 +840,6 @@ class HomePageState extends State<HomePage>
   /// The seat you play from: the bottom of the table. Online, the seat
   /// you joined in (see GameController.mySeat).
   int get _you => _ctrl.mySeat;
-  final _rand = math.Random(HomePageTestHooks.seed);
   final _bot = Bot(
       HomePageTestHooks.seed == null ? null : math.Random(HomePageTestHooks.seed));
   Timer? _botTimer;
@@ -2950,7 +2949,6 @@ class HomePageState extends State<HomePage>
       // the Bishop, each with their house's token.
       if (mode == GameMode.tutorial) {
         game.courtiers = List.of(tutorialHouses);
-        game.people = [for (final c in game.courtiers) c.title];
       }
       if (digital) {
         // You sit at the bottom; bots take the other seats.
@@ -3544,11 +3542,6 @@ class HomePageState extends State<HomePage>
 
           final spoke = game.spoke[seat];
           final canSpeak = game.canSpeak(seat) || spoke;
-          const label = TextStyle(
-              fontFamily: displayFont,
-              fontWeight: FontWeight.w700,
-              fontSize: 17,
-              color: Palette.ink);
           return RotatedBox(
             quarterTurns: _geo.edge(seat),
             child: Dialog(
@@ -4952,10 +4945,9 @@ class HomePageState extends State<HomePage>
         children: [
           DeckStack(width: geo.cardWidth * 0.75),
           const SizedBox(height: 18),
-          Text(
-              'Who holds the King card?',
+          const Text('Who holds the King card?',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: displayFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 26,

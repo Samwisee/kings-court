@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'courtiers.dart';
 import 'engine/cards.dart';
 import 'models.dart';
 
@@ -88,11 +87,6 @@ class Palette {
 extension PlayerColour on Player {
   Color get color => Color(colorValue);
   set color(Color c) => colorValue = c.toARGB32();
-}
-
-extension CourtColours on GameState {
-  /// The colour of [c], seated or not.
-  Color colorOf(Courtier c) => Color(colorValueOf(c));
 }
 
 /// Royal display face for titles and every number: Roman capitals with
