@@ -6,7 +6,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../engine/cards.dart';
 import '../skin.dart';
 import '../theme.dart' as court;
 
@@ -74,22 +73,9 @@ class CourtSkin extends Skin {
   List<Color> get players => court.Palette.players;
 
   @override
-  Color suitColour(Suit s, {required bool fourColour}) => switch (s) {
-        Suit.hearts => cardRed,
-        Suit.diamonds => fourColour ? diamondBlue : cardRed,
-        Suit.spades => ink,
-        Suit.clubs => fourColour ? clubGreen : ink,
-        Suit.court => gold,
-      };
-
+  Color get diamondOnDark => court.Palette.diamondOnDark;
   @override
-  Color suitColourOnDark(Suit s, Color text, {required bool fourColour}) =>
-      switch (s) {
-        Suit.hearts => redOnDark,
-        Suit.diamonds => fourColour ? court.Palette.diamondOnDark : redOnDark,
-        Suit.clubs => fourColour ? court.Palette.clubOnDark : text,
-        Suit.spades || Suit.court => text,
-      };
+  Color get clubOnDark => court.Palette.clubOnDark;
 
   @override
   String get displayFont => court.displayFont;

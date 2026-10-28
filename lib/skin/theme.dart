@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../engine/cards.dart';
 import '../game/state.dart';
+import '../platform/settings.dart';
 
 /// The King's Court palette: card table felt, white card stock, card-red
 /// and black suits, and brass gold reserved for the King.
@@ -18,11 +19,10 @@ class Palette {
   static const inkSoft = Color(0xFF6B655C);
   static const cardRed = Color(0xFFB3122B);
 
-  /// Four-colour suits (a setting in the menu): ♦ blue and ♣ green, so no
-  /// two suits share a colour. Easier to tell apart at a glance, for
-  /// colour-blind players and anyone on a small screen. Every suit keeps
-  /// its own shape either way.
-  static bool fourColourSuits = false;
+  /// Four-colour suits, the setting (platform/settings.dart): ♦ blue and
+  /// ♣ green, easier to tell apart at a glance, for colour-blind players
+  /// and anyone on a small screen.
+  static bool get fourColourSuits => Settings.fourColourSuits;
   static const diamondBlue = Color(0xFF1A5BC8);
   static const clubGreen = Color(0xFF13793A);
 

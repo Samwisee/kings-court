@@ -10,6 +10,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../engine/cards.dart';
+import '../platform/settings.dart';
 
 abstract class Skin {
   const Skin();
@@ -75,11 +76,27 @@ abstract class Skin {
   /// The seats' colours.
   List<Color> get players;
 
-  /// The colour a suit is printed in, and on the felt or another dark
-  /// ground (where [text] is the colour of the words around it), with
-  /// [fourColour] suits on or off.
-  Color suitColour(Suit s, {required bool fourColour});
-  Color suitColourOnDark(Suit s, Color text, {required bool fourColour});
+  /// The colours four-colour ♦ and ♣ are printed in on the felt.
+  Color get diamondOnDark;
+  Color get clubOnDark;
+
+  /// The colour a suit is printed in (with the four-colour setting).
+  Color suitColour(Suit s) => switch (s) {
+        Suit.hearts => cardRed,
+        Suit.diamonds => Settings.fourColourSuits ? diamondBlue : cardRed,
+        Suit.spades => ink,
+        Suit.clubs => Settings.fourColourSuits ? clubGreen : ink,
+        Suit.court => gold,
+      };
+
+  /// The colour a suit is printed in on the felt or another dark ground,
+  /// where [text] is the colour of the words around it.
+  Color suitColourOnDark(Suit s, Color text) => switch (s) {
+        Suit.hearts => redOnDark,
+        Suit.diamonds => Settings.fourColourSuits ? diamondOnDark : redOnDark,
+        Suit.clubs => Settings.fourColourSuits ? clubOnDark : text,
+        Suit.spades || Suit.court => text,
+      };
 
   // -------------------------------------------------------------- type
 

@@ -38,6 +38,7 @@ import '../modes/progress.dart';
 import '../modes/tutorial/lessons.dart';
 import '../net/table_link.dart';
 import '../platform/analytics.dart';
+import '../platform/settings.dart';
 import '../platform/sfx.dart';
 import '../skin/theme.dart';
 import 'bug_report.dart';
@@ -560,7 +561,7 @@ class HomePageState extends State<HomePage>
               jsonDecode(chronicleRaw) as Map<String, dynamic>);
       Sfx.enabled = prefs.getBool(_soundKey) ?? true;
       _upright = prefs.getBool(_uprightKey) ?? false;
-      Palette.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
+      Settings.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
       _showKeys = prefs.getBool(_keysKey) ?? false;
       final saves = await _readSaves(prefs);
       // Anyone with a saved game has played already.
@@ -670,7 +671,7 @@ class HomePageState extends State<HomePage>
       await prefs.setString(_chronicleKey, jsonEncode(_progress.chronicle.toJson()));
       await prefs.setBool(_soundKey, Sfx.enabled);
       await prefs.setBool(_uprightKey, _upright);
-      await prefs.setBool(_suitsKey, Palette.fourColourSuits);
+      await prefs.setBool(_suitsKey, Settings.fourColourSuits);
       await prefs.setBool(_keysKey, _showKeys);
       await prefs.setBool(_tutorialDoneKey, _tutorialDone);
     } catch (_) {}
@@ -3553,7 +3554,7 @@ class HomePageState extends State<HomePage>
           'menu',
           choice,
           if (choice == 'sound') Sfx.enabled ? 'off' : 'on',
-          if (choice == 'suits') Palette.fourColourSuits ? 'off' : 'on',
+          if (choice == 'suits') Settings.fourColourSuits ? 'off' : 'on',
           if (choice == 'keys') _showKeys ? 'off' : 'on',
         ]);
         switch (choice) {
@@ -3598,7 +3599,7 @@ class HomePageState extends State<HomePage>
           case 'bug':
             showBugReport(context, details: _bugDetails);
           case 'suits':
-            setState(() => Palette.fourColourSuits = !Palette.fourColourSuits);
+            setState(() => Settings.fourColourSuits = !Settings.fourColourSuits);
             // Every card on screen repaints in the new colours, even ones
             // built once and kept.
             void rebuild(Element e) {
@@ -3629,7 +3630,7 @@ class HomePageState extends State<HomePage>
             on: Sfx.enabled),
         // For colour-blind players: no two suits share a colour.
         _menuItem('suits', Icons.palette_outlined, 'Four-colour suits',
-            on: Palette.fourColourSuits),
+            on: Settings.fourColourSuits),
         // On a computer: the keyboard shortcuts, beside the table.
         if (_desktop)
           _menuItem('keys', Icons.keyboard_outlined, 'Keyboard shortcuts',
@@ -3653,7 +3654,7 @@ class HomePageState extends State<HomePage>
       },
       'settings': {
         'sound': Sfx.enabled,
-        'fourColourSuits': Palette.fourColourSuits,
+        'fourColourSuits': Settings.fourColourSuits,
         'keyboard': _showKeys,
       },
       if (_inGame) 'state': game.toJson(),
