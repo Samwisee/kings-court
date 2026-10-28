@@ -45,11 +45,11 @@ import 'play/tutorial_intro.dart';
 import 'sfx.dart';
 import 'task_help.dart';
 import 'theme.dart';
+import 'ui/modes/tutorial/coach.dart';
 import 'ui/overlays/crowning.dart';
 import 'ui/overlays/decree.dart';
 import 'ui/overlays/king_prompt.dart';
 import 'ui/overlays/outcome_card.dart';
-import 'ui/modes/tutorial/coach.dart';
 import 'ui/overlays/play_flourish.dart';
 import 'widgets.dart';
 

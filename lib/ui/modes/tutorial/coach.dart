@@ -67,6 +67,7 @@ class Coach extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final line = this.line;
     final l = lessons[math.min(lesson, lessons.length - 1)];
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
