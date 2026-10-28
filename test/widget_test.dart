@@ -1259,7 +1259,10 @@ void main() {
           await tester.pump(const Duration(milliseconds: 30));
         }
         expect(find.text('Skip'), findsOneWidget);
-        expect(game.tasks.every((t) => t.assignedPlayerIndex == null), isTrue);
+        // Nobody has picked yet (a task only one player could take may
+        // already have gone straight to them).
+        expect(game.tasks.where((t) => t.assignedPlayerIndex != null).length,
+            lessThan(game.tasks.length));
         await tester.tap(find.text('Skip'));
         await tester.pump();
         expect(find.text('Skip'), findsNothing);
@@ -1353,8 +1356,15 @@ void main() {
   });
   }
 
-  testWidgets('A courtier can be tapped anywhere on their token', (tester) async {
-    setPhoneSize(tester);
+  for (final mouse in [false, true])
+  testWidgets('A courtier can be ${mouse ? 'clicked' : 'tapped'} anywhere on their token', (tester) async {
+    if (mouse) {
+      tester.view.physicalSize = const Size(2192, 1518);
+      tester.view.devicePixelRatio = 1.6;
+      addTearDown(tester.view.reset);
+    } else {
+      setPhoneSize(tester);
+    }
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
@@ -1383,7 +1393,19 @@ void main() {
           r.center - Offset(r.width * 0.3, 0)]) {
         final hit = HitTestResult();
         tester.binding.hitTestInView(hit, at, tester.view.viewId);
-        await tester.tapAt(at);
+        if (mouse) {
+          // Moved there first, as a mouse is.
+          final g = await tester.createGesture(kind: PointerDeviceKind.mouse);
+          await g.addPointer(location: at - const Offset(40, 40));
+          await g.moveTo(at);
+          await tester.pump(const Duration(milliseconds: 50));
+          await g.down(at);
+          await tester.pump(const Duration(milliseconds: 30));
+          await g.up();
+          await g.removePointer();
+        } else {
+          await tester.tapAt(at);
+        }
         await tester.pump(const Duration(milliseconds: 50));
         final opened = find.byType(Dialog).evaluate().isNotEmpty;
         expect(opened, isTrue,
