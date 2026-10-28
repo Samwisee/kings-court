@@ -138,7 +138,7 @@ class _ShortcutsCard extends StatelessWidget {
           court: true,
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          maxWidth: 360,
+          maxWidth: 380,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,14 +156,22 @@ class _ShortcutsCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     SizedBox(
-                      width: 96,
+                      width: 84,
                       child: Wrap(spacing: 3, runSpacing: 3, children: [
                         for (final c in caps) _KeyCap(c, size: 21),
                       ]),
                     ),
-                    Text(what,
-                        style: const TextStyle(
-                            fontFamily: bodyFont, fontSize: 13.5, color: Colors.white)),
+                    // Long lines wrap inside the card rather than running
+                    // off its edge.
+                    Flexible(
+                      child: Text(what,
+                          softWrap: true,
+                          style: const TextStyle(
+                              fontFamily: bodyFont,
+                              fontSize: 13.5,
+                              height: 1.25,
+                              color: Colors.white)),
+                    ),
                   ]),
                 ),
             ],

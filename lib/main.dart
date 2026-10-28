@@ -5134,11 +5134,24 @@ class _HomePageState extends State<HomePage>
       const Positioned.fill(
           child: IgnorePointer(child: SafeArea(child: TableTrim()))),
       // Keyboard shortcuts, when asked for, beside the table.
-      if (_keysShown && _inGame && _setupArgs == null && _digital)
-        const Positioned(
+      // It slides up and fades in when turned on, and back out when off.
+      if (_inGame && _setupArgs == null && _digital)
+        Positioned(
           right: 22,
           bottom: 22,
-          child: IgnorePointer(child: _ShortcutsCard()),
+          child: IgnorePointer(
+            child: AnimatedSlide(
+              offset: _keysShown ? Offset.zero : const Offset(0, 0.12),
+              duration: const Duration(milliseconds: 260),
+              curve: _keysShown ? Curves.easeOutCubic : Curves.easeInCubic,
+              child: AnimatedOpacity(
+                opacity: _keysShown ? 1 : 0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                child: const _ShortcutsCard(),
+              ),
+            ),
+          ),
         ),
       // The card tracker: a panel in the middle of the screen over a dimmed
       // table (tap outside to put it away). Holding its eye, or the space
