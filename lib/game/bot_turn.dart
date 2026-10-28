@@ -74,15 +74,20 @@ class CourtierScript {
   final bool showsBetweenTricks;
 }
 
-/// The next move a courtier makes in [game]'s round, or null when it's
-/// your move or there is nothing to do. [you] is the seat the player sits
-/// in; [script] is the mode's say over the courtiers.
+/// The next move a courtier makes in [game]'s round, or null when it's a
+/// person's move or there is nothing to do. [courtier] says which seats
+/// the courtiers play here: every seat but [you]'s, unless given (a host
+/// plays a dropped person's seat too). [script] is the mode's say over
+/// the courtiers.
 Future<BotDecision?> botDecision(GameState game, Bot bot,
-    {required int you, CourtierScript script = const CourtierScript()}) async {
+    {int you = -1,
+    bool Function(int seat)? courtier,
+    CourtierScript script = const CourtierScript()}) async {
+  final plays = courtier ?? (int seat) => seat != you;
   final r = game.round!;
   final picker = r.pickTurn;
   if (picker != null) {
-    if (picker == you) return null;
+    if (!plays(picker)) return null;
     final open = [
       for (var i = 0; i < r.tasks.length; i++)
         if (r.tasks[i].owner == null) i
@@ -130,20 +135,20 @@ Future<BotDecision?> botDecision(GameState game, Bot bot,
   for (var i = 0; i < r.tasks.length; i++) {
     final t = r.tasks[i];
     if (!needsX(t.description) || t.x != null) continue;
-    if (t.owner == you) return YourAnnouncement(i);
+    if (!plays(t.owner!)) return YourAnnouncement(i);
     final x = await bot.chooseXAsync(r, t.owner!, i);
     return BotAnnounces(t.owner!, i, x);
   }
   // Between tricks, any courtier may show a card someone needs.
   if (r.current.isEmpty && script.showsBetweenTricks) {
     for (var s = 0; s < r.players; s++) {
-      if (s == you) continue;
+      if (!plays(s)) continue;
       final shown = botShows(r, s);
       if (shown != null) return BotShows(s, shown);
     }
   }
   final turn = r.turn;
-  if (turn == you) return null;
+  if (!plays(turn)) return null;
   // A scripted courtier (a lesson's) follows the script while it holds.
   if (script.play?.call(r.tricks.length, turn) case final planned?
       when r.legalFor(turn).contains(planned)) {

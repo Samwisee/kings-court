@@ -846,6 +846,14 @@ class Round {
   /// In a view for one seat, how many cards each of the others holds.
   List<int>? handSizes;
 
+  /// Whether [seat] still holds [card]: seen in their hand, or, in a view
+  /// where their hand is hidden, not played yet.
+  bool holds(int seat, PlayingCard card) => hands[seat].isNotEmpty
+      ? hands[seat].contains(card)
+      : handSizes != null &&
+          !current.contains(card) &&
+          !tricks.any((t) => t.cards.contains(card));
+
   /// The round as [seat] may see it: their own hand, how many cards the
   /// others hold, and everything public. (The cards set aside stay, so
   /// every device judges the tasks alike; a server judging for everyone

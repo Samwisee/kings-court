@@ -1,72 +1,83 @@
 # Taking the card game online
 
-The on-screen card game is built so a backend can be added without
-rewriting the rules.
+Everything short of the server is built: every change to a game is an
+action with JSON, applied in one place; moves are numbered; a game is
+replayable from its setup and its moves; each seat has a view that hides
+the other hands; a fake network proves two devices stay the same through
+latency, reordering, duplicates and a dropped connection; rooms and
+sessions are interfaces with an in-process implementation. What's left is
+a server and a link to it.
 
 ## How it fits together
 
-- `lib/engine/cards.dart`: the deck, legal plays and who wins a trick.
-- `lib/engine/rules.dart`: every task as a rule that returns done, failed
-  or pending from the tricks so far.
-- `lib/engine/task.dart`: `Task`, and every task in the game (`allTasks`).
-- `lib/engine/match.dart`: `MatchState`, plain data that saves to JSON, and
-  `MatchAction` (`PickTask`, `Announce`, `PlayCard`, `ShowCard`).
-  `MatchState.apply` changes a game, and `problem()` says why an action
-  isn't allowed.
-- `lib/engine/bot.dart`: bot teammates that see only their own hand and
-  imagine the rest (`engine/sampling.dart`), so a bot in an empty seat at
-  an online table knows no more than a player would (see HANDOFF.md).
-- `lib/game/bot_turn.dart`: what a courtier does on their turn
-  (`botDecision`), from the game alone: pick, pass, announce, show or
-  play. A server can run it for empty seats.
-- `lib/net/table_link.dart`: `TableLink` is where moves are sent, and
-  where they come back from. `LocalLink` is the one in use: a move comes
-  straight back. Every move at the table goes through it (`_onMove` in
-  main.dart makes them as they come back): `PickTask`, `Pass`,
-  `Announce`, `PlayCard`, `ShowCard`.
-- `GameState.seed` with `dealId` fixes each round's cards and tasks
-  (`dealRandom`), so a deal can be made again anywhere.
-- `GameController.mySeat` is the seat this device plays from.
+- **Actions.** A move within a round is a `MatchAction`
+  (`engine/round.dart`: `PickTask`, `Pass`, `Announce`, `PlayCard`,
+  `ShowCard`, `ReturnTask`), applied by `Round.apply`; `Round.problem`
+  says why one isn't allowed. The rest are `GameAction`s
+  (`game/actions.dart`: `Crown`, `Speak`, `MarkTask`, `UndoMark`,
+  `NextRound`, `RetryRound`, `Redeal`), applied by `GameState.apply` with
+  `GameState.problem`. Both are plain data: `toJson`, `fromJson`
+  (`tableActionFromJson`). The page sends every action through the link
+  and changes the game only when the action comes back (`_onAction` in
+  main.dart); a stale action is let go.
+- **Moves.** `TableLink` (`net/table_link.dart`) sends actions and plays
+  back `Move`s (`seq` + action) in the order the table plays them, and
+  keeps the game's history. `LocalLink` is the one in use: straight back.
+- **The seed.** `GameState.seed` and `game/dice.dart` fix every random
+  choice (the deal, the tasks, the exile, the courtiers' choices, the
+  seats): every device at a table deals the same cards from the same seed,
+  and the same seed plays the same game (`test/determinism_test.dart`).
+- **Setup and replay.** `GameSetup` (`game/setup.dart`) is what a game
+  starts from, kept in the game and its saves; `replay(setup, moves)`
+  (`net/replay.dart`) rebuilds a game move by move. Bug reports carry the
+  setup and the moves (see the bug replay tool).
+- **Seat views.** `Round.visibleTo(seat)` is what a seat may see: its own
+  hand, how many cards the others hold, everything public (the set-aside
+  cards stay, so every device judges alike; a server judging for everyone
+  could withhold them). The page draws card counts with `Round.cardsIn`
+  and shown cards with `Round.holds`, so it can draw from a view.
+- **Seats.** `Seats` (`game/seats.dart`): each seat held by a person (by
+  session id, connected or not), a courtier, or nobody. The host plays the
+  courtiers' seats and a dropped person's (`Host.plays`); a person who
+  returns takes their seat back.
+- **The headless table.** `HeadlessTable` (`net/headless_table.dart`) is
+  the page without a screen: it deals, crowns, runs the courtiers, applies
+  every move that comes back, and waits for its own moves before thinking
+  again. A server runs this for a room.
+- **The fake network.** `FakeNetwork` and `FakeLink`
+  (`net/fake_network.dart`): a server between several links, with latency,
+  reordering, duplicates and disconnection; a link hands its table the
+  moves in order, each once, and a reconnecting one catches up from the
+  last move it saw. `test/two_devices_test.dart` plays a round on two
+  devices, one of them dropping out and coming back, and checks the two
+  games end the same.
+- **Rooms.** `Rooms`, `Room` and `Session` (`net/rooms.dart`): a room is
+  made from a setup by its host, joined by code, each session takes a
+  seat and gets a link; drops and rejoins keep the seat. `InMemoryRooms`
+  runs rooms in this process on the fake network (`test/rooms_test.dart`).
 
-The engine and the whole game model (`models.dart`, chronicle, courtiers,
-story, tutorial, bot_turn) are plain Dart with no Flutter;
-`test/net_test.dart` checks their imports, so they can run on a server as
-they are.
+## What a server does
 
-## What's still in the way
-
-- **Two records of the round.** `GameState` (tasks, owners, statuses,
-  Dynasty) and `MatchState` (hands, tricks) are both kept; the page joins
-  them with `_matchView` for the bots, and judges tasks itself
-  (`_judgeTasks`, seals and absolution included) rather than through
-  `MatchState.apply`'s `_check`. A server needs one record and one judge:
-  either `MatchState` learns seals, decrees and Dynasty's rules, or the
-  server runs `GameState` (it can, now it has no Flutter) and
-  `MatchState` becomes its cards.
-- **Dealing happens on the page** (`_syncCards`: the deal, the King, task
-  swaps for impossible deals). Online, the server deals from the seed and
-  the devices receive hands; `_syncCards` should become "take the deal
-  the link gives".
-- **Timing lives on the page** (bot delays, trick pauses, the play-out).
-  Fine for one device; online, the server paces bots and devices animate
-  what arrives.
+1. **Rooms**: implement `Rooms`/`Room` over the backend (a room document
+   with the setup, the seats and the host; sessions by auth id).
+2. **The table**: run a `HeadlessTable` for the room (host-side today;
+   server-side when there is one): it numbers each action as it arrives
+   (`problem` first, so nobody plays a card they don't hold), applies it,
+   and sends the move to every device. Bots play the empty seats.
+3. **The link**: a `ServerLink implements TableLink` that sends actions
+   to the server and plays back its moves in `seq` order, buffering early
+   ones and dropping repeats as `FakeLink` does, and asks for everything
+   after its last `seq` on reconnection.
+4. **Views**: send each seat `Round.visibleTo(seat)` at the deal rather
+   than letting devices deal from the seed, once hands must be private.
 
 ## Plan for Firebase
 
-1. `flutterfire configure`, add `firebase_core`, `firebase_auth`
-   (anonymous sign-in) and `cloud_firestore`.
-2. A room document: `rooms/{code}` with seats (uid or "bot"), the target,
-   and a public view of `MatchState` (tasks, tricks, current trick, hand
-   sizes; not the hands).
-3. Hands are private: `rooms/{code}/hands/{seat}`, readable only by the
-   uid in that seat (security rules).
-4. Actions are written to `rooms/{code}/actions` in order. A Cloud
-   Function (Dart engine compiled to JS, or ported to TypeScript) checks
-   each with `problem()`, applies it, and writes the new state. That keeps
-   anyone from playing a card they don't hold.
-5. A `FirestoreLink implements TableLink` writes each move to the actions
-   collection and emits the moves the function accepts, in order. Bots can
-   run in the same function for empty seats.
-
-`Task` and the task data are already Flutter-free (`lib/engine/task.dart`,
-`lib/tasks.dart`).
+- `flutterfire configure`; `firebase_auth` (anonymous sign-in),
+  `cloud_firestore`.
+- `rooms/{code}`: setup, seats, host; `rooms/{code}/moves/{seq}`: the
+  numbered moves; `rooms/{code}/hands/{seat}`: private, readable by the
+  session in that seat.
+- A Cloud Function applies each action with `problem`/`apply` (the engine
+  is plain Dart: compile it to JS, or run it in a Dart container) and
+  writes the move; the `ServerLink` listens to `moves` in order.

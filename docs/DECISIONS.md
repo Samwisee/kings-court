@@ -113,3 +113,11 @@ explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
   screen: deals, crowns, runs the courtiers, applies every move at once.
   Replays, the determinism test and the two-device test run on it; a
   server would too.
+- **Seats, the fake network and rooms** (5d–5g): `Seats` says who holds
+  each seat; the host plays courtiers' seats and dropped people's
+  (`Host.plays`, `botDecision(courtier:)`); `FakeNetwork` numbers moves
+  and delivers them late, out of order, twice or not at all, and a
+  `FakeLink` hands its table the moves in order, each once; `Rooms`,
+  `Room` and `Session` are interfaces with `InMemoryRooms` on the fake
+  network. The page still plays on a `LocalLink`: nothing on screen
+  changes. `docs/ONLINE.md` is rewritten around these.

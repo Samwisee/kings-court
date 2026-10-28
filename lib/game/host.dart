@@ -13,6 +13,7 @@ import '../engine/round.dart';
 import '../models.dart';
 import 'bot_turn.dart';
 import 'dice.dart';
+import 'seats.dart';
 
 /// What came of giving the courtiers a turn: [decision] is what the
 /// courtier (or you, for an announcement) decided, null when there was
@@ -25,6 +26,7 @@ class Host {
       {required this.bot,
       required this.you,
       required this.send,
+      this.seats,
       this.script = const CourtierScript()});
 
   /// The courtiers' brain, shared between the seats.
@@ -32,6 +34,14 @@ class Host {
 
   /// The seat this device plays from: never a courtier's.
   final int you;
+
+  /// Who holds each seat, when the table has more than this device at it:
+  /// the host plays the courtiers' seats and the seats of people who
+  /// dropped. Null means every seat but [you]'s is a courtier's.
+  Seats? seats;
+
+  /// Whether this host moves for [seat].
+  bool plays(int seat) => seats?.hostPlays(seat) ?? seat != you;
 
   /// Where a courtier's move goes (the table link).
   final void Function(MatchAction move) send;
@@ -82,7 +92,7 @@ class Host {
     try {
       _rollFor(g);
       final before = moment(g);
-      final decision = await botDecision(g, bot, you: you, script: script);
+      final decision = await botDecision(g, bot, courtier: plays, script: script);
       if (!(still?.call() ?? true) || moment(g) != before) {
         return (decision: null, stale: true);
       }
@@ -114,7 +124,7 @@ class Host {
     final open = [for (final t in r.tasks) if (t.owner == null) t];
     final shows = <ShowCard>[];
     for (var seat = 0; seat < r.players; seat++) {
-      if (seat == you || r.spoke[seat] || !r.canSpeak(seat)) continue;
+      if (!plays(seat) || r.spoke[seat] || !r.canSpeak(seat)) continue;
       for (final card in r.hands[seat]) {
         if (r.revealFor(seat, card) == null) continue;
         if (open.any((t) => neededCards(t.description).contains(card))) {

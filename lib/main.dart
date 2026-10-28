@@ -2265,7 +2265,7 @@ class HomePageState extends State<HomePage>
                             : 0,
                         child: Text(
                             c.hasCards
-                                ? '${_shownTricksWon(seat)} won · ${c.hands[seat].length} cards'
+                                ? '${_shownTricksWon(seat)} won · ${c.cardsIn(seat)} cards'
                                 : '0 won · 0 cards',
                             maxLines: 1,
                             overflow: TextOverflow.fade,
@@ -2342,9 +2342,7 @@ class HomePageState extends State<HomePage>
   Widget? _revealedView(int seat, {double height = 40}) {
     final c = _round;
     final card = c.revealed[seat];
-    if (card == null || !c.hasCards || !c.hands[seat].contains(card)) {
-      return null;
-    }
+    if (card == null || !c.hasCards || !c.holds(seat, card)) return null;
     // High contrast: framed in the player's colour with dark lines, and
     // what was said about it on a dark tag.
     return Column(
