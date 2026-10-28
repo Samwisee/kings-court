@@ -50,6 +50,7 @@ class CrowningScene extends StatelessWidget {
       animation: animation,
       builder: (context, _) {
         final t = animation.value;
+        final startSize = this.startSize;
         final fly = Curves.easeInOutCubic
             .transform(clampD(t / 0.6, 0, 1));
         final land = clampD((t - 0.6) / 0.4, 0, 1);
