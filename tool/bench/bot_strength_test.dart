@@ -10,6 +10,8 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
+import 'package:kings_court/engine/cards.dart';
+import 'package:kings_court/engine/match.dart';
 import 'package:kings_court/engine/sampling.dart';
 
 import '../balance/play_round.dart';
@@ -32,25 +34,25 @@ void main() {
           final bot = Bot(Random(7))
             ..budget = 900
             ..omniscient = omniscient;
+          // At some fair plays made after a card was shown: the same
+          // decision with the shown cards forgotten, and (for comparison)
+          // the same decision thought through again.
+          void check(MatchState s, int seat, PlayingCard card) {
+            if (s.revealed.isEmpty) return;
+            afterShow++;
+            final forgot = worldWith(s, s.hands)
+              ..revealed = <int, PlayingCard>{}
+              ..revealHint = <int, String>{};
+            final seed = 100 + afterShow;
+            final a = (Bot(Random(seed))..budget = 900).choosePlay(s, seat);
+            final b = (Bot(Random(seed))..budget = 900).choosePlay(forgot, seat);
+            if (a != b) changed++;
+            final c = (Bot(Random(seed + 1))..budget = 900).choosePlay(s, seat);
+            if (a != c) noise++;
+          }
+
           final (won, _, _) = playRound(players, target, rand, bot,
-              onPlay: omniscient || i % 5 != 0
-                  ? null
-                  : (s, seat, card) {
-                      if (s.revealed.isEmpty) return;
-                      // The same decision with the shown cards forgotten.
-                      afterShow++;
-                      final forgot = worldWith(s, s.hands)
-                        ..revealed = {}
-                        ..revealHint = {};
-                      final seed = 100 + afterShow;
-                      final a = (Bot(Random(seed))..budget = 900).choosePlay(s, seat);
-                      final b = (Bot(Random(seed))..budget = 900).choosePlay(forgot, seat);
-                      if (a != b) changed++;
-                      // How often the same decision differs just from
-                      // thinking again, for comparison.
-                      final c = (Bot(Random(seed + 1))..budget = 900).choosePlay(s, seat);
-                      if (a != c) noise++;
-                    });
+              onPlay: omniscient || i % 5 != 0 ? null : check);
           if (won) wins++;
         }
         sw.stop();
