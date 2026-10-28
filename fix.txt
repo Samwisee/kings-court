@@ -1,0 +1,12 @@
+Computing fixes in kings-court...
+Applying fixes...
+
+lib/ui/setup/setup_panel.dart
+  unused_import - 1 fix
+
+lib/ui/welcome/welcome.dart
+  unused_import - 1 fix
+
+2 fixes made in 2 files.
+Computing fixes in kings-court...
+Nothing to fix!
