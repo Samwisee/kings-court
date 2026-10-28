@@ -62,7 +62,8 @@ void main() {
       expect(d.seat, turn);
       expect(c.legalFor(turn), contains(d.card));
     }
-    // On your turn, the table waits.
-    expect(await botDecision(g, c, bot, you: turn), isNull);
+    // On your turn, the table waits for you (a courtier may still show a
+    // card between tricks).
+    expect(await botDecision(g, c, bot, you: turn), anyOf(isNull, isA<BotShows>()));
   });
 }

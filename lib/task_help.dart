@@ -172,6 +172,8 @@ String explainTask(String d) {
 }
 
 const _special = <String, String>{
+  'Win all four Aces':
+      'Win every Ace: the A♥, A♦, A♠ and A♣ must all end up in tricks you win. Aces are the lowest cards, so they fall when their suit is led and their holder has nothing else, or are thrown on tricks their holder can’t follow. If anyone else wins one, the task fails.',
   'Win more tricks than anyone else':
       'At the end of the round, count everyone’s tricks: you must have more than any other single player. A tie doesn’t count.',
   'Win more tricks than the rest of the court put together':

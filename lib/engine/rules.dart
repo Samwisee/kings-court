@@ -502,6 +502,7 @@ String? taskProgress(String d, RoundView v, int owner, int? x) {
     final mine = v.won(owner).toSet();
     return of(named.where(mine.contains).length, named.length);
   }
+  if (d == 'Win all four Aces') return of(won((c) => rank(c, 1)), 4);
   final allFour = RegExp(r'^Win all four (\d)s$').firstMatch(d);
   if (allFour != null) {
     final r = int.parse(allFour.group(1)!);

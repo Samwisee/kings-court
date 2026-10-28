@@ -636,8 +636,6 @@ const Map<String, String> renamedTasks = {
       "Win exactly one Court Card",
   "Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)":
       "Win exactly two Court Cards",
-  "Don't win any ♣ cards":
-      "Don't win any ♥ cards",
   "Don't win any ♦ or ♣ cards":
       "Don't win any ♦ or ♠ cards",
   "Win exactly X tricks, announced to everyone":
