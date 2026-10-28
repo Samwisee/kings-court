@@ -87,19 +87,55 @@ class Bot {
   PlayingCard choosePlay(MatchState s, int seat) {
     final legal = s.legalFor(seat);
     if (legal.length == 1) return legal.first;
-    final per = max(20, budget ~/ legal.length);
     final assigned = {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
-    var best = legal.first;
+    return _focus(legal, budget,
+        (card, n) => _scoreOf(s, assigned, n, first: (seat, card)));
+  }
+
+  /// Whether the playouts are spent in two rounds: a look at every option,
+  /// then the rest on the few that looked best (so the close calls get
+  /// the most thought). Off, every option gets an equal share.
+  bool focus = true;
+
+  /// Picks the best of [options] with [total] playouts, by [score] (the
+  /// average of n playouts), spending them where they tell the most.
+  T _focus<T>(List<T> options, int total, double Function(T option, int n) score) {
+    if (!focus) {
+      final per = max(20, total ~/ options.length);
+      T best = options.first;
+      var bestScore = -1.0;
+      for (final o in options) {
+        final v = score(o, per) + rand.nextDouble() * 0.01;
+        if (v > bestScore) {
+          bestScore = v;
+          best = o;
+        }
+      }
+      return best;
+    }
+    // First look: a share of the budget over every option.
+    final first = max(16, (total * 0.4) ~/ options.length);
+    final scores = <T, (double, int)>{
+      for (final o in options) o: (score(o, first), first)
+    };
+    // The best few get the rest, and their scores are pooled.
+    final keep = max(2, (options.length / 3).ceil());
+    final top = options.toList()
+      ..sort((a, b) => scores[b]!.$1.compareTo(scores[a]!.$1));
+    final finalists = top.take(keep).toList();
+    final more = max(16, (total - first * options.length) ~/ finalists.length);
+    T best = finalists.first;
     var bestScore = -1.0;
-    for (final card in legal) {
-      final score =
-          _scoreOf(s, assigned, per, first: (seat, card)) + rand.nextDouble() * 0.01;
-      if (score > bestScore) {
-        bestScore = score;
-        best = card;
+    for (final o in finalists) {
+      final (s1, n1) = scores[o]!;
+      final s2 = score(o, more);
+      final pooled = (s1 * n1 + s2 * more) / (n1 + more) + rand.nextDouble() * 0.01;
+      if (pooled > bestScore) {
+        bestScore = pooled;
+        best = o;
       }
     }
     return best;
@@ -315,19 +351,49 @@ class Bot {
     final legal = s.legalFor(seat);
     if (legal.length == 1) return legal.first;
     _begin();
-    final per = max(20, budget ~/ legal.length);
     final assigned = {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
-    var best = legal.first;
+    return _focusAsync(legal, budget,
+        (card, n) => _scoreAsync(s, assigned, n, first: (seat, card)));
+  }
+
+  /// [_focus], a slice at a time.
+  Future<T> _focusAsync<T>(List<T> options, int total,
+      Future<double> Function(T option, int n) score) async {
+    if (!focus) {
+      final per = max(20, total ~/ options.length);
+      T best = options.first;
+      var bestScore = -1.0;
+      for (final o in options) {
+        final v = await score(o, per) + rand.nextDouble() * 0.01;
+        if (v > bestScore) {
+          bestScore = v;
+          best = o;
+        }
+      }
+      return best;
+    }
+    final first = max(16, (total * 0.4) ~/ options.length);
+    final scores = <T, (double, int)>{};
+    for (final o in options) {
+      scores[o] = (await score(o, first), first);
+    }
+    final keep = max(2, (options.length / 3).ceil());
+    final top = options.toList()
+      ..sort((a, b) => scores[b]!.$1.compareTo(scores[a]!.$1));
+    final finalists = top.take(keep).toList();
+    final more = max(16, (total - first * options.length) ~/ finalists.length);
+    T best = finalists.first;
     var bestScore = -1.0;
-    for (final card in legal) {
-      final score = await _scoreAsync(s, assigned, per, first: (seat, card)) +
-          rand.nextDouble() * 0.01;
-      if (score > bestScore) {
-        bestScore = score;
-        best = card;
+    for (final o in finalists) {
+      final (s1, n1) = scores[o]!;
+      final s2 = await score(o, more);
+      final pooled = (s1 * n1 + s2 * more) / (n1 + more) + rand.nextDouble() * 0.01;
+      if (pooled > bestScore) {
+        bestScore = pooled;
+        best = o;
       }
     }
     return best;
