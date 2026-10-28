@@ -7,6 +7,8 @@ library;
 import 'dart:math';
 
 import 'cards.dart';
+import 'conflicts.dart';
+import 'deal_mix.dart';
 import 'match.dart';
 import 'rules.dart';
 
@@ -16,6 +18,17 @@ class Bot {
 
   /// Playouts per decision, shared between the options.
   int budget = 900;
+
+  /// Whether playouts are guided: in each one, every player mostly plays
+  /// for their own tasks (winning a trick that holds a card they need,
+  /// ducking one that holds a card they must avoid), with some play left
+  /// random. Off, every playout is uniformly random, as the first bots
+  /// were. Guided playouts look further ahead for the same cost.
+  bool guided = true;
+
+  /// How often a guided player follows their task rather than playing at
+  /// random (the rest keeps the playouts varied).
+  double guidance = 0.75;
 
   /// The task [seat] should pick.
   int choosePick(MatchState s, int seat) {
@@ -52,9 +65,10 @@ class Bot {
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
     final inPlay = s.inPlay;
+    final guide = _guideFor(s, assigned);
     for (int n = 0; n < budget; n++) {
       final sim = _Sim.from(s);
-      sim.playOut(rand);
+      sim.playOut(rand, guide: guide);
       // Count this playout if everything else would succeed.
       final v = sim.view(s, inPlay);
       all[v.tricksWon(seat)]++;
@@ -102,16 +116,23 @@ class Bot {
       {(int, PlayingCard)? first, bool freeX = false}) {
     double total = 0;
     final inPlay = s.inPlay;
+    final guide = _guideFor(s, assigned);
     for (int n = 0; n < playouts; n++) {
-      total += _playout(s, assigned, inPlay, first, freeX);
+      total += _playout(s, assigned, inPlay, first, freeX, guide);
     }
     return total / playouts;
   }
 
+  /// What each seat plays for in guided playouts, from the tasks they
+  /// hold (null when playouts are random).
+  _Guide? _guideFor(MatchState s, Map<int, int> assigned) =>
+      guided ? _Guide.of(s, assigned, guidance) : null;
+
   /// One random playout's value: 1 if every assigned task is done, a
   /// little for each one done otherwise.
   double _playout(MatchState s, Map<int, int> assigned,
-      Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX) {
+      Set<PlayingCard> inPlay, (int, PlayingCard)? first, bool freeX,
+      [_Guide? guide]) {
     final sim = _Sim.from(s);
     var lostNow = false;
     if (first != null) {
@@ -119,7 +140,7 @@ class Bot {
       // Finish this trick first: a card that loses a task in the trick it's
       // played in (the King led by someone who may win only the last trick)
       // is a blunder, whatever might happen later.
-      sim.playOut(rand, until: s.tricks.length + 1);
+      sim.playOut(rand, until: s.tricks.length + 1, guide: guide);
       final now = sim.view(s, inPlay);
       for (final e in assigned.entries) {
         final t = s.tasks[e.key];
@@ -131,7 +152,7 @@ class Bot {
         }
       }
     }
-    sim.playOut(rand);
+    sim.playOut(rand, guide: guide);
     final v = sim.view(s, inPlay);
     int done = 0;
     for (final e in assigned.entries) {
@@ -244,8 +265,9 @@ class Bot {
       int playouts, {(int, PlayingCard)? first, bool freeX = false}) async {
     double total = 0;
     final inPlay = s.inPlay;
+    final guide = _guideFor(s, assigned);
     for (int n = 0; n < playouts; n++) {
-      total += _playout(s, assigned, inPlay, first, freeX);
+      total += _playout(s, assigned, inPlay, first, freeX, guide);
       final pause = _breathe();
       if (pause != null) await pause;
     }
@@ -325,10 +347,11 @@ class Bot {
       for (final e in assigned.entries)
         if (e.key != task && !needsX(s.tasks[e.key].description)) e
     ];
+    final guide = _guideFor(s, assigned);
     _begin();
     for (int n = 0; n < budget; n++) {
       final sim = _Sim.from(s);
-      sim.playOut(rand);
+      sim.playOut(rand, guide: guide);
       final v = sim.view(s, inPlay);
       all[v.tricksWon(seat)]++;
       if (others.every((e) =>
@@ -381,15 +404,27 @@ class _Sim {
     }
   }
 
-  /// Plays on at random to the end of the round, or until [until] tricks
-  /// have been played.
-  void playOut(Random rand, {int? until}) {
+  /// Plays on to the end of the round, or until [until] tricks have been
+  /// played: at random, or mostly for each player's tasks with a [guide].
+  void playOut(Random rand, {int? until, _Guide? guide}) {
     while (tricks.length < (until ?? totalTricks)) {
       final seat = turn;
       final legal = legalPlays(hands[seat], cards.isEmpty ? null : cards.first);
       if (legal.isEmpty) break;
-      play(seat, legal[rand.nextInt(legal.length)]);
+      final chosen = guide != null && rand.nextDouble() < guide.strength
+          ? guide.choose(this, seat, legal, rand)
+          : legal[rand.nextInt(legal.length)];
+      play(seat, chosen);
     }
+  }
+
+  /// Whether [card], played now by the next player, would be winning the
+  /// trick so far.
+  bool wins(PlayingCard card) {
+    if (cards.isEmpty) return true;
+    final b = cards[winningPlay(cards)];
+    if (card.isCourt) return !b.isCourt || card.rank > b.rank;
+    return !b.isCourt && card.suit == cards.first.suit && card.rank > b.rank;
   }
 
   RoundView view(MatchState s, Set<PlayingCard> inPlay) => RoundView(
@@ -398,4 +433,94 @@ class _Sim {
       tricks: tricks,
       totalTricks: totalTricks,
       inPlay: inPlay);
+}
+
+/// What each seat plays for in a guided playout, from the tasks they hold:
+/// the cards they need to win, the cards they must not win, and whether
+/// they want tricks at all.
+class _Guide {
+  _Guide(this.need, this.avoid, this.temper, this.strength);
+
+  /// Cards each seat must win.
+  final List<Set<PlayingCard>> need;
+
+  /// Cards each seat must not win (null when nothing is forbidden).
+  final List<bool Function(PlayingCard)?> avoid;
+
+  /// Whether each seat wants tricks (+1), wants to avoid them (-1), or
+  /// doesn't mind (0).
+  final List<int> temper;
+
+  /// How often a player follows the guide rather than playing at random.
+  final double strength;
+
+  factory _Guide.of(MatchState s, Map<int, int> assigned, double strength) {
+    final need = [for (int i = 0; i < s.players; i++) <PlayingCard>{}];
+    final avoids = [for (int i = 0; i < s.players; i++) <bool Function(PlayingCard)>[]];
+    final temper = List.filled(s.players, 0);
+    for (final e in assigned.entries) {
+      final t = s.tasks[e.key];
+      if (t.verdict != Verdict.pending) continue;
+      final seat = e.value;
+      final d = t.description;
+      final p = profileOf(d);
+      need[seat].addAll(p.cards);
+      if (p.forbidCard != null) avoids[seat].add(p.forbidCard!);
+      switch (tierOf(d)) {
+        case TaskTier.avoid:
+          temper[seat] -= 1;
+        case TaskTier.capture:
+        case TaskTier.trick:
+          temper[seat] += 1;
+        case TaskTier.race:
+          temper[seat] += d.contains('fewer') ? -1 : 1;
+        case TaskTier.precise:
+          break;
+      }
+    }
+    return _Guide(need, [
+      for (final a in avoids)
+        a.isEmpty ? null : (PlayingCard c) => a.any((f) => f(c))
+    ], [for (final t in temper) t.sign], strength);
+  }
+
+  /// The card [seat] plays, following what they hold.
+  PlayingCard choose(_Sim sim, int seat, List<PlayingCard> legal, Random rand) {
+    PlayingCard lowest(Iterable<PlayingCard> cs) =>
+        cs.reduce((a, b) => _value(a) <= _value(b) ? a : b);
+    PlayingCard highest(Iterable<PlayingCard> cs) =>
+        cs.reduce((a, b) => _value(a) >= _value(b) ? a : b);
+    final winners = [for (final c in legal) if (sim.wins(c)) c];
+    final losers = [for (final c in legal) if (!sim.wins(c)) c];
+    final onTable = sim.cards;
+    // A card they need is on the table: take the trick as cheaply as it
+    // can be taken.
+    if (onTable.any(need[seat].contains) && winners.isNotEmpty) {
+      return lowest(winners);
+    }
+    // A card they must not win is on the table: stay under it, throwing
+    // the biggest card that still loses.
+    final forbid = avoid[seat];
+    if (forbid != null && onTable.any(forbid)) {
+      return losers.isNotEmpty ? highest(losers) : lowest(legal);
+    }
+    // Leading: those who want tricks lead high, those who don't lead low,
+    // and a card someone else needs is never led by its holder's rivals
+    // (nothing to be done about it; leave it to chance).
+    if (onTable.isEmpty) {
+      if (temper[seat] > 0) return highest(legal);
+      if (temper[seat] < 0) return lowest(legal);
+      return legal[rand.nextInt(legal.length)];
+    }
+    if (temper[seat] > 0) {
+      return winners.isNotEmpty ? lowest(winners) : lowest(legal);
+    }
+    if (temper[seat] < 0) {
+      return losers.isNotEmpty ? highest(losers) : lowest(legal);
+    }
+    return legal[rand.nextInt(legal.length)];
+  }
+
+  /// A card's strength: Court Cards above every plain card.
+  static int _value(PlayingCard c) => c.isCourt ? 100 + c.rank : c.rank;
 }
