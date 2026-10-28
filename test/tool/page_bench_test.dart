@@ -6,7 +6,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/main.dart';
+import 'package:kings_court/ui/app.dart';
+import 'package:kings_court/ui/table_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

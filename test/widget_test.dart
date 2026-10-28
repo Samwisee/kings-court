@@ -11,7 +11,6 @@ import 'package:kings_court/engine/contest.dart';
 import 'package:kings_court/engine/decrees.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/rules.dart';
-import 'package:kings_court/main.dart';
 import 'package:kings_court/models.dart';
 import 'package:kings_court/modes/chronicle/chapters.dart';
 import 'package:kings_court/modes/dynasty/data/dilemmas.dart';
@@ -21,6 +20,8 @@ import 'package:kings_court/modes/free/free_play.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/play/contest_table.dart';
 import 'package:kings_court/sfx.dart';
+import 'package:kings_court/ui/app.dart';
+import 'package:kings_court/ui/table_page.dart';
 import 'package:kings_court/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

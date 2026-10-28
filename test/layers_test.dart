@@ -40,12 +40,7 @@ const legacy = {
 const legacyFolders = {'play': 'ui'};
 
 /// Imports pointing the wrong way today, and the step that fixes them.
-const knownDebts = {
-  // The controller is Flutter and belongs in ui/ (step 7).
-  'lib/game/controller.dart → package:flutter/foundation.dart',
-  'lib/game/controller.dart → package:shared_preferences/shared_preferences.dart',
-  'lib/game/controller.dart → lib/net/table_link.dart',
-};
+const knownDebts = <String>{};
 
 /// Packages that mean Flutter or a plugin.
 const flutterPackages = [

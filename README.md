@@ -44,9 +44,11 @@ Commit messages are one plain sentence of what changed for the player.
 
 ```
 lib/
-  main.dart          The app and its one page, the table (HomePage).
-  game/              GameController: the game, its table link, and saving;
-                     bot_turn.dart: what a courtier does on their turn.
+  main.dart          runApp.
+  ui/app.dart        The app; ui/table_page.dart its one page, the table (HomePage).
+  game/              The game around the engine: dealing, the host and its
+                     courtiers, bot_turn.dart (what a courtier does on their turn).
+  ui/controller.dart GameController: the game, its table link, and saving.
   widgets.dart       Shared UI used on every screen: exports lib/ui/widgets/...
   ui/widgets/        ...one family per library.
   ui/overlays/       What lies over the table: the outcome card, the crowning,
@@ -77,14 +79,14 @@ tool/                Screenshots, balance, the print pipeline, CI helpers.
 web/                 The page shell: loading crown, PWA manifest, icons.
 ```
 
-### main.dart and the table's pieces
+### table_page.dart and the table's pieces
 
-`HomePage` is the whole game on one page: the front page, setup, the table
-(on screen or at a real table), menus, the tutorial flow and Dynasty's
-scenes. Its state, `_HomePageState`, is still one big class (about 7,000
-lines). Flutter state can't be split across files without rewriting it, so
-its sections are marked with `// ----` headers. Everything that isn't that
-state is a library of its own under `lib/ui/`:
+`HomePage` (`lib/ui/table_page.dart`) is the whole game on one page: the
+front page, setup, the table (on screen or at a real table), menus, the
+tutorial flow and the end of each round. Its state, `HomePageState`, is
+still one big class (about 3,900 lines), its sections marked with `// ----`
+headers. Everything that isn't that state is a library of its own under
+`lib/ui/`:
 
 | File | What's in it |
 |---|---|
@@ -102,9 +104,9 @@ state is a library of its own under `lib/ui/`:
 | `ui/setup/transitions.dart` | How setup pages turn. |
 | `ui/setup/saves.dart` | Saved games, one per way to play. |
 
-### lib/game: the controller
+### lib/ui/controller.dart: the controller
 
-`GameController` (`lib/game/controller.dart`) is a `ChangeNotifier` that
+`GameController` (`lib/ui/controller.dart`) is a `ChangeNotifier` that
 owns the `GameState` (and its `MatchState`), the `TableLink` every move
 goes through, and saving. The page reads `game` from it and draws.
 
