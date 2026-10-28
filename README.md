@@ -251,8 +251,8 @@ The engine was built for this:
   playouts, so thinking gives the screen just the frames it needs.
 - **Measured** (`tool/bench`, published as `bench.txt` on the `shots`
   branch with every screenshot run): the courtiers decide in 25–65 ms in
-  Chrome (900 playouts) and 5–30 ms on the VM, far under the 700 ms they
-  wait anyway, so the playout budget could go up for smarter courtiers.
+  Chrome (900 playouts, about twice that now the playouts are guided)
+  and 5–30 ms on the VM, far under the 700 ms they wait anyway.
   A whole-page rebuild mid-round costs the framework about 14 ms in the
   debug test harness, nearly all of it building and laying out the hand
   and the table inside their `LayoutBuilder`s (release on a phone is

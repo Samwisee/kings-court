@@ -103,7 +103,7 @@ vs straight, with vs without a part of the page), not across runs.
 | `lib/engine/rules.dart` | `taskRules`: every task as a function of the tricks → `Verdict` (pending/done/failed). |
 | `lib/engine/conflicts.dart` | Which tasks clash; `playableWith`; timing (for seals). |
 | `lib/engine/match.dart` | `MatchState` (on-screen round: hands, tricks, phase) and `MatchAction`s, all JSON-able. Online play builds on this. |
-| `lib/engine/bot.dart` | Cooperative bots using random playouts (`choosePickAsync`, `choosePlayAsync`). |
+| `lib/engine/bot.dart` | Cooperative bots: each option is scored by many imagined rounds (`choosePickAsync`, `choosePlayAsync`). The imagined rounds are *guided* (`_Guide`): every player in them mostly plays for their own tasks and feeds teammates the cards they need; and the playouts are *focused*: a look at every option, then the rest on the few that looked best. `tool/bench/bot_strength_test.dart` plays the first bots against today's on the same deals. |
 | `lib/engine/contest.dart`, `lib/play/contest_table.dart` | The *Trial of Hearts*: a hearts round that settles a divided court in Dynasty. |
 | `lib/courtiers.dart` | `Courtier` enum (titles, shapes, powers), Dynasty `Dilemma`s and `Choice`/`Effect`s, entrances and exits, and every line courtiers say (chatter, retorts, cheers, task quips). |
 | `lib/story.dart` | Tidings (news that opens a round), story arcs with flags, the main Karsk campaign from harvest to war. |
