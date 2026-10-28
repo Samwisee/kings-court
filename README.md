@@ -47,7 +47,6 @@ lib/
   main.dart          The app and its one page, the table (HomePage).
   game/              GameController: the game, its table link, and saving;
                      bot_turn.dart: what a courtier does on their turn.
-  home/              The table's pieces, one family per file (part of main.dart).
   widgets.dart       Shared UI used on every screen: exports lib/ui/widgets/...
   ui/widgets/        ...one family per library.
   ui/overlays/       What lies over the table: the outcome card, the crowning,
@@ -78,21 +77,21 @@ tool/                Screenshots, balance, the print pipeline, CI helpers.
 web/                 The page shell: loading crown, PWA manifest, icons.
 ```
 
-### main.dart and lib/home
+### main.dart and the table's pieces
 
 `HomePage` is the whole game on one page: the front page, setup, the table
 (on screen or at a real table), menus, the tutorial flow and Dynasty's
 scenes. Its state, `_HomePageState`, is still one big class (about 7,000
 lines). Flutter state can't be split across files without rewriting it, so
 its sections are marked with `// ----` headers. Everything that isn't that
-state is a library of its own (the last few still parts, in `lib/home/`):
+state is a library of its own under `lib/ui/`:
 
 | File | What's in it |
 |---|---|
-| `home/welcome.dart` | The front page's fanned Court Cards and crowned title. |
-| `home/menu.dart` | The gold top-bar buttons and the ornate drop-down menu. |
-| `home/setup.dart` | New game: how, which way to play, players, names, last choices. |
-| `home/chronicle_ui.dart` | The chapter picker. |
+| `ui/welcome/welcome.dart` | The front page's fanned Court Cards and crowned title. |
+| `ui/menu/menu.dart` | The gold top-bar buttons and the ornate drop-down menu. |
+| `ui/setup/setup_panel.dart` | New game: how, which way to play, players, names, last choices. |
+| `ui/setup/chapter_picker.dart` | The chapter picker and crown ratings. |
 | `ui/round_table/geometry.dart` | Where seats, cards and dealt tasks sit on the table. |
 | `ui/tracker/card_tracker.dart` | The card tracker. |
 | `ui/cards/task_chip.dart` | Task cards on the on-screen table, flights, close-up parts. |

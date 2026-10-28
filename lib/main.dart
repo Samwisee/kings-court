@@ -47,6 +47,7 @@ import 'task_help.dart';
 import 'theme.dart';
 import 'ui/cards/mini_card.dart';
 import 'ui/cards/task_chip.dart';
+import 'ui/menu/menu.dart';
 import 'ui/modes/tutorial/coach.dart';
 import 'ui/overlays/crowning.dart';
 import 'ui/overlays/decree.dart';
@@ -55,16 +56,13 @@ import 'ui/overlays/outcome_card.dart';
 import 'ui/overlays/play_flourish.dart';
 import 'ui/round_table/geometry.dart';
 import 'ui/setup/saves.dart';
-import 'ui/setup/transitions.dart';
+import 'ui/setup/setup_panel.dart';
 import 'ui/tracker/card_tracker.dart';
+import 'ui/welcome/welcome.dart';
 import 'ui/widgets/buttons.dart';
 import 'ui/widgets/house_banner.dart';
 import 'widgets.dart';
 
-part 'home/welcome.dart';
-part 'home/menu.dart';
-part 'home/chronicle_ui.dart';
-part 'home/setup.dart';
 
 void main() {
   Analytics.visit();
@@ -238,7 +236,7 @@ class HomePageState extends State<HomePage>
   bool _upright = false;
 
   /// The New Game panel, while it's open.
-  _SetupArgs? _setupArgs;
+  SetupArgs? _setupArgs;
 
   /// Setup opened from Continue: it lists the saved games instead.
   bool _setupContinuing = false;
@@ -2665,7 +2663,7 @@ class HomePageState extends State<HomePage>
                 // Shown on past the row's end, through the margin to the
                 // brass edge.
                 child: ClipRect(
-                clipper: const _ReachRight(10),
+                clipper: const ReachRight(10),
                 child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 clipBehavior: Clip.none,
@@ -3739,7 +3737,7 @@ class HomePageState extends State<HomePage>
   late final AnimationController _coronation = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1500));
 
-  void _startFromSetup(_SetupResult r) {
+  void _startFromSetup(SetupResult r) {
     if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive) {
       _beginFromSetup(r);
       return;
@@ -3760,7 +3758,7 @@ class HomePageState extends State<HomePage>
     });
   }
 
-  void _beginFromSetup(_SetupResult r) {
+  void _beginFromSetup(SetupResult r) {
     setState(() => _setupArgs = null);
     if (r.mode == GameMode.tutorial) {
       _startTutorial();
@@ -3775,7 +3773,7 @@ class HomePageState extends State<HomePage>
 
   Widget _buildSetupPanel() {
     final args = _setupArgs!;
-    return _SetupPanel(
+    return SetupPanel(
       players: game.players,
       playerCount: _setupCount,
       targetPoints: _setupTarget,
@@ -4137,7 +4135,7 @@ class HomePageState extends State<HomePage>
   /// The menu on the right: the rules, the Chronicle and sound.
   /// One line of the menu: a gold icon and a regal title.
   /// A menu entry; [on] adds a tick box for a setting.
-  _MenuEntry _menuItem(String value, IconData icon, String title, {bool? on}) =>
+  MenuEntry _menuItem(String value, IconData icon, String title, {bool? on}) =>
       (value: value, icon: icon, title: title, on: on);
 
   bool _menuOpen = false;
@@ -4145,10 +4143,10 @@ class HomePageState extends State<HomePage>
   /// The menu button: its bars fold into a cross while the menu is open.
   Widget _buildMenu() => Tooltip(
         message: 'Menu',
-        child: _GoldBar(
+        child: GoldBar(
           onTap: _openMenu,
           semanticLabel: 'Menu',
-          child: _OrnateMenuIcon(open: _menuOpen),
+          child: OrnateMenuIcon(open: _menuOpen),
         ),
       );
 
@@ -4163,7 +4161,7 @@ class HomePageState extends State<HomePage>
       transitionDuration: const Duration(milliseconds: 260),
       // Settings switch in place and the menu stays open; anything that
       // goes somewhere closes it.
-      pageBuilder: (context, _, __) => _OrnateMenu(
+      pageBuilder: (context, _, __) => OrnateMenu(
         entries: _menuEntries,
         onToggle: _onMenuChoice,
       ),
@@ -4242,7 +4240,7 @@ class HomePageState extends State<HomePage>
         }
   }
 
-  List<_MenuEntry> _menuEntries() => [
+  List<MenuEntry> _menuEntries() => [
         if ((_inGame || _saves.isNotEmpty) && _setupArgs == null)
           _menuItem('new', Icons.group_add_outlined, 'New game'),
         if (_inGame && _setupArgs == null)
@@ -4373,7 +4371,7 @@ class HomePageState extends State<HomePage>
           padding: const EdgeInsets.only(top: 8, right: 10),
           child: Tooltip(
             message: 'Points target',
-            child: _GoldBar(
+            child: GoldBar(
               onTap: _showPointsDialog,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -4711,7 +4709,7 @@ class HomePageState extends State<HomePage>
           fit: BoxFit.scaleDown,
           child: SizedBox(
             width: math.max(0.0, clampD(c.maxWidth, 0, 640) - 48),
-            child: _WelcomeIntro(
+            child: WelcomeIntro(
               crownSize: clampD(c.maxWidth * 0.42, 120, 270),
               buttons: [
                 // Games in progress first: carry on where you left off.

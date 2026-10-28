@@ -37,7 +37,7 @@ const legacy = {
 };
 
 /// Old folders that are all UI.
-const legacyFolders = {'home': 'ui', 'play': 'ui'};
+const legacyFolders = {'play': 'ui'};
 
 /// Imports pointing the wrong way today, and the step that fixes them.
 const knownDebts = {

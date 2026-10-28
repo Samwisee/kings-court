@@ -1,11 +1,25 @@
-// Setting up a new game: how to play, the way to play, players, names and the last choices.
-part of '../main.dart';
+/// Setting up a new game: how to play, the way to play, players, names and the last choices.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../models.dart';
+import '../../modes/chronicle/chapters.dart';
+import '../../sfx.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
+import '../menu/menu.dart';
+import 'chapter_picker.dart';
+import 'saves.dart';
+import 'transitions.dart';
 
 /// What the New Game panel starts with.
-typedef _SetupArgs = ({GameMode? mode, int? chapter});
+typedef SetupArgs = ({GameMode? mode, int? chapter});
 
 /// The settings a New Game panel hands back.
-typedef _SetupResult = ({
+typedef SetupResult = ({
   int count,
   int target,
   List<String> names,
@@ -20,8 +34,8 @@ typedef _SetupResult = ({
 /// play, how many players, who they are, then the points (or chapter, or
 /// the start of the story). Each step fades in as the last fades away, so
 /// the table never needs to scroll.
-class _SetupPanel extends StatefulWidget {
-  const _SetupPanel({
+class SetupPanel extends StatefulWidget {
+  const SetupPanel({
     required this.players,
     required this.playerCount,
     required this.targetPoints,
@@ -59,13 +73,13 @@ class _SetupPanel extends StatefulWidget {
   final ChronicleProgress progress;
   final bool canCancel;
   final VoidCallback onCancel;
-  final ValueChanged<_SetupResult> onStart;
+  final ValueChanged<SetupResult> onStart;
 
   /// Start with on-screen cards switched on.
   final bool digital;
 
   @override
-  State<_SetupPanel> createState() => _SetupPanelState();
+  State<SetupPanel> createState() => _SetupPanelState();
 }
 
 /// What each way to play is about, shown on the first step.
@@ -92,7 +106,7 @@ const _modeInfo = {
   ),
 };
 
-class _SetupPanelState extends State<_SetupPanel> {
+class _SetupPanelState extends State<SetupPanel> {
   late int count =
       widget.digital && widget.playerCount < 3 ? 3 : widget.playerCount;
   late int target = widget.targetPoints.clamp(1, maxTarget);
@@ -458,7 +472,7 @@ class _SetupPanelState extends State<_SetupPanel> {
           children: [
             const Text('Which chapter?', style: _heading),
             const SizedBox(height: 14),
-            _ChapterPicker(
+            ChapterPicker(
               progress: widget.progress,
               chapter: chapter,
               onChanged: (c) => setState(() => chapter = c),
@@ -549,7 +563,7 @@ class _SetupPanelState extends State<_SetupPanel> {
     // the buttons fixed in the bottom corners so they never move. Every
     // word on the felt has the front page's soft shadow.
     return DefaultTextStyle.merge(
-      style: const TextStyle(shadows: _feltShadow),
+      style: const TextStyle(shadows: feltShadow),
       child: SizedBox.expand(
       child: Padding(
         // Clear of the table's edge and brass inlay all round.

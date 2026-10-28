@@ -1,11 +1,17 @@
-// The Chronicle’s chapter picker and its crown ratings.
-part of '../main.dart';
+/// The Chronicle’s chapter picker and its crown ratings.
+library;
+
+import 'package:flutter/material.dart';
+
+import '../../modes/chronicle/chapters.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 /// The rules, available from the welcome screen and during a game.
 /// Chooses a Chronicle chapter in the setup dialog: any chapter up to the
 /// first one not yet beaten.
-class _ChapterPicker extends StatelessWidget {
-  const _ChapterPicker(
+class ChapterPicker extends StatelessWidget {
+  const ChapterPicker(
       {required this.progress, required this.chapter, required this.onChanged});
   final ChronicleProgress progress;
   final int chapter;

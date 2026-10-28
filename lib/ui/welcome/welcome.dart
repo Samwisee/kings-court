@@ -1,21 +1,31 @@
-// The front page: the Court Cards fanning out, the crowned title and its sparks.
-part of '../main.dart';
+/// The front page: the Court Cards fanning out, the crowned title and its sparks.
+library;
+
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+
+import '../../engine/cards.dart';
+import '../../play/card_view.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
+import '../overlays/crowning.dart';
 
 /// The opening flourish on the front page: the four Court Cards rise and
 /// fan out wide, with a burst of sparks. It plays once (about two seconds)
 /// and then holds still.
-class _WelcomeIntro extends StatefulWidget {
-  const _WelcomeIntro({required this.crownSize, required this.buttons});
+class WelcomeIntro extends StatefulWidget {
+  const WelcomeIntro({required this.crownSize, required this.buttons});
   final double crownSize;
 
   /// The front page's buttons, which fade in one after another.
   final List<Widget> buttons;
 
   @override
-  State<_WelcomeIntro> createState() => _WelcomeIntroState();
+  State<WelcomeIntro> createState() => _WelcomeIntroState();
 }
 
-class _WelcomeIntroState extends State<_WelcomeIntro> {
+class _WelcomeIntroState extends State<WelcomeIntro> {
   /// The very first time, the flourish waits for the loading crown to fade
   /// away, so it isn't spent behind it.
   static bool _firstShow = true;
@@ -125,7 +135,7 @@ class _WelcomeIntroState extends State<_WelcomeIntro> {
               child: const Text(
                   'A cooperative trick-taking game for 2 to 6 players.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.white70, shadows: _feltShadow)),
+                  style: TextStyle(fontSize: 18, color: Colors.white70, shadows: feltShadow)),
             ),
             const SizedBox(height: 36),
             SizedBox(
@@ -156,15 +166,15 @@ class _WelcomeIntroState extends State<_WelcomeIntro> {
 }
 
 /// A clip [extra] wider on the right than the box it wraps.
-class _ReachRight extends CustomClipper<Rect> {
-  const _ReachRight(this.extra);
+class ReachRight extends CustomClipper<Rect> {
+  const ReachRight(this.extra);
   final double extra;
 
   @override
   Rect getClip(Size size) => Rect.fromLTRB(0, -40, size.width + extra, size.height + 40);
 
   @override
-  bool shouldReclip(_ReachRight old) => old.extra != extra;
+  bool shouldReclip(ReachRight old) => old.extra != extra;
 }
 
 /// The game's name, with a little crown over the I of King's.

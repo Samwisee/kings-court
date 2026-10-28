@@ -1,19 +1,26 @@
-// The top bar’s gold buttons and the ornate menu that drops down from it.
-part of '../main.dart';
+/// The top bar’s gold buttons and the ornate menu that drops down from it.
+library;
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+import '../../theme.dart';
+import '../../widgets.dart';
 
 /// A button in the top corner, flat on the felt: just its gold, pressing
 /// in when tapped.
-class _GoldBar extends StatefulWidget {
-  const _GoldBar({required this.onTap, required this.child, this.semanticLabel});
+class GoldBar extends StatefulWidget {
+  const GoldBar({required this.onTap, required this.child, this.semanticLabel});
   final VoidCallback onTap;
   final Widget child;
   final String? semanticLabel;
 
   @override
-  State<_GoldBar> createState() => _GoldBarState();
+  State<GoldBar> createState() => _GoldBarState();
 }
 
-class _GoldBarState extends State<_GoldBar> {
+class _GoldBarState extends State<GoldBar> {
   bool _down = false;
 
   @override
@@ -102,20 +109,20 @@ class OrnateBorder extends ShapeBorder {
   ShapeBorder scale(double t) => OrnateBorder(radius: radius * t, gems: gems);
 }
 
-typedef _MenuEntry = ({String value, IconData icon, String title, bool? on});
+typedef MenuEntry = ({String value, IconData icon, String title, bool? on});
 
 /// The menu, on the court's ornate panel: a medallion over the top, each
 /// line with a gold icon, divided by fine gold rules.
-class _OrnateMenu extends StatefulWidget {
-  const _OrnateMenu({required this.entries, required this.onToggle});
-  final List<_MenuEntry> Function() entries;
+class OrnateMenu extends StatefulWidget {
+  const OrnateMenu({required this.entries, required this.onToggle});
+  final List<MenuEntry> Function() entries;
   final void Function(String) onToggle;
 
   @override
-  State<_OrnateMenu> createState() => _OrnateMenuState();
+  State<OrnateMenu> createState() => _OrnateMenuState();
 }
 
-class _OrnateMenuState extends State<_OrnateMenu> {
+class _OrnateMenuState extends State<OrnateMenu> {
   /// Settings, which change in place without closing the menu.
   static const _toggles = {'sound', 'suits', 'upright', 'keys'};
 
@@ -201,8 +208,8 @@ class _OrnateMenuState extends State<_OrnateMenu> {
 /// The menu button: three gold bars, the middle one shorter, each tipped
 /// with a small diamond. While the menu is open the outer bars cross and
 /// the middle one draws in to a single jewel.
-class _OrnateMenuIcon extends StatelessWidget {
-  const _OrnateMenuIcon({this.open = false});
+class OrnateMenuIcon extends StatelessWidget {
+  const OrnateMenuIcon({this.open = false});
   static const size = 30.0;
   final bool open;
 
