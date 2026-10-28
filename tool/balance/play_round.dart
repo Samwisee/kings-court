@@ -19,7 +19,7 @@ import 'package:kings_court/models.dart';
 /// task on the table needs (and that it may show). [onPlay] sees every
 /// card about to be played, for benchmarks.
 (bool, List<String>, List<String>) playRound(int players, int target, Random rand, Bot bot,
-    {void Function(MatchState s, int seat, PlayingCard card)? onPlay}) {
+    {void Function(MatchState s, int seat, PlayingCard card)? onPlay, bool showing = true}) {
   // The seed from [rand], so a seeded run deals the same tasks every time.
   final g = GameState()
     ..seed = rand.nextInt(1 << 30)
@@ -38,7 +38,7 @@ import 'package:kings_court/models.dart';
   s.phase = Phase.picking;
   // A card someone's task needs, shown once a round, as a courtier would.
   void showCards() {
-    if (s.current.isNotEmpty) return;
+    if (!showing || s.current.isNotEmpty) return;
     for (int seat = 0; seat < players; seat++) {
       if (s.revealed.containsKey(seat)) continue;
       for (final card in s.hands[seat]) {

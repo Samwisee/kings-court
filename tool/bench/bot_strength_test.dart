@@ -6,7 +6,8 @@
 ///
 /// STRENGTH_CONFIGS names the bots to compare, comma-separated, each a
 /// colon-separated list of settings: `seeing` or `fair`, `s<samples>`,
-/// `b<budget>`, `unpaired`, `unfocused`, `unguided`. STRENGTH_ROUNDS is
+/// `b<budget>`, `unpaired`, `unfocused`, `unguided`, and `noshow` (nobody
+/// shows a card all round, to see what showing is worth). STRENGTH_ROUNDS is
 /// the rounds per table. Printed as BENCH lines; the Screenshots workflow
 /// runs a short version, the Strength workflow a long one.
 library;
@@ -69,7 +70,8 @@ void main() {
           }
 
           final (won, _, _) = playRound(players, target, rand, bot,
-              onPlay: bot.omniscient || i % 5 != 0 ? null : check);
+              onPlay: bot.omniscient || i % 5 != 0 ? null : check,
+              showing: !config.split(':').contains('noshow'));
           if (won) wins++;
         }
         sw.stop();
