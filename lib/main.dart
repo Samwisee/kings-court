@@ -662,6 +662,10 @@ class _HomePageState extends State<HomePage>
   /// tracker, a key press): rebuilds without saving or waking the game.
   void _ui(VoidCallback fn) => super.setState(fn);
 
+  /// A screen-only change, for the benchmarks.
+  @visibleForTesting
+  void debugUi(VoidCallback fn) => _ui(fn);
+
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);

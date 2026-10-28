@@ -219,8 +219,26 @@ class Bot {
   //
   // The same decisions, done a slice at a time so the screen keeps
   // animating while a bot thinks (on the web everything shares one thread).
+  // A slice is measured in time, not playouts: think for [sliceTime], then
+  // let a frame draw. (Counting playouts meant dozens of hand-backs per
+  // decision, each a few idle milliseconds on the web.)
 
-  static const _slice = 24;
+  /// How long a bot thinks before giving the screen a turn: half a frame.
+  static Duration sliceTime = const Duration(milliseconds: 8);
+
+  /// The current slice's clock (one decision thinks at a time).
+  final _clock = Stopwatch();
+
+  void _begin() => _clock
+    ..reset()
+    ..start();
+
+  /// A frame's turn, when the slice has run its time; null when thinking
+  /// can go straight on (so the hot loop needn't wait on a future).
+  Future<void>? _breathe() {
+    if (_clock.elapsedMicroseconds < sliceTime.inMicroseconds) return null;
+    return Future<void>.delayed(Duration.zero).then((_) => _clock.reset());
+  }
 
   Future<double> _scoreAsync(MatchState s, Map<int, int> assigned,
       int playouts, {(int, PlayingCard)? first, bool freeX = false}) async {
@@ -228,14 +246,17 @@ class Bot {
     final inPlay = s.inPlay;
     for (int n = 0; n < playouts; n++) {
       total += _playout(s, assigned, inPlay, first, freeX);
-      if (n % _slice == _slice - 1) await Future<void>.delayed(Duration.zero);
+      final pause = _breathe();
+      if (pause != null) await pause;
     }
     return total / playouts;
   }
 
   Future<double> scoreAsync(
-          MatchState s, Map<int, int> assigned, int playouts) =>
-      _scoreAsync(s, assigned, playouts);
+      MatchState s, Map<int, int> assigned, int playouts) {
+    _begin();
+    return _scoreAsync(s, assigned, playouts);
+  }
 
   /// How well the last pick chosen is likely to go (0 to 1).
   double lastPickScore = 1;
@@ -247,6 +268,7 @@ class Bot {
     ];
     lastPickScore = 1;
     if (options.length == 1) return options.first;
+    _begin();
     final per = max(20, budget ~/ options.length);
     var best = options.first;
     var bestScore = -1.0;
@@ -270,6 +292,7 @@ class Bot {
   Future<PlayingCard> choosePlayAsync(MatchState s, int seat) async {
     final legal = s.legalFor(seat);
     if (legal.length == 1) return legal.first;
+    _begin();
     final per = max(20, budget ~/ legal.length);
     final assigned = {
       for (int t = 0; t < s.tasks.length; t++)
@@ -296,19 +319,25 @@ class Bot {
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
     final inPlay = s.inPlay;
+    // The other tasks whose success decides whether a count is usable;
+    // worked out once, not once a playout.
+    final others = [
+      for (final e in assigned.entries)
+        if (e.key != task && !needsX(s.tasks[e.key].description)) e
+    ];
+    _begin();
     for (int n = 0; n < budget; n++) {
       final sim = _Sim.from(s);
       sim.playOut(rand);
       final v = sim.view(s, inPlay);
       all[v.tricksWon(seat)]++;
-      final others = assigned.entries.where((e) =>
-          e.key != task && !needsX(s.tasks[e.key].description));
       if (others.every((e) =>
           taskRules[s.tasks[e.key].description]!(v, e.value, s.tasks[e.key].x) ==
           Verdict.done)) {
         counts[v.tricksWon(seat)]++;
       }
-      if (n % _slice == _slice - 1) await Future<void>.delayed(Duration.zero);
+      final pause = _breathe();
+      if (pause != null) await pause;
     }
     return _bestX(counts, all, s, seat);
   }
