@@ -1,0 +1,295 @@
+{
+  "game": {
+    "players": [
+      {
+        "name": "You",
+        "color": 4293304064
+      },
+      {
+        "name": "The Merchant",
+        "color": 4283872489
+      },
+      {
+        "name": "The Bishop",
+        "color": 4291590567
+      }
+    ],
+    "tasks": [
+      {
+        "description": "Win exactly two tricks",
+        "status": 1,
+        "owner": 0,
+        "seal": null
+      },
+      {
+        "description": "Win at least five ♣ cards",
+        "status": 1,
+        "owner": 1,
+        "seal": null
+      }
+    ],
+    "king": 0,
+    "round": 1,
+    "wins": 1,
+    "losses": 0,
+    "spoke": [
+      false,
+      false,
+      false
+    ],
+    "passed": [],
+    "pickTurn": null,
+    "mode": 0,
+    "chapter": null,
+    "lesson": 0,
+    "surprise": false,
+    "roles": true,
+    "cards": {
+      "players": 3,
+      "target": 5,
+      "round": 0,
+      "wins": 0,
+      "losses": 0,
+      "streak": 0,
+      "hands": [
+        [
+          1,
+          3,
+          4,
+          5,
+          19,
+          20,
+          25,
+          13,
+          15,
+          28,
+          37,
+          38,
+          39
+        ],
+        [
+          2,
+          6,
+          18,
+          21,
+          26,
+          12,
+          16,
+          17,
+          27,
+          29,
+          30,
+          34,
+          36
+        ],
+        [
+          0,
+          7,
+          8,
+          22,
+          23,
+          24,
+          9,
+          10,
+          11,
+          31,
+          32,
+          33,
+          35
+        ]
+      ],
+      "setAside": [
+        14
+      ],
+      "king": 0,
+      "tasks": [],
+      "pickTurn": null,
+      "tricks": [],
+      "leader": 0,
+      "currentSeats": [],
+      "current": [],
+      "phase": 0,
+      "won": null,
+      "dealId": 1,
+      "announced": {},
+      "revealed": {},
+      "revealHint": {},
+      "revealedAt": {}
+    },
+    "reignWins": 0,
+    "traits": {},
+    "annals": [],
+    "tiding": null,
+    "tidingResolved": false,
+    "facedTidings": [],
+    "chargeSeat": null,
+    "chargeTask": null,
+    "chargeByKing": false,
+    "pendingCharge": null,
+    "sealCount": 0,
+    "decree": null,
+    "exiled": null,
+    "courtiers": [
+      2,
+      4,
+      1
+    ],
+    "loyalty": [
+      3,
+      3,
+      3
+    ],
+    "schemeOf": [
+      null,
+      null,
+      null
+    ],
+    "schemeResult": [
+      null,
+      null,
+      null
+    ],
+    "powerUsed": [
+      false,
+      false,
+      false
+    ],
+    "kingWounds": 0,
+    "kingToughness": 2,
+    "reign": 0,
+    "fallenKings": 0,
+    "reignStartRound": 0,
+    "pendingDecree": null,
+    "pointsBonus": 0,
+    "facedDilemmas": [],
+    "flags": [],
+    "people": [
+      "The General",
+      "The Merchant",
+      "The Bishop"
+    ],
+    "traitorRounds": [
+      0,
+      0,
+      0
+    ],
+    "pendingDepartures": [],
+    "courtNews": [],
+    "pendingArrivals": [],
+    "reignName": "",
+    "court": [],
+    "standing": {},
+    "schemeBy": {},
+    "traitorFor": {},
+    "courtColor": {},
+    "scenePicked": -1,
+    "coffers": 12,
+    "mainBeatRound": -99,
+    "streak": 1,
+    "bestStreak": 1,
+    "dealId": 1,
+    "seed": 9,
+    "resultRecorded": true
+  },
+  "playerCount": 3,
+  "targetPoints": 5,
+  "cardWidth": 120.0,
+  "dealt": true,
+  "pos": [
+    null,
+    null
+  ],
+  "tilt": [
+    0.0,
+    0.0
+  ],
+  "savedAt": 1761600000000,
+  "facts": {
+    "mode": "free",
+    "players": [
+      "You",
+      "The Merchant",
+      "The Bishop"
+    ],
+    "playerCount": 3,
+    "target": 5,
+    "round": 1,
+    "wins": 1,
+    "losses": 0,
+    "streak": 1,
+    "king": 0,
+    "pickTurn": null,
+    "seals": 0,
+    "decree": null,
+    "exiled": null,
+    "tasks": [
+      {
+        "d": "Win exactly two tricks",
+        "owner": 0,
+        "status": "completed",
+        "seal": null
+      },
+      {
+        "d": "Win at least five ♣ cards",
+        "owner": 1,
+        "status": "completed",
+        "seal": null
+      }
+    ],
+    "outcome": "won",
+    "dealId": 1,
+    "seed": 9,
+    "hands": [
+      [
+        "2♥",
+        "4♥",
+        "5♥",
+        "6♥",
+        "2♠",
+        "3♠",
+        "8♠",
+        "5♦",
+        "7♦",
+        "2♣",
+        "Jack",
+        "Queen",
+        "King"
+      ],
+      [
+        "3♥",
+        "7♥",
+        "A♠",
+        "4♠",
+        "9♠",
+        "4♦",
+        "8♦",
+        "9♦",
+        "A♣",
+        "3♣",
+        "4♣",
+        "8♣",
+        "Joker"
+      ],
+      [
+        "A♥",
+        "8♥",
+        "9♥",
+        "5♠",
+        "6♠",
+        "7♠",
+        "A♦",
+        "2♦",
+        "3♦",
+        "5♣",
+        "6♣",
+        "7♣",
+        "9♣"
+      ]
+    ],
+    "tricks": 0,
+    "current": [],
+    "turn": 0,
+    "announced": {},
+    "shown": {}
+  }
+}

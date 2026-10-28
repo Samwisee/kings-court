@@ -1,0 +1,351 @@
+{
+  "game": {
+    "players": [
+      {
+        "name": "You",
+        "color": 4293304064
+      },
+      {
+        "name": "The Spymaster",
+        "color": 4283872489
+      },
+      {
+        "name": "The Merchant",
+        "color": 4291590567
+      }
+    ],
+    "tasks": [
+      {
+        "description": "Win a trick you led",
+        "status": 0,
+        "owner": 2,
+        "seal": null
+      },
+      {
+        "description": "Win a trick with a 5",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the A♥ and the 9♥",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the 2♦",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win a trick that holds a 2 and a 9",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the card you showed",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      }
+    ],
+    "king": 2,
+    "round": 1,
+    "wins": 0,
+    "losses": 0,
+    "spoke": [
+      false,
+      false,
+      false
+    ],
+    "passed": [],
+    "pickTurn": 0,
+    "mode": 0,
+    "chapter": null,
+    "lesson": 0,
+    "surprise": false,
+    "roles": true,
+    "cards": {
+      "players": 3,
+      "target": 7,
+      "round": 0,
+      "wins": 0,
+      "losses": 0,
+      "streak": 0,
+      "hands": [
+        [
+          3,
+          7,
+          18,
+          22,
+          9,
+          11,
+          17,
+          27,
+          28,
+          30,
+          32,
+          34,
+          35
+        ],
+        [
+          0,
+          1,
+          5,
+          8,
+          20,
+          21,
+          23,
+          24,
+          10,
+          12,
+          16,
+          29,
+          33
+        ],
+        [
+          4,
+          6,
+          19,
+          25,
+          26,
+          13,
+          14,
+          15,
+          31,
+          36,
+          37,
+          38,
+          39
+        ]
+      ],
+      "setAside": [
+        2
+      ],
+      "king": 2,
+      "tasks": [],
+      "pickTurn": null,
+      "tricks": [],
+      "leader": 2,
+      "currentSeats": [],
+      "current": [],
+      "phase": 0,
+      "won": null,
+      "dealId": 1,
+      "announced": {},
+      "revealed": {},
+      "revealHint": {},
+      "revealedAt": {}
+    },
+    "reignWins": 0,
+    "traits": {},
+    "annals": [],
+    "tiding": null,
+    "tidingResolved": false,
+    "facedTidings": [],
+    "chargeSeat": null,
+    "chargeTask": null,
+    "chargeByKing": false,
+    "pendingCharge": null,
+    "sealCount": 0,
+    "decree": null,
+    "exiled": null,
+    "courtiers": [
+      1,
+      3,
+      4
+    ],
+    "loyalty": [
+      3,
+      3,
+      3
+    ],
+    "schemeOf": [
+      null,
+      null,
+      null
+    ],
+    "schemeResult": [
+      null,
+      null,
+      null
+    ],
+    "powerUsed": [
+      false,
+      false,
+      false
+    ],
+    "kingWounds": 0,
+    "kingToughness": 2,
+    "reign": 0,
+    "fallenKings": 0,
+    "reignStartRound": 0,
+    "pendingDecree": null,
+    "pointsBonus": 0,
+    "facedDilemmas": [],
+    "flags": [],
+    "people": [
+      "The Bishop",
+      "The Spymaster",
+      "The Merchant"
+    ],
+    "traitorRounds": [
+      0,
+      0,
+      0
+    ],
+    "pendingDepartures": [],
+    "courtNews": [],
+    "pendingArrivals": [],
+    "reignName": "",
+    "court": [],
+    "standing": {},
+    "schemeBy": {},
+    "traitorFor": {},
+    "courtColor": {},
+    "scenePicked": -1,
+    "coffers": 12,
+    "mainBeatRound": -99,
+    "streak": 0,
+    "bestStreak": 0,
+    "dealId": 1,
+    "seed": 5,
+    "resultRecorded": false
+  },
+  "playerCount": 3,
+  "targetPoints": 7,
+  "cardWidth": 120.0,
+  "dealt": true,
+  "pos": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "tilt": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "savedAt": 1761600000000,
+  "facts": {
+    "mode": "free",
+    "players": [
+      "You",
+      "The Spymaster",
+      "The Merchant"
+    ],
+    "playerCount": 3,
+    "target": 7,
+    "round": 1,
+    "wins": 0,
+    "losses": 0,
+    "streak": 0,
+    "king": 2,
+    "pickTurn": 0,
+    "seals": 0,
+    "decree": null,
+    "exiled": null,
+    "tasks": [
+      {
+        "d": "Win a trick you led",
+        "owner": 2,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win a trick with a 5",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the A♥ and the 9♥",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the 2♦",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win a trick that holds a 2 and a 9",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the card you showed",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      }
+    ],
+    "outcome": "inProgress",
+    "dealId": 1,
+    "seed": 5,
+    "hands": [
+      [
+        "4♥",
+        "8♥",
+        "A♠",
+        "5♠",
+        "A♦",
+        "3♦",
+        "9♦",
+        "A♣",
+        "2♣",
+        "4♣",
+        "6♣",
+        "8♣",
+        "9♣"
+      ],
+      [
+        "A♥",
+        "2♥",
+        "6♥",
+        "9♥",
+        "3♠",
+        "4♠",
+        "6♠",
+        "7♠",
+        "2♦",
+        "4♦",
+        "8♦",
+        "3♣",
+        "7♣"
+      ],
+      [
+        "5♥",
+        "7♥",
+        "2♠",
+        "8♠",
+        "9♠",
+        "5♦",
+        "6♦",
+        "7♦",
+        "5♣",
+        "Joker",
+        "Jack",
+        "Queen",
+        "King"
+      ]
+    ],
+    "tricks": 0,
+    "current": [],
+    "turn": 2,
+    "announced": {},
+    "shown": {}
+  }
+}

@@ -31,7 +31,7 @@ jobs:
       - name: Analyze
         run: |
           mkdir -p out
-          flutter analyze --fatal-infos --fatal-warnings --format=machine 2>&1 | tee out/analyze.txt || true
+          dart analyze --format=machine --fatal-infos --fatal-warnings 2>&1 | tee out/analyze.txt || true
           awk -F'|' 'NF>=8 {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' out/analyze.txt | head -50
           echo "analyzer issues: $(grep -c '|' out/analyze.txt || true)" | tee -a out/summary.txt
           ! grep -q '|' out/analyze.txt
@@ -44,12 +44,6 @@ jobs:
           tail -5 out/test.txt | tee -a out/summary.txt
           if [ $code -ne 0 ]; then python3 tool/ci_annotate.py out/test.txt; fi
           exit $code
-      - name: Save fixtures
-        if: (success() || failure()) && hashFiles('tool/fixtures/make_saves_test.dart') != ''
-        run: |
-          timeout 300 flutter test tool/fixtures/make_saves_test.dart --reporter expanded > out/fixtures.txt 2>&1 || true
-          tail -3 out/fixtures.txt
-          mkdir -p out/fixtures && cp tool/fixtures/out/* out/fixtures/ 2>/dev/null || true
       - name: Build
         if: success() || failure()
         run: flutter build web --release --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8} > out/build.txt 2>&1 || (tail -20 out/build.txt; exit 1)

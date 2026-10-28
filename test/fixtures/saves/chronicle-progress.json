@@ -1,0 +1,17 @@
+{
+  "progress": {
+    "attempts": {
+      "0": 1,
+      "1": 2,
+      "6": 1
+    },
+    "crowns": {
+      "0": 3,
+      "1": 2
+    }
+  },
+  "facts": {
+    "nextChapter": 2,
+    "totalCrowns": 5
+  }
+}
