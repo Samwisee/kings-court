@@ -27,7 +27,7 @@ void main() {
   test('There are saves to check', () => expect(files, isNotEmpty));
 
   test('Every version up to the current one has fixtures', () {
-    for (var v = 2; v <= GameState.saveVersion; v++) {
+    for (var v = 2; v <= saveVersion; v++) {
       expect(files.where((f) => f.path.contains('/v$v/')), isNotEmpty,
           reason: 'no fixtures for save version $v: run test/tool/make_saves_test.dart');
     }
@@ -38,8 +38,8 @@ void main() {
       ..players = [for (var i = 0; i < 3; i++) Player('P$i', colorValue: 0)]
       ..startRound(3, 6);
     final json = g.toJson();
-    expect(json['version'], GameState.saveVersion);
-    expect(GameState.upgradeSave(json), same(json));
+    expect(json['version'], saveVersion);
+    expect(upgradeSave(json), same(json));
   });
 
   for (final file in files) {

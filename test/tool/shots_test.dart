@@ -14,6 +14,7 @@ import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
+import 'package:kings_court/ui/dynasty/hall_pieces.dart';
 import 'package:kings_court/ui/dynasty/throne_room.dart';
 import 'package:kings_court/ui/table_page.dart';
 import 'package:kings_court/ui/widgets.dart';

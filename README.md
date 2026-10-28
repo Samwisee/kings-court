@@ -129,10 +129,16 @@ as online play needs them.
 |---|---|
 | `icons.dart` | Crowns, suits, the Court Card and no-Court-Cards marks, the tracker and show-a-card buttons. |
 | `suit_text.dart` | `SuitText`: game text with coloured suits, little named cards, icons, and gold game words you can tap. |
-| `tokens.dart` | Seat tokens and the courtiers' living tokens. |
-| `task_card.dart` | Task cards on a real table, the deck, wax seals, decree scrolls. |
+| `tokens.dart` | Seat tokens, the pulse ring, the speech token, shaped tokens. |
+| `task_card.dart` | Task cards on a real table and the deck. |
 | `table.dart` | The red table rim and brass inlay, sparks and confetti. |
-| `panels.dart` | `OrnateCard` and its `Ornament` levels, `CourtDialog`, gold pips, `HighVisBorder`. |
+| `panels.dart` | `OrnateCard` and its `Ornament` levels, `OrnateDivider`, the glossary dialog. |
+| `court_dialog.dart` | `CourtDialog`, `HighVisBorder`, `KeyFocusRing`. |
+| `pips.dart` | Gold pips and pip tiles. |
+| `character_token.dart` | The courtiers' living tokens and speech bubbles. |
+| `candles.dart` | Loyalty candles (kept for the roguelike). |
+| `seals.dart` | Wax seals and the decree scroll. |
+| `token_shapes.dart` | The outline of each courtier's token. |
 | `clamp.dart` | `clampD`, a clamp that never throws. |
 
 ---

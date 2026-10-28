@@ -15,7 +15,7 @@ import 'package:kings_court/game/state.dart';
 
 void main() {
   test('Every older fixture saved again in the current shape', () {
-    final out = Directory('test/tool/out/fixtures/v${GameState.saveVersion}')
+    final out = Directory('test/tool/out/fixtures/v${saveVersion}')
       ..createSync(recursive: true);
     final files = Directory('test/fixtures/saves')
         .listSync()

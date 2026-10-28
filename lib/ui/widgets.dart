@@ -3,10 +3,16 @@
 /// table, panels and dialogs); their look comes from theme.dart.
 library;
 
+export 'widgets/candles.dart';
+export 'widgets/character_token.dart';
 export 'widgets/clamp.dart';
+export 'widgets/court_dialog.dart';
 export 'widgets/icons.dart';
 export 'widgets/panels.dart';
+export 'widgets/pips.dart';
+export 'widgets/seals.dart';
 export 'widgets/suit_text.dart';
 export 'widgets/table.dart';
 export 'widgets/task_card.dart';
+export 'widgets/token_shapes.dart';
 export 'widgets/tokens.dart';
