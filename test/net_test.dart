@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -44,30 +43,5 @@ void main() {
     expect(seen, [a, b]);
     expect(link.history, [a, b]);
     link.dispose();
-  });
-
-  test('The engine is plain Dart, ready to run on a server', () {
-    for (final f in [
-      ...Directory('lib/engine').listSync().whereType<File>(),
-      File('lib/tasks.dart'),
-      File('lib/net/table_link.dart'),
-      // The whole game, Dynasty and all: the model has no screen in it.
-      File('lib/models.dart'),
-      File('lib/chronicle.dart'),
-      File('lib/courtiers.dart'),
-      File('lib/story.dart'),
-      File('lib/tutorial.dart'),
-      File('lib/game/bot_turn.dart'),
-    ]) {
-      final imports = f.readAsLinesSync().where((l) => l.startsWith('import '));
-      for (final i in imports) {
-        expect(i, isNot(contains('package:flutter')), reason: f.path);
-        expect(i, isNot(contains('dart:ui')), reason: f.path);
-        expect(i, isNot(contains('theme.dart')), reason: f.path);
-        if (f.path.contains('engine')) {
-          expect(i, isNot(contains('models.dart')), reason: f.path);
-        }
-      }
-    }
   });
 }

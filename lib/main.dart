@@ -81,27 +81,31 @@ class TheKingsCourtApp extends StatelessWidget {
 @visibleForTesting
 class HomePageTestHooks {
   static void fast() {
-    _HomePageState.botDelay = const Duration(milliseconds: 1);
-    _HomePageState.trickPause = const Duration(milliseconds: 4);
-    _HomePageState.autoPlayStep = const Duration(milliseconds: 2);
-    _HomePageState.flipStagger = const Duration(milliseconds: 2);
-    _HomePageState.botBudget = 30;
+    HomePageState.botDelay = const Duration(milliseconds: 1);
+    HomePageState.trickPause = const Duration(milliseconds: 4);
+    HomePageState.autoPlayStep = const Duration(milliseconds: 2);
+    HomePageState.flipStagger = const Duration(milliseconds: 2);
+    HomePageState.botBudget = 30;
     CharacterToken.alive = false;
   }
 
   /// Parts of the page left out, so a benchmark can tell what each costs:
   /// 'table', 'hand', 'bar', 'trim'.
   static Set<String> skip = {};
+
+  /// When set, every new game deals from this seed and the courtiers think
+  /// from it too, so a run (the screenshots) comes out the same every time.
+  static int? seed;
 }
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
+class HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   /// The game itself: its state, the moves, saving (game/controller.dart).
   /// This page draws it.
@@ -863,8 +867,9 @@ class _HomePageState extends State<HomePage>
   /// The seat you play from: the bottom of the table. Online, the seat
   /// you joined in (see GameController.mySeat).
   int get _you => _ctrl.mySeat;
-  final _rand = math.Random();
-  final _bot = Bot();
+  final _rand = math.Random(HomePageTestHooks.seed);
+  final _bot = Bot(
+      HomePageTestHooks.seed == null ? null : math.Random(HomePageTestHooks.seed));
   Timer? _botTimer;
   Timer? _crownTimer;
   final _trickTimers = <Timer>[];
@@ -3546,6 +3551,7 @@ class _HomePageState extends State<HomePage>
       game = GameState()
         ..mode = mode
         ..lesson = lesson
+        ..seed = HomePageTestHooks.seed ?? math.Random().nextInt(1 << 30)
         ..chapter = chapter
         ..surprise = surprise
         ..roles = roles

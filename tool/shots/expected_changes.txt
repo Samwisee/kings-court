@@ -1,0 +1,4 @@
+# Screenshots that may differ from the shots-baseline branch, with the reason.
+# One per line, `name.png: why`, or `*: why` for all of them. The Compare job
+# fails on any difference not listed here. Clear it once a new baseline is
+# taken.

@@ -32,8 +32,7 @@ void main() {
     for (int i = 0; i < 600 && find.text('Skip').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
-    // ignore: avoid_implicit_dynamic
-    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
 
     Future<double> time(String what, void Function() change, {int times = 20}) async {
       // One warm-up, then the average of [times] frames.
@@ -103,7 +102,7 @@ void main() {
     // What a change to the game does besides the rebuild.
     final work = <String, double>{};
     for (int i = 0; i < 20; i++) {
-      final w = state.debugGameWork() as Map<String, double>;
+      final w = state.debugGameWork();
       w.forEach((k, v) => work[k] = (work[k] ?? 0) + v / 20);
     }
     work.forEach((k, v) {

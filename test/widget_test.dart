@@ -148,9 +148,9 @@ void main() {
     await dealGame(tester, 4);
     await tester.tap(find.byType(SeatToken).first);
     await tester.pumpAndSettle();
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
-    final link = state.debugLink as TableLink;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
+    final link = state.debugLink;
     final before = link.history.length;
     final t = game.tasks.firstWhere((t) => t.assignedPlayerIndex == null && game.canTake(t, 1));
     state.debugAssign(t, 1);
@@ -226,13 +226,13 @@ void main() {
     await tester.tap(find.byType(SeatToken).first); // seat 0 is King
     await tester.pumpAndSettle();
 
-    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
     final card = find.byType(TableCard).first;
     final seat = tester.getCenter(find.byType(SeatToken).at(1));
     await dragFromTo(tester, tester.getCenter(card), seat);
     await tester.pumpAndSettle();
 
-    final tasks = (state.game as GameState).tasks;
+    final tasks = state.game.tasks;
     expect(tasks.where((t) => t.assignedPlayerIndex == 1), isNotEmpty);
     // Drags on the round table are occasionally missed in the test
     // harness (random tasks, random layouts); one retry settles it.
@@ -283,7 +283,7 @@ void main() {
     expect(report['message'], 'The King vanished');
     expect(report['where']['round'], 1);
     final back = GameState.fromJson(Map<String, dynamic>.from(report['state'] as Map));
-    final game = (tester.state(find.byType(HomePage)) as dynamic).game as GameState;
+    final game = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(back, isNotNull);
     expect(back!.tasks.length, game.tasks.length);
     expect(back.kingIndex, game.kingIndex);
@@ -297,8 +297,8 @@ void main() {
     await dealGame(tester, 4);
     await tester.tap(find.byType(SeatToken).first);
     await tester.pumpAndSettle();
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final players = (state.game as GameState).players;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final players = state.game.players;
 
     await tester.tap(find.byTooltip('Points target'));
     await tester.pumpAndSettle();
@@ -310,8 +310,8 @@ void main() {
     // A fresh deal for the new target: same players and round, and the
     // King card is dealt again, so the table asks who has it.
     expect(state.targetPoints, isNot(5));
-    expect((state.game as GameState).players, same(players));
-    expect((state.game as GameState).kingIndex, isNull);
+    expect(state.game.players, same(players));
+    expect(state.game.kingIndex, isNull);
     expect(find.text('Who holds the King card?'), findsOneWidget);
     expect(find.text('Round 1'), findsOneWidget);
   });
@@ -358,8 +358,8 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final owned = (state.game as GameState)
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final owned = state.game
         .tasks
         .where((t) => t.assignedPlayerIndex != null)
         .toList();
@@ -508,7 +508,7 @@ void main() {
     await tester.tap(deal);
     await tester.pumpAndSettle();
 
-    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
     expect(state.targetPoints, isNot(5));
     expect(find.text('Round 2'), findsOneWidget);
     expect(find.text('Who holds the King card?'), findsOneWidget);
@@ -531,8 +531,8 @@ void main() {
     await tester.tap(find.text('Undo last mark'));
     await tester.pumpAndSettle();
     expect(find.text('Round lost'), findsNothing);
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    expect((state.game as GameState).losses, 0);
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    expect(state.game.losses, 0);
   });
 
   testWidgets('Picking moves clockwise from the King, then Play!',
@@ -541,8 +541,8 @@ void main() {
     await dealGame(tester, 3);
     await tester.tap(find.byType(SeatToken).at(1)); // seat 1 is King
     await tester.pumpAndSettle();
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
     expect(game.pickTurn, 1);
     expect(find.byType(PulseRing), findsOneWidget);
 
@@ -591,8 +591,8 @@ void main() {
     await dealGame(tester, 4);
     await tester.tap(find.byType(SeatToken).first);
     await tester.pumpAndSettle();
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
 
     await tester.tap(find.byType(SeatToken).at(2));
     await tester.pumpAndSettle();
@@ -625,8 +625,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(SeatToken).first);
     await tester.pumpAndSettle();
-    final game = (tester.state(find.byType(HomePage)) as dynamic).game
-        as GameState;
+    final game = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(game.roles, isFalse);
     expect(find.byType(ShapedToken), findsNothing);
     await tester.tap(find.byType(SeatToken).at(3));
@@ -647,7 +646,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(GoldPip));
     await tester.pumpAndSettle();
-    final live = (tester.state(find.byType(HomePage)) as dynamic).game as GameState;
+    final live = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(live.spoke[1], isTrue, reason: 'the switch marks the reveal');
     await tester.ensureVisible(find.text('Close'));
     await tester.tap(find.text('Close'));
@@ -661,8 +660,8 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
     expect(game.kingIndex, 0);
     expect(game.spoke[1], isTrue);
     expect(find.byType(TableCard), findsWidgets);
@@ -776,7 +775,7 @@ void main() {
     setPhoneSize(tester);
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    final state = tester.state(find.byType(HomePage)) as dynamic;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
     // Chapter 4 is "The Silent Court".
     state.debugStartChapter(3, 4);
     await tester.pumpAndSettle();
@@ -1136,8 +1135,7 @@ void main() {
     expect(find.text('A crown awaits'), findsOneWidget);
     await tester.tap(find.text('Begin the reign'));
     await tester.pump();
-    final game = (tester.state(find.byType(HomePage)) as dynamic).game
-        as GameState;
+    final game = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(game.isDynasty, isTrue);
     expect(game.digital, isTrue);
     await tester.pumpWidget(const SizedBox());
@@ -1165,8 +1163,7 @@ void main() {
     expect(find.text('Endless'), findsOneWidget);
     await tester.tap(find.text('Free play'));
     await tester.pumpAndSettle();
-    final game = (tester.state(find.byType(HomePage)) as dynamic).game
-        as GameState;
+    final game = tester.state<HomePageState>(find.byType(HomePage)).game;
     expect(game.mode, GameMode.free);
     expect(game.players, hasLength(4));
   });
@@ -1322,8 +1319,8 @@ void main() {
       await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Start'));
       await tester.pump();
 
-      final state = tester.state(find.byType(HomePage)) as dynamic;
-      final game = state.game as GameState;
+      final state = tester.state<HomePageState>(find.byType(HomePage));
+      final game = state.game;
       expect(game.digital, isTrue);
       expect(game.players.first.name, 'You');
       if (mode == 'Free play') {
@@ -1520,10 +1517,10 @@ void main() {
 
     // The table sits under the pages, so look past them for it.
     final state =
-        tester.state(find.byType(HomePage, skipOffstage: false)) as dynamic;
+        tester.state<HomePageState>(find.byType(HomePage, skipOffstage: false));
     for (int lesson = 0; lesson < lessons.length; lesson++) {
       await readPages(lessons[lesson].pages, 'Play lesson ${lesson + 1}');
-      final game = state.game as GameState;
+      final game = state.game;
       expect(game.isTutorial, isTrue);
       expect(game.lesson, lesson);
       expect(game.players.map((p) => p.name), tutorialCourtiers);

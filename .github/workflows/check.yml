@@ -1,15 +1,25 @@
 name: Check a branch
 
-# Analyze and test on any branch but main (main runs them in deploy.yml),
-# so work in progress can be checked without publishing it.
+# Analyze, test and build on any branch but main (main runs them in
+# deploy.yml), compare every screenshot with the baseline, and time main
+# against the branch. Each job publishes its full output to a branch of
+# its own (ci-<branch>, shots-<branch>, bench-<branch>), so results can be
+# read from a session where the logs can't be.
 on:
   push:
-    branches-ignore: [main]
+    branches-ignore: [main, 'ci-*', 'shots*', 'bench*', balance, fixtures]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: check-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -20,15 +30,114 @@ jobs:
       - run: flutter pub get
       - name: Analyze
         run: |
-          flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine 2>&1 | tee analyze.txt || true
-          awk -F'|' 'NF>=8 && ($1=="ERROR" || $1=="WARNING") {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' analyze.txt
-          ! grep -q '^ERROR|' analyze.txt
+          mkdir -p out
+          flutter analyze --fatal-infos --fatal-warnings --format=machine 2>&1 | tee out/analyze.txt || true
+          awk -F'|' 'NF>=8 {lvl=($1=="ERROR")?"error":"warning"; f=$4; sub(".*/kings-court/kings-court/","",f); printf "::%s file=%s,line=%s,col=%s::%s (%s)\n", lvl, f, $5, $6, $8, $3}' out/analyze.txt | head -50
+          echo "analyzer issues: $(grep -c '|' out/analyze.txt || true)" | tee -a out/summary.txt
+          ! grep -q '|' out/analyze.txt
       - name: Test
+        if: success() || failure()
         run: |
           set +e
-          timeout 600 flutter test --timeout 60s --reporter expanded > test.txt 2>&1
+          timeout 900 flutter test --timeout 60s --reporter expanded > out/test.txt 2>&1
           code=$?
-          tail -5 test.txt
-          if [ $code -ne 0 ]; then python3 tool/ci_annotate.py test.txt; fi
+          tail -5 out/test.txt | tee -a out/summary.txt
+          if [ $code -ne 0 ]; then python3 tool/ci_annotate.py out/test.txt; fi
           exit $code
-      - run: flutter build web --release --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8}
+      - name: Save fixtures
+        if: (success() || failure()) && hashFiles('tool/fixtures/make_saves_test.dart') != ''
+        run: |
+          timeout 300 flutter test tool/fixtures/make_saves_test.dart --reporter expanded > out/fixtures.txt 2>&1 || true
+          tail -3 out/fixtures.txt
+          mkdir -p out/fixtures && cp tool/fixtures/out/* out/fixtures/ 2>/dev/null || true
+      - name: Build
+        if: success() || failure()
+        run: flutter build web --release --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8} > out/build.txt 2>&1 || (tail -20 out/build.txt; exit 1)
+      - name: Publish the output to ci-${{ github.ref_name }}
+        if: always()
+        run: |
+          cd out
+          git init -q -b "ci-${GITHUB_REF_NAME}"
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Check of ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "ci-${GITHUB_REF_NAME}"
+
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Take screenshots
+        run: |
+          mkdir -p out
+          timeout 900 flutter test tool/shots/shots_test.dart --update-goldens --reporter expanded > out/shots.txt 2>&1 || true
+          tail -5 out/shots.txt
+          python3 tool/ci_annotate.py out/shots.txt || true
+          cp tool/shots/goldens/*.png out/ 2>/dev/null || true
+      - name: Compare with the baseline
+        id: compare
+        run: |
+          pip install --quiet pillow
+          if git fetch --depth=1 origin shots-baseline 2>/dev/null; then
+            mkdir -p /tmp/baseline && git --work-tree=/tmp/baseline checkout FETCH_HEAD -- . && echo "baseline $(git rev-parse FETCH_HEAD)" > out/compare.txt
+          else
+            echo "no baseline branch" > out/compare.txt
+          fi
+          set +e
+          python3 tool/shots/compare.py /tmp/baseline tool/shots/goldens tool/shots/expected_changes.txt out >> out/compare.txt
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          grep -v '^same' out/compare.txt | head -80
+      - name: Publish to shots-${{ github.ref_name }}
+        if: always()
+        run: |
+          cd out
+          git init -q -b "shots-${GITHUB_REF_NAME}"
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Screenshots for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "shots-${GITHUB_REF_NAME}"
+      - name: Every difference must be explained
+        run: test "${{ steps.compare.outputs.code }}" = "0"
+
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: base
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get && (cd base && flutter pub get)
+      - name: Time main and the branch, twice each, on this runner
+        run: |
+          mkdir -p out
+          bench() {
+            echo "== $1: the page, mid-round (phone size) ==" >> out/bench-compare.txt
+            (cd $2 && timeout 300 flutter test tool/bench/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
+            echo "== $1: bots, on the Dart VM ==" >> out/bench-compare.txt
+            (cd $2 && timeout 300 flutter test tool/bench/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //') >> out/bench-compare.txt || true
+          }
+          for round in 1 2; do
+            bench "main (run $round)" base
+            bench "branch (run $round)" .
+          done
+          cat out/bench-compare.txt
+      - name: Publish to bench-${{ github.ref_name }}
+        if: always()
+        run: |
+          cd out
+          git init -q -b "bench-${GITHUB_REF_NAME}"
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Benchmarks for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "bench-${GITHUB_REF_NAME}"

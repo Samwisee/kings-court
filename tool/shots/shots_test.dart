@@ -42,6 +42,9 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     Sfx.muteForTests = true;
+    // The same deals and the same courtiers' choices every run, so a
+    // screenshot that changed means the code did.
+    HomePageTestHooks.seed = 7;
     await loadFonts();
   });
 
@@ -77,8 +80,8 @@ void main() {
     }
 
     await readPages(lessons[0].pages, '0-intro', 'Play lesson 1');
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
     Future<void> frames(int n) async {
       for (int i = 0; i < n; i++) {
         await tester.pump(const Duration(milliseconds: 30));
@@ -135,8 +138,8 @@ void main() {
     await tester.drag(find.byType(Slider), const Offset(90, 0));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start'));
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
     var shot = 0;
     Future<void> snap() => expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/phone-${shot++}.png'));
@@ -179,8 +182,8 @@ void main() {
     if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start'));
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
     var shot = 0;
     Future<void> snap() async {
       for (final e in find.byType(PlayingCardView).evaluate().take(3)) {
@@ -241,8 +244,8 @@ void main() {
         await tester.pumpAndSettle();
       }
       await tester.tap(find.text('Start'));
-      final state = tester.state(find.byType(HomePage)) as dynamic;
-      final game = state.game as GameState;
+      final state = tester.state<HomePageState>(find.byType(HomePage));
+      final game = state.game;
       final name = onScreen ? 'screen' : 'table';
       if (onScreen) {
         for (int i = 0; i < 400 && game.pickTurn != null; i++) {
@@ -450,8 +453,8 @@ void main() {
     await tester.tap(find.text('Dynasty'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Begin the reign'));
-    final state = tester.state(find.byType(HomePage)) as dynamic;
-    final game = state.game as GameState;
+    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final game = state.game;
     var shot = 0;
     Future<void> snap(String name) async {
       await expectLater(find.byType(MaterialApp),
