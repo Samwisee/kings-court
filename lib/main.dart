@@ -27,6 +27,7 @@ import 'engine/contest.dart';
 import 'engine/inference.dart';
 import 'engine/match.dart';
 import 'engine/rules.dart';
+import 'game/controller.dart';
 import 'net/table_link.dart';
 import 'play/card_view.dart';
 import 'play/contest_table.dart';
@@ -92,8 +93,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>
-    with TickerProviderStateMixin {
-  GameState game = GameState();
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  /// The game itself: its state, the moves, saving (game/controller.dart).
+  /// This page draws it.
+  final _ctrl = GameController();
+  GameState get game => _ctrl.game;
+  set game(GameState g) => _ctrl.game = g;
   int playerCount = 4;
   int targetPoints = 5;
 
@@ -207,8 +212,8 @@ class _HomePageState extends State<HomePage>
   /// Before save slots, one game was kept under this key. It moves to its
   /// mode's slot the first time it's loaded.
   static const _legacySaveKey = 'kingsCourt.game';
-  static String _slotKey(GameMode mode) => 'kingsCourt.game.${mode.name}';
-  static const _bestKey = 'kingsCourt.bestStreak';
+  static String _slotKey(GameMode mode) => GameController.slotKey(mode);
+  static const _bestKey = GameController.bestKey;
   static const _chronicleKey = 'kingsCourt.chronicle';
   static const _soundKey = 'kingsCourt.sound';
   static const _uprightKey = 'kingsCourt.upright';
@@ -241,6 +246,20 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _moves = _link.moves.listen(_onMove);
+    // What a save holds beside the game: the real table's layout.
+    _ctrl.saveExtras = () => {
+          'playerCount': playerCount,
+          'targetPoints': targetPoints,
+          'cardWidth': _cardWidth,
+          'dealt': _dealtFor == game.dealId,
+          'pos': [
+            for (final t in game.tasks)
+              if (_pos[t] != null) [_pos[t]!.dx, _pos[t]!.dy] else null,
+          ],
+          'tilt': [for (final t in game.tasks) _tilt[t] ?? 0.0],
+        };
+    _ctrl.knownBest = () => _bestStreak;
+    WidgetsBinding.instance.addObserver(this);
     // Create the animation controllers now, so dispose never makes one.
     for (final c in [_deal, _crown, _play, _outcome, _outcomeHold, _coronation]) {
       c.value;
@@ -261,7 +280,7 @@ class _HomePageState extends State<HomePage>
         _spaceTimer!.cancel();
         _spaceTimer = null;
         if (_trackerPeek) {
-          setState(() => _trackerPeek = false);
+          _ui(() => _trackerPeek = false);
         } else if (_trackerOpen) {
           _closeTracker();
         }
@@ -304,7 +323,7 @@ class _HomePageState extends State<HomePage>
       // Held past a moment: hide it to see the table, until let go.
       _spaceTimer?.cancel();
       _spaceTimer = Timer(const Duration(milliseconds: 220), () {
-        if (mounted && _trackerOpen) setState(() => _trackerPeek = true);
+        if (mounted && _trackerOpen) _ui(() => _trackerPeek = true);
       });
       return true;
     }
@@ -332,7 +351,7 @@ class _HomePageState extends State<HomePage>
       if (keyAt >= hand.length) return false;
       final play = _handPlays[hand[keyAt]];
       if (play == null) return false;
-      setState(() {
+      _ui(() {
         _kbRow = 0;
         _kbCard = hand[keyAt];
       });
@@ -363,21 +382,21 @@ class _HomePageState extends State<HomePage>
     final choices = playable.isEmpty ? hand : playable;
     if (key == LogicalKeyboardKey.arrowUp) {
       if (open.isEmpty) return false;
-      setState(() {
+      _ui(() {
         _kbRow = 1;
         if (!open.contains(_kbTask)) _kbTask = open.first;
       });
       return true;
     }
     if (key == LogicalKeyboardKey.arrowDown) {
-      setState(() => _kbRow = 0);
+      _ui(() => _kbRow = 0);
       return true;
     }
     if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
       final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
       if (_kbRow == 1 && open.isNotEmpty) {
         final at = open.indexOf(_kbTask ?? open.first);
-        setState(() => _kbTask = open[(at + step) % open.length]);
+        _ui(() => _kbTask = open[(at + step) % open.length]);
         return true;
       }
       if (choices.isEmpty) return false;
@@ -385,7 +404,7 @@ class _HomePageState extends State<HomePage>
       final next = at < 0
           ? (step > 0 ? 0 : choices.length - 1)
           : (at + step) % choices.length;
-      setState(() {
+      _ui(() {
         _kbRow = 0;
         _kbCard = choices[next];
       });
@@ -440,7 +459,7 @@ class _HomePageState extends State<HomePage>
   Timer? _spaceTimer;
 
   /// What tapping each card in your hand does, for the Enter key.
-  final Map<PlayingCard, VoidCallback> _handPlays = {};
+  final Map<PlayingCard, bool Function()> _handPlays = {};
 
   Future<void> _loadSaved() async {
     try {
@@ -502,6 +521,11 @@ class _HomePageState extends State<HomePage>
 
   /// Saves after every change, so closing the app mid-round loses nothing.
   /// Skipped while a card is being dragged; saved again when it's dropped.
+  ///
+  /// A change to what's on screen only (a menu, a toast, a drag, the
+  /// tracker, a key press): rebuilds without saving or waking the game.
+  void _ui(VoidCallback fn) => super.setState(fn);
+
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
@@ -513,30 +537,14 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Future<void> _save() async {
-    // The tutorial is never saved, so it can't replace a game in progress.
-    if (game.isTutorial) return;
-    try {
-      final data = {
-        'game': game.toJson(),
-        'playerCount': playerCount,
-        'targetPoints': targetPoints,
-        'cardWidth': _cardWidth,
-        'dealt': _dealtFor == game.dealId,
-        'pos': [
-          for (final t in game.tasks)
-            if (_pos[t] != null) [_pos[t]!.dx, _pos[t]!.dy] else null,
-        ],
-        'tilt': [for (final t in game.tasks) _tilt[t] ?? 0.0],
-        'savedAt': DateTime.now().millisecondsSinceEpoch,
-      };
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_slotKey(game.mode), jsonEncode(data));
-      final best = math.max(_bestStreak, game.bestStreak);
-      if (best > (prefs.getInt(_bestKey) ?? 0)) await prefs.setInt(_bestKey, best);
-    } catch (_) {
-      // Saving is best-effort.
-    }
+  /// Saves the game soon (saving waits for a pause in changes, so a
+  /// burst of them is written once).
+  void _save() => _ctrl.changed();
+
+  /// Put in the background or closed: write any waiting save now.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed && _ctrl.savePending) _ctrl.saveNow();
   }
 
   /// Saves Chronicle progress and the sound setting.
@@ -616,11 +624,14 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     _moves.cancel();
-    _link.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _ctrl.dispose();
     HardwareKeyboard.instance.removeHandler(_onKey);
     _toastTimer?.cancel();
     _trackerTimer?.cancel();
     _deal.dispose();
+    _handSnap.dispose();
+    _handDragV.dispose();
     _crown.dispose();
     _coronation.dispose();
     _outcomeHold.dispose();
@@ -1204,7 +1215,7 @@ class _HomePageState extends State<HomePage>
   // the same order on every device.
 
   /// Where moves go: this device, for now.
-  final TableLink _link = LocalLink();
+  TableLink get _link => _ctrl.link;
   late final StreamSubscription<MatchAction> _moves;
 
   /// A move coming back from the link: play it on the table.
@@ -1395,20 +1406,20 @@ class _HomePageState extends State<HomePage>
     _trackerTimer?.cancel();
     // First built unseen (the slow frame, if there is one), then faded in,
     // so the fade itself runs smoothly.
-    setState(() {
+    _ui(() {
       _trackerMounted = true;
       _trackerSliding = true;
       _trackerPeek = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _trackerSliding) setState(() => _trackerOpen = true);
+        if (mounted && _trackerSliding) _ui(() => _trackerOpen = true);
       });
     });
   }
 
   void _closeTracker() {
-    setState(() {
+    _ui(() {
       _trackerOpen = false;
       _trackerPeek = false;
       _trackerSliding = true;
@@ -1416,7 +1427,7 @@ class _HomePageState extends State<HomePage>
     _trackerTimer?.cancel();
     _trackerTimer = Timer(_trackerSlide + const Duration(milliseconds: 40), () {
       if (mounted && !_trackerOpen) {
-        setState(() {
+        _ui(() {
           _trackerSliding = false;
           _trackerMounted = false;
         });
@@ -1723,18 +1734,20 @@ class _HomePageState extends State<HomePage>
                           : legal.contains(card) || _queued == card
                               ? 0.0
                               : 12.0;
-                      void play() {
+                      // Whether the card went anywhere (played, shown or
+                      // queued); a drag that didn't slides back.
+                      bool play() {
                         if (_revealing || _speakPromptDue) {
                           if (_cards.revealFor(_you, card) == null) {
                             _showSnack(
                                 'Only your highest, lowest or only card of a suit can be shown, never a Court Card',
                                 Palette.feltDeep);
-                            return;
+                            return false;
                           }
                           final opening = _speakPromptDue;
                           _reveal(_you, card);
                           if (opening) _startChoosing();
-                          return;
+                          return true;
                         }
                         if (!_yourPlay && canQueue) {
                           final ok = legalPlays(c.hands[_you], c.current.first);
@@ -1745,12 +1758,12 @@ class _HomePageState extends State<HomePage>
                                     ? 'You must follow with a Court Card'
                                     : 'You must follow ${led.suit.name}',
                                 Palette.feltDeep);
-                            return;
+                            return false;
                           }
                           setState(() => _queued = _queued == card ? null : card);
-                          return;
+                          return true;
                         }
-                        if (!_yourPlay) return;
+                        if (!_yourPlay) return false;
                         if (!legal.contains(card)) {
                           final led = c.led!;
                           _showSnack(
@@ -1758,7 +1771,7 @@ class _HomePageState extends State<HomePage>
                                   ? 'You must follow with a Court Card'
                                   : 'You must follow ${led.suit.name}',
                               Palette.feltDeep);
-                          return;
+                          return false;
                         }
                         final area = _rectOn(_handKey);
                         if (area != null) {
@@ -1767,6 +1780,7 @@ class _HomePageState extends State<HomePage>
                               (dragging ? _handDrag : Offset.zero);
                         }
                         _playCard(_you, card);
+                        return true;
                       }
                       _handPlays[card] = play;
 
@@ -1776,29 +1790,39 @@ class _HomePageState extends State<HomePage>
                             ? Duration.zero
                             : const Duration(milliseconds: 220),
                         curve: Curves.easeOutCubic,
-                        left: left + (dragging ? _handDrag.dx : 0),
-                        top: top + (dragging ? _handDrag.dy : 0),
-                        child: GestureDetector(
+                        left: left,
+                        top: top,
+                        child: ValueListenableBuilder<Offset>(
+                          valueListenable: _handDragV,
+                          builder: (context, drag, child) => Transform.translate(
+                              offset: dragging || _handSnapCard == card.id
+                                  ? drag
+                                  : Offset.zero,
+                              child: child),
+                          child: GestureDetector(
                           onTap: play,
                           // Or drag it up onto the table.
-                          onPanStart: (_) => setState(() {
+                          onPanStart: (_) => _ui(() {
+                            _handSnap.stop();
+                            _handSnapCard = null;
                             _handDragCard = card.id;
                             _handDrag = Offset.zero;
                           }),
-                          onPanUpdate: (d) =>
-                              setState(() => _handDrag += d.delta),
+                          onPanUpdate: (d) => _handDrag += d.delta,
                           onPanEnd: (_) {
                             final far = _handDrag.dy < -h * 0.6;
-                            if (far) play();
-                            setState(() {
-                              _handDragCard = null;
-                              _handDrag = Offset.zero;
-                            });
-                          },
-                          onPanCancel: () => setState(() {
+                            // Let go first, so the play below is saved.
                             _handDragCard = null;
-                            _handDrag = Offset.zero;
-                          }),
+                            if (far && play()) {
+                              _ui(() => _handDrag = Offset.zero);
+                            } else {
+                              _snapBack(card.id);
+                            }
+                          },
+                          onPanCancel: () {
+                            _handDragCard = null;
+                            _snapBack(card.id);
+                          },
                           child: AnimatedScale(
                             scale: dragging ? 1.1 : 1,
                             duration: const Duration(milliseconds: 120),
@@ -1835,6 +1859,7 @@ class _HomePageState extends State<HomePage>
                             ),
                           ),
                         ),
+                        ),
                       );
                     }(),
                 ],
@@ -1870,7 +1895,35 @@ class _HomePageState extends State<HomePage>
 
   /// A hand card being dragged towards the table, and how far.
   int? _handDragCard;
-  Offset _handDrag = Offset.zero;
+
+  /// The card sliding back into the hand after a drag that didn't play it.
+  int? _handSnapCard;
+  Offset _handSnapFrom = Offset.zero;
+  late final AnimationController _handSnap = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 220))
+    ..addListener(() => _handDrag = _handSnapFrom *
+        (1 - Curves.easeOutCubic.transform(_handSnap.value)))
+    ..addStatusListener((s) {
+      if (s == AnimationStatus.completed) {
+        _ui(() {
+          _handSnapCard = null;
+          _handDrag = Offset.zero;
+        });
+      }
+    });
+
+  void _snapBack(int id) {
+    _ui(() {
+      _handSnapCard = id;
+      _handSnapFrom = _handDrag;
+    });
+    _handSnap.forward(from: 0);
+  }
+  /// How far the dragged card has moved. Only that card listens, so a drag
+  /// moves one card, not the whole page.
+  final _handDragV = ValueNotifier(Offset.zero);
+  Offset get _handDrag => _handDragV.value;
+  set _handDrag(Offset v) => _handDragV.value = v;
 
   GlobalKey _seatKey(int seat) => _seatKeys.putIfAbsent(seat, GlobalKey.new);
 
@@ -3695,7 +3748,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onDragStart(Task t) {
-    setState(() {
+    _ui(() {
       _dragging = t;
       _order
         ..remove(t)
@@ -3704,7 +3757,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onDragUpdate(Task t, Offset delta) {
-    setState(() {
+    _ui(() {
       final geo = _geo;
       final p = geo.clampToTable(_toPx(_pos[t]!) + delta, geo.cardSize(t));
       _pos[t] = _toFrac(p);
@@ -3855,9 +3908,9 @@ class _HomePageState extends State<HomePage>
   void _showSnack(String text, Color color) {
     if (_digital && _inGame && !_storyActive) {
       _toastTimer?.cancel();
-      setState(() => _toast = text);
+      _ui(() => _toast = text);
       _toastTimer = Timer(const Duration(milliseconds: 2600), () {
-        if (mounted && _toast == text) setState(() => _toast = null);
+        if (mounted && _toast == text) _ui(() => _toast = null);
       });
       return;
     }
@@ -4920,7 +4973,7 @@ class _HomePageState extends State<HomePage>
                               you: _you,
                               players: game.players,
                               onClose: _closeTracker,
-                              onPeek: (on) => setState(() => _trackerPeek = on),
+                              onPeek: (on) => _ui(() => _trackerPeek = on),
                             ),
                           ),
                         ),
@@ -4955,7 +5008,7 @@ class _HomePageState extends State<HomePage>
 
   /// The menu: an ornate panel that drops down from the corner.
   Future<void> _openMenu() async {
-    setState(() => _menuOpen = true);
+    _ui(() => _menuOpen = true);
     final choice = await showGeneralDialog<String>(
       context: context,
       barrierDismissible: true,
@@ -4976,7 +5029,7 @@ class _HomePageState extends State<HomePage>
         );
       },
     );
-    if (mounted) setState(() => _menuOpen = false);
+    if (mounted) _ui(() => _menuOpen = false);
     if (choice == null || !mounted) return;
     await _onMenuChoice(choice);
   }
@@ -7352,6 +7405,8 @@ class _HomePageState extends State<HomePage>
   /// Continue on the welcome screen: the saved games, to pick one up.
   Future<void> _showContinue() async {
     try {
+      // A save still waiting goes in first, so the list is up to date.
+      if (_ctrl.savePending) await _ctrl.saveNow();
       final saves = await _readSaves(await SharedPreferences.getInstance());
       if (mounted) setState(() => _saves = saves);
     } catch (_) {}
