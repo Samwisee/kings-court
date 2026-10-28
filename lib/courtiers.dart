@@ -16,7 +16,7 @@ enum Courtier {
     house: 'House Ashcombe',
     motto: 'What we hold, we keep.',
     story:
-        'Old blood and older land. The Ashcombes have guarded the northern march for nine generations, and never let a King forget it.',
+        'Old blood and older land. The Ashcombes have held the northern march for nine generations, and every hill fort along it was raised by their hands. They count their wealth in acres and their loyalties in centuries, and they have outlasted every storm the realm has known.',
   ),
   bishop(
     'The Bishop',
@@ -26,7 +26,7 @@ enum Courtier {
     house: 'House Vell',
     motto: 'Light before the throne.',
     story:
-        'The Vells raised the great cathedral and ring its bells. They anoint every King, and remind each one whose hand held the oil.',
+        'The Vells raised the great cathedral stone by stone, and their bells still mark the hours of the realm. Their archive holds every oath ever sworn in the kingdom, and they have forgotten none of them. Even their silences are said to be prayers.',
   ),
   general(
     'The General',
@@ -36,7 +36,7 @@ enum Courtier {
     house: 'House Strand',
     motto: 'Steel answers.',
     story:
-        'Soldiers risen from the ranks. Every Strand has bled for the crown, and every Strand expects the crown to remember.',
+        'Soldiers risen from the ranks. Every Strand learns to march before they learn to read, and the family’s scars are its heraldry. They keep the realm’s peace the hard way, and remember the name of every field it cost.',
   ),
   spymaster(
     'The Spymaster',
@@ -46,7 +46,7 @@ enum Courtier {
     house: 'House Morrow',
     motto: 'Every wall has ears.',
     story:
-        'No one is sure where the Morrows came from. They know everyone\'s secrets, and keep their own.',
+        'No one is sure where the Morrows came from, and the Morrows prefer it that way. Their letters travel in other people’s pockets, and their friends wear many faces. They know everyone’s secrets, and keep their own.',
   ),
   merchant(
     'The Merchant',
@@ -56,7 +56,7 @@ enum Courtier {
     house: 'House Coyne',
     motto: 'All things have a price.',
     story:
-        'The Coynes own the harbour, the mint and half the debts in the kingdom, some of them the King\'s.',
+        'The Coynes own the harbour, the mint and half the debts in the kingdom. Their ships carry wine south and silver home, and every guild hall keeps a seat for a Coyne. To them, a quarrel is only a price not yet agreed.',
   ),
   jester(
     'The Jester',
@@ -66,7 +66,7 @@ enum Courtier {
     house: 'House Motley',
     motto: 'Laugh, lest you weep.',
     story:
-        'A house of one, with a borrowed name. The Jester says what no one else dares, and somehow keeps their head.',
+        'A house of one, with a borrowed name. The Jester tumbles through every hall of the court, says what no one else dares, and somehow keeps their head. Behind the bells, very little is missed.',
   ),
 
   /// You, in solo Dynasty: the King, above every house.

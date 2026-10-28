@@ -2198,8 +2198,12 @@ class OrnateCard extends StatelessWidget {
       this.margin = const EdgeInsets.fromLTRB(24, 46, 24, 24),
       this.padding = const EdgeInsets.fromLTRB(28, 30, 28, 18),
       this.maxWidth = 400,
-      this.ornament = Ornament.low});
+      this.ornament = Ornament.low,
+      this.edge});
   final bool won;
+
+  /// A different colour for its edge (say, a player's).
+  final Color? edge;
 
   /// How much decoration: see [Ornament].
   final Ornament ornament;
@@ -2213,7 +2217,7 @@ class OrnateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final edge = court ? Palette.gold : won ? const Color(0xFF6E4E0E) : Palette.lost;
+    final edge = this.edge ?? (court ? Palette.gold : won ? const Color(0xFF6E4E0E) : Palette.lost);
     final ink = won && !court ? const Color(0xFF6E4E0E) : Palette.gold;
     return Container(
       margin: margin,

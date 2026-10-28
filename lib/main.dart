@@ -582,7 +582,14 @@ class _HomePageState extends State<HomePage>
       _showCardTracker();
       return true;
     }
-    if (_trackerOpen) return false;
+    if (_trackerOpen) {
+      // The arrows step through the deck and the others' hands.
+      if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
+        _trackerKey.currentState?.step(key == LogicalKeyboardKey.arrowRight ? 1 : -1);
+        return true;
+      }
+      return false;
+    }
     if (key == LogicalKeyboardKey.keyS) {
       if (!(_mayAskToSpeak || _revealing)) return false;
       _speak();
@@ -1617,6 +1624,7 @@ class _HomePageState extends State<HomePage>
   /// Hidden for a moment (its eye, or the space bar, held down) to see
   /// the table behind it.
   bool _trackerPeek = false;
+  final _trackerKey = GlobalKey<_CardTrackerState>();
 
   void _showCardTracker() {
     if (_trackerOpen) {
@@ -2251,6 +2259,16 @@ class _HomePageState extends State<HomePage>
           ? game.pickTurn == seat
           : _playing && _lastTrick == null && _cards.turn == seat);
 
+  /// What tapping a seat does: their courtier's card, or (without roles)
+  /// asking them to show a card.
+  VoidCallback? _seatTap(int seat) => _choosingKing
+      ? null
+      : game.hasRoles
+          ? () => _showCourtier(seat)
+          : _digital && seat != _you
+              ? () => _askToSpeak(seat)
+              : null;
+
   Widget _digiToken(int seat, double size, {bool tight = false}) {
     final labels = seatLabels(game.players);
     // Each courtier breathes, and springs in when they first come to the
@@ -2282,13 +2300,7 @@ class _HomePageState extends State<HomePage>
         // Loyalty and powers are in each courtier's card (tap the token),
         // keeping the table clear.
         // Tap a courtier to ask them to show a card (once a round).
-        onTap: _choosingKing
-            ? null
-            : game.hasRoles
-                ? () => _showCourtier(seat)
-                : _digital && seat != _you
-                    ? () => _askToSpeak(seat)
-                    : null,
+        onTap: _seatTap(seat),
         tight: tight,
       ),
       ),
@@ -2492,6 +2504,12 @@ class _HomePageState extends State<HomePage>
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // The token, name and tally are all one big target, so
+                    // a tap anywhere on them reaches the courtier.
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: seat == null ? null : _seatTap(seat),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
                     if (seat != null)
                       _withReveal(seat, _digiToken(seat, width > 600 ? 48 : 38, tight: true),
                           size: width > 600 ? 48 : 38)
@@ -2532,6 +2550,8 @@ class _HomePageState extends State<HomePage>
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white54)),
                       ),
+                      ]),
+                    ),
                     // A traitor's scheme, face up: a black card the court
                     // must stop.
                     if (seat != null &&
@@ -2557,10 +2577,13 @@ class _HomePageState extends State<HomePage>
                     top: (width > 600 ? 48 : 38) + 22,
                     left: 0,
                     right: 0,
-                    child: Center(
-                      child: SpeechBubble(_quips[seat]!,
-                          key: ValueKey('quip-$seat-${_quips[seat]}'),
-                          tailAbove: true),
+                    // Never in the way of a tap on the courtier.
+                    child: IgnorePointer(
+                      child: Center(
+                        child: SpeechBubble(_quips[seat]!,
+                            key: ValueKey('quip-$seat-${_quips[seat]}'),
+                            tailAbove: true),
+                      ),
                     ),
                   ),
                   ],
@@ -4105,9 +4128,11 @@ class _HomePageState extends State<HomePage>
           return RotatedBox(
             quarterTurns: _geo.edge(seat),
             child: Dialog(
-              backgroundColor: Palette.card,
+              backgroundColor: DialogStyle.paper,
               surfaceTintColor: Colors.transparent,
               clipBehavior: Clip.antiAlias,
+              // Edged in the player's colour, like their tasks.
+              shape: HighVisBorder(game.isAntagonist(seat) ? Palette.lost : player.color),
               insetPadding: const EdgeInsets.all(20),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 380),
@@ -4127,8 +4152,22 @@ class _HomePageState extends State<HomePage>
                         antagonist: game.isAntagonist(seat),
                         king: isKing,
                       ),
+                      // A gilt band between the banner and the card.
+                      Container(
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(colors: [
+                            Color(0xFFA57C1B),
+                            Color(0xFFF9E08C),
+                            Color(0xFFD4A63A),
+                            Color(0xFFA57C1B),
+                          ]),
+                          border: Border(
+                              bottom: BorderSide(color: outlineColour, width: 1)),
+                        ),
+                      ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                        padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -5106,19 +5145,13 @@ class _HomePageState extends State<HomePage>
                               maxHeight: MediaQuery.sizeOf(context).height * 0.88),
                           child: Material(
                             type: MaterialType.transparency,
-                            child: OrnateCard(
-                              won: false,
-                              court: true,
-                              maxWidth: 400,
-                              margin: EdgeInsets.zero,
-                              padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
-                              child: _CardTracker(
-                                cards: _cards,
-                                you: _you,
-                                players: game.players,
-                                onClose: _closeTracker,
-                                onPeek: (on) => setState(() => _trackerPeek = on),
-                              ),
+                            child: _CardTracker(
+                              key: _trackerKey,
+                              cards: _cards,
+                              you: _you,
+                              players: game.players,
+                              onClose: _closeTracker,
+                              onPeek: (on) => setState(() => _trackerPeek = on),
                             ),
                           ),
                         ),
@@ -8398,7 +8431,9 @@ class _SetupPanelState extends State<_SetupPanel> {
   List<String> get _flow => [
         'how',
         'mode',
-        if (!_solo) 'count',
+        // On screen the number of players is chosen on the last step; at a
+        // real table it comes first, for the names.
+        if (!_solo && !digital) 'count',
         if (!_solo && !digital) 'names',
         'final',
       ];
@@ -8693,16 +8728,52 @@ class _SetupPanelState extends State<_SetupPanel> {
   /// The last step's choices, with room to breathe between them and in
   /// from the sides.
   Widget _settingsPanel(List<Widget> rows) => Padding(
-        padding: const EdgeInsets.fromLTRB(10, 18, 10, 0),
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (final (i, r) in rows.indexed) ...[
-              if (i > 0) const SizedBox(height: 10),
+              // A faint gold rule between choices, fading at the ends.
+              if (i > 0)
+                Container(
+                  height: 1,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      Palette.gold.withValues(alpha: 0),
+                      Palette.gold.withValues(alpha: 0.35),
+                      Palette.gold.withValues(alpha: 0),
+                    ]),
+                  ),
+                ),
               r,
             ],
           ],
         ),
+      );
+
+  /// On screen: how many sit at the table (you and the courtiers).
+  Widget _playersRow() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(children: [
+            Text('Players', style: TextStyle(fontSize: 16)),
+            Spacer(),
+            Text('You and your courtiers',
+                style: TextStyle(fontSize: 14, color: Colors.white70)),
+          ]),
+          const SizedBox(height: 10),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (int n = 3; n <= maxPlayers; n++)
+                _CountChip(
+                    n: n, selected: count == n, onTap: () => setState(() => count = n)),
+            ],
+          ),
+        ],
       );
 
   Widget _rolesSwitch() => powersComingSoon
@@ -8754,7 +8825,7 @@ class _SetupPanelState extends State<_SetupPanel> {
               label: Text('All chapters (${widget.progress.totalCrowns} crowns)'),
               style: TextButton.styleFrom(foregroundColor: Palette.gold),
             ),
-            _settingsPanel([_rolesSwitch(), _soundSwitch()]),
+            _settingsPanel([if (digital) _playersRow(), _rolesSwitch(), _soundSwitch()]),
           ],
         );
       case GameMode.dynasty:
@@ -8786,6 +8857,7 @@ class _SetupPanelState extends State<_SetupPanel> {
             const Center(child: Text('Setup', style: _heading)),
             const SizedBox(height: 4),
             _settingsPanel([
+            if (digital) _playersRow(),
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(
               children: [
@@ -9680,7 +9752,8 @@ class _MoreAboutState extends State<_MoreAbout> {
 /// they may still hold.
 class _CardTracker extends StatefulWidget {
   const _CardTracker(
-      {required this.cards,
+      {super.key,
+      required this.cards,
       required this.you,
       required this.players,
       this.onClose,
@@ -9864,7 +9937,7 @@ class _CardTrackerState extends State<_CardTracker> {
             if (c.suit == suit && g.possible.contains(c)) c
         ];
         return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.only(bottom: 3),
           child: Row(children: [
             suitLabel(suit),
             Expanded(
@@ -9885,22 +9958,20 @@ class _CardTrackerState extends State<_CardTracker> {
         );
       }
 
-      return Container(
+      // The tracker's own edge turns their colour, so no box of its own.
+      return Padding(
         key: ValueKey('guess-${g.seat}'),
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-        decoration: BoxDecoration(
-          color: const Color(0x22000000),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: players[g.seat].color, width: 2),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                '${players[g.seat].name} holds ${g.size} card${g.size == 1 ? '' : 's'}. '
-                'Bright ones they certainly hold; faint ones they may.',
-                style: const TextStyle(fontSize: 14, height: 1.3, color: Colors.white70)),
-            const SizedBox(height: 8),
+                '${players[g.seat].name}: ${g.size} card${g.size == 1 ? '' : 's'}. '
+                'Bright: certain. Faint: possible.',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, color: Colors.white70)),
+            const SizedBox(height: 6),
             for (final suit in suits) suitRow(suit),
           ],
         ),
@@ -9913,7 +9984,21 @@ class _CardTrackerState extends State<_CardTracker> {
       final small = clampD(w * 0.7, 20, 34);
       // The deck's height: the Court Cards and four suits, a row each.
       final deckHeight = 5 * (w * 1.3 + 3);
-      return Column(
+      // Its edge turns the colour of whoever's hand is shown.
+      return TweenAnimationBuilder<Color?>(
+        tween: ColorTween(end: _seat == null ? Palette.gold : players[_seat!].color),
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+        builder: (context, edge, child) => OrnateCard(
+          won: false,
+          court: true,
+          edge: edge,
+          maxWidth: 400,
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+          child: child!,
+        ),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // The title and a cross.
@@ -9977,40 +10062,54 @@ class _CardTrackerState extends State<_CardTracker> {
             ),
           ),
           const SizedBox(height: 8),
-          // Along the bottom: the eye to hold for a look at the table, then
-          // the deck and each player.
-          Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              Tooltip(
-                message: 'Hold to see the table',
-                child: Listener(
-                  onPointerDown: (_) => widget.onPeek?.call(true),
-                  onPointerUp: (_) => widget.onPeek?.call(false),
-                  onPointerCancel: (_) => widget.onPeek?.call(false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: ShapeDecoration(
-                      color: const Color(0x33000000),
-                      shape: StadiumBorder(
-                          side: BorderSide(
-                              color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
-                    ),
-                    child: const Icon(Icons.visibility_rounded,
-                        color: Palette.gold, size: 17),
+          // Along the bottom: the deck and each player, then (in the
+          // corner, easy to reach with a thumb) the eye to hold for a look at
+          // the table.
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            Expanded(
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  deckChip(),
+                  for (int s = 0; s < players.length; s++) key(s),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Tooltip(
+              message: 'Hold to see the table',
+              child: Listener(
+                onPointerDown: (_) => widget.onPeek?.call(true),
+                onPointerUp: (_) => widget.onPeek?.call(false),
+                onPointerCancel: (_) => widget.onPeek?.call(false),
+                child: Container(
+                  width: 48,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: ShapeDecoration(
+                    color: const Color(0x33000000),
+                    shape: StadiumBorder(
+                        side: BorderSide(
+                            color: Palette.gold.withValues(alpha: 0.7), width: 1.3)),
                   ),
+                  child: const Icon(Icons.visibility_rounded,
+                      color: Palette.gold, size: 20),
                 ),
               ),
-              deckChip(),
-              for (int s = 0; s < players.length; s++) key(s),
-            ],
-          ),
+            ),
+          ]),
         ],
+      ),
       );
     });
+  }
+
+  /// The arrow keys: step through the deck and each other player's hand.
+  void step(int dir) {
+    final order = <int?>[null, for (int s = 0; s < players.length; s++) if (s != you) s];
+    final at = order.indexOf(_seat);
+    setState(() => _seat = order[(at + dir) % order.length]);
   }
 
   static double cellWidth(double width, double height) {

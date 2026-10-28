@@ -1235,7 +1235,8 @@ void main() {
       if (mode != 'Dynasty') {
         await tester.tap(find.text('3').last);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Next'));
+        // On screen, the number of players is on the last step itself.
+        if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
         await tester.pumpAndSettle();
       }
       await tester.tap(find.text(mode == 'Dynasty' ? 'Begin the reign' : 'Start'));

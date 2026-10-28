@@ -130,7 +130,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('4').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
+    if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Slider), const Offset(90, 0));
     await tester.pumpAndSettle();
@@ -176,7 +176,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('4').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
+    if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start'));
     final state = tester.state(find.byType(HomePage)) as dynamic;
@@ -234,7 +234,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(onScreen ? '3' : '4').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Next'));
+      if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       if (!onScreen) {
         await tester.tap(find.text('Next'));
