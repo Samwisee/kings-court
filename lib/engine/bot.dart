@@ -466,17 +466,22 @@ class _Guide {
       final p = profileOf(d);
       need[seat].addAll(p.cards);
       if (p.forbidCard != null) avoids[seat].add(p.forbidCard!);
+      // Wanting tricks in general: only tasks about the count of tricks.
+      // Capturing a card is about *which* trick, and is handled when the
+      // card is on the table; leading high for its own sake wastes the
+      // cards that win it later.
       switch (tierOf(d)) {
         case TaskTier.avoid:
           temper[seat] -= 1;
-        case TaskTier.capture:
-        case TaskTier.trick:
-          temper[seat] += 1;
         case TaskTier.race:
           temper[seat] += d.contains('fewer') ? -1 : 1;
+        case TaskTier.trick:
+          if (d.contains('in a row')) temper[seat] += 1;
+        case TaskTier.capture:
         case TaskTier.precise:
           break;
       }
+      if (p.maxTricks != null && p.maxTricks! <= 1) temper[seat] -= 1;
     }
     return _Guide(need, [
       for (final a in avoids)
@@ -497,6 +502,18 @@ class _Guide {
     // can be taken.
     if (onTable.any(need[seat].contains) && winners.isNotEmpty) {
       return lowest(winners);
+    }
+    // Playing together: a card a teammate needs goes to them when they're
+    // winning the trick, and a trick holding a card a teammate needs is
+    // left to them.
+    if (onTable.isNotEmpty) {
+      final ahead = sim.seats[winningPlay(onTable)];
+      if (ahead != seat) {
+        final gift = [for (final c in legal) if (need[ahead].contains(c)) c];
+        if (gift.isNotEmpty && !sim.wins(gift.first)) return gift.first;
+        final theirs = onTable.any(need[ahead].contains);
+        if (theirs && losers.isNotEmpty) return highest(losers);
+      }
     }
     // A card they must not win is on the table: stay under it, throwing
     // the biggest card that still loses.

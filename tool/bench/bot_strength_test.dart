@@ -18,8 +18,7 @@ void main() {
       final line = StringBuffer('$players players, target $target, $rounds rounds:');
       for (final (name, guided, strength) in [
         ('random', false, 0.0),
-        ('guided 0.6', true, 0.6),
-        ('guided 0.8', true, 0.8),
+        ('guided 0.7', true, 0.7),
         ('guided 0.9', true, 0.9),
       ]) {
         // The same deals for both: the seed fixes the tasks and the cards.
