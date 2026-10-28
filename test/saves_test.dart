@@ -26,6 +26,13 @@ void main() {
 
   test('There are saves to check', () => expect(files, isNotEmpty));
 
+  test('Every version up to the current one has fixtures', () {
+    for (var v = 2; v <= GameState.saveVersion; v++) {
+      expect(files.where((f) => f.path.contains('/v$v/')), isNotEmpty,
+          reason: 'no fixtures for save version $v: run test/tool/make_saves_test.dart');
+    }
+  });
+
   test('A save says its version, and loading one again changes nothing', () {
     final g = GameState()
       ..players = [for (var i = 0; i < 3; i++) Player('P$i', colorValue: 0)]
