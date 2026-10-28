@@ -1,9 +1,12 @@
-/// Saved games from before the refactor still load, and mean the same.
+/// Saved games of every version still load, and mean the same.
 ///
-/// The files in test/fixtures/saves were written by the pre-refactor code
-/// (tool/fixtures/make_saves_test.dart, run once in CI): each holds a save
-/// slot's data and a `facts` map saying what that save meant at the time.
-/// Bug reports carry the same `game` JSON, so this keeps them readable too.
+/// test/fixtures/saves holds saves written by the pre-refactor code
+/// (version 1; tool/fixtures/make_saves_test.dart, run once in CI) and,
+/// under v<n>/, saves written in each later shape (test/tool/make_saves_test.dart
+/// writes them). Each file holds a save slot's data and a `facts` map
+/// saying what that save meant when it was written, so the loader can be
+/// checked against it. Bug reports carry the same `game` JSON, so this
+/// keeps them readable too.
 library;
 
 import 'dart:convert';
@@ -15,7 +18,7 @@ import 'package:kings_court/modes/chronicle/chapters.dart';
 
 void main() {
   final files = Directory('test/fixtures/saves')
-      .listSync()
+      .listSync(recursive: true)
       .whereType<File>()
       .where((f) => f.path.endsWith('.json') && !f.path.endsWith('progress.json'))
       .toList()
@@ -23,8 +26,18 @@ void main() {
 
   test('There are saves to check', () => expect(files, isNotEmpty));
 
+  test('A save says its version, and loading one again changes nothing', () {
+    final g = GameState()
+      ..players = [for (var i = 0; i < 3; i++) Player('P$i', colorValue: 0)]
+      ..startRound(3, 6);
+    final json = g.toJson();
+    expect(json['version'], GameState.saveVersion);
+    expect(GameState.upgradeSave(json), same(json));
+  });
+
   for (final file in files) {
-    test('${file.uri.pathSegments.last} loads and means the same', () {
+    final name = file.path.split('test/fixtures/saves/').last;
+    test('$name loads and means the same', () {
       final data = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
       final facts = data['facts'] as Map<String, dynamic>;
       final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
@@ -75,10 +88,14 @@ void main() {
       expect(again.round!.king, round.king);
       expect(again.round!.turn, round.turn);
       expect([for (final t in again.tasks) t.owner], [for (final t in round.tasks) t.owner]);
-      // The target was kept beside the game then; the page reads it in.
-      expect(data['playerCount'], facts['playerCount']);
-      expect(data['targetPoints'], facts['target']);
       expect(game.players.length, facts['playerCount']);
+      // Version 1 kept the target beside the game; the page reads it in.
+      if (data.containsKey('targetPoints')) {
+        expect(data['playerCount'], facts['playerCount']);
+        expect(data['targetPoints'], facts['target']);
+      } else {
+        expect(game.target, facts['target']);
+      }
     });
   }
 

@@ -44,6 +44,11 @@ jobs:
           tail -5 out/test.txt | tee -a out/summary.txt
           if [ $code -ne 0 ]; then python3 tool/ci_annotate.py out/test.txt; fi
           exit $code
+      - name: Write the save fixtures for the current version
+        if: success() || failure()
+        run: |
+          timeout 300 flutter test test/tool/make_saves_test.dart --reporter expanded > out/fixtures.txt 2>&1 || tail -5 out/fixtures.txt
+          cp -r test/tool/out/fixtures out/ 2>/dev/null || true
       - name: Build
         if: success() || failure()
         run: flutter build web --release --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8} > out/build.txt 2>&1 || (tail -20 out/build.txt; exit 1)

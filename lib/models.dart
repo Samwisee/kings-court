@@ -326,7 +326,17 @@ class GameState {
 
   // ------------------------------------------------------------ saving
 
+  /// The shape saves are written in. A save from an older version is
+  /// brought up to date one step at a time by [upgradeSave] before it's
+  /// read, so each change to the format is one migration here:
+  ///
+  /// 1. before the refactor: the round's tasks, King, picks and so on
+  ///    beside the game, and the on-screen cards apart under `cards`;
+  /// 2. the round is one record under `round`.
+  static const saveVersion = 2;
+
   Map<String, dynamic> toJson() => {
+        'version': saveVersion,
         'players': [
           for (final p in players)
             {'name': p.name, 'color': p.colorValue},
@@ -350,11 +360,11 @@ class GameState {
         'resultRecorded': _resultRecorded,
       };
 
-  /// Rebuilds a saved game. Returns null if the save can't be read (for
-  /// example after the task list changed in an update). Reads saves from
-  /// before the round was one record too (`tasks` beside `cards`).
-  static GameState? fromJson(Map<String, dynamic> j) {
+  /// Rebuilds a saved game of any version. Returns null if the save can't
+  /// be read (for example after the task list changed in an update).
+  static GameState? fromJson(Map<String, dynamic> saved) {
     try {
+      final j = upgradeSave(saved);
       final g = GameState()
         ..players = [
           for (final p in (j['players'] as List<dynamic>).cast<Map<String, dynamic>>())
@@ -370,7 +380,8 @@ class GameState {
         ..lesson = (j['lesson'] as int?) ?? 0
         ..surprise = (j['surprise'] as bool?) ?? false
         ..roles = (j['roles'] as bool?) ?? true
-        ..roundNumber = (j['roundNumber'] ?? j['round']) as int
+        ..digital = (j['digital'] as bool?) ?? false
+        ..roundNumber = j['roundNumber'] as int
         ..wins = j['wins'] as int
         ..losses = j['losses'] as int
         ..streak = j['streak'] as int
@@ -381,16 +392,10 @@ class GameState {
       if (g.players.isEmpty) return null;
       // A game of the old Dynasty: its story no longer loads.
       if (g.isDynasty) return null;
-      if (j['round'] is Map) {
-        g.digital = (j['digital'] as bool?) ?? false;
-        g.round = Round.fromJson(Map<String, dynamic>.from(j['round'] as Map));
-      } else {
-        g.digital = j['cards'] != null;
-        g.round = _legacyRound(j, g);
-      }
-      final r = g.round;
-      if (r == null || r.tasks.isEmpty) return null;
-      r.names = [for (final p in g.players) p.name];
+      if (j['round'] is! Map) return null;
+      final r = Round.fromJson(Map<String, dynamic>.from(j['round'] as Map));
+      if (r.tasks.isEmpty) return null;
+      g.round = r..names = [for (final p in g.players) p.name];
       if (g.courtiers.length != g.players.length) g.seatCourtiers();
       return g;
     } catch (_) {
@@ -398,43 +403,99 @@ class GameState {
     }
   }
 
-  /// A round from a save that kept the tasks and the cards apart.
-  static Round _legacyRound(Map<String, dynamic> j, GameState g) {
-    final r = Round(players: g.players.length, target: g.target, dealId: g.dealId)
-      ..tasks = [
-        for (final t in (j['tasks'] as List<dynamic>).cast<Map<String, dynamic>>())
-          RoundTask.fromJson(t)
-      ]
-      ..king = j['king'] as int?
-      ..passed = {for (final s in (j['passed'] as List?) ?? const []) s as int}
-      ..pickTurn = j['pickTurn'] as int?
-      ..sealCount = (j['sealCount'] as int?) ?? 0
-      ..decree = j['decree'] == null ? null : Decree.values[j['decree'] as int]
-      ..exiledSeat = j['exiled'] as int?
-      ..passing = !g.isTutorial;
-    if (j['spoke'] case final List<dynamic> spoke when spoke.length == r.players) {
-      r.spoke = List<bool>.from(spoke);
+  /// [saved] in the current shape: each migration from its version on,
+  /// in turn. A save with no version is from before versions (1).
+  static Map<String, dynamic> upgradeSave(Map<String, dynamic> saved) {
+    var j = saved;
+    var version = (j['version'] as int?) ?? 1;
+    while (version < saveVersion) {
+      j = _migrations[version]!(j);
+      version++;
     }
+    return j;
+  }
+
+  /// From each version to the next.
+  static const _migrations = <int, Map<String, dynamic> Function(Map<String, dynamic>)>{
+    1: _v1ToV2,
+  };
+
+  /// Version 1 kept the round's tasks, King, picks, seals and decree
+  /// beside the game, and the on-screen cards apart under `cards` (with
+  /// their own tasks, announced numbers and shown cards); the round
+  /// number was `round`. Version 2 has the round as one record.
+  static Map<String, dynamic> _v1ToV2(Map<String, dynamic> j) {
+    final players = (j['players'] as List?)?.length ?? 0;
+    final dealId = j['dealId'] as int;
+    final tutorial = j['mode'] == GameMode.tutorial.index;
+    final tasks = [
+      for (final t in (j['tasks'] as List<dynamic>).cast<Map<String, dynamic>>())
+        RoundTask.fromJson(t).toJson()
+    ];
     // The cards, if they were dealt for this very deal.
-    if (j['cards'] case final Map<dynamic, dynamic> cards
-        when cards['dealId'] == g.dealId) {
-      final c = Round.fromJson(Map<String, dynamic>.from(cards));
-      r
-        ..hands = c.hands
-        ..setAside = c.setAside
-        ..tricks = c.tricks
-        ..leader = c.leader
-        ..currentSeats = c.currentSeats
-        ..current = c.current
-        ..revealed = c.revealed
-        ..revealHint = c.revealHint
-        ..revealedAt = c.revealedAt;
-      for (final t in r.tasks) {
-        final x = c.announced[t.description];
-        if (x != null) t.x = x;
+    final raw = j['cards'];
+    final cards = raw is Map && raw['dealId'] == dealId
+        ? Map<String, dynamic>.from(raw)
+        : null;
+    if (cards != null) {
+      final announced = (cards['announced'] as Map?) ?? const {};
+      for (final t in tasks) {
+        if (announced[t['d']] case final int x) t['x'] = x;
       }
     }
-    return r;
+    final open = tasks.any((t) => t['owner'] == null);
+    final failed = tasks.any((t) => t['status'] == TaskStatus.failed.index);
+    final done = tasks.every((t) => t['status'] == TaskStatus.completed.index);
+    final unannounced = tasks.any((t) => needsX(t['d'] as String) && t['x'] == null);
+    final phase = failed || done
+        ? Phase.roundOver
+        : open
+            ? Phase.picking
+            : unannounced
+                ? Phase.announcing
+                : Phase.playing;
+    final round = <String, dynamic>{
+      'players': players,
+      'target': (j['target'] as int?) ?? 5,
+      'hands': cards?['hands'] ?? const [],
+      'setAside': cards?['setAside'] ?? const [],
+      'king': j['king'],
+      'tasks': tasks,
+      'pickTurn': j['pickTurn'],
+      'passed': j['passed'] ?? const [],
+      if (j['spoke'] case final List<dynamic> spoke when spoke.length == players)
+        'spoke': spoke,
+      'picksMade': 0,
+      'sealCount': j['sealCount'] ?? 0,
+      'decree': j['decree'],
+      'exiled': j['exiled'],
+      'passing': !tutorial,
+      'tricks': cards?['tricks'] ?? const [],
+      'leader': cards?['leader'] ?? 0,
+      'currentSeats': cards?['currentSeats'] ?? const [],
+      'current': cards?['current'] ?? const [],
+      'phase': phase.index,
+      'dealId': dealId,
+      'revealed': cards?['revealed'] ?? const {},
+      'revealHint': cards?['revealHint'] ?? const {},
+      'revealedAt': cards?['revealedAt'] ?? const {},
+    };
+    return {
+      ...j,
+      'version': 2,
+      'digital': j['cards'] != null,
+      'round': round,
+      'roundNumber': j['round'],
+    }
+      ..remove('tasks')
+      ..remove('cards')
+      ..remove('king')
+      ..remove('pickTurn')
+      ..remove('passed')
+      ..remove('spoke')
+      ..remove('sealCount')
+      ..remove('decree')
+      ..remove('exiled');
   }
 }
 
