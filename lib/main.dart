@@ -671,6 +671,28 @@ class _HomePageState extends State<HomePage>
   @visibleForTesting
   void debugUi(VoidCallback fn) => _ui(fn);
 
+  /// What a change to the game does besides rebuilding, for the benchmarks:
+  /// each part's time in milliseconds.
+  @visibleForTesting
+  Map<String, double> debugGameWork() {
+    final sw = Stopwatch();
+    double time(void Function() f) {
+      sw
+        ..reset()
+        ..start();
+      f();
+      sw.stop();
+      return sw.elapsedMicroseconds / 1000;
+    }
+
+    return {
+      'save (scheduling)': time(_save),
+      'syncCards': time(_syncCards),
+      'taskFlights': time(_launchTaskFlights),
+      'scheduleBot': time(_scheduleBot),
+    };
+  }
+
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
@@ -838,7 +860,9 @@ class _HomePageState extends State<HomePage>
   // mode works the same way on top of this.
 
   bool get _digital => game.digital;
-  static const _you = 0;
+  /// The seat you play from: the bottom of the table. Online, the seat
+  /// you joined in (see GameController.mySeat).
+  int get _you => _ctrl.mySeat;
   final _rand = math.Random();
   final _bot = Bot();
   Timer? _botTimer;
@@ -5136,9 +5160,11 @@ class _HomePageState extends State<HomePage>
       Positioned.fill(child: _coronationOverlay()),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
+      // Its own layer: the trim (with its soft shadow) is painted once, not
+      // every time something on the table changes.
       if (!HomePageTestHooks.skip.contains('trim'))
         const Positioned.fill(
-            child: IgnorePointer(child: SafeArea(child: TableTrim()))),
+            child: IgnorePointer(child: RepaintBoundary(child: SafeArea(child: TableTrim())))),
       // Keyboard shortcuts, when asked for, beside the table.
       // It slides up and fades in when turned on, and back out when off.
       if (_inGame && _setupArgs == null && _digital)

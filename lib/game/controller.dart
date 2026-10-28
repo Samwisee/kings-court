@@ -28,6 +28,10 @@ class GameController extends ChangeNotifier {
   /// Where moves go: this device, for now (see net/table_link.dart).
   final TableLink link;
 
+  /// The seat this device plays from. On one device it's seat 0, drawn at
+  /// the bottom of the table; online it's the seat joined in.
+  int mySeat = 0;
+
   GameState _game = GameState();
 
   /// The game on the table. Setting a new one (a new game, a saved game

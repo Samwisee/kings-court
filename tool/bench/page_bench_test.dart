@@ -64,5 +64,15 @@ void main() {
       print('BENCH  so the $part costs about ${(whole - without).toStringAsFixed(1)} ms');
     }
     HomePageTestHooks.skip = {};
+    // What a change to the game does besides the rebuild.
+    final work = <String, double>{};
+    for (int i = 0; i < 20; i++) {
+      final w = state.debugGameWork() as Map<String, double>;
+      w.forEach((k, v) => work[k] = (work[k] ?? 0) + v / 20);
+    }
+    work.forEach((k, v) {
+      // ignore: avoid_print
+      print('BENCH  after a change, $k: ${v.toStringAsFixed(2)} ms');
+    });
   });
 }
