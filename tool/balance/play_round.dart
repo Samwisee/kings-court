@@ -13,7 +13,10 @@ import 'package:kings_court/models.dart';
 /// Plays one round with bots; returns whether it was won, which tasks
 /// failed, and the tasks dealt.
 (bool, List<String>, List<String>) playRound(int players, int target, Random rand, Bot bot) {
-  final g = GameState()..addTasksUntilTarget(players, target);
+  // The seed from [rand], so a seeded run deals the same tasks every time.
+  final g = GameState()
+    ..seed = rand.nextInt(1 << 30)
+    ..addTasksUntilTarget(players, target);
   final s = MatchState(players: players, target: target);
   s.dealFor(1, rand,
       accept: (hands, inPlay) =>
