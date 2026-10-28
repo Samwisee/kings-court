@@ -2,3 +2,5 @@
 # One per line, `name.png: why`, or `*: why` for all of them. The Compare job
 # fails on any difference not listed here. Clear it once a new baseline is
 # taken.
+wide-screen-menu.png: the menu offers the Plain look (a new row, docs/DECISIONS.md step 7)
+wide-table-menu.png: the menu offers the Plain look (a new row, docs/DECISIONS.md step 7)

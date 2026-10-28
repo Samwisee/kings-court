@@ -259,3 +259,11 @@ with such literals as the next debt.
 - The task card's text style (which the card's size is measured in) is
   the skin's (`Skin.taskText`), so `TableCard.sizeFor` and the table
   geometry take the skin, and the size cache is keyed by it.
+- **The menu gains a row: "Plain look"** (a pip, like four-colour suits),
+  which wears the Plain skin and remembers it (`kingsCourt.skin`); a skin
+  the player doesn't own shows "(locked)" and can't be worn
+  (`Entitlements`, `AllOwned` today). Intended change; screenshots:
+  `wide-screen-menu.png`, `wide-table-menu.png`. The Plain skin: slate
+  instead of felt, a teal accent instead of gold, the body face for titles,
+  flat dialogs and buttons; the Court Cards and the table's ornament are
+  the court's art in both.
