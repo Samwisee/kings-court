@@ -52,7 +52,17 @@ void main() {
     }
 
     await time('a change to the game (setState)', () => state.setState(() {}));
-    await time('a change to the screen only (_ui)', () => state.debugUi(() {}));
+    final whole = await time('a change to the screen only (_ui)', () => state.debugUi(() {}));
     await time('a frame with nothing changed', () {});
+    // What each part of the page costs: the frame without it.
+    for (final part in ['table', 'hand', 'bar', 'trim']) {
+      HomePageTestHooks.skip = {part};
+      state.debugUi(() {});
+      await tester.pump();
+      final without = await time('  without the $part', () => state.debugUi(() {}));
+      // ignore: avoid_print
+      print('BENCH  so the $part costs about ${(whole - without).toStringAsFixed(1)} ms');
+    }
+    HomePageTestHooks.skip = {};
   });
 }

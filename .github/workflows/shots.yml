@@ -35,7 +35,10 @@ jobs:
           echo "== bots, on the Dart VM ==" > bench.txt
           timeout 300 flutter test tool/bench/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
           echo "== bots, in Chrome (as players see it) ==" >> bench.txt
-          timeout 600 flutter test --platform chrome tool/bench/bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]|rror' | sed 's/^BENCH //' | head -20 >> bench.txt || true
+          # Chrome runs only take tests under test/, so the file goes there for the run.
+          cp tool/bench/bot_bench_test.dart test/zz_bot_bench_test.dart
+          timeout 600 flutter test --platform chrome test/zz_bot_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]|rror' | sed 's/^BENCH //' | head -20 >> bench.txt || true
+          rm test/zz_bot_bench_test.dart
           echo "== the page, mid-round (phone size) ==" >> bench.txt
           timeout 300 flutter test tool/bench/page_bench_test.dart --reporter expanded 2>&1 | grep -E '^BENCH|\[E\]' | sed 's/^BENCH //' >> bench.txt || true
           cat bench.txt

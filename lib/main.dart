@@ -87,6 +87,10 @@ class HomePageTestHooks {
     _HomePageState.botBudget = 30;
     CharacterToken.alive = false;
   }
+
+  /// Parts of the page left out, so a benchmark can tell what each costs:
+  /// 'table', 'hand', 'bar', 'trim'.
+  static Set<String> skip = {};
 }
 
 class HomePage extends StatefulWidget {
@@ -5043,7 +5047,7 @@ class _HomePageState extends State<HomePage>
               fit: StackFit.expand,
               children: [...previous, if (current != null) current]),
           child: _inGame && _setupArgs == null
-              ? KeyedSubtree(key: const ValueKey('game-bar'), child: _buildAppBar())
+              ? KeyedSubtree(key: const ValueKey('game-bar'), child: HomePageTestHooks.skip.contains('bar') ? AppBar(toolbarHeight: 60, backgroundColor: Colors.transparent) : _buildAppBar())
               : AppBar(
                   key: const ValueKey('plain-bar'),
                   toolbarHeight: 60,
@@ -5086,11 +5090,11 @@ class _HomePageState extends State<HomePage>
                           _handLimit = limit;
                           _gameHeight = c.maxHeight;
                           return Column(children: [
-                          Expanded(child: mid(_buildDigitalTable())),
+                          Expanded(child: HomePageTestHooks.skip.contains('table') ? const SizedBox() : mid(_buildDigitalTable())),
                           if (game.isTutorial) mid(_buildCoach()),
                           // The story has the table: no hand to play.
                           // (Not size-animated: that clipped the cards.)
-                          if (!_storyActive) _buildHand(),
+                          if (!_storyActive && !HomePageTestHooks.skip.contains('hand')) _buildHand(),
                         ]);
                         }))
                       : _centred(_buildTable(), aspect: 1.2)
@@ -5216,8 +5220,9 @@ class _HomePageState extends State<HomePage>
       Positioned.fill(child: _coronationOverlay()),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
-      const Positioned.fill(
-          child: IgnorePointer(child: SafeArea(child: TableTrim()))),
+      if (!HomePageTestHooks.skip.contains('trim'))
+        const Positioned.fill(
+            child: IgnorePointer(child: SafeArea(child: TableTrim()))),
       // Keyboard shortcuts, when asked for, beside the table.
       // It slides up and fades in when turned on, and back out when off.
       if (_inGame && _setupArgs == null && _digital)
