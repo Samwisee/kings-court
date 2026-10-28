@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
@@ -282,7 +281,7 @@ void main() {
 
   test('Nobody may hold two tasks that work against each other', () {
     final g = GameState()
-      ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: const Color(0xFF000000))];
+      ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: 0xFF000000)];
     Task task(String d) =>
         GameState.taskPool.firstWhere((t) => t.description == d).freshCopy();
     final noHearts = task('Win no ♠ cards')..assignedPlayerIndex = 1;
@@ -320,7 +319,7 @@ void main() {
 
   test("If the King can't take any task, the next player picks first", () {
     final g = GameState()
-      ..players = [for (int i = 0; i < 3; i++) Player('P$i', color: const Color(0xFF000000))]
+      ..players = [for (int i = 0; i < 3; i++) Player('P$i', colorValue: 0xFF000000)]
       ..tasks = [
         GameState.taskPool
             .firstWhere((t) => t.description == 'Win no Court Cards')
@@ -352,7 +351,7 @@ void main() {
   test('The same seed deals the same cards and tasks again', () {
     GameState fresh(int seed) => GameState()
       ..seed = seed
-      ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: const Color(0xff000000))]
+      ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: 0xff000000)]
       ..seatCourtiers()
       ..addTasksUntilTarget(4, 6);
     final a = fresh(42), b = fresh(42), c = fresh(43);

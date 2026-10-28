@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
 import 'chronicle.dart';
 import 'courtiers.dart';
 import 'story.dart';
@@ -12,7 +11,6 @@ import 'engine/task.dart';
 
 export 'engine/task.dart';
 import 'tutorial.dart';
-import 'theme.dart';
 
 enum RoundOutcome { inProgress, won, lost }
 
@@ -25,10 +23,25 @@ enum GameMode { free, endless, chronicle, dynasty, tutorial }
 const minPlayers = 2;
 const maxPlayers = 6;
 
+/// The colours seats are given, as ARGB values (the Okabe–Ito set, which
+/// stays distinct for colour-blind players and at a glance). The screen's
+/// Palette.players is made from these.
+const playerColours = <int>[
+  0xFFE69F00, // orange
+  0xFF56B4E9, // sky blue
+  0xFFCC79A7, // reddish purple
+  0xFF009E73, // bluish green
+  0xFFF0E442, // yellow
+  0xFF0072B2, // deep blue
+];
+
 class Player {
   String name;
-  Color color;
-  Player(this.name, {required this.color});
+
+  /// The seat's colour, as an ARGB value (the screen turns it into a
+  /// Color; the game itself has no Flutter in it, so it can run on a server).
+  int colorValue;
+  Player(this.name, {required this.colorValue});
 }
 
 class GameState {
@@ -202,11 +215,11 @@ class GameState {
   Courtier? get kingRole =>
       courtiers.isEmpty ? null : courtiers[kingIndex ?? 0];
 
-  /// The colour of [c], seated or not.
-  Color colorOf(Courtier c) {
+  /// The colour of [c], seated or not, as an ARGB value.
+  int colorValueOf(Courtier c) {
     final seat = courtiers.indexOf(c);
-    if (seat >= 0 && seat != kingIndex) return players[seat].color;
-    return Color(courtColor[c.name] ?? Palette.players[1].toARGB32());
+    if (seat >= 0 && seat != kingIndex) return players[seat].colorValue;
+    return courtColor[c.name] ?? playerColours[1];
   }
 
   /// What [c] thinks of you, seated or not.
@@ -233,21 +246,19 @@ class GameState {
       if (s == king) continue;
       court.add(courtiers[s]);
       standing[courtiers[s].name] = loyalty[s];
-      courtColor[courtiers[s].name] = players[s].color.toARGB32();
+      courtColor[courtiers[s].name] = players[s].colorValue;
     }
     // The whole council is there for the coronation: every great house.
     for (final c in Courtier.houses) {
       if (court.contains(c) || court.length >= maxCourt) continue;
       final used = {
-        players.first.color.toARGB32(),
+        players.first.colorValue,
         ...courtColor.values,
       };
       court.add(c);
       standing[c.name] = startingLoyalty;
-      courtColor[c.name] = Palette.players
-          .firstWhere((p) => !used.contains(p.toARGB32()),
-              orElse: () => Palette.players[court.length % Palette.players.length])
-          .toARGB32();
+      courtColor[c.name] = playerColours.firstWhere((p) => !used.contains(p),
+          orElse: () => playerColours[court.length % playerColours.length]);
     }
   }
 
@@ -460,14 +471,12 @@ class GameState {
     schemeBy.remove(c.name);
     traitorFor.remove(c.name);
     final used = {
-      players.isEmpty ? 0 : players.first.color.toARGB32(),
+      players.isEmpty ? 0 : players.first.colorValue,
       for (final o in court)
         if (o != c && courtColor[o.name] != null) courtColor[o.name]!,
     };
-    courtColor[c.name] = Palette.players
-        .firstWhere((p) => !used.contains(p.toARGB32()),
-            orElse: () => Palette.players.last)
-        .toARGB32();
+    courtColor[c.name] = playerColours.firstWhere((p) => !used.contains(p),
+        orElse: () => playerColours.last);
     courtNews.add(CourtNews(c, courtColor[c.name]!, news));
   }
 
@@ -1429,7 +1438,7 @@ class GameState {
   Map<String, dynamic> toJson() => {
         'players': [
           for (final p in players)
-            {'name': p.name, 'color': p.color.toARGB32()},
+            {'name': p.name, 'color': p.colorValue},
         ],
         'tasks': [
           for (final t in tasks)
@@ -1509,7 +1518,7 @@ class GameState {
       final g = GameState()
         ..players = [
           for (final p in j['players'] as List)
-            Player(p['name'] as String, color: Color(p['color'] as int)),
+            Player(p['name'] as String, colorValue: p['color'] as int),
         ]
         ..tasks = [
           for (final t in j['tasks'] as List)

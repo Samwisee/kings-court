@@ -450,7 +450,7 @@ void main() {
   });
 
   test('Seat labels are short and never repeat', () {
-    Player p(String n) => Player(n, color: Colors.red);
+    Player p(String n) => Player(n, colorValue: Colors.red.toARGB32());
     expect(seatLabels([p('Player 1'), p('Player 2'), p('Player 3')]),
         ['1', '2', '3']);
     expect(seatLabels([p('Sam'), p('Mary Jane'), p('Player 3')]),
@@ -688,7 +688,7 @@ void main() {
     final game = GameState()
       ..campaign = true
       ..players = [
-        for (int i = 0; i < 3; i++) Player('P$i', color: Colors.red)
+        for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.red.toARGB32())
       ]
       ..addTasksUntilTarget(3, 6);
     for (final t in game.tasks) {
@@ -707,7 +707,7 @@ void main() {
   test('A game survives saving and loading', () {
     final game = GameState()
       ..players = [
-        for (int i = 0; i < 4; i++) Player('P$i', color: Colors.blue)
+        for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.blue.toARGB32())
       ]
       ..addTasksUntilTarget(4, 10)
       ..setKing(2);
@@ -724,7 +724,7 @@ void main() {
 
   test('Seals must be completed in order, Ω last', () {
     final game = GameState()
-      ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: Colors.red)]
+      ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
       ..sealCount = 0
       ..addTasksUntilTarget(4, 14, newRound: false);
     while (game.tasks.length < 4) {
@@ -748,7 +748,7 @@ void main() {
 
   test('Decrees change who can pick, speak and take tasks', () {
     GameState make(Decree d) => GameState()
-      ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: Colors.red)]
+      ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
       ..addTasksUntilTarget(4, 10)
       ..decree = d;
 
@@ -809,7 +809,7 @@ void main() {
 
   GameState dynasty(int players) => GameState()
     ..mode = GameMode.dynasty
-    ..players = [for (int i = 0; i < players; i++) Player('P$i', color: Colors.red)]
+    ..players = [for (int i = 0; i < players; i++) Player('P$i', colorValue: Colors.red.toARGB32())]
     ..seatCourtiers()
     ..addTasksUntilTarget(players, 8);
 
@@ -1192,7 +1192,7 @@ void main() {
       ..mode = GameMode.endless
       ..addTasksUntilTarget(3, 4);
     old.players = [
-      for (int i = 0; i < 3; i++) Player('P$i', color: Colors.teal)
+      for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.teal.toARGB32())
     ];
     SharedPreferences.setMockInitialValues({
       'kingsCourt.game': jsonEncode({
@@ -1564,7 +1564,7 @@ void main() {
 
   test('Each player may pass on picking once a round', () {
     final g = GameState()
-      ..players = [for (int i = 0; i < 3; i++) Player('P$i', color: Colors.teal)]
+      ..players = [for (int i = 0; i < 3; i++) Player('P$i', colorValue: Colors.teal.toARGB32())]
       ..addTasksUntilTarget(3, 10);
     g.setKing(0);
     final first = g.pickTurn!;
@@ -1648,7 +1648,7 @@ void main() {
 
   test('A task only one player can take goes straight to them', () {
     final g = GameState()
-      ..players = [for (int i = 0; i < 2; i++) Player('P$i', color: Colors.red)];
+      ..players = [for (int i = 0; i < 2; i++) Player('P$i', colorValue: Colors.red.toARGB32())];
     final kingTask = GameState.taskPool.firstWhere((t) => t.kingCantTake);
     final other = GameState.taskPool.firstWhere((t) => !t.kingCantTake);
     g.tasks = [kingTask.freshCopy(), other.freshCopy()];

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'courtiers.dart';
 import 'engine/cards.dart';
+import 'models.dart';
 
 /// The King's Court palette: card table felt, white card stock, card-red
 /// and black suits, and brass gold reserved for the King.
@@ -77,16 +79,20 @@ class Palette {
 
   /// Seat colours. Chosen to stay clear of the card red so a player's
   /// colour is never mistaken for a suit.
-  static const players = <Color>[
-    // From the Okabe–Ito set, chosen to stay distinct for colour-blind
-    // players and from each other at a glance.
-    Color(0xFFE69F00), // orange
-    Color(0xFF56B4E9), // sky blue
-    Color(0xFFCC79A7), // reddish purple
-    Color(0xFF009E73), // bluish green
-    Color(0xFFF0E442), // yellow
-    Color(0xFF0072B2), // deep blue
-  ];
+  /// The seats' colours (see playerColours in models.dart).
+  static final players = <Color>[for (final v in playerColours) Color(v)];
+}
+
+/// A seat's colour on screen. The game keeps colours as plain numbers so it
+/// has no Flutter in it; these turn them into Colors where they're drawn.
+extension PlayerColour on Player {
+  Color get color => Color(colorValue);
+  set color(Color c) => colorValue = c.toARGB32();
+}
+
+extension CourtColours on GameState {
+  /// The colour of [c], seated or not.
+  Color colorOf(Courtier c) => Color(colorValueOf(c));
 }
 
 /// Royal display face for titles and every number: Roman capitals with

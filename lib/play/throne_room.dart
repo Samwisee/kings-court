@@ -336,7 +336,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
         size: size,
         color: f.color,
         ring: Palette.gold,
-        child: OutlinedLabel(seatLabels([Player(f.role!.title, color: f.color)]).first,
+        child: OutlinedLabel(seatLabels([Player(f.role!.title, colorValue: f.color.toARGB32())]).first,
             fontSize: size * 0.36, strokeWidth: size * 0.07),
       );
 

@@ -360,7 +360,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
             points: task.getPointsForPlayerCount(3),
             owner: owner == null
                 ? null
-                : Player(tutorialCourtiers[owner], color: Palette.players[owner]),
+                : Player(tutorialCourtiers[owner], colorValue: Palette.players[owner].toARGB32()),
             width: size.width,
             height: size.height),
       )),
@@ -372,7 +372,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
   Widget _token(int seat, String label, double size, {TokenShape? shape}) =>
       IgnorePointer(
         child: SeatToken(
-          player: Player(label, color: Palette.players[seat]),
+          player: Player(label, colorValue: Palette.players[seat].toARGB32()),
           label: label,
           size: size,
           shape: shape ?? tutorialHouses[seat].shape,

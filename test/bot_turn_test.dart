@@ -1,4 +1,3 @@
-import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
@@ -12,7 +11,7 @@ import 'package:kings_court/models.dart';
 (GameState, MatchState) table({int seed = 7, int you = 0}) {
   final g = GameState()
     ..seed = seed
-    ..players = [for (int i = 0; i < 4; i++) Player('P$i', color: const Color(0xff000000))]
+    ..players = [for (int i = 0; i < 4; i++) Player('P$i', colorValue: 0xff000000)]
     ..seatCourtiers()
     ..addTasksUntilTarget(4, 6);
   g.cards = MatchState(players: 4, target: 6)..dealFor(g.dealId, g.dealRandom());

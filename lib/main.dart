@@ -3547,7 +3547,7 @@ class _HomePageState extends State<HomePage>
         ..bestStreak = _bestStreak
         ..players = [
           for (int i = 0; i < count; i++)
-            Player(names[i], color: Palette.players[i % Palette.players.length])
+            Player(names[i], colorValue: Palette.players[i % Palette.players.length].toARGB32())
         ]
         ..seatCourtiers()
         ..addTasksUntilTarget(count, target);
@@ -7275,7 +7275,7 @@ class _HomePageState extends State<HomePage>
         size: size,
         color: color,
         ring: Palette.goldDeep,
-        child: OutlinedLabel(seatLabels([Player(role.title, color: color)]).first,
+        child: OutlinedLabel(seatLabels([Player(role.title, colorValue: color.toARGB32())]).first,
             fontSize: size * 0.36, strokeWidth: size * 0.07),
       );
 
