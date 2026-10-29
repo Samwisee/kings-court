@@ -41,7 +41,9 @@ const harbourDesign = SkinDesign(
 );
 ```
 
-Then list it in `lib/skin/skins.dart`. That's all: the menu's *Look* row
+Then list it in `lib/skin/skins.dart`, and give it a line in the loading
+screen's `looks` in `web/index.html` (its table, felt glow, deep felt and
+accent colours; `test/skin_test.dart` says which values when they're off). That's all: the menu's *Look* row
 steps through every listed skin, the screenshots take a set of it (front
 page, setup, a round, the menu) and a sheet of its pieces
 (`skin-<id>-pieces.png`), and the skin tests check it defines everything.

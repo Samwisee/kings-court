@@ -51,8 +51,38 @@
   <!-- The dark red table behind everything, so the browser bars and the edges of the
        screen match the table round the felt, and nothing flashes white while
        the game loads. -->
+  <!-- The look saved last time (shared_preferences keeps it in local
+       storage), so the loading screen is in that skin's colours, not
+       always the court's. Each skin's values are its Skin's table,
+       feltGlow, feltDeep and gold, and whether the felt sits in a rim;
+       test/skin_test.dart checks they match the Dart. -->
+  <script>
+    (function () {
+      var looks = {
+        court: {table: '#4E0B18', glow: '#176141', deep: '#0A3622', gold: '#D4A63A', rim: 1, hi: '#F9E08C', lo: '#A57C1B'},
+        plain: {table: '#151B24', glow: '#364150', deep: '#1A2230', gold: '#8DB4FF', rim: 0},
+        lacquer: {table: '#0D0606', glow: '#4C2326', deep: '#26090B', gold: '#DDB65E', rim: 1}
+      };
+      var id = 'court';
+      try { id = JSON.parse(localStorage.getItem('flutter.kingsCourt.skin')) || id; } catch (e) {}
+      var l = looks[id] || looks.court;
+      var root = document.documentElement.style;
+      root.setProperty('--table', l.table);
+      root.setProperty('--glow', l.glow);
+      root.setProperty('--deep', l.deep);
+      root.setProperty('--gold', l.gold);
+      root.setProperty('--rule', l.rim ? l.gold : 'transparent');
+      // The crown's gilt, light to dark: the court's own, or the accent's.
+      root.setProperty('--gold-hi', l.hi || 'color-mix(in srgb, ' + l.gold + ' 55%, white)');
+      root.setProperty('--gold-lo', l.lo || 'color-mix(in srgb, ' + l.gold + ' 70%, black)');
+      root.setProperty('--inset', l.rim ? '7px' : '0px');
+      root.setProperty('--radius', l.rim ? '16px' : '0px');
+      var bar = document.querySelector('meta[name="theme-color"]');
+      if (bar) bar.setAttribute('content', l.table);
+    })();
+  </script>
   <style>
-    html, body { margin: 0; background: #4E0B18; }
+    html, body { margin: 0; background: var(--table, #4E0B18); }
     /* The court's own mouse pointers: a gilt arrow, and a gilt hand over
        anything you can press (Flutter marks those with an inline
        "cursor: pointer" on its view, which these win over). The art is
@@ -71,21 +101,23 @@
     /* While the game loads: a gold crown on the felt, rising and glowing,
        which fades away as the first frame appears. */
     #loading {
-      position: fixed; inset: 7px; border-radius: 16px;
-      background: radial-gradient(circle at 50% 45%, #176141, #0A3622 70%);
+      position: fixed; inset: var(--inset, 7px); border-radius: var(--radius, 16px);
+      background: radial-gradient(circle at 50% 45%, var(--glow, #176141), var(--deep, #0A3622) 70%);
       box-shadow: inset 0 0 0 1.5px rgba(212,166,58,.8);
+      box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rule, #D4A63A) 80%, transparent);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 10; transition: opacity .7s ease; will-change: opacity;
     }
     #loading.done { opacity: 0; pointer-events: none; }
     #loading svg {
       width: 96px; filter: drop-shadow(0 0 14px rgba(212,166,58,.55));
+      filter: drop-shadow(0 0 14px color-mix(in srgb, var(--gold, #D4A63A) 55%, transparent));
       animation: rise 1.6s ease-in-out infinite;
       will-change: transform;
     }
     #loading .dots { margin-top: 22px; display: flex; gap: 9px; }
     #loading .dots i {
-      width: 8px; height: 8px; border-radius: 50%; background: #D4A63A;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--gold, #D4A63A);
       animation: blink 1.2s ease-in-out infinite;
     }
     #loading .dots i:nth-child(2) { animation-delay: .2s; }
@@ -105,8 +137,9 @@
     <svg viewBox="0 0 100 75" aria-hidden="true">
       <defs>
         <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#F9E08C"/><stop offset=".5" stop-color="#D4A63A"/>
-          <stop offset="1" stop-color="#A57C1B"/>
+          <stop offset="0" stop-color="#F9E08C" style="stop-color: var(--gold-hi, #F9E08C)"/>
+          <stop offset=".5" stop-color="#D4A63A" style="stop-color: var(--gold, #D4A63A)"/>
+          <stop offset="1" stop-color="#A57C1B" style="stop-color: var(--gold-lo, #A57C1B)"/>
         </linearGradient>
       </defs>
       <path fill="url(#g)" d="M0 18.75 L27 41.25 L50 0 L73 41.25 L100 18.75 L88 61.5 L12 61.5 Z M12 66 H88 V75 H12 Z"/>

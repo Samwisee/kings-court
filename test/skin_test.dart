@@ -6,9 +6,12 @@ library;
 
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
+import 'package:kings_court/skin/looks.dart';
 import 'package:kings_court/skin/skin.dart';
+import 'package:kings_court/skin/skins.dart';
 
 /// What a widget must not name: the Court skin's constants in theme.dart.
 final named = RegExp(
@@ -55,5 +58,22 @@ void main() {
     expect(skin.theme().colorScheme.primary, skin.gold);
     expect(skin.dialogTitle.fontFamily, skin.displayFont);
     expect(skin.theme().textTheme.bodyMedium?.fontFamily ?? skin.bodyFont, skin.bodyFont);
+  });
+
+  test('The web loading screen knows every skin’s colours', () {
+    // web/index.html draws the loading screen before the game runs, in the
+    // look saved last time; its colours have to be the skins' own.
+    final html = File('web/index.html').readAsStringSync();
+    String hex(Color c) => '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+    for (final skin in skins) {
+      final entry = RegExp('${skin.id}: \\{([^}]*)\\}').firstMatch(html);
+      expect(entry, isNotNull, reason: 'add ${skin.id} to the looks in web/index.html');
+      final values = entry!.group(1)!;
+      expect(values, contains("table: '${hex(skin.table)}'"), reason: skin.id);
+      expect(values, contains("glow: '${hex(skin.feltGlow)}'"), reason: skin.id);
+      expect(values, contains("deep: '${hex(skin.feltDeep)}'"), reason: skin.id);
+      expect(values, contains("gold: '${hex(skin.gold)}'"), reason: skin.id);
+      expect(values, contains('rim: ${skin.tableLook.style == TableStyle.rimmed ? 1 : 0}'), reason: skin.id);
+    }
   });
 }
