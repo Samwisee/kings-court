@@ -36,9 +36,21 @@ const seen = (c) => c.got.filter((m) => m.t === "move").map((m) => `${m.m.seq}:$
 await until(() => seen(ann).split(" ").length === 2 && seen(ben).split(" ").length === 2, "both moves at both");
 console.log(`Ann saw ${seen(ann)}; Ben saw ${seen(ben)}`);
 if (seen(ann) !== seen(ben)) throw new Error("they saw different moves");
-const wrong = await open(`/rooms/${code}?${q({ session: "live-zed", name: "Zed", build: "live" })}`);
-const err = await until(() => wrong.got.find((m) => m.t === "error"), "a stranger turned away");
-console.log(`a stranger after the start: ${err.why}`);
-ann.ws.close(); ben.ws.close();
+// Someone new after the start takes the courtier's seat, caught up.
+const cal = await open(`/rooms/${code}?${q({ session: "live-cal-" + Date.now(), name: "Cal", build: "live" })}`);
+const ch = await until(() => cal.got.find((m) => m.t === "hello"), "Cal's hello");
+console.log(`Cal after the start: seat ${ch.seat}, ${ch.moves.length} moves to catch up on`);
+if (ch.seat !== 2 || ch.moves.length !== 2) throw new Error("Cal didn't take the courtier's seat, caught up");
+// Ben leaves: a courtier takes his seat, and Dee may have it.
+ben.send({ t: "leave" });
+await until(() => ann.got.find((m) => m.t === "seats" && m.seats[1].who === "courtier"), "Ben's seat to a courtier");
+const dee = await open(`/rooms/${code}?${q({ session: "live-dee-" + Date.now(), name: "Dee", build: "live" })}`);
+const dh = await until(() => dee.got.find((m) => m.t === "hello"), "Dee's hello");
+console.log(`Ben left; Dee took seat ${dh.seat}`);
+const full = await open(`/rooms/${code}?${q({ session: "live-eve", name: "Eve", build: "live" })}`);
+const err = await until(() => full.got.find((m) => m.t === "error"), "a full room turns Eve away");
+console.log(`with every seat taken: ${err.why}`);
+cal.ws.close(); dee.ws.close();
+ann.ws.close();
 console.log("rooms: ok");
 process.exit(0);

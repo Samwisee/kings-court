@@ -9,6 +9,11 @@
 /// platform), so this stays plain Dart and is tested on a fake. A dropped
 /// socket is reopened on its own, asking for the moves after the last one
 /// played; moves made meanwhile wait and go when it's back.
+///
+/// People come and go as they like: someone joining a game under way
+/// takes a courtier's seat and catches up on every move so far (they come
+/// with the room's hello, so [history] is whole the moment it's open);
+/// someone who [leave]s hands their seat back to a courtier.
 library;
 
 import 'dart:async';
@@ -174,8 +179,9 @@ class OnlineTable implements TableLink {
   /// The host starts the game: empty seats go to courtiers.
   void start() => _write({'t': 'start'});
 
-  /// Leaves the room (the seat is kept a while, in case of a return).
+  /// Leaves the room for good: a courtier takes the seat.
   Future<void> leave() async {
+    if (status == TableStatus.open) _write({'t': 'leave'});
     status = TableStatus.closed;
     _retry?.cancel();
     await _listening?.cancel();
@@ -230,6 +236,10 @@ class OnlineTable implements TableLink {
         setup = GameSetup.fromJson(Map<String, dynamic>.from(msg['setup'] as Map));
         seat = msg['seat'] as int;
         _seats(msg);
+        // Every move since the last this device played, in order.
+        for (final m in (msg['moves'] as List?) ?? const []) {
+          if (Move.fromJson(Map<String, dynamic>.from(m as Map)) case final move?) _arrive(move);
+        }
         status = TableStatus.open;
         _tries = 0;
         if (!_settled.isCompleted) _settled.complete();

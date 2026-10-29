@@ -14,10 +14,11 @@ import 'table_link.dart';
 /// The game [setup] started, after [moves] in order. Rounds are dealt as
 /// the table dealt them (from the seed), so the cards come out the same.
 /// A move that isn't allowed when its turn comes is skipped and listed in
-/// [skipped], since the table it came from must have let it go too.
+/// [skipped], since the table it came from must have let it go too. [you]
+/// is the seat it's rebuilt for (a device joining late: its own).
 GameState replay(GameSetup setup, Iterable<Move> moves,
-    {required ModeRules rules, List<Move>? skipped}) {
-  final game = setup.start(rules);
+    {required ModeRules rules, List<Move>? skipped, int you = 0}) {
+  final game = setup.start(rules, you: you);
   for (final move in moves) {
     final round = game.round!;
     if (!round.hasCards) dealRound(game, rigged: rules.riggedDeal?.call(game));

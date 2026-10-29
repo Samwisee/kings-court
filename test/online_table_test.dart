@@ -10,11 +10,13 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/round.dart';
+import 'package:kings_court/game/seats.dart';
 import 'package:kings_court/game/setup.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/modes.dart';
 import 'package:kings_court/net/headless_table.dart';
 import 'package:kings_court/net/online_table.dart';
+import 'package:kings_court/net/replay.dart';
 
 import 'fake_rooms.dart';
 
@@ -51,10 +53,12 @@ void main() {
     final old = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'x', name: 'X', build: 'b0');
     expect(old.refusal, Refusal.version);
     expect(old.refusal!.message, contains('refresh'));
-    ann.start();
-    await settle();
-    final late = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'y', name: 'Y', build: 'b1');
-    expect(late.refusal, Refusal.started);
+    final ben = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'ben', name: 'Ben', build: 'b1');
+    final cal = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'cal', name: 'Cal', build: 'b1');
+    final dee = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'dee', name: 'Dee', build: 'b1');
+    final full = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'y', name: 'Y', build: 'b1');
+    expect(full.refusal, Refusal.full);
+    expect([ben.seat, cal.seat, dee.seat], [1, 2, 3]);
     final gone = await OnlineTable.join((_) => throw Exception('offline'), service,
         code: ann.code, session: 'z', name: 'Z', build: 'b1');
     expect(gone.refusal, Refusal.unreachable);
@@ -126,6 +130,38 @@ void main() {
     expect(a.refused.map((m) => m.toJson()), b.refused.map((m) => m.toJson()));
     a.dispose();
     b.dispose();
+  });
+
+  test('Someone can join a game under way, caught up, in a courtier’s seat, and leave it to one', () async {
+    final rooms = FakeRooms();
+    final rules = modeOf(GameMode.free).rules;
+    final ann = await OnlineTable.create(rooms.open, service, setup: setup, session: 'ann', name: 'Ann', build: 'b1');
+    ann.start();
+    await settle();
+    final game = ann.setup!.start(rules);
+    final a = HeadlessTable(game, ann, rules, you: 0, seats: ann.seats, bot: Bot()..budget = 16);
+    ann.changes.listen((_) => a.courtiers.seats = ann.seats);
+    for (var i = 0; i < 12; i++) {
+      await a.step();
+      await a.playAs(0);
+      await settle();
+    }
+    expect(ann.history, isNotEmpty);
+    final cal = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'cal', name: 'Cal', build: 'b1');
+    await settle();
+    expect(cal.started, isTrue);
+    expect(cal.seats.holders[cal.seat], isA<Person>());
+    expect(ann.seats.holders[cal.seat], isA<Person>(), reason: 'the host stops playing it');
+    expect(cal.history.map((m) => m.toJson()), ann.history.map((m) => m.toJson()),
+        reason: 'every move so far, the moment Cal is in');
+    // The game Cal's device rebuilds is the one on the table.
+    final caught = replay(cal.setup!, cal.history, rules: rules, you: cal.seat);
+    String round(GameState g) => jsonEncode(g.round!.toJson()).replaceAll(RegExp(',"why":"[^"]*"'), '');
+    expect(round(caught), round(game));
+    await cal.leave();
+    await settle();
+    expect(ann.seats.holders[cal.seat], isA<CourtierSeat>(), reason: 'a courtier plays on');
+    a.dispose();
   });
 
   test('Reconnecting waits a little longer each time, up to fifteen seconds', () {

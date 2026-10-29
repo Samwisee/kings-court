@@ -65,6 +65,11 @@ reordering, duplicates and a dropped connection.
   host's for the courtiers and anyone away, and every table refuses a move
   the rules don't allow, the same way, because they all see the same moves
   in the same order. A host who drops hands the room to whoever's left.
+  People come and go freely: after the start a newcomer takes a courtier's
+  seat (or one whose person has been away two minutes), and the room's
+  hello carries every move so far; someone who leaves hands their seat to
+  a courtier. A move writes only itself: the room's details are written
+  when the seats change, and its two-day clearing is put off once an hour.
 - **The link.** `OnlineTable` (`net/online_table.dart`) is the
   `TableLink` to a room: moves in `seq` order, each once; moves made while
   the socket is down wait and go when it's back; it reconnects by itself,
@@ -72,7 +77,9 @@ reordering, duplicates and a dropped connection.
   are turned away (they'd play the rules differently).
 - **The page.** Setup's Multiplayer starts a room or joins one by code
   (`ui/online/online_setup.dart`), then waits in the room until the host
-  starts it; empty seats go to courtiers. `ui/online/room_play.dart` is the
+  starts it (or straight into a game under way, rebuilt from its moves by
+  `net/replay.dart`); empty seats go to courtiers, and the menu's "Leave
+  the room" gives yours back to one. `ui/online/room_play.dart` is the
   room from the page's side. Every device deals from the shared seed and
   asks only its own player for moves; the host's device plays the
   courtiers and anyone away, crowns the King, deals each round and keeps
@@ -80,7 +87,7 @@ reordering, duplicates and a dropped connection.
 - **Tests.** `test/online_table_test.dart` plays a whole game on two
   devices through a room in this process (`test/fake_rooms.dart`, the
   rules of rooms.js in Dart); `test/ui/online_play_test.dart` does it from
-  the page, and has the host play out the seat of a friend who drops.
+  the page, with a friend leaving part-way and someone joining part-way.
 
 ## Still to do
 

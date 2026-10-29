@@ -14,9 +14,10 @@ MenuEntry _item(String value, IconData icon, String title, {bool? on}) =>
 /// The menu's rows: a new game and a reshuffle when they make sense, the
 /// rules, the view at a real table ([upright], or null on screen), sounds,
 /// four-colour suits, the [look] worn, the keyboard shortcuts on a
-/// computer ([keys], or null elsewhere), sharing play data, and a bug
-/// report.
+/// computer ([keys], or null elsewhere), sharing play data, a bug
+/// report, and leaving the room in an online game ([online]).
 List<MenuEntry> menuEntries({
+  bool online = false,
   required bool newGame,
   required bool shuffle,
   required bool? upright,
@@ -44,4 +45,5 @@ List<MenuEntry> menuEntries({
       // Rounds sent anonymously to help balance the game (How to Play says).
       _item('share', Icons.insights_outlined, Strings.sharePlayData, on: share),
       _item('bug', Icons.bug_report_outlined, Strings.reportBug),
+      if (online) _item('leave', Icons.logout_rounded, Strings.leaveRoom),
     ];

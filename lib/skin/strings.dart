@@ -23,6 +23,7 @@ abstract final class Strings {
   static const locked = '(locked)';
   static const keyboardShortcuts = 'Keyboard shortcuts';
   static const reportBug = 'Report a bug';
+  static const leaveRoom = 'Leave the room';
   static const sharePlayData = 'Share play data';
 
   // The front page.

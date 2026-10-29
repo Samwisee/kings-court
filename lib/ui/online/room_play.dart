@@ -13,6 +13,7 @@ import '../../game/seats.dart';
 import '../../game/setup.dart';
 import '../../game/state.dart';
 import '../../net/online_table.dart';
+import '../../net/replay.dart';
 import '../../platform/build_info.dart';
 import '../../platform/game_log.dart';
 import '../../platform/room_socket.dart';
@@ -20,9 +21,11 @@ import '../../platform/service.dart';
 import 'online_setup.dart';
 
 class RoomPlay {
-  RoomPlay(this.room, {required this.onChange}) : _status = room.status {
+  RoomPlay(this.room, {required this.onChange})
+      : _status = room.status,
+        _was = List.of(room.seats.holders) {
     _changes = room.changes.listen((_) {
-      String? news;
+      var news = _comings();
       if (room.status != _status) {
         _status = room.status;
         news = switch (room.status) {
@@ -38,8 +41,36 @@ class RoomPlay {
 
   final OnlineTable room;
 
-  /// The room changed; [news] is a word about the connection, when it
-  /// changed.
+  /// Who came, went, dropped out or came back since the room last
+  /// changed, in a few words (the last of them, if several).
+  String? _comings() {
+    String? news;
+    final now = room.seats.holders;
+    String name(String id) => room.names[id] ?? 'Someone';
+    for (var s = 0; s < now.length && s < _was.length; s++) {
+      final (was, isNow) = (_was[s], now[s]);
+      if (isNow case Person(:final id, :final connected) when id != room.session) {
+        if (was case Person(id: final wasId, connected: final wasThere) when wasId == id) {
+          if (wasThere && !connected) {
+            news = '${name(id)} dropped out${hosting ? ': you play their seat for now' : ''}';
+          } else if (!wasThere && connected) {
+            news = '${name(id)} is back';
+          }
+        } else {
+          news = '${name(id)} joined';
+        }
+      } else if (was case Person(:final id) when id != room.session && isNow is CourtierSeat) {
+        news = '${name(id)} left: a courtier plays on';
+      }
+    }
+    _was = List.of(now);
+    return news;
+  }
+
+  List<SeatHolder> _was;
+
+  /// The room changed; [news] is a word about who came or went, or the
+  /// connection, when one of them changed.
   final void Function(String? news) onChange;
   late final StreamSubscription<void> _changes;
   TableStatus _status;
@@ -75,9 +106,11 @@ class RoomPlay {
   /// The seats people play.
   List<int> people() => [for (var s = 0; s < room.seats.count; s++) if (personAt(s)) s];
 
-  /// The room's game, dealt from its setup, with you in your seat and
+  /// The room's game, dealt from its setup and played on through every
+  /// move so far (joining one under way), with you in your seat and
   /// people's seats named after them.
-  GameState start(ModeRules rules) => nameSeats(room.setup!.start(rules, you: seat));
+  GameState start(ModeRules rules) =>
+      nameSeats(replay(room.setup!, room.history, rules: rules, you: seat));
 
   /// People's seats go by their names (yours stays "You"); courtiers keep
   /// theirs.

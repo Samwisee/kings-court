@@ -14,21 +14,31 @@
 //   GET /rooms/CODE?session=&name=&build=&after=  (WebSocket) join, or come
 //       back after a drop and catch up on the moves after `after`
 //
+// People come and go freely. Before the start a newcomer takes an empty
+// seat; after it, a courtier's (a device catches up by playing the moves
+// so far from the seed), or the seat of someone away for a while. Someone
+// who leaves hands their seat to a courtier; someone who drops keeps it,
+// played by the host, until they're back or someone else takes it.
+//
 // Messages, as JSON. From a device:
 //   {t:"move", a:<action>}   a move (the action's JSON, as the game sends it)
 //   {t:"start"}              the host starts the game; empty seats go to
 //                            courtiers
+//   {t:"leave"}              gone for good: a courtier takes the seat
 //   {t:"ping"}               answered with {t:"pong"}
 // To a device:
-//   {t:"hello", code, setup, seats, names, host, started, seat}
+//   {t:"hello", code, setup, seats, names, host, started, seat, moves}
+//                            moves: every move after `after`, in order
 //   {t:"seats", seats, names, host, started}   who sits where, changed
 //   {t:"move", m:<move>}     a move, numbered: {seq, ...action}
 //   {t:"error", why}         then the socket closes: no-room, full,
-//                            started, version, taken, bad
+//                            version, bad
 //   {t:"refused", why, a}    a move not accepted (not this device's seat)
 
 const LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ"; // no I, L or O: easy to read out
 const IDLE = 2 * 24 * 60 * 60 * 1000; // a room unused this long is cleared
+const AWAY = 2 * 60 * 1000; // a seat away this long may be taken by someone new
+const HOUR = 60 * 60 * 1000;
 const MAX_MESSAGE = 20_000;
 
 /// A new room's code.
@@ -74,8 +84,15 @@ export class Room {
     this.ctx = ctx;
     this.env = env;
     this.meta = null;
+    // Moves are numbered from here; kept apart from the room's details so
+    // a move writes only itself.
+    this.count = 0;
+    this.alarmSet = 0;
     ctx.blockConcurrencyWhile(async () => {
       this.meta = (await ctx.storage.get("meta")) || null;
+      const last = await ctx.storage.list({ prefix: "m", reverse: true, limit: 1 });
+      for (const move of last.values()) this.count = move.seq + 1;
+      this.count = Math.max(this.count, this.meta?.count ?? 0);
     });
   }
 
@@ -94,7 +111,7 @@ export class Room {
       const players = setup && Array.isArray(setup.names) ? setup.names.length : 0;
       if (!session || players < 2 || players > 6) return this.refuse("bad");
       this.meta = {
-        code, setup, build, host: session, started: false, count: 0,
+        code, setup, build, host: session, started: false,
         seats: Array.from({ length: players }, () => ({ who: "empty" })),
         names: {}, created: Date.now(),
       };
@@ -106,8 +123,13 @@ export class Room {
 
     let seat = m.seats.findIndex((h) => h.who === "person" && h.id === session);
     if (seat < 0) {
-      if (m.started) return this.refuse("started");
-      seat = m.seats.findIndex((h) => h.who === "empty");
+      // Before the start an empty seat; after it a courtier's, or one
+      // whose person has been away a while.
+      seat = m.seats.findIndex((h) => h.who === (m.started ? "courtier" : "empty"));
+      if (seat < 0 && m.started) {
+        seat = m.seats.findIndex((h) => h.who === "person" && !h.connected &&
+          !this.connected(h.id) && Date.now() - (h.since ?? 0) > AWAY);
+      }
       if (seat < 0) return this.refuse("full");
     }
     m.seats[seat] = { who: "person", id: session, connected: true };
@@ -123,15 +145,15 @@ export class Room {
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server, [session]);
     server.serializeAttachment({ session });
-    server.send(JSON.stringify({ t: "hello", code: m.code, setup: m.setup, seats: m.seats,
-      names: m.names, host: m.host, started: m.started, seat }));
-    // Everything after what this device has seen.
-    const after = Number(q.get("after"));
+    // With everything after what this device has seen, so it's caught up
+    // the moment it's in.
+    const after = q.get("after") === null ? NaN : Number(q.get("after"));
     const from = Number.isFinite(after) ? after + 1 : 0;
-    if (from < m.count) {
-      const moves = await this.ctx.storage.list({ prefix: "m", start: moveKey(from) });
-      for (const move of moves.values()) server.send(JSON.stringify({ t: "move", m: move }));
-    }
+    const moves = from < this.count
+      ? [...(await this.ctx.storage.list({ prefix: "m", start: moveKey(from) })).values()]
+      : [];
+    server.send(JSON.stringify({ t: "hello", code: m.code, setup: m.setup, seats: m.seats,
+      names: m.names, host: m.host, started: m.started, seat, moves }));
     this.broadcast({ t: "seats", seats: m.seats, names: m.names, host: m.host, started: m.started }, server);
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -166,6 +188,18 @@ export class Room {
         await this.save();
         this.broadcast({ t: "seats", seats: m.seats, names: m.names, host: m.host, started: true });
         return;
+      case "leave": {
+        if (seat < 0) return;
+        m.seats[seat] = m.started ? { who: "courtier" } : { who: "empty" };
+        if (m.host === session) {
+          const next = m.seats.find((h) => h.who === "person" && h.connected);
+          if (next) m.host = next.id;
+        }
+        await this.save();
+        this.broadcast(this.seatsMessage(), ws);
+        ws.close(1000, "left");
+        return;
+      }
       case "move": {
         const a = msg.a;
         if (!a || typeof a !== "object" || typeof a.type !== "string") return;
@@ -179,10 +213,10 @@ export class Room {
           ws.send(JSON.stringify({ t: "refused", why: "not your seat", a }));
           return;
         }
-        const move = { ...a, seq: m.count };
-        m.count++;
+        const move = { ...a, seq: this.count };
+        this.count++;
         await this.ctx.storage.put(moveKey(move.seq), move);
-        await this.save();
+        await this.touch();
         this.broadcast({ t: "move", m: move });
         return;
       }
@@ -200,7 +234,7 @@ export class Room {
     const { session } = ws.deserializeAttachment() || {};
     if (!session || this.connected(session, ws)) return;
     const seat = m.seats.findIndex((h) => h.who === "person" && h.id === session);
-    if (seat >= 0) m.seats[seat] = { who: "person", id: session, connected: false };
+    if (seat >= 0) m.seats[seat] = { who: "person", id: session, connected: false, since: Date.now() };
     if (m.host === session) {
       const next = m.seats.find((h) => h.who === "person" && h.connected);
       if (next) m.host = next.id;
@@ -228,8 +262,23 @@ export class Room {
     }
   }
 
+  seatsMessage() {
+    const m = this.meta;
+    return { t: "seats", seats: m.seats, names: m.names, host: m.host, started: m.started };
+  }
+
+  /// The room's details changed (seats, the host, the start).
   async save() {
+    this.meta.count = this.count;
     await this.ctx.storage.put("meta", this.meta);
+    await this.touch();
+  }
+
+  /// The room is in use: its clearing is put off (an hour at a time, so a
+  /// move doesn't write more than itself).
+  async touch() {
+    if (Date.now() - this.alarmSet < HOUR) return;
+    this.alarmSet = Date.now();
     await this.ctx.storage.setAlarm(Date.now() + IDLE);
   }
 

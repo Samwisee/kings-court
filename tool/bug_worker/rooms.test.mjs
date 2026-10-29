@@ -30,11 +30,13 @@ function fakeCtx(storage = new Map()) {
     storage: {
       data: storage,
       async get(k) { return structuredClone(storage.get(k)); },
-      async put(k, v) { storage.set(k, structuredClone(v)); },
-      async list({ prefix, start }) {
-        return new Map([...storage.entries()].filter(([k]) => k.startsWith(prefix) && k !== "meta" && (!start || k >= start)).sort());
+      async put(k, v) { storage.set(k, structuredClone(v)); this.writes = (this.writes ?? 0) + 1; },
+      async list({ prefix, start, reverse = false, limit = Infinity }) {
+        const keys = [...storage.entries()].filter(([k]) => k.startsWith(prefix) && k !== "meta" && (!start || k >= start)).sort();
+        if (reverse) keys.reverse();
+        return new Map(keys.slice(0, limit));
       },
-      async setAlarm() {},
+      async setAlarm() { this.writes = (this.writes ?? 0) + 1; },
       async deleteAll() { storage.clear(); },
     },
     blockConcurrencyWhile(fn) { this.pending = fn(); },
@@ -141,14 +143,12 @@ test("A device that drops keeps its seat, and catches up when it comes back", as
   await r.webSocketClose(old);
   assert.equal(r.meta.seats[1].connected, false);
   await say(r, "ann", { t: "move", a: { type: "pass", seat: 1 } });
-  assert.equal(r.meta.count, 2, "the host plays a dropped seat");
-  // Back, having seen move 0: only move 1 comes.
+  assert.equal(r.count, 2, "the host plays a dropped seat");
+  // Back, having seen move 0: only move 1 comes, with the hello.
   const back = await connect(r, "ben", { after: 0 });
   assert.equal(last(back, "hello").seat, 1);
-  assert.deepEqual(back.sent.filter((m) => m.t === "move").map((m) => m.m.seq), [1]);
+  assert.deepEqual(last(back, "hello").moves.map((m) => m.seq), [1]);
   assert.equal(r.meta.seats[1].connected, true);
-  // A stranger can't join a game that's begun.
-  assert.equal(last(await connect(r, "zed"), "error").why, "started");
   assert.ok(ben);
 });
 
@@ -169,9 +169,68 @@ test("A room wakes from storage as it was", async () => {
   await connect(r, "ben");
   await say(r, "ann", { t: "start" });
   await say(r, "ann", { t: "move", a: { type: "crown", seat: 0, king: 0 } });
+  await say(r, "ann", { t: "move", a: { type: "pass", seat: 2 } });
   const woken = await room(fakeCtx(ctx.storage.data));
-  assert.equal(woken.meta.count, 1);
+  assert.equal(woken.count, 2, "numbered on from the last move stored");
   assert.equal(woken.meta.started, true);
   const ben = await connect(woken, "ben", { after: -1 });
-  assert.equal(ben.sent.filter((m) => m.t === "move").length, 1);
+  assert.equal(last(ben, "hello").moves.length, 2);
+});
+
+test("After the start, a newcomer takes a courtier's seat with every move so far", async () => {
+  const r = await room();
+  await connect(r, "ann", { create: true });
+  await connect(r, "ben");
+  await say(r, "ann", { t: "start" });
+  await say(r, "ann", { t: "move", a: { type: "crown", seat: 0, king: 0 } });
+  await say(r, "ann", { t: "move", a: { type: "pass", seat: 2 } });
+  const cal = await connect(r, "cal");
+  const hello = last(cal, "hello");
+  assert.equal(hello.seat, 2);
+  assert.equal(hello.started, true);
+  assert.deepEqual(hello.moves.map((m) => m.type), ["crown", "pass"]);
+  // The seat is Cal's now: the host no longer moves for it.
+  await say(r, "ann", { t: "move", a: { type: "pass", seat: 2 } });
+  assert.equal(last(cal, "refused")?.why, undefined);
+  assert.equal(r.count, 2);
+  // Every seat has a person: the next is turned away.
+  assert.equal(last(await connect(r, "dee"), "error").why, "full");
+});
+
+test("Someone who leaves hands their seat to a courtier; one away a while may be taken", async () => {
+  const r = await room();
+  await connect(r, "ann", { create: true });
+  const ben = await connect(r, "ben");
+  await connect(r, "cal");
+  await say(r, "ann", { t: "start" });
+  const benEnd = serverOf(r, "ben");
+  await say(r, "ben", { t: "leave" });
+  assert.deepEqual(r.meta.seats[1], { who: "courtier" });
+  assert.deepEqual(benEnd.closed, { code: 1000, why: "left" });
+  assert.ok(ben);
+  benEnd.gone = true;
+  // Dee takes Ben's seat.
+  assert.equal(last(await connect(r, "dee"), "hello").seat, 1);
+  // Cal drops: his seat waits for him a while, then anyone may have it.
+  const s = serverOf(r, "cal");
+  s.gone = true;
+  await r.webSocketClose(s);
+  assert.equal(last(await connect(r, "eve"), "error").why, "full");
+  const now = Date.now;
+  Date.now = () => now() + 3 * 60 * 1000;
+  try {
+    assert.equal(last(await connect(r, "fay"), "hello").seat, 2);
+  } finally {
+    Date.now = now;
+  }
+});
+
+test("A move writes only itself", async () => {
+  const ctx = fakeCtx();
+  const r = await room(ctx);
+  await connect(r, "ann", { create: true });
+  await say(r, "ann", { t: "start" });
+  const before = ctx.storage.writes;
+  for (let i = 0; i < 10; i++) await say(r, "ann", { t: "move", a: { type: "pass", seat: 1 } });
+  assert.equal(ctx.storage.writes - before, 10);
 });

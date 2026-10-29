@@ -52,18 +52,22 @@ class FakeRoom {
     if (b != build) return end.deliver({'t': 'error', 'why': 'version'});
     var seat = seatOf(session);
     if (seat < 0) {
-      if (started) return end.deliver({'t': 'error', 'why': 'started'});
-      seat = seats.indexWhere((h) => h['who'] == 'empty');
+      // Before the start an empty seat; after it a courtier's.
+      seat = seats.indexWhere((h) => h['who'] == (started ? 'courtier' : 'empty'));
       if (seat < 0) return end.deliver({'t': 'error', 'why': 'full'});
     }
     seats[seat] = {'who': 'person', 'id': session, 'connected': true};
     names[session] = name;
     ends[session] = end;
     end.onSend = (text) => _message(session, jsonDecode(text) as Map<String, dynamic>);
-    end.deliver({'t': 'hello', 'code': code, 'setup': setup.toJson(), 'seat': seat, ..._state()});
-    for (final m in moves) {
-      if (m['seq'] as int > (after ?? -1)) end.deliver({'t': 'move', 'm': m});
-    }
+    end.deliver({
+      't': 'hello',
+      'code': code,
+      'setup': setup.toJson(),
+      'seat': seat,
+      ..._state(),
+      'moves': [for (final m in moves) if (m['seq'] as int > (after ?? -1)) m],
+    });
     _tellAll({'t': 'seats', ..._state()});
   }
 
@@ -78,6 +82,17 @@ class FakeRoom {
           if (seats[s]['who'] == 'empty') seats[s] = {'who': 'courtier'};
         }
         started = true;
+        _tellAll({'t': 'seats', ..._state()});
+      case 'leave':
+        final s = seatOf(session);
+        if (s < 0) return;
+        seats[s] = started ? {'who': 'courtier'} : {'who': 'empty'};
+        if (host == session) {
+          host = [for (final h in seats) if (h['who'] == 'person' && h['connected'] == true) h['id'] as String]
+                  .firstOrNull ??
+              host;
+        }
+        ends.remove(session)?.cut();
         _tellAll({'t': 'seats', ..._state()});
       case 'move':
         final a = msg['a'] as Map<String, dynamic>;

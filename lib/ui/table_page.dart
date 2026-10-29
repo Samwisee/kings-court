@@ -921,9 +921,8 @@ class HomePageState extends State<HomePage>
   }
 
   // ------------------------------------------------------------ online
-  //
-  // A room online (ui/online/room_play.dart): every device plays the
-  // room's moves in its order; the host's device does the table's work.
+  // A room (ui/online/room_play.dart): every device plays the room's moves
+  // in its order; the host's device does the table's work.
 
   RoomPlay? _room;
 
@@ -963,9 +962,6 @@ class HomePageState extends State<HomePage>
       _ctrl.online = true;
       _resetTable();
     });
-    for (final m in table.history) { // anything played before the table was here
-      _onAction(m.action);
-    }
     _keepAwake(true);
   }
 
@@ -980,8 +976,7 @@ class HomePageState extends State<HomePage>
     _host = _newHost();
   }
 
-  /// Online, only the host deals; anyone else is told so. Whether this
-  /// device may.
+  /// Whether this device may deal: online, only the host (others are told).
   bool get _mayDeal {
     if (_hostsTable) return true;
     _showSnack('The host deals the next round', context.skin.feltDeep);
@@ -2986,6 +2981,10 @@ class HomePageState extends State<HomePage>
             _saveSettings();
           case 'bug':
             showBugReport(context, details: _bugDetails);
+          case 'leave': // a courtier takes your seat; back to the front page
+            _leaveRoom();
+            setState(() => game = GameState());
+            _keepAwake(false);
           case 'skin':
             final next = skinAfter(context.skin, (s) => SkinScope.owns(context, s));
             // Everything that reads the skin depends on it, so it's all drawn
@@ -3013,6 +3012,7 @@ class HomePageState extends State<HomePage>
   }
 
   List<MenuEntry> _menuEntries() => menuEntries(
+        online: _room != null,
         newGame: (_inGame || _saves.isNotEmpty) && _setupArgs == null,
         shuffle: _inGame && _setupArgs == null,
         // Only round a real table does the view need turning.
