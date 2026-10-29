@@ -82,6 +82,12 @@ void main() {
       final gameB = ben.setup!.start(rules, you: ben.seat);
       final b = HeadlessTable(gameB, ben, rules,
           you: 1, seats: ben.seats, host: false, bot: Bot()..budget = 20);
+      String where(GameState g) {
+        final r = g.round!;
+        return 'king ${r.king} pick ${r.pickTurn} owners ${[for (final t in r.tasks) t.owner]} '
+            'x ${[for (final t in r.tasks) t.x]} tricks ${r.tricks.length} current ${r.current.length} '
+            'turn ${r.turn} settled ${r.settled} outcome ${g.outcome}';
+      }
       var thinking = false;
       var benMoves = 0;
       var dropped = false;
@@ -91,6 +97,10 @@ void main() {
                   (!dropped && gameB.outcome == RoundOutcome.inProgress));
           i++) {
         await tester.pump(const Duration(milliseconds: 30));
+        if (i % 200 == 0) {
+          debugPrint('ONLINE $i dropped $dropped ben $benMoves thinking $thinking '
+              'room ${rooms.rooms[code]!.moves.length} | ${where(game)}');
+        }
         if (find.text('Skip').evaluate().isNotEmpty) {
           await tester.tap(find.text('Skip'));
         } else if (find.text('So be it').evaluate().isNotEmpty) {
@@ -105,7 +115,7 @@ void main() {
         // The friend drops after their first move, and does nothing more.
         if (drop && !dropped && benMoves >= 1 && !thinking) {
           dropped = true;
-          await ben.leave();
+          unawaited(ben.leave());
           rooms.rooms[code]!.drop('ben');
         }
         // Until then the friend's device plays its own seat.
@@ -116,12 +126,6 @@ void main() {
             if (moved) benMoves++;
           }));
         }
-      }
-      String where(GameState g) {
-        final r = g.round!;
-        return 'king ${r.king} pick ${r.pickTurn} owners ${[for (final t in r.tasks) t.owner]} '
-            'x ${[for (final t in r.tasks) t.x]} tricks ${r.tricks.length} current ${r.current.length} '
-            'turn ${r.turn} settled ${r.settled} outcome ${g.outcome}';
       }
       expect(game.outcome, isNot(RoundOutcome.inProgress),
           reason: 'page: ${where(game)}\nben: ${where(gameB)}\n'
