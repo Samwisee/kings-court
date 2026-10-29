@@ -296,6 +296,31 @@ void main() {
     expect(find.text('Report copied'), findsNothing);
   });
 
+  testWidgets('With the keyboard up, the bug report keeps its title and Send in view', (tester) async {
+    setPhoneSize(tester);
+    await dealGame(tester, 4);
+    await tester.tap(find.byType(SeatToken).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Report a bug'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Report a bug'));
+    await tester.pumpAndSettle();
+    // A phone's keyboard: about two fifths of the screen.
+    final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+    tester.view.viewInsets = FakeViewPadding(bottom: screen.height * 0.42 * tester.view.devicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'nothing overflows');
+    final above = screen.height * 0.58;
+    final send = tester.getRect(find.text('Send'));
+    expect(send.bottom, lessThanOrEqualTo(above));
+    expect(tester.getRect(find.text('Report a bug').last).top, greaterThanOrEqualTo(0));
+    expect(find.byKey(const ValueKey('bugMessage')), findsOneWidget);
+    expect(find.text('Your name (optional)'), findsNothing);
+  });
+
   testWidgets('Points target can change without a new game', (tester) async {
     setPhoneSize(tester);
     await dealGame(tester, 4);
