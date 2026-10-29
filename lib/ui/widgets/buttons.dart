@@ -116,10 +116,10 @@ class _GlowButtonState extends State<GlowButton>
                         gradient: LinearGradient(
                           begin: Alignment(x - 0.5, -1),
                           end: Alignment(x + 0.5, 1),
-                          colors: const [
-                            Color(0x00FFFFFF),
-                            Color(0xAAFFF6D8),
-                            Color(0x00FFFFFF),
+                          colors: [
+                            const Color(0x00FFFFFF),
+                            skin.sheen.withValues(alpha: 0xAA / 255),
+                            const Color(0x00FFFFFF),
                           ],
                           stops: const [0.3, 0.5, 0.7],
                         ),

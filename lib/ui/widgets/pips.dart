@@ -151,13 +151,17 @@ class _GlitterState extends State<Glitter> with SingleTickerProviderStateMixin {
       ? const SizedBox.shrink()
       : AnimatedBuilder(
           animation: _c,
-          builder: (context, _) => CustomPaint(painter: _GlitterPainter(_c.value)),
+          builder: (context, _) => CustomPaint(
+              painter: _GlitterPainter(_c.value, Color.lerp(context.skin.sheen, const Color(0xFFFFFFFF), 0.4)!)),
         );
 }
 
 class _GlitterPainter extends CustomPainter {
-  _GlitterPainter(this.t);
+  _GlitterPainter(this.t, this.light);
   final double t;
+
+  /// The sheen's and the stars' colour.
+  final Color light;
 
   static const _stars = [
     (0.12, 0.18, 0.0), (0.86, 0.14, 0.35), (0.22, 0.78, 0.6), (0.78, 0.7, 0.15),
@@ -180,12 +184,12 @@ class _GlitterPainter extends CustomPainter {
             ..shader = ui.Gradient.linear(
               Offset(cx - band, 0),
               Offset(cx + band, size.height * 0.35),
-              const [Color(0x00FFFFFF), Color(0x66FFFBE6), Color(0x00FFFFFF)],
+              [const Color(0x00FFFFFF), light.withValues(alpha: 0x66 / 255), const Color(0x00FFFFFF)],
               const [0, 0.5, 1],
             ));
     }
     // The stars, each twinkling in its own moment.
-    final star = Paint()..color = const Color(0xFFFFFBEA);
+    final star = Paint()..color = light;
     for (final (sx, sy, phase) in _stars) {
       // Each star twinkles three times a cycle, each in its own moment,
       // so there are always a few catching the light.
@@ -207,5 +211,5 @@ class _GlitterPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlitterPainter old) => old.t != t;
+  bool shouldRepaint(_GlitterPainter old) => old.t != t || old.light != light;
 }

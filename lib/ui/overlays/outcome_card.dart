@@ -64,7 +64,7 @@ class OutcomeOverlay extends StatelessWidget {
           children: [
             Positioned.fill(
               child: ColoredBox(
-                color: Color.lerp(Colors.black45, const Color(0x99B3122B),
+                color: Color.lerp(Colors.black45, context.skin.cardRed.withValues(alpha: 0x99 / 255),
                     redPulse)!,
               ),
             ),
@@ -187,7 +187,7 @@ class _OutcomeCardState extends State<OutcomeCard> {
                 decoration: BoxDecoration(
                   color: const Color(0x22FFFFFF),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0x55D9483B)),
+                  border: Border.all(color: skin.lost.withValues(alpha: 0x55 / 255)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

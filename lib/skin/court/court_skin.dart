@@ -157,6 +157,9 @@ class CourtSkin extends Skin {
   Color get feltGlow => const Color(0xFF176141);
 
   @override
+  Color get sheen => const Color(0xFFFFF6D8);
+
+  @override
   TokenLook get tokenLook => const TokenLook();
 
   @override

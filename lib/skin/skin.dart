@@ -148,6 +148,10 @@ abstract class Skin {
   ButtonLook get buttonLook;
 
   /// Parts the skin draws itself (parts.dart); none by default.
+  /// The light catching the gold: the sweep across a button that's
+  /// waiting, a win's sheen and its stars.
+  Color get sheen => Color.lerp(gold, const Color(0xFFFFFFFF), 0.8)!;
+
   /// The light behind the crowning: the felt, lit.
   Color get feltGlow => Color.lerp(felt, const Color(0xFFFFFFFF), 0.08)!;
 
