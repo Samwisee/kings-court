@@ -23,7 +23,8 @@ def rows(path):
 
 
 def main(path):
-    records = [r for r in rows(path) if r.get('outcome') in ('won', 'lost')]
+    # Test records (from setting up the service) are left out.
+    records = [r for r in rows(path) if r.get('outcome') in ('won', 'lost') and not r.get('test')]
     if not records:
         print('No finished rounds yet.')
         return
