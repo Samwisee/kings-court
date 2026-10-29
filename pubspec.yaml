@@ -45,6 +45,8 @@ dependencies:
   http: ^1.2.2
   # Crash reports (lib/platform/crash_reports.dart).
   sentry_flutter: ^9.0.0
+  # Multiplayer rooms (lib/platform/room_socket.dart).
+  web_socket_channel: ^3.0.1
 
 dev_dependencies:
   flutter_test:
