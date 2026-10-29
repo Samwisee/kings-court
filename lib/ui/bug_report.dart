@@ -191,10 +191,12 @@ class _BugDialogState extends State<_BugDialog> {
                         'The game as it is now is sent along with it.',
                         style: skin.dialogNote),
                     const SizedBox(height: 12),
-                    // As tall as there's room for: above the keyboard when
-                    // it's up.
-                    Expanded(
-                      child: TextField(
+                    // As tall as there's room for (above the keyboard when
+                    // it's up), up to a good page's worth.
+                    Flexible(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 320),
+                        child: TextField(
                         key: const ValueKey('bugMessage'),
                         controller: _message,
                         autofocus: true,
@@ -205,6 +207,7 @@ class _BugDialogState extends State<_BugDialog> {
                         textCapitalization: TextCapitalization.sentences,
                         onChanged: (_) => setState(() {}),
                         decoration: const InputDecoration(hintText: 'I tapped the Jester and nothing happened…'),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
