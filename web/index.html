@@ -131,7 +131,64 @@
     @media (prefers-reduced-motion: reduce) {
       #loading svg, #loading .dots i { animation: none; }
     }
+    /* Opened inside another app (a link in Messenger, Instagram…): a note
+       that the game runs smoother in the phone's own browser. */
+    #inapp {
+      position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 20; display: flex; align-items: center; gap: 12px;
+      padding: 12px 12px 12px 16px; border-radius: 14px;
+      background: #2A0710; color: #F6EBD2; border: 1.5px solid #D4A63A;
+      box-shadow: 0 8px 28px rgba(0,0,0,.45);
+      font: 15px/1.35 -apple-system, system-ui, sans-serif;
+    }
+    #inapp p { margin: 0; flex: 1; }
+    #inapp a, #inapp button {
+      flex: none; border: 0; border-radius: 10px; padding: 9px 12px;
+      font: 600 14px -apple-system, system-ui, sans-serif; text-decoration: none;
+      background: #D4A63A; color: #2A0710; cursor: pointer;
+    }
+    #inapp button.quiet { background: transparent; color: #D4A63A; padding: 9px 6px; }
   </style>
+  <script>
+    // Inside another app's browser the game is slower, so it draws fewer
+    // pixels there (twice the screen's points at most), and suggests the
+    // phone's own browser once.
+    (function () {
+      var ua = navigator.userAgent || '';
+      if (!/FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Line\/|MicroMessenger|Snapchat|musical_ly|BytedanceWebview|TikTok/i.test(ua)) return;
+      if ((window.devicePixelRatio || 1) > 2) {
+        try { Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 2; }, configurable: true }); } catch (e) {}
+      }
+      try { if (sessionStorage.getItem('kingsCourt.inAppNoted')) return; } catch (e) {}
+      document.addEventListener('DOMContentLoaded', function () {
+        var android = /Android/i.test(ua);
+        var note = document.createElement('div');
+        note.id = 'inapp';
+        note.setAttribute('role', 'note');
+        var p = document.createElement('p');
+        p.textContent = android
+          ? 'The game runs smoother in Chrome.'
+          : 'The game runs smoother in Safari: tap \u2022\u2022\u2022 at the top, then open it in Safari.';
+        note.appendChild(p);
+        if (android) {
+          var a = document.createElement('a');
+          var here = location.href.replace(/^https?:\/\//, '');
+          a.href = 'intent://' + here + '#Intent;scheme=https;package=com.android.chrome;end';
+          a.textContent = 'Open in Chrome';
+          note.appendChild(a);
+        }
+        var ok = document.createElement('button');
+        ok.className = android ? 'quiet' : '';
+        ok.textContent = android ? 'Not now' : 'Got it';
+        ok.onclick = function () {
+          note.remove();
+          try { sessionStorage.setItem('kingsCourt.inAppNoted', '1'); } catch (e) {}
+        };
+        note.appendChild(ok);
+        document.body.appendChild(note);
+      });
+    })();
+  </script>
 </head>
 <body>
   <div id="loading" aria-label="Loading The King's Court" role="status">
