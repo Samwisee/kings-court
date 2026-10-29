@@ -120,7 +120,7 @@ class CourtSkin extends Skin {
         innerRule: Color(0x66D4A63A),
         panelRule: Color(0x99D4A63A),
         panelInnerRule: Color(0x66D4A63A),
-        lamp: 0.28,
+        lamp: 0.07,
       );
 
   @override

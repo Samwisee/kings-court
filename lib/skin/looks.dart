@@ -57,9 +57,9 @@ class TableLook {
   final Color? panelRule;
   final Color? panelInnerRule;
 
-  /// How far the felt darkens towards its corners, as if lit by a lamp
-  /// over the middle of the table: 0 for an even felt, about 0.3 for a
-  /// card room's.
+  /// The light of a lamp over the middle of the table: how much white is
+  /// in the felt at its brightest (0 for an even felt, about 0.07 for a
+  /// card room's). It fades to the felt's own colour at the edges.
   final double lamp;
 }
 

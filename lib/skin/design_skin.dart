@@ -237,7 +237,7 @@ class DesignSkin extends Skin {
           innerRule: design.accent.withValues(alpha: 0.4),
           panelRule: design.accent.withValues(alpha: 0.6),
           panelInnerRule: design.accent.withValues(alpha: 0.4),
-          lamp: 0.3,
+          lamp: 0.06,
         )
       : TableLook(
           style: TableStyle.edged,
