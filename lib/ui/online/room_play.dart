@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../engine/round.dart';
 import '../../game/seats.dart';
 import '../../game/setup.dart';
 import '../../game/state.dart';
@@ -24,9 +25,13 @@ import '../../platform/service.dart';
 import 'online_setup.dart';
 
 class RoomPlay {
-  RoomPlay(this.room, {required this.onChange})
+  RoomPlay(this.room, {required this.onChange, required VoidCallback onRebuilt})
       : _status = room.status,
         _was = List.of(room.seats.holders) {
+    // Moves made here are played at once; the room's order wins if it
+    // differs ([OnlineTable.playAhead]).
+    room.playAhead = true;
+    _rebuilds = room.rebuilt.listen((_) => onRebuilt());
     _changes = room.changes.listen((_) {
       var news = _comings();
       if (room.status != _status) {
@@ -77,6 +82,7 @@ class RoomPlay {
   /// connection, when one of them changed.
   final void Function(String? news) onChange;
   late final StreamSubscription<void> _changes;
+  late final StreamSubscription<void> _rebuilds;
   TableStatus _status;
 
   /// This device in rooms: its player's id, and a part for this run, so
@@ -108,6 +114,13 @@ class RoomPlay {
 
   /// Whether a person plays [seat].
   bool personAt(int seat) => room.seats.holders[seat] is Person;
+
+  /// Whether someone at the table but [you] is still to say, before the
+  /// first pick of [r], whether they'll show a card first.
+  bool deciding(Round r, {required int you}) => [
+        for (var s = 0; s < r.players && s < room.seats.count; s++)
+          if (s != you && room.seats.present(s) && !r.ready.contains(s) && !r.spoke[s]) s
+      ].isNotEmpty;
 
   /// The seats people play.
   List<int> people() => [for (var s = 0; s < room.seats.count; s++) if (personAt(s)) s];
@@ -209,8 +222,8 @@ class RoomPlay {
   /// How long a move waits on you before your courtier makes it, so
   /// someone who's walked away holds nobody up; you're warned [warning]
   /// before.
-  static Duration idleLimit = const Duration(seconds: 20);
-  static const warning = Duration(seconds: 8);
+  static Duration idleLimit = const Duration(seconds: 45);
+  static const warning = Duration(seconds: 10);
   Timer? _idle;
   Timer? _warn;
   String? _idleAt;
@@ -244,6 +257,7 @@ class RoomPlay {
   /// Out of the room for good: nothing to come back to.
   void close() {
     _changes.cancel();
+    _rebuilds.cancel();
     _idle?.cancel();
     _warn?.cancel();
     unawaited(_forget());

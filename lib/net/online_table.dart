@@ -172,8 +172,33 @@ class OnlineTable implements TableLink {
   @override
   List<Move> get history => List.unmodifiable(_history);
 
+  /// Moves made here are played here at once ([send]), before the room
+  /// has numbered them, so the table answers a tap straight away (off by
+  /// default: a table that can't be [rebuilt] mustn't).
+  bool playAhead = false;
+
+  /// The moves played ahead, as JSON, oldest first: each is let go when it
+  /// comes back from the room.
+  final _ahead = <String>[];
+
+  /// The room put another move before one played ahead here: the game
+  /// here is to be rebuilt from [history] (the moves the room has
+  /// numbered), and the moves played ahead come back as anyone's do.
+  Stream<void> get rebuilt => _rebuilt.stream;
+  final _rebuilt = StreamController<void>.broadcast(sync: true);
+
   @override
   void send(TableAction action) {
+    if (status == TableStatus.closed) return;
+    // Only a move the room will take is played ahead: this device's own,
+    // the host's for the seats it plays, and a task handed to anyone.
+    final ours = action.seat == seat ||
+        action is PickTask ||
+        (hosting && action.seat < seats.count && seats.hostPlays(action.seat));
+    if (playAhead && ours) {
+      _ahead.add(jsonEncode(action.toJson()));
+      _moves.add(Move(lastSeq + _ahead.length, action));
+    }
     if (status == TableStatus.open) {
       _write({'t': 'move', 'a': action.toJson()});
     } else if (status != TableStatus.closed) {
@@ -210,6 +235,7 @@ class OnlineTable implements TableLink {
     unawaited(_close());
     _moves.close();
     _changes.close();
+    _rebuilt.close();
   }
 
   void _write(Map<String, dynamic> msg) => _socket?.send(jsonEncode(msg));
@@ -266,6 +292,10 @@ class OnlineTable implements TableLink {
         if (move != null) _arrive(move);
       case 'error':
         _refuse(Refusal.of(msg['why'] as String?));
+      case 'refused':
+        // A move played ahead that the room won't take: start again from
+        // the room's moves.
+        if (_ahead.remove(jsonEncode(msg['a']))) _rebuilt.add(null);
     }
   }
 
@@ -285,7 +315,15 @@ class OnlineTable implements TableLink {
     while (_held.containsKey(lastSeq + 1)) {
       final next = _held.remove(lastSeq + 1)!;
       _history.add(next);
-      _moves.add(next);
+      if (_ahead.isEmpty) {
+        _moves.add(next);
+      } else if (_ahead.first == jsonEncode(next.action.toJson())) {
+        _ahead.removeAt(0); // played here already
+      } else {
+        // Someone else's move came first: start again from the room's.
+        _ahead.clear();
+        _rebuilt.add(null);
+      }
     }
   }
 

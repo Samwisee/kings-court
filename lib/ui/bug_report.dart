@@ -23,6 +23,7 @@ import '../platform/build_info.dart';
 import '../platform/crash_reports.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
+import '../skin/skin_scope.dart';
 import 'widgets.dart';
 
 /// Where reports go, set when the game is built
@@ -66,9 +67,11 @@ Future<void> showBugReport(BuildContext context,
   final snapshot = _safely(details);
   final size = MediaQuery.sizeOf(context);
   final dpr = MediaQuery.devicePixelRatioOf(context);
-  return showDialog<void>(
-    context: context,
-    builder: (context) => _BugDialog(
+  // A page of its own, not a dialog: with the keyboard up on a phone the
+  // words and Send stay in view above it, whatever the browser does.
+  return Navigator.of(context).push<void>(PageRouteBuilder(
+    opaque: false,
+    pageBuilder: (context, a, b) => _BugDialog(
       payload: (message) => {
         'message': message,
         'build': buildVersion,
@@ -85,7 +88,9 @@ Future<void> showBugReport(BuildContext context,
         ...snapshot,
       },
     ),
-  );
+    transitionsBuilder: (context, a, b, child) =>
+        FadeTransition(opacity: CurvedAnimation(parent: a, curve: Curves.easeOut), child: child),
+  ));
 }
 
 Map<String, dynamic> _safely(Map<String, dynamic> Function() f) {
@@ -137,61 +142,89 @@ class _BugDialogState extends State<_BugDialog> {
 
   @override
   Widget build(BuildContext context) {
-    const field = InputDecoration(isDense: true);
-    return switch (_stage) {
-      _Stage.sent => CourtDialog(
-          title: 'Thank you!',
-          actions: [
-            FilledButton(
-                onPressed: () => Navigator.pop(context), child: const Text('Back to the game')),
-          ],
-          child: const Text('Your report is on its way, with the game as it was, so it can be put right.',
-              textAlign: TextAlign.center),
+    final skin = context.skin;
+    final (title, words, done) = switch (_stage) {
+      _Stage.sent => (
+          'Thank you!',
+          'Your report is on its way, with the game as it was, so it can be put right.',
+          'Back to the game'
         ),
-      _Stage.copied => CourtDialog(
-          title: 'Report copied',
-          actions: [
-            FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
-          ],
-          child: const Text(
-              'It couldn’t be sent from here, so it’s been copied instead. '
-              'Paste it into a message to Sam.',
-              textAlign: TextAlign.center),
+      _Stage.copied => (
+          'Report copied',
+          'It couldn’t be sent from here, so it’s been copied instead. Paste it into a message to Sam.',
+          'Done'
         ),
-      _ => CourtDialog(
-          title: 'Report a bug',
-          align: CrossAxisAlignment.stretch,
-          actions: [
-            FilledButton(
-                onPressed: _stage == _Stage.sending ? null : _send,
-                child: Text(_stage == _Stage.sending ? 'Sending…' : 'Send')),
-            TextButton(
-                onPressed: _stage == _Stage.sending ? null : () => Navigator.pop(context),
-                child: const Text('Cancel')),
-          ],
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                  'What went wrong, or what did you expect to happen? '
-                  'The game as it is now is sent along with it.',
-                  style: TextStyle(color: Colors.white70)),
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey('bugMessage'),
-                controller: _message,
-                autofocus: true,
-                minLines: 3,
-                maxLines: 6,
-                maxLength: 2000,
-                textCapitalization: TextCapitalization.sentences,
-                onChanged: (_) => setState(() {}),
-                decoration: field.copyWith(hintText: 'I tapped the Jester and nothing happened…'),
+      _ => ('Report a bug', null, null),
+    };
+    final writing = done == null;
+    return Scaffold(
+      backgroundColor: skin.feltDeep,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: writing ? MainAxisAlignment.start : MainAxisAlignment.center,
+                children: [
+                  Row(children: [
+                    Expanded(child: Text(title, style: skin.dialogTitle)),
+                    if (writing)
+                      IconButton(
+                        tooltip: 'Cancel',
+                        onPressed: _stage == _Stage.sending ? null : () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                  ]),
+                  const SizedBox(height: 8),
+                  if (!writing) ...[
+                    Text(words!, style: skin.dialogBody),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(done)),
+                    ),
+                  ] else ...[
+                    Text(
+                        'What went wrong, or what did you expect to happen? '
+                        'The game as it is now is sent along with it.',
+                        style: skin.dialogNote),
+                    const SizedBox(height: 12),
+                    // As tall as there's room for: above the keyboard when
+                    // it's up.
+                    Expanded(
+                      child: TextField(
+                        key: const ValueKey('bugMessage'),
+                        controller: _message,
+                        autofocus: true,
+                        expands: true,
+                        maxLines: null,
+                        maxLength: 2000,
+                        textAlignVertical: TextAlignVertical.top,
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(hintText: 'I tapped the Jester and nothing happened…'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      TextButton(
+                          onPressed: _stage == _Stage.sending ? null : () => Navigator.pop(context),
+                          child: const Text('Cancel')),
+                      const Spacer(),
+                      FilledButton(
+                          onPressed: _stage == _Stage.sending || _message.text.trim().isEmpty ? null : _send,
+                          child: Text(_stage == _Stage.sending ? 'Sending…' : 'Send')),
+                    ]),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
         ),
-    };
+      ),
+    );
   }
 }

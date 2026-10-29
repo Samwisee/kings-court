@@ -40,6 +40,10 @@ extension RoundChecks on Round {
         if (task < 0 || task >= tasks.length) return 'No such task';
         if (tasks[task].owner != seat) return 'Not your task';
         if (x < 0 || x > totalTricks) return 'Not a possible number';
+      case Ready(:final seat):
+        if (!hasCards || phase != Phase.picking || picksMade > 0) return 'The picking has begun';
+        if (seat < 0 || seat >= players) return 'No such seat';
+        if (ready.contains(seat)) return 'Ready already';
       case ShowCard(:final seat, :final card):
         if (!hasCards || seat >= hands.length) return 'No cards to show';
         if (spoke[seat]) return 'That card reveal is used this round';

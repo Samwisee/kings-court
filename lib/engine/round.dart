@@ -67,6 +67,10 @@ class Round {
   /// Whether each seat has used their once-per-round card reveal.
   List<bool> spoke;
 
+  /// Who is ready for the picking to begin, not showing a card first
+  /// ([Ready]).
+  Set<int> ready = {};
+
   /// Tasks taken by a pick this round (not counting ones that went
   /// straight to the only player who could take them).
   int picksMade = 0;
@@ -474,6 +478,9 @@ class Round {
       case Announce(:final task, :final x):
         announce(task, x);
         return null;
+      case Ready(:final seat):
+        ready.add(seat);
+        return null;
       case ShowCard(:final seat, :final card):
         revealHint[seat] = revealFor(seat, card)!;
         revealed[seat] = card;
@@ -513,6 +520,7 @@ class Round {
         'pickTurn': pickTurn,
         'passed': passed.toList(),
         'spoke': spoke,
+        if (ready.isNotEmpty) 'ready': ready.toList()..sort(),
         'picksMade': picksMade,
         'sealCount': sealCount,
         'decree': decree?.index,
@@ -545,6 +553,7 @@ class Round {
       ..pickTurn = j['pickTurn'] as int?
       ..passed = {for (final s in (j['passed'] as List?) ?? const []) s as int}
       ..picksMade = (j['picksMade'] as int?) ?? 0
+      ..ready = {for (final s in (j['ready'] as List?) ?? const []) s as int}
       ..sealCount = (j['sealCount'] as int?) ?? 0
       ..decree = j['decree'] == null ? null : Decree.values[j['decree'] as int]
       ..exiledSeat = j['exiled'] as int?

@@ -116,6 +116,12 @@ class HeadlessTable {
   Future<bool> playAs(int seat) async {
     prepare();
     if (pending.isNotEmpty || game.outcome != RoundOutcome.inProgress) return false;
+    // Before the first pick, ready for it (a person at a shared table
+    // says so; nobody shows a card here).
+    if (round.hasCards && round.king != null && round.problem(Ready(seat)) == null) {
+      _send(Ready(seat));
+      return true;
+    }
     final person = Host.standIn(seat, game.players.length,
         bot: bot, send: _send, script: rules.script?.call(game) ?? const CourtierScript());
     final turn = await person.act(game);

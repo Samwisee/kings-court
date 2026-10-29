@@ -739,7 +739,8 @@ class HomePageState extends State<HomePage>
       !_choosingKing &&
       !_decreePending &&
       _table.dealtFor == game.dealId &&
-      _round.pickTurn == _you;
+      _round.pickTurn == _you &&
+      !_othersDeciding;
 
   /// Deals hands for a new round (or after a reload with an old deal), and
   /// lets the King card choose the King.
@@ -771,7 +772,9 @@ class HomePageState extends State<HomePage>
   PlayingCard? _queued;
 
   void _scheduleBot() {
-    _room?.watch(Host.moment(game), yours: _yourPick || _yourPlay, standIn: _standIn,
+    // Online, with no card to show you're ready for the picking at once.
+    if (_openingPick && _room != null && !_speakPromptDue && _round.problem(Ready(_you)) == null) _link.send(Ready(_you));
+    _room?.watch(Host.moment(game), yours: _yourPick || _yourPlay || _speakPromptDue, standIn: _standIn,
         warn: (words) => _showSnack(words, context.skin.feltDeep));
     if (_queued != null && _yourPlay) {
       final card = _queued!;
@@ -833,12 +836,18 @@ class HomePageState extends State<HomePage>
       !game.isTutorial &&
       _speakAskedFor != game.dealId &&
       _openingPick &&
+      !_round.ready.contains(_you) &&
       _mayAskToSpeak;
+
+  /// Online, before the first pick: someone else at the table is still to
+  /// say whether they'll show a card first, so nobody picks yet.
+  bool get _othersDeciding => _openingPick && (_room?.deciding(_round, you: _you) ?? false);
 
   /// Picking begins: courtiers may show a card a task on the table needs,
   /// then the first pick is made.
   void _startChoosing() {
     setState(() => _speakAskedFor = game.dealId);
+    if (_round.problem(Ready(_you)) == null) _link.send(Ready(_you));
     if (_hostsTable) _host.openingShows(game).forEach(_link.send);
   }
 
@@ -859,6 +868,7 @@ class HomePageState extends State<HomePage>
       return false;
     }
     if (!Host.ready(game, dealtFor: _table.dealtFor) ||
+        _othersDeciding ||
         _crowning != null ||
         _decreePending ||
         _table.dragging != null ||
@@ -956,6 +966,15 @@ class HomePageState extends State<HomePage>
       _host.seats = table.seats; // the host plays anyone away
       if (news != null) _showSnack(news, context.skin.feltDeep);
       setState(() => _room!.nameSeats(game));
+    }, onRebuilt: () {
+      if (!mounted || _room?.room != table) return;
+      // The room put someone else's move first: the game again from its moves.
+      setState(() {
+        _lastTrick = null;
+        _crowning = null;
+        game = _room!.start(modeOf(table.setup!.mode).rules);
+        _resetTable();
+      });
     });
     setState(() {
       _online = null;
@@ -973,6 +992,7 @@ class HomePageState extends State<HomePage>
 
   /// You've been a while: your courtier makes your move.
   void _standIn() {
+    if (mounted && _speakPromptDue) return _startChoosing();
     if (!mounted || !(_yourPick || _yourPlay)) return;
     _showSnack('Your courtier moved for you', context.skin.feltDeep);
     unawaited(Host.standIn(_you, game.players.length, bot: Bot(), send: _link.send).act(game));
@@ -1041,6 +1061,8 @@ class HomePageState extends State<HomePage>
           _round.apply(move);
           _table.layoutOwned(_geo);
         });
+      case Ready():
+        setState(() => _round.apply(move));
     }
   }
 
@@ -1325,7 +1347,7 @@ class HomePageState extends State<HomePage>
 
   /// What the table says is happening, under the cards.
   String get _cardStatus => tableStatus(game, you: _you, lastTrick: _lastTrick,
-      choosingKing: _choosingKing, speakPrompt: _speakPromptDue);
+      choosingKing: _choosingKing, speakPrompt: _speakPromptDue, othersDeciding: _othersDeciding);
 
   /// Your hand along the bottom, fanned to fit: cards you may play stand
   /// up, the rest dim. Tap one to play it.
@@ -2084,36 +2106,14 @@ class HomePageState extends State<HomePage>
   /// can, else one that says the most (the only card of its suit, or the
   /// highest of their longest suit).
   void _askToSpeak(int seat) {
-    final c = _round;
-    final name = game.players[seat].name;
-    if (!c.hasCards || game.outcome != RoundOutcome.inProgress) return;
-    String? no;
-    if (_round.spoke[seat]) {
-      no = '$name has already shown a card this round';
-    } else if (!_round.canSpeak(seat)) {
-      no = _round.whyCantSpeak() ?? 'No cards may be shown now';
-    } else if (c.current.isNotEmpty) {
-      no = '$name can show a card once this trick is over';
+    if (!_round.hasCards || game.outcome != RoundOutcome.inProgress) return;
+    switch (courtierShow(game, seat)) {
+      case (no: final String no, card: _):
+        _showSnack(no, context.skin.feltDeep);
+      case (no: _, card: final PlayingCard card):
+        _haptic(HapticFeedback.selectionClick);
+        _reveal(seat, card);
     }
-    if (no != null) {
-      _showSnack(no, context.skin.feltDeep);
-      return;
-    }
-    final showable = [for (final card in c.hands[seat]) if (c.revealFor(seat, card) != null) card];
-    if (showable.isEmpty) {
-      _showSnack('$name has no card they may show', context.skin.feltDeep);
-      return;
-    }
-    int score(PlayingCard card) {
-      final needed = game.tasks.any((t) =>
-          t.status == TaskStatus.pending && neededCards(t.description).contains(card));
-      final hint = c.revealFor(seat, card);
-      final suitCount = c.hands[seat].where((x) => x.suit == card.suit).length;
-      return (needed ? 100 : 0) + (hint == 'only' ? 20 : 0) + suitCount;
-    }
-    showable.sort((a, b) => score(b).compareTo(score(a)));
-    _haptic(HapticFeedback.selectionClick);
-    _reveal(seat, showable.first);
   }
 
   /// Marks a task done, for tests.

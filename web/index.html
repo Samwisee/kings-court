@@ -241,6 +241,11 @@
     window.addEventListener('flutter-first-frame', loaded);
     // Never left covering the game, whatever happens.
     setTimeout(loaded, 15000);
+    // The game fills the window and never scrolls: some phones' browsers
+    // scroll the page when the keyboard comes up, leaving it out of view.
+    window.addEventListener('scroll', function () {
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    });
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

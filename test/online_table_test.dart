@@ -164,6 +164,37 @@ void main() {
     a.dispose();
   });
 
+  test('Played ahead, a move shows at once and isn’t played twice; another’s first starts again', () async {
+    final rooms = FakeRooms();
+    final ann = await OnlineTable.create(rooms.open, service, setup: setup, session: 'ann', name: 'Ann', build: 'b1');
+    final ben = await OnlineTable.join(rooms.open, service, code: ann.code, session: 'ben', name: 'Ben', build: 'b1');
+    ann.start();
+    await settle();
+    ann.playAhead = true;
+    final played = <String>[];
+    var rebuilt = 0;
+    ann.moves.listen((m) => played.add(m.action.toJson()['type'] as String));
+    ann.rebuilt.listen((_) => rebuilt++);
+    ann.send(const Pass(0));
+    expect(played, ['pass'], reason: 'at once, before the room answers');
+    expect(ann.history, isEmpty);
+    await settle();
+    expect(played, ['pass'], reason: 'its echo isn’t played again');
+    expect(ann.history.map((m) => m.seq), [0]);
+    // Ben's move reaches the room first; Ann's, played ahead, comes after.
+    ben.send(const Ready(1));
+    ann.send(const Ready(0));
+    expect(played, ['pass', 'ready']);
+    await settle();
+    expect(rebuilt, 1, reason: 'the room put Ben’s first');
+    expect(ann.history.map((m) => m.action.seat), [0, 1, 0]);
+    // From there the moves come as anyone's: Ann's own again, in its place.
+    expect(played, ['pass', 'ready', 'ready']);
+    // A move this device may not make isn't played ahead.
+    ann.send(const Pass(2));
+    expect(played.length, 3);
+  });
+
   test('Reconnecting waits a little longer each time, up to fifteen seconds', () {
     expect([for (var n = 0; n < 6; n++) waits(n).inSeconds], [1, 2, 4, 8, 15, 15]);
   });

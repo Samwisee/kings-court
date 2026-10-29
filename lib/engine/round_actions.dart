@@ -34,6 +34,7 @@ sealed class MatchAction extends TableAction {
         'pass' => Pass(j['seat'] as int),
         'play' => PlayCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
         'return' => ReturnTask(j['seat'] as int, j['task'] as int),
+        'ready' => Ready(j['seat'] as int),
         _ => null,
       };
 }
@@ -78,6 +79,15 @@ class PlayCard extends MatchAction {
   @override
   Map<String, dynamic> toJson() =>
       {'type': 'play', 'seat': seat, 'card': card.id};
+}
+
+/// Before anyone takes a task, [seat] won't show a card first: they're
+/// ready for the picking to begin. At a table of several people, the
+/// picking waits until every one of them is (or has shown a card).
+class Ready extends MatchAction {
+  const Ready(super.seat);
+  @override
+  Map<String, dynamic> toJson() => {'type': 'ready', 'seat': seat};
 }
 
 /// Showing a card: a player's highest, lowest or only card of a suit,

@@ -137,6 +137,19 @@ void main() {
     expect(won.problem(PlayCard(won.turn, won.legalFor(won.turn).first)), isNull);
   });
 
+  test('Before the first pick each seat may say it’s ready, once; after it, nobody', () {
+    final r = table(['Win the 3♥', 'Win the 6♣']);
+    expect(r.problem(const Ready(1)), isNull);
+    r.apply(const Ready(1));
+    expect(r.ready, {1});
+    expect(r.problem(const Ready(1)), 'Ready already');
+    expect(Round.fromJson(r.toJson()).ready, {1}, reason: 'kept with the round');
+    final seat = r.pickTurn!;
+    r.apply(PickTask(seat, [0, 1].firstWhere((i) => r.canTake(i, seat))));
+    expect(r.problem(const Ready(2)), 'The picking has begun');
+    expect(MatchAction.fromJson(const Ready(2).toJson()), isA<Ready>());
+  });
+
   test('A table that turns tasks over at its own pace stops play where a judging one would', () {
     // Played with the judging held back (as the screen does), the round
     // refuses the next card once a task has failed, exactly where a round
