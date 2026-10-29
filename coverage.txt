@@ -1,0 +1,37 @@
+lib/ (code): 84.6% of 9876 lines
+lib/ (with art and data): 85.1% of 10833 lines
+
+engine      95.8% of  1348 lines
+game        93.8% of   664 lines
+modes       98.6% of    73 lines
+net         94.0% of   217 lines
+platform    56.4% of   101 lines
+skin        83.4% of   380 lines
+ui          81.6% of  7093 lines
+
+Least covered (code files of 40+ lines):
+    0.0%  ui/modes/tutorial/intro_preview.dart (40 lines)
+    0.0%  ui/widgets/candles.dart (75 lines)
+   19.4%  ui/setup/transitions.dart (67 lines)
+   26.1%  ui/widgets/character_token.dart (211 lines)
+   60.0%  ui/widgets/pips.dart (95 lines)
+   62.6%  ui/tracker/card_tracker.dart (187 lines)
+   62.7%  ui/dialogs/task_close_up.dart (118 lines)
+   65.8%  ui/rules/rules_page.dart (199 lines)
+   66.7%  ui/widgets/icons.dart (183 lines)
+   72.1%  ui/cards/card_back.dart (86 lines)
+   74.0%  ui/table/trick_view.dart (50 lines)
+   75.0%  game/dealer.dart (40 lines)
+   75.0%  skin/theme.dart (56 lines)
+   75.6%  ui/table_page.dart (1630 lines)
+   75.8%  skin/court/court_skin.dart (62 lines)
+   76.8%  game/seats.dart (56 lines)
+   78.8%  ui/cards/mini_card.dart (80 lines)
+   79.5%  ui/cards/task_chip.dart (156 lines)
+   79.6%  ui/widgets/task_card.dart (186 lines)
+   83.2%  ui/menu/menu.dart (137 lines)
+   83.7%  skin/design_skin.dart (178 lines)
+   86.9%  ui/bug_report.dart (61 lines)
+   87.2%  ui/round_table/geometry.dart (133 lines)
+   87.5%  engine/sampling.dart (72 lines)
+   88.2%  platform/game_log.dart (51 lines)
