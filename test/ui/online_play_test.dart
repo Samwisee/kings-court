@@ -111,7 +111,7 @@ void main() {
             if (moved) benMoves++;
           }));
         }
-        if (drop && !dropped && benMoves >= 2 && !thinking) {
+        if (drop && !dropped && benMoves >= 1 && !thinking) {
           dropped = true;
           await ben.leave();
           rooms.rooms[code]!.drop('ben');
