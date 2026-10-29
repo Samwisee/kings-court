@@ -1,0 +1,17 @@
+ERROR|COMPILE_TIME_ERROR|INVOCATION_OF_NON_FUNCTION_EXPRESSION|/home/runner/work/kings-court/kings-court/lib/main.dart|956|57|6|The expression doesn't evaluate to a function, so it can't be invoked.
+ERROR|COMPILE_TIME_ERROR|AMBIGUOUS_IMPORT|/home/runner/work/kings-court/kings-court/lib/main.dart|1162|18|6|The name 'Action' is defined in the libraries 'package:flutter/src/widgets/actions.dart (via package:flutter/material.dart)' and 'package:kings_court/engine/round.dart'.
+ERROR|COMPILE_TIME_ERROR|DUPLICATE_DEFINITION|/home/runner/work/kings-court/kings-court/lib/main.dart|3328|8|6|The name '_crown' is already defined.
+ERROR|COMPILE_TIME_ERROR|INVOCATION_OF_NON_FUNCTION_EXPRESSION|/home/runner/work/kings-court/kings-court/lib/main.dart|4728|52|6|The expression doesn't evaluate to a function, so it can't be invoked.
+ERROR|COMPILE_TIME_ERROR|AMBIGUOUS_IMPORT|/home/runner/work/kings-court/kings-court/test/game_actions_test.dart|129|19|5|The name 'Retry' is defined in the libraries 'package:kings_court/game/actions.dart' and 'package:test_api/src/backend/configuration/retry.dart (via package:flutter_test/flutter_test.dart)'.
+ERROR|COMPILE_TIME_ERROR|AMBIGUOUS_IMPORT|/home/runner/work/kings-court/kings-court/test/net_test.dart|72|13|5|The name 'Retry' is defined in the libraries 'package:kings_court/game/actions.dart' and 'package:test_api/src/backend/configuration/retry.dart (via package:flutter_test/flutter_test.dart)'.
+WARNING|STATIC_WARNING|UNUSED_ELEMENT|/home/runner/work/kings-court/kings-court/lib/main.dart|3328|8|6|The declaration '_crown' isn't referenced.
+INFO|LINT|UNNECESSARY_THIS|/home/runner/work/kings-court/kings-court/lib/engine/round.dart|830|21|4|Unnecessary 'this.' qualifier.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|44|22|14|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|45|22|14|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|58|22|14|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|59|13|14|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|66|22|7|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|67|22|7|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|68|13|7|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|72|26|7|Use 'const' with the constructor to improve performance.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/test/round_test.dart|95|13|29|Use 'const' with the constructor to improve performance.

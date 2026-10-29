@@ -1,0 +1,6 @@
+analyzer issues: 17
+  package:kings_court/engine/round.dart 830:26  Round._check
+  package:kings_court/engine/round.dart 822:37  Round.apply
+  test/tutorial_test.dart 59:11                 main.<fn>
+  
+00:12 +76 -33: Some tests failed.

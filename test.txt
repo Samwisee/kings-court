@@ -1,0 +1,461 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/engine_test.dart
+00:00 +0: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The deck has 40 cards and deals evenly, never setting aside the King card
+00:00 +1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A two-player hand is played to its end
+00:00 +1 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A two-player hand is played to its end [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..1: 2
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  test/engine_test.dart 35:14                   main.<fn>
+  
+00:00 +1 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Hands sort ♥ ♠ ♦ ♣, then the Court Cards
+00:00 +2 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Card ids and labels round-trip
+00:00 +3 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: You must follow suit, and a Court Card lead needs a Court Card
+00:00 +4 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The highest Court Card wins, otherwise the highest of the suit led
+00:00 +5 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every task has a rule
+00:00 +6 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Rules decide early when they can
+00:00 +7 -1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every rule reaches a verdict by the end of the round
+00:00 +7 -2: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every rule reaches a verdict by the end of the round [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  test/engine_test.dart 119:34                  main.<fn>
+  
+00:00 +7 -2: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Bots can play a whole round
+00:00 +7 -3: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Bots can play a whole round [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/bot.dart 504:11    new _Sim.from
+  package:kings_court/engine/bot.dart 223:22    Bot._playout
+  package:kings_court/engine/bot.dart 196:16    Bot._scoreOf
+  package:kings_court/engine/bot.dart 83:21     Bot.choosePick
+  test/engine_test.dart 141:45                  main.<fn>
+  
+00:00 +7 -3: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A game in progress saves and loads
+00:00 +7 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A game in progress saves and loads [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 525:5   Round.assign
+  package:kings_court/engine/round.dart 802:9   Round.apply
+  test/engine_test.dart 165:9                   main.<fn>
+  
+00:00 +7 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Illegal moves are refused
+00:00 +8 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Task profiles name real tasks
+00:00 +9 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Clashing tasks are spotted
+00:00 +10 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Rounds never deal tasks that clash
+00:00 +11 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Avoiding something clashes with needing enough of it
+00:00 +12 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: No card is avoided by every player
+00:00 +13 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every task has a tier, and deals keep within the tier limits
+lib/main.dart:3328:8: Error: '_crown' is already declared in this scope.
+  void _crown(int index) {
+       ^^^^^^
+lib/main.dart:146:34: Context: Previous declaration of '_crown'.
+  late final AnimationController _crown = AnimationController(
+                                 ^^^^^^
+00:00 +14 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Nobody may hold two tasks that work against each other
+00:00 +15 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Progress counts what a task has won so far
+00:00 +16 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The King can never take a task the King card makes impossible
+00:00 +17 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: If the King can't take any task, the next player picks first
+00:00 +18 -4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The same seed deals the same cards and tasks again
+lib/main.dart:26:1: Error: 'Action' is imported from both 'package:flutter/src/widgets/actions.dart' and 'package:kings_court/engine/round.dart'.
+import 'engine/round.dart';
+^^^^^^
+00:05 +19 -5: loading /home/runner/work/kings-court/kings-court/test/widget_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/test/widget_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/test/widget_test.dart: lib/main.dart:3328:8: Error: '_crown' is already declared in this scope.
+    void _crown(int index) {
+         ^^^^^^
+  lib/main.dart:146:34: Context: Previous declaration of '_crown'.
+    late final AnimationController _crown = AnimationController(
+                                   ^^^^^^
+  lib/main.dart:26:1: Error: 'Action' is imported from both 'package:flutter/src/widgets/actions.dart' and 'package:kings_court/engine/round.dart'.
+  import 'engine/round.dart';
+  ^^^^^^
+  .
+00:06 +19 -5: /home/runner/work/kings-court/kings-court/test/host_test.dart: The game is ready for a courtier once the King is crowned and the deal shown
+00:06 +19 -6: /home/runner/work/kings-court/kings-court/test/host_test.dart: The game is ready for a courtier once the King is crowned and the deal shown [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/host_test.dart 39:7                      main.<fn>
+  
+00:06 +19 -6: /home/runner/work/kings-court/kings-court/test/host_test.dart: A courtier whose turn it is picks a task, and the move is sent
+00:06 +19 -7: /home/runner/work/kings-court/kings-court/test/host_test.dart: A courtier whose turn it is picks a task, and the move is sent [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/host_test.dart 26:22                     crowned
+  test/host_test.dart 45:15                     main.<fn>
+  
+00:06 +19 -7: /home/runner/work/kings-court/kings-court/test/host_test.dart: With nothing moving, a turn that finds the game changed is stale
+00:06 +19 -8: /home/runner/work/kings-court/kings-court/test/host_test.dart: With nothing moving, a turn that finds the game changed is stale [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/host_test.dart 26:22                     crowned
+  test/host_test.dart 58:15                     main.<fn>
+  
+00:06 +19 -8: /home/runner/work/kings-court/kings-court/test/host_test.dart: Before the first pick, courtiers show a card a task needs
+00:06 +19 -9: /home/runner/work/kings-court/kings-court/test/host_test.dart: Before the first pick, courtiers show a card a task needs [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/host_test.dart 67:24                     main.<fn>
+  
+00:06 +19 -9: /home/runner/work/kings-court/kings-court/test/host_test.dart: A round playing itself out plays a legal card for whoever is on turn
+00:06 +19 -10: /home/runner/work/kings-court/kings-court/test/host_test.dart: A round playing itself out plays a legal card for whoever is on turn [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/host_test.dart 80:24                     main.<fn>
+  
+00:06 +19 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: Every way to play is in the registry, under its own id
+00:06 +20 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: Free play draws to the target; with surprises on, the seed rolls the seals and decree
+00:06 +21 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: A re-deal in free play keeps the round’s seals and decree
+00:06 +22 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: Endless adds a point to the target after a win, up to the most
+00:06 +23 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: A Chronicle chapter fixes the round’s seals and decree, and a win earns crowns
+00:06 +24 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: The tutorial fixes each lesson’s tasks, deals its cards and scripts the courtiers
+00:06 +25 -10: /home/runner/work/kings-court/kings-court/test/modes_test.dart: A round’s result says how it went
+00:07 +26 -10: /home/runner/work/kings-court/kings-court/test/round_test.dart: A task only one seat may take goes straight to them when the King is crowned
+00:07 +27 -10: /home/runner/work/kings-court/kings-court/test/round_test.dart: Picks follow the table’s rules: whose turn, what they may hold, who picks next
+00:07 +27 -11: /home/runner/work/kings-court/kings-court/test/round_test.dart: Picks follow the table’s rules: whose turn, what they may hold, who picks next [E]
+  Bad state: No task "Win the 7♣"
+  package:kings_court/engine/task.dart 151:6  taskByDescription
+  test/round_test.dart 18:49                  table
+  test/round_test.dart 41:15                  main.<fn>
+  
+00:07 +27 -11: /home/runner/work/kings-court/kings-court/test/round_test.dart: Under the King’s Command the King hands every task out
+00:07 +27 -12: /home/runner/work/kings-court/kings-court/test/round_test.dart: Under the King’s Command the King hands every task out [E]
+  Bad state: No task "Win the 7♣"
+  package:kings_court/engine/task.dart 151:6  taskByDescription
+  test/round_test.dart 18:49                  table
+  test/round_test.dart 55:15                  main.<fn>
+  
+00:07 +27 -12: /home/runner/work/kings-court/kings-court/test/round_test.dart: Passing is refused when the round or the turn says so
+00:07 +27 -13: /home/runner/work/kings-court/kings-court/test/round_test.dart: Passing is refused when the round or the turn says so [E]
+  Bad state: No task "Win the 7♣"
+  package:kings_court/engine/task.dart 151:6  taskByDescription
+  test/round_test.dart 18:49                  table
+  test/round_test.dart 65:15                  main.<fn>
+  
+00:07 +27 -13: /home/runner/work/kings-court/kings-court/test/round_test.dart: Showing a card needs the speech token, the decree’s leave and a showable card
+00:07 +27 -14: /home/runner/work/kings-court/kings-court/test/round_test.dart: Showing a card needs the speech token, the decree’s leave and a showable card [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  test/round_test.dart 21:5                     table
+  test/round_test.dart 76:15                    main.<fn>
+  
+00:07 +27 -14: /home/runner/work/kings-court/kings-court/test/round_test.dart: A table that turns the cards over itself plays without judging
+00:07 +27 -15: /home/runner/work/kings-court/kings-court/test/round_test.dart: A table that turns the cards over itself plays without judging [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  test/round_test.dart 21:5                     table
+  test/round_test.dart 91:15                    main.<fn>
+  
+00:07 +27 -15: /home/runner/work/kings-court/kings-court/test/round_test.dart: A seat’s view keeps its own hand and hides the others
+00:07 +27 -16: /home/runner/work/kings-court/kings-court/test/round_test.dart: A seat’s view keeps its own hand and hides the others [E]
+  Bad state: No task "Win the 7♣"
+  package:kings_court/engine/task.dart 151:6  taskByDescription
+  test/round_test.dart 18:49                  table
+  test/round_test.dart 109:15                 main.<fn>
+  
+00:07 +27 -16: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: A courtier picks a task they may take; you are left to pick yours
+00:07 +27 -17: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: A courtier picks a task they may take; you are left to pick yours [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/bot_turn_test.dart 17:5                  table
+  test/bot_turn_test.dart 25:15                 main.<fn>
+  
+00:07 +27 -17: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: Once every task is taken, a courtier plays a legal card on their turn
+00:07 +27 -18: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: Once every task is taken, a courtier plays a legal card on their turn [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/bot_turn_test.dart 17:5                  table
+  test/bot_turn_test.dart 39:15                 main.<fn>
+  
+00:07 +27 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Every task is explained in plain words
+00:07 +28 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Every game word a task uses is in the glossary
+00:07 +29 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Every task says how it is going, from the first trick
+00:07 +30 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Tasks about what not to do have trackers too
+00:07 +31 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: A failed task says why
+00:07 +32 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Number tasks track which cards are still to come
+00:07 +33 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Some pairs of trick tasks are impossible at a bigger table
+00:07 +34 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: The court’s own tasks judge the tricks right
+00:07 +35 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Tasks about shown cards judge what was shown, and when
+00:07 +36 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: More of the court’s tasks judge the tricks right
+00:07 +37 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Your own hand can rule a task out
+00:07 +38 -18: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: A task close-up shows the cards it is about
+00:07 +39 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: There are saves to check
+00:07 +40 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: Every version up to the current one has fixtures
+00:07 +41 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: A save says its version, and loading one again changes nothing
+00:07 +42 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: chronicle-chapter7.json loads and means the same
+00:07 +43 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: chronicle-kings-command.json loads and means the same
+00:07 +44 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: endless-midround.json loads and means the same
+00:07 +45 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: every-task.json loads and means the same
+00:07 +46 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-screen-midround.json loads and means the same
+00:07 +47 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-screen-picking.json loads and means the same
+00:07 +48 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-screen-won.json loads and means the same
+00:07 +49 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-table-exile.json loads and means the same
+00:07 +50 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-table-seals.json loads and means the same
+00:07 +51 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/chronicle-chapter7.json loads and means the same
+00:07 +52 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/chronicle-kings-command.json loads and means the same
+00:07 +53 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/endless-midround.json loads and means the same
+00:07 +54 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/every-task.json loads and means the same
+00:07 +55 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-screen-midround.json loads and means the same
+00:07 +56 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-screen-picking.json loads and means the same
+00:07 +57 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-screen-won.json loads and means the same
+00:07 +58 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-table-exile.json loads and means the same
+00:07 +59 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-table-seals.json loads and means the same
+00:07 +60 -18: /home/runner/work/kings-court/kings-court/test/saves_test.dart: Chronicle progress from before the refactor loads
+00:08 +61 -18: /home/runner/work/kings-court/kings-court/test/inference_test.dart: Not following suit shows a player has none of it
+00:08 +62 -18: /home/runner/work/kings-court/kings-court/test/inference_test.dart: A shown card and its mark narrow a hand down
+00:08 +63 -18: /home/runner/work/kings-court/kings-court/test/inference_test.dart: Everyone knows who holds the King
+00:08 +64 -18: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A task the tricks settle turns over; the others wait
+00:08 +64 -19: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A task the tricks settle turns over; the others wait [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/judge_test.dart 25:5                     table
+  test/judge_test.dart 47:15                    main.<fn>
+  
+00:08 +64 -19: /home/runner/work/kings-court/kings-court/test/judge_test.dart: Sealed tasks turn over in seal order, and one done out of order fails
+00:08 +64 -20: /home/runner/work/kings-court/kings-court/test/judge_test.dart: Sealed tasks turn over in seal order, and one done out of order fails [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/judge_test.dart 25:5                     table
+  test/judge_test.dart 72:15                    main.<fn>
+  
+00:08 +64 -20: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A round plays itself out only once every open task is done
+00:08 +64 -21: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A round plays itself out only once every open task is done [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/judge_test.dart 25:5                     table
+  test/judge_test.dart 92:15                    main.<fn>
+  
+00:08 +64 -21: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A failed task ends the round; every task done wins it
+00:08 +64 -22: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A failed task ends the round; every task done wins it [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/judge_test.dart 25:5                     table
+  test/judge_test.dart 105:15                   main.<fn>
+  
+00:08 +64 -22: /home/runner/work/kings-court/kings-court/test/judge_test.dart: The shown view leaves a trick still on the table out
+00:08 +64 -23: /home/runner/work/kings-court/kings-court/test/judge_test.dart: The shown view leaves a trick still on the table out [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/judge_test.dart 25:5                     table
+  test/judge_test.dart 128:15                   main.<fn>
+  
+test/game_actions_test.dart:129:19: Error: 'Retry' is imported from both 'package:kings_court/game/actions.dart' and 'package:test_api/src/backend/configuration/retry.dart'.
+    g.apply(const Retry(0));
+                  ^^^^^
+00:08 +64 -23: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: The same seed deals the same cards, and a different seed does not
+00:08 +65 -23: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: A dealt round waits for the table to crown the King card’s holder
+00:08 +66 -23: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: A re-deal keeps a reigning King, with the King card in their hand
+00:08 +66 -24: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: A re-deal keeps a reigning King, with the King card in their hand [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 490:5   Round.crown
+  package:kings_court/models.dart 161:35        GameState.crown
+  test/dealer_test.dart 50:7                    main.<fn>
+  
+00:08 +66 -24: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: No task is impossible once the cards are dealt
+00:08 +67 -24: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: A rigged deal is used as it is, with the King card in your hand
+00:08 +68 -25: loading /home/runner/work/kings-court/kings-court/test/game_actions_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/test/game_actions_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/test/game_actions_test.dart: test/game_actions_test.dart:129:19: Error: 'Retry' is imported from both 'package:kings_court/game/actions.dart' and 'package:test_api/src/backend/configuration/retry.dart'.
+      g.apply(const Retry(0));
+                    ^^^^^
+  .
+test/net_test.dart:72:13: Error: 'Retry' is imported from both 'package:kings_court/game/actions.dart' and 'package:test_api/src/backend/configuration/retry.dart'.
+      const Retry(0),
+            ^^^^^
+00:10 +68 -25: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: What a bot knows is the same whoever holds the cards it cannot see
+00:10 +68 -26: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: What a bot knows is the same whoever holds the cards it cannot see [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 525:5   Round.assign
+  package:kings_court/engine/round.dart 802:9   Round.apply
+  test/fairness_test.dart 41:7                  table
+  test/fairness_test.dart 66:15                 main.<fn>
+  
+00:10 +68 -26: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: The deals a bot imagines are the same whoever holds the hidden cards
+00:10 +68 -27: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: The deals a bot imagines are the same whoever holds the hidden cards [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 525:5   Round.assign
+  package:kings_court/engine/round.dart 802:9   Round.apply
+  test/fairness_test.dart 41:7                  table
+  test/fairness_test.dart 81:15                 main.<fn>
+  
+00:10 +68 -27: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: A bot decides the same whoever holds the hidden cards
+00:10 +68 -28: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: A bot decides the same whoever holds the hidden cards [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..3: 4
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 609:60  Round._settle
+  package:kings_court/engine/round.dart 525:5   Round.assign
+  package:kings_court/engine/round.dart 802:9   Round.apply
+  test/fairness_test.dart 41:7                  table
+  test/fairness_test.dart 92:15                 main.<fn>
+  
+00:10 +68 -28: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: Imagined deals honour every public fact
+00:10 +68 -29: loading /home/runner/work/kings-court/kings-court/test/net_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/test/net_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/test/net_test.dart: test/net_test.dart:72:13: Error: 'Retry' is imported from both 'package:kings_court/game/actions.dart' and 'package:test_api/src/backend/configuration/retry.dart'.
+        const Retry(0),
+              ^^^^^
+  .
+00:10 +69 -29: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: In a 2-player game the imagined deals set cards aside
+00:11 +70 -29: /home/runner/work/kings-court/kings-court/test/layers_test.dart: Every file under lib/ belongs to a layer
+00:11 +71 -29: /home/runner/work/kings-court/kings-court/test/layers_test.dart: Dependencies only point down the layers, and the lower ones are plain Dart
+00:12 +72 -29: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 1 (Lead and win) deals a full, fair hand
+00:12 +73 -29: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 1 (Lead and win) is won by following the coach
+00:12 +73 -30: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 1 (Lead and win) is won by following the coach [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 571:15  Round.judge
+  package:kings_court/engine/round.dart 830:26  Round._check
+  package:kings_court/engine/round.dart 822:37  Round.apply
+  test/tutorial_test.dart 59:11                 main.<fn>
+  
+00:12 +73 -30: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 2 (Win a card) deals a full, fair hand
+00:12 +74 -30: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 2 (Win a card) is won by following the coach
+00:12 +74 -31: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 2 (Win a card) is won by following the coach [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 571:15  Round.judge
+  package:kings_court/engine/round.dart 830:26  Round._check
+  package:kings_court/engine/round.dart 822:37  Round.apply
+  test/tutorial_test.dart 59:11                 main.<fn>
+  
+00:12 +74 -31: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) deals a full, fair hand
+00:12 +75 -31: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) is won by following the coach
+00:12 +75 -32: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) is won by following the coach [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 571:15  Round.judge
+  package:kings_court/engine/round.dart 830:26  Round._check
+  package:kings_court/engine/round.dart 822:37  Round.apply
+  test/tutorial_test.dart 59:11                 main.<fn>
+  
+00:12 +75 -32: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) deals a full, fair hand
+00:12 +76 -32: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) is won by following the coach
+00:12 +76 -33: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) is won by following the coach [E]
+  RangeError (length): Invalid value: Not in inclusive range 0..2: 3
+  dart:core                                     List.[]
+  package:kings_court/engine/round.dart 841:74  Round.handSize
+  package:kings_court/engine/round.dart 318:26  Round.totalTricks
+  package:kings_court/engine/round.dart 348:20  Round.view
+  package:kings_court/engine/round.dart 571:15  Round.judge
+  package:kings_court/engine/round.dart 830:26  Round._check
+  package:kings_court/engine/round.dart 822:37  Round.apply
+  test/tutorial_test.dart 59:11                 main.<fn>
+  
+00:12 +76 -33: Some tests failed.
