@@ -1,0 +1,4 @@
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_METHOD|/home/runner/work/kings-court/kings-court/lib/ui/widgets/task_card.dart|335|14|10|The method 'BackGround' isn't defined for the type 'TableCard'.
+ERROR|COMPILE_TIME_ERROR|INVALID_CONSTANT|/home/runner/work/kings-court/kings-court/lib/ui/widgets/task_card.dart|360|40|21|Invalid constant value.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_METHOD|/home/runner/work/kings-court/kings-court/lib/ui/widgets/task_card.dart|360|40|10|The method 'BackGround' isn't defined for the type 'TableCard'.
+INFO|LINT|EOL_AT_END_OF_FILE|/home/runner/work/kings-court/kings-court/lib/ui/widgets/back_motifs.dart|115|2|1|Missing a newline at the end of the file.
