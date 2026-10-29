@@ -1,0 +1,44 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart
+Warning: A tag was used that wasn't specified in dart_test.yaml.
+  tool was used in the suite itself
+
+00:00 +0: Tutorial
+00:07 +1: A phone, a big round
+00:09 +2: A laptop window during play
+LAPTOP card Offset(240.5, 209.9) Size(162.0, 230.0)
+LAPTOP card Offset(391.0, 182.9) Size(162.0, 230.0)
+LAPTOP card Offset(543.3, 172.4) Size(162.0, 230.0)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(268.0, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(337.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+00:10 +3: A wide screen, on-screen cards
+00:13 +4: A wide screen, round table
+00:15 +5: The Plain skin: front page, setup, a round, the menu
+00:16 +6: The Lacquer skin: front page, setup, a round, the menu
+00:17 +7: The Court skin's pieces
+00:17 +8: The Plain skin's pieces
+00:17 +9: The Lacquer skin's pieces
+00:17 +10: The front page, wide
+00:18 +11: The Court Cards
+00:18 +12: A throne room on its own
+POS Offset(155.0, 483.4) Size(80.0, 65.0)
+POS Offset(154.9, 145.4) Size(80.0, 65.0)
+POS Offset(295.4, 172.1) Size(80.0, 82.0)
+OPA 1.0
+OPA 1.0
+OPA 1.0
+OPA 1.0
+OPA 1.0
+00:18 +13: All tests passed!
