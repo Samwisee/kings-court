@@ -18,6 +18,9 @@ with the screenshots it explains (`tool/shots/expected_changes.txt`).
   **Check a branch** (`.github/workflows/check.yml`), about 10 minutes:
   - `test`: `dart analyze --fatal-infos --fatal-warnings` (any output
     fails), `flutter test --exclude-tags tool`, `flutter build web`.
+    The tests run with coverage: the total is in `summary.txt`, the
+    breakdown by layer and the least-covered files in `coverage.txt` on
+    `ci-<branch>` (`tool/coverage.py`).
   - `shots`: takes the 70 screenshots and compares them with the
     `shots-baseline` branch; fails on any difference not listed in
     `tool/shots/expected_changes.txt`.
@@ -53,6 +56,12 @@ with the screenshots it explains (`tool/shots/expected_changes.txt`).
   and clear `expected_changes.txt`.
 - Tool runs (`test/tool/`, tagged `tool`) are not part of the test run:
   screenshots, benchmarks, the bot strength and balance reports.
+- **What to test while the game is still changing fast**: the rules and
+  the decisions (engine, game, net, modes: what a move is refused for,
+  what a bot may choose), and a widget's behaviour where it's a promise
+  (a locked chapter can't be chosen, every skin draws every piece). Not
+  layouts or animations: the screenshots cover how things look, and a
+  test of a layout only has to be rewritten with it.
 
 ## The layers
 
