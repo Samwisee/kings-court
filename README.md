@@ -315,3 +315,8 @@ The engine was built for this:
   with the screenshots.
 - `test/tool/shots_test.dart`: the screenshots.
 - `test/tool/balance_test.dart`: the balance report.
+
+## Licence
+
+All rights reserved: see [LICENSE](LICENSE). The repository is public
+to view, not to reuse. The fonts keep their own licence (SIL OFL).

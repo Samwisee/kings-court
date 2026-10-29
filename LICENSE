@@ -1,0 +1,17 @@
+Copyright (c) 2026 Sam (github.com/Samwisee). All rights reserved.
+
+The King's Court, its source code, rules text, task wording, card and
+emblem art, sounds, screenshots and other material in this repository are
+the copyright of the owner above. No licence is granted to copy, modify,
+distribute, publish, or make derivative works from any of it, in whole or
+in part, without written permission.
+
+Being able to view this repository, or to fork it on GitHub under GitHub's
+Terms of Service, grants no further rights.
+
+Third-party material keeps its own licence:
+  - The fonts in assets/fonts (Alegreya Sans, Cinzel Decorative) are under
+    the SIL Open Font License; see OFL.txt and OFL-CinzelDecorative.txt
+    there.
+  - Packages the game depends on (pubspec.yaml) are under their own
+    licences.
