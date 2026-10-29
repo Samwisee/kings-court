@@ -35,8 +35,6 @@ const debts = {
   'lib/engine/round.dart': 960,
   // One stateful panel with five steps.
   'lib/ui/setup/setup_panel.dart': 870,
-  // One stateful pager.
-  'lib/ui/modes/tutorial/tutorial_intro.dart': 610,
 };
 
 void main() {

@@ -11,13 +11,13 @@ import 'package:flutter/material.dart';
 
 import '../../../engine/cards.dart';
 import '../../../engine/round.dart';
-import '../../../engine/task_help.dart';
 import '../../../game/courtiers.dart';
 import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
 import '../../../skin/skin_scope.dart';
 import '../../cards/card_view.dart';
 import '../../widgets.dart';
+import 'intro_preview.dart';
 
 const _shadow = [Shadow(color: Colors.black54, blurRadius: 10)];
 
@@ -243,83 +243,6 @@ class _TutorialIntroState extends State<TutorialIntro> {
     );
   }
 
-  /// A task's close-up, as in a game: its points and marks, its words, what
-  /// each mark means, and what the task means in plain words.
-  void _preview(Task task) {
-    final marks = <(Widget, String)>[
-      if (task.noCourtCards)
-        (const NoCourtIcon(size: 16), 'The trick can\u2019t have any Court Cards in it.'),
-      if (task.kingCantTake)
-        (Icon(Icons.block, size: 16, color: context.skin.inkSoft),
-            'The King can\u2019t take this task.'),
-      for (final n in task.notes)
-        (Icon(Icons.info_outline, size: 16, color: context.skin.inkSoft), n),
-    ];
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: context.skin.paper,
-        shape: HighVisBorder(null, context.skin),
-        scrollable: true,
-        contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        content: SizedBox(
-          width: 360,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Text('${task.getPointsForPlayerCount(3)}',
-                    style: TextStyle(
-                        fontFamily: context.skin.displayFont,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 28,
-                        height: 1,
-                        color: context.skin.ink)),
-                const SizedBox(width: 3),
-                CrownIcon(size: 19, color: context.skin.goldDeep),
-                for (final (icon, _) in marks) ...[
-                  const SizedBox(width: 7),
-                  icon,
-                ],
-              ]),
-              const SizedBox(height: 6),
-              SuitText(task.fullText(3),
-                  style: TextStyle(
-                      fontSize: 19,
-                      height: 1.3,
-                      fontWeight: FontWeight.w600,
-                      color: context.skin.ink)),
-              for (final (icon, words) in marks)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    SizedBox(width: 26, child: Align(alignment: Alignment.topLeft, child: icon)),
-                    Expanded(
-                      child: SuitText(words,
-                          style: TextStyle(
-                              fontSize: 14.5, height: 1.35, color: context.skin.inkSoft)),
-                    ),
-                  ]),
-                ),
-              const SizedBox(height: 12),
-              SuitText(explainTask(task.description),
-                  style: TextStyle(fontSize: 15, height: 1.4, color: context.skin.ink)),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(foregroundColor: context.skin.ink),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   static PlayingCard _c(String label) => PlayingCard.parse(label)!;
 
   Widget _card(String label, {double width = 58, bool glow = false, bool dimmed = false, Color? edge}) =>
@@ -353,7 +276,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
       button: true,
       label: 'Task: ${task.fullText(3)}. Tap to read it.',
       child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
-        onTap: () => _preview(task.task),
+        onTap: () => showIntroTaskPreview(context, task.task),
         child: TableCard(
             task: task,
             text: text,
