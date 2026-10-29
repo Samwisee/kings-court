@@ -1,0 +1,6 @@
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_METHOD|/home/runner/work/kings-court/kings-court/lib/main.dart|1001|13|8|The method 'fitsDeal' isn't defined for the type 'HomePageState'.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_SETTER|/home/runner/work/kings-court/kings-court/lib/main.dart|3101|14|6|The setter 'people' isn't defined for the type 'GameState'.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_METHOD|/home/runner/work/kings-court/kings-court/lib/theme.dart|95|38|12|The method 'colorValueOf' isn't defined for the type 'GameState'.
+WARNING|STATIC_WARNING|UNUSED_FIELD|/home/runner/work/kings-court/kings-court/lib/main.dart|837|9|5|The value of the field '_rand' isn't used.
+WARNING|STATIC_WARNING|UNUSED_LOCAL_VARIABLE|/home/runner/work/kings-court/kings-court/lib/main.dart|3695|17|5|The value of the local variable 'label' isn't used.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/lib/main.dart|5103|11|290|Use 'const' with the constructor to improve performance.
