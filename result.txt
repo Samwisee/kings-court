@@ -1,0 +1,2 @@
+the live game knows the service: 2
+url: https://kings-court-bugs.samcheneyus.workers.dev
