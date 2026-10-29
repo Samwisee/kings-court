@@ -1,0 +1,10 @@
+database: kings-court-rounds (6244ee5f-59a3-4bda-8bfe-a7b702179bfd)
+url: https://kings-court-bugs.samcheneyus.workers.dev
+answers: OPTIONS 204 (want 204), reading rounds 200 (want 200), 4 rounds kept so far
+room VVJJ: Ann in seat 0, hosting
+Ben in seat 1
+Ann saw 0:crown 1:pass; Ben saw 0:crown 1:pass
+Cal after the start: seat 2, 2 moves to catch up on
+Ben left; Dee took seat 1
+with every seat taken: full
+rooms: ok

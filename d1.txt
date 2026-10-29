@@ -1,0 +1,61 @@
+[
+  {
+    "uuid": "6244ee5f-59a3-4bda-8bfe-a7b702179bfd",
+    "name": "kings-court-rounds",
+    "created_at": "2026-10-29T12:53:43.302Z",
+    "version": "production",
+    "num_tables": 0,
+    "file_size": 32768,
+    "jurisdiction": null
+  }
+]
+
+ ⛅️ wrangler 4.86.0
+───────────────────
+Resource location: remote 
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m⚠️ This process may take some time, during which your D1 database will be unavailable to serve queries.[0m
+
+
+🌀 Executing on remote database kings-court-rounds (6244ee5f-59a3-4bda-8bfe-a7b702179bfd):
+🌀 To execute on your local development database, remove the --remote flag from your wrangler command.
+Note: if the execution fails to complete, your DB will return to its original state and you can safely retry.
+├ Checking if file needs uploading
+│
+🌀 File already uploaded. Processing.
+🌀 Starting import...
+🌀 Processed 2 queries.
+🚣 Executed 2 queries in 6.12ms (0 rows read, 0 rows written)
+   Database is currently at bookmark 00000008-00000004-00005113-5827348002fb4390f2de6bc1e757d33f.
+[
+  {
+    "results": [
+      {
+        "Total queries executed": 2,
+        "Rows read": 0,
+        "Rows written": 0,
+        "Database size (MB)": "0.03"
+      }
+    ],
+    "success": true,
+    "finalBookmark": "00000008-00000004-00005113-5827348002fb4390f2de6bc1e757d33f",
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "WNAM",
+      "served_by_colo": "SJC",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 6.1188
+      },
+      "duration": 6.1188,
+      "changes": 1,
+      "last_row_id": 0,
+      "changed_db": true,
+      "size_after": 32768,
+      "rows_read": 0,
+      "rows_written": 0,
+      "num_tables": 1,
+      "total_attempts": 1
+    }
+  }
+]

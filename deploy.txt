@@ -1,0 +1,17 @@
+
+ ⛅️ wrangler 4.86.0 (update available 4.156.0)
+──────────────────────────────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 14.75 KiB / gzip: 4.76 KiB
+Your Worker has access to the following bindings:
+Binding                                              Resource                  
+env.ROOMS (Room)                                     Durable Object            
+env.DB (kings-court-rounds)                          D1 Database               
+env.REPO ("Samwisee/kings-court")                    Environment Variable      
+env.ALLOW_ORIGIN ("https://samwisee.github.io")      Environment Variable      
+
+Uploaded kings-court-bugs (6.19 sec)
+Deployed kings-court-bugs triggers (1.00 sec)
+  https://kings-court-bugs.samcheneyus.workers.dev
+Current Version ID: 61f7e14a-9fbe-4aaf-80f4-e9925a9b9e96
