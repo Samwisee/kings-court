@@ -1,0 +1,15 @@
+# The game's web service on Cloudflare, deployed by
+# .github/workflows/service.yml (which fills in the database's id).
+name = "kings-court-bugs"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+
+[vars]
+REPO = "Samwisee/kings-court"
+ALLOW_ORIGIN = "https://samwisee.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "kings-court-rounds"
+database_id = "DATABASE_ID"

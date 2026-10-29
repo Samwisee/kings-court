@@ -1,0 +1,91 @@
+name: Deploy the web service
+
+# The Cloudflare Worker in tool/bug_worker/ (bug reports, and the rounds
+# people play): its database made the first time, its tables, its secrets,
+# then a check that it answers. The result goes to the service branch
+# (status.txt), so it can be read from a session where the logs can't.
+on:
+  push:
+    branches: [main]
+    paths: ['tool/bug_worker/**', '.github/workflows/service.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: service
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up yet?
+        id: ready
+        run: |
+          mkdir -p out
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Not set up: add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (tool/bug_worker/README.md)" | tee out/status.txt
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.ready.outputs.go == 'yes'
+        with:
+          node-version: 20
+      - name: The database, made the first time, and its tables
+        if: steps.ready.outputs.go == 'yes'
+        working-directory: tool/bug_worker
+        run: |
+          find() { $WRANGLER d1 list --json | jq -r '.[] | select(.name=="kings-court-rounds") | .uuid'; }
+          id=$(find)
+          if [ -z "$id" ]; then $WRANGLER d1 create kings-court-rounds; id=$(find); fi
+          test -n "$id"
+          sed -i "s/DATABASE_ID/$id/" wrangler.toml
+          $WRANGLER d1 execute kings-court-rounds --remote --file schema.sql
+          echo "database: kings-court-rounds ($id)" >> ../../out/status.txt
+      - name: Deploy
+        if: steps.ready.outputs.go == 'yes'
+        working-directory: tool/bug_worker
+        run: |
+          $WRANGLER deploy 2>&1 | tee ../../out/deploy.txt
+          url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' ../../out/deploy.txt | head -1)
+          test -n "$url"
+          echo "URL=$url" >> "$GITHUB_ENV"
+          echo "url: $url" >> ../../out/status.txt
+      - name: Secrets
+        if: steps.ready.outputs.go == 'yes'
+        working-directory: tool/bug_worker
+        env:
+          ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
+          ROUNDS_READ_KEY: ${{ secrets.ROUNDS_READ_KEY }}
+        run: |
+          if [ -n "$ISSUES_TOKEN" ]; then printf '%s' "$ISSUES_TOKEN" | $WRANGLER secret put GITHUB_TOKEN; else echo "no ISSUES_TOKEN: bug reports can't be filed" >> ../../out/status.txt; fi
+          if [ -n "$ROUNDS_READ_KEY" ]; then printf '%s' "$ROUNDS_READ_KEY" | $WRANGLER secret put READ_KEY; else echo "no ROUNDS_READ_KEY: rounds can't be read back" >> ../../out/status.txt; fi
+      - name: Does it answer?
+        if: steps.ready.outputs.go == 'yes'
+        env:
+          ROUNDS_READ_KEY: ${{ secrets.ROUNDS_READ_KEY }}
+        run: |
+          sleep 5
+          cors=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS -H 'Origin: https://samwisee.github.io' "$URL/rounds")
+          read=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $ROUNDS_READ_KEY" "$URL/rounds?after=0")
+          rounds=$(curl -s -H "Authorization: Bearer $ROUNDS_READ_KEY" "$URL/rounds?after=0" | grep -c . || true)
+          echo "answers: OPTIONS $cors (want 204), reading rounds $read (want 200), $rounds rounds kept so far" | tee -a out/status.txt
+          test "$cors" = 204
+      - name: Publish to the service branch
+        if: always()
+        run: |
+          cd out
+          git init -q -b service
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Service deploy for ${GITHUB_SHA}"
+          for i in 1 2 3 4 5; do git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" service && exit 0; sleep $((i * 5)); done; exit 1
