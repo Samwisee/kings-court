@@ -14,7 +14,7 @@ round runs, how it ships, and where online play plugs in. Deeper notes are
 in `docs/`:
 
 - `docs/HANDOFF.md`: the game's history, its modes, and how we work.
-- `docs/ONLINE.md`: the plan for multiplayer.
+- `docs/ONLINE.md`: how multiplayer works.
 - `docs/adding-tasks.md`: adding a task without making rounds impossible.
 - `tool/print/README.md`: the printed deck and box.
 
@@ -248,13 +248,14 @@ The engine was built for this:
   whether it's allowed and `apply()` plays it.
 - `lib/net/table_link.dart`: the table sends every move to a `TableLink`
   and makes it when it comes back. `LocalLink` sends them straight back.
-  A network link (Firebase, say) would send them to the server and play
-  whatever the server sends back, in the same order, on every device.
+  `OnlineTable` (`net/online_table.dart`) sends them to a room on the
+  game's web service and plays whatever the room sends back, in the same
+  order, on every device.
 - Every random choice comes from the game's `seed` (`game/dice.dart`), so a
   game replays exactly from its setup and moves (`net/replay.dart`).
 - The seat you play from is `GameController.mySeat` (0 on one device).
 
-`docs/ONLINE.md` has the plan and what's still to do.
+`docs/ONLINE.md` has how it works and what's still to do.
 
 ---
 

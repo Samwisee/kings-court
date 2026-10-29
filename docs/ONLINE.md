@@ -1,12 +1,11 @@
 # Taking the card game online
 
-Everything short of the server is built: every change to a game is an
-action with JSON, applied in one place; moves are numbered; a game is
-replayable from its setup and its moves; each seat has a view that hides
-the other hands; a fake network proves two devices stay the same through
-latency, reordering, duplicates and a dropped connection; rooms and
-sessions are interfaces with an in-process implementation. What's left is
-a server and a link to it.
+Multiplayer is built: a room on the game's web service numbers the moves
+and every device plays them in that order. Every change to a game is an
+action with JSON, applied in one place; a game is replayable from its
+setup and its moves; each seat has a view that hides the other hands; a
+fake network proves two devices stay the same through latency,
+reordering, duplicates and a dropped connection.
 
 ## How it fits together
 
@@ -56,28 +55,37 @@ a server and a link to it.
   seat and gets a link; drops and rejoins keep the seat. `InMemoryRooms`
   runs rooms in this process on the fake network (`test/rooms_test.dart`).
 
-## What a server does
+## Playing online
 
-1. **Rooms**: implement `Rooms`/`Room` over the backend (a room document
-   with the setup, the seats and the host; sessions by auth id).
-2. **The table**: run a `HeadlessTable` for the room (host-side today;
-   server-side when there is one): it numbers each action as it arrives
-   (`problem` first, so nobody plays a card they don't hold), applies it,
-   and sends the move to every device. Bots play the empty seats.
-3. **The link**: a `ServerLink implements TableLink` that sends actions
-   to the server and plays back its moves in `seq` order, buffering early
-   ones and dropping repeats as `FakeLink` does, and asks for everything
-   after its last `seq` on reconnection.
-4. **Views**: send each seat `Round.visibleTo(seat)` at the deal rather
-   than letting devices deal from the seed, once hands must be private.
+- **The rooms.** `tool/bug_worker/rooms.js`: a Cloudflare Durable Object
+  per room, named by its four-letter code, joined over a WebSocket. It
+  keeps the setup, the seats, the host and every move, and numbers each
+  move as it comes in. It doesn't know the rules: a device moves for its
+  own seat (and may hand a task to anyone, for the King's Command), the
+  host's for the courtiers and anyone away, and every table refuses a move
+  the rules don't allow, the same way, because they all see the same moves
+  in the same order. A host who drops hands the room to whoever's left.
+- **The link.** `OnlineTable` (`net/online_table.dart`) is the
+  `TableLink` to a room: moves in `seq` order, each once; moves made while
+  the socket is down wait and go when it's back; it reconnects by itself,
+  asking for the moves after the last it played. Devices on another build
+  are turned away (they'd play the rules differently).
+- **The page.** Setup's Multiplayer starts a room or joins one by code
+  (`ui/online/online_setup.dart`), then waits in the room until the host
+  starts it; empty seats go to courtiers. `ui/online/room_play.dart` is the
+  room from the page's side. Every device deals from the shared seed and
+  asks only its own player for moves; the host's device plays the
+  courtiers and anyone away, crowns the King, deals each round and keeps
+  the round's record. Online games aren't saved on the device.
+- **Tests.** `test/online_table_test.dart` plays a whole game on two
+  devices through a room in this process (`test/fake_rooms.dart`, the
+  rules of rooms.js in Dart); `test/ui/online_play_test.dart` does it from
+  the page, and has the host play out the seat of a friend who drops.
 
-## Plan for Firebase
+## Still to do
 
-- `flutterfire configure`; `firebase_auth` (anonymous sign-in),
-  `cloud_firestore`.
-- `rooms/{code}`: setup, seats, host; `rooms/{code}/moves/{seq}`: the
-  numbered moves; `rooms/{code}/hands/{seat}`: private, readable by the
-  session in that seat.
-- A Cloud Function applies each action with `problem`/`apply` (the engine
-  is plain Dart: compile it to JS, or run it in a Dart container) and
-  writes the move; the `ServerLink` listens to `moves` in order.
+- Coming back after the app is closed: the seat is kept, but the page
+  doesn't yet reopen the room.
+- Private hands: today every device deals every hand from the seed. A
+  server dealing would send each seat `Round.visibleTo(seat)` instead.
+- An idle player: the host could play a seat that hasn't moved for a while.

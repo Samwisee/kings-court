@@ -117,7 +117,18 @@ void main() {
           rooms.rooms[code]!.drop('ben');
         }
       }
-      expect(game.outcome, isNot(RoundOutcome.inProgress));
+      String where(GameState g) {
+        final r = g.round!;
+        return 'king ${r.king} pick ${r.pickTurn} owners ${[for (final t in r.tasks) t.owner]} '
+            'x ${[for (final t in r.tasks) t.x]} tricks ${r.tricks.length} current ${r.current.length} '
+            'turn ${r.turn} settled ${r.settled} outcome ${g.outcome}';
+      }
+      expect(game.outcome, isNot(RoundOutcome.inProgress),
+          reason: 'page: ${where(game)}\nben: ${where(gameB)}\n'
+              'ben pending ${b.pending} refused ${[for (final a in b.refused) a.toJson()]}\n'
+              'room moves ${rooms.rooms[code]!.moves.length}, page has ${state.debugLink.history.length}, '
+              'ben has ${ben.history.length}, ben moves $benMoves, thinking $thinking\n'
+              'last moves ${rooms.rooms[code]!.moves.reversed.take(6).toList()}');
       if (drop) {
         expect(dropped, isTrue);
       } else {

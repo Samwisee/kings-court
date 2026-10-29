@@ -180,7 +180,7 @@ class OnlineTable implements TableLink {
     _retry?.cancel();
     await _listening?.cancel();
     await _socket?.close();
-    _changes.add(null);
+    if (!_changes.isClosed) _changes.add(null);
   }
 
   /// The room's moves start again with a new game; nothing to do here (a
