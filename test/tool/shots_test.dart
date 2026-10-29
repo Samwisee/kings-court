@@ -13,6 +13,9 @@ import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/skin_scope.dart';
+import 'package:kings_court/ui/cards/card_back.dart';
+import 'package:kings_court/skin/tailored.dart';
+import 'package:kings_court/skin/court/court_skin.dart';
 import 'package:kings_court/skin/skins.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
@@ -417,6 +420,41 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-4-look.png'));
   });
   }
+
+  // Every card back and table the Look dialog offers, on the court.
+  testWidgets('The backs and tables to choose from', (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    const court = CourtSkin();
+    await tester.pumpWidget(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: court.felt,
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Wrap(spacing: 14, children: [
+              for (final b in backChoices)
+                SkinScope(skin: TailoredSkin(court, backChoice: b), child: const CardBack(width: 90)),
+            ]),
+            const SizedBox(height: 30),
+            Wrap(spacing: 14, children: [
+              for (final t in tableChoices)
+                Container(
+                  width: 110,
+                  height: 80,
+                  color: t.table,
+                  padding: const EdgeInsets.all(8),
+                  child: Container(color: t.felt),
+                ),
+            ]),
+          ]),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/looks-choices.png'));
+  });
 
   // Every skin's pieces side by side: the Court Cards and a few others,
   // large and small, a back, and the seats (the King's, whoever's turn).

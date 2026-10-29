@@ -912,9 +912,13 @@ void main() {
   testWidgets('Each way to play keeps its own save', (tester) async {
     setPhoneSize(tester);
     await dealGame(tester, 4);
-    // A second game of another kind, from the menu.
+    // A second game of another kind: out to the main menu (the first is
+    // kept), and a new game from there.
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Main menu'));
+    await tester.pumpAndSettle();
+    expect(find.text('Continue'), findsOneWidget, reason: 'the game left is there to take up');
     await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
     await setupThrough(tester, players: 3, mode: 'Endless');
