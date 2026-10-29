@@ -1,0 +1,83 @@
+baseline 3fa3cb92d3c6228d2426f20f74a34ba20d47cc3d
+same    court-cards.png
+same    laptop-0.png
+differs laptop-1.png: 2389026 of 3327456 pixels (71.80%), box (14, 14, 2178, 1132)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs laptop-2.png: 1720855 of 3327456 pixels (51.72%), box (14, 14, 2178, 1132)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs laptop-3.png: 1720855 of 3327456 pixels (51.72%), box (14, 14, 2178, 1132)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs laptop-4.png: 1720855 of 3327456 pixels (51.72%), box (14, 14, 2178, 1132)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs laptop-5.png: 1720855 of 3327456 pixels (51.72%), box (14, 14, 2178, 1132)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+same    laptop-how.png
+differs phone-0.png: 1647010 of 2962440 pixels (55.60%), box (21, 21, 1149, 2017)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs phone-1.png: 1714457 of 2962440 pixels (57.87%), box (21, 21, 1149, 2017)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs phone-2.png: 695129 of 2962440 pixels (23.46%), box (21, 21, 1149, 2017)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs phone-3.png: 698648 of 2962440 pixels (23.58%), box (21, 21, 1149, 2017)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs phone-4.png: 698648 of 2962440 pixels (23.58%), box (21, 21, 1149, 2017)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing plain-0-welcome.png  [expected: Plain is a design of its own now; its set is taken for every skin as skin-<id>-*]
+missing plain-1-setup.png  [expected: as plain-0-welcome]
+missing plain-2-table.png  [expected: as plain-0-welcome]
+missing plain-3-menu.png  [expected: as plain-0-welcome]
+new     skin-court-pieces.png  [expected: new, every skin's pieces side by side]
+new     skin-lacquer-0-welcome.png  [expected: new, the Lacquer skin]
+new     skin-lacquer-1-setup.png  [expected: new, the Lacquer skin]
+new     skin-lacquer-2-table.png  [expected: new, the Lacquer skin]
+new     skin-lacquer-3-menu.png  [expected: new, the Lacquer skin]
+new     skin-lacquer-pieces.png  [expected: new, the Lacquer skin]
+new     skin-plain-0-welcome.png  [expected: new, Plain redesigned (was plain-0-welcome)]
+new     skin-plain-1-setup.png  [expected: new, as skin-plain-0-welcome]
+new     skin-plain-2-table.png  [expected: new, as skin-plain-0-welcome]
+new     skin-plain-3-menu.png  [expected: new, as skin-plain-0-welcome]
+new     skin-plain-pieces.png  [expected: new, as skin-court-pieces]
+same    tut-0-intro-0.png
+same    tut-0-intro-1.png
+same    tut-0-intro-2.png
+same    tut-0-intro-3.png
+same    tut-0-intro-4.png
+same    tut-0-play.png
+same    tut-0-welcome.png
+differs tut-1a-pick.png: 857758 of 1316640 pixels (65.15%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-1b-play.png: 861835 of 1316640 pixels (65.46%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-1c-done.png: 473680 of 1316640 pixels (35.98%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+same    tut-2-intro-0.png
+same    tut-2-intro-1.png
+same    tut-2-intro-2.png
+differs tut-2a-pick.png: 866575 of 1316640 pixels (65.82%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-2b-play.png: 860567 of 1316640 pixels (65.36%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-2c-done.png: 472600 of 1316640 pixels (35.89%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+same    tut-3-intro-0.png
+same    tut-3-intro-1.png
+differs tut-3a-pick.png: 855709 of 1316640 pixels (64.99%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-3b-play.png: 809521 of 1316640 pixels (61.48%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-3c-done.png: 442607 of 1316640 pixels (33.62%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+same    tut-4-intro-0.png
+same    tut-4-intro-1.png
+same    tut-4-intro-2.png
+same    tut-4-intro-3.png
+differs tut-4a-pick.png: 841319 of 1316640 pixels (63.90%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-4b-play.png: 831326 of 1316640 pixels (63.14%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs tut-4c-done.png: 502986 of 1316640 pixels (38.20%), box (14, 14, 766, 1345)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+same    tut-5-ready.png
+same    tut-outro-0.png
+same    tut-outro-1.png
+same    wide-0-modes.png
+differs wide-screen-1.png: 1526456 of 2073600 pixels (73.61%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-screen-2-task.png: 1453926 of 2073600 pixels (70.12%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-screen-4-four-colour.png: 1396081 of 2073600 pixels (67.33%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold (and the menu's skin row names the look worn, "Look: Court")]
+differs wide-screen-5-cards.png: 1409045 of 2073600 pixels (67.95%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-screen-6-hand.png: 1409043 of 2073600 pixels (67.95%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-screen-bug.png: 1529708 of 2073600 pixels (73.77%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-screen-menu.png: 1396081 of 2073600 pixels (67.33%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold (and the menu's skin row names the look worn, "Look: Court")]
+differs wide-screen-points.png: 1440248 of 2073600 pixels (69.46%), box (7, 7, 1913, 838)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-table-1.png: 1947178 of 2073600 pixels (93.90%), box (7, 7, 1913, 1073)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-table-2-task.png: 1898833 of 2073600 pixels (91.57%), box (7, 7, 1913, 1073)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-table-bug.png: 1963090 of 2073600 pixels (94.67%), box (7, 7, 1913, 1073)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+differs wide-table-menu.png: 1800884 of 2073600 pixels (86.85%), box (7, 7, 1913, 1073)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold (and the menu's skin row names the look worn, "Look: Court")]
+differs wide-table-points.png: 1878059 of 2073600 pixels (90.57%), box (7, 7, 1913, 1073)  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+same    wide-welcome.png
+unstable zz-room.png  [the throne room's figures move on a clock of their own, so it varies run to run (shelved Dynasty; not guarded)]
+same    zz-turn-0.png
+same    zz-turn-1.png
+same    zz-turn-2.png
+same    zz-turn-3.png
+same    zz-turn-4.png
+same    zz-turn-5.png
+30 same, 0 unexplained
