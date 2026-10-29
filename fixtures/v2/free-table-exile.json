@@ -1,0 +1,197 @@
+{
+ "game": {
+  "version": 2,
+  "players": [
+   {
+    "name": "Player 1",
+    "color": 4293304064
+   },
+   {
+    "name": "Player 2",
+    "color": 4283872489
+   },
+   {
+    "name": "Player 3",
+    "color": 4291590567
+   },
+   {
+    "name": "Player 4",
+    "color": 4278230643
+   }
+  ],
+  "courtiers": [
+   3,
+   4,
+   2,
+   0
+  ],
+  "mode": 0,
+  "target": 9,
+  "chapter": null,
+  "lesson": 0,
+  "surprise": true,
+  "roles": true,
+  "digital": false,
+  "round": {
+   "players": 4,
+   "target": 5,
+   "hands": [],
+   "setAside": [],
+   "king": 1,
+   "tasks": [
+    {
+     "d": "Win a trick you led",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Jack and the Queen",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win three tricks in a row",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first trick with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with three different suits in it",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Joker",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    }
+   ],
+   "pickTurn": 1,
+   "passed": [],
+   "spoke": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "picksMade": 0,
+   "sealCount": 0,
+   "decree": 3,
+   "exiled": 2,
+   "passing": true,
+   "tricks": [],
+   "leader": 0,
+   "currentSeats": [],
+   "current": [],
+   "phase": 0,
+   "dealId": 1,
+   "revealed": {},
+   "revealHint": {},
+   "revealedAt": {}
+  },
+  "roundNumber": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "bestStreak": 0,
+  "dealId": 1,
+  "seed": 62,
+  "resultRecorded": false
+ },
+ "cardWidth": 120.0,
+ "dealt": true,
+ "pos": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "tilt": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "savedAt": 1761600000000,
+ "facts": {
+  "mode": "free",
+  "players": [
+   "Player 1",
+   "Player 2",
+   "Player 3",
+   "Player 4"
+  ],
+  "playerCount": 4,
+  "target": 9,
+  "round": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "king": 1,
+  "pickTurn": 1,
+  "seals": 0,
+  "decree": "exile",
+  "exiled": 2,
+  "tasks": [
+   {
+    "d": "Win a trick you led",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Jack and the Queen",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win three tricks in a row",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first trick with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with three different suits in it",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Joker",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   }
+  ],
+  "outcome": "inProgress",
+  "dealId": 1,
+  "seed": 62
+ }
+}
