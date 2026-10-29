@@ -445,3 +445,26 @@ baseline).
   fought more often than not. By the balance report the first-trick tasks
   are dealt about as often as their share of the pool (one round in
   three has one), so no other change to how often they come up.
+
+## Every round recorded
+
+- **What**: when a round is over, the game sends one record of it: the
+  deal (every card, played or still in hand), each task with its owner and
+  how it went, the tricks, every move since the last record, which seats
+  were people, the mode, target, build and platform, and an anonymous id
+  for the device (16 random hex digits, made on first run). No names: the
+  players' names are in the game, not the round, and the record leaves
+  them out (`test/game_log_test.dart` holds it to that).
+- **Where**: the bug-report worker, at `/rounds`, into a D1 database
+  (`tool/bug_worker/README.md` has the setup; nothing changes in the game's
+  build). `tool/games/pull.py` fetches the new ones; `tool/games/report.py`
+  gives win rates and the hardest tasks, with failures split by people
+  and courtiers.
+- **Asked, not assumed**: the menu has *Share play data* (on unless turned
+  off) and How to Play says what's sent. Sending is fire and forget: a
+  failure never touches the game. A round is recorded once, even if a
+  mark is undone and made again (the first record stands).
+- The menu screenshots gain the row (`*-menu.png`,
+  `wide-screen-4-four-colour.png`).
+- This is the first part of the multiplayer server: the same records,
+  kept per room, are what a room will replay from.
