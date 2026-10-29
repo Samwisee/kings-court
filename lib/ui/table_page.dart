@@ -64,6 +64,9 @@ import 'round_table/round_table.dart';
 import 'rules/rules_page.dart';
 import 'setup/saves.dart';
 import 'setup/setup_panel.dart';
+import 'table/game_bar.dart';
+import 'table/keyboard.dart';
+import 'table/seats.dart';
 import 'table/trick_view.dart';
 import 'tracker/card_tracker.dart';
 import 'welcome/welcome.dart';
@@ -272,7 +275,7 @@ class HomePageState extends State<HomePage>
       LogicalKeyboardKey.arrowDown,
       LogicalKeyboardKey.enter,
       LogicalKeyboardKey.numpadEnter,
-      ..._cardKeys,
+      ...cardKeys,
     ];
     if (!handled.contains(key)) return false;
     // Not while typing (player names), or off the on-screen game.
@@ -318,7 +321,7 @@ class HomePageState extends State<HomePage>
     }
     final hand = _round.hands.length > _you ? _round.hands[_you] : const <PlayingCard>[];
     // A card by its key: 1 to 9, 0, - and = along the top row, then Q W E.
-    final keyAt = _cardKeys.indexOf(key);
+    final keyAt = cardKeys.indexOf(key);
     if (keyAt >= 0) {
       if (keyAt >= hand.length) return false;
       final play = _handPlays[hand[keyAt]];
@@ -392,14 +395,14 @@ class HomePageState extends State<HomePage>
         for (final st in ahead)
           if (st.rect.top < nearest.rect.bottom && st.rect.bottom > nearest.rect.top) st
       ];
-      go(_closestTo(row, from));
+      go(closestStop(row, from));
       return true;
     }
     if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
       final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
       var kind = here?.row ?? _kbRow;
       if (!stops.any((st) => st.row == kind)) kind = 0;
-      final same = _readingOrder([for (final st in stops) if (st.row == kind) st]);
+      final same = readingOrder([for (final st in stops) if (st.row == kind) st]);
       if (same.isEmpty) return false;
       final at = here == null
           ? -1
@@ -408,7 +411,7 @@ class HomePageState extends State<HomePage>
         // Nothing chosen yet (or it's gone): start nearest the last choice.
         go(_kbLast == null
             ? same[step > 0 ? 0 : same.length - 1]
-            : _closestTo(same, _kbLast!));
+            : closestStop(same, _kbLast!));
       } else {
         go(same[(at + step) % same.length]);
       }
@@ -458,54 +461,6 @@ class HomePageState extends State<HomePage>
     }
     return null;
   }
-
-  /// The stop in [stops] nearest [r]: across first, then up or down.
-  static KbStop _closestTo(List<KbStop> stops, Rect r) {
-    double d(KbStop st) =>
-        (st.rect.center.dx - r.center.dx).abs() +
-        (st.rect.center.dy - r.center.dy).abs() * 0.25;
-    return stops.reduce((a, b) => d(a) <= d(b) ? a : b);
-  }
-
-  /// [stops] as they're read: row by row from the top, each row left to
-  /// right (the tasks are packed in columns of different heights, so a
-  /// row is whatever overlaps it side by side).
-  static List<KbStop> _readingOrder(List<KbStop> stops) {
-    final rest = [...stops]..sort((a, b) => a.rect.top.compareTo(b.rect.top));
-    final out = <KbStop>[];
-    while (rest.isNotEmpty) {
-      final first = rest.first;
-      final row = [
-        for (final st in rest)
-          if (st.rect.top < first.rect.bottom - 4) st
-      ]..sort((a, b) => a.rect.left.compareTo(b.rect.left));
-      out.addAll(row);
-      rest.removeWhere(row.contains);
-    }
-    return out;
-  }
-
-  /// The keys that play the cards in your hand, left to right.
-  static final _cardKeys = [
-    LogicalKeyboardKey.digit1,
-    LogicalKeyboardKey.digit2,
-    LogicalKeyboardKey.digit3,
-    LogicalKeyboardKey.digit4,
-    LogicalKeyboardKey.digit5,
-    LogicalKeyboardKey.digit6,
-    LogicalKeyboardKey.digit7,
-    LogicalKeyboardKey.digit8,
-    LogicalKeyboardKey.digit9,
-    LogicalKeyboardKey.digit0,
-    LogicalKeyboardKey.minus,
-    LogicalKeyboardKey.equal,
-    LogicalKeyboardKey.keyQ,
-    LogicalKeyboardKey.keyW,
-    LogicalKeyboardKey.keyE,
-  ];
-
-  /// What's printed on each of those keys.
-  static const _cardKeyLabels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Q', 'W', 'E'];
 
   /// Where the arrow keys are: your hand (0), the tasks on the table (1)
   /// or the Skip or Pass button (2).
@@ -1770,11 +1725,11 @@ class HomePageState extends State<HomePage>
                                 ),
                                 // With the shortcuts showing: the key that
                                 // plays it, in the card's bottom corner.
-                                if (_keysShown && i < _cardKeyLabels.length)
+                                if (_keysShown && i < cardKeyLabels.length)
                                   Positioned(
                                     left: cardW * 0.08,
                                     bottom: cardW * 0.08,
-                                    child: KeyCap(_cardKeyLabels[i], size: cardW * 0.2),
+                                    child: KeyCap(cardKeyLabels[i], size: cardW * 0.2),
                                   ),
                               ]),
                             ),
@@ -2092,161 +2047,49 @@ class HomePageState extends State<HomePage>
 
   /// The bots across the top, each with their tasks under them.
   Widget _digiOpponents(double width, double maxHeight) {
-    final seats = [for (var i = 0; i < game.players.length; i++) if (i != _you) i];
-    Courtier? roleAt(int i) =>
-        game.hasRoles && i < game.courtiers.length ? game.courtiers[i] : null;
-    final colWidth = width / math.max(1, seats.length);
-    final taskWidth = math.min(colWidth - 6, width > 600 ? 170.0 : 130.0);
     final c = _round;
-    Widget column(int seat) => SizedBox(
-          key: ValueKey('col-$seat'),
-          width: colWidth,
-          child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                // A courtier's quip floats over their column rather than
-                // pushing their tasks down and back up again. The column
-                // fills its width so its contents stay centred.
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
-                  fit: StackFit.passthrough,
-                  children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // The token, name and tally are all one big target, so
-                    // a tap anywhere on them reaches the courtier.
-                    MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _seatTap(seat),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    _withReveal(seat, _digiToken(seat, width > 600 ? 48 : 38, tight: true),
-                        size: width > 600 ? 48 : 38),
-                    Text(
-                        roleAt(seat)?.short ?? game.players[seat].name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.white70, shadows: context.skin.feltShadow)),
-                    // Trick counts once the tricks begin. Their room is
-                    // kept from the start, so nothing shifts when they
-                    // appear.
-                    Opacity(
-                        opacity: c.hasCards &&
-                                (_playing || c.tricks.isNotEmpty)
-                            ? 1
-                            : 0,
-                        child: Text(
-                            c.hasCards
-                                ? '${_shownTricksWon(seat)} won · ${c.cardsIn(seat)} cards'
-                                : '0 won · 0 cards',
-                            maxLines: 1,
-                            overflow: TextOverflow.fade,
-                            softWrap: false,
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.white54)),
-                      ),
-                      ]),
-                    )),
-                    for (final t in game.tasks)
-                      if (t.owner == seat)
-                        _miniTask(t, taskWidth,
-                            fontSize: colWidth < 80
-                                ? 11
-                                : width > 600
-                                    ? 13.5
-                                    : 12),
-                  ],
-                ),
-                if (_quips[seat] != null)
-                  Positioned(
-                    top: (width > 600 ? 48 : 38) + 22,
-                    left: 0,
-                    right: 0,
-                    // Never in the way of a tap on the courtier.
-                    child: IgnorePointer(
-                      child: Center(
-                        child: SpeechBubble(_quips[seat]!,
-                            key: ValueKey('quip-$seat-${_quips[seat]}'),
-                            tailAbove: true),
-                      ),
-                    ),
-                  ),
-                  ],
-                ),
-              ),
-            ),
-        );
-    // Only as tall as the bots' tasks need (so there's room for the tasks
-    // being picked), growing smoothly as tasks arrive.
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-        alignment: Alignment.topCenter,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [for (final seat in seats) column(seat)],
-        ),
-      ),
+    final big = width > 600;
+    return OpponentsRow(
+      seats: [for (var i = 0; i < game.players.length; i++) if (i != _you) i],
+      width: width,
+      maxHeight: maxHeight,
+      name: (i) => game.hasRoles && i < game.courtiers.length
+          ? game.courtiers[i].short
+          : game.players[i].name,
+      token: (seat, size) => _withReveal(seat, _digiToken(seat, size, tight: true), size: size),
+      onTap: _seatTap,
+      // Trick counts once the tricks begin; their room is kept from the
+      // start, so nothing shifts when they appear.
+      tallyShown: c.hasCards && (_playing || c.tricks.isNotEmpty),
+      tally: (seat) => c.hasCards
+          ? '${_shownTricksWon(seat)} won · ${c.cardsIn(seat)} cards'
+          : '0 won · 0 cards',
+      tasks: (seat) => [for (final t in game.tasks) if (t.owner == seat) t],
+      task: _miniTask,
+      quip: (seat) => _quips[seat],
+      tokenSize: big ? 48 : 38,
+      taskWidth: big ? 170 : 130,
     );
   }
 
-  /// [token] with the card [seat] has shown tucked beside it, so showing a
-  /// card never takes room from the trick.
-  Widget _withReveal(int seat, Widget token, {required double size}) {
-    final r = _revealedView(seat, height: size);
-    // Always the same shape, card or no card: otherwise showing a card
-    // would rebuild the token from scratch, and it would arrive all over
-    // again.
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        token,
-        // Level with the token (below its crown slot), as tall as it.
-        if (r != null) Positioned(right: -(size / 1.3 + 8), top: 14, child: r),
-      ],
-    );
-  }
+  Widget _withReveal(int seat, Widget token, {required double size}) =>
+      withShownCard(token, _revealedView(seat, height: size), size: size);
 
-  /// A card shown with the speech token, while it's still in hand.
-  Widget? _revealedView(int seat, {double height = 40}) {
-    final skin = context.skin;
-    final c = _round;
-    final card = c.revealed[seat];
-    if (card == null || !c.hasCards || !c.holds(seat, card)) return null;
-    // High contrast: framed in the player's colour with dark lines, and
-    // what was said about it on a dark tag.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        MiniCard(card: card, width: height / 1.3, edge: game.players[seat].color),
-        const SizedBox(height: 3),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          decoration: BoxDecoration(
-            color: const Color(0xFF14100A),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: skin.gold),
-          ),
-          // One short word: high, low or only.
-          child: Text(
-              switch (c.revealHint[seat]) {
-                'highest' => 'high',
-                'lowest' => 'low',
-                final h => h ?? '',
-              },
-              maxLines: 1,
-              softWrap: false,
-              style: TextStyle(
-                  fontSize: 11.5, fontWeight: FontWeight.w800, color: skin.gold)),
-        ),
-      ],
-    );
-  }
+  Widget? _revealedView(int seat, {double height = 40}) =>
+      shownCard(context.skin, _round, seat, game.players[seat].color, height: height);
+
+  Widget _digiYou(double width) => YourSeat(
+        width: width,
+        token: _digiToken(_you, 40),
+        shown: _revealedView(_you),
+        tallyShown: _round.hasCards && (_playing || _round.tricks.isNotEmpty),
+        tally: _round.hasCards
+            ? '${_shownTricksWon(_you)} trick${_shownTricksWon(_you) == 1 ? '' : 's'}'
+            : '0 tricks',
+        tasks: [for (final t in game.tasks) if (t.owner == _you) t],
+        task: _miniTask,
+        scrolled: _youScrolled,
+      );
 
   /// The middle of the table: the tasks to take while picking (tap one),
   /// then the trick.
@@ -2484,98 +2327,6 @@ class HomePageState extends State<HomePage>
   final _youScrolled = ValueNotifier(false);
 
   /// You, with your tasks beside you.
-  Widget _digiYou(double width) {
-    final mine = [
-      for (final t in game.tasks)
-        if (t.owner == _you) t
-    ];
-    final c = _round;
-    const tokenW = 58.0;
-    // A place kept for the card you show, as tall as your token.
-    const revealW = 40 / 1.3 + 12;
-    const leadW = tokenW + revealW;
-    final you = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: tokenW,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _digiToken(_you, 40),
-              // Room kept from the start, so nothing shifts when it appears.
-              Opacity(
-                opacity:
-                    c.hasCards && (_playing || c.tricks.isNotEmpty)
-                        ? 1
-                        : 0,
-                child: Text(
-                    c.hasCards
-                        ? '${_shownTricksWon(_you)} trick${_shownTricksWon(_you) == 1 ? '' : 's'}'
-                        : '0 tricks',
-                    style: const TextStyle(fontSize: 11, color: Colors.white54)),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          width: revealW,
-          child: Center(child: _revealedView(_you)),
-        ),
-      ],
-    );
-    final tasks = mine.isEmpty
-            ? const SizedBox.shrink()
-            // Your tasks scroll sideways when they don't fit, slipping under
-            // your token and shown card rather than stopping short of them.
-            : NotificationListener<ScrollUpdateNotification>(
-                onNotification: (n) {
-                  final scrolled = n.metrics.pixels > 2;
-                  if (scrolled != _youScrolled.value) _youScrolled.value = scrolled;
-                  return false;
-                },
-                // Shown on past the row's end, through the margin to the
-                // brass edge.
-                child: ClipRect(
-                clipper: const ReachRight(10),
-                child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                padding: const EdgeInsets.only(left: leadW),
-                child: Row(children: [
-                  for (final t in mine)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: _miniTask(
-                          t, math.min(width > 600 ? 190.0 : 140.0, width / 3),
-                          fontSize: width > 600 ? 15 : 13),
-                    ),
-                ]),
-              ),
-              ),
-              );
-    // The whole width, so you sit at its left end.
-    return SizedBox(
-      width: width,
-      child: Stack(
-      alignment: Alignment.centerLeft,
-      clipBehavior: Clip.none,
-      children: [
-        // Keeps the row at least as tall as you.
-        const SizedBox(width: leadW, height: 80),
-        tasks,
-        // You, at your full size, over the start of the row.
-        Positioned(
-          left: 0,
-          // Nothing behind you: tasks scrolled under your token and shown
-          // card stay in sight, with your glow over them.
-          child: you,
-        ),
-      ],
-      ),
-    );
-  }
-
   /// The trick in the middle of the table (ui/table/trick_view.dart),
   /// each card from where it was played: your hand, or a courtier's seat.
   List<Widget> _trickCards(Size area) {
@@ -3666,112 +3417,24 @@ class HomePageState extends State<HomePage>
   }
 
   PreferredSizeWidget _buildAppBar() {
-    final skin = context.skin;
-    return AppBar(
-      toolbarHeight: 60,
-      titleSpacing: 28,
-      backgroundColor: Colors.transparent,
-      title: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        // The round's name, with anything in force this round beside it.
-        child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            flex: 3,
-            child: Text(
-              game.mode == GameMode.chronicle && game.chapter != null
-                  ? 'Chapter ${game.chapter! + 1}'
-                  : game.isTutorial
-                      ? 'Lesson ${game.lesson + 1}'
-                      : 'Round ${game.roundNumber}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  fontFamily: skin.displayFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 22,
-                  color: skin.gold,
-                  shadows: const [Shadow(color: Colors.black54, blurRadius: 10)])),
-          ),
-              if (_choosingKing) ...[
-                const SizedBox(width: 12),
-                const Flexible(
-                  child: Text('Choose the King',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: Colors.white70)),
-                ),
-              ],
-              if (_round.decree != null && !_choosingKing) ...[
-                const SizedBox(width: 8),
-                // The decree in force; tap to read it again.
-                Flexible(child: InkWell(
-                  onTap: () => showDecree(context, _round, game.players),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: skin.cardRed,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(_round.decree!.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                  ),
-                )),
-              ],
-        ],
-      ),
-      ),
-      actions: [
-        // At a real table: whoever's picking may pass, once a round.
-        if (!_digital &&
-            _round.pickTurn != null &&
-            _round.canPass(_round.pickTurn!))
-          Tooltip(
-            message: '${game.players[_round.pickTurn!].name} passes the pick on (once a round)',
-            child: TextButton(
-              onPressed: () => _pass(_round.pickTurn!),
-              style: TextButton.styleFrom(foregroundColor: skin.gold),
-              child: const Text(Strings.pass),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8, right: 10),
-          child: Tooltip(
-            message: Strings.pointsTarget,
-            child: GoldBar(
-              onTap: _showPointsDialog,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('${game.target}',
-                      style: TextStyle(
-                          fontFamily: skin.displayFont,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 22,
-                          height: 1,
-                          color: skin.gold,
-                          shadows: const [Shadow(blurRadius: 6)])),
-                  const SizedBox(width: 5),
-                  const CrownIcon(size: 18),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: _buildMenu(),
-        ),
-        const SizedBox(width: 18),
-      ],
+    final picker = _round.pickTurn;
+    return GameBar(
+      title: game.mode == GameMode.chronicle && game.chapter != null
+          ? 'Chapter ${game.chapter! + 1}'
+          : game.isTutorial
+              ? 'Lesson ${game.lesson + 1}'
+              : 'Round ${game.roundNumber}',
+      choosingKing: _choosingKing,
+      decree: _round.decree,
+      onDecree: () => showDecree(context, _round, game.players),
+      // At a real table: whoever's picking may pass, once a round.
+      passer: !_digital && picker != null && _round.canPass(picker)
+          ? game.players[picker].name
+          : null,
+      onPass: () => _pass(_round.pickTurn!),
+      target: game.target,
+      onPoints: _showPointsDialog,
+      menu: _buildMenu(),
     );
   }
 
