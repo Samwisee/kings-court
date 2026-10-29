@@ -506,6 +506,10 @@ class HomePageState extends State<HomePage>
   /// tracker, a key press): rebuilds without saving or waking the game.
   void _ui(VoidCallback fn) => super.setState(fn);
 
+  /// A menu choice, for the benchmarks (the look's switch).
+  @visibleForTesting
+  void debugMenuChoice(String choice) => _onMenuChoice(choice);
+
   /// A screen-only change, for the benchmarks.
   @visibleForTesting
   void debugUi(VoidCallback fn) => _ui(fn);
@@ -2991,13 +2995,9 @@ class HomePageState extends State<HomePage>
             showBugReport(context, details: _bugDetails);
           case 'skin':
             final next = skinAfter(context.skin, (s) => SkinScope.owns(context, s));
+            // Everything that reads the skin depends on it, so it's all drawn
+            // again in the new one (the painters compare their skin too).
             if (next != null && SkinScope.choose(context, next)) {
-              // Everything is drawn again, the cards kept on their layers too.
-              void redraw(Element e) {
-                e.markNeedsBuild();
-                e.visitChildren(redraw);
-              }
-              (context as Element).visitChildren(redraw);
               // Saved once the page is under the new skin.
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) _saveSettings();

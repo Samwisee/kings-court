@@ -104,6 +104,26 @@ void main() {
       await phases('  without the $part');
     }
     HomePageTestHooks.skip = {};
+    // Switching the look mid-round, through every skin and back: the
+    // frames from the choice until it has settled, the slowest, and the
+    // time it takes in all.
+    for (var k = 0; k < 3; k++) {
+      final frames = <double>[];
+      final all = Stopwatch()..start();
+      state.debugMenuChoice('skin');
+      for (var i = 0; i < 40; i++) {
+        final sw = Stopwatch()..start();
+        await tester.pump(const Duration(milliseconds: 16));
+        frames.add(sw.elapsedMicroseconds / 1000);
+        if (i > 2 && !tester.binding.hasScheduledFrame) break;
+      }
+      all.stop();
+      final worst = frames.reduce((a, b) => a > b ? a : b);
+      // The timings are the output: printed, for CI to collect.
+      // ignore: avoid_print
+      print('BENCH switching the look: ${frames.length} frames, the first ${frames.first.toStringAsFixed(1)} ms, '
+          'the slowest ${worst.toStringAsFixed(1)} ms, ${(all.elapsedMicroseconds / 1000).toStringAsFixed(0)} ms in all');
+    }
     // What a change to the game does besides the rebuild.
     final work = <String, double>{};
     for (var i = 0; i < 20; i++) {
