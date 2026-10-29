@@ -331,6 +331,7 @@ class WalkIn {
     handedOver = false;
     waiting = crowning;
     keepCover = onDone != null;
+    changed();
     animation.forward(from: 0).whenComplete(() {
       if (onDone != null) {
         onDone();

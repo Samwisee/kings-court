@@ -203,7 +203,7 @@ class SparkBurst extends CustomPainter {
     }
     // A soft gold glow under the crown: a gradient as wide as the blur it
     // stands for, which costs nothing to soften.
-    canvas.drawCircle(origin, 18 + 20 * ease + 30, softGlow(origin, 18 + 20 * ease, 30, skin.gold.withAlpha((90 * fade).round())));
+    canvas.drawCircle(origin, 18 + 20 * ease + 24, softGlow(origin, 18 + 20 * ease, 24, skin.gold.withAlpha((90 * fade).round())));
   }
 
   @override

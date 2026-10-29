@@ -2618,7 +2618,7 @@ class HomePageState extends State<HomePage>
         crowning: r.digital && !tutorial,
         stillDue: () => mounted && _inGame && _choosingKing && _crowning == null,
         onDone: tutorial ? begin : null);
-    if (!tutorial) Timer(const Duration(milliseconds: 560), begin);
+    Timer(const Duration(milliseconds: 560), () => mounted && tutorial ? _ui(() => _setupArgs = null) : begin());
   }
 
 
