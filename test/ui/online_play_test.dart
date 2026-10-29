@@ -97,10 +97,6 @@ void main() {
                   (!dropped && gameB.outcome == RoundOutcome.inProgress));
           i++) {
         await tester.pump(const Duration(milliseconds: 30));
-        if (i % 200 == 0) {
-          debugPrint('ONLINE $i dropped $dropped ben $benMoves thinking $thinking '
-              'room ${rooms.rooms[code]!.moves.length} | ${where(game)}');
-        }
         if (find.text('Skip').evaluate().isNotEmpty) {
           await tester.tap(find.text('Skip'));
         } else if (find.text('So be it').evaluate().isNotEmpty) {
@@ -115,6 +111,8 @@ void main() {
         // The friend drops after their first move, and does nothing more.
         if (drop && !dropped && benMoves >= 1 && !thinking) {
           dropped = true;
+          // (Not awaited: a socket's close doesn't finish in a test's
+          // made-up time.)
           unawaited(ben.leave());
           rooms.rooms[code]!.drop('ben');
         }
