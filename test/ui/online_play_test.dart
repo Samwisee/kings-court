@@ -102,19 +102,19 @@ void main() {
         } else {
           state.debugYourMove();
         }
-        // The friend's device, playing its own seat (once it's dropped,
-        // it does nothing more).
-        if (!thinking && !(drop && dropped)) {
+        // The friend drops after their first move, and does nothing more.
+        if (drop && !dropped && benMoves >= 1 && !thinking) {
+          dropped = true;
+          await ben.leave();
+          rooms.rooms[code]!.drop('ben');
+        }
+        // Until then the friend's device plays its own seat.
+        if (!thinking && !dropped) {
           thinking = true;
           unawaited(b.playAs(1).then((moved) {
             thinking = false;
             if (moved) benMoves++;
           }));
-        }
-        if (drop && !dropped && benMoves >= 1 && !thinking) {
-          dropped = true;
-          await ben.leave();
-          rooms.rooms[code]!.drop('ben');
         }
       }
       String where(GameState g) {
