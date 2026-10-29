@@ -27,7 +27,8 @@ modes/     Plain Dart. One folder per way to play: how its rounds are set
            up, what its courtiers are told, what a result means, its data.
 platform/  Flutter and plugins: settings, sounds, analytics, crash
            reports, the build's version.
-skin/      The look: the Skin interface, the Court and Plain skins, the
+skin/      The look: the Skin interface, its looks and parts, skins made
+           from a design, the Court, Plain and Lacquer skins, the
            scope widgets read it from, entitlements, the chrome's strings.
 ui/        Flutter. The app, its one page, the controller, and the page's
            pieces by family.
@@ -113,11 +114,23 @@ look, and the Material theme. Widgets read it from their context
 constructor argument. `test/skin_test.dart` fails on any file under
 `lib/ui/` naming the Court skin's constants. `CourtSkin` is the look the
 game has always had (its values are `skin/theme.dart`'s constants);
-`PlainSkin` is the second. The menu switches between them
-(`SkinScope.choose`, remembered as `kingsCourt.skin`), for skins
-`Entitlements` says the player owns (`AllOwned` today). The Court Cards'
-faces and the table's ornament are the court's art and are drawn the same
-in both skins. The chrome's words are in `skin/strings.dart`.
+the others are made from a `SkinDesign` (`skin/design_skin.dart`). The
+menu's *Look* row steps through them (`skinAfter`, `SkinScope.choose`,
+remembered as `kingsCourt.skin`), for skins `Entitlements` says the player
+owns (`AllOwned` today). The chrome's words are in `skin/strings.dart`.
+
+Beside its colours a skin has **looks** (`skin/looks.dart`), small values
+saying how its pieces are built: `TableLook` (a rim round the felt, or an
+edge), `PanelLook` (ornate or flat, and the grounds for the court, a win
+and a loss), `CardLook` (the Court Cards as emblems on their cloths or as
+roundels on the card stock, the back), `TokenLook` (the houses' shapes or
+discs) and `ButtonLook` (cut corners and a glow, or rounded). The widgets
+draw from them (`TableTrim`, `OrnateCard`, `PlayingCardView`, `CardBack`,
+`MiniCard`, `SeatToken`, `GlowButton`, the menu's border). For what a look
+can't say a skin draws a **part** itself (`skin/parts.dart`): a card face
+or back, a panel, the table. Each builder gets a spec, the game's
+`PartKit` (suit marks, the crown) and the standard part to wrap. How to
+make one is `docs/SKINS.md`.
 
 ## The guards
 
@@ -142,7 +155,7 @@ in both skins. The chrome's words are in `skin/strings.dart`.
 | `GameState` | about 1,620 lines (the round, the game and Dynasty mixed) | 415 lines; the round is `Round` (750) |
 | Moves through the link | 5 kinds | every action |
 | Random choices | unseeded `Random()`s | one seeded `Dice` |
-| The look | `static const`s named in 27 files | a `Skin` from context, two skins |
+| The look | `static const`s named in 27 files | a `Skin` from context; three skins, two made from a design alone |
 | Tests | 119 | 205 |
 
 ## Future work
@@ -154,4 +167,5 @@ Also open: the on-screen table's remaining pieces and their `TableUi`
 mode-specific fields are `chapter` and `lesson`, both set only through
 `NextRound`); `Round`'s JSON and judging as extensions to bring it under
 the file-size line; the setup panel and the tutorial pager split by page;
-the ornament painters' one-off tints named in the skin.
+the ornament painters' one-off tints named in the skin; Dynasty's hall
+pieces, shelved, still carry the court's colours.

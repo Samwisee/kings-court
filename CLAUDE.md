@@ -80,7 +80,9 @@ platform/  Flutter and plugins: settings, sounds, analytics, crash reports,
            build info.
 skin/      The look: the Skin interface (skin.dart), the Court skin
            (court/, its values theme.dart's constants, and the Court Card
-           art) and the Plain skin (plain/), SkinScope and context.skin,
+           art), looks.dart and parts.dart (what a skin's pieces are
+           built from), design_skin.dart (a skin from a design), Plain and
+           Lacquer, SkinScope and context.skin,
            Entitlements, and the chrome's words (strings.dart).
 ui/        Flutter. Widgets and screens: they draw state and send actions.
            app.dart, table_page.dart (the one page) and controller.dart,
@@ -125,12 +127,16 @@ the layers test's `legacy` and `knownDebts` lists are empty and stay so.
   a `problem` check and an `apply` case; the page sends it through the link
   and never changes state directly. A test of the JSON round trip and of
   `problem`.
-- **A skin**: a `Skin` subclass in `lib/skin/<name>/` (every getter;
-  `PlainSkin` is the short example), added to `skins` in
-  `skin/skins.dart`; the menu's switcher picks it up. Widgets read the
+- **A skin**: see `docs/SKINS.md`. Usually a `SkinDesign` in
+  `lib/skin/<name>/` (`PlainSkin` is the example), wrapped in a
+  `DesignSkin`, added to `skins` in `skin/skins.dart`; the menu's *Look*
+  row and the screenshots (`skin-<id>-*`) pick it up. For more, override
+  a look (`skin/looks.dart`) or draw a part (`skin/parts.dart`;
+  `LacquerSkin` draws its card backs). Widgets read the
   look only through `context.skin` (painters take a `Skin` argument);
   `test/skin_test.dart` fails on a widget naming `Palette`, a font or
-  `DialogStyle`. Add a screenshot set for it in `test/tool/shots_test.dart`.
+  `DialogStyle`. Its screenshots are new files: list them in
+  `tool/shots/expected_changes.txt` until the baseline is retaken.
 - **A save format change**: bump `saveVersion` in `game/saves.dart`, add
   one migration to `_migrations` there, let CI write the new fixtures
   (`fixtures/` on `ci-<branch>`) and commit them under

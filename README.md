@@ -146,9 +146,11 @@ as online play needs them.
 ## Changing the look (skins)
 
 The look is a `Skin` (`lib/skin/skin.dart`): one object every widget reads
-from its context (`context.skin`), and painters take as an argument. Two
-skins ship, the King's Court and Plain, and the menu's *Plain look* switches
-between them (remembered on the device). `test/skin_test.dart` fails if a
+from its context (`context.skin`), and painters take as an argument. Three
+skins ship, the Court, Plain and Lacquer, and the menu's *Look* row steps
+through them (remembered on the device). **To make one, see
+[docs/SKINS.md](docs/SKINS.md)**: most are a `SkinDesign` of about fifteen
+colours, two fonts and a finish. `test/skin_test.dart` fails if a
 widget names a colour, font or dialog style of the Court skin directly.
 
 1. **A skin** defines:
@@ -163,9 +165,15 @@ widget names a colour, font or dialog style of the Court skin directly.
    - `outlineColour` / `outlineWidth`, the dark line round every card;
    - `theme()`, the Material theme (buttons, dialogs, the app bar).
 
+   - its **looks** (`skin/looks.dart`): the table's edge, the panels, the
+     Court Cards' faces and the backs, the seats, the buttons;
+   - optionally its own **parts** (`skin/parts.dart`): a card face or back,
+     a panel or the table drawn by the skin itself.
+
    The Court skin (`skin/court/court_skin.dart`) takes its values from
-   `skin/theme.dart`'s constants; `skin/plain/plain_skin.dart` is the short
-   example of a whole skin. A new one goes in `skins` (`skin/skins.dart`),
+   `skin/theme.dart`'s constants and sets every look by hand; Plain and
+   Lacquer are `DesignSkin`s (`skin/design_skin.dart`), Lacquer with card
+   backs of its own. A new one goes in `skins` (`skin/skins.dart`),
    and `Entitlements` (`skin/entitlements.dart`) says whether it's owned.
    The chrome's words are in `skin/strings.dart`.
 2. **Panels**: `OrnateCard` in `lib/ui/widgets/panels.dart` draws every panel and
@@ -194,8 +202,8 @@ widget names a colour, font or dialog style of the Court skin directly.
    round whatever the arrow keys have chosen.
 
 The ornament painters' one-off tints (the damask, the glitter, the throne
-room) and the Court Cards' faces are still literals: the court's art, drawn
-the same in both skins.
+room) and the emblems' gold are still literals: the court's art, used by
+every rich skin.
 
 ---
 

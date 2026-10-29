@@ -308,3 +308,47 @@ with such literals as the next debt.
     as they were.
   The baseline was retaken from the first green run after this (f7724f9,
   `shots-baseline` now 3fa3cb9), so the guard holds from here on.
+
+## Skins with designs of their own
+
+Asked for skins that are easy to make and still free to look like
+anything, and for Plain to be a design rather than a recolour:
+
+- **A skin has looks beside its colours** (`skin/looks.dart`): the table's
+  edge, the panels, the Court Cards and backs, the seats, the buttons.
+  The widgets that drew the court's shapes now draw from these; the Court
+  skin sets them to exactly what it drew before, and its screenshots are
+  pixel for pixel the same (62 same in the compare).
+- **Or draws a part itself** (`skin/parts.dart`): a card face or back, a
+  panel, the table, each handed a spec, the game's pieces and the
+  standard part.
+- **Most skins are a `SkinDesign`** (`skin/design_skin.dart`): fifteen or
+  so colours, two fonts and a finish (`rich` for the court's family of
+  shapes, `simple` for flat ones); everything else is worked out.
+  `docs/SKINS.md` is the how-to.
+- **Plain is redesigned** as a simple design: slate felt running to the
+  screen's edge, flat panels with a band of cornflower for an occasion,
+  the Court Cards as their emblem on a roundel of their colour on white
+  stock with the letter in the corner, a latticed back, round seats,
+  rounded buttons with a steady glow. Its shots are now
+  `skin-plain-*` (the `plain-*` set is gone).
+- **Lacquer is new**, a rich design (red-black lacquer, gold leaf,
+  jewel-toned Court Cards) with one part of its own, its card backs: to
+  show both routes. `skin-lacquer-*`.
+- **The menu's skin row names the look worn** ("Look: Court") and steps
+  to the next skin owned, instead of the Plain look's on/off pip; the
+  Court skin's name is "Court". `wide-screen-menu.png`,
+  `wide-screen-4-four-colour.png`, `wide-table-menu.png`.
+- **Every skin gets a sheet of its pieces** (`skin-<id>-pieces.png`) and,
+  but the court, the front page, setup, a round and the menu, taken for
+  whatever is in `skins`.
+- **The court's last literals on the table came into the skin**: the
+  brass line over the hand, the coach's ground, the crowning's light
+  (`feltGlow`), the small Court Cards' colours and the task cards' backs
+  (`CardLook.small`, `taskBack`), and a few gold tints, so a new skin's
+  table has none of the court's colours on it. Same pixels for the court.
+- `card_view.dart` went over the line with the letters face, so the back,
+  the flip and the shuffling deck moved to `cards/card_back.dart`.
+- Made as one commit for the code and one for the docs, not a commit per
+  widget: the Plain skin couldn't compile against the new `Skin` until
+  every look existed, and each widget's change is a few lines.
