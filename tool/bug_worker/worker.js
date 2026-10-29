@@ -19,7 +19,10 @@ const MAX_ISSUE = 60_000; // GitHub's limit is 65,536 characters
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const allowed = origin === env.ALLOW_ORIGIN || origin.startsWith("http://localhost");
+    // The web game sends its page's origin; the iOS and Android apps send
+    // none (only browsers do), so no origin is the apps. Any other origin
+    // is some other web page, turned away.
+    const allowed = origin === "" || origin === env.ALLOW_ORIGIN || origin.startsWith("http://localhost");
     const cors = {
       "Access-Control-Allow-Origin": allowed ? origin : env.ALLOW_ORIGIN,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
