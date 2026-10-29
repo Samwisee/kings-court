@@ -41,10 +41,15 @@ main.dart  runApp.
   the tasks and who holds them, picks and passes, tricks, shown cards,
   statuses, seals, the decree. Every move within a round is a sealed
   `MatchAction` (`PickTask`, `ReturnTask`, `Pass`, `Announce`, `PlayCard`,
-  `ShowCard`); `Round.problem` says why one isn't allowed and
-  `Round.apply` is the only way it changes. `visibleTo(seat)` is what one
+  `ShowCard`, in `engine/round_actions.dart`); `problem` says why one
+  isn't allowed and `Round.apply` is the only way it changes.
+  `visibleTo(seat)` is what one
   seat may see (other hands hidden, the set-aside cards kept so every
   device judges alike); `result` is what a mode reads once it's over.
+  Beside it: its tasks and result (`round_task.dart`), the questions it
+  answers without changing (`round_queries.dart`: who may take a task,
+  show a card, pass, pick next) and its checks and views
+  (`round_checks.dart`), extensions exported with it.
 - **`GameState`** (`game/state.dart`) is the game around it: players,
   mode, target, the record, the seed and its `dice`, the setup it started
   from. Everything else players do is a `GameAction` (`Crown`, `Speak`,
@@ -96,13 +101,21 @@ registry. A mode is two folders: its rules and data in `modes/<name>/`
 
 ### What's still on the page
 
-The on-screen table's opponents, the middle (with the task flights) and
-your hand (with its queue, the speech token, the drag and the keyboard
-focus) are still methods of `HomePageState`: they share keys and timers
-with the bots' pacing and the judging animations. The next step is to move
-that pacing into a `TableUi` beside the controller, after which they split
-out like the round table did. `test/file_size_test.dart` holds the page to
-its current length, and the number only goes down.
+The on-screen table's pieces are widgets of their own in `ui/table/`:
+the courtiers across the top and your seat (`seats.dart`), the bar over
+a game (`game_bar.dart`), the line over your hand (`hand_bar.dart`) and
+its cards (`hand_card.dart`), the tasks waiting in the middle
+(`open_task.dart`) and being dealt (`dealt_task.dart`), and the tracker
+over the table (`tracker/tracker_overlay.dart`). Two pieces of the
+screen's own state have moved off the page too: the task flights
+(`table/task_flights.dart`) and the drag of a card from your hand
+(`table/hand_drag.dart`); the arrow keys' moves are a pure function
+(`table/keyboard.dart`, tested). What's left on `HomePageState` is the
+pacing: the bots' turns, the trick pauses, the judging animations and the
+keyboard focus, and the wiring that hands each piece its inputs. The next
+step is to move that pacing into a `TableUi` beside the controller (the
+flights and the drag are its first parts). `test/file_size_test.dart`
+holds the page to its current length, and the number only goes down.
 
 ## Skins
 
@@ -151,7 +164,7 @@ make one is `docs/SKINS.md`.
 | | Before | After |
 |---|---|---|
 | `lib/main.dart` | 7,776 lines (the page and twelve `part` files) | 12 lines |
-| The page's state class | `_HomePageState`, 7,660 lines | `HomePageState`, about 3,770 |
+| The page's state class | `_HomePageState`, 7,660 lines | `HomePageState`, about 3,050 |
 | `GameState` | about 1,620 lines (the round, the game and Dynasty mixed) | 415 lines; the round is `Round` (750) |
 | Moves through the link | 5 kinds | every action |
 | Random choices | unseeded `Random()`s | one seeded `Dice` |
@@ -162,10 +175,8 @@ make one is `docs/SKINS.md`.
 
 Translation (a `Strings` per locale, translated data files), a
 state-management library and a Flutter upgrade were left out on purpose.
-Also open: the on-screen table's remaining pieces and their `TableUi`
-(above); `ModeState` per mode with saves at version 3 (the
-mode-specific fields are `chapter` and `lesson`, both set only through
-`NextRound`); `Round`'s JSON and judging as extensions to bring it under
-the file-size line; the setup panel and the tutorial pager split by page;
-the ornament painters' one-off tints named in the skin; Dynasty's hall
-pieces, shelved, still carry the court's colours.
+Also open: the page's pacing moved into a `TableUi` (above);
+`ModeState` per mode with saves at version 3 (the mode-specific fields
+are `chapter` and `lesson`, both set only through `NextRound`); the wax
+seals' reds and Dynasty's hall pieces (shelved) still carry the court's
+colours.

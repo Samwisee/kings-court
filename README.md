@@ -77,7 +77,7 @@ web/                 The page shell: loading crown, PWA manifest, icons.
 `HomePage` (`lib/ui/table_page.dart`) is the whole game on one page: the
 front page, setup, the table (on screen or at a real table), menus, the
 tutorial flow and the end of each round. Its state, `HomePageState`, is
-still one big class (about 3,900 lines), its sections marked with `// ----`
+still one big class (about 3,050 lines), its sections marked with `// ----`
 headers. Everything that isn't that state is a library of its own under
 `lib/ui/`:
 
@@ -95,6 +95,15 @@ headers. Everything that isn't that state is a library of its own under
 | `ui/widgets/house_banner.dart` | A courtier card's banner. |
 | `ui/widgets/buttons.dart` | Glowing buttons, key caps and the shortcuts card. |
 | `ui/table/trick_view.dart` | The trick in the middle of the on-screen table. |
+| `ui/table/seats.dart` | The courtiers across the top, your seat, a shown card. |
+| `ui/table/game_bar.dart` | The bar over a game: round, decree, points, menu. |
+| `ui/table/hand_bar.dart`, `hand_card.dart` | The line over your hand, and its cards. |
+| `ui/table/open_task.dart`, `dealt_task.dart` | Tasks waiting in the middle, and being dealt. |
+| `ui/table/task_flights.dart`, `hand_drag.dart` | Taken tasks flying to their owner; a card dragged from your hand. |
+| `ui/table/keyboard.dart` | The keys that play cards and where the arrow keys go. |
+| `ui/tracker/tracker_overlay.dart` | The tracker over the table. |
+| `ui/setup/setup_frame.dart`, `setup_tiles.dart` | Setup's steps and buttons, and its choices. |
+| `ui/menu/menu_entries.dart` | What the menu offers. |
 | `ui/setup/transitions.dart` | How setup pages turn. |
 | `ui/setup/saves.dart` | Saved games, one per way to play. |
 

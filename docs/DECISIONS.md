@@ -370,3 +370,40 @@ skin can have them:
 - Every in-game court screenshot moves with these (listed in
   `expected_changes.txt`); the front page, setup, rules and lesson
   introductions don't. Frame budget kept.
+
+## Paying down the debt
+
+On its own branch (`debt`, from `refactor`), so the refactor can be merged
+without it. Every screenshot is pixel for pixel what `refactor` drew (each
+step compared against `shots-refactor` directly, not only against the
+baseline).
+
+- **Off the debt list**: the tutorial pager (its task close-up moved to
+  `intro_preview.dart`), the setup panel (its frame and tiles to
+  `setup_frame.dart` and `setup_tiles.dart`), and the round record (its
+  tasks, moves, queries and checks to `round_task.dart`,
+  `round_actions.dart`, `round_queries.dart` and `round_checks.dart`,
+  exported with it; the queries and checks are extensions on `Round`, so
+  callers are unchanged, though a file importing only `game/state.dart`
+  now imports `engine/round.dart` for them).
+- **The page, 3,866 → 3,162 lines**: the courtiers across the top, your
+  seat, the game bar, the hand's bar and cards, the open and dealt tasks
+  and the tracker overlay are widgets in `ui/table/` (and `ui/tracker/`)
+  taking explicit inputs; the menu's rows are `menu_entries.dart`. The
+  task flights and the hand drag are classes of their own, the first
+  parts of a `TableUi`. The arrow keys' moves are a pure function with a
+  test (`test/ui/keyboard_test.dart`). The dealt tasks lost a spread that
+  was always zero (`apart`), the same motion.
+- **The page is still over the line**: what's left is the pacing (bots,
+  trick pauses, judging, keyboard focus) and the wiring. Moving the
+  pacing out is a bigger change with timers in it; left as the next step
+  rather than rushed.
+- **The last court tints named**: a lost round's red flush and a failed
+  task's edge come from the skin (`cardRed`, `lost`); the light on the
+  gold (a waiting button's sweep, a win's sheen and stars) is
+  `Skin.sheen`. The court's sheen is exactly its old colour; the win's
+  stars and sheen are now a shade of it (`#FFF9E4`-ish where they were
+  `#FFFBE6` and `#FFFBEA`), too faint to tell and not drawn under test.
+  The wax seals stay red in every skin.
+- **CI retries its result pushes**: two runs side by side sometimes had a
+  push of `ci-`, `shots-` or `bench-` refused, failing a green run.
