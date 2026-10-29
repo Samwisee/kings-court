@@ -1,0 +1,452 @@
+Resolving dependencies...
+Downloading packages...
+  async 2.11.0 (2.13.1 available)
+  audioplayers 6.7.1 (6.8.1 available)
+  audioplayers_android 5.2.1 (5.3.0 available)
+  audioplayers_darwin 6.4.0 (6.5.0 available)
+  audioplayers_linux 4.2.1 (4.3.0 available)
+  audioplayers_platform_interface 7.1.1 (7.2.0 available)
+  audioplayers_web 5.2.1 (5.3.0 available)
+  audioplayers_windows 4.3.1 (4.4.1 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  clock 1.1.2 (1.1.3 available)
+  code_assets 1.2.1 (2.1.0 available)
+  crypto 3.0.7 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  flutter_lints 4.0.0 (6.0.0 available)
+  hooks 2.0.2 (2.2.0 available)
+  injector 3.0.0 (4.0.0 available)
+  jni 0.14.2 (1.1.1 available)
+  leak_tracker 11.0.1 (11.0.2 available)
+  lints 4.0.0 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.17.0 (1.19.0 available)
+  objective_c 9.5.0 (9.6.2 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_android 2.2.23 (2.3.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  record_use 0.6.0 (1.1.1 available)
+  sentry 9.30.1 (10.2.0 available)
+  sentry_flutter 9.30.1 (10.2.0 available)
+  shared_preferences_android 2.4.23 (2.5.4 available)
+  shared_preferences_foundation 2.5.7 (2.6.1 available)
+  source_span 1.10.0 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  synchronized 3.4.0+1 (3.5.0 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.10 (0.7.15 available)
+  vector_math 2.2.0 (2.4.4 available)
+  vm_service 14.2.5 (15.4.0 available)
+  wakelock_plus 1.7.0 (1.8.2 available)
+  wakelock_plus_platform_interface 1.6.0 (1.7.0 available)
+  web 1.1.1 (1.1.2 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+45 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/engine_test.dart
+00:00 +0: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The deck has 40 cards and deals evenly, never setting aside the King card
+00:00 +1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A two-player hand is played to its end
+00:00 +2: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Hands sort ♥ ♠ ♦ ♣, then the Court Cards
+00:00 +3: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Card ids and labels round-trip
+00:00 +4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: You must follow suit, and a Court Card lead needs a Court Card
+00:00 +5: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The highest Court Card wins, otherwise the highest of the suit led
+00:00 +6: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every task has a rule
+00:00 +7: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Rules decide early when they can
+00:00 +8: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every rule reaches a verdict by the end of the round
+00:00 +9: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Bots can play a whole round
+00:00 +10: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A game in progress saves and loads
+00:00 +11: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Illegal moves are refused
+00:00 +12: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Task profiles name real tasks
+00:00 +13: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Clashing tasks are spotted
+00:00 +14: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Rounds never deal tasks that clash
+00:00 +15: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The first trick a Court Card falls in is never dealt beside winning the first trick
+00:00 +16: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Avoiding something clashes with needing enough of it
+00:00 +17: /home/runner/work/kings-court/kings-court/test/engine_test.dart: No card is avoided by every player
+00:00 +18: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every task has a tier, and deals keep within the tier limits
+00:00 +19: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Nobody may hold two tasks that work against each other
+00:00 +20: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Progress counts what a task has won so far
+00:00 +21: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The King can never take a task the King card makes impossible
+00:00 +22: /home/runner/work/kings-court/kings-court/test/engine_test.dart: If the King can't take any task, the next player picks first
+00:00 +23: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The same seed deals the same cards and tasks again
+00:07 +24: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:08 +25: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:08 +26: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:08 +27: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:08 +28: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:09 +29: /home/runner/work/kings-court/kings-court/test/widget_test.dart: After the tutorial, setup no longer says Start here
+00:09 +30: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:10 +31: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:10 +32: /home/runner/work/kings-court/kings-court/test/rooms_test.dart: A game is played through the room’s links
+00:11 +33: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Starting and finishing rounds are counted
+00:11 +34: /home/runner/work/kings-court/kings-court/test/widget_test.dart: How to play opens as a dialog with the 2-player rules
+00:12 +35: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:12 +36: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +37: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +38: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +39: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +40: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +41: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +42: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:13 +43: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 6 seats and the dealt tasks fit without scrolling
+00:13 +44: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Dragging a task onto a seat gives it to that player
+00:14 +45: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffle tasks mid-round keeps the round and King
+00:15 +46: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:15 +47: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:15 +48: /home/runner/work/kings-court/kings-court/test/ui/invite_test.dart: Opening the game from an invite goes straight to joining that room
+00:16 +49: /home/runner/work/kings-court/kings-court/test/ui/invite_test.dart: Opening the game from an invite goes straight to joining that room
+00:17 +50: /home/runner/work/kings-court/kings-court/test/ui/invite_test.dart: Opening the game from an invite goes straight to joining that room
+00:17 +50: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A done task flips over
+
+Warning: A call to tap() with finder "Found 1 widget with type "TableCard" (ignoring all but first): [
+  TableCard(dependencies: [SkinScope]),
+]" derived an Offset (Offset(195.0, 382.9)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#ae76b
+The hit test result at that offset is: HitTestResult(RenderParagraph#8b644@Offset(41.6, 15.7), RenderConstrainedBox#7a164@Offset(41.6, 15.7), RenderFittedBox#a2995@Offset(41.6, 15.7), _RenderLayoutBuilder#532f1@Offset(41.6, 15.7), RenderPadding#29e2f@Offset(41.6, 15.7), RenderFlex#81bb2@Offset(41.6, 34.7), RenderPadding#89d71@Offset(47.6, 38.7), RenderStack#cfb52@Offset(47.6, 38.7), RenderPadding#590ff@Offset(52.6, 43.7), RenderDecoratedBox#2f08f@Offset(52.6, 43.7), RenderDecoratedBox#d7931@Offset(52.6, 43.7), RenderConstrainedBox#07fa8@Offset(52.6, 43.7), RenderPointerListener#adab5@Offset(52.6, 43.7), RenderSemanticsGestureHandler#67783@Offset(52.6, 43.7), RenderMouseRegion#09da5@Offset(52.6, 43.7), RenderOpacity#ba599@Offset(52.7, 43.7), RenderStack#59922@Offset(195.0, 322.9), RenderStack#f897e@Offset(195.0, 322.9), _RenderLayoutBuilder#fda70@Offset(195.0, 322.9), _RenderLayoutBuilder#49fce@Offset(195.0, 322.9), RenderStack#47fc7@Offset(195.0, 322.9), RenderPadding#e0029@Offset(195.0, 322.9), RenderCustomMultiChildLayoutBox#c788e@Offset(195.0, 382.9), _RenderInkFeatures#28384@Offset(195.0, 382.9), RenderPhysicalModel#a9b8b@Offset(195.0, 382.9), RenderStack#0bf2a@Offset(195.0, 382.9), RenderSemanticsAnnotations#2cd1c@Offset(195.0, 382.9), RenderRepaintBoundary#e3728@Offset(195.0, 382.9), RenderIgnorePointer#5a970@Offset(195.0, 382.9), RenderAnimatedOpacity#8450a@Offset(195.0, 382.9), RenderAnimatedOpacity#9f97d@Offset(195.0, 382.9), _RenderColoredBox#cbefa@Offset(195.0, 382.9), RenderAnimatedOpacity#7edc5@Offset(195.0, 382.9), RenderIgnorePointer#0d62f@Offset(195.0, 382.9), RenderAnimatedOpacity#80ee0@Offset(195.0, 382.9), RenderRepaintBoundary#2df44@Offset(195.0, 382.9), RenderSemanticsAnnotations#33645@Offset(195.0, 382.9), RenderOffstage#c282c@Offset(195.0, 382.9), RenderSemanticsAnnotations#7e62d@Offset(195.0, 382.9), _RenderTheater#f9a1d@Offset(195.0, 382.9), RenderAbsorbPointer#0e408@Offset(195.0, 382.9), RenderPointerListener#cc7e1@Offset(195.0, 382.9), RenderSemanticsAnnotations#d3104@Offset(195.0, 382.9), RenderRepaintBoundary#5aa7f@Offset(195.0, 382.9), RenderStack#3dafa@Offset(195.0, 382.9), RenderSemanticsAnnotations#a7b4f@Offset(195.0, 382.9), RenderSemanticsAnnotations#ed647@Offset(195.0, 382.9), RenderSemanticsAnnotations#afd5d@Offset(195.0, 382.9), RenderTapRegionSurface#cf8c9@Offset(195.0, 382.9), RenderSemanticsAnnotations#75ea8@Offset(195.0, 382.9), RenderSemanticsAnnotations#ac26b@Offset(195.0, 382.9), HitTestEntry<HitTestTarget>#7b9d2(_ReusableRenderView#c385a), HitTestEntry<HitTestTarget>#ccafc(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:354:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:17 +51: /home/runner/work/kings-court/kings-court/test/ui/invite_test.dart: Opening the game from an invite goes straight to joining that room
+00:17 +52: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Stacks for neighbouring seats never overlap
+00:18 +53: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Table cards keep their wording short
+00:18 +54: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The board wording is shorter, with Court Cards as crowns
+00:18 +55: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Court Cards are always capitalised and bold
+00:18 +56: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seat labels are short and never repeat
+00:18 +57: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Holding the felt turns every card towards that seat
+00:19 +58: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Long tasks get taller cards instead of tiny text
+00:19 +59: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Winning a round, then dealing the next with new points
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard(dependencies: [SkinScope]),
+]" derived an Offset (Offset(195.0, 273.3)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#f7cb1
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#a7fa6(TextSpan("Show a card before you win a trick")), RenderParagraph#1441f@Offset(52.0, 37.4), RenderConstrainedBox#714eb@Offset(52.0, 37.4), RenderFittedBox#e74dd@Offset(41.6, 30.0), _RenderLayoutBuilder#87757@Offset(41.6, 30.0), RenderPadding#ca137@Offset(41.6, 30.0), RenderFlex#36261@Offset(41.6, 49.0), RenderPadding#a7ec8@Offset(47.6, 53.0), RenderStack#ba53e@Offset(47.6, 53.0), RenderPadding#ce578@Offset(52.6, 58.0), RenderDecoratedBox#ebfde@Offset(52.6, 58.0), RenderDecoratedBox#88bad@Offset(52.6, 58.0), RenderConstrainedBox#fdcf8@Offset(52.6, 58.0), RenderPointerListener#e68b1@Offset(52.6, 58.0), RenderSemanticsGestureHandler#b37b6@Offset(52.6, 58.0), RenderMouseRegion#96e7e@Offset(52.6, 58.0), RenderOpacity#73da5@Offset(52.7, 58.0), RenderStack#13d26@Offset(195.0, 213.3), RenderStack#bc00d@Offset(195.0, 213.3), _RenderLayoutBuilder#2fecf@Offset(195.0, 213.3), _RenderLayoutBuilder#b7a15@Offset(195.0, 213.3), RenderStack#457fb@Offset(195.0, 213.3), RenderPadding#2e39c@Offset(195.0, 213.3), RenderCustomMultiChildLayoutBox#35717@Offset(195.0, 273.3), _RenderInkFeatures#9756e@Offset(195.0, 273.3), RenderPhysicalModel#a7932@Offset(195.0, 273.3), RenderStack#3d60c@Offset(195.0, 273.3), RenderSemanticsAnnotations#8ac0f@Offset(195.0, 273.3), RenderRepaintBoundary#2b74b@Offset(195.0, 273.3), RenderIgnorePointer#afd30@Offset(195.0, 273.3), RenderAnimatedOpacity#24516@Offset(195.0, 273.3), RenderAnimatedOpacity#489bc@Offset(195.0, 273.3), _RenderColoredBox#77642@Offset(195.0, 273.3), RenderAnimatedOpacity#5212e@Offset(195.0, 273.3), RenderIgnorePointer#0f969@Offset(195.0, 273.3), RenderAnimatedOpacity#a3e07@Offset(195.0, 273.3), RenderRepaintBoundary#04c9a@Offset(195.0, 273.3), RenderSemanticsAnnotations#f14b3@Offset(195.0, 273.3), RenderOffstage#48978@Offset(195.0, 273.3), RenderSemanticsAnnotations#f3c47@Offset(195.0, 273.3), _RenderTheater#7b4e9@Offset(195.0, 273.3), RenderAbsorbPointer#02739@Offset(195.0, 273.3), RenderPointerListener#416db@Offset(195.0, 273.3), RenderSemanticsAnnotations#83f15@Offset(195.0, 273.3), RenderRepaintBoundary#6c08b@Offset(195.0, 273.3), RenderStack#26f65@Offset(195.0, 273.3), RenderSemanticsAnnotations#9dde9@Offset(195.0, 273.3), RenderSemanticsAnnotations#ee70a@Offset(195.0, 273.3), RenderSemanticsAnnotations#3eb6d@Offset(195.0, 273.3), RenderTapRegionSurface#8e322@Offset(195.0, 273.3), RenderSemanticsAnnotations#ace2f@Offset(195.0, 273.3), RenderSemanticsAnnotations#5e94c@Offset(195.0, 273.3), HitTestEntry<HitTestTarget>#d070b(_ReusableRenderView#c385a), HitTestEntry<HitTestTarget>#f6047(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:525:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard(dependencies: [SkinScope]),
+]" derived an Offset (Offset(195.0, 397.2)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#aa6d5
+The hit test result at that offset is: HitTestResult(RenderParagraph#da068@Offset(45.5, 32.7), RenderConstrainedBox#3cae3@Offset(45.5, 32.7), RenderFittedBox#cc1f4@Offset(41.7, 30.0), _RenderLayoutBuilder#ef9a0@Offset(41.7, 30.0), RenderPadding#b9285@Offset(41.7, 30.0), RenderFlex#1ad10@Offset(41.7, 49.0), RenderPadding#dbf6a@Offset(47.7, 53.0), RenderStack#d75a5@Offset(47.7, 53.0), RenderPadding#0cd83@Offset(52.7, 58.0), RenderDecoratedBox#9ce2d@Offset(52.7, 58.0), RenderDecoratedBox#d2a73@Offset(52.7, 58.0), RenderConstrainedBox#9d0a7@Offset(52.7, 58.0), RenderPointerListener#c64ef@Offset(52.7, 58.0), RenderSemanticsGestureHandler#07ce2@Offset(52.7, 58.0), RenderMouseRegion#215bf@Offset(52.7, 58.0), RenderOpacity#0447f@Offset(52.7, 58.0), RenderStack#13d26@Offset(195.0, 337.2), RenderStack#bc00d@Offset(195.0, 337.2), _RenderLayoutBuilder#2fecf@Offset(195.0, 337.2), _RenderLayoutBuilder#b7a15@Offset(195.0, 337.2), RenderStack#457fb@Offset(195.0, 337.2), RenderPadding#2e39c@Offset(195.0, 337.2), RenderCustomMultiChildLayoutBox#35717@Offset(195.0, 397.2), _RenderInkFeatures#9756e@Offset(195.0, 397.2), RenderPhysicalModel#a7932@Offset(195.0, 397.2), RenderStack#3d60c@Offset(195.0, 397.2), RenderSemanticsAnnotations#8ac0f@Offset(195.0, 397.2), RenderRepaintBoundary#2b74b@Offset(195.0, 397.2), RenderIgnorePointer#afd30@Offset(195.0, 397.2), RenderAnimatedOpacity#24516@Offset(195.0, 397.2), RenderAnimatedOpacity#489bc@Offset(195.0, 397.2), _RenderColoredBox#77642@Offset(195.0, 397.2), RenderAnimatedOpacity#5212e@Offset(195.0, 397.2), RenderIgnorePointer#0f969@Offset(195.0, 397.2), RenderAnimatedOpacity#a3e07@Offset(195.0, 397.2), RenderRepaintBoundary#04c9a@Offset(195.0, 397.2), RenderSemanticsAnnotations#f14b3@Offset(195.0, 397.2), RenderOffstage#48978@Offset(195.0, 397.2), RenderSemanticsAnnotations#f3c47@Offset(195.0, 397.2), _RenderTheater#7b4e9@Offset(195.0, 397.2), RenderAbsorbPointer#02739@Offset(195.0, 397.2), RenderPointerListener#416db@Offset(195.0, 397.2), RenderSemanticsAnnotations#83f15@Offset(195.0, 397.2), RenderRepaintBoundary#6c08b@Offset(195.0, 397.2), RenderStack#26f65@Offset(195.0, 397.2), RenderSemanticsAnnotations#9dde9@Offset(195.0, 397.2), RenderSemanticsAnnotations#ee70a@Offset(195.0, 397.2), RenderSemanticsAnnotations#3eb6d@Offset(195.0, 397.2), RenderTapRegionSurface#8e322@Offset(195.0, 397.2), RenderSemanticsAnnotations#ace2f@Offset(195.0, 397.2), RenderSemanticsAnnotations#5e94c@Offset(195.0, 397.2), HitTestEntry<HitTestTarget>#111dc(_ReusableRenderView#c385a), HitTestEntry<HitTestTarget>#1477d(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:525:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard(dependencies: [SkinScope]),
+]" derived an Offset (Offset(195.0, 506.8)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#407a5
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#de306(TextSpan("Win the ")), RenderParagraph#accab@Offset(55.0, 20.8), RenderConstrainedBox#40e8a@Offset(55.0, 20.8), RenderFittedBox#edc19@Offset(41.6, 15.7), _RenderLayoutBuilder#9ac88@Offset(41.6, 15.7), RenderPadding#d043f@Offset(41.6, 15.7), RenderFlex#6e7ec@Offset(41.6, 34.7), RenderPadding#dd916@Offset(47.6, 38.7), RenderStack#cced0@Offset(47.6, 38.7), RenderPadding#53771@Offset(52.6, 43.7), RenderDecoratedBox#be739@Offset(52.6, 43.7), RenderDecoratedBox#53a70@Offset(52.6, 43.7), RenderConstrainedBox#a5a2f@Offset(52.6, 43.7), RenderPointerListener#e4704@Offset(52.6, 43.7), RenderSemanticsGestureHandler#88c7f@Offset(52.6, 43.7), RenderMouseRegion#09c98@Offset(52.6, 43.7), RenderOpacity#54c40@Offset(52.7, 43.7), RenderStack#13d26@Offset(195.0, 446.8), RenderStack#bc00d@Offset(195.0, 446.8), _RenderLayoutBuilder#2fecf@Offset(195.0, 446.8), _RenderLayoutBuilder#b7a15@Offset(195.0, 446.8), RenderStack#457fb@Offset(195.0, 446.8), RenderPadding#2e39c@Offset(195.0, 446.8), RenderCustomMultiChildLayoutBox#35717@Offset(195.0, 506.8), _RenderInkFeatures#9756e@Offset(195.0, 506.8), RenderPhysicalModel#a7932@Offset(195.0, 506.8), RenderStack#3d60c@Offset(195.0, 506.8), RenderSemanticsAnnotations#8ac0f@Offset(195.0, 506.8), RenderRepaintBoundary#2b74b@Offset(195.0, 506.8), RenderIgnorePointer#afd30@Offset(195.0, 506.8), RenderAnimatedOpacity#24516@Offset(195.0, 506.8), RenderAnimatedOpacity#489bc@Offset(195.0, 506.8), _RenderColoredBox#77642@Offset(195.0, 506.8), RenderAnimatedOpacity#5212e@Offset(195.0, 506.8), RenderIgnorePointer#0f969@Offset(195.0, 506.8), RenderAnimatedOpacity#a3e07@Offset(195.0, 506.8), RenderRepaintBoundary#04c9a@Offset(195.0, 506.8), RenderSemanticsAnnotations#f14b3@Offset(195.0, 506.8), RenderOffstage#48978@Offset(195.0, 506.8), RenderSemanticsAnnotations#f3c47@Offset(195.0, 506.8), _RenderTheater#7b4e9@Offset(195.0, 506.8), RenderAbsorbPointer#02739@Offset(195.0, 506.8), RenderPointerListener#416db@Offset(195.0, 506.8), RenderSemanticsAnnotations#83f15@Offset(195.0, 506.8), RenderRepaintBoundary#6c08b@Offset(195.0, 506.8), RenderStack#26f65@Offset(195.0, 506.8), RenderSemanticsAnnotations#9dde9@Offset(195.0, 506.8), RenderSemanticsAnnotations#ee70a@Offset(195.0, 506.8), RenderSemanticsAnnotations#3eb6d@Offset(195.0, 506.8), RenderTapRegionSurface#8e322@Offset(195.0, 506.8), RenderSemanticsAnnotations#ace2f@Offset(195.0, 506.8), RenderSemanticsAnnotations#5e94c@Offset(195.0, 506.8), HitTestEntry<HitTestTarget>#0db99(_ReusableRenderView#c385a), HitTestEntry<HitTestTarget>#fb991(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:525:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard(dependencies: [SkinScope]),
+]" derived an Offset (Offset(195.0, 623.6)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#269d5
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#18eb7(TextSpan("Win a trick everyone followed")), RenderParagraph#7a307@Offset(41.6, 37.1), RenderConstrainedBox#a44c5@Offset(41.6, 37.1), RenderFittedBox#051bf@Offset(41.6, 37.1), _RenderLayoutBuilder#6d153@Offset(41.6, 37.1), RenderPadding#342ec@Offset(41.6, 37.1), RenderFlex#406b7@Offset(41.6, 56.1), RenderPadding#a82bd@Offset(47.6, 60.1), RenderStack#78212@Offset(47.6, 60.1), RenderPadding#40e28@Offset(52.6, 65.1), RenderDecoratedBox#6ecc5@Offset(52.6, 65.1), RenderDecoratedBox#e71d6@Offset(52.6, 65.1), RenderConstrainedBox#a2e3b@Offset(52.6, 65.1), RenderPointerListener#d14e9@Offset(52.6, 65.1), RenderSemanticsGestureHandler#47581@Offset(52.6, 65.1), RenderMouseRegion#c6a36@Offset(52.6, 65.1), RenderOpacity#4abdb@Offset(52.7, 65.1), RenderStack#13d26@Offset(195.0, 563.6), RenderStack#bc00d@Offset(195.0, 563.6), _RenderLayoutBuilder#2fecf@Offset(195.0, 563.6), _RenderLayoutBuilder#b7a15@Offset(195.0, 563.6), RenderStack#457fb@Offset(195.0, 563.6), RenderPadding#2e39c@Offset(195.0, 563.6), RenderCustomMultiChildLayoutBox#35717@Offset(195.0, 623.6), _RenderInkFeatures#9756e@Offset(195.0, 623.6), RenderPhysicalModel#a7932@Offset(195.0, 623.6), RenderStack#3d60c@Offset(195.0, 623.6), RenderSemanticsAnnotations#8ac0f@Offset(195.0, 623.6), RenderRepaintBoundary#2b74b@Offset(195.0, 623.6), RenderIgnorePointer#afd30@Offset(195.0, 623.6), RenderAnimatedOpacity#24516@Offset(195.0, 623.6), RenderAnimatedOpacity#489bc@Offset(195.0, 623.6), _RenderColoredBox#77642@Offset(195.0, 623.6), RenderAnimatedOpacity#5212e@Offset(195.0, 623.6), RenderIgnorePointer#0f969@Offset(195.0, 623.6), RenderAnimatedOpacity#a3e07@Offset(195.0, 623.6), RenderRepaintBoundary#04c9a@Offset(195.0, 623.6), RenderSemanticsAnnotations#f14b3@Offset(195.0, 623.6), RenderOffstage#48978@Offset(195.0, 623.6), RenderSemanticsAnnotations#f3c47@Offset(195.0, 623.6), _RenderTheater#7b4e9@Offset(195.0, 623.6), RenderAbsorbPointer#02739@Offset(195.0, 623.6), RenderPointerListener#416db@Offset(195.0, 623.6), RenderSemanticsAnnotations#83f15@Offset(195.0, 623.6), RenderRepaintBoundary#6c08b@Offset(195.0, 623.6), RenderStack#26f65@Offset(195.0, 623.6), RenderSemanticsAnnotations#9dde9@Offset(195.0, 623.6), RenderSemanticsAnnotations#ee70a@Offset(195.0, 623.6), RenderSemanticsAnnotations#3eb6d@Offset(195.0, 623.6), RenderTapRegionSurface#8e322@Offset(195.0, 623.6), RenderSemanticsAnnotations#ace2f@Offset(195.0, 623.6), RenderSemanticsAnnotations#5e94c@Offset(195.0, 623.6), HitTestEntry<HitTestTarget>#ef01f(_ReusableRenderView#c385a), HitTestEntry<HitTestTarget>#8fde0(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:525:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:19 +60: /home/runner/work/kings-court/kings-court/test/ui/outcome_card_test.dart: A won round rejoices and offers the next deal at the slider’s target
+00:20 +60: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Undo last mark reopens a round ended by mistake
+
+Warning: A call to tap() with finder "Found 1 widget with type "TableCard" (ignoring all but first): [
+  TableCard(dependencies: [SkinScope]),
+]" derived an Offset (Offset(195.0, 363.6)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#b7bcb
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#1552b(TextSpan("Win exactly two tricks")), RenderParagraph#a3a75@Offset(42.5, 23.3), RenderConstrainedBox#85902@Offset(42.5, 23.3), RenderFittedBox#4a778@Offset(41.6, 22.8), _RenderLayoutBuilder#fdc8e@Offset(41.6, 22.8), RenderPadding#a170e@Offset(41.6, 22.8), RenderFlex#677ae@Offset(41.6, 41.8), RenderPadding#99255@Offset(47.6, 45.8), RenderStack#e26e5@Offset(47.6, 45.8), RenderPadding#03c86@Offset(52.6, 50.8), RenderDecoratedBox#91a36@Offset(52.6, 50.8), RenderDecoratedBox#f123c@Offset(52.6, 50.8), RenderConstrainedBox#9f6cf@Offset(52.6, 50.8), RenderPointerListener#2d7e0@Offset(52.6, 50.8), RenderSemanticsGestureHandler#26803@Offset(52.6, 50.8), RenderMouseRegion#bb172@Offset(52.6, 50.8), RenderOpacity#9a943@Offset(52.7, 50.8), RenderStack#4c255@Offset(195.0, 303.6), RenderStack#ead29@Offset(195.0, 303.6), _RenderLayoutBuilder#029dd@Offset(195.0, 303.6), _RenderLayoutBuilder#7a4fa@Offset(195.0, 303.6), RenderStack#6dad1@Offset(195.0, 303.6), RenderPadding#fc02a@Offset(195.0, 303.6), RenderCustomMultiChildLayoutBox#8669e@Offset(195.0, 363.6), _RenderInkFeatures#32719@Offset(195.0, 363.6), RenderPhysicalModel#c80d4@Offset(195.0, 363.6), RenderStack#07b2e@Offset(195.0, 363.6), RenderSemanticsAnnotations#2506f@Offset(195.0, 363.6), RenderRepaintBoundary#07adf@Offset(195.0, 363.6), RenderIgnorePointer#3c0bf@Offset(195.0, 363.6), RenderAnimatedOpacity#a8633@Offset(195.0, 363.6), RenderAnimatedOpacity#3bc95@Offset(195.0, 363.6), _RenderColoredBox#00a66@Offset(195.0, 363.6), RenderAnimatedOpacity#463b0@Offset(195.0, 363.6), RenderIgnorePointer#c819a@Offset(195.0, 363.6), RenderAnimatedOpacity#551e6@Offset(195.0, 363.6), RenderRepaintBoundary#04325@Offset(195.0, 363.6), RenderSemanticsAnnotations#e59ec@Offset(195.0, 363.6), RenderOffstage#73e46@Offset(195.0, 363.6), RenderSemanticsAnnotations#e7321@Offset(195.0, 363.6), _RenderTheater#9d8a1@Offset(195.0, 363.6), RenderAbsorbPointer#1954e@Offset(195.0, 363.6), RenderPointerListener#9cd40@Offset(195.0, 363.6), RenderSemanticsAnnotations#0d614@Offset(195.0, 363.6), RenderRepaintBoundary#3cf7d@Offset(195.0, 363.6), RenderStack#5e08c@Offset(195.0, 363.6), RenderSemanticsAnnotations#91260@Offset(195.0, 363.6), RenderSemanticsAnnotations#b9577@Offset(195.0, 363.6), RenderSemanticsAnnotations#ce8ad@Offset(195.0, 363.6), RenderTapRegionSurface#5fc14@Offset(195.0, 363.6), RenderSemanticsAnnotations#65fe5@Offset(195.0, 363.6), RenderSemanticsAnnotations#44ea8@Offset(195.0, 363.6), HitTestEntry<HitTestTarget>#88bc7(_ReusableRenderView#c385a), HitTestEntry<HitTestTarget>#4fec6(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:555:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:20 +61: /home/runner/work/kings-court/kings-court/test/ui/outcome_card_test.dart: A won round rejoices and offers the next deal at the slider’s target
+00:20 +62: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Picking moves clockwise from the King, then Play!
+00:20 +63: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Picking moves clockwise from the King, then Play!
+00:20 +64: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Picking moves clockwise from the King, then Play!
+00:20 +65: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Picking moves clockwise from the King, then Play!
+00:21 +66: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tapping a seat opens the courtier card to mark the reveal
+00:21 +67: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A saved game can be continued
+00:22 +68: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Campaign streaks rise with wins and reset on a loss
+00:22 +69: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A game survives saving and loading
+00:22 +70: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seals must be completed in order, Ω last
+00:22 +71: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Decrees change who can pick, speak and take tasks
+00:22 +72: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Chronicle chapters unlock in order and award crowns
+00:22 +73: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A Chronicle chapter reads its decree before dealing
+00:22 +74: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every story flag a matter needs can be earned
+00:22 +75: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every seat gets a different courtier shape
+00:22 +76: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tidings lead to dilemmas that exist
+00:22 +77: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The Trial of Hearts plays out fairly
+00:22 +78: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The Trial of Hearts table plays to the end
+00:22 +79: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Each way to play keeps its own save
+00:23 +80: /home/runner/work/kings-court/kings-court/test/ui/round_table_test.dart: The controller deals the cards out, stacks owned ones and follows a drag
+00:23 +81: /home/runner/work/kings-court/kings-court/test/ui/round_table_test.dart: The controller deals the cards out, stacks owned ones and follows a drag
+00:23 +82: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seals come in twos or not at all
+00:23 +83: /home/runner/work/kings-court/kings-court/test/ui/round_table_test.dart: The table shows the prompt until the King is crowned, then the cards
+00:23 +84: /home/runner/work/kings-court/kings-court/test/ui/round_table_test.dart: The table shows the prompt until the King is crowned, then the cards
+00:23 +85: /home/runner/work/kings-court/kings-court/test/ui/round_table_test.dart: The table shows the prompt until the King is crowned, then the cards
+00:24 +86: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tasks marked any-trick can be done before the last trick
+00:26 +87: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tasks marked any-trick can be done before the last trick
+00:26 +88: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tasks marked any-trick can be done before the last trick
+00:26 +89: /home/runner/work/kings-court/kings-court/test/ui/coach_test.dart: The note shows the lesson, its line, and leads back or on
+00:27 +90: /home/runner/work/kings-court/kings-court/test/widget_test.dart: On-screen cards play a whole Free play round
+00:27 +91: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The arrow keys reach the Skip button
+00:28 +92: /home/runner/work/kings-court/kings-court/test/widget_test.dart: S skips showing a card
+00:28 +93: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A courtier can be tapped anywhere on their token
+00:29 +94: /home/runner/work/kings-court/kings-court/test/ui/chapter_picker_test.dart: A new player is held to the first chapter
+00:29 +95: /home/runner/work/kings-court/kings-court/test/ui/chapter_picker_test.dart: A new player is held to the first chapter
+00:29 +96: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The tutorial plays through every lesson, following the coach
+00:30 +97: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The tutorial plays through every lesson, following the coach
+00:30 +98: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The tutorial plays through every lesson, following the coach
+00:30 +99: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The tutorial plays through every lesson, following the coach
+00:31 +100: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Each player may pass on picking once a round
+00:31 +101: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Cards a task needs are crossed out once won
+00:31 +102: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Roman numerals for reigns
+00:31 +103: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Task draw hits the target without repeats
+00:31 +104: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Two players use the 3-player difficulty
+00:31 +105: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Round is won when all tasks complete, lost when any fails
+00:31 +106: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffling mid-round keeps the round number and King
+00:31 +107: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A task only one player can take goes straight to them
+00:31 +108: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The King cannot take King-relative tasks
+00:31 +109: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every task has 6-player points
+00:32 +110: /home/runner/work/kings-court/kings-court/test/ui/dialogs_test.dart: The points dialog gives the target back on Deal, nothing on Cancel
+00:33 +111: /home/runner/work/kings-court/kings-court/test/ui/dialogs_test.dart: The announce dialog counts between the least and every trick
+00:34 +112: /home/runner/work/kings-court/kings-court/test/ui/overlays_test.dart: The King prompt says what to do, on screen and at a real table
+00:34 +113: /home/runner/work/kings-court/kings-court/test/ui/overlays_test.dart: The King prompt says what to do, on screen and at a real table
+00:34 +114: /home/runner/work/kings-court/kings-court/test/ui/overlays_test.dart: The King prompt says what to do, on screen and at a real table
+00:34 +115: /home/runner/work/kings-court/kings-court/test/ui/overlays_test.dart: The King prompt says what to do, on screen and at a real table
+00:34 +116: /home/runner/work/kings-court/kings-court/test/ui/overlays_test.dart: The King prompt says what to do, on screen and at a real table
+00:34 +117: /home/runner/work/kings-court/kings-court/test/ui/dialogs_test.dart: The courtier’s card names the King, tells their story and offers your reveal
+00:34 +118: /home/runner/work/kings-court/kings-court/test/ui/dialogs_test.dart: The courtier’s card names the King, tells their story and offers your reveal
+00:34 +119: /home/runner/work/kings-court/kings-court/test/ui/dialogs_test.dart: The courtier’s card names the King, tells their story and offers your reveal
+00:34 +120: /home/runner/work/kings-court/kings-court/test/ui/overlays_test.dart: The walk-in’s crown grows, lifts away, or waits for the King
+00:35 +121: loading /home/runner/work/kings-court/kings-court/test/ui/trick_view_test.dart
+00:36 +121: /home/runner/work/kings-court/kings-court/test/ui/trick_view_test.dart: Trick cards fit the table: narrower with more players, never tiny
+00:36 +122: /home/runner/work/kings-court/kings-court/test/ui/trick_view_test.dart: The cards played so far show from their seats; a won trick glows for the winner
+00:37 +123: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: A room started on the page plays a round with a friend’s device to the same end
+00:39 +124: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: A room started on the page plays a round with a friend’s device to the same end
+00:40 +125: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: A room started on the page plays a round with a friend’s device to the same end
+00:40 +126: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: A room started on the page plays a round with a friend’s device to the same end
+00:41 +127: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: When a friend leaves part-way, a courtier plays their seat to the end
+00:42 +128: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: When a friend leaves part-way, a courtier plays their seat to the end
+00:42 +129: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: When a friend leaves part-way, a courtier plays their seat to the end
+00:43 +130: /home/runner/work/kings-court/kings-court/test/ui/skins_test.dart: The menu steps through the looks and remembers the one worn
+00:44 +131: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone joining part-way takes the courtier’s seat, caught up, and plays to the same end
+00:44 +132: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone joining part-way takes the courtier’s seat, caught up, and plays to the same end
+00:44 +133: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone joining part-way takes the courtier’s seat, caught up, and plays to the same end
+00:44 +134: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone joining part-way takes the courtier’s seat, caught up, and plays to the same end
+00:45 +135: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone who doesn’t move for a while has their courtier move for them
+00:46 +136: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone who doesn’t move for a while has their courtier move for them
+00:47 +137: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone who doesn’t move for a while has their courtier move for them
+00:47 +138: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone who doesn’t move for a while has their courtier move for them
+00:47 +139: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone who doesn’t move for a while has their courtier move for them
+00:47 +140: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Someone who doesn’t move for a while has their courtier move for them
+00:47 +141: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Opening the game again after closing it mid-game goes back to the same seat
+00:49 +142: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Opening the game again after closing it mid-game goes back to the same seat
+00:49 +143: /home/runner/work/kings-court/kings-court/test/ui/online_play_test.dart: Opening the game again after closing it mid-game goes back to the same seat
+00:50 +144: loading /home/runner/work/kings-court/kings-court/test/modes_test.dart
+00:51 +144: /home/runner/work/kings-court/kings-court/test/modes_test.dart: Every way to play is in the registry, under its own id
+00:51 +145: /home/runner/work/kings-court/kings-court/test/modes_test.dart: Free play draws to the target; with surprises on, the seed rolls the seals and decree
+00:51 +146: /home/runner/work/kings-court/kings-court/test/modes_test.dart: A re-deal in free play keeps the round’s seals and decree
+00:51 +147: /home/runner/work/kings-court/kings-court/test/modes_test.dart: Endless adds a point to the target after a win, up to the most
+00:51 +148: /home/runner/work/kings-court/kings-court/test/modes_test.dart: A Chronicle chapter fixes the round’s seals and decree, and a win earns crowns
+00:51 +149: /home/runner/work/kings-court/kings-court/test/modes_test.dart: The tutorial fixes each lesson’s tasks, deals its cards and scripts the courtiers
+00:51 +150: /home/runner/work/kings-court/kings-court/test/modes_test.dart: A round’s result says how it went
+00:51 +151: /home/runner/work/kings-court/kings-court/test/determinism_test.dart: A setup travels as JSON and starts the same game
+00:51 +152: /home/runner/work/kings-court/kings-court/test/determinism_test.dart: Two tables from one seed make the same moves and end the same
+00:52 +153: /home/runner/work/kings-court/kings-court/test/determinism_test.dart: A replay of the moves rebuilds the game
+00:52 +154: /home/runner/work/kings-court/kings-court/test/determinism_test.dart: A bug report plays again to the state it carried
+00:52 +155: /home/runner/work/kings-court/kings-court/test/determinism_test.dart: Moves travel as JSON and replay the same
+00:53 +156: /home/runner/work/kings-court/kings-court/test/round_test.dart: A task only one seat may take goes straight to them when the King is crowned
+00:53 +157: /home/runner/work/kings-court/kings-court/test/round_test.dart: Picks follow the table’s rules: whose turn, what they may hold, who picks next
+00:53 +158: /home/runner/work/kings-court/kings-court/test/round_test.dart: Under the King’s Command the King hands every task out
+00:53 +159: /home/runner/work/kings-court/kings-court/test/round_test.dart: Passing is refused when the round or the turn says so
+00:53 +160: /home/runner/work/kings-court/kings-court/test/round_test.dart: Showing a card needs the speech token, the decree’s leave and a showable card
+00:53 +161: /home/runner/work/kings-court/kings-court/test/round_test.dart: A table that turns the cards over itself plays without judging
+00:53 +162: /home/runner/work/kings-court/kings-court/test/round_test.dart: A seat’s view keeps its own hand and hides the others
+00:54 +163: loading /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart
+00:54 +163: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: A courtier picks a task they may take; you are left to pick yours
+00:54 +164: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: Once every task is taken, a courtier plays a legal card on their turn
+00:55 +165: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: A courtier names a number for their "exactly X" task; yours waits for you
+00:55 +166: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: Under the King’s Command a courtier King hands each task to someone who may hold it
+00:55 +167: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: A lesson’s courtier plays the scripted card while it’s legal, and decides otherwise
+00:55 +168: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: Bots announce, pick and play legally with even thinking as with focused
+00:55 +169: /home/runner/work/kings-court/kings-court/test/bot_turn_test.dart: Sealed tasks are planned in their order
+00:55 +170: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Every task is explained in plain words
+00:55 +171: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Every game word a task uses is in the glossary
+00:55 +172: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Every task says how it is going, from the first trick
+00:55 +173: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Tasks about what not to do have trackers too
+00:55 +174: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: A failed task says why
+00:55 +175: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Number tasks track which cards are still to come
+00:55 +176: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Some pairs of trick tasks are impossible at a bigger table
+00:55 +177: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: The court’s own tasks judge the tricks right
+00:55 +178: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Tasks about shown cards judge what was shown, and when
+00:55 +179: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: More of the court’s tasks judge the tricks right
+00:55 +180: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: Your own hand can rule a task out
+00:55 +181: /home/runner/work/kings-court/kings-court/test/task_help_test.dart: A task close-up shows the cards it is about
+00:55 +182: loading /home/runner/work/kings-court/kings-court/test/saves_test.dart
+00:56 +182: /home/runner/work/kings-court/kings-court/test/saves_test.dart: There are saves to check
+00:56 +183: /home/runner/work/kings-court/kings-court/test/saves_test.dart: Every version up to the current one has fixtures
+00:56 +184: /home/runner/work/kings-court/kings-court/test/saves_test.dart: A save says its version, and loading one again changes nothing
+00:56 +185: /home/runner/work/kings-court/kings-court/test/saves_test.dart: chronicle-chapter7.json loads and means the same
+00:56 +186: /home/runner/work/kings-court/kings-court/test/saves_test.dart: chronicle-kings-command.json loads and means the same
+00:56 +187: /home/runner/work/kings-court/kings-court/test/saves_test.dart: endless-midround.json loads and means the same
+00:56 +188: /home/runner/work/kings-court/kings-court/test/saves_test.dart: every-task.json loads and means the same
+00:56 +189: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-screen-midround.json loads and means the same
+00:56 +190: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-screen-picking.json loads and means the same
+00:56 +191: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-screen-won.json loads and means the same
+00:56 +192: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-table-exile.json loads and means the same
+00:56 +193: /home/runner/work/kings-court/kings-court/test/saves_test.dart: free-table-seals.json loads and means the same
+00:56 +194: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/chronicle-chapter7.json loads and means the same
+00:56 +195: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/chronicle-kings-command.json loads and means the same
+00:56 +196: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/endless-midround.json loads and means the same
+00:56 +197: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/every-task.json loads and means the same
+00:56 +198: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-screen-midround.json loads and means the same
+00:56 +199: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-screen-picking.json loads and means the same
+00:56 +200: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-screen-won.json loads and means the same
+00:56 +201: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-table-exile.json loads and means the same
+00:56 +202: /home/runner/work/kings-court/kings-court/test/saves_test.dart: v2/free-table-seals.json loads and means the same
+00:56 +203: /home/runner/work/kings-court/kings-court/test/saves_test.dart: Chronicle progress from before the refactor loads
+00:56 +204: /home/runner/work/kings-court/kings-court/test/inference_test.dart: Not following suit shows a player has none of it
+00:56 +205: /home/runner/work/kings-court/kings-court/test/inference_test.dart: A shown card and its mark narrow a hand down
+00:56 +206: /home/runner/work/kings-court/kings-court/test/inference_test.dart: Everyone knows who holds the King
+00:57 +207: loading /home/runner/work/kings-court/kings-court/test/file_size_test.dart
+00:57 +207: /home/runner/work/kings-court/kings-court/test/file_size_test.dart: No file under lib/ is over 600 lines, apart from data and the debts
+00:58 +208: /home/runner/work/kings-court/kings-court/test/file_size_test.dart: Every debt is real, and the list only shrinks
+00:58 +209: loading /home/runner/work/kings-court/kings-court/test/online_table_test.dart
+00:58 +209: /home/runner/work/kings-court/kings-court/test/online_table_test.dart: The creator hosts in seat 0; others join by code, in the next seat
+00:58 +210: /home/runner/work/kings-court/kings-court/test/online_table_test.dart: A room that can’t be joined says why
+00:58 +211: /home/runner/work/kings-court/kings-court/test/online_table_test.dart: Moves come back numbered, in order; made while away, they wait and go on return
+00:58 +212: /home/runner/work/kings-court/kings-court/test/online_table_test.dart: Two devices play a whole game through a room to the same end, one dropping for a while
+00:59 +213: /home/runner/work/kings-court/kings-court/test/online_table_test.dart: Someone can join a game under way, caught up, in a courtier’s seat, and leave it to one
+00:59 +214: /home/runner/work/kings-court/kings-court/test/online_table_test.dart: Reconnecting waits a little longer each time, up to fifteen seconds
+00:59 +215: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A task the tricks settle turns over; the others wait
+00:59 +216: /home/runner/work/kings-court/kings-court/test/judge_test.dart: Sealed tasks turn over in seal order, and one done out of order fails
+00:59 +217: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A round plays itself out only once every open task is done
+00:59 +218: /home/runner/work/kings-court/kings-court/test/judge_test.dart: A failed task ends the round; every task done wins it
+00:59 +219: /home/runner/work/kings-court/kings-court/test/judge_test.dart: The shown view leaves a trick still on the table out
+01:00 +220: loading /home/runner/work/kings-court/kings-court/test/dealer_test.dart
+01:01 +220: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: The same seed deals the same cards, and a different seed does not
+01:01 +221: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: A dealt round waits for the table to crown the King card’s holder
+01:01 +222: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: A re-deal keeps a reigning King, with the King card in their hand
+01:01 +223: /home/runner/work/kings-court/kings-court/test/dealer_test.dart: No task is impossible once the cards are dealt
+01:01 +224: /home/runner/work/kings-court/kings-court/test/game_log_test.dart: A round’s record holds the deal, the tasks, the moves and the result, and no names
+01:01 +225: /home/runner/work/kings-court/kings-court/test/game_log_test.dart: A round’s record holds the deal, the tasks, the moves and the result, and no names
+01:01 +226: /home/runner/work/kings-court/kings-court/test/game_log_test.dart: A table’s rounds are each recorded once, each with its own moves
+01:02 +227: /home/runner/work/kings-court/kings-court/test/game_log_test.dart: An anonymous id is sixteen hex digits, new each time
+01:03 +228: loading /home/runner/work/kings-court/kings-court/test/game_actions_test.dart
+01:03 +228: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: Nothing is allowed before a round, and the King is crowned once
+01:04 +229: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: The speech token is set and taken back, within the decree
+01:04 +230: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: A mark by hand settles the round, and undoing it takes the result back
+01:04 +231: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: The next round once this one is over counts a round and waits to be crowned
+01:04 +232: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: New tasks mid-round keep the round, the King and the decree
+01:04 +233: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: The next chapter sets the chapter and its target
+01:04 +234: /home/runner/work/kings-court/kings-court/test/game_actions_test.dart: A retry plays the same tasks again; a re-deal draws new ones for a new target
+01:04 +235: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: What a bot knows is the same whoever holds the cards it cannot see
+01:04 +236: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: The deals a bot imagines are the same whoever holds the hidden cards
+01:04 +237: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: A bot decides the same whoever holds the hidden cards
+01:04 +238: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: Imagined deals honour every public fact
+01:04 +239: /home/runner/work/kings-court/kings-court/test/fairness_test.dart: In a 2-player game the imagined deals set cards aside
+01:05 +240: loading /home/runner/work/kings-court/kings-court/test/net_test.dart
+01:05 +240: /home/runner/work/kings-court/kings-court/test/net_test.dart: Moves survive the trip to JSON and back
+01:05 +241: /home/runner/work/kings-court/kings-court/test/net_test.dart: Passing moves the pick on, and only on your turn
+01:05 +242: /home/runner/work/kings-court/kings-court/test/net_test.dart: A local link plays each move at once, in order, numbered, and keeps them
+01:05 +243: /home/runner/work/kings-court/kings-court/test/net_test.dart: A move travels as JSON with its number, as does every kind of action
+01:06 +244: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: At a real table a task taken by mistake can be handed back, and picking resumes
+01:06 +245: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: With the cards on screen a task stays with whoever took it
+01:06 +246: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: An "exactly X" task waits for its number, from its owner, within the tricks
+01:06 +247: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: A card is played in turn, following the suit led
+01:06 +248: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: Silence holds every card back; Late Counsel until three tricks are played
+01:06 +249: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: Under Exile someone other than the King sits out, and the pick passes them by
+01:06 +250: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: A lost round stops play; a won one may play itself out
+01:06 +251: /home/runner/work/kings-court/kings-court/test/round_rules_test.dart: A table that turns tasks over at its own pace stops play where a judging one would
+01:06 +252: loading /home/runner/work/kings-court/kings-court/test/layers_test.dart
+01:07 +252: /home/runner/work/kings-court/kings-court/test/layers_test.dart: Every file under lib/ belongs to a layer
+01:07 +253: /home/runner/work/kings-court/kings-court/test/layers_test.dart: Dependencies only point down the layers, and the lower ones are plain Dart
+01:08 +254: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 1 (Lead and win) deals a full, fair hand
+01:08 +255: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 1 (Lead and win) is won by following the coach
+01:08 +256: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 2 (Win a card) deals a full, fair hand
+01:08 +257: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 2 (Win a card) is won by following the coach
+01:08 +258: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) deals a full, fair hand
+01:08 +259: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) is won by following the coach
+01:08 +260: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) deals a full, fair hand
+01:08 +261: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) is won by following the coach
+01:09 +262: All tests passed!
