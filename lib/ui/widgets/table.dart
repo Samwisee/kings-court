@@ -95,6 +95,30 @@ class _TablePainter extends CustomPainter {
       canvas.restore();
     }
 
+    // Lamp light: the felt darkens towards its corners. Drawn in a square
+    // stretched to the felt, so the fall-off follows its shape.
+    if (look.lamp > 0) {
+      canvas.save();
+      canvas.clipRRect(felt);
+      final r = felt.outerRect;
+      canvas.translate(r.center.dx, r.center.dy);
+      canvas.scale(r.width / 2, r.height / 2);
+      const unit = Rect.fromLTRB(-1, -1, 1, 1);
+      canvas.drawRect(
+          unit,
+          Paint()
+            ..shader = RadialGradient(
+              radius: math.sqrt2 / 2,
+              colors: [
+                const Color(0x00000000),
+                const Color(0x00000000),
+                Color.fromRGBO(0, 0, 0, look.lamp),
+              ],
+              stops: const [0, 0.5, 1],
+            ).createShader(unit));
+      canvas.restore();
+    }
+
     // The table round it.
     if (look.rim > 0) canvas.drawPath(table, Paint()..color = skin.table);
 

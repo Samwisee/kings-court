@@ -45,15 +45,18 @@ class CardBack extends StatelessWidget {
         border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
       ),
       alignment: Alignment.center,
-      child: look.backPattern
-          ? ClipRRect(
-              borderRadius: radius,
-              child: CustomPaint(
-                painter: BackLattice(look.backEdge.withValues(alpha: 0.35)),
-                child: Center(child: CrownIcon(size: width * 0.4, color: look.backEdge)),
-              ),
-            )
-          : CrownIcon(size: width * 0.5),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: CustomPaint(
+          painter: look.backPattern
+              ? BackLattice(look.backEdge.withValues(alpha: look.backPatternAlpha))
+              : null,
+          foregroundPainter: look.backRule == null ? null : _BackRule(look.backRule!, width),
+          child: Center(
+              child: CrownIcon(
+                  size: width * (look.backPattern ? 0.42 : 0.5), color: look.backCrown)),
+        ),
+      ),
     );
   }
 }
@@ -77,6 +80,28 @@ class BackLattice extends CustomPainter {
 
   @override
   bool shouldRepaint(BackLattice old) => old.colour != colour;
+}
+
+/// A fine rule inside a card back's edge.
+class _BackRule extends CustomPainter {
+  const _BackRule(this.colour, this.width);
+  final Color colour;
+  final double width;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final inset = math.max(2.5, width * 0.07);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            (Offset.zero & size).deflate(inset), Radius.circular(width * 0.05)),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(0.8, width * 0.012)
+          ..color = colour);
+  }
+
+  @override
+  bool shouldRepaint(_BackRule old) => old.colour != colour || old.width != width;
 }
 
 /// Turns a card over: the back while [face] runs from 0 to 0.5, the front

@@ -120,6 +120,7 @@ class CourtSkin extends Skin {
         innerRule: Color(0x66D4A63A),
         panelRule: Color(0x99D4A63A),
         panelInnerRule: Color(0x66D4A63A),
+        lamp: 0.28,
       );
 
   @override
@@ -145,6 +146,9 @@ class CourtSkin extends Skin {
         courtFrame: Color(0x99D4A63A),
         back: Color(0xFF5A1620),
         backEdge: Color(0xFFD4A63A),
+        backPattern: true,
+        backPatternAlpha: 0.14,
+        backRule: Color(0x99D4A63A),
         small: [Color(0xFF4A2670), Color(0xFF0F5B3A), Color(0xFF203C8C), Color(0xFF7E1828)],
         taskBack: [Color(0xFF7A1F2C), Color(0xFF3E0C14)],
       );
