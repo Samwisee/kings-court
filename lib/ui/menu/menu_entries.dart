@@ -14,13 +14,15 @@ MenuEntry _item(String value, IconData icon, String title, {bool? on}) =>
 /// The menu's rows: a new game and a reshuffle when they make sense, the
 /// rules, the view at a real table ([upright], or null on screen), sounds,
 /// four-colour suits, the [look] worn, the keyboard shortcuts on a
-/// computer ([keys], or null elsewhere), and a bug report.
+/// computer ([keys], or null elsewhere), sharing play data, and a bug
+/// report.
 List<MenuEntry> menuEntries({
   required bool newGame,
   required bool shuffle,
   required bool? upright,
   required String look,
   required bool? keys,
+  required bool share,
 }) =>
     [
       if (newGame) _item('new', Icons.group_add_outlined, Strings.newGame),
@@ -39,5 +41,7 @@ List<MenuEntry> menuEntries({
       _item('skin', Icons.brush_outlined, Strings.look(look)),
       if (keys != null)
         _item('keys', Icons.keyboard_outlined, Strings.keyboardShortcuts, on: keys),
+      // Rounds sent anonymously to help balance the game (How to Play says).
+      _item('share', Icons.insights_outlined, Strings.sharePlayData, on: share),
       _item('bug', Icons.bug_report_outlined, Strings.reportBug),
     ];

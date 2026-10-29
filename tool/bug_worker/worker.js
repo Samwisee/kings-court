@@ -1,11 +1,17 @@
-// The King's Court bug reports: a Cloudflare Worker that turns a report
-// sent from the game (lib/bug_report.dart) into a GitHub issue labelled
-// "bug". The GitHub token lives here, as a Worker secret, never in the game.
+// The King's Court's small web service, a Cloudflare Worker:
+//   POST /          a bug report from the game (lib/ui/bug_report.dart),
+//                   filed as a GitHub issue labelled "bug"
+//   POST /rounds    a round just played (lib/platform/game_log.dart), kept
+//                   in the D1 database for balancing the game
+//   GET  /rounds    the rounds kept, for tool/games/pull.py (needs READ_KEY)
+// Tokens live here, as Worker secrets, never in the game.
 //
 // Secrets / variables (Cloudflare dashboard > Worker > Settings > Variables):
 //   GITHUB_TOKEN  (secret) fine-grained token: kings-court repo, Issues: read & write
 //   REPO          (text)   Samwisee/kings-court
 //   ALLOW_ORIGIN  (text)   https://samwisee.github.io
+//   READ_KEY      (secret) any long random string; tool/games/pull.py sends it
+// Bindings: DB, the D1 database "kings-court-rounds" (schema.sql).
 
 const MAX_BODY = 200_000; // bytes accepted from the game
 const MAX_ISSUE = 60_000; // GitHub's limit is 65,536 characters
@@ -21,6 +27,8 @@ export default {
       "Vary": "Origin",
     };
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    const path = new URL(request.url).pathname.replace(/\/+$/, "");
+    if (path === "/rounds" && request.method === "GET") return readRounds(request, env);
     if (request.method !== "POST") return new Response("POST a report", { status: 405, headers: cors });
     if (!allowed) return new Response("Not from the game", { status: 403, headers: cors });
 
@@ -28,6 +36,7 @@ export default {
     if (raw.length > MAX_BODY) return new Response("Too big", { status: 413, headers: cors });
     let r;
     try { r = JSON.parse(raw); } catch { return new Response("Not JSON", { status: 400, headers: cors }); }
+    if (path === "/rounds") return keepRound(r, raw, request, env, cors);
     const message = String(r.message || "").trim().slice(0, 2000);
     if (!message) return new Response("Say what went wrong", { status: 400, headers: cors });
 
@@ -75,3 +84,44 @@ export default {
     });
   },
 };
+
+// A round from the game: a few columns to find rounds by, and the whole
+// record as sent.
+async function keepRound(r, raw, request, env, cors) {
+  if (!env.DB) return new Response("No database bound", { status: 503, headers: cors });
+  if (typeof r.v !== "number" || !r.round) return new Response("Not a round", { status: 400, headers: cors });
+  await env.DB.prepare(
+    "INSERT INTO rounds (received, version, build, player, mode, players, people, outcome, record)" +
+      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(
+    new Date().toISOString(),
+    r.v,
+    String(r.build || ""),
+    String(r.player || ""),
+    String(r.mode || ""),
+    Number(r.players) || 0,
+    Array.isArray(r.people) ? r.people.length : 0,
+    String(r.outcome || ""),
+    raw,
+  ).run();
+  return new Response(null, { status: 204, headers: cors });
+}
+
+// The rounds kept after id `after` (500 at a time), newest last, as JSON
+// lines: {"id": …, "received": …, "record": {…}}.
+async function readRounds(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  if (!env.READ_KEY || auth !== `Bearer ${env.READ_KEY}`) return new Response("No", { status: 401 });
+  if (!env.DB) return new Response("No database bound", { status: 503 });
+  const url = new URL(request.url);
+  const after = Number(url.searchParams.get("after")) || 0;
+  const { results } = await env.DB.prepare(
+    "SELECT id, received, record FROM rounds WHERE id > ? ORDER BY id LIMIT 500"
+  ).bind(after).all();
+  const lines = results.map((row) =>
+    JSON.stringify({ id: row.id, received: row.received, record: JSON.parse(row.record) }));
+  return new Response(lines.join("\n") + (lines.length ? "\n" : ""), {
+    headers: { "Content-Type": "application/x-ndjson" },
+  });
+}
+

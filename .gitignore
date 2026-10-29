@@ -47,3 +47,6 @@ test/tool/out/
 test/tool/goldens/
 
 print-out/
+
+# Rounds fetched with tool/games/pull.py
+*.jsonl
