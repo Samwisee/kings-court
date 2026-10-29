@@ -24,7 +24,6 @@ import '../platform/crash_reports.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
 import '../skin/skin_scope.dart';
-import 'widgets.dart';
 
 /// Where reports go, set when the game is built
 /// (`--dart-define=BUG_URL=https://…`). Empty means copy instead.

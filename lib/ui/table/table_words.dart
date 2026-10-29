@@ -4,6 +4,7 @@
 library;
 
 import '../../engine/cards.dart';
+import '../../engine/conflicts.dart';
 import '../../engine/decrees.dart';
 import '../../engine/inference.dart';
 import '../../engine/round.dart';
