@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import '../../engine/round.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import '../cards/card_back.dart';
+import '../cards/card_view.dart';
 import '../cards/mini_card.dart';
 import '../welcome/welcome.dart';
 import '../widgets.dart';
@@ -28,6 +30,7 @@ class OpponentsRow extends StatelessWidget {
     required this.token,
     required this.onTap,
     required this.tallyShown,
+    required this.won,
     required this.tally,
     required this.tasks,
     required this.task,
@@ -49,8 +52,11 @@ class OpponentsRow extends StatelessWidget {
   /// What tapping a seat does.
   final VoidCallback? Function(int seat) onTap;
 
-  /// Whether the tricks won show yet (their room is kept regardless).
+  /// Whether the tricks won show yet (their room is kept regardless): a
+  /// pile of them face down under each token ([won]), and a word under
+  /// that ([tally]: the cards left).
   final bool tallyShown;
+  final int Function(int seat) won;
   final String Function(int seat) tally;
 
   final List<RoundTask> Function(int seat) tasks;
@@ -103,6 +109,10 @@ class OpponentsRow extends StatelessWidget {
                                     fontSize: 13,
                                     color: Colors.white70,
                                     shadows: context.skin.feltShadow)),
+                            Opacity(
+                              opacity: tallyShown ? 1 : 0,
+                              child: TrickPile(won: tallyShown ? won(seat) : 0),
+                            ),
                             Opacity(
                               opacity: tallyShown ? 1 : 0,
                               child: Text(tally(seat),
@@ -169,7 +179,7 @@ class YourSeat extends StatelessWidget {
     required this.token,
     required this.shown,
     required this.tallyShown,
-    required this.tally,
+    required this.won,
     required this.tasks,
     required this.task,
     required this.scrolled,
@@ -178,8 +188,11 @@ class YourSeat extends StatelessWidget {
   final double width;
   final Widget token;
   final Widget? shown;
+
+  /// Whether the tricks you've won show yet (their room is kept
+  /// regardless): a pile of them face down under your token.
   final bool tallyShown;
-  final String tally;
+  final int won;
   final List<RoundTask> tasks;
   final TaskBuilder task;
 
@@ -204,10 +217,7 @@ class YourSeat extends StatelessWidget {
             children: [
               token,
               // Room kept from the start, so nothing shifts when it appears.
-              Opacity(
-                opacity: tallyShown ? 1 : 0,
-                child: Text(tally, style: const TextStyle(fontSize: 11, color: Colors.white54)),
-              ),
+              Opacity(opacity: tallyShown ? 1 : 0, child: TrickPile(won: tallyShown ? won : 0)),
             ],
           ),
         ),
@@ -259,6 +269,54 @@ class YourSeat extends StatelessWidget {
           Positioned(left: 0, child: you),
         ],
       ),
+    );
+  }
+}
+
+/// The tricks a player has won, face down in a little pile in front of
+/// them (in the card backs worn), with how many beside it. Room is kept
+/// for it with none.
+class TrickPile extends StatelessWidget {
+  const TrickPile({super.key, required this.won, this.cardWidth = 13});
+  final int won;
+  final double cardWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = PlayingCardView.heightFor(cardWidth);
+    final shown = math.min(won, 6);
+    final step = cardWidth * 0.3;
+    return SizedBox(
+      height: h + 6,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (shown > 0)
+          // Drawn once, then left: it changes only when a trick is won.
+          RepaintBoundary(
+            child: SizedBox(
+              width: cardWidth + step * (shown - 1) + 3,
+              height: h + 6,
+              child: Stack(clipBehavior: Clip.none, children: [
+                for (var k = 0; k < shown; k++)
+                  Positioned(
+                    left: k * step,
+                    top: 3 + (k.isOdd ? 1.0 : 0),
+                    child: Transform.rotate(
+                        angle: (k.isEven ? -1 : 1) * 0.07, child: CardBack(width: cardWidth)),
+                  ),
+              ]),
+            ),
+          ),
+        if (won > 0)
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text('$won',
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white70,
+                    shadows: context.skin.feltShadow)),
+          ),
+      ]),
     );
   }
 }

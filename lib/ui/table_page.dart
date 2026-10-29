@@ -1841,9 +1841,8 @@ class HomePageState extends State<HomePage>
       // Trick counts once the tricks begin; their room is kept from the
       // start, so nothing shifts when they appear.
       tallyShown: c.hasCards && (_playing || c.tricks.isNotEmpty),
-      tally: (seat) => c.hasCards
-          ? '${_shownTricksWon(seat)} won · ${c.cardsIn(seat)} cards'
-          : '0 won · 0 cards',
+      won: _shownTricksWon,
+      tally: (seat) => '${c.hasCards ? c.cardsIn(seat) : 0} cards',
       tasks: (seat) => [for (final t in game.tasks) if (t.owner == seat) t],
       task: _miniTask,
       quip: (seat) => _quips[seat],
@@ -1863,9 +1862,7 @@ class HomePageState extends State<HomePage>
         token: _digiToken(_you, 40),
         shown: _revealedView(_you),
         tallyShown: _round.hasCards && (_playing || _round.tricks.isNotEmpty),
-        tally: _round.hasCards
-            ? '${_shownTricksWon(_you)} trick${_shownTricksWon(_you) == 1 ? '' : 's'}'
-            : '0 tricks',
+        won: _shownTricksWon(_you),
         tasks: [for (final t in game.tasks) if (t.owner == _you) t],
         task: _miniTask,
         scrolled: _youScrolled,
