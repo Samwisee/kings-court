@@ -461,7 +461,7 @@ class HomePageState extends State<HomePage>
       // Back to a game the app was closed in, or into one an invite link is for.
       final (:room, :invited) = await RoomPlay.onOpen(open: HomePageTestHooks.rooms, address: HomePageTestHooks.address);
       if (room != null) mounted && !_inGame ? _playOnline(room) : room.dispose();
-      if (invited != null && mounted) setState(() => (_setupArgs, _onlineSetup, _invited) = ((mode: null, chapter: null), true, invited));
+      if (invited != null && mounted) setState(() { _online = invited; _setupArgs = (mode: null, chapter: null); });
     } catch (_) {
       // No saved game (or storage unavailable): start fresh.
     }
@@ -935,10 +935,9 @@ class HomePageState extends State<HomePage>
 
   RoomPlay? _room;
 
-  /// Multiplayer setup is open, in place of the New Game panel; [_invited]
-  /// the room an invite link opened it to join.
-  bool _onlineSetup = false;
-  String? _invited;
+  /// Multiplayer setup, while it's open in place of the New Game panel:
+  /// the room an invite link opened it to join, or '' for none.
+  String? _online;
 
   /// This device moves for the table: the courtiers, the crown, the deal.
   bool get _hostsTable => _room?.hosting ?? true;
@@ -949,8 +948,8 @@ class HomePageState extends State<HomePage>
   Widget _buildOnlineSetup() => RoomPlay.setup(
       open: HomePageTestHooks.rooms,
       seed: HomePageTestHooks.seed,
-      joinCode: _invited,
-      onCancel: () => setState(() => (_onlineSetup, _invited) = (false, null)),
+      joinCode: _online,
+      onCancel: () => setState(() => _online = null),
       onPlay: _playOnline);
 
   /// The room's game has started: it's dealt here as on every device.
@@ -964,7 +963,7 @@ class HomePageState extends State<HomePage>
       setState(() => _room!.nameSeats(game));
     });
     setState(() {
-      (_onlineSetup, _invited) = (false, null);
+      _online = null;
       _setupArgs = null;
       _room = room;
       _ctrl.mySeat = room.seat;
@@ -2600,7 +2599,7 @@ class HomePageState extends State<HomePage>
 
   void _closeSetup() => setState(() {
         _setupArgs = null;
-        (_onlineSetup, _invited) = (false, null);
+        _online = null;
       });
 
   /// From the menus into a game: the menu fades to the felt, the crown
@@ -2667,7 +2666,7 @@ class HomePageState extends State<HomePage>
       digital: !_inGame || game.digital,
       newPlayer: !_tutorialDone,
       onOnline: hasService || HomePageTestHooks.rooms != null
-          ? () => setState(() => _onlineSetup = true)
+          ? () => setState(() => _online = '')
           : null,
       onSound: (on) {
         setState(() => Sfx.enabled = on);
@@ -2825,7 +2824,7 @@ class HomePageState extends State<HomePage>
                           // In a game, wash the table out so the setup reads.
                           color: _inGame ? skin.felt : Colors.transparent,
                           child: Center(
-                              child: _onlineSetup ? _buildOnlineSetup() : _buildSetupPanel()),
+                              child: _online != null ? _buildOnlineSetup() : _buildSetupPanel()),
                         ),
                 ),
               ),

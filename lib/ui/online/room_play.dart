@@ -98,7 +98,7 @@ class RoomPlay {
           session: session,
           build: buildVersion,
           seed: seed,
-          joinCode: joinCode,
+          joinCode: joinCode == '' ? null : joinCode,
           onCancel: onCancel,
           onPlay: onPlay);
 

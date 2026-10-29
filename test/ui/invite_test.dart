@@ -51,8 +51,8 @@ void main() {
     HomePageTestHooks.fast();
     final rooms = FakeRooms();
     HomePageTestHooks.rooms = rooms.open;
-    final setup = GameSetup(
-        mode: GameMode.free, names: const ['A', 'B', 'C'], target: 4, seed: 9, digital: true);
+    const setup = GameSetup(
+        mode: GameMode.free, names: ['A', 'B', 'C'], target: 4, seed: 9, digital: true);
     final ann = await OnlineTable.create(rooms.open, service,
         setup: setup, session: 'ann', name: 'Ann', build: buildVersion);
     HomePageTestHooks.address = inviteLink(ann.code, Uri.parse('https://x/kings-court/'));
