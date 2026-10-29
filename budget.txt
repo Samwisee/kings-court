@@ -1,0 +1,6 @@
+ok     bots, 3 players (playouts/s): run 1: missing; run 2: missing
+ok     bots, 4 players (playouts/s): run 1: missing; run 2: missing
+ok     bots, 5 players (playouts/s): run 1: missing; run 2: missing
+ok     frame after a change to the game (ms): run 1: missing; run 2: missing
+ok     frame after a change to the screen (ms): run 1: missing; run 2: missing
+budget kept

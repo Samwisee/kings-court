@@ -1,0 +1,58 @@
+== main (run 1): the page, mid-round (phone size) ==
+a change to the game (setState): 19.6 ms a frame
+a change to the screen only (_ui): 18.3 ms a frame
+a frame with nothing changed: 1.6 ms a frame
+the framework's work a frame: build 2.2 ms, layout 10.8 ms, paint 1.0 ms
+  without the table: 8.6 ms a frame
+ so the table costs about 9.7 ms
+  without the table: build 1.8 ms, layout 5.0 ms, paint 0.4 ms
+  without the hand: 10.5 ms a frame
+ so the hand costs about 7.8 ms
+  without the hand: build 1.9 ms, layout 5.2 ms, paint 0.5 ms
+  without the bar: 12.8 ms a frame
+ so the bar costs about 5.5 ms
+  without the bar: build 1.0 ms, layout 7.8 ms, paint 0.8 ms
+  without the trim: 12.5 ms a frame
+ so the trim costs about 5.8 ms
+  without the trim: build 1.8 ms, layout 8.8 ms, paint 0.8 ms
+ after a change, save (scheduling): 0.01 ms
+ after a change, syncCards: 0.00 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
+== main (run 1): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 78 ms (11500 playouts/s), sliced 42 ms (+-36 ms), pick 22 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 43 ms (21094 playouts/s), sliced 30 ms (+-12 ms), pick 17 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 27 ms (33185 playouts/s), sliced 26 ms (+-1 ms), pick 18 ms
+== branch (run 1): the page, mid-round (phone size) ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/page_bench_test.dart [E]
+== branch (run 1): bots, on the Dart VM ==
+00:00 +0 -1: bot timings [E]
+== main (run 2): the page, mid-round (phone size) ==
+a change to the game (setState): 18.7 ms a frame
+a change to the screen only (_ui): 17.1 ms a frame
+a frame with nothing changed: 1.9 ms a frame
+the framework's work a frame: build 2.1 ms, layout 11.2 ms, paint 0.8 ms
+  without the table: 9.6 ms a frame
+ so the table costs about 7.4 ms
+  without the table: build 2.2 ms, layout 5.9 ms, paint 0.5 ms
+  without the hand: 8.4 ms a frame
+ so the hand costs about 8.6 ms
+  without the hand: build 1.8 ms, layout 4.0 ms, paint 0.2 ms
+  without the bar: 12.8 ms a frame
+ so the bar costs about 4.3 ms
+  without the bar: build 1.2 ms, layout 8.8 ms, paint 0.8 ms
+  without the trim: 11.5 ms a frame
+ so the trim costs about 5.5 ms
+  without the trim: build 1.9 ms, layout 8.1 ms, paint 0.8 ms
+ after a change, save (scheduling): 0.01 ms
+ after a change, syncCards: 0.00 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
+== main (run 2): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 79 ms (11354 playouts/s), sliced 45 ms (+-34 ms), pick 21 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 36 ms (24771 playouts/s), sliced 29 ms (+-8 ms), pick 18 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 28 ms (32000 playouts/s), sliced 26 ms (+-2 ms), pick 18 ms
+== branch (run 2): the page, mid-round (phone size) ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/page_bench_test.dart [E]
+== branch (run 2): bots, on the Dart VM ==
+00:00 +0 -1: bot timings [E]
