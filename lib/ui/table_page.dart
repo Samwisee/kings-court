@@ -37,6 +37,7 @@ import '../modes/progress.dart';
 import '../modes/tutorial/lessons.dart';
 import '../net/table_link.dart';
 import '../platform/analytics.dart';
+import '../platform/game_log.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
 import '../skin/skin_scope.dart';
@@ -415,8 +416,7 @@ class HomePageState extends State<HomePage>
       ];
 
   /// Where the arrow keys are now, if it's still there to stop on.
-  KbStop? _kbHere(List<KbStop> stops) =>
-      stopAt(stops, row: _kbRow, task: _kbTask, card: _kbCard);
+  KbStop? _kbHere(List<KbStop> stops) => stopAt(stops, row: _kbRow, task: _kbTask, card: _kbCard);
 
   /// Where the arrow keys are: your hand (0), the tasks on the table (1)
   /// or the Skip or Pass button (2).
@@ -476,6 +476,7 @@ class HomePageState extends State<HomePage>
       _upright = prefs.getBool(_uprightKey) ?? false;
       Settings.fourColourSuits = prefs.getBool(_suitsKey) ?? false;
       _showKeys = prefs.getBool(_keysKey) ?? false;
+      await GameLog.load(prefs);
       final skin = prefs.getString(_skinKey);
       if (skin != null && mounted) SkinScope.choose(context, skinById(skin));
       final saves = await readSaves(prefs);
@@ -561,6 +562,7 @@ class HomePageState extends State<HomePage>
       await prefs.setBool(_uprightKey, _upright);
       await prefs.setBool(_suitsKey, Settings.fourColourSuits);
       await prefs.setBool(_keysKey, _showKeys);
+      await GameLog.save(prefs);
       await prefs.setBool(_tutorialDoneKey, _tutorialDone);
     } catch (_) {}
   }
@@ -574,11 +576,9 @@ class HomePageState extends State<HomePage>
       GameMode.chronicle,
       chapter: chapter);
 
-
   /// Starts (or retries) a Chronicle chapter with the same players: sends
   /// the action.
-  void _beginChapter(int chapter) =>
-      _link.send(NextRound(_you, chapter: chapter));
+  void _beginChapter(int chapter) => _link.send(NextRound(_you, chapter: chapter));
 
   /// Picks up a saved game exactly where it was left.
   void _continueSaved(SavedGame saved) {
@@ -1991,8 +1991,7 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  bool _mayTake(RoundTask t) =>
-      _round.decree == Decree.kingsCommand || _round.mayTake(t, _you);
+  bool _mayTake(RoundTask t) => _round.decree == Decree.kingsCommand || _round.mayTake(t, _you);
 
   /// Your pick: take a task. Under King's Command you're the King handing
   /// tasks out, so choose who gets it.
@@ -2087,7 +2086,6 @@ class HomePageState extends State<HomePage>
     }
     setState(() => _revealing = true);
   }
-
 
   /// Shows [card] for [seat]: sends the move, which shows it when it
   /// comes back. The card stays in their hand, face up for all.
@@ -2486,7 +2484,11 @@ class HomePageState extends State<HomePage>
 
   /// The round's result was just recorded: what it means to the mode, the
   /// sounds, and the outcome card coming up.
+  /// Records each round as it's over (platform/game_log.dart).
+  final _rounds = RoundLogger();
+
   void _roundSettled() {
+    _rounds.over(game, _link.history, you: _digital ? _you : null);
     final result = _round.result!;
     final won = result.won;
     Analytics.event(
@@ -2944,6 +2946,7 @@ class HomePageState extends State<HomePage>
           if (choice == 'sound') Sfx.enabled ? 'off' : 'on',
           if (choice == 'suits') Settings.fourColourSuits ? 'off' : 'on',
           if (choice == 'keys') _showKeys ? 'off' : 'on',
+          if (choice == 'share') GameLog.sharing ? 'off' : 'on',
         ]);
         switch (choice) {
           case 'new':
@@ -2996,6 +2999,9 @@ class HomePageState extends State<HomePage>
                 if (mounted) _saveSettings();
               });
             }
+          case 'share':
+            setState(() => GameLog.sharing = !GameLog.sharing);
+            _saveSettings();
           case 'suits':
             setState(() => Settings.fourColourSuits = !Settings.fourColourSuits);
             // Every card on screen repaints in the new colours, even ones
@@ -3016,6 +3022,7 @@ class HomePageState extends State<HomePage>
         upright: _inGame && !_digital ? _upright : null,
         look: context.skin.name,
         keys: _desktop ? _showKeys : null,
+        share: GameLog.sharing,
       );
 
   /// What goes with a bug report: where the player is, their settings, and

@@ -110,6 +110,10 @@ const _sections = <_Section>[
     'Courtly roles: everyone plays a courtier of a great house. Tap a seat to read about them.',
     'Your game saves as you play, one save for each way to play: tap Play to pick any of them up.',
   ]),
+  _Section('Play data', [
+    'To help balance the game, each round you play is sent without your name: the cards, the tasks, every move and how it ended, with a random number for this device so rounds can be told apart.',
+    'Turn off Share play data in the menu to stop sending them.',
+  ]),
   _Section('Two players', [
     'Deal 13 cards each. The other 14 go to a third hand, the Dummy: 7 face down, with 7 face up on top. When a face-up Dummy card is played, flip the card underneath it.',
     'The King plays the Dummy’s cards as well as their own. Only the two players take tasks, which use the 3-player difficulty.',
