@@ -49,6 +49,10 @@ void main() {
 
   testWidgets('The menu switches to the Plain look and remembers it', (tester) async {
     SharedPreferences.setMockInitialValues({});
+    // A phone, where the menu drops down from the top bar.
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
