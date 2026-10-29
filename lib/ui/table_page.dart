@@ -161,16 +161,8 @@ class HomePageState extends State<HomePage>
   /// Seat being crowned while the crown animation plays.
   int? _crowning;
 
-  /// The crown from the walk into the game is waiting in the middle of the
-  /// screen to be the King's crown (so there is only ever one crown).
-  bool _crownWaiting = false;
-
-  /// This crowning's crown starts as that waiting crown.
+  /// This crowning's crown starts as the walk-in's, waiting in the middle.
   bool _crownFromCentre = false;
-
-  /// The walk-in's crown has gone to the King: the walk-in no longer draws
-  /// it, even while the rest of it plays out.
-  bool _crownHandedOver = false;
 
   /// The deal whose decree has been read out (see [_decreePending]).
   int _decreeReadFor = -1;
@@ -239,7 +231,7 @@ class HomePageState extends State<HomePage>
     _ctrl.knownBest = () => _bestStreak;
     WidgetsBinding.instance.addObserver(this);
     // Create the animation controllers now, so dispose never makes one.
-    for (final c in [_table.deal, _crown, _play, _outcome, _outcomeHold, _coronation]) {
+    for (final c in [_table.deal, _crown, _play, _outcome, _outcomeHold, _walkIn.animation]) {
       c.value;
     }
     _loadSaved();
@@ -592,7 +584,7 @@ class HomePageState extends State<HomePage>
     _table.dispose();
     _drag.dispose();
     _crown.dispose();
-    _coronation.dispose();
+    _walkIn.dispose();
     _outcomeHold.dispose();
     _play.dispose();
     _outcome.dispose();
@@ -955,7 +947,7 @@ class HomePageState extends State<HomePage>
   /// The room's game has started: it's dealt here as on every device.
   void _playOnline(OnlineTable table) {
     _leaveRoom();
-    _crownWaiting = false;
+    _walkIn.waiting = false;
     final room = RoomPlay(table, onChange: (news) {
       if (!mounted || _room?.room != table) return;
       _host.seats = table.seats; // the host plays anyone away
@@ -2340,30 +2332,21 @@ class HomePageState extends State<HomePage>
   /// dealt.
   void _crownKing(int index) {
     if (_crowning != null) return;
-    final fromCentre = _crownWaiting;
+    final fromCentre = _walkIn.waiting;
     setState(() {
       _crowning = index;
       _crownFromCentre = fromCentre;
     });
-    // The walk-in's crown waits until the walk-in is done (until then it
-    // covers the table, where the crowning plays), then becomes this one,
-    // in the same place. The walk-in already sounded the fanfare.
-    if (fromCentre && _coronation.isAnimating) {
-      void done(AnimationStatus s) {
-        if (s != AnimationStatus.completed) return;
-        _coronation.removeStatusListener(done);
-        if (mounted && _crowning == index) _flyCrown(index, fromCentre);
-      }
-      return _coronation.addStatusListener(done);
-    }
-    _flyCrown(index, fromCentre);
+    // The walk-in's crown becomes this one, in the same place, once the
+    // walk-in is done. It already sounded the fanfare.
+    _walkIn.handOver(() {
+      if (mounted && _crowning == index) _flyCrown(fromCentre);
+    });
   }
 
-  void _flyCrown(int index, bool fromCentre) {
-    setState(() {
-      if (fromCentre) _crownHandedOver = true;
-      _crownWaiting = false;
-    });
+  void _flyCrown(bool fromCentre) {
+    final index = _crowning!;
+    setState(() {});
     if (!fromCentre) Sfx.fanfare();
     _crown.forward(from: 0).whenComplete(() {
       if (!mounted) return;
@@ -2620,31 +2603,20 @@ class HomePageState extends State<HomePage>
   /// From the menus into a game: the menu fades to the felt, the crown
   /// rises up in the middle in a burst of sparks, and as it lifts away the
   /// table is revealed beneath it.
-  late final AnimationController _coronation = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1500));
+  late final _walkIn = WalkIn(vsync: this, changed: () {
+    if (mounted) setState(() {});
+  });
 
   void _startFromSetup(SetupResult r) {
-    if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive) {
+    // The tutorial's pages fade straight in: no crowning to walk into yet.
+    if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || r.mode == GameMode.tutorial) {
       _beginFromSetup(r);
       return;
     }
     Sfx.fanfare();
     // On screen, the crown stays to crown the King at the table.
-    _crownHandedOver = false;
-    _crownWaiting = r.digital && r.mode != GameMode.tutorial;
-    _coronation.forward(from: 0).whenComplete(() {
-      // In case no crowning follows after all, let it go; held while the
-      // King is still to be chosen (a slow phone is still setting out).
-      void letGo() {
-        if (!mounted || !_crownWaiting) return;
-        if (_inGame && _choosingKing && _crowning == null) {
-          Timer(const Duration(milliseconds: 500), letGo);
-          return;
-        }
-        setState(() => _crownWaiting = false);
-      }
-      Timer(const Duration(milliseconds: 1500), letGo);
-    });
+    _walkIn.start(
+        crowning: r.digital, stillDue: () => mounted && _inGame && _choosingKing && _crowning == null);
     // The game is set out while the crown hides the change.
     Timer(const Duration(milliseconds: 560), () {
       if (mounted) _beginFromSetup(r);
@@ -2878,9 +2850,9 @@ class HomePageState extends State<HomePage>
       // The crowning between the menus and a game.
       Positioned.fill(
           child: CoronationOverlay(
-              animation: _coronation,
-              waiting: _crownWaiting,
-              handedOver: _crownHandedOver)),
+              animation: _walkIn.animation,
+              waiting: _walkIn.waiting,
+              handedOver: _walkIn.handedOver)),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       // Its own layer: the trim (with its soft shadow) is painted once, not

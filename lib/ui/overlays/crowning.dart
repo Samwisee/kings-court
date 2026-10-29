@@ -5,6 +5,7 @@
 /// middle of the screen before it is handed over.
 library;
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -237,16 +238,25 @@ class CoronationOverlay extends StatelessWidget {
                       scale: waiting && t > 0.42 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
                       // Drawn once, glow and all, then only moved, scaled and
                       // faded.
+                      // A round glow behind it (a gradient: no blur to work out).
                       child: RepaintBoundary(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(boxShadow: [
-                            BoxShadow(
-                                color: context.skin.gold.withValues(alpha: 0.35),
-                                blurRadius: crown * 0.5,
-                                spreadRadius: crown * 0.05),
-                          ]),
-                          child: CrownIcon(size: crown),
-                        ),
+                        child: Stack(clipBehavior: Clip.none, children: [
+                          Positioned(
+                            left: -crown * 0.4,
+                            right: -crown * 0.4,
+                            top: -crown * 0.525,
+                            bottom: -crown * 0.525,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: RadialGradient(colors: [
+                                  context.skin.gold.withValues(alpha: 0.4),
+                                  context.skin.gold.withValues(alpha: 0),
+                                ]),
+                              ),
+                            ),
+                          ),
+                          CrownIcon(size: crown),
+                        ]),
                       ),
                     ),
                   ),
@@ -281,4 +291,64 @@ class IntroSparks extends CustomPainter {
 
   @override
   bool shouldRepaint(IntroSparks old) => old.progress != progress || old.skin != skin;
+}
+
+/// The walk into a game from the menus ([CoronationOverlay]): its crown,
+/// whether it's waiting to be the King's, and handing it over to the
+/// crowning at the table, only once the walk-in is done (until then it
+/// covers the table, where the crowning plays).
+class WalkIn {
+  WalkIn({required TickerProvider vsync, required this.changed})
+      : animation = AnimationController(vsync: vsync, duration: const Duration(milliseconds: 1500));
+
+  final AnimationController animation;
+
+  /// Something to draw changed.
+  final VoidCallback changed;
+
+  /// The crown waits in the middle of the screen to be the King's crown
+  /// (so there is only ever one crown).
+  bool waiting = false;
+
+  /// The crown has gone to the King: the walk-in no longer draws it, even
+  /// while the rest of it plays out.
+  bool handedOver = false;
+
+  /// Walks in; with [crowning], the crown stays for the King, while
+  /// [stillDue] says the King's still to be chosen (a slow phone may still
+  /// be setting out), and goes once it isn't.
+  void start({required bool crowning, required bool Function() stillDue}) {
+    handedOver = false;
+    waiting = crowning;
+    animation.forward(from: 0).whenComplete(() {
+      void letGo() {
+        if (!waiting) return;
+        if (stillDue()) {
+          Timer(const Duration(milliseconds: 500), letGo);
+          return;
+        }
+        waiting = false;
+        changed();
+      }
+      Timer(const Duration(milliseconds: 1500), letGo);
+    });
+  }
+
+  /// The crowning takes the crown: [fly] runs once the walk-in is done.
+  void handOver(VoidCallback fly) {
+    void go() {
+      handedOver = handedOver || waiting;
+      waiting = false;
+      fly();
+    }
+    if (!animation.isAnimating) return go();
+    void done(AnimationStatus s) {
+      if (s != AnimationStatus.completed) return;
+      animation.removeStatusListener(done);
+      go();
+    }
+    animation.addStatusListener(done);
+  }
+
+  void dispose() => animation.dispose();
 }
