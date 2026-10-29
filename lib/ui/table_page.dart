@@ -172,8 +172,6 @@ class HomePageState extends State<HomePage>
 
   /// Before save slots, one game was kept under this key. It moves to its
   /// mode's slot the first time it's loaded.
-  static const _legacySaveKey = 'kingsCourt.game';
-  static String _slotKey(GameMode mode) => GameController.slotKey(mode);
   static const _bestKey = GameController.bestKey;
   static const _chronicleKey = 'kingsCourt.chronicle';
   static const _soundKey = 'kingsCourt.sound';
@@ -569,7 +567,7 @@ class HomePageState extends State<HomePage>
       _showKeys = prefs.getBool(_keysKey) ?? false;
       final skin = prefs.getString(_skinKey);
       if (skin != null && mounted) SkinScope.choose(context, skinById(skin));
-      final saves = await _readSaves(prefs);
+      final saves = await readSaves(prefs);
       // Anyone with a saved game has played already.
       _tutorialDone = (prefs.getBool(_tutorialDoneKey) ?? false) || saves.isNotEmpty;
       if (!mounted) return;
@@ -581,39 +579,6 @@ class HomePageState extends State<HomePage>
     } catch (_) {
       // No saved game (or storage unavailable): start fresh.
     }
-  }
-
-  /// Reads every saved game still in progress, newest first, moving an old
-  /// single save into its slot.
-  static Future<List<SavedGame>> _readSaves(SharedPreferences prefs) async {
-    final legacy = prefs.getString(_legacySaveKey);
-    if (legacy != null) {
-      try {
-        final data = jsonDecode(legacy) as Map<String, dynamic>;
-        final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
-        if (g != null && prefs.getString(_slotKey(g.mode)) == null) {
-          await prefs.setString(_slotKey(g.mode), legacy);
-        }
-      } catch (_) {}
-      await prefs.remove(_legacySaveKey);
-    }
-    final saves = <SavedGame>[];
-    for (final mode in GameMode.values) {
-      if (mode == GameMode.tutorial) continue;
-      final raw = prefs.getString(_slotKey(mode));
-      if (raw == null) continue;
-      try {
-        final data = jsonDecode(raw) as Map<String, dynamic>;
-        final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
-        if (g == null || g.outcome != RoundOutcome.inProgress) continue;
-        saves.add(SavedGame(g, data,
-            DateTime.fromMillisecondsSinceEpoch(data['savedAt'] as int? ?? 0)));
-      } catch (_) {
-        // A save that no longer reads is skipped.
-      }
-    }
-    saves.sort((a, b) => b.at.compareTo(a.at));
-    return saves;
   }
 
   /// Saves after every change, so closing the app mid-round loses nothing.
@@ -3370,7 +3335,11 @@ class HomePageState extends State<HomePage>
                           child: AnimatedOpacity(
                             opacity: _setupArgs == null ? 1 : 0,
                             duration: const Duration(milliseconds: 200),
-                            child: Center(child: _buildWelcome()),
+                            child: Center(
+                                child: WelcomeScreen(
+                                    hasSaves: _saves.isNotEmpty,
+                                    onContinue: _showContinue,
+                                    onNewGame: _showSetupDialog)),
                           ),
                         ),
                       ],
@@ -3883,7 +3852,7 @@ class HomePageState extends State<HomePage>
     try {
       // A save still waiting goes in first, so the list is up to date.
       if (_ctrl.savePending) await _ctrl.saveNow();
-      final saves = await _readSaves(await SharedPreferences.getInstance());
+      final saves = await readSaves(await SharedPreferences.getInstance());
       if (mounted) _ui(() => _saves = saves);
     } catch (_) {}
     if (!mounted) return;
@@ -3892,42 +3861,6 @@ class HomePageState extends State<HomePage>
     } else if (_saves.isNotEmpty) {
       _showSetupDialog(continuing: true);
     }
-  }
-
-  /// The front of the table before a game: the four Court Cards fan out
-  /// in a burst of sparks, then the name and one button, Play, which offers
-  /// saved games, a new game and the tutorial.
-  Widget _buildWelcome() {
-    return LayoutBuilder(
-      builder: (context, c) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: SizedBox(
-            width: math.max(0.0, clampD(c.maxWidth, 0, 640) - 48),
-            child: WelcomeIntro(
-              crownSize: clampD(c.maxWidth * 0.42, 120, 270),
-              buttons: [
-                // Games in progress first: carry on where you left off.
-                if (_saves.isNotEmpty)
-                  FilledButton(
-                    onPressed: _showContinue,
-                    child: const Text(Strings.continueGame),
-                  ),
-                if (_saves.isEmpty)
-                  FilledButton(
-                      onPressed: _showSetupDialog,
-                      child: const Text(Strings.newGame))
-                else
-                  OutlinedButton(
-                      onPressed: _showSetupDialog,
-                      child: const Text(Strings.newGame)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
 }

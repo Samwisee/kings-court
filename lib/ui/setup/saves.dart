@@ -1,10 +1,14 @@
 /// A saved game, one per way to play.
 library;
 
+import 'dart:convert';
 import 'dart:math' as math;
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../game/state.dart';
 import '../../modes/modes.dart';
+import '../controller.dart';
 
 /// A game saved on this device: its state, the table layout that goes with
 /// it, and when it was last saved.
@@ -43,4 +47,41 @@ class SavedGame {
     if (d.inDays == 1) return 'yesterday';
     return '${d.inDays} days ago';
   }
+}
+
+/// Where saves were kept before there was one per way to play.
+const _legacyKey = 'kingsCourt.game';
+
+/// The games saved on this device, newest first: one per way to play, the
+/// tutorial's left out, and only rounds still in progress. A save in the
+/// old single slot is moved to its mode's first.
+Future<List<SavedGame>> readSaves(SharedPreferences prefs) async {
+  final legacy = prefs.getString(_legacyKey);
+  if (legacy != null) {
+    try {
+      final data = jsonDecode(legacy) as Map<String, dynamic>;
+      final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
+      if (g != null && prefs.getString(GameController.slotKey(g.mode)) == null) {
+        await prefs.setString(GameController.slotKey(g.mode), legacy);
+      }
+    } catch (_) {}
+    await prefs.remove(_legacyKey);
+  }
+  final saves = <SavedGame>[];
+  for (final mode in GameMode.values) {
+    if (mode == GameMode.tutorial) continue;
+    final raw = prefs.getString(GameController.slotKey(mode));
+    if (raw == null) continue;
+    try {
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final g = GameState.fromJson(data['game'] as Map<String, dynamic>);
+      if (g == null || g.outcome != RoundOutcome.inProgress) continue;
+      saves.add(SavedGame(g, data,
+          DateTime.fromMillisecondsSinceEpoch(data['savedAt'] as int? ?? 0)));
+    } catch (_) {
+      // A save that no longer reads is skipped.
+    }
+  }
+  saves.sort((a, b) => b.at.compareTo(a.at));
+  return saves;
 }

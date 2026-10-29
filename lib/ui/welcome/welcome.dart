@@ -1,6 +1,7 @@
 /// The front page: the Court Cards fanning out, the crowned title and its sparks.
 library;
 
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../engine/cards.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import '../../skin/strings.dart';
 import '../cards/card_view.dart';
 import '../overlays/crowning.dart';
 import '../widgets.dart';
@@ -228,6 +230,55 @@ class _CrownedTitle extends StatelessWidget {
       ]),
       semanticsLabel: "The King's Court",
       textAlign: TextAlign.center,
+    );
+  }
+}
+
+/// The front of the table before a game: the four Court Cards fan out
+/// in a burst of sparks, then the name and the buttons: Continue (with
+/// saved games) and New game.
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen(
+      {super.key,
+      required this.hasSaves,
+      required this.onContinue,
+      required this.onNewGame});
+
+  final bool hasSaves;
+  final VoidCallback onContinue;
+  final VoidCallback onNewGame;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(
+            width: math.max(0.0, clampD(c.maxWidth, 0, 640) - 48),
+            child: WelcomeIntro(
+              crownSize: clampD(c.maxWidth * 0.42, 120, 270),
+              buttons: [
+                // Games in progress first: carry on where you left off.
+                if (hasSaves)
+                  FilledButton(
+                    onPressed: onContinue,
+                    child: const Text(Strings.continueGame),
+                  ),
+                if (!hasSaves)
+                  FilledButton(
+                      onPressed: onNewGame,
+                      child: const Text(Strings.newGame))
+                else
+                  OutlinedButton(
+                      onPressed: onNewGame,
+                      child: const Text(Strings.newGame)),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
