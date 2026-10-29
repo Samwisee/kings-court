@@ -87,10 +87,16 @@ class CourtDialog extends StatelessWidget {
                   Text(title!, textAlign: TextAlign.center, style: context.skin.dialogTitle),
                   const SizedBox(height: 12),
                 ],
-                Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: align,
-                    children: [child]),
+                // The words scroll when there isn't room (a phone with its
+                // keyboard up), so the title and the buttons stay in view.
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: align,
+                        children: [child]),
+                  ),
+                ),
                 if (actions.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Wrap(

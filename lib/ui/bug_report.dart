@@ -36,9 +36,8 @@ Future<void> showBugReport(BuildContext context,
   return showDialog<void>(
     context: context,
     builder: (context) => _BugDialog(
-      payload: (message, name) => {
+      payload: (message) => {
         'message': message,
-        if (name.isNotEmpty) 'name': name,
         'build': buildVersion,
         'device': {
           'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
@@ -66,7 +65,7 @@ Map<String, dynamic> _safely(Map<String, dynamic> Function() f) {
 
 class _BugDialog extends StatefulWidget {
   const _BugDialog({required this.payload});
-  final Map<String, dynamic> Function(String message, String name) payload;
+  final Map<String, dynamic> Function(String message) payload;
 
   @override
   State<_BugDialog> createState() => _BugDialogState();
@@ -76,20 +75,18 @@ enum _Stage { writing, sending, sent, copied }
 
 class _BugDialogState extends State<_BugDialog> {
   final _message = TextEditingController();
-  final _name = TextEditingController();
   _Stage _stage = _Stage.writing;
 
   @override
   void dispose() {
     _message.dispose();
-    _name.dispose();
     super.dispose();
   }
 
   Future<void> _send() async {
     final text = _message.text.trim();
     if (text.isEmpty) return;
-    final body = jsonEncode(widget.payload(text, _name.text.trim()));
+    final body = jsonEncode(widget.payload(text));
     setState(() => _stage = _Stage.sending);
     var sent = false;
     if (bugReportUrl.isNotEmpty) {
@@ -158,13 +155,6 @@ class _BugDialogState extends State<_BugDialog> {
                 textCapitalization: TextCapitalization.sentences,
                 onChanged: (_) => setState(() {}),
                 decoration: field.copyWith(hintText: 'I tapped the Jester and nothing happened…'),
-              ),
-              const SizedBox(height: 4),
-              TextField(
-                key: const ValueKey('bugName'),
-                controller: _name,
-                textCapitalization: TextCapitalization.words,
-                decoration: field.copyWith(hintText: 'Your name (optional)'),
               ),
             ],
           ),
