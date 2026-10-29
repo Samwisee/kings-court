@@ -1,0 +1,31 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart
+lib/main.dart:5283:19: Error: The argument type 'void Function(String)' can't be assigned to the parameter type 'Future<void> Function(String)'.
+ - 'Future' is from 'dart:async'.
+        onToggle: _onMenuChoice,
+                  ^
+lib/ui/panels.dart:149:20: Error: The argument type 'num' can't be assigned to the parameter type 'double'.
+          ..moveTo(x, y - 4)
+                   ^
+lib/ui/panels.dart:151:20: Error: The argument type 'num' can't be assigned to the parameter type 'double'.
+          ..lineTo(x, y + 4)
+                   ^
+lib/game/bot_turn.dart:99:23: Error: A value of type 'double' can't be assigned to a variable of type 'int'.
+          bestScore = score;
+                      ^
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/test/tool/shots_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/test/tool/shots_test.dart: lib/main.dart:5283:19: Error: The argument type 'void Function(String)' can't be assigned to the parameter type 'Future<void> Function(String)'.
+   - 'Future' is from 'dart:async'.
+          onToggle: _onMenuChoice,
+                    ^
+  lib/ui/panels.dart:149:20: Error: The argument type 'num' can't be assigned to the parameter type 'double'.
+            ..moveTo(x, y - 4)
+                     ^
+  lib/ui/panels.dart:151:20: Error: The argument type 'num' can't be assigned to the parameter type 'double'.
+            ..lineTo(x, y + 4)
+                     ^
+  lib/game/bot_turn.dart:99:23: Error: A value of type 'double' can't be assigned to a variable of type 'int'.
+            bestScore = score;
+                        ^
+  .
+00:00 +0 -1: Some tests failed.
