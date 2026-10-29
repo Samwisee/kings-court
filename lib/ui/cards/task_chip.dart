@@ -260,7 +260,7 @@ class TaskChip extends StatelessWidget {
               foregroundPainter: InnerEdge(radius: 8, inset: 2.5 + skin.outlineWidth),
               child: Container(
                 decoration: BoxDecoration(
-                  color: skin.feltDeep,
+                  color: skin.cardLook.back,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: color, width: 2.5 + 2 * skin.outlineWidth),
                 ),
@@ -268,8 +268,8 @@ class TaskChip extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
                 ),
-                alignment: Alignment.center,
-                child: Row(
+                // The card backs worn, under what it was worth.
+                child: BackGround(radius: 6, child: Center(child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Done: just what it was worth.
@@ -282,7 +282,7 @@ class TaskChip extends StatelessWidget {
                     const SizedBox(width: 4),
                     CrownIcon(size: fontSize * 1.5),
                   ],
-                ),
+                ))),
               ),
               ),
             ),

@@ -331,8 +331,8 @@ class TableCard extends StatelessWidget {
       width: width,
       height: _height,
       foregroundDecoration: _edge(skin),
-      decoration: _frame(skin, skin.feltDeep, border: skin.gold, borderWidth: 1.5),
-      child: Container(
+      decoration: _frame(skin, skin.cardLook.back, border: skin.gold, borderWidth: 1.5),
+      child: BackGround(radius: 6, child: Container(
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
@@ -340,7 +340,7 @@ class TableCard extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: CrownIcon(size: width * 0.28),
-      ),
+      )),
     );
   }
 
@@ -352,10 +352,12 @@ class TableCard extends StatelessWidget {
       width: width,
       height: _height,
       foregroundDecoration: _edge(skin),
-      decoration: _frame(skin, skin.feltDeep,
+      decoration: _frame(skin, skin.cardLook.back,
           border: owner?.color ?? skin.gold, borderWidth: 2.5),
       child: Stack(
         children: [
+          // The card backs worn.
+          const Positioned.fill(child: BackGround(radius: 6)),
           Positioned.fill(
             child: Container(
               margin: const EdgeInsets.all(4),

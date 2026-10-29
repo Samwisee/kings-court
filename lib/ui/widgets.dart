@@ -3,6 +3,7 @@
 /// table, panels and dialogs); their look comes from theme.dart.
 library;
 
+export 'widgets/back_motifs.dart';
 export 'widgets/candles.dart';
 export 'widgets/character_token.dart';
 export 'widgets/clamp.dart';

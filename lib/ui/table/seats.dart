@@ -285,9 +285,10 @@ class TrickPile extends StatelessWidget {
     final h = PlayingCardView.heightFor(cardWidth);
     final shown = math.min(won, 6);
     final step = cardWidth * 0.22;
+    // Never wider than its place: it shrinks to fit a narrow seat.
     return SizedBox(
       height: h + 6,
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
+      child: FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisSize: MainAxisSize.min, children: [
         if (shown > 0)
           // Drawn once, then left: it changes only when a trick is won.
           RepaintBoundary(
@@ -315,7 +316,7 @@ class TrickPile extends StatelessWidget {
                     color: Colors.white70,
                     shadows: context.skin.feltShadow)),
           ),
-      ]),
+      ])),
     );
   }
 }
