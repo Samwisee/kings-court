@@ -1,0 +1,11 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart
+lib/game/judge.dart:81:15: Error: Method not found: 'failReason'.
+            : failReason(t.description, v, t.assignedPlayerIndex!,
+              ^^^^^^^^^^
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/test/tool/shots_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/test/tool/shots_test.dart: lib/game/judge.dart:81:15: Error: Method not found: 'failReason'.
+              : failReason(t.description, v, t.assignedPlayerIndex!,
+                ^^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.
