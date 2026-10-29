@@ -281,7 +281,6 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('bugMessage')), 'The King vanished');
     await tester.tap(find.text('Send'));
     await tester.pumpAndSettle();
-    debugPrint('BUGPAGE ${[for (final e in find.byType(Text).evaluate()) (e.widget as Text).data].join(' | ')}');
     // No service in tests, so the report is copied instead.
     expect(find.text('Report copied'), findsOneWidget);
     final report = jsonDecode(copied!) as Map<String, dynamic>;

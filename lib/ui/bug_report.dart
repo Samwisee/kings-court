@@ -214,7 +214,7 @@ class _BugDialogState extends State<_BugDialog> {
                           child: const Text('Cancel')),
                       const Spacer(),
                       FilledButton(
-                          onPressed: _stage == _Stage.sending || _message.text.trim().isEmpty ? null : _send,
+                          onPressed: _stage == _Stage.sending ? null : _send,
                           child: Text(_stage == _Stage.sending ? 'Sending…' : 'Send')),
                     ]),
                   ],
