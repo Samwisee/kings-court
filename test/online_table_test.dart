@@ -243,7 +243,10 @@ void main() {
     expect(dropped, isTrue);
     expect(gameA.outcome, isNot(RoundOutcome.inProgress));
     expect(gameB.outcome, gameA.outcome);
-    expect(jsonEncode(gameB.round!.toJson()), jsonEncode(gameA.round!.toJson()));
+    // The same round, but for how a failure is worded to each player ("You
+    // won trick 5" on one device is "The Bishop won trick 5" on another).
+    String round(GameState g) => jsonEncode(g.round!.toJson()).replaceAll(RegExp(r',"why":"[^"]*"'), '');
+    expect(round(gameB), round(gameA));
     expect(benLink.history.length, annLink.history.length);
     expect(a.refused.map((m) => m.toJson()), b.refused.map((m) => m.toJson()));
     a.dispose();
