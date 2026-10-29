@@ -1594,10 +1594,10 @@ class HomePageState extends State<HomePage>
 
   GlobalKey _seatKey(int seat) => _seatKeys.putIfAbsent(seat, GlobalKey.new);
 
-  /// Where a widget sits on the on-screen table (from the last frame).
+  /// Where a widget sat on the on-screen table last frame (safe mid-build).
   Rect? _rectOn(GlobalKey key) {
-    final box = key.currentContext?.findRenderObject() as RenderBox?;
-    final table = _digiKey.currentContext?.findRenderObject() as RenderBox?;
+    final box = (key.currentContext as Element?)?.renderObject as RenderBox?;
+    final table = (_digiKey.currentContext as Element?)?.renderObject as RenderBox?;
     if (box == null || table == null || !box.attached || !box.hasSize) {
       return null;
     }
