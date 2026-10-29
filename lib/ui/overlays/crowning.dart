@@ -206,17 +206,19 @@ class CoronationOverlay extends StatelessWidget {
           final centre = Offset(size.width / 2, size.height / 2);
           return IgnorePointer(
             child: Stack(children: [
-              Positioned.fill(
-                child: Opacity(
-                  opacity: cover,
+              // (The fade is in the gradient's own colours: fading the whole
+              // screen as a layer is costly, on the web above all.)
+              if (cover > 0)
+                Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                          radius: 0.9, colors: [context.skin.feltGlow, context.skin.feltDeep]),
+                      gradient: RadialGradient(radius: 0.9, colors: [
+                        context.skin.feltGlow.withValues(alpha: cover),
+                        context.skin.feltDeep.withValues(alpha: cover),
+                      ]),
                     ),
                   ),
                 ),
-              ),
               Positioned.fill(
                 child: CustomPaint(
                   painter: spark > 0 && spark < 1
@@ -233,14 +235,18 @@ class CoronationOverlay extends StatelessWidget {
                     opacity: iv(0.05, 0.2) * (1 - lift),
                     child: Transform.scale(
                       scale: waiting && t > 0.42 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(boxShadow: [
-                          BoxShadow(
-                              color: context.skin.gold.withValues(alpha: 0.35 * grow),
-                              blurRadius: crown * 0.5,
-                              spreadRadius: crown * 0.05),
-                        ]),
-                        child: CrownIcon(size: crown),
+                      // Drawn once, glow and all, then only moved, scaled and
+                      // faded.
+                      child: RepaintBoundary(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(boxShadow: [
+                            BoxShadow(
+                                color: context.skin.gold.withValues(alpha: 0.35),
+                                blurRadius: crown * 0.5,
+                                spreadRadius: crown * 0.05),
+                          ]),
+                          child: CrownIcon(size: crown),
+                        ),
                       ),
                     ),
                   ),

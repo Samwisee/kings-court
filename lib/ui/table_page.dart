@@ -1778,7 +1778,7 @@ class HomePageState extends State<HomePage>
 
   Widget _digiCrowningNow() {
     final king = _crowning;
-    if (king == null) return const SizedBox.shrink();
+    if (king == null || !_crown.isAnimating) return const SizedBox.shrink();
     final middle = _rectOn(_middleKey);
     final seat = _rectOn(_seatKey(king));
     if (middle == null || seat == null) return const SizedBox.shrink();
@@ -2343,12 +2343,27 @@ class HomePageState extends State<HomePage>
     final fromCentre = _crownWaiting;
     setState(() {
       _crowning = index;
-      // The waiting crown becomes this one, in the same place.
       _crownFromCentre = fromCentre;
+    });
+    // The walk-in's crown waits until the walk-in is done (until then it
+    // covers the table, where the crowning plays), then becomes this one,
+    // in the same place. The walk-in already sounded the fanfare.
+    if (fromCentre && _coronation.isAnimating) {
+      void done(AnimationStatus s) {
+        if (s != AnimationStatus.completed) return;
+        _coronation.removeStatusListener(done);
+        if (mounted && _crowning == index) _flyCrown(index, fromCentre);
+      }
+      return _coronation.addStatusListener(done);
+    }
+    _flyCrown(index, fromCentre);
+  }
+
+  void _flyCrown(int index, bool fromCentre) {
+    setState(() {
       if (fromCentre) _crownHandedOver = true;
       _crownWaiting = false;
     });
-    // The walk-in already sounded the fanfare.
     if (!fromCentre) Sfx.fanfare();
     _crown.forward(from: 0).whenComplete(() {
       if (!mounted) return;
@@ -2618,10 +2633,17 @@ class HomePageState extends State<HomePage>
     _crownHandedOver = false;
     _crownWaiting = r.digital && r.mode != GameMode.tutorial;
     _coronation.forward(from: 0).whenComplete(() {
-      // In case no crowning follows after all: let it go.
-      Timer(const Duration(milliseconds: 1500), () {
-        if (mounted && _crownWaiting) setState(() => _crownWaiting = false);
-      });
+      // In case no crowning follows after all, let it go; held while the
+      // King is still to be chosen (a slow phone is still setting out).
+      void letGo() {
+        if (!mounted || !_crownWaiting) return;
+        if (_inGame && _choosingKing && _crowning == null) {
+          Timer(const Duration(milliseconds: 500), letGo);
+          return;
+        }
+        setState(() => _crownWaiting = false);
+      }
+      Timer(const Duration(milliseconds: 1500), letGo);
     });
     // The game is set out while the crown hides the change.
     Timer(const Duration(milliseconds: 560), () {
