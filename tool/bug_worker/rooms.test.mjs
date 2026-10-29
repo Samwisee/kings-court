@@ -32,7 +32,7 @@ function fakeCtx(storage = new Map()) {
       async get(k) { return structuredClone(storage.get(k)); },
       async put(k, v) { storage.set(k, structuredClone(v)); this.writes = (this.writes ?? 0) + 1; },
       async list({ prefix, start, reverse = false, limit = Infinity }) {
-        const keys = [...storage.entries()].filter(([k]) => k.startsWith(prefix) && k !== "meta" && (!start || k >= start)).sort();
+        const keys = [...storage.entries()].filter(([k]) => k.startsWith(prefix) && (!start || k >= start)).sort();
         if (reverse) keys.reverse();
         return new Map(keys.slice(0, limit));
       },

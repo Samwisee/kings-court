@@ -77,7 +77,9 @@ export async function handleRooms(request, env, path) {
   return stub.fetch(new Request(target, request));
 }
 
-const moveKey = (seq) => "m" + String(seq).padStart(8, "0");
+// Moves are kept under "mv:" and a number, apart from "meta".
+const MOVES = "mv:";
+const moveKey = (seq) => MOVES + String(seq).padStart(8, "0");
 
 export class Room {
   constructor(ctx, env) {
@@ -90,7 +92,7 @@ export class Room {
     this.alarmSet = 0;
     ctx.blockConcurrencyWhile(async () => {
       this.meta = (await ctx.storage.get("meta")) || null;
-      const last = await ctx.storage.list({ prefix: "m", reverse: true, limit: 1 });
+      const last = await ctx.storage.list({ prefix: MOVES, reverse: true, limit: 1 });
       for (const move of last.values()) this.count = move.seq + 1;
       this.count = Math.max(this.count, this.meta?.count ?? 0);
     });
@@ -150,7 +152,7 @@ export class Room {
     const after = q.get("after") === null ? NaN : Number(q.get("after"));
     const from = Number.isFinite(after) ? after + 1 : 0;
     const moves = from < this.count
-      ? [...(await this.ctx.storage.list({ prefix: "m", start: moveKey(from) })).values()]
+      ? [...(await this.ctx.storage.list({ prefix: MOVES, start: moveKey(from) })).values()]
       : [];
     server.send(JSON.stringify({ t: "hello", code: m.code, setup: m.setup, seats: m.seats,
       names: m.names, host: m.host, started: m.started, seat, moves }));
