@@ -1,0 +1,2 @@
+WARNING|STATIC_WARNING|UNUSED_ELEMENT|/home/runner/work/kings-court/kings-court/lib/home/card_tracker.dart|380|17|9|The declaration 'cellWidth' isn't referenced.
+INFO|LINT|PREFER_CONST_CONSTRUCTORS|/home/runner/work/kings-court/kings-court/lib/home/menu.dart|215|31|17|Use 'const' with the constructor to improve performance.
