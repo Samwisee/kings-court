@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import 'table.dart' show softGlow;
 
 /// A courtier's loyalty as a candle: the flame burns taller the more loyal
 /// they are and gutters out at nothing. It flickers when loyalty changes,
@@ -117,12 +118,10 @@ class _CandlePainter extends CustomPainter {
     final base = Offset(cx, bodyTop - h * 0.04);
     final color = Color.lerp(const Color(0xFFB4541C), skin.gold, level)!;
     // Glow, brighter while flickering.
-    canvas.drawCircle(
-        base.translate(0, -flameH * 0.45),
-        flameH * (0.7 + 0.5 * (1 - flicker)),
-        Paint()
-          ..color = color.withValues(alpha: 0.18 + 0.25 * (1 - flicker))
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+    final glowAt = base.translate(0, -flameH * 0.45);
+    final glowR = flameH * (0.7 + 0.5 * (1 - flicker));
+    canvas.drawCircle(glowAt, glowR + 7,
+        softGlow(glowAt, glowR, 7, color.withValues(alpha: 0.18 + 0.25 * (1 - flicker))));
     final flame = Path()
       ..moveTo(base.dx, base.dy)
       ..quadraticBezierTo(base.dx - flameW, base.dy - flameH * 0.35,

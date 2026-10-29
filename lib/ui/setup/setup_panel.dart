@@ -395,7 +395,6 @@ class _SetupPanelState extends State<SetupPanel> {
                 ),
                 prefixIconConstraints: const BoxConstraints(minWidth: 40),
                 isDense: true,
-                border: const OutlineInputBorder(),
               ),
             ),
           ),

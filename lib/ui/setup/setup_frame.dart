@@ -195,3 +195,26 @@ class SetupFrame extends StatelessWidget {
     );
   }
 }
+
+/// Between the New Game panel and Multiplayer's: the one fades out, then
+/// the other fades in, as the steps within each do.
+class SetupSwitch extends StatelessWidget {
+  const SetupSwitch({super.key, required this.online, required this.child});
+
+  /// Which of the two [child] is.
+  final bool online;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final still = MediaQuery.disableAnimationsOf(context);
+    return AnimatedSwitcher(
+      duration: Duration(milliseconds: still ? 200 : 460),
+      switchInCurve: still ? Curves.easeOut : const Interval(0.5, 1, curve: Curves.easeOut),
+      switchOutCurve: still ? Curves.easeIn : const Interval(0.5, 1, curve: Curves.easeIn),
+      layoutBuilder: (current, previous) =>
+          Stack(alignment: Alignment.center, children: [...previous, if (current != null) current]),
+      child: KeyedSubtree(key: ValueKey(online), child: child),
+    );
+  }
+}

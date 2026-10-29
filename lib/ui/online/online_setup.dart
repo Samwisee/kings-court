@@ -236,7 +236,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
         textCapitalization: TextCapitalization.words,
         maxLength: 24,
         decoration: const InputDecoration(
-            labelText: 'Your name', isDense: true, border: OutlineInputBorder(), counterText: ''),
+            labelText: 'Your name', isDense: true, counterText: ''),
       );
 
   Widget _problemText() => _problem == null
@@ -266,7 +266,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
             style: TextStyle(
                 fontFamily: skin.displayFont, fontSize: 30, letterSpacing: 10, color: skin.gold),
             decoration: const InputDecoration(
-                labelText: 'Room code', border: OutlineInputBorder(), counterText: ''),
+                labelText: 'Room code', counterText: ''),
             onSubmitted: (_) => _connect(),
           ),
           const SizedBox(height: 12),

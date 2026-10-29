@@ -137,7 +137,7 @@ class _BugDialogState extends State<_BugDialog> {
 
   @override
   Widget build(BuildContext context) {
-    const field = InputDecoration(isDense: true, border: OutlineInputBorder());
+    const field = InputDecoration(isDense: true);
     return switch (_stage) {
       _Stage.sent => CourtDialog(
           title: 'Thank you!',

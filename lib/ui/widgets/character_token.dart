@@ -125,9 +125,11 @@ class _CharacterTokenState extends State<CharacterToken>
   Widget build(BuildContext context) {
     final skin = context.skin;
     // Its own layer: a breathing token repaints alone, never the table.
+    // And the token within its own too: breathing only moves and scales
+    // it, so it's drawn once (shadow, glow and all), not every frame.
     return RepaintBoundary(child: AnimatedBuilder(
       animation: Listenable.merge([_once, _breath]),
-      child: widget.child,
+      child: RepaintBoundary(child: widget.child),
       builder: (context, child) {
         final t = _once.value;
         final b = math.sin(2 * math.pi * (_breath.value + widget.phase));

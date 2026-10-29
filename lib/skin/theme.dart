@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../engine/cards.dart';
 import '../game/state.dart';
 import '../platform/settings.dart';
+import 'fields.dart';
 
 /// The King's Court palette: card table felt, white card stock, card-red
 /// and black suits, and brass gold reserved for the King.
@@ -226,6 +227,8 @@ ThemeData buildTheme() {
         shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
+    inputDecorationTheme: fieldTheme(accent: Palette.gold, radius: 12, font: bodyFont),
+    textSelectionTheme: selectionTheme(Palette.gold),
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
     // Every dialog, unless it says otherwise (see [DialogStyle]).
     dialogTheme: const DialogThemeData(

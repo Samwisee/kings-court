@@ -165,6 +165,19 @@ class _LampPainter extends CustomPainter {
   bool shouldRepaint(_LampPainter old) => old.lamp != lamp;
 }
 
+/// Paint for a soft round glow of [color] at [centre]: solid to [radius],
+/// fading to nothing over [soft] beyond it, as a blur would, but drawn as a
+/// gradient (a blur is costly to work out every frame, on the web above
+/// all). Draw a circle of [radius] + [soft] with it.
+Paint softGlow(Offset centre, double radius, double soft, Color color) {
+  final outer = radius + soft;
+  return Paint()
+    ..shader = RadialGradient(
+      colors: [color, color.withValues(alpha: color.a * 0.5), color.withValues(alpha: 0)],
+      stops: [radius / outer * 0.6, radius / outer, 1],
+    ).createShader(Rect.fromCircle(center: centre, radius: outer));
+}
+
 /// A ring of gold and white sparks flying out from [origin] and fading as
 /// [progress] runs from 0 to 1. Used when the crown lands.
 class SparkBurst extends CustomPainter {
@@ -188,14 +201,9 @@ class SparkBurst extends CustomPainter {
         Paint()..color = color.withAlpha((255 * fade).round()),
       );
     }
-    // A soft gold glow under the crown.
-    canvas.drawCircle(
-      origin,
-      18 + 20 * ease,
-      Paint()
-        ..color = skin.gold.withAlpha((90 * fade).round())
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
-    );
+    // A soft gold glow under the crown: a gradient as wide as the blur it
+    // stands for, which costs nothing to soften.
+    canvas.drawCircle(origin, 18 + 20 * ease + 30, softGlow(origin, 18 + 20 * ease, 30, skin.gold.withAlpha((90 * fade).round())));
   }
 
   @override

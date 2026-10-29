@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'fields.dart';
 import 'looks.dart';
 import 'skin.dart';
 
@@ -347,6 +348,8 @@ class DesignSkin extends Skin {
           shape: shape,
         ),
       ),
+      inputDecorationTheme: fieldTheme(accent: gold, radius: design.radius, font: bodyFont),
+      textSelectionTheme: selectionTheme(gold),
       snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
       dialogTheme: DialogThemeData(
         backgroundColor: dialogBackground,

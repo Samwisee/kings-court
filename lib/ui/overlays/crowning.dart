@@ -183,21 +183,26 @@ class CoronationOverlay extends StatelessWidget {
       {super.key,
       required this.animation,
       required this.waiting,
-      required this.handedOver});
+      required this.handedOver,
+      this.keepCover = false});
 
   final Animation<double> animation;
   final bool waiting;
   final bool handedOver;
+
+  /// The felt stays over the screen once the crown has gone, for what
+  /// comes next to come up over it (the tutorial's pages).
+  final bool keepCover;
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: animation,
         builder: (context, _) {
           final t = animation.value;
-          if (t == 0 || (t == 1 && !waiting)) return const SizedBox.shrink();
+          if (t == 0 || (t == 1 && !waiting && !keepCover)) return const SizedBox.shrink();
           double iv(double a, double b, [Curve c = Curves.linear]) =>
               c.transform(((t - a) / (b - a)).clamp(0.0, 1.0));
-          final cover = iv(0, 0.3, Curves.easeOut) * (1 - iv(0.6, 1, Curves.easeIn));
+          final cover = iv(0, 0.3, Curves.easeOut) * (keepCover ? 1 : 1 - iv(0.6, 1, Curves.easeIn));
           final grow = iv(0.08, 0.42, Curves.easeOutBack);
           // A crown waiting for the King holds still, full size.
           final lift = waiting ? 0.0 : iv(0.58, 1, Curves.easeInCubic);
@@ -314,13 +319,28 @@ class WalkIn {
   /// while the rest of it plays out.
   bool handedOver = false;
 
+  /// The felt stays once the crown has gone (see [CoronationOverlay]).
+  bool keepCover = false;
+
   /// Walks in; with [crowning], the crown stays for the King, while
   /// [stillDue] says the King's still to be chosen (a slow phone may still
-  /// be setting out), and goes once it isn't.
-  void start({required bool crowning, required bool Function() stillDue}) {
+  /// be setting out), and goes once it isn't. With [onDone], the felt stays
+  /// when the crown has gone, [onDone] puts what comes next over it, and
+  /// the felt goes a moment later.
+  void start({required bool crowning, required bool Function() stillDue, VoidCallback? onDone}) {
     handedOver = false;
     waiting = crowning;
+    keepCover = onDone != null;
     animation.forward(from: 0).whenComplete(() {
+      if (onDone != null) {
+        onDone();
+        Timer(const Duration(milliseconds: 450), () {
+          if (_gone) return;
+          keepCover = false;
+          animation.value = 0;
+          changed();
+        });
+      }
       void letGo() {
         if (!waiting) return;
         if (stillDue()) {
@@ -350,5 +370,10 @@ class WalkIn {
     animation.addStatusListener(done);
   }
 
-  void dispose() => animation.dispose();
+  bool _gone = false;
+
+  void dispose() {
+    _gone = true;
+    animation.dispose();
+  }
 }

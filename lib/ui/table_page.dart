@@ -65,6 +65,7 @@ import 'round_table/geometry.dart';
 import 'round_table/round_table.dart';
 import 'rules/rules_page.dart';
 import 'setup/saves.dart';
+import 'setup/setup_frame.dart';
 import 'setup/setup_panel.dart';
 import 'table/dealt_task.dart';
 import 'table/game_bar.dart';
@@ -2485,8 +2486,7 @@ class HomePageState extends State<HomePage>
   final _rounds = RoundLogger();
 
   void _roundSettled() {
-    // Online, the host's device keeps the record.
-    if (_hostsTable) {
+    if (_hostsTable) { // online, the host's device keeps the record
       _rounds.over(game, _link.history,
           you: _digital ? _you : null,
           people: _room?.people());
@@ -2608,20 +2608,19 @@ class HomePageState extends State<HomePage>
   });
 
   void _startFromSetup(SetupResult r) {
-    // The tutorial's pages fade straight in: no crowning to walk into yet.
-    if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || r.mode == GameMode.tutorial) {
-      _beginFromSetup(r);
-      return;
-    }
+    if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive) return _beginFromSetup(r);
     Sfx.fanfare();
-    // On screen, the crown stays to crown the King at the table.
+    // The crown stays for the King on screen, the game set out beneath it;
+    // the tutorial's pages come up over the felt once it's gone.
+    final tutorial = r.mode == GameMode.tutorial;
+    void begin() { if (mounted) _beginFromSetup(r); }
     _walkIn.start(
-        crowning: r.digital, stillDue: () => mounted && _inGame && _choosingKing && _crowning == null);
-    // The game is set out while the crown hides the change.
-    Timer(const Duration(milliseconds: 560), () {
-      if (mounted) _beginFromSetup(r);
-    });
+        crowning: r.digital && !tutorial,
+        stillDue: () => mounted && _inGame && _choosingKing && _crowning == null,
+        onDone: tutorial ? begin : null);
+    if (!tutorial) Timer(const Duration(milliseconds: 560), begin);
   }
+
 
   void _beginFromSetup(SetupResult r) {
     setState(() => _setupArgs = null);
@@ -2818,7 +2817,7 @@ class HomePageState extends State<HomePage>
                           // In a game, wash the table out so the setup reads.
                           color: _inGame ? skin.felt : Colors.transparent,
                           child: Center(
-                              child: _online != null ? _buildOnlineSetup() : _buildSetupPanel()),
+                              child: SetupSwitch(online: _online != null, child: _online != null ? _buildOnlineSetup() : _buildSetupPanel())),
                         ),
                 ),
               ),
@@ -2852,7 +2851,8 @@ class HomePageState extends State<HomePage>
           child: CoronationOverlay(
               animation: _walkIn.animation,
               waiting: _walkIn.waiting,
-              handedOver: _walkIn.handedOver)),
+              handedOver: _walkIn.handedOver,
+              keepCover: _walkIn.keepCover)),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       // Its own layer: the trim (with its soft shadow) is painted once, not

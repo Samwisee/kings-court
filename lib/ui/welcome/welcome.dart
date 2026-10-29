@@ -130,7 +130,8 @@ class _WelcomeIntroState extends State<WelcomeIntro> {
               opacity: title,
               child: Transform.translate(
                 offset: Offset(0, 16 * (1 - title)),
-                child: const _CrownedTitle(),
+                // Its blurred shadow drawn once, not with every spark.
+                child: const RepaintBoundary(child: _CrownedTitle()),
               ),
             ),
             const SizedBox(height: 14),
