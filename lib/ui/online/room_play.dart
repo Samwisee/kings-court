@@ -7,11 +7,17 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
+
 import '../../game/seats.dart';
 import '../../game/setup.dart';
 import '../../game/state.dart';
 import '../../net/online_table.dart';
+import '../../platform/build_info.dart';
 import '../../platform/game_log.dart';
+import '../../platform/room_socket.dart';
+import '../../platform/service.dart';
+import 'online_setup.dart';
 
 class RoomPlay {
   RoomPlay(this.room, {required this.onChange}) : _status = room.status {
@@ -42,6 +48,22 @@ class RoomPlay {
   /// two windows on one computer are two players.
   static final session =
       '${GameLog.player ?? GameLog.newPlayerId()}-${GameLog.newPlayerId().substring(0, 4)}';
+
+  /// Multiplayer setup, through the game's service (or [open]'s rooms,
+  /// in tests).
+  static Widget setup(
+          {SocketOpener? open,
+          int? seed,
+          required VoidCallback onCancel,
+          required ValueChanged<OnlineTable> onPlay}) =>
+      OnlineSetup(
+          open: open ?? openRoomSocket,
+          service: Uri.parse(hasService ? serviceUrl : 'https://rooms.test'),
+          session: session,
+          build: buildVersion,
+          seed: seed,
+          onCancel: onCancel,
+          onPlay: onPlay);
 
   int get seat => room.seat;
   bool get hosting => room.hosting;

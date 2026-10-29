@@ -37,9 +37,7 @@ import '../modes/tutorial/lessons.dart';
 import '../net/online_table.dart';
 import '../net/table_link.dart';
 import '../platform/analytics.dart';
-import '../platform/build_info.dart';
 import '../platform/game_log.dart';
-import '../platform/room_socket.dart';
 import '../platform/service.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
@@ -58,7 +56,6 @@ import 'menu/menu.dart';
 import 'menu/menu_entries.dart';
 import 'modes/tutorial/coach.dart';
 import 'modes/tutorial/tutorial_intro.dart';
-import 'online/online_setup.dart';
 import 'online/room_play.dart';
 import 'overlays/crowning.dart';
 import 'overlays/decree.dart';
@@ -914,6 +911,7 @@ class HomePageState extends State<HomePage>
   /// Where moves go: this device, for now.
   TableLink get _link => _ctrl.link;
   late StreamSubscription<Move> _moves;
+  final _afterCrown = <TableAction>[];
 
   /// Plays through [link] from now on.
   void _useLink(TableLink link) {
@@ -938,15 +936,11 @@ class HomePageState extends State<HomePage>
   /// Whether a person plays [seat] (online; elsewhere only you).
   bool _personAt(int seat) => seat == _you || (_room?.personAt(seat) ?? false);
 
-  Widget _buildOnlineSetup() => OnlineSetup(
-        open: HomePageTestHooks.rooms ?? openRoomSocket,
-        service: Uri.parse(hasService ? serviceUrl : 'https://rooms.test'),
-        session: RoomPlay.session,
-        build: buildVersion,
-        seed: HomePageTestHooks.seed,
-        onCancel: () => setState(() => _onlineSetup = false),
-        onPlay: _playOnline,
-      );
+  Widget _buildOnlineSetup() => RoomPlay.setup(
+      open: HomePageTestHooks.rooms,
+      seed: HomePageTestHooks.seed,
+      onCancel: () => setState(() => _onlineSetup = false),
+      onPlay: _playOnline);
 
   /// The room's game has started: it's dealt here as on every device.
   void _playOnline(OnlineTable table) {
@@ -969,8 +963,7 @@ class HomePageState extends State<HomePage>
       _ctrl.online = true;
       _resetTable();
     });
-    // Anything played before the table was here.
-    for (final m in table.history) {
+    for (final m in table.history) { // anything played before the table was here
       _onAction(m.action);
     }
     _keepAwake(true);
@@ -1005,6 +998,9 @@ class HomePageState extends State<HomePage>
   /// isn't allowed any more (the table moved on) is let go.
   void _onAction(TableAction action) {
     if (!mounted || !_inGame) return;
+    // Online, play goes on while the crown flies: what comes meanwhile is
+    // made once it lands, in order.
+    if (_crowning != null) return _afterCrown.add(action);
     switch (action) {
       case MatchAction():
         if (_round.problem(action) != null) return;
@@ -2283,6 +2279,7 @@ class HomePageState extends State<HomePage>
   void _resetTable() {
     _table.reset();
     _tasks.landing.clear();
+    _afterCrown.clear();
   }
 
   /// New tasks: a new round once this one is over (to [target] points, or
@@ -2348,6 +2345,9 @@ class HomePageState extends State<HomePage>
         _crowning = null;
         _crownFromCentre = false;
       });
+      final held = List.of(_afterCrown);
+      _afterCrown.clear();
+      held.forEach(_onAction);
     });
   }
 
