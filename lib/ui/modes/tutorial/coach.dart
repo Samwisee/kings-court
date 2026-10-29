@@ -81,7 +81,7 @@ class Coach extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 6, 6, 12),
               // On the felt, edged in gold, like the rules.
               decoration: BoxDecoration(
-                color: const Color(0xF20A3622),
+                color: skin.feltDeep.withValues(alpha: 0xF2 / 255),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: skin.gold.withValues(alpha: 0.7), width: 1.4),
                 boxShadow: const [

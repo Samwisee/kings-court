@@ -6,19 +6,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/task_help.dart';
+import '../../skin/looks.dart';
+import '../../skin/parts.dart';
+import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import 'court_dialog.dart';
 import 'icons.dart';
 import 'pips.dart';
 import 'suit_text.dart';
 
-/// How dressed up a panel or dialog is. Everything is [low] unless it's an
-/// occasion:
-/// * [low]: the gradient, a faint damask and a bronze rule round it.
-/// * [medium]: a curl in each corner and a crown medallion over the top
-///   (the menu, a lesson or round's result, You're ready).
-/// * [high]: a sheen of gold sweeps across it and stars twinkle.
-enum Ornament { low, medium, high }
+export '../../skin/looks.dart' show Ornament;
 
 /// The court's panel for menus, results and dialogs: a framed card at one
 /// of three [Ornament] levels. Gold for a win, dark wine for a loss, felt
@@ -60,6 +57,68 @@ class OrnateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    Widget standard() =>
+        skin.panelLook.style == PanelStyle.ornate ? _ornate(skin) : _flat(skin);
+    final part = skin.parts.panel;
+    if (part == null) return standard();
+    return part(
+        context,
+        PanelSpec(
+            won: won,
+            court: court,
+            ornament: ornament,
+            edge: edge,
+            margin: margin,
+            padding: padding,
+            maxWidth: maxWidth,
+            kit: partKit,
+            standard: standard,
+            child: child));
+  }
+
+  /// A flat card: the ground, a fine edge, a soft shadow, and on an
+  /// occasion a band of colour along the top.
+  Widget _flat(Skin skin) {
+    final look = skin.panelLook;
+    final edge = this.edge ??
+        (court ? skin.gold.withValues(alpha: 0.35) : won ? skin.goldDeep : skin.lost);
+    final band = court ? look.courtMedallion : won ? look.wonMedallion : look.lostMedallion;
+    return Container(
+      margin: margin,
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: court ? look.court : won ? look.won : look.lost,
+        ),
+        borderRadius: BorderRadius.circular(look.radius),
+        border: Border.all(color: edge, width: look.edgeWidth),
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, blurRadius: 24, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Stack(
+        children: [
+          if (ornament != Ornament.low)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ClipRRect(
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(look.radius - look.edgeWidth)),
+                child: Container(height: 5, color: band.first),
+              ),
+            ),
+          Padding(padding: padding, child: child),
+        ],
+      ),
+    );
+  }
+
+  Widget _ornate(Skin skin) {
+    final look = skin.panelLook;
     final edge = this.edge ?? (court ? skin.gold : won ? skin.goldInk : skin.lost);
     final ink = won && !court ? skin.goldInk : skin.gold;
     return Container(
@@ -70,13 +129,13 @@ class OrnateCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: court
-              ? const [Color(0xFF15583A), Color(0xFF0C3A25), Color(0xFF07291A)]
+              ? look.court
               : won
-              ? [skin.goldLight, skin.gold, const Color(0xFFB98A24)]
-              : const [Color(0xFF3A1218), Color(0xFF1C0A0E), Color(0xFF12080A)],
+              ? look.won
+              : look.lost,
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: edge, width: 2.5),
+        borderRadius: BorderRadius.circular(look.radius),
+        border: Border.all(color: edge, width: look.edgeWidth),
         boxShadow: [
           const BoxShadow(color: Colors.black54, blurRadius: 28, offset: Offset(0, 8)),
           BoxShadow(
@@ -93,7 +152,7 @@ class OrnateCard extends StatelessWidget {
           // and filigree scrolls in every corner.
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(look.radius - 2),
               child: CustomPaint(painter: _Damask(ink.withValues(alpha: 0.07))),
             ),
           ),
@@ -107,7 +166,7 @@ class OrnateCard extends StatelessWidget {
             Positioned.fill(
               child: IgnorePointer(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(look.radius - 2),
                   child: const Glitter(),
                 ),
               ),
@@ -127,10 +186,10 @@ class OrnateCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: court
-                        ? [const Color(0xFF1E6B47), skin.feltDeep]
+                        ? look.courtMedallion
                         : won
-                        ? [skin.goldPale, skin.gold]
-                        : const [Color(0xFF5A1A22), Color(0xFF2A0E12)],
+                        ? look.wonMedallion
+                        : look.lostMedallion,
                   ),
                   border: Border.all(color: edge, width: 2.5),
                   boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],

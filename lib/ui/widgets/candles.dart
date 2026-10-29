@@ -43,7 +43,7 @@ class LoyaltyCandle extends StatelessWidget {
           shape: BoxShape.circle,
           color: skin.ink,
           border: Border.all(
-              color: loyalty <= 0 ? skin.lost : const Color(0x88D4A63A),
+              color: loyalty <= 0 ? skin.lost : skin.gold.withValues(alpha: 0x88 / 255),
               width: 1.5),
         ),
         child: candle,

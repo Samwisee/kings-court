@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 
@@ -30,18 +31,29 @@ class TableTrim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (table) return CustomPaint(painter: _TablePainter(context.skin), size: Size.infinite);
+    final skin = context.skin;
+    Widget standard() => _standard(skin);
+    final part = skin.parts.table;
+    if (part != null) return part(context, TableSpec(table: table, standard: standard));
+    return standard();
+  }
+
+  Widget _standard(Skin skin) {
+    final look = skin.tableLook;
+    if (table) return CustomPaint(painter: _TablePainter(skin), size: Size.infinite);
+    final outer = look.panelRule;
+    final inner = look.panelInnerRule;
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x99D4A63A), width: outerRule),
+        borderRadius: BorderRadius.circular(look.radius),
+        border: outer == null ? null : Border.all(color: outer, width: outerRule),
       ),
       child: Container(
         margin: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0x66D4A63A), width: innerRule),
+          borderRadius: BorderRadius.circular(math.max(0, look.radius - 4)),
+          border: inner == null ? null : Border.all(color: inner, width: innerRule),
         ),
       ),
     );
@@ -54,9 +66,10 @@ class _TablePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final look = skin.tableLook;
     final all = Offset.zero & size;
-    // The brass rules sit where the felt meets the wood, and 3px inside.
-    final felt = RRect.fromRectAndRadius(all.deflate(TableTrim.rim), const Radius.circular(16));
+    // The rules sit where the felt meets the table, and 3px inside.
+    final felt = RRect.fromRectAndRadius(all.deflate(look.rim), Radius.circular(look.radius));
     final table = Path()
       ..fillType = PathFillType.evenOdd
       ..addRect(all)
@@ -65,36 +78,42 @@ class _TablePainter extends CustomPainter {
     // The felt is sunk a little into the table: a soft shadow just inside
     // its edge. Drawn as a few fading strokes rather than a blur: a blur
     // across the whole screen's edge was the dearest thing in every frame.
-    canvas.save();
-    canvas.clipRRect(felt);
-    const steps = 7;
-    for (var i = 0; i < steps; i++) {
-      // Darkest at the edge, fading inwards over about 9px.
-      final alpha = (0x3A * (1 - i / steps) * (1 - i / steps)).round();
+    if (look.sunk) {
+      canvas.save();
+      canvas.clipRRect(felt);
+      const steps = 7;
+      for (var i = 0; i < steps; i++) {
+        // Darkest at the edge, fading inwards over about 9px.
+        final alpha = (0x3A * (1 - i / steps) * (1 - i / steps)).round();
+        canvas.drawRRect(
+            felt.deflate(i * 1.3),
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2.6
+              ..color = Color(alpha << 24));
+      }
+      canvas.restore();
+    }
+
+    // The table round it.
+    if (look.rim > 0) canvas.drawPath(table, Paint()..color = skin.table);
+
+    if (look.outerRule case final rule?) {
       canvas.drawRRect(
-          felt.deflate(i * 1.3),
+          felt,
           Paint()
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 2.6
-            ..color = Color(alpha << 24));
+            ..strokeWidth = TableTrim.outerRule
+            ..color = rule);
     }
-    canvas.restore();
-
-    // The table: plain royal red.
-    canvas.drawPath(table, Paint()..color = skin.table);
-
-    canvas.drawRRect(
-        felt,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = TableTrim.outerRule
-          ..color = const Color(0xCCD4A63A));
-    canvas.drawRRect(
-        felt.deflate(4.5),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = TableTrim.innerRule
-          ..color = const Color(0x66D4A63A));
+    if (look.innerRule case final rule?) {
+      canvas.drawRRect(
+          felt.deflate(4.5),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = TableTrim.innerRule
+            ..color = rule);
+    }
   }
 
   @override

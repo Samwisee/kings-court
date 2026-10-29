@@ -753,7 +753,7 @@ class _ModeTile extends StatelessWidget {
       button: true,
       selected: selected,
       child: Material(
-      color: selected ? const Color(0x33D4A63A) : const Color(0x22000000),
+      color: selected ? skin.gold.withValues(alpha: 0x33 / 255) : const Color(0x22000000),
       // Gold double rule with a jewel in each corner, like the menus.
       shape: OrnateBorder(skin: context.skin, radius: 12, gems: false),
       child: InkWell(

@@ -212,7 +212,7 @@ class CoronationOverlay extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
-                          radius: 0.9, colors: [const Color(0xFF176141), context.skin.feltDeep]),
+                          radius: 0.9, colors: [context.skin.feltGlow, context.skin.feltDeep]),
                     ),
                   ),
                 ),

@@ -18,7 +18,8 @@ abstract final class Strings {
   static const tableView = 'Table view';
   static const sounds = 'Sounds';
   static const fourColourSuits = 'Four-colour suits';
-  static const plainLook = 'Plain look';
+  /// The menu's skin choice, naming the one worn.
+  static String look(String name) => 'Look: $name';
   static const locked = '(locked)';
   static const keyboardShortcuts = 'Keyboard shortcuts';
   static const reportBug = 'Report a bug';

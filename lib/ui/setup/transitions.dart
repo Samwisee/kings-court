@@ -88,7 +88,7 @@ class PageTurn extends StatelessWidget {
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: skin.gold,
-                        boxShadow: const [BoxShadow(color: Color(0xAAD4A63A), blurRadius: 10)],
+                        boxShadow: [BoxShadow(color: skin.gold.withValues(alpha: 0xAA / 255), blurRadius: 10)],
                       ),
                     ),
                   ),

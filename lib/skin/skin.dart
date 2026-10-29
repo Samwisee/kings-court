@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 
 import '../engine/cards.dart';
 import '../platform/settings.dart';
+import 'looks.dart';
+import 'parts.dart';
 
 abstract class Skin {
   const Skin();
@@ -134,6 +136,22 @@ abstract class Skin {
   /// A task's close-up is on card stock instead, like the card itself.
   Color get paper;
   TextStyle get paperTitle;
+
+  // ------------------------------------------------------------- shapes
+
+  /// How the table, panels, cards, seat tokens and buttons are built
+  /// (looks.dart).
+  TableLook get tableLook;
+  PanelLook get panelLook;
+  CardLook get cardLook;
+  TokenLook get tokenLook;
+  ButtonLook get buttonLook;
+
+  /// Parts the skin draws itself (parts.dart); none by default.
+  /// The light behind the crowning: the felt, lit.
+  Color get feltGlow => Color.lerp(felt, const Color(0xFFFFFFFF), 0.08)!;
+
+  SkinParts get parts => const SkinParts();
 
   /// The Material theme: buttons, dialogs, the app bar, in this look.
   ThemeData theme();

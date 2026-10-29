@@ -85,8 +85,12 @@ class SeatToken extends StatelessWidget {
         fontSize: size * (initial.length > 1 ? 0.36 : 0.46),
         strokeWidth: size * 0.07);
     final ringColor = ring;
-    final ringWidth = isKing || highlighted || picking ? 3.0 : 2.0;
+    final base = skin.tokenLook.ringWidth;
+    final ringWidth = isKing || highlighted || picking ? base + 1 : base;
     final fill = player.color;
+    // A skin may seat everyone at a plain disc rather than their houses'
+    // shapes.
+    final shape = skin.tokenLook.shaped ? this.shape : null;
     final token = shape == null
         ? AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -118,7 +122,7 @@ class SeatToken extends StatelessWidget {
             ),
           )
         : ShapedToken(
-            shape: shape!,
+            shape: shape,
             size: size,
             color: fill,
             ring: ringColor,

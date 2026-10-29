@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
@@ -76,6 +77,16 @@ class OrnateBorder extends ShapeBorder {
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    // A flat skin's panels have one fine rule in the accent.
+    if (skin.panelLook.style == PanelStyle.flat) {
+      canvas.drawRRect(
+          _r(rect.deflate(1)),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = skin.gold.withValues(alpha: 0.6));
+      return;
+    }
     final gold = Paint()
       ..style = PaintingStyle.stroke
       ..color = skin.gold;

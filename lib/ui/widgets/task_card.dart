@@ -336,7 +336,7 @@ class TableCard extends StatelessWidget {
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0x99D4A63A)),
+          border: Border.all(color: skin.gold.withValues(alpha: 0x99 / 255)),
         ),
         alignment: Alignment.center,
         child: CrownIcon(size: width * 0.28),
@@ -361,7 +361,7 @@ class TableCard extends StatelessWidget {
               margin: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0x99D4A63A)),
+                border: Border.all(color: skin.gold.withValues(alpha: 0x99 / 255)),
               ),
             ),
           ),

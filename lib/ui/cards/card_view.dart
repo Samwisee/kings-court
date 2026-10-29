@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../skin/court/emblems.g.dart';
+import '../../skin/looks.dart';
+import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
+
+export 'card_back.dart';
 
 /// A playing card drawn on screen. Plain suits show their pip. Each Court
 /// Card has a face of its own, all framed in gold: the Joker's jester cap
@@ -43,26 +47,45 @@ class PlayingCardView extends StatelessWidget {
 
   static double heightFor(double width) => width * 1.42;
 
-  /// Each Court Card's cloth: Joker, Jack, Queen, King.
-  static const _cloth = [
-    [Color(0xFF5A2F87), Color(0xFF241238)],
-    [Color(0xFF13734A), Color(0xFF062A1B)],
-    [Color(0xFF2849A8), Color(0xFF0B1A45)],
-    [Color(0xFF9A1E31), Color(0xFF3A0610)],
-  ];
-
   bool get _isKing => card == PlayingCard.king;
 
-  Color _inkColour(Skin skin) => skin.suitColour(card.suit);
+  /// The ink of its rank and suit: the suit's colour, or for a Court Card
+  /// drawn as a letter, its cloth's.
+  Color _inkColour(Skin skin) => card.isCourt && _letters(skin)
+      ? skin.cardLook.cloth[card.rank - 1][0]
+      : skin.suitColour(card.suit);
+
+  static bool _letters(Skin skin) => skin.cardLook.courtStyle == CourtCardStyle.letters;
 
   // Its own layer: the emblems are costly to draw, so a card is drawn once and kept while things move around it.
   @override
-  Widget build(BuildContext context) => RepaintBoundary(child: _build(context));
+  Widget build(BuildContext context) {
+    final part = context.skin.parts.cardFace;
+    Widget standard() => _build(context);
+    return RepaintBoundary(
+        child: part == null
+            ? standard()
+            : part(
+                context,
+                CardFaceSpec(
+                    card: card,
+                    width: width,
+                    dimmed: dimmed,
+                    glow: glow,
+                    edge: edge,
+                    marks: marks,
+                    kit: partKit,
+                    standard: standard)));
+  }
 
   Widget _build(BuildContext context) {
     final skin = context.skin;
+    final look = skin.cardLook;
+    // A Court Card's cloth (its emblem on it), or the card stock with the
+    // card's letter in its colours.
+    final cloth = card.isCourt && !_letters(skin);
     final h = heightFor(width);
-    final outer = width * 0.1;
+    final outer = width * look.radius;
     final r = BorderRadius.circular(outer - skin.outlineWidth);
     final corner = TextStyle(
         fontFamily: card.isCourt ? skin.displayFont : skin.bodyFont,
@@ -75,8 +98,10 @@ class PlayingCardView extends StatelessWidget {
             ? marks.first
             : glow
                 ? skin.gold
-                : card.isCourt
+                : cloth
                     ? skin.gold
+                    : card.isCourt
+                    ? look.cloth[card.rank - 1][0]
                     // Number cards keep the same band in their own white,
                     // so their lines sit where a player's colour would.
                     : skin.card);
@@ -101,18 +126,18 @@ class PlayingCardView extends StatelessWidget {
           else if (marks.isNotEmpty)
             BoxShadow(color: marks.first.withValues(alpha: 0.85), blurRadius: 10)
           else if (_isKing)
-            const BoxShadow(color: Color(0x88D4A63A), blurRadius: 8)
+            BoxShadow(color: skin.gold.withValues(alpha: 0x88 / 255), blurRadius: 8)
           else
             const BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
         ],
         child: Container(
         decoration: BoxDecoration(
-          color: card.isCourt ? null : skin.card,
-          gradient: card.isCourt
+          color: cloth ? null : skin.card,
+          gradient: cloth
               ? LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: _cloth[card.rank - 1])
+                  colors: look.cloth[card.rank - 1])
               : null,
           borderRadius: r,
           border: Border.all(color: borderColour, width: borderWidth),
@@ -123,7 +148,7 @@ class PlayingCardView extends StatelessWidget {
         child: Stack(
           children: [
             // Each Court Card's cloth has its own pattern.
-            if (card.isCourt)
+            if (cloth)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: r,
@@ -138,7 +163,7 @@ class PlayingCardView extends StatelessWidget {
               ),
             // (The Stack already sits inside the coloured border, so the
             // line goes right at its edge, touching the colour.)
-            if (coloured || !card.isCourt)
+            if (coloured || !cloth)
               Positioned.fill(
                 child: Padding(
                   padding: EdgeInsets.zero,
@@ -154,23 +179,22 @@ class PlayingCardView extends StatelessWidget {
             // Every card has an inner frame, as on the printed deck: gold
             // on the Court Cards, a fine dark rule on the rest (unless a
             // player's colour is already framed in dark).
-            if (card.isCourt)
+            if (cloth)
             Positioned.fill(
               child: Container(
                 margin: EdgeInsets.all(width * 0.06),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(width * 0.06),
-                  border: Border.all(
-                      color: card.isCourt
-                          ? const Color(0x99D4A63A)
-                          : skin.outlineColour.withValues(alpha: 0.45)),
+                  border: Border.all(color: look.courtFrame),
                 ),
               ),
             ),
-            if (card.isCourt)
+            if (cloth)
               Positioned.fill(
-                child: CustomPaint(painter: _Emblem(card.rank, _cloth[card.rank - 1][0])),
+                child: CustomPaint(painter: _Emblem(card.rank, look.cloth[card.rank - 1][0])),
               )
+            else if (card.isCourt)
+              _letterFace(look.cloth[card.rank - 1])
             else
               Center(
                 child: Padding(
@@ -228,6 +252,35 @@ class PlayingCardView extends StatelessWidget {
   }
 
   Widget _face(Skin skin) => SuitIcon(card.suit, size: width * 0.44, color: _inkColour(skin));
+
+  /// A Court Card on the card stock: a band of its colour down the side
+  /// and its letter large, the King's with the crown over it.
+  /// A Court Card's face in the letters style: the card's letter in its
+  /// corner, and its emblem on a roundel of its colours in the middle.
+  Widget _letterFace(List<Color> cloth) {
+    final d = width * 0.68;
+    return Positioned.fill(
+      child: Align(
+        alignment: const Alignment(0, 0.2),
+        child: Container(
+          width: d,
+          height: d,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(center: const Alignment(-0.3, -0.4), radius: 1, colors: cloth),
+            boxShadow: [
+              BoxShadow(
+                  color: cloth[1].withValues(alpha: 0.35),
+                  blurRadius: width * 0.05,
+                  offset: Offset(0, width * 0.02)),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: CustomPaint(size: Size(d * 0.9, d), painter: _Emblem(card.rank, cloth[0])),
+        ),
+      ),
+    );
+  }
 }
 
 // The emblems' gold: the court skin's art (skin/court).
@@ -412,107 +465,4 @@ class _Lattice extends CustomPainter {
 
   @override
   bool shouldRepaint(_Lattice old) => false;
-}
-
-/// The back of a card, for hands you can't see and cards being dealt.
-class CardBack extends StatelessWidget {
-  const CardBack({super.key, required this.width});
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    return Container(
-      width: width,
-      height: PlayingCardView.heightFor(width),
-      decoration: BoxDecoration(
-        color: const Color(0xFF5A1620),
-        borderRadius: BorderRadius.circular(width * 0.1),
-        border: Border.all(color: skin.gold, width: 1.5 + skin.outlineWidth),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-        ],
-      ),
-      foregroundDecoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(width * 0.1),
-        border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
-      ),
-      alignment: Alignment.center,
-      child: CrownIcon(size: width * 0.5),
-    );
-  }
-}
-
-/// Turns a card over: the back while [face] runs from 0 to 0.5, the front
-/// after, like a card flipped on the table.
-class FlipIn extends StatelessWidget {
-  const FlipIn(
-      {super.key, required this.t, required this.front, required this.back});
-  final double t;
-  final Widget front;
-  final Widget back;
-
-  @override
-  Widget build(BuildContext context) {
-    // Once face up, no 3D transform at all: on the web a lingering
-    // perspective layer can cut a card off as it's drawn.
-    if (t >= 1) return front;
-    final angle = (1 - t) * math.pi;
-    final showBack = angle > math.pi / 2;
-    return Transform(
-      alignment: Alignment.center,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.0015)
-        ..rotateY(angle),
-      child: showBack
-          ? Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..rotateY(math.pi),
-              child: back)
-          : front,
-    );
-  }
-}
-
-/// A deck being shuffled: the two halves part and riffle together a few
-/// times. Plays once.
-class ShufflingDeck extends StatelessWidget {
-  const ShufflingDeck({super.key, required this.width});
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final h = PlayingCardView.heightFor(width);
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 1400),
-      builder: (context, t, _) {
-        // Three riffles: the halves swing apart and back.
-        final phase = (t * 3) % 1;
-        final apart = t >= 1 ? 0.0 : math.sin(phase * math.pi);
-        return SizedBox(
-          width: width * 2.6,
-          height: h + 20,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              for (int i = 0; i < 4; i++)
-                Transform.translate(
-                  offset: Offset(-apart * width * 0.7 + i * 1.5, -i * 1.5),
-                  child: Transform.rotate(
-                      angle: -apart * 0.18, child: CardBack(width: width)),
-                ),
-              for (int i = 0; i < 4; i++)
-                Transform.translate(
-                  offset: Offset(apart * width * 0.7 + i * 1.5,
-                      -i * 1.5 - (phase < 0.5 ? 0 : 4)),
-                  child: Transform.rotate(
-                      angle: apart * 0.18, child: CardBack(width: width)),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }

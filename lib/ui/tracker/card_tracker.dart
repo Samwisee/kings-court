@@ -408,7 +408,7 @@ class _CornerNotch extends CustomPainter {
     final rect = Offset.zero & size;
     canvas.drawRRect(
         RRect.fromRectAndCorners(rect, topLeft: r, bottomRight: r),
-        Paint()..color = held ? const Color(0x33D4A63A) : const Color(0x33000000));
+        Paint()..color = held ? skin.gold.withValues(alpha: 0x33 / 255) : const Color(0x33000000));
     final edge = Path()
       ..moveTo(0, size.height)
       ..lineTo(0, r.y)

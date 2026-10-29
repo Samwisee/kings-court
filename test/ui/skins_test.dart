@@ -29,6 +29,12 @@ void main() {
     }
     expect(skinById('plain'), isA<PlainSkin>());
     expect(skinById('gone'), same(skins.first));
+    // The menu steps through them in order, round to the first, past any
+    // not owned.
+    expect(skinAfter(skins.first, (_) => true), same(skins[1]));
+    expect(skinAfter(skins.last, (_) => true), same(skins.first));
+    expect(skinAfter(skins.first, (s) => s == skins.last), same(skins.last));
+    expect(skinAfter(skins.first, (_) => false), isNull);
   });
 
   testWidgets('A skin not owned can’t be chosen', (tester) async {
@@ -47,7 +53,7 @@ void main() {
     expect(chosen, isNull);
   });
 
-  testWidgets('The menu switches to the Plain look and remembers it', (tester) async {
+  testWidgets('The menu steps through the looks and remembers the one worn', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
@@ -62,10 +68,20 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Plain look'));
+    await tester.tap(find.text('Look: Court'));
     await tester.pumpAndSettle();
     expect(worn().id, 'plain');
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('kingsCourt.skin'), 'plain');
+    // Round them all and back to the court.
+    for (final s in skins.skip(2)) {
+      if (find.text('Look: ${worn().name}').evaluate().isEmpty) {
+        await tester.tap(find.byTooltip('Menu'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Look: ${worn().name}'));
+      await tester.pumpAndSettle();
+      expect(worn().id, s.id);
+    }
   });
 }

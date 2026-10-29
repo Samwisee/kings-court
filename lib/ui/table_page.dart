@@ -1465,7 +1465,7 @@ class HomePageState extends State<HomePage>
       padding: const EdgeInsets.fromLTRB(14, 2, 14, 16),
       decoration: BoxDecoration(
         color: skin.feltDeep,
-        border: const Border(top: BorderSide(color: Color(0x66D4A63A))),
+        border: Border(top: BorderSide(color: skin.gold.withValues(alpha: 0x66 / 255))),
       ),
       child: Center(
         child: ConstrainedBox(
@@ -2407,10 +2407,14 @@ class HomePageState extends State<HomePage>
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
+                                gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
-                                  colors: [Color(0xFF7A1F2C), Color(0xFF3E0C14)],
+                                  colors: skin.cardLook.taskBack ??
+                                      [
+                                        skin.cardLook.back,
+                                        Color.lerp(skin.cardLook.back, Colors.black, 0.5)!
+                                      ],
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: skin.gold, width: 1.5),
@@ -3582,8 +3586,8 @@ class HomePageState extends State<HomePage>
           case 'bug':
             showBugReport(context, details: _bugDetails);
           case 'skin':
-            final next = context.skin.id == skins[1].id ? skins[0] : skins[1];
-            if (SkinScope.choose(context, next)) {
+            final next = skinAfter(context.skin, (s) => SkinScope.owns(context, s));
+            if (next != null && SkinScope.choose(context, next)) {
               // Everything is drawn again, the cards kept on their layers too.
               void redraw(Element e) {
                 e.markNeedsBuild();
@@ -3628,12 +3632,8 @@ class HomePageState extends State<HomePage>
         // For colour-blind players: no two suits share a colour.
         _menuItem('suits', Icons.palette_outlined, Strings.fourColourSuits,
             on: Settings.fourColourSuits),
-        // The quiet look beside the court's (a lock if it isn't owned).
-        _menuItem('skin', Icons.brush_outlined,
-            SkinScope.owns(context, skins[1])
-                ? Strings.plainLook
-                : '${Strings.plainLook} ${Strings.locked}',
-            on: context.skin.id == skins[1].id),
+        // The look worn; tapped, the next one owned.
+        _menuItem('skin', Icons.brush_outlined, Strings.look(context.skin.name)),
         // On a computer: the keyboard shortcuts, beside the table.
         if (_desktop)
           _menuItem('keys', Icons.keyboard_outlined, Strings.keyboardShortcuts,

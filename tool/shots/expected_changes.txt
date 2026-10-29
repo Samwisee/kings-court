@@ -4,3 +4,21 @@
 # taken (keep the `~` lines: those screenshots vary from run to run and are
 # never compared).
 ~zz-room.png: the throne room's figures move on a clock of their own, so it varies run to run (shelved Dynasty; not guarded)
+wide-screen-menu.png: the menu's skin row names the look worn ("Look: Court") and steps through every skin, instead of the Plain look's on/off pip
+wide-screen-4-four-colour.png: the same menu row
+wide-table-menu.png: the same menu row
+plain-0-welcome.png: Plain is a design of its own now; its set is taken for every skin as skin-<id>-*
+plain-1-setup.png: as plain-0-welcome
+plain-2-table.png: as plain-0-welcome
+plain-3-menu.png: as plain-0-welcome
+skin-court-pieces.png: new, every skin's pieces side by side
+skin-plain-pieces.png: new, as skin-court-pieces
+skin-plain-0-welcome.png: new, Plain redesigned (was plain-0-welcome)
+skin-plain-1-setup.png: new, as skin-plain-0-welcome
+skin-plain-2-table.png: new, as skin-plain-0-welcome
+skin-plain-3-menu.png: new, as skin-plain-0-welcome
+skin-lacquer-pieces.png: new, the Lacquer skin
+skin-lacquer-0-welcome.png: new, the Lacquer skin
+skin-lacquer-1-setup.png: new, the Lacquer skin
+skin-lacquer-2-table.png: new, the Lacquer skin
+skin-lacquer-3-menu.png: new, the Lacquer skin

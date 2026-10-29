@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
+import '../../skin/looks.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
@@ -34,12 +35,10 @@ class MiniCard extends StatelessWidget {
   /// The trick it was played in, shown in its corner.
   final int? trick;
 
-  static const _cloth = [
-    Color(0xFF4A2670),
-    Color(0xFF0F5B3A),
-    Color(0xFF203C8C),
-    Color(0xFF7E1828),
-  ];
+  Color _small(CardLook look) {
+    final i = card.rank - 1;
+    return look.small?[i] ?? Color.lerp(look.cloth[i][0], look.cloth[i][1], 0.5)!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +46,20 @@ class MiniCard extends StatelessWidget {
     final court = card.isCourt;
     final felt = skin.feltDeep;
     final fade = faint ? 0.55 : 0.0;
+    // A Court Card on its cloth in gold, or (a skin whose Court Cards are
+    // letters) on the card stock in its cloth's colour.
+    final cloth = court && skin.cardLook.courtStyle == CourtCardStyle.emblems;
     final ink = Color.lerp(
-        court ? skin.gold : skin.suitColour(card.suit), felt, fade)!;
+        cloth
+            ? skin.gold
+            : court
+                ? skin.cardLook.cloth[card.rank - 1][0]
+                : skin.suitColour(card.suit),
+        felt,
+        fade)!;
     final face = Color.lerp(
-        court
-            ? Color.lerp(_cloth[card.rank - 1], Colors.black, dimmed ? 0.5 : 0)!
+        cloth
+            ? Color.lerp(_small(skin.cardLook), Colors.black, dimmed ? 0.5 : 0)!
             : dimmed
                 ? const Color(0xFFB4AFA4)
                 : skin.card,
@@ -106,7 +114,7 @@ class MiniCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(r - 1),
           border: Border.all(
               color: edge ??
-                  Color.lerp(court ? skin.gold : const Color(0xFFD9D2C3),
+                  Color.lerp(cloth ? skin.gold : const Color(0xFFD9D2C3),
                       felt, fade)!,
               width: edgeW),
         ),

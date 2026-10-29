@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../looks.dart';
 import '../skin.dart';
 import '../theme.dart' as court;
 
@@ -15,7 +16,7 @@ class CourtSkin extends Skin {
   @override
   String get id => 'court';
   @override
-  String get name => "The King's Court";
+  String get name => 'Court';
 
   @override
   Color get felt => court.Palette.felt;
@@ -111,6 +112,51 @@ class CourtSkin extends Skin {
   Color get paper => court.DialogStyle.paper;
   @override
   TextStyle get paperTitle => court.DialogStyle.paperTitle;
+
+  @override
+  TableLook get tableLook => const TableLook(
+        style: TableStyle.rimmed,
+        outerRule: Color(0xCCD4A63A),
+        innerRule: Color(0x66D4A63A),
+        panelRule: Color(0x99D4A63A),
+        panelInnerRule: Color(0x66D4A63A),
+      );
+
+  @override
+  PanelLook get panelLook => PanelLook(
+        style: PanelStyle.ornate,
+        court: const [Color(0xFF15583A), Color(0xFF0C3A25), Color(0xFF07291A)],
+        won: [goldLight, gold, const Color(0xFFB98A24)],
+        lost: const [Color(0xFF3A1218), Color(0xFF1C0A0E), Color(0xFF12080A)],
+        courtMedallion: [const Color(0xFF1E6B47), feltDeep],
+        wonMedallion: [goldPale, gold],
+        lostMedallion: const [Color(0xFF5A1A22), Color(0xFF2A0E12)],
+      );
+
+  @override
+  CardLook get cardLook => const CardLook(
+        courtStyle: CourtCardStyle.emblems,
+        cloth: [
+          [Color(0xFF5A2F87), Color(0xFF241238)],
+          [Color(0xFF13734A), Color(0xFF062A1B)],
+          [Color(0xFF2849A8), Color(0xFF0B1A45)],
+          [Color(0xFF9A1E31), Color(0xFF3A0610)],
+        ],
+        courtFrame: Color(0x99D4A63A),
+        back: Color(0xFF5A1620),
+        backEdge: Color(0xFFD4A63A),
+        small: [Color(0xFF4A2670), Color(0xFF0F5B3A), Color(0xFF203C8C), Color(0xFF7E1828)],
+        taskBack: [Color(0xFF7A1F2C), Color(0xFF3E0C14)],
+      );
+
+  @override
+  Color get feltGlow => const Color(0xFF176141);
+
+  @override
+  TokenLook get tokenLook => const TokenLook();
+
+  @override
+  ButtonLook get buttonLook => const ButtonLook();
 
   @override
   ThemeData theme() => court.buildTheme();

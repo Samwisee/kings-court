@@ -12,7 +12,8 @@ import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
-import 'package:kings_court/skin/plain/plain_skin.dart';
+import 'package:kings_court/skin/skin_scope.dart';
+import 'package:kings_court/skin/skins.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/dynasty/hall_pieces.dart';
@@ -376,17 +377,20 @@ void main() {
     });
   }
 
-  testWidgets('The Plain skin: front page, setup, a round, the menu', (tester) async {
+  // Every skin beside the court's, wherever it's listed: the front page,
+  // setup, a round and the menu.
+  for (final skin in skins.skip(1)) {
+  testWidgets('The ${skin.name} skin: front page, setup, a round, the menu', (tester) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     HomePageTestHooks.fast();
-    await tester.pumpWidget(const TheKingsCourtApp(skin: PlainSkin()));
+    await tester.pumpWidget(TheKingsCourtApp(skin: skin));
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-0-welcome.png'));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-0-welcome.png'));
     await tester.tap(find.text('New game'));
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-1-setup.png'));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-1-setup.png'));
     await tester.tap(find.text('Single player'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Free play'));
@@ -399,13 +403,66 @@ void main() {
     for (var i = 0; i < 160; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-2-table.png'));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-2-table.png'));
     await tester.tap(find.byTooltip('Menu'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/plain-3-menu.png'));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-3-menu.png'));
   });
+  }
+
+  // Every skin's pieces side by side: the Court Cards and a few others,
+  // large and small, a back, and the seats (the King's, whoever's turn).
+  for (final skin in skins) {
+    testWidgets('The ${skin.name} skin\'s pieces', (tester) async {
+      tester.view.physicalSize = const Size(1600, 900);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      final players = [
+        for (var i = 0; i < 4; i++) Player('P$i', colorValue: skin.players[i].toARGB32())
+      ];
+      await tester.pumpWidget(SkinScope(
+        skin: skin,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: skin.theme(),
+          home: Scaffold(
+            backgroundColor: skin.felt,
+            body: Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Wrap(spacing: 12, runSpacing: 12, children: [
+                  for (final c in [
+                    PlayingCard.joker,
+                    PlayingCard.jack,
+                    PlayingCard.queen,
+                    PlayingCard.king,
+                    const PlayingCard(Suit.hearts, 7),
+                    const PlayingCard(Suit.spades, 3),
+                  ])
+                    PlayingCardView(card: c, width: 96),
+                  const CardBack(width: 96),
+                ]),
+                const SizedBox(height: 16),
+                Wrap(spacing: 8, children: [
+                  for (final c in [PlayingCard.king, const PlayingCard(Suit.diamonds, 9), const PlayingCard(Suit.clubs, 1)])
+                    PlayingCardView(card: c, width: 44),
+                  const CardBack(width: 44),
+                ]),
+                const SizedBox(height: 16),
+                Wrap(spacing: 16, children: [
+                  for (var i = 0; i < players.length; i++)
+                    SeatToken(player: players[i], isKing: i == 0, highlighted: i == 1),
+                ]),
+              ]),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump();
+      await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-pieces.png'));
+    });
+  }
 
   testWidgets('The front page, wide', (tester) async {
     tester.view.physicalSize = const Size(3840, 2160);

@@ -62,6 +62,32 @@ class _GlowButtonState extends State<GlowButton>
     final skin = context.skin;
     final shape = Theme.of(context).filledButtonTheme.style?.shape?.resolve({}) ??
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+    final button = KeyFocusRing(
+      on: widget.focused,
+      radius: 12,
+      child: FilledButton(
+        onPressed: widget.onPressed,
+        style: FilledButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            minimumSize: const Size(0, 40),
+            padding: const EdgeInsets.symmetric(horizontal: 18)),
+        child: Text(widget.label),
+      ),
+    );
+    // A quieter skin marks it with a steady light instead of a pulse and
+    // a sweep.
+    if (!skin.buttonLook.glow) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            shape: shape,
+            shadows: [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 10)],
+          ),
+          child: button,
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: AnimatedBuilder(
@@ -105,18 +131,7 @@ class _GlowButtonState extends State<GlowButton>
             ]),
           );
         },
-        child: KeyFocusRing(
-          on: widget.focused,
-          radius: 12,
-          child: FilledButton(
-            onPressed: widget.onPressed,
-            style: FilledButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                minimumSize: const Size(0, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 18)),
-            child: Text(widget.label),
-          ),
-        ),
+        child: button,
       ),
     );
   }

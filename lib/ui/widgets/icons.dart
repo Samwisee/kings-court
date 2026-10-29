@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../skin/court/suits.g.dart';
+import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 
@@ -339,3 +340,10 @@ class _SlashPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SlashPainter old) => old.color != color || old.skin != skin;
 }
+
+Widget _suitMark(Suit suit, double size, Color colour) =>
+    SuitIcon(suit, size: size, color: colour);
+Widget _crownMark(double size, {Color? colour}) => CrownIcon(size: size, color: colour);
+
+/// The game's own pieces, for parts a skin draws itself (skin/parts.dart).
+const partKit = PartKit(suitMark: _suitMark, crown: _crownMark);
