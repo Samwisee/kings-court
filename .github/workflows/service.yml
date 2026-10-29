@@ -24,7 +24,8 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      WRANGLER: npx --yes wrangler@4
+      # One version, so a new release can't change what the steps read.
+      WRANGLER: npx --yes wrangler@4.86.0
     steps:
       - uses: actions/checkout@v4
       - name: Set up yet?
@@ -48,12 +49,12 @@ jobs:
         if: steps.ready.outputs.go == 'yes'
         working-directory: tool/bug_worker
         run: |
-          find() { $WRANGLER d1 list --json | jq -r '.[] | select(.name=="kings-court-rounds") | .uuid'; }
+          find() { $WRANGLER d1 list --json 2> ../../out/d1.txt | tee -a ../../out/d1.txt | jq -r '.[] | select(.name=="kings-court-rounds") | .uuid'; }
           id=$(find)
           if [ -z "$id" ]; then $WRANGLER d1 create kings-court-rounds; id=$(find); fi
           test -n "$id"
           sed -i "s/DATABASE_ID/$id/" wrangler.toml
-          $WRANGLER d1 execute kings-court-rounds --remote --file schema.sql
+          $WRANGLER d1 execute kings-court-rounds --remote --file schema.sql >> ../../out/d1.txt 2>&1
           echo "database: kings-court-rounds ($id)" >> ../../out/status.txt
       - name: Deploy
         if: steps.ready.outputs.go == 'yes'
@@ -91,6 +92,7 @@ jobs:
         if: always()
         run: |
           cd out
+          touch status.txt
           git init -q -b service
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Service deploy for ${GITHUB_SHA}"
