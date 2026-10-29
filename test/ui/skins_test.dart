@@ -49,7 +49,6 @@ void main() {
 
   testWidgets('The menu switches to the Plain look and remembers it', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    // A phone, where the menu drops down from the top bar.
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -58,6 +57,9 @@ void main() {
     await tester.pumpAndSettle();
     Skin worn() => SkinScope.of(tester.element(find.byType(HomePage)));
     expect(worn().id, 'court');
+    // No menu on the front page; it's there once setup opens.
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Plain look'));
