@@ -5,6 +5,8 @@ library;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show AxisDirection;
 
+import '../../engine/cards.dart';
+import '../../engine/round.dart';
 import '../round_table/geometry.dart';
 
 /// The stop in [stops] nearest [r]: across first, then up or down.
@@ -128,4 +130,45 @@ KbStop? stopAt(List<KbStop> stops, {required int row, Object? task, Object? card
     if (row == 2) return st;
   }
   return null;
+}
+
+/// The arrow keys: they keep moving while held.
+const arrowKeys = [
+  LogicalKeyboardKey.arrowLeft,
+  LogicalKeyboardKey.arrowRight,
+  LogicalKeyboardKey.arrowUp,
+  LogicalKeyboardKey.arrowDown,
+];
+
+/// Every key the on-screen table answers to.
+final tableKeys = {
+  LogicalKeyboardKey.space,
+  LogicalKeyboardKey.keyS,
+  ...arrowKeys,
+  LogicalKeyboardKey.enter,
+  LogicalKeyboardKey.numpadEnter,
+  ...cardKeys,
+};
+
+/// Whether the table takes [e]: a press of one of its keys, or an arrow
+/// held down (everything else acts once).
+bool tableTakes(KeyEvent e) =>
+    tableKeys.contains(e.logicalKey) &&
+    (e is KeyDownEvent || (e is KeyRepeatEvent && arrowKeys.contains(e.logicalKey)));
+
+/// The cards in your hand ([you]'s) the arrows stop on: those you may
+/// play now, or show when [showing], or play when your turn comes; all of
+/// them when there are none.
+List<PlayingCard> kbCards(Round r, int you, {required bool showing}) {
+  final hand = r.hands.length > you ? r.hands[you] : const <PlayingCard>[];
+  final playable = [
+    for (final c in hand)
+      if (showing
+          ? r.revealFor(you, c) != null
+          : r.turn == you
+              ? r.legalFor(you).contains(c)
+              : r.current.isEmpty || legalPlays(hand, r.current.first).contains(c))
+        c
+  ];
+  return playable.isEmpty ? hand : playable;
 }

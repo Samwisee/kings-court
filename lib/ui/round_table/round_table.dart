@@ -90,6 +90,33 @@ class RoundTableController {
           upright: upright,
           skin: skin);
 
+  /// The table's layout as a save keeps it beside [game].
+  Map<String, dynamic> saveData(GameState game) => {
+        'cardWidth': cardWidth,
+        'dealt': dealtFor == game.dealId,
+        'pos': [
+          for (final t in game.tasks)
+            if (pos[t] != null) [pos[t]!.dx, pos[t]!.dy] else null,
+        ],
+        'tilt': [for (final t in game.tasks) tilt[t] ?? 0.0],
+      };
+
+  /// The layout a save kept ([saveData]) back on the table, when it's
+  /// whole: then the deal is already laid out, with no deal to play.
+  void restore(Map<String, dynamic> data, GameState g) {
+    final pos = data['pos'] as List;
+    final tilt = data['tilt'] as List;
+    if (data['dealt'] != true || pos.length != g.tasks.length || pos.any((p) => p == null)) return;
+    cardWidth = (data['cardWidth'] as num).toDouble();
+    for (var i = 0; i < g.tasks.length; i++) {
+      final p = pos[i] as List;
+      this.pos[g.tasks[i]] = Offset((p[0] as num).toDouble(), (p[1] as num).toDouble());
+      this.tilt[g.tasks[i]] = (tilt[i] as num).toDouble();
+    }
+    order = List.of(g.tasks);
+    dealtFor = g.dealId;
+  }
+
   /// Clears the table for a new deal.
   void reset() {
     pos.clear();

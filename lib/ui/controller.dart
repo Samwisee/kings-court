@@ -25,8 +25,19 @@ import '../net/table_link.dart';
 class GameController extends ChangeNotifier {
   GameController({TableLink? link}) : link = link ?? LocalLink();
 
-  /// Where moves go: this device, for now (see net/table_link.dart).
-  final TableLink link;
+  /// Where moves go: this device, or a room online (see
+  /// net/table_link.dart).
+  TableLink link;
+
+  /// Plays through [next] from now on (the last link is closed).
+  void useLink(TableLink next) {
+    if (identical(next, link)) return;
+    link.dispose();
+    link = next;
+  }
+
+  /// An online game: it lives in its room, so it isn't saved here.
+  bool online = false;
 
   /// The seat this device plays from. On one device it's seat 0, drawn at
   /// the bottom of the table; online it's the seat joined in.
@@ -93,7 +104,7 @@ class GameController extends ChangeNotifier {
     _saveTimer?.cancel();
     _saveTimer = null;
     // The tutorial is never saved, so it can't replace a game in progress.
-    if (_game.isTutorial) return;
+    if (_game.isTutorial || online) return;
     try {
       final data = {
         'game': _game.toJson(),

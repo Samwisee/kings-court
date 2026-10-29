@@ -54,7 +54,11 @@ class SetupPanel extends StatefulWidget {
     this.onContinue,
     this.onSound,
     this.newPlayer = false,
+    this.onOnline,
   });
+
+  /// Multiplayer, when there's a service to play through.
+  final VoidCallback? onOnline;
 
   /// Sounds switched on or off on the last step (the same setting as in
   /// the menu).
@@ -280,8 +284,8 @@ class _SetupPanelState extends State<SetupPanel> {
                   step++;
                 })),
         tile('Multiplayer', 'Play with friends online, each on your own phone.',
-            Icons.groups_rounded, null,
-            badge: '(Coming soon)'),
+            Icons.groups_rounded, widget.onOnline,
+            badge: widget.onOnline == null ? '(Coming soon)' : null),
         tile('In person',
             'Round a real table with a real deck; the app keeps the tasks.',
             Icons.table_restaurant_rounded, () => setState(() {

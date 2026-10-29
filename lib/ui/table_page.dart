@@ -35,9 +35,13 @@ import '../modes/chronicle/chapters.dart';
 import '../modes/modes.dart';
 import '../modes/progress.dart';
 import '../modes/tutorial/lessons.dart';
+import '../net/online_table.dart';
 import '../net/table_link.dart';
 import '../platform/analytics.dart';
+import '../platform/build_info.dart';
 import '../platform/game_log.dart';
+import '../platform/room_socket.dart';
+import '../platform/service.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
 import '../skin/skin_scope.dart';
@@ -55,6 +59,8 @@ import 'menu/menu.dart';
 import 'menu/menu_entries.dart';
 import 'modes/tutorial/coach.dart';
 import 'modes/tutorial/tutorial_intro.dart';
+import 'online/online_setup.dart';
+import 'online/room_play.dart';
 import 'overlays/crowning.dart';
 import 'overlays/decree.dart';
 import 'overlays/outcome_card.dart';
@@ -72,6 +78,7 @@ import 'table/hand_drag.dart';
 import 'table/keyboard.dart';
 import 'table/open_task.dart';
 import 'table/seats.dart';
+import 'table/table_words.dart';
 import 'table/task_flights.dart';
 import 'table/trick_view.dart';
 import 'tracker/card_tracker.dart';
@@ -99,6 +106,9 @@ class HomePageTestHooks {
   /// When set, every new game deals from this seed and the courtiers think
   /// from it too, so a run (the screenshots) comes out the same every time.
   static int? seed;
+
+  /// Rooms to play multiplayer through, in place of the web service's.
+  static SocketOpener? rooms;
 }
 
 class HomePage extends StatefulWidget {
@@ -226,15 +236,7 @@ class HomePageState extends State<HomePage>
     super.initState();
     _moves = _link.moves.listen((m) => _onAction(m.action));
     // What a save holds beside the game: the real table's layout.
-    _ctrl.saveExtras = () => {
-          'cardWidth': _table.cardWidth,
-          'dealt': _table.dealtFor == game.dealId,
-          'pos': [
-            for (final t in game.tasks)
-              if (_table.pos[t] != null) [_table.pos[t]!.dx, _table.pos[t]!.dy] else null,
-          ],
-          'tilt': [for (final t in game.tasks) _table.tilt[t] ?? 0.0],
-        };
+    _ctrl.saveExtras = () => _table.saveData(game);
     _ctrl.knownBest = () => _bestStreak;
     WidgetsBinding.instance.addObserver(this);
     // Create the animation controllers now, so dispose never makes one.
@@ -265,26 +267,7 @@ class HomePageState extends State<HomePage>
       }
       return false;
     }
-    // Arrows keep moving while held; everything else acts once.
-    const arrows = [
-      LogicalKeyboardKey.arrowLeft,
-      LogicalKeyboardKey.arrowRight,
-      LogicalKeyboardKey.arrowUp,
-      LogicalKeyboardKey.arrowDown,
-    ];
-    if (e is! KeyDownEvent && !(e is KeyRepeatEvent && arrows.contains(key))) return false;
-    final handled = [
-      LogicalKeyboardKey.space,
-      LogicalKeyboardKey.keyS,
-      LogicalKeyboardKey.arrowLeft,
-      LogicalKeyboardKey.arrowRight,
-      LogicalKeyboardKey.arrowUp,
-      LogicalKeyboardKey.arrowDown,
-      LogicalKeyboardKey.enter,
-      LogicalKeyboardKey.numpadEnter,
-      ...cardKeys,
-    ];
-    if (!handled.contains(key)) return false;
+    if (!tableTakes(e)) return false;
     // Not while typing (player names), or off the on-screen game.
     if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) return false;
     // Nor under a dialog or another page.
@@ -354,19 +337,7 @@ class HomePageState extends State<HomePage>
             (!_yourPick || (_mayTake(t) && _round.mayTake(t, _you))))
           t
     ];
-    final showing = _revealing || _speakPromptDue;
-    final playable = [
-      for (final c in hand)
-        if (showing
-            ? _round.revealFor(_you, c) != null
-            : _round.turn == _you
-                ? _round.legalFor(_you).contains(c)
-                : _round.current.isEmpty ||
-                    legalPlays(hand, _round.current.first).contains(c))
-          c
-    ];
-    final choices = playable.isEmpty ? hand : playable;
-    final stops = _kbStops(open, choices);
+    final stops = _kbStops(open, kbCards(_round, _you, showing: _revealing || _speakPromptDue));
     if (stops.isEmpty) return false;
     final here = _kbHere(stops);
     void go(KbStop to) => _ui(() {
@@ -583,6 +554,7 @@ class HomePageState extends State<HomePage>
   /// Picks up a saved game exactly where it was left.
   void _continueSaved(SavedGame saved) {
     Analytics.event(['continue', saved.game.mode.name]);
+    _leaveRoom();
     final g = saved.game;
     final data = saved.data;
     setState(() {
@@ -594,22 +566,7 @@ class HomePageState extends State<HomePage>
       _setupCount = g.players.length;
       _setupTarget = g.target;
       _resetTable();
-      final pos = data['pos'] as List;
-      final tilt = data['tilt'] as List;
-      final restored = data['dealt'] == true &&
-          pos.length == g.tasks.length &&
-          pos.every((p) => p != null);
-      if (restored) {
-        _table.cardWidth = (data['cardWidth'] as num).toDouble();
-        for (var i = 0; i < g.tasks.length; i++) {
-          final p = pos[i] as List;
-          _table.pos[g.tasks[i]] = Offset(
-              (p[0] as num).toDouble(), (p[1] as num).toDouble());
-          _table.tilt[g.tasks[i]] = (tilt[i] as num).toDouble();
-        }
-        _table.order = List.of(g.tasks);
-        _table.dealtFor = g.dealId; // already on the table: no re-deal
-      }
+      _table.restore(data, g); // already on the table: no re-deal
       _saves = [for (final s in _saves) if (s.game.mode != g.mode) s];
     });
     _keepAwake(true);
@@ -692,7 +649,9 @@ class HomePageState extends State<HomePage>
 
   /// The courtiers' side of the table (game/host.dart): what they do, and
   /// sending it. The page keeps only its own pauses and the timers.
-  late final _host = Host(bot: Bot(), you: _you, send: _link.send);
+  late Host _host = _newHost();
+  Host _newHost() =>
+      Host(bot: Bot(), you: _you, seats: _room?.seats, send: (a) => _link.send(a));
   Timer? _botTimer;
   Timer? _crownTimer;
   final _trickTimers = <Timer>[];
@@ -730,6 +689,7 @@ class HomePageState extends State<HomePage>
   /// sending its cards home.
   bool _autoPlaying = false;
   int _autoDeal = -1;
+  String? _autoSent;
   static Duration autoPlayStep = const Duration(milliseconds: 140);
 
   /// After a trick: if every task is done already with cards still in
@@ -764,8 +724,14 @@ class HomePageState extends State<HomePage>
     // Every card played: the last trick's pause ends the play-out.
     if (c.tricks.length >= c.totalTricks) return;
     if (_lastTrick == null) {
+      // Online, each device plays out its own seat (the host, the rest);
+      // once per card, however long it takes to come back.
       final play = _host.playOutStep(game);
-      if (play != null) _link.send(play);
+      final now = Host.moment(game);
+      if (play != null && now != _autoSent && (play.seat == _you || (_hostsTable && _host.plays(play.seat)))) {
+        _autoSent = now;
+        _link.send(play);
+      }
     }
     _trickTimers.add(Timer(autoPlayStep, _autoStep));
   }
@@ -792,7 +758,7 @@ class HomePageState extends State<HomePage>
     if (!_choosingKing && !_decreePending && _table.dealtFor != game.dealId) {
       _table.dealtFor = game.dealId;
     }
-    if (_choosingKing && _crowning == null && _crownTimer == null) {
+    if (_choosingKing && _hostsTable && _crowning == null && _crownTimer == null) {
       // Long live the King first; the tasks are shuffled out after.
       _crownTimer = Timer(const Duration(milliseconds: 350), () {
         _crownTimer = null;
@@ -873,7 +839,7 @@ class HomePageState extends State<HomePage>
   /// then the first pick is made.
   void _startChoosing() {
     setState(() => _speakAskedFor = game.dealId);
-    _host.openingShows(game).forEach(_link.send);
+    if (_hostsTable) _host.openingShows(game).forEach(_link.send);
   }
 
   Future<void> _botStep() async {
@@ -899,6 +865,11 @@ class HomePageState extends State<HomePage>
         _lastTrick != null) {
       return false;
     }
+    // Online, away from the host: nobody here but you to ask.
+    if (!_hostsTable) {
+      if (yourNumberDue(_round, you: _you) case final i?) unawaited(_askX(game.tasks[i]));
+      return false;
+    }
     _host.bot.budget = botBudget;
     _host.script = _mode.script(game);
     final turn = await _host.act(game, still: () => mounted);
@@ -909,7 +880,8 @@ class HomePageState extends State<HomePage>
       case null:
         return false;
       case YourAnnouncement(:final task):
-        unawaited(_askX(game.tasks[task]));
+        // Yours to say; someone else's online, said on their device.
+        if (game.tasks[task].owner == _you) unawaited(_askX(game.tasks[task]));
         return false;
       default:
         return true;
@@ -942,7 +914,85 @@ class HomePageState extends State<HomePage>
 
   /// Where moves go: this device, for now.
   TableLink get _link => _ctrl.link;
-  late final StreamSubscription<Move> _moves;
+  late StreamSubscription<Move> _moves;
+
+  /// Plays through [link] from now on.
+  void _useLink(TableLink link) {
+    _moves.cancel();
+    _ctrl.useLink(link);
+    _moves = link.moves.listen((m) => _onAction(m.action));
+  }
+
+  // ------------------------------------------------------------ online
+  //
+  // A room online (ui/online/room_play.dart): every device plays the
+  // room's moves in its order; the host's device does the table's work.
+
+  RoomPlay? _room;
+
+  /// Multiplayer setup is open, in place of the New Game panel.
+  bool _onlineSetup = false;
+
+  /// This device moves for the table: the courtiers, the crown, the deal.
+  bool get _hostsTable => _room?.hosting ?? true;
+
+  /// Whether a person plays [seat] (online; elsewhere only you).
+  bool _personAt(int seat) => seat == _you || (_room?.personAt(seat) ?? false);
+
+  Widget _buildOnlineSetup() => OnlineSetup(
+        open: HomePageTestHooks.rooms ?? openRoomSocket,
+        service: Uri.parse(hasService ? serviceUrl : 'https://rooms.test'),
+        session: RoomPlay.session,
+        build: buildVersion,
+        seed: HomePageTestHooks.seed,
+        onCancel: () => setState(() => _onlineSetup = false),
+        onPlay: _playOnline,
+      );
+
+  /// The room's game has started: it's dealt here as on every device.
+  void _playOnline(OnlineTable table) {
+    _leaveRoom();
+    _crownWaiting = false;
+    final room = RoomPlay(table, onChange: (news) {
+      if (!mounted || _room?.room != table) return;
+      _host.seats = table.seats; // the host plays anyone away
+      if (news != null) _showSnack(news, context.skin.feltDeep);
+      setState(() => _room!.nameSeats(game));
+    });
+    setState(() {
+      _onlineSetup = false;
+      _setupArgs = null;
+      _room = room;
+      _ctrl.mySeat = room.seat;
+      _useLink(table);
+      _host = _newHost();
+      game = room.start(modeOf(table.setup!.mode).rules);
+      _ctrl.online = true;
+      _resetTable();
+    });
+    // Anything played before the table was here.
+    table.history.forEach((m) => _onAction(m.action));
+    _keepAwake(true);
+  }
+
+  /// Out of the room, back to playing on this device.
+  void _leaveRoom() {
+    if (_room == null) return;
+    _room!.close();
+    _room = null;
+    _ctrl.online = false;
+    _ctrl.mySeat = 0;
+    _useLink(LocalLink());
+    _host = _newHost();
+  }
+
+  /// Online, only the host deals; anyone else is told so. Whether this
+  /// device may.
+  bool get _mayDeal {
+    if (_hostsTable) return true;
+    _showSnack('The host deals the next round', context.skin.feltDeep);
+    return false;
+  }
 
   /// The mode's say for a new round, for the game to apply the actions
   /// that start one.
@@ -1235,45 +1285,8 @@ class HomePageState extends State<HomePage>
 
   static const _trackerSlide = Duration(milliseconds: 320);
 
-  /// The cards [t] is about, and what's become of each this round.
-  /// The cards a task is about, marked the way the card tracker marks
-  /// them: outlined in the colour of whoever played each one (with the
-  /// trick it fell in), or of whoever is known to hold it.
-  List<MarkedCard> _cardStates(RoundTask t) {
-    final cards = relevantCards(t.description);
-    if (!_digital || !_round.hasCards) {
-      return [for (final c in cards) (card: c, edge: null, trick: null, played: false)];
-    }
-    final playedIn = <PlayingCard, (int, int)>{}; // trick number, seat
-    for (var i = 0; i < _round.tricks.length; i++) {
-      final tr = _round.tricks[i];
-      for (var k = 0; k < tr.cards.length; k++) {
-        playedIn[tr.cards[k]] = (i + 1, tr.seats[k]);
-      }
-    }
-    for (var k = 0; k < _round.current.length; k++) {
-      playedIn[_round.current[k]] = (_round.tricks.length + 1, _round.currentSeats[k]);
-    }
-    final holder = <PlayingCard, int>{
-      if (_round.hands.length > _you)
-        for (final c in _round.hands[_you]) c: _you,
-      for (final g in guessHands(_round, _you))
-        for (final c in g.certain) c: g.seat,
-    };
-    return [
-      for (final c in cards)
-        (
-          card: c,
-          edge: playedIn[c] != null
-              ? game.players[playedIn[c]!.$2].color
-              : holder[c] != null
-                  ? game.players[holder[c]!].color
-                  : null,
-          trick: playedIn[c]?.$1,
-          played: playedIn[c] != null,
-        ),
-    ];
-  }
+  List<MarkedCard> _cardStates(RoundTask t) =>
+      cardStates(t, round: _round, players: game.players, you: _you, onScreen: _digital);
 
   String? _progressOf(RoundTask t) {
     if (!_digital ||
@@ -1305,42 +1318,8 @@ class HomePageState extends State<HomePage>
   }
 
   /// What the table says is happening, under the cards.
-  String get _cardStatus {
-    if (_lastTrick != null) {
-      final w = _lastTrick!.winner;
-      return w == _you
-          ? 'You win the trick'
-          : '${game.players[w].name} wins the trick';
-    }
-    if (_choosingKing) return '';
-    if (_round.pickTurn != null) {
-      if (_speakPromptDue) return 'Share a card?';
-      if (_round.pickTurn == _you) {
-        return _round.decree == Decree.kingsCommand
-            ? "King's Command: hold a task to hand it out"
-            : _round.canPass(_you)
-                ? 'Hold a task to take it, or'
-                : 'Hold a task to take it';
-      }
-      if (_speakPromptDue) return 'Share a card?';
-      return '${game.players[_round.pickTurn!].name} is choosing a task…';
-    }
-    if (!_round.settled) return 'Announcing numbers…';
-    if (game.outcome != RoundOutcome.inProgress) return '';
-    final c = _round;
-    if (c.turn == _you) {
-      if (c.current.isEmpty) return 'Your lead';
-      final led = c.led!;
-      return 'Your turn: follow ${switch (led.suit) {
-        Suit.hearts => 'hearts',
-        Suit.diamonds => 'diamonds',
-        Suit.spades => 'spades',
-        Suit.clubs => 'clubs',
-        Suit.court => 'with a Court Card',
-      }}';
-    }
-    return '${game.players[c.turn].name} is thinking…';
-  }
+  String get _cardStatus => tableStatus(game, you: _you, lastTrick: _lastTrick,
+      choosingKing: _choosingKing, speakPrompt: _speakPromptDue);
 
   /// Your hand along the bottom, fanned to fit: cards you may play stand
   /// up, the rest dim. Tap one to play it.
@@ -1822,10 +1801,11 @@ class HomePageState extends State<HomePage>
     final c = _round;
     final big = width > 600;
     return OpponentsRow(
-      seats: [for (var i = 0; i < game.players.length; i++) if (i != _you) i],
+      // Round the table from you, in the order of play.
+      seats: [for (var k = 1; k < game.players.length; k++) (_you + k) % game.players.length],
       width: width,
       maxHeight: maxHeight,
-      name: (i) => game.hasRoles && i < game.courtiers.length
+      name: (i) => game.hasRoles && i < game.courtiers.length && !_personAt(i)
           ? game.courtiers[i].short
           : game.players[i].name,
       token: (seat, size) => _withReveal(seat, _digiToken(seat, size, tight: true), size: size),
@@ -2175,6 +2155,7 @@ class HomePageState extends State<HomePage>
       bool digital = false,
       int? chapter,
       int lesson = 0}) {
+    _leaveRoom();
     if (chapter != null) {
       target = chronicle[chapter].points;
       _progress.chronicle.startAttempt(chapter);
@@ -2306,11 +2287,14 @@ class HomePageState extends State<HomePage>
   /// New tasks: a new round once this one is over (to [target] points, or
   /// the next lesson), or the round in progress dealt again. Sends the
   /// action.
-  void _shuffleTasks({int? target, int? lesson}) =>
-      _link.send(NextRound(_you, target: target, lesson: lesson));
+  void _shuffleTasks({int? target, int? lesson}) {
+    if (_mayDeal) _link.send(NextRound(_you, target: target, lesson: lesson));
+  }
 
   /// The same tasks again in a new round: sends the action.
-  void _retryRound() => _link.send(RetryRound(_you));
+  void _retryRound() {
+    if (_mayDeal) _link.send(RetryRound(_you));
+  }
 
   /// A haptic tap where the device supports it.
   void _haptic(Future<void> Function() feedback) {
@@ -2488,7 +2472,12 @@ class HomePageState extends State<HomePage>
   final _rounds = RoundLogger();
 
   void _roundSettled() {
-    _rounds.over(game, _link.history, you: _digital ? _you : null);
+    // Online, the host's device keeps the record.
+    if (_hostsTable) {
+      _rounds.over(game, _link.history,
+          you: _digital ? _you : null,
+          people: _room?.people());
+    }
     final result = _round.result!;
     final won = result.won;
     Analytics.event(
@@ -2593,7 +2582,10 @@ class HomePageState extends State<HomePage>
     });
   }
 
-  void _closeSetup() => setState(() => _setupArgs = null);
+  void _closeSetup() => setState(() {
+        _setupArgs = null;
+        _onlineSetup = false;
+      });
 
   /// From the menus into a game: the menu fades to the felt, the crown
   /// rises up in the middle in a burst of sparks, and as it lifts away the
@@ -2658,6 +2650,9 @@ class HomePageState extends State<HomePage>
       // On-screen cards unless the game being replaced used a real deck.
       digital: !_inGame || game.digital,
       newPlayer: !_tutorialDone,
+      onOnline: hasService || HomePageTestHooks.rooms != null
+          ? () => setState(() => _onlineSetup = true)
+          : null,
       onSound: (on) {
         setState(() => Sfx.enabled = on);
         _saveSettings();
@@ -2672,7 +2667,7 @@ class HomePageState extends State<HomePage>
     if (target == null || !mounted) return;
     // The round is dealt again from the start, cards, tasks and all, for
     // the new target: whoever's dealt the King card is King.
-    _link.send(Redeal(_you, target));
+    if (_mayDeal) _link.send(Redeal(_you, target));
   }
 
   // ------------------------------------------------------------------ views
@@ -2813,7 +2808,8 @@ class HomePageState extends State<HomePage>
                           key: const ValueKey('setup'),
                           // In a game, wash the table out so the setup reads.
                           color: _inGame ? skin.felt : Colors.transparent,
-                          child: Center(child: _buildSetupPanel()),
+                          child: Center(
+                              child: _onlineSetup ? _buildOnlineSetup() : _buildSetupPanel()),
                         ),
                 ),
               ),

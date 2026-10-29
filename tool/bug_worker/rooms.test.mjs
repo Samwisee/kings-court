@@ -123,6 +123,9 @@ test("A device moves only for its own seat; the host also for courtiers", async 
   assert.equal(last(ben, "move").m.seat, 2, "the host plays the courtier");
   await say(r, "ann", { t: "move", a: { type: "pass", seat: 1 } });
   assert.equal(last(ben, "move").m.seq, 0, "but not a person who's there");
+  // A task can be handed to anyone (the King's Command); the tables check.
+  await say(r, "ben", { t: "move", a: { type: "pick", seat: 0, task: 3 } });
+  assert.deepEqual([last(ben, "move").m.seq, last(ben, "move").m.seat], [1, 0]);
 });
 
 test("A device that drops keeps its seat, and catches up when it comes back", async () => {

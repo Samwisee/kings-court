@@ -19,6 +19,7 @@ class SetupFrame extends StatelessWidget {
     required this.onBack,
     required this.onNext,
     required this.body,
+    this.choosing,
   });
 
   final int step;
@@ -31,14 +32,19 @@ class SetupFrame extends StatelessWidget {
   final bool canCancel;
   final String nextLabel;
   final VoidCallback onBack;
-  final VoidCallback onNext;
+  /// Disabled when null.
+  final VoidCallback? onNext;
   final Widget body;
+
+  /// A step that goes on as soon as you choose, with no Next (the first
+  /// two, unless said otherwise).
+  final bool? choosing;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
     // The first two steps go on as soon as you choose.
-    final choosing = step < 2;
+    final choosing = this.choosing ?? step < 2;
     final still = MediaQuery.disableAnimationsOf(context);
 
     // Fills the screen: progress at the top, the step in the middle, and

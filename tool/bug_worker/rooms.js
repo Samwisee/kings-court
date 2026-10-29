@@ -171,8 +171,9 @@ export class Room {
         if (!a || typeof a !== "object" || typeof a.type !== "string") return;
         if (!m.started) return;
         // A device moves for its own seat; the host's also moves for the
-        // courtiers and anyone who has dropped.
-        const own = a.seat === seat;
+        // courtiers and anyone who has dropped. A task may be handed to
+        // anyone (the King's Command): every table checks whose pick it is.
+        const own = a.seat === seat || (a.type === "pick" && seat >= 0);
         const forOthers = session === m.host && this.hostPlays(a.seat);
         if (!own && !forOthers) {
           ws.send(JSON.stringify({ t: "refused", why: "not your seat", a }));

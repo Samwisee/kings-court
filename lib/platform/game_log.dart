@@ -119,9 +119,10 @@ class RoundLogger {
 
   /// [game]'s round is over: records it with the moves in [history] since
   /// the last. [you] is the seat a person plays on screen; null at a real
-  /// table, where every seat is a person. Once per deal, even if a mark is
+  /// table, where every seat is a person. Online, [people] are the seats
+  /// people played, every one on screen. Once per deal, even if a mark is
   /// undone and made again.
-  void over(GameState game, List<Move> history, {required int? you}) {
+  void over(GameState game, List<Move> history, {required int? you, List<int>? people}) {
     // A new game starts its moves (and its deals) again.
     if (!identical(game, _game) || _moves > history.length) {
       _game = game;
@@ -134,7 +135,7 @@ class RoundLogger {
     _moves = history.length;
     GameLog.send(GameLog.record(game,
         moves: moves,
-        people: you == null ? [for (var i = 0; i < game.players.length; i++) i] : [you],
-        onScreen: you != null));
+        people: people ?? (you == null ? [for (var i = 0; i < game.players.length; i++) i] : [you]),
+        onScreen: you != null || people != null));
   }
 }
