@@ -66,6 +66,17 @@ jobs:
           # Retried: pushes from runs side by side sometimes fail at first.
           for i in 1 2 3 4 5; do git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "ci-${GITHUB_REF_NAME}" && exit 0; sleep $((i * 5)); done; exit 1
 
+  service:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: The web service's tests (rooms)
+        run: node --test tool/bug_worker/rooms.test.mjs
+
   shots:
     runs-on: ubuntu-latest
     timeout-minutes: 25

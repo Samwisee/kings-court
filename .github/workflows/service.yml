@@ -41,6 +41,9 @@ jobs:
         if: steps.ready.outputs.go == 'yes'
         with:
           node-version: 20
+      - name: The rooms' tests
+        if: steps.ready.outputs.go == 'yes'
+        run: node --test tool/bug_worker/rooms.test.mjs
       - name: The database, made the first time, and its tables
         if: steps.ready.outputs.go == 'yes'
         working-directory: tool/bug_worker

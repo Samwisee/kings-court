@@ -4,6 +4,7 @@
 //   POST /rounds    a round just played (lib/platform/game_log.dart), kept
 //                   in the D1 database for balancing the game
 //   GET  /rounds    the rounds kept, for tool/games/pull.py (needs READ_KEY)
+//   GET  /rooms/... multiplayer rooms, over WebSockets (rooms.js)
 // Tokens live here, as Worker secrets, never in the game.
 //
 // Secrets / variables (Cloudflare dashboard > Worker > Settings > Variables):
@@ -12,6 +13,10 @@
 //   ALLOW_ORIGIN  (text)   https://samwisee.github.io
 //   READ_KEY      (secret) any long random string; tool/games/pull.py sends it
 // Bindings: DB, the D1 database "kings-court-rounds" (schema.sql).
+
+import { handleRooms } from "./rooms.js";
+
+export { Room } from "./rooms.js";
 
 const MAX_BODY = 200_000; // bytes accepted from the game
 const MAX_ISSUE = 60_000; // GitHub's limit is 65,536 characters
@@ -32,6 +37,10 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     const path = new URL(request.url).pathname.replace(/\/+$/, "");
     if (path === "/rounds" && request.method === "GET") return readRounds(request, env);
+    if (path.startsWith("/rooms/")) {
+      if (!allowed) return new Response("Not from the game", { status: 403 });
+      return handleRooms(request, env, path);
+    }
     if (request.method !== "POST") return new Response("POST a report", { status: 405, headers: cors });
     if (!allowed) return new Response("Not from the game", { status: 403, headers: cors });
 

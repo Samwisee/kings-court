@@ -13,3 +13,12 @@ ALLOW_ORIGIN = "https://samwisee.github.io"
 binding = "DB"
 database_name = "kings-court-rounds"
 database_id = "DATABASE_ID"
+
+# Multiplayer rooms: one Durable Object per room (rooms.js).
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
