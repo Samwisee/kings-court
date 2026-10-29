@@ -4,31 +4,3 @@
 # taken (keep the `~` lines: those screenshots vary from run to run and are
 # never compared).
 ~zz-room.png: the throne room's figures move on a clock of their own, so it varies run to run (shelved Dynasty; not guarded)
-laptop-0.png: the Powers tile is gone from setup (step 3, docs/DECISIONS.md)
-laptop-1.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-laptop-2.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-laptop-3.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-laptop-4.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-laptop-5.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-phone-0.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-phone-1.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-phone-2.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-phone-3.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-phone-4.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-screen-1.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-screen-2-task.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-screen-4-four-colour.png: the seeded seats, and the menu's new Plain look row (step 7)
-wide-screen-5-cards.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-screen-6-hand.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-screen-bug.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-screen-menu.png: the seeded seats, and the menu's new Plain look row (step 7)
-wide-screen-points.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-table-1.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-table-2-task.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-table-bug.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-wide-table-menu.png: the seeded seats, and the menu's new Plain look row (step 7)
-wide-table-points.png: deals and courtiers' seats come from the game's seed (steps 4-5); the old baseline varied run to run
-plain-0-welcome.png: new, the Plain skin's set (step 7)
-plain-1-setup.png: new, the Plain skin's set (step 7)
-plain-2-table.png: new, the Plain skin's set (step 7)
-plain-3-menu.png: new, the Plain skin's set (step 7)

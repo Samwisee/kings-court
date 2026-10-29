@@ -306,5 +306,5 @@ with such literals as the next debt.
     crown stretched to its slot's height, a pixel lower
     (`tut-*-pick.png`, `tut-*-play.png`, `tut-*-done.png`). Both are back
     as they were.
-  The baseline is retaken from the first green run after this, so the
-  guard holds from here on.
+  The baseline was retaken from the first green run after this (f7724f9,
+  `shots-baseline` now 3fa3cb9), so the guard holds from here on.
