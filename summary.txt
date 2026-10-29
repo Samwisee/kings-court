@@ -1,0 +1,6 @@
+analyzer issues: 0
+00:27 +210: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) deals a full, fair hand
+00:27 +211: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) is won by following the coach
+00:27 +212: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) deals a full, fair hand
+00:27 +213: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) is won by following the coach
+00:27 +214: All tests passed!
