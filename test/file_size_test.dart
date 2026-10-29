@@ -30,9 +30,6 @@ const debts = {
   // The page: what's left of the one big state after the split (see
   // docs/ARCHITECTURE.md, "What's still on the page").
   'lib/ui/table_page.dart': 3866,
-  // The record of a round: its JSON, picks and judging could be
-  // extensions once its private helpers are shared.
-  'lib/engine/round.dart': 960,
 };
 
 void main() {

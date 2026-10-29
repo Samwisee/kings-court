@@ -4,7 +4,7 @@
 /// and the bots alike. Plain data that saves to JSON.
 ///
 /// Everything a player does to a round is a [MatchAction], applied by
-/// [Round.apply]; [Round.problem] says why one isn't allowed. That is the
+/// [Round.apply]; `problem` (round_checks.dart) says why one isn't allowed. That is the
 /// shape online play needs: each player sends actions, one place applies
 /// them in order, and every device holds the same round.
 library;
@@ -12,197 +12,24 @@ library;
 import 'dart:math';
 
 import 'cards.dart';
-import 'conflicts.dart';
 import 'deal_mix.dart';
 import 'decrees.dart';
+import 'round_actions.dart';
+import 'round_checks.dart';
+import 'round_queries.dart';
+import 'round_task.dart';
 import 'rules.dart';
 import 'task.dart';
 import 'task_help.dart';
-import 'tasks.dart';
+
+export 'round_actions.dart';
+export 'round_checks.dart';
+export 'round_queries.dart';
+export 'round_task.dart';
 
 enum Phase { picking, announcing, playing, roundOver }
 
 enum RoundOutcome { inProgress, won, lost }
-
-/// A task on the table this round: who holds it, and how it's going.
-class RoundTask {
-  RoundTask(this.task,
-      {this.owner,
-      this.x,
-      this.seal,
-      this.status = TaskStatus.pending,
-      this.whyFailed});
-  final Task task;
-
-  /// The seat holding it, once taken.
-  int? owner;
-
-  /// The number announced for "exactly X tricks" tasks.
-  int? x;
-
-  /// Wax seal fixing when it must be done (see [Seals]).
-  int? seal;
-
-  TaskStatus status;
-
-  /// Why it failed, for the end of the round.
-  String? whyFailed;
-
-  String get description => task.description;
-  String cardText(int playerCount) => task.cardText(playerCount);
-  String boardText(int playerCount) => task.boardText(playerCount);
-  String fullText(int playerCount) => task.fullText(playerCount);
-  int points(int playerCount) => task.getPointsForPlayerCount(playerCount);
-  bool get kingCantTake => task.kingCantTake;
-  bool get noCourtCards => task.noCourtCards;
-  List<String> get notes => task.notes;
-  bool get hasNotes => task.hasNotes;
-  bool get isPending => status == TaskStatus.pending;
-  bool get isCompleted => status == TaskStatus.completed;
-  bool get isFailed => status == TaskStatus.failed;
-
-  Map<String, dynamic> toJson() => {
-        'd': description,
-        'owner': owner,
-        'x': x,
-        'seal': seal,
-        'status': status.index,
-        if (whyFailed != null) 'why': whyFailed,
-      };
-
-  /// Reads a saved task; also the older shape (`verdict` for the status,
-  /// `description` for the words).
-  static RoundTask fromJson(Map<String, dynamic> j) {
-    final name = (j['d'] ?? j['description']) as String;
-    final task = taskByDescription(renamedTasks[name] ?? name);
-    final status = j['status'] != null
-        ? TaskStatus.values[j['status'] as int]
-        : j['verdict'] != null
-            ? const [TaskStatus.pending, TaskStatus.completed, TaskStatus.failed][
-                j['verdict'] as int]
-            : TaskStatus.pending;
-    return RoundTask(task,
-        owner: j['owner'] as int?,
-        x: j['x'] as int?,
-        seal: j['seal'] as int?,
-        status: status,
-        whyFailed: j['why'] as String?);
-  }
-}
-
-/// How a round ended, for the mode that played it and the outcome card:
-/// won or lost, each task as it finished (its owner, status and why it
-/// failed), the King and the tricks played.
-class RoundResult {
-  const RoundResult(
-      {required this.won,
-      required this.tasks,
-      required this.king,
-      required this.tricksPlayed,
-      required this.target});
-  final bool won;
-  final List<RoundTask> tasks;
-  final int? king;
-  final int tricksPlayed;
-
-  /// The points the tasks were drawn to.
-  final int target;
-
-  Iterable<RoundTask> get failed => tasks.where((t) => t.isFailed);
-}
-
-/// A task the tricks have settled: done, or failed and why.
-class TaskFlip {
-  const TaskFlip(this.task, this.status, {this.why});
-  final RoundTask task;
-  final TaskStatus status;
-  final String? why;
-}
-
-/// Something a player does at the table, as plain data: it turns into
-/// JSON and back, so it can travel to every device at the table. The
-/// moves within a round's play are [MatchAction]s; the rest (crowning,
-/// marking a task at a real table, the next round) are the game's
-/// (game/actions.dart).
-abstract class TableAction {
-  const TableAction();
-
-  /// The seat making the move.
-  int get seat;
-
-  Map<String, dynamic> toJson();
-}
-
-/// A move within a round's play.
-sealed class MatchAction extends TableAction {
-  const MatchAction(this.seat);
-  @override
-  final int seat;
-
-  /// The move [j] encodes, or null if it isn't one of these.
-  static MatchAction? fromJson(Map<String, dynamic> j) => switch (j['type']) {
-        'pick' => PickTask(j['seat'] as int, j['task'] as int),
-        'announce' =>
-          Announce(j['seat'] as int, j['task'] as int, j['x'] as int),
-        'show' => ShowCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
-        'pass' => Pass(j['seat'] as int),
-        'play' => PlayCard(j['seat'] as int, PlayingCard.fromId(j['card'] as int)),
-        'return' => ReturnTask(j['seat'] as int, j['task'] as int),
-        _ => null,
-      };
-}
-
-/// Passing on a pick: the turn to take a task moves on.
-class Pass extends MatchAction {
-  const Pass(super.seat);
-  @override
-  Map<String, dynamic> toJson() => {'type': 'pass', 'seat': seat};
-}
-
-/// Task [task] goes to [seat]: their own pick, or one the King hands out
-/// under the King's Command. At a real table, where the phone only keeps
-/// the tasks, a task may also be moved from one seat to another.
-class PickTask extends MatchAction {
-  const PickTask(super.seat, this.task);
-  final int task;
-  @override
-  Map<String, dynamic> toJson() => {'type': 'pick', 'seat': seat, 'task': task};
-}
-
-/// Task [task] put back on the table by whoever held it (a real table).
-class ReturnTask extends MatchAction {
-  const ReturnTask(super.seat, this.task);
-  final int task;
-  @override
-  Map<String, dynamic> toJson() => {'type': 'return', 'seat': seat, 'task': task};
-}
-
-class Announce extends MatchAction {
-  const Announce(super.seat, this.task, this.x);
-  final int task;
-  final int x;
-  @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'announce', 'seat': seat, 'task': task, 'x': x};
-}
-
-class PlayCard extends MatchAction {
-  const PlayCard(super.seat, this.card);
-  final PlayingCard card;
-  @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'play', 'seat': seat, 'card': card.id};
-}
-
-/// Showing a card: a player's highest, lowest or only card of a suit,
-/// face up in their hand until played.
-class ShowCard extends MatchAction {
-  const ShowCard(super.seat, this.card);
-  final PlayingCard card;
-  @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'show', 'seat': seat, 'card': card.id};
-}
 
 class Round {
   Round({required this.players, required this.target, this.dealId = 0})
@@ -349,124 +176,6 @@ class Round {
       inPlay: inPlay,
       shown: revealed,
       shownAt: revealedAt);
-
-  /// What may be said about [card] in [seat]'s hand, or null if it can't
-  /// be shown (Court Cards, or a card in the middle of its suit).
-  String? revealFor(int seat, PlayingCard card) {
-    if (card.isCourt || !hands[seat].contains(card)) return null;
-    final suit = hands[seat].where((c) => c.suit == card.suit).toList();
-    if (suit.length == 1) return 'only';
-    final ranks = suit.map((c) => c.rank);
-    if (card.rank == ranks.reduce((a, b) => a > b ? a : b)) return 'highest';
-    if (card.rank == ranks.reduce((a, b) => a < b ? a : b)) return 'lowest';
-    return null;
-  }
-
-  /// Whether [seat] may take task [i], which nobody holds yet.
-  bool canTake(int i, int seat) =>
-      tasks[i].owner == null && whyCantTake(tasks[i], seat) == null;
-
-  /// Whether [seat] may hold [t] (taken or not).
-  bool mayTake(RoundTask t, int seat) => whyCantTake(t, seat) == null;
-
-  /// Why [seat] can't hold [t], or null if they can. With [publicOnly],
-  /// nobody's hand is consulted: only what the whole table can see.
-  String? whyCantTake(RoundTask t, int seat, {bool publicOnly = false}) {
-    if (seat == exiledSeat) return 'Exiled: no tasks this round';
-    if (t.task.kingCantTake && seat == king) {
-      return "The King can't take this task";
-    }
-    // Someone can't hold two tasks that work against each other.
-    for (final o in tasks) {
-      if (o != t &&
-          o.owner == seat &&
-          selfClash(o.description, t.description, players: players)) {
-        return 'That clashes with a task they already hold';
-      }
-    }
-    // On screen the app knows every hand: no task someone's cards make
-    // impossible for them (unless nobody else could take it either).
-    if (!publicOnly && hasCards && seat < hands.length) {
-      final why = handBlocks(t.description, hands[seat]);
-      if (why != null) {
-        final someoneElse = [
-          for (var s = 0; s < players && s < hands.length; s++)
-            if (s != seat &&
-                s != exiledSeat &&
-                !(t.task.kingCantTake && s == king) &&
-                handBlocks(t.description, hands[s]) == null)
-              s
-        ].isNotEmpty;
-        if (someoneElse) return why;
-      }
-    }
-    return null;
-  }
-
-  /// Whether [seat] may reveal a card right now, given the decree. Late
-  /// Counsel holds every card back until three tricks have been played
-  /// (on screen, where the app sees the tricks; at a real table the
-  /// players keep to it themselves).
-  bool canSpeak(int seat) => switch (decree) {
-        Decree.silence => false,
-        Decree.lateCounsel => !hasCards || tricks.length >= 3,
-        _ => true,
-      };
-
-  /// Why no card may be shown now, or null if one may.
-  String? whyCantSpeak() => switch (decree) {
-        Decree.silence => 'Silence is decreed: no cards may be shown this round',
-        Decree.lateCounsel when !canSpeak(0) =>
-          'Late Counsel: no cards may be shown until three tricks have been played',
-        _ => null,
-      };
-
-  /// Why completing [t] now would break the seal order, or null if it's
-  /// fine. Completing a task out of order fails the round.
-  String? sealProblem(RoundTask t) {
-    final seal = t.seal;
-    if (seal == null) return null;
-    if (seal == Seals.last) {
-      final open = tasks.where((o) => o != t && !o.isCompleted);
-      return open.isEmpty
-          ? null
-          : 'The Ω seal must be the last task done, and ${open.length} '
-              'other task${open.length == 1 ? ' is' : 's are'} still open.';
-    }
-    final earlier = tasks.where((o) =>
-        o.seal != null && o.seal != Seals.last && o.seal! < seal && !o.isCompleted);
-    if (earlier.isEmpty) return null;
-    final first = earlier.map((o) => o.seal!).reduce(min);
-    return 'Seal ${Seals.label(first)} must be done before seal ${Seals.label(seal)}.';
-  }
-
-  /// Whether [seat] may pass on picking a task right now: the round allows
-  /// it, it's their turn, they haven't passed this round, and someone else
-  /// could pick instead.
-  bool canPass(int seat) =>
-      passing &&
-      pickTurn == seat &&
-      decree != Decree.kingsCommand &&
-      !passed.contains(seat) &&
-      tasks.any((t) => t.owner == null) &&
-      nextPicker(seat) != seat;
-
-  /// The next seat clockwise after [from] that may pick a task: skipping
-  /// anyone who can't take any of the tasks left, then anyone exiled.
-  int? nextPicker(int from) {
-    for (var step = 1; step <= players; step++) {
-      final seat = (from + step) % players;
-      if (seat != exiledSeat &&
-          tasks.any((t) => t.owner == null && whyCantTake(t, seat) == null)) {
-        return seat;
-      }
-    }
-    for (var step = 1; step <= players; step++) {
-      final seat = (from + step) % players;
-      if (seat != exiledSeat) return seat;
-    }
-    return null;
-  }
 
   // ------------------------------------------------------------- changes
 
@@ -744,55 +453,6 @@ class Round {
 
   // -------------------------------------------------------------- actions
 
-  /// Why [a] isn't allowed right now, or null if it is.
-  String? problem(MatchAction a) {
-    switch (a) {
-      case PickTask(:final seat, :final task):
-        if (task < 0 || task >= tasks.length) return 'No such task';
-        if (seat < 0 || seat >= players) return 'No such seat';
-        if (!hasCards) {
-          // A real table: the phone keeps the tasks as the players share
-          // them out, and a task may move from seat to seat.
-          if (outcome != RoundOutcome.inProgress) return 'The round is over';
-          return whyCantTake(tasks[task], seat);
-        }
-        if (phase != Phase.picking) return 'Tasks are not being picked';
-        if (tasks[task].owner != null) return 'That task is taken';
-        // Under the King's Command the King hands every task out.
-        final kingsCommand = decree == Decree.kingsCommand && pickTurn == king;
-        if (seat != pickTurn && !kingsCommand) return 'Not your turn to pick';
-        return whyCantTake(tasks[task], seat);
-      case ReturnTask(:final task):
-        if (task < 0 || task >= tasks.length) return 'No such task';
-        if (hasCards) return 'Tasks stay with whoever took them';
-        if (tasks[task].owner == null) return 'That task is on the table';
-      case Pass(:final seat):
-        if (phase != Phase.picking) return 'Tasks are not being picked';
-        if (seat != pickTurn) return 'Not your turn to pick';
-        if (!canPass(seat)) return 'No passing now';
-      case Announce(:final seat, :final task, :final x):
-        if (phase != Phase.announcing) return 'Nothing to announce';
-        if (task < 0 || task >= tasks.length) return 'No such task';
-        if (tasks[task].owner != seat) return 'Not your task';
-        if (x < 0 || x > totalTricks) return 'Not a possible number';
-      case ShowCard(:final seat, :final card):
-        if (!hasCards || seat >= hands.length) return 'No cards to show';
-        if (spoke[seat]) return 'That card reveal is used this round';
-        if (!canSpeak(seat)) return whyCantSpeak() ?? 'No cards may be shown now';
-        if (revealFor(seat, card) == null) return 'That card can’t be shown';
-      case PlayCard(:final seat, :final card):
-        // A won round may play itself out; a lost one stops.
-        if (!settled) return 'Not playing yet';
-        if (outcome == RoundOutcome.lost) return 'The round is lost';
-        if (tricks.length >= totalTricks) return 'Every card is played';
-        if (seat != turn) return 'Not your turn';
-        if (!legalFor(seat).contains(card)) {
-          return 'You must follow ${led!.isCourt ? 'with a Court Card' : led!.suit.symbol}';
-        }
-    }
-    return null;
-  }
-
   /// Carries out [a], the one way a round's play moves on. Returns the
   /// finished trick when [a] completed one. The tasks are judged as the
   /// trick ends unless [judge] is off (a table that turns the cards over
@@ -836,37 +496,8 @@ class Round {
     _settle();
   }
 
-  // --------------------------------------------------------------- views
-
-  /// How many cards [seat] holds: counted from their hand, or, in a view
-  /// where their hand is hidden, as told.
-  int cardsIn(int seat) =>
-      handSizes != null && hands[seat].isEmpty ? handSizes![seat] : hands[seat].length;
-
   /// In a view for one seat, how many cards each of the others holds.
   List<int>? handSizes;
-
-  /// Whether [seat] still holds [card]: seen in their hand, or, in a view
-  /// where their hand is hidden, not played yet.
-  bool holds(int seat, PlayingCard card) => hands[seat].isNotEmpty
-      ? hands[seat].contains(card)
-      : handSizes != null &&
-          !current.contains(card) &&
-          !tricks.any((t) => t.cards.contains(card));
-
-  /// The round as [seat] may see it: their own hand, how many cards the
-  /// others hold, and everything public. (The cards set aside stay, so
-  /// every device judges the tasks alike; a server judging for everyone
-  /// could withhold them.) What goes to a device at that seat.
-  Round visibleTo(int seat) {
-    final v = Round.fromJson(toJson())
-      ..names = names
-      ..handSizes = [for (final h in hands) h.length];
-    for (var s = 0; s < v.hands.length; s++) {
-      if (s != seat) v.hands[s] = [];
-    }
-    return v;
-  }
 
   // --------------------------------------------------------------- saving
 
