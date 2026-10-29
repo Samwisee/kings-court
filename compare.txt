@@ -1,0 +1,267 @@
+baseline 3fa3cb92d3c6228d2426f20f74a34ba20d47cc3d
+missing court-cards.png
+new     crown-00.png
+new     crown-01.png
+new     crown-02.png
+new     crown-03.png
+new     crown-04.png
+new     crown-05.png
+new     crown-06.png
+new     crown-07.png
+new     crown-08.png
+new     crown-09.png
+new     crown-10.png
+new     crown-11.png
+new     crown-12.png
+new     crown-13.png
+new     crown-14.png
+new     crown-15.png
+new     crown-16.png
+new     crown-17.png
+new     crown-18.png
+new     crown-19.png
+new     crown-20.png
+new     crown-21.png
+new     crown-22.png
+new     crown-23.png
+new     crown-24.png
+new     crown-25.png
+new     crown-26.png
+new     crown-27.png
+new     crown-28.png
+new     crown-29.png
+new     crown-30.png
+new     crown-31.png
+new     crown-32.png
+new     crown-33.png
+new     crown-34.png
+new     crown-35.png
+new     crown-36.png
+new     crown-37.png
+new     crown-38.png
+new     crown-39.png
+new     crown-40.png
+new     crown-41.png
+new     crown-42.png
+new     crown-43.png
+new     crown-44.png
+new     crown-45.png
+new     crown-46.png
+new     crown-47.png
+new     crown-48.png
+new     crown-49.png
+new     crown-50.png
+new     crown-51.png
+new     crown-52.png
+new     crown-53.png
+new     crown-54.png
+new     crown-55.png
+new     crown-56.png
+new     crown-57.png
+new     crown-58.png
+new     crown-59.png
+new     crown-60.png
+new     crown-61.png
+new     crown-62.png
+new     crown-63.png
+new     crown-64.png
+new     crown-65.png
+new     crown-66.png
+new     crown-67.png
+new     crown-68.png
+new     crown-69.png
+new     crown-70.png
+new     crown-71.png
+new     crown-72.png
+new     crown-73.png
+new     crown-74.png
+new     crown-75.png
+new     crown-76.png
+new     crown-77.png
+new     crown-78.png
+new     crown-79.png
+new     crown-80.png
+new     crown-81.png
+new     crown-82.png
+new     crown-83.png
+new     crown-84.png
+new     crown-85.png
+new     crown-86.png
+new     crown-87.png
+new     crown-88.png
+new     crown-89.png
+missing laptop-0.png
+missing laptop-1.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing laptop-2.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing laptop-3.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing laptop-4.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing laptop-5.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing laptop-how.png
+missing phone-0.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing phone-1.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing phone-2.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing phone-3.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing phone-4.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing plain-0-welcome.png  [expected: Plain is a design of its own now; its set is taken for every skin as skin-<id>-*]
+missing plain-1-setup.png  [expected: as plain-0-welcome]
+missing plain-2-table.png  [expected: as plain-0-welcome]
+missing plain-3-menu.png  [expected: as plain-0-welcome]
+missing tut-0-intro-0.png
+missing tut-0-intro-1.png
+missing tut-0-intro-2.png
+missing tut-0-intro-3.png
+missing tut-0-intro-4.png
+missing tut-0-play.png
+missing tut-0-welcome.png
+new     tut-000.png
+new     tut-001.png
+new     tut-002.png
+new     tut-003.png
+new     tut-004.png
+new     tut-005.png
+new     tut-006.png
+new     tut-007.png
+new     tut-008.png
+new     tut-009.png
+new     tut-010.png
+new     tut-011.png
+new     tut-012.png
+new     tut-013.png
+new     tut-014.png
+new     tut-015.png
+new     tut-016.png
+new     tut-017.png
+new     tut-018.png
+new     tut-019.png
+new     tut-020.png
+new     tut-021.png
+new     tut-022.png
+new     tut-023.png
+new     tut-024.png
+new     tut-025.png
+new     tut-026.png
+new     tut-027.png
+new     tut-028.png
+new     tut-029.png
+new     tut-030.png
+new     tut-031.png
+new     tut-032.png
+new     tut-033.png
+new     tut-034.png
+new     tut-035.png
+new     tut-036.png
+new     tut-037.png
+new     tut-038.png
+new     tut-039.png
+new     tut-040.png
+new     tut-041.png
+new     tut-042.png
+new     tut-043.png
+new     tut-044.png
+new     tut-045.png
+new     tut-046.png
+new     tut-047.png
+new     tut-048.png
+new     tut-049.png
+new     tut-050.png
+new     tut-051.png
+new     tut-052.png
+new     tut-053.png
+new     tut-054.png
+new     tut-055.png
+new     tut-056.png
+new     tut-057.png
+new     tut-058.png
+new     tut-059.png
+new     tut-060.png
+new     tut-061.png
+new     tut-062.png
+new     tut-063.png
+new     tut-064.png
+new     tut-065.png
+new     tut-066.png
+new     tut-067.png
+new     tut-068.png
+new     tut-069.png
+new     tut-070.png
+new     tut-071.png
+new     tut-072.png
+new     tut-073.png
+new     tut-074.png
+new     tut-075.png
+new     tut-076.png
+new     tut-077.png
+new     tut-078.png
+new     tut-079.png
+new     tut-080.png
+new     tut-081.png
+new     tut-082.png
+new     tut-083.png
+new     tut-084.png
+new     tut-085.png
+new     tut-086.png
+new     tut-087.png
+new     tut-088.png
+new     tut-089.png
+new     tut-090.png
+new     tut-091.png
+new     tut-092.png
+new     tut-093.png
+new     tut-094.png
+new     tut-095.png
+new     tut-096.png
+new     tut-097.png
+new     tut-098.png
+new     tut-099.png
+new     tut-100.png
+new     tut-101.png
+new     tut-102.png
+new     tut-103.png
+new     tut-104.png
+missing tut-1a-pick.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-1b-play.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-1c-done.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-2-intro-0.png
+missing tut-2-intro-1.png
+missing tut-2-intro-2.png
+missing tut-2a-pick.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-2b-play.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-2c-done.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-3-intro-0.png
+missing tut-3-intro-1.png
+missing tut-3a-pick.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-3b-play.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-3c-done.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-4-intro-0.png
+missing tut-4-intro-1.png
+missing tut-4-intro-2.png
+missing tut-4-intro-3.png
+missing tut-4a-pick.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-4b-play.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-4c-done.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing tut-5-ready.png
+missing tut-outro-0.png
+missing tut-outro-1.png
+missing wide-0-modes.png
+missing wide-screen-1.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-screen-2-task.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-screen-4-four-colour.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold (and the menu's skin row names the look worn, "Look: Court")]
+missing wide-screen-5-cards.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-screen-6-hand.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-screen-bug.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-screen-menu.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold (and the menu's skin row names the look worn, "Look: Court")]
+missing wide-screen-points.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-table-1.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-table-2-task.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-table-bug.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-table-menu.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold (and the menu's skin row names the look worn, "Look: Court")]
+missing wide-table-points.png  [expected: the court polished: a pool of lamp light over the felt, and the card backs latticed and ruled in gold]
+missing wide-welcome.png
+missing zz-room.png
+missing zz-turn-0.png
+missing zz-turn-1.png
+missing zz-turn-2.png
+missing zz-turn-3.png
+missing zz-turn-4.png
+missing zz-turn-5.png
+0 same, 226 unexplained
