@@ -1,0 +1,5 @@
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|/home/runner/work/kings-court/kings-court/test/widget_test.dart|1316|33|5|Undefined name 'roman'.
+WARNING|STATIC_WARNING|INFERENCE_FAILURE_ON_FUNCTION_INVOCATION|/home/runner/work/kings-court/kings-court/test/widget_test.dart|1316|29|3|The type argument(s) of the function 'map' can't be inferred.
+INFO|LINT|EOL_AT_END_OF_FILE|/home/runner/work/kings-court/kings-court/lib/main.dart|5387|32|1|Missing a newline at the end of the file.
+INFO|LINT|AVOID_REDUNDANT_ARGUMENT_VALUES|/home/runner/work/kings-court/kings-court/test/modes_test.dart|87|48|1|The value of the argument is redundant because it matches the default value.
+INFO|LINT|AVOID_REDUNDANT_ARGUMENT_VALUES|/home/runner/work/kings-court/kings-court/test/modes_test.dart|89|49|1|The value of the argument is redundant because it matches the default value.
