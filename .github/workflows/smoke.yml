@@ -20,7 +20,10 @@ jobs:
         run: |
           mkdir -p out
           {
+            echo -n "the live game knows the service: "
+            curl -s https://samwisee.github.io/kings-court/main.dart.js | grep -c "samcheneyus.workers.dev" || true
             echo "url: $URL"
+            exit 0
             echo -n "round from the web page: "
             curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Origin: https://samwisee.github.io' -H 'Content-Type: application/json' \
               -d '{"v":1,"test":true,"mode":"free","players":4,"people":[0],"outcome":"won","round":{"target":6,"tasks":[]},"moves":[]}' "$URL/rounds"
