@@ -415,15 +415,8 @@ class HomePageState extends State<HomePage>
       ];
 
   /// Where the arrow keys are now, if it's still there to stop on.
-  KbStop? _kbHere(List<KbStop> stops) {
-    for (final st in stops) {
-      if (st.row != _kbRow) continue;
-      if (_kbRow == 1 && st.item == _kbTask) return st;
-      if (_kbRow == 0 && st.item == _kbCard) return st;
-      if (_kbRow == 2) return st;
-    }
-    return null;
-  }
+  KbStop? _kbHere(List<KbStop> stops) =>
+      stopAt(stops, row: _kbRow, task: _kbTask, card: _kbCard);
 
   /// Where the arrow keys are: your hand (0), the tasks on the table (1)
   /// or the Skip or Pass button (2).

@@ -117,3 +117,15 @@ AxisDirection? arrowStep(LogicalKeyboardKey key) => switch (key) {
   }
   return (handled: true, to: same[(at + by) % same.length]);
 }
+
+/// The stop in [stops] the arrow keys are on: in [row], the [task] or
+/// [card] chosen there (or the button, row 2); null if it's gone.
+KbStop? stopAt(List<KbStop> stops, {required int row, Object? task, Object? card}) {
+  for (final st in stops) {
+    if (st.row != row) continue;
+    if (row == 1 && st.item == task) return st;
+    if (row == 0 && st.item == card) return st;
+    if (row == 2) return st;
+  }
+  return null;
+}

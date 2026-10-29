@@ -58,4 +58,13 @@ void main() {
     expect(arrowStep(LogicalKeyboardKey.arrowUp), AxisDirection.up);
     expect(arrowStep(LogicalKeyboardKey.enter), isNull);
   });
+
+  test('The stop chosen is found again while it’s there', () {
+    expect(stopAt(stops, row: 0, card: 'card1'), same(cards[1]));
+    expect(stopAt(stops, row: 1, task: 'b'), same(tasks[1]));
+    expect(stopAt(stops, row: 2), same(button));
+    // Played (or taken): gone.
+    expect(stopAt(stops, row: 0, card: 'card9'), isNull);
+    expect(stopAt(cards, row: 2), isNull);
+  });
 }
