@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../cards/card_view.dart';
-import '../widgets.dart';
+import '../widgets/buttons.dart';
 
 class HandCard extends StatelessWidget {
   const HandCard({
