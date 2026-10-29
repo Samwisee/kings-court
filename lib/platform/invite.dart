@@ -27,12 +27,12 @@ void forgetInvite() => native.dropRoomFromAddress();
 Uri inviteLink(String code, [Uri? at]) =>
     (at ?? (kIsWeb ? Uri.base : Uri.parse(gameUrl))).removeFragment().replace(queryParameters: {'room': code});
 
-/// Shares an invite to room [code]: the share sheet where there is one,
-/// otherwise the link is copied. True when it went to the share sheet.
+/// Shares an invite to room [code], the link alone (its preview says what
+/// the game is): the share sheet where there is one, otherwise copied.
+/// True when it went to the share sheet.
 Future<bool> shareInvite(String code) async {
   final link = inviteLink(code).toString();
-  const text = 'Come and play The King’s Court with me';
-  if (await native.shareText(text, link)) return true;
-  await Clipboard.setData(ClipboardData(text: '$text: $link'));
+  if (await native.shareUrl(link)) return true;
+  await Clipboard.setData(ClipboardData(text: link));
   return false;
 }

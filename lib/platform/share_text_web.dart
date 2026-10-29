@@ -7,13 +7,13 @@ import 'dart:js_interop_unsafe';
 
 import 'package:web/web.dart' as web;
 
-/// Opens the share sheet with [text] and [url]; false where the browser
-/// has none (most computers). Cancelling it still counts as shared.
-Future<bool> shareText(String text, String url) async {
+/// Opens the share sheet with [url]; false where the browser has none
+/// (most computers). Cancelling it still counts as shared.
+Future<bool> shareUrl(String url) async {
   final nav = web.window.navigator;
   if (!nav.has('share')) return false;
   try {
-    await nav.share(web.ShareData(text: text, url: url)).toDart;
+    await nav.share(web.ShareData(url: url)).toDart;
   } catch (_) {
     // Cancelled, or turned down: nothing to do.
   }

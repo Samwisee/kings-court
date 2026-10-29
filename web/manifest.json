@@ -7,7 +7,7 @@
     "display": "standalone",
     "background_color": "#0A3622",
     "theme_color": "#4E0B18",
-    "description": "A cooperative trick-taking card game.",
+    "description": "A cooperative trick-taking game for 2–6 players.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
