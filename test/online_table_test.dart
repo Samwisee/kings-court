@@ -11,7 +11,6 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/round.dart';
-import 'package:kings_court/game/seats.dart';
 import 'package:kings_court/game/setup.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/modes.dart';
@@ -165,7 +164,7 @@ void main() {
     await settle();
     expect(ben.seat, 1);
     expect(ben.hosting, isFalse);
-    expect(ann.names['ben'], 'Ben', 'the host hears who came in');
+    expect(ann.names['ben'], 'Ben', reason: 'the host hears who came in');
     expect(ann.seats.present(1), isTrue);
   });
 
