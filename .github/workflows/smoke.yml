@@ -1,0 +1,45 @@
+name: Try the web service once
+
+# Sends one test round and one test bug report to the deployed service,
+# reads the rounds back, and publishes what happened to smoke-result.
+on:
+  push:
+    branches: [smoke-service]
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send and read back
+        env:
+          URL: ${{ vars.BUG_REPORT_URL }}
+          KEY: ${{ secrets.ROUNDS_READ_KEY }}
+        run: |
+          mkdir -p out
+          {
+            echo "url: $URL"
+            echo -n "round from the web page: "
+            curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Origin: https://samwisee.github.io' -H 'Content-Type: application/json' \
+              -d '{"v":1,"test":true,"mode":"free","players":4,"people":[0],"outcome":"won","round":{"target":6,"tasks":[]},"moves":[]}' "$URL/rounds"
+            echo -n "round from an app (no origin): "
+            curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' \
+              -d '{"v":1,"test":true,"mode":"free","players":3,"people":[0],"outcome":"lost","round":{"target":5,"tasks":[]},"moves":[]}' "$URL/rounds"
+            echo -n "round from another site (want 403): "
+            curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Origin: https://example.com' -d '{"v":1,"round":{}}' "$URL/rounds"
+            echo -n "bug report: "
+            curl -s -w ' %{http_code}\n' -X POST -H 'Origin: https://samwisee.github.io' -H 'Content-Type: application/json' \
+              -d '{"message":"Test report from setting up the service (safe to close)","build":"smoke","where":{"test":true}}' "$URL"
+            echo "rounds read back:"
+            curl -s -H "Authorization: Bearer $KEY" "$URL/rounds?after=0"
+          } | tee out/result.txt
+      - name: Publish
+        if: always()
+        run: |
+          cd out
+          git init -q -b smoke-result
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Smoke test"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" smoke-result
