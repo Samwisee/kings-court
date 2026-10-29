@@ -62,6 +62,7 @@ import 'round_table/round_table.dart';
 import 'rules/rules_page.dart';
 import 'setup/saves.dart';
 import 'setup/setup_panel.dart';
+import 'table/dealt_task.dart';
 import 'table/game_bar.dart';
 import 'table/keyboard.dart';
 import 'table/seats.dart';
@@ -2212,70 +2213,11 @@ class HomePageState extends State<HomePage>
               ),
             );
             if (!measured) return Opacity(opacity: 0, child: chip);
-            final from = _dealFrom[t] ?? Offset.zero;
-            // Cards lean alternately left and right as they fly.
-            final side = i.isEven ? -1.0 : 1.0;
-            final startMs = pileMs + i * 170;
-            final total = startMs + 820;
-            return TweenAnimationBuilder<double>(
+            return DealtTask(
               key: ValueKey('deal-${game.dealId}-${t.description}'),
-              tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: total),
-              builder: (context, raw, child) {
-                final ms = raw * total;
-                const apart = 0.0;
-                // Then each card is dealt: it arcs out to its place,
-                // straightening and turning face up as it lands.
-                final d = ms < startMs
-                    ? 0.0
-                    : Curves.easeOutBack.transform(
-                        clampD((ms - startMs) / (total - startMs), 0, 1));
-                final dc = clampD(d, 0, 1);
-                final lift = math.sin(dc * math.pi) * 36;
-                final pile = Offset(side * apart * w * 0.6, -i * 1.6 - apart * 10);
-                return Transform.translate(
-                  offset: from * (1 - d) + pile * (1 - dc) + Offset(0, -lift),
-                  child: Transform.rotate(
-                    angle: side * apart * 0.22 + side * 0.3 * math.sin(dc * math.pi),
-                    child: Transform.scale(
-                      scale: 0.86 + 0.14 * dc,
-                      child: FlipIn(
-                        t: clampD(dc * 1.5 - 0.3, 0, 1),
-                        front: child!,
-                        // The back is exactly the size of the front.
-                        back: Stack(children: [
-                          Opacity(opacity: 0, child: child),
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: skin.cardLook.taskBack ??
-                                      [
-                                        skin.cardLook.back,
-                                        Color.lerp(skin.cardLook.back, Colors.black, 0.5)!
-                                      ],
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: skin.gold, width: 1.5),
-                                boxShadow: const [
-                                  BoxShadow(
-                                      color: Colors.black45,
-                                      blurRadius: 6,
-                                      offset: Offset(0, 3)),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: const CrownIcon(size: 26),
-                            ),
-                          ),
-                        ]),
-                      ),
-                    ),
-                  ),
-                );
-              },
+              index: i,
+              from: _dealFrom[t] ?? Offset.zero,
+              startMs: pileMs + i * 170,
               child: chip,
             );
           }(),
