@@ -1,0 +1,9 @@
+Computing fixes in kings-court...
+Applying fixes...
+
+test/tool/shots_test.dart
+  directives_ordering - 1 fix
+
+1 fix made in 1 file.
+Computing fixes in kings-court...
+Nothing to fix!
