@@ -155,6 +155,14 @@ bool clash(String a, String b) {
   if (p.cards.intersection(q.cards).isNotEmpty) return true;
   if (p.tricks.intersection(q.tricks).isNotEmpty) return true;
   if (p.mostTricks && q.mostTricks) return true;
+  // The first trick a Court Card falls in is often the first trick itself
+  // (the King leads it, and Court Cards come out early): beside a task to
+  // win the first trick, held by someone else, the two fight more often
+  // than not.
+  const firstCourt = 'Win the first trick a Court Card falls in';
+  if (a == firstCourt && q.tricks.contains(0) || b == firstCourt && p.tricks.contains(0)) {
+    return true;
+  }
   // Not enough of a rank, a suit or Court Cards to go round.
   for (var r = 1; r <= 9; r++) {
     int need(TaskProfile t) => [

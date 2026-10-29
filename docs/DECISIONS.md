@@ -428,3 +428,20 @@ baseline).
 - **The loading screen** is drawn in the look saved last time
   (`web/index.html` reads it from local storage); `test/skin_test.dart`
   checks its colours against each skin's.
+
+## The bug report on a phone, and the first trick
+
+- **The bug report with the keyboard up**: the dialog didn't fit, so its
+  buttons slid down over the table and the title off the top. A court
+  dialog's words now scroll when there isn't room, keeping the title and
+  the buttons in view (every `CourtDialog`, not only this one). A test
+  holds it with a phone's keyboard up. The name field is gone; reports
+  come in as "anonymous". `wide-*-bug.png` change.
+- **"Win the first trick a Court Card falls in"** is no longer dealt
+  beside a task to win the first trick (or the first two, or the first
+  trick with a Court Card). They only clashed when a Court Card fell in
+  the first trick, so the deal check let them through, but the King leads
+  that trick and Court Cards come out early: held by two players they
+  fought more often than not. By the balance report the first-trick tasks
+  are dealt about as often as their share of the pool (one round in
+  three has one), so no other change to how often they come up.

@@ -241,6 +241,15 @@ void main() {
     }
   });
 
+  test('The first trick a Court Card falls in is never dealt beside winning the first trick', () {
+    const first = 'Win the first trick a Court Card falls in';
+    for (final other in ['Win the first trick', 'Win the first two tricks', 'Win the first trick with a Court Card']) {
+      expect(clash(first, other), isTrue, reason: other);
+      expect(clash(other, first), isTrue, reason: other);
+    }
+    expect(clash(first, 'Win the last trick'), isFalse);
+  });
+
   test('Avoiding something clashes with needing enough of it', () {
     expect(selfClash("Don't win any 9s", 'Win at least five ♦ cards'), isFalse);
     expect(selfClash("Don't win any ♣ cards", 'Win at least five ♣ cards'), isTrue);
