@@ -19,7 +19,9 @@ class FakeRooms {
     final end = FakeEnd();
     var code = uri.pathSegments.last;
     if (code == 'new') {
-      code = 'R${(_next++).toString().padLeft(3, '0')}';
+      // Four letters, as the service's codes are.
+      final n = _next++;
+      code = 'R${String.fromCharCodes([for (final d in [676, 26, 1]) 65 + n ~/ d % 26])}';
       final s = GameSetup.fromJson(jsonDecode(q['setup']!) as Map<String, dynamic>);
       rooms[code] = FakeRoom(code, s, q['session']!, q['build']!);
     }
