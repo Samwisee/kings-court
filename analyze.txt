@@ -1,0 +1,15 @@
+ERROR|COMPILE_TIME_ERROR|INVALID_ASSIGNMENT|/home/runner/work/kings-court/kings-court/lib/game/bot_turn.dart|99|23|5|A value of type 'double' can't be assigned to a variable of type 'int'.
+ERROR|COMPILE_TIME_ERROR|ARGUMENT_TYPE_NOT_ASSIGNABLE|/home/runner/work/kings-court/kings-court/lib/main.dart|5283|19|13|The argument type 'void Function(String)' can't be assigned to the parameter type 'Future<void> Function(String)'. 
+ERROR|COMPILE_TIME_ERROR|ARGUMENT_TYPE_NOT_ASSIGNABLE|/home/runner/work/kings-court/kings-court/lib/ui/panels.dart|149|20|1|The argument type 'num' can't be assigned to the parameter type 'double'. 
+ERROR|COMPILE_TIME_ERROR|ARGUMENT_TYPE_NOT_ASSIGNABLE|/home/runner/work/kings-court/kings-court/lib/ui/panels.dart|151|20|1|The argument type 'num' can't be assigned to the parameter type 'double'. 
+ERROR|COMPILE_TIME_ERROR|URI_DOES_NOT_EXIST|/home/runner/work/kings-court/kings-court/test/tool/bot_strength_test.dart|25|8|28|Target of URI doesn't exist: '../balance/play_round.dart'.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_FUNCTION|/home/runner/work/kings-court/kings-court/test/tool/bot_strength_test.dart|73|31|9|The function 'playRound' isn't defined.
+WARNING|STATIC_WARNING|UNUSED_ELEMENT|/home/runner/work/kings-court/kings-court/lib/home/card_tracker.dart|29|17|9|The declaration 'gridWidth' isn't referenced.
+WARNING|STATIC_WARNING|UNUSED_ELEMENT|/home/runner/work/kings-court/kings-court/lib/home/card_tracker.dart|35|17|7|The declaration 'cellFor' isn't referenced.
+WARNING|STATIC_WARNING|UNUSED_ELEMENT_PARAMETER|/home/runner/work/kings-court/kings-court/lib/home/menu.dart|205|31|4|A value for optional parameter 'size' isn't ever given.
+INFO|LINT|AVOID_REDUNDANT_ARGUMENT_VALUES|/home/runner/work/kings-court/kings-court/lib/home/chronicle_ui.dart|116|33|2|The value of the argument is redundant because it matches the default value.
+INFO|LINT|AVOID_REDUNDANT_ARGUMENT_VALUES|/home/runner/work/kings-court/kings-court/lib/main.dart|1844|49|2|The value of the argument is redundant because it matches the default value.
+INFO|LINT|SORT_CHILD_PROPERTIES_LAST|/home/runner/work/kings-court/kings-court/lib/main.dart|3335|13|177|The 'child' argument should be last in widget constructor invocations.
+INFO|LINT|SORT_CHILD_PROPERTIES_LAST|/home/runner/work/kings-court/kings-court/lib/main.dart|3448|9|391|The 'child' argument should be last in widget constructor invocations.
+INFO|LINT|NOOP_PRIMITIVE_OPERATIONS|/home/runner/work/kings-court/kings-court/lib/main.dart|7307|10|5|The expression has no effect and can be removed.
+INFO|LINT|EOL_AT_END_OF_FILE|/home/runner/work/kings-court/kings-court/test/tool/play_round.dart|104|2|1|Missing a newline at the end of the file.
