@@ -772,7 +772,6 @@ class HomePageState extends State<HomePage>
   PlayingCard? _queued;
 
   void _scheduleBot() {
-    // Online, with no card to show you're ready for the picking at once.
     if (_openingPick && _room != null && !_speakPromptDue && _round.problem(Ready(_you)) == null) _link.send(Ready(_you));
     _room?.watch(Host.moment(game), yours: _yourPick || _yourPlay || _speakPromptDue, standIn: _standIn,
         warn: (words) => _showSnack(words, context.skin.feltDeep));
@@ -1030,6 +1029,7 @@ class HomePageState extends State<HomePage>
     // Online, play goes on while the crown flies: what comes meanwhile is
     // made once it lands, in order.
     if (_crowning != null) return _afterCrown.add(action);
+    if (_digital && !_round.hasCards) dealRound(game, rigged: _mode.riggedDeal(game)); // before it came
     switch (action) {
       case MatchAction():
         if (_round.problem(action) != null) return;

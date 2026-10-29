@@ -190,8 +190,8 @@ void main() {
     expect(ann.history.map((m) => m.action.seat), [0, 1, 0]);
     // From there the moves come as anyone's: Ann's own again, in its place.
     expect(played, ['pass', 'ready', 'ready']);
-    // A move this device may not make isn't played ahead.
-    ann.send(const Pass(2));
+    // A move this device may not make (Ben's) isn't played ahead.
+    ann.send(const Pass(1));
     expect(played.length, 3);
   });
 

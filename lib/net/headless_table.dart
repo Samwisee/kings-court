@@ -63,6 +63,8 @@ class HeadlessTable {
 
   /// Makes [action] on the table; a stale one is let go.
   void apply(TableAction action) {
+    // A move can come before this table has dealt: the cards first.
+    if (!round.hasCards && game.digital) dealRound(game, rigged: rules.riggedDeal?.call(game));
     switch (action) {
       case MatchAction():
         if (round.problem(action) != null) {
