@@ -101,7 +101,7 @@ headers. Everything that isn't that state is a library of its own under
 ### lib/ui/controller.dart: the controller
 
 `GameController` (`lib/ui/controller.dart`) is a `ChangeNotifier` that
-owns the `GameState` (and its `MatchState`), the `TableLink` every move
+owns the `GameState` (and its `Round`), the `TableLink` every move
 goes through, and saving. The page reads `game` from it and draws.
 
 - **Saving waits for a pause.** A change asks the controller to save, and
@@ -145,21 +145,29 @@ as online play needs them.
 
 ## Changing the look (skins)
 
-Everything visual is decided in a few central places. A new skin changes
-these, and every screen follows.
+The look is a `Skin` (`lib/skin/skin.dart`): one object every widget reads
+from its context (`context.skin`), and painters take as an argument. Two
+skins ship, the King's Court and Plain, and the menu's *Plain look* switches
+between them (remembered on the device). `test/skin_test.dart` fails if a
+widget names a colour, font or dialog style of the Court skin directly.
 
-1. **`lib/skin/theme.dart`** is the skin itself:
-   - `Palette`: every colour, named. That covers the felt, the table, card
-     stock, ink, gold and its shades, suit colours, player colours and the
-     traitor reds. Nothing else in the app should write a colour by
-     number; if it does, it belongs here.
-   - `displayFont` / `bodyFont`: the two typefaces (in `assets/fonts`).
-   - `feltShadow`: the soft shadow under words on the felt.
-   - `DialogStyle`: every dialog's background, edge, title and words, and
-     the card-stock version for task close-ups.
-   - `buildTheme()`: the bevelled gold buttons, text buttons, outlined
-     buttons and the dialog theme.
-   - `outlineColour` / `outlineWidth`: the dark line round every card.
+1. **A skin** defines:
+   - the palette by name: the felt, the table, card stock, ink, gold and its
+     shades, suit colours (`suitColour`, with the four-colour setting),
+     the seats' colours and the traitor reds;
+   - `displayFont` / `bodyFont`, and `taskText`, the task cards' words
+     (their size is measured in it);
+   - `feltShadow`, the soft shadow under words on the felt;
+   - the dialogs' background, edge, shape, title and words, and the card
+     stock version for task close-ups;
+   - `outlineColour` / `outlineWidth`, the dark line round every card;
+   - `theme()`, the Material theme (buttons, dialogs, the app bar).
+
+   The Court skin (`skin/court/court_skin.dart`) takes its values from
+   `skin/theme.dart`'s constants; `skin/plain/plain_skin.dart` is the short
+   example of a whole skin. A new one goes in `skins` (`skin/skins.dart`),
+   and `Entitlements` (`skin/entitlements.dart`) says whether it's owned.
+   The chrome's words are in `skin/strings.dart`.
 2. **Panels**: `OrnateCard` in `lib/ui/widgets/panels.dart` draws every panel and
    ornate dialog, at one of three levels of `Ornament`:
    - `low` (the default): gradient, faint damask, one bronze rule.
@@ -185,28 +193,27 @@ these, and every screen follows.
 7. **Keyboard choice**: `KeyFocusRing` (`lib/ui/widgets/panels.dart`) is the ring
    round whatever the arrow keys have chosen.
 
-Today a skin is a code change and a new build. To switch skins inside the
-app, `Palette`'s constants would become an instance chosen at start-up (an
-`InheritedWidget` or a `ThemeExtension`). Every colour already goes through
-`Palette`, so that's a change to one file, plus removing `const` where
-colours are used.
+The ornament painters' one-off tints (the damask, the glitter, the throne
+room) and the Court Cards' faces are still literals: the court's art, drawn
+the same in both skins.
 
 ---
 
 ## How an on-screen round runs
 
-1. `GameState.addTasksUntilTarget` deals the round's tasks.
-2. `MatchState.dealFor` deals the cards and the King is crowned. It
-   rejects any deal that makes a task impossible.
-3. Tasks are taken in turn from the King: `_assignTask` sends a `PickTask`
-   move to the table link and `_assignTaskNow` takes it when it comes back
-   (`game.assign`). Passing (`Pass`) and announcing a number (`Announce`)
-   go the same way. Courtiers decide in `botDecision`.
-4. Cards are played: `_playCard` sends a `PlayCard` move to the table link,
-   and `_playCardNow` plays it when it comes back. Showing a card works the
-   same way (`ShowCard`).
-5. Each finished trick pauses, then `taskRules` (engine/rules.dart) judge
-   every task. The round is won when all are done, and lost when one fails.
+1. `GameState.startRound` draws the round's tasks from the mode's
+   `RoundSetup` and the game's dice.
+2. `game/dealer.dart` deals the cards from the seed, refusing a deal that
+   makes a task impossible; the table sends `Crown` for the King card's
+   holder.
+3. Tasks are taken in turn from the King: the page sends a `PickTask`
+   through the table link and `Round.apply` takes it when it comes back.
+   Passing (`Pass`) and announcing a number (`Announce`) go the same way.
+   The `Host` decides the courtiers' moves (`botDecision`).
+4. Cards are played with `PlayCard` and shown with `ShowCard`, the same way.
+5. `Round.apply` judges every task after each trick (in seal order); the
+   page pauses, then shows the flips. The round is won when all are done,
+   and lost when one fails.
 
 ---
 
@@ -214,20 +221,20 @@ colours are used.
 
 The engine was built for this:
 
-- `lib/engine` and the whole game model (`models.dart`, the chronicle,
-  courtiers, story, tutorial, `game/bot_turn.dart`) are plain Dart with no
-  Flutter (a test keeps it that way), so the same rules, and the same
-  courtiers, can run on a server.
-- Every move is a `MatchAction` (`PickTask`, `Pass`, `Announce`,
-  `PlayCard`, `ShowCard`) that turns into JSON and back.
-  `MatchState.problem()` says whether a move is allowed, and
-  `MatchState.apply()` plays it.
+- `lib/engine`, `lib/game`, `lib/net` and `lib/modes` are plain Dart with
+  no Flutter (the layers test keeps it that way), so the same rules, and
+  the same courtiers, can run on a server.
+- Every action is a `MatchAction` (within a round: `PickTask`,
+  `ReturnTask`, `Pass`, `Announce`, `PlayCard`, `ShowCard`) or a
+  `GameAction` (`Crown`, `Speak`, `MarkTask`, `UndoMark`, `NextRound`,
+  `RetryRound`, `Redeal`) that turns into JSON and back; `problem()` says
+  whether it's allowed and `apply()` plays it.
 - `lib/net/table_link.dart`: the table sends every move to a `TableLink`
   and makes it when it comes back. `LocalLink` sends them straight back.
   A network link (Firebase, say) would send them to the server and play
   whatever the server sends back, in the same order, on every device.
-- A game's deals come from its `seed` (`GameState.dealRandom`), so a
-  round can be dealt again exactly, and a server could deal the same.
+- Every random choice comes from the game's `seed` (`game/dice.dart`), so a
+  game replays exactly from its setup and moves (`net/replay.dart`).
 - The seat you play from is `GameController.mySeat` (0 on one device).
 
 `docs/ONLINE.md` has the plan and what's still to do.

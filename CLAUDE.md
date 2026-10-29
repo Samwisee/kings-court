@@ -18,7 +18,7 @@ with the screenshots it explains (`tool/shots/expected_changes.txt`).
   **Check a branch** (`.github/workflows/check.yml`), about 10 minutes:
   - `test`: `dart analyze --fatal-infos --fatal-warnings` (any output
     fails), `flutter test --exclude-tags tool`, `flutter build web`.
-  - `shots`: takes the 66 screenshots and compares them with the
+  - `shots`: takes the 70 screenshots and compares them with the
     `shots-baseline` branch; fails on any difference not listed in
     `tool/shots/expected_changes.txt`.
   - `bench`: times main and the branch, twice each, on the same runner;
@@ -76,9 +76,12 @@ modes/     Pure Dart. One folder per way to play: how a round is set up,
            what the courtiers are told, what a result means. The Chronicle's
            chapters, the tutorial's lessons and the old Dynasty's story are
            data here.
-platform/  Flutter and plugins: sounds, analytics, crash reports, build info.
-skin/      Flutter. The look: theme.dart (palette, fonts, dialogs, buttons)
-           and the Court Card art.
+platform/  Flutter and plugins: settings, sounds, analytics, crash reports,
+           build info.
+skin/      The look: the Skin interface (skin.dart), the Court skin
+           (court/, its values theme.dart's constants, and the Court Card
+           art) and the Plain skin (plain/), SkinScope and context.skin,
+           Entitlements, and the chrome's words (strings.dart).
 ui/        Flutter. Widgets and screens: they draw state and send actions.
            app.dart, table_page.dart (the one page) and controller.dart,
            then one folder per family of pieces (widgets/, cards/,
@@ -122,17 +125,23 @@ the layers test's `legacy` and `knownDebts` lists are empty and stay so.
   a `problem` check and an `apply` case; the page sends it through the link
   and never changes state directly. A test of the JSON round trip and of
   `problem`.
-- **A skin** (from step 7 of the refactor): a `Skin` in `lib/skin/`,
-  every colour, font and asset read through `context.skin`; a screenshot
-  set per skin.
-- **A save format change**: bump `GameState.saveVersion`, add a migration
-  step in `GameState.fromJson`, and a fixture in `test/fixtures/saves/`
-  written in the new shape; `test/saves_test.dart` checks every fixture
-  still loads and means the same.
+- **A skin**: a `Skin` subclass in `lib/skin/<name>/` (every getter;
+  `PlainSkin` is the short example), added to `skins` in
+  `skin/skins.dart`; the menu's switcher picks it up. Widgets read the
+  look only through `context.skin` (painters take a `Skin` argument);
+  `test/skin_test.dart` fails on a widget naming `Palette`, a font or
+  `DialogStyle`. Add a screenshot set for it in `test/tool/shots_test.dart`.
+- **A save format change**: bump `saveVersion` in `game/saves.dart`, add
+  one migration to `_migrations` there, let CI write the new fixtures
+  (`fixtures/` on `ci-<branch>`) and commit them under
+  `test/fixtures/saves/v<n>/`; `test/saves_test.dart` loads every version.
+- **A big file**: `test/file_size_test.dart` fails on a file over about
+  600 lines. Split it; generated art and data go in its `data` list, and a
+  file that can't be split yet goes in `debts` at its current length (the
+  number only goes down).
 
-## The refactor in progress
+## The refactor
 
-`docs/REFACTOR_PLAN.md` is the plan and the order (steps 1–9);
-`docs/DECISIONS.md` records every call made along the way and every
-intended behaviour change. Branch `refactor`; checkpoints go to Sam in
-chat; merge to `main` only when he says.
+Done on branch `refactor` (not merged: Sam merges). `docs/ARCHITECTURE.md`
+is the shape it left, `docs/DECISIONS.md` every call made along the way and
+every intended behaviour change, with the screenshots each explains.

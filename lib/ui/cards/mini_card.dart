@@ -110,14 +110,20 @@ class MiniCard extends StatelessWidget {
                       felt, fade)!,
               width: edgeW),
         ),
-        child: DecoratedBox(
+        // Inside the border, as a Container would place it (the refactor's
+        // lint fix to DecoratedBox lost this inset; docs/DECISIONS.md).
+        child: Padding(
+          padding: EdgeInsets.all(edgeW),
+          child: DecoratedBox(
           decoration: edge != null
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(math.max(0, r - edgeW)),
                   border: Border.all(color: skin.outlineColour),
                 )
               : const BoxDecoration(),
-          child: Stack(children: [
+          child: Padding(
+            padding: EdgeInsets.all(edge != null ? 1 : 0),
+            child: Stack(children: [
             Positioned.fill(child: label),
             if (trick != null)
               Positioned(
@@ -127,6 +133,8 @@ class MiniCard extends StatelessWidget {
                     size: width * 0.28, color: edge ?? Colors.white),
               ),
           ]),
+          ),
+        ),
         ),
       ),
     );

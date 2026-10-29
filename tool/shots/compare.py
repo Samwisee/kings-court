@@ -7,7 +7,9 @@ Prints one line per screenshot (same, differs, missing, new) and writes a
 diff image for each one that differs (the changed pixels in red over a
 faded copy) into <out dir>/diff/. Exits 1 if anything differs, went
 missing or is new without a reason in the expected-changes file, whose
-lines are `name.png: why`, or `*: why` to explain every difference.
+lines are `name.png: why`, or `*: why` to explain every difference. A
+line `~name.png: why` marks a screenshot that varies from run to run: it
+is never compared, and stays listed when the baseline moves.
 """
 import os
 import sys
@@ -17,13 +19,18 @@ from PIL import Image, ImageChops
 
 def main(baseline, new, expected_file, out):
     expected = {}
+    unstable = {}
     if os.path.exists(expected_file):
         for line in open(expected_file):
             line = line.strip()
             if not line or line.startswith('#') or ':' not in line:
                 continue
             name, why = line.split(':', 1)
-            expected[name.strip()] = why.strip()
+            name = name.strip()
+            if name.startswith('~'):
+                unstable[name[1:]] = why.strip()
+            else:
+                expected[name] = why.strip()
     diff_dir = os.path.join(out, 'diff')
     os.makedirs(diff_dir, exist_ok=True)
     if not os.path.isdir(new) or not any(f.endswith('.png') for f in os.listdir(new)):
@@ -37,6 +44,9 @@ def main(baseline, new, expected_file, out):
     unexplained = []
     same = 0
     for name in sorted(old | now):
+        if name in unstable and name in now:
+            print(f'unstable {name}  [{unstable[name]}]')
+            continue
         if name not in now:
             line = f'missing {name}'
         elif name not in old:
@@ -48,13 +58,14 @@ def main(baseline, new, expected_file, out):
                 line = f'differs {name}: size {a.size} -> {b.size}'
             else:
                 d = ImageChops.difference(a, b)
-                box = d.getbbox()
+                # Every channel: an RGBA image's getbbox() looks at alpha alone.
+                box = d.getbbox(alpha_only=False)
                 if box is None:
                     same += 1
                     print(f'same    {name}')
                     continue
-                mask = d.convert('L').point(lambda v: 255 if v else 0)
-                changed = sum(1 for v in mask.getdata() if v)
+                mask = d.convert('RGB').convert('L').point(lambda v: 255 if v else 0)
+                changed = mask.histogram()[255]
                 total = a.size[0] * a.size[1]
                 line = (f'differs {name}: {changed} of {total} pixels '
                         f'({100.0 * changed / total:.2f}%), box {box}')

@@ -2,7 +2,8 @@
 
 Every call made without asking, newest last, and every change to what the
 player sees or how a round plays (those also name the screenshots they
-explain, or say none differ). The plan is `docs/REFACTOR_PLAN.md`.
+explain, or say none differ). The plan was `docs/REFACTOR_PLAN.md`, now
+`docs/ARCHITECTURE.md`.
 
 ## Step 2: the guards
 
@@ -275,3 +276,35 @@ with such literals as the next debt.
   page, the small dialogs) as constants, so the widgets showing them stay
   `const`; translation would make it an object chosen by locale (future
   work).
+
+## The screenshot guard, mended
+
+- **The comparator never compared colour.** `tool/shots/compare.py` took
+  `getbbox()` of an RGBA difference, which looks at the alpha channel
+  only, so every run since step 2 reported "66 same" whatever changed.
+  It now compares every channel. Re-run against the pre-refactor
+  baseline (and nine commits along the way, pushed to `bisect-*`
+  branches for their screenshots), 35 of the 66 differ:
+  - **23 never matched**: the phone, laptop (but the first), wide-screen,
+    wide-table and throne-room shots differed between two runs of the
+    baseline's own commit, because their deals and courtiers drew from
+    unseeded randoms. Since step 5 every random choice comes from the
+    seed, so they are steady now, but with other deals and seats
+    (Bishop → Duke, and so on). Listed in `expected_changes.txt`, with
+    the menu shots, which also gained the *Plain look* row.
+  - **The throne room** (`zz-room.png`) still varies run to run (its
+    figures move on a clock of their own). It is marked unstable (`~` in
+    `expected_changes.txt`) and not compared; it is the shelved Dynasty's.
+  - **`laptop-0.png`**: the Powers tile is gone from setup, as decided at
+    checkpoint 1 (step 3 said "none differ"; it did).
+  - **Two regressions, fixed**: the strict-lint pass (step 2) turned the
+    mini card's `Container`s into `DecoratedBox`es, which don't inset
+    their child by the border, so every mini card (the tracker, a task's
+    close-up, a shown card) drew its rank and suit a little larger and
+    off-centre (`tut-4b-play.png`); and the Dynasty removal (step 3)
+    unwrapped the King's crown over a seat token from its `Row`, so the
+    crown stretched to its slot's height, a pixel lower
+    (`tut-*-pick.png`, `tut-*-play.png`, `tut-*-done.png`). Both are back
+    as they were.
+  The baseline is retaken from the first green run after this, so the
+  guard holds from here on.

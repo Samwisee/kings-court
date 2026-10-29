@@ -9,7 +9,7 @@ A cooperative trick-taking card game for 2 to 6 players, in the family of *The C
 - **The deck:** 40 cards, Ace (1) to 9 in ♥ ♦ ♠ ♣, plus four **Court Cards** (Joker < Jack < Queen < King). Court Cards are their own suit and beat every suit. Whoever holds the King card is **the King**, picks the first task and leads the first trick. Players must follow the suit led if they can.
 - **The tasks** (`lib/tasks.dart`, about 120 of them) are the court's own: tasks about the King, the Court Cards and how a trick is won, plus the plain goals every trick-taking game shares. Their points, per table size, come from the balance report (`tool/balance`), not from any other game.
 
-### Ways to play (`GameMode` in `lib/models.dart`)
+### Ways to play (`GameMode` in `lib/game/state.dart`)
 
 Saved games store the enum index, so **new modes go on the end**.
 
@@ -19,7 +19,7 @@ Saved games store the enum index, so **new modes go on the end**.
 | `endless` | Each win adds a point to the next round; win streaks are tracked. |
 | `chronicle` | 24 chapters with set points, seals and decrees; crowns for wins (`lib/chronicle.dart`). |
 | `dynasty` | Story mode, labelled **Dynasty (Alpha)**. Always solo with on-screen cards (setup skips the players step): **you are always the King**, courtiers come and go with the story, a throne room scene runs between hands. Old saves of physical Dynasty still load. |
-| `tutorial` | Opening pages (story, goal, cards, tricks, following suit, Court Cards, reading tasks, playing together), then four scripted lessons (`lib/tutorial.dart`, `lib/play/tutorial_intro.dart`). Never saved. |
+| `tutorial` | Opening pages (story, goal, cards, tricks, following suit, Court Cards, reading tasks, playing together), then four scripted lessons (`lib/modes/tutorial/lessons.dart`, `lib/ui/modes/tutorial/tutorial_intro.dart`). Never saved. |
 
 Two ways to use any mode:
 - **At a real table:** the phone sits in the middle and tracks tasks for a physical deck.
@@ -79,7 +79,7 @@ variables > Actions) and does nothing without it.
   `menu/<choice>[/on|off]`. Add new ones with `Analytics.event([...])`.
 - `build_info.dart` holds the commit (`BUILD`), shown in reports and crashes.
 - A report's `state` carries the game's `seed`, so its deals can be made
-  again exactly (`GameState.dealRandom`).
+  again exactly (`game/dice.dart`).
 
 ## Benchmarks
 
@@ -94,38 +94,30 @@ vs straight, with vs without a part of the page), not across runs.
 
 ## Code map
 
-| File | What lives there |
+`README.md` is the file-by-file map and `docs/ARCHITECTURE.md` the shape
+(layers, the round and its actions, moves, modes, skins, the guards). In
+short:
+
+| Where | What lives there |
 |---|---|
-| `README.md` | The up-to-date map of the codebase, the skin, performance and online play. Start there. |
-| `lib/main.dart` (~7.4k lines) + `lib/home/` | Everything on screen (the widgets it uses are in `lib/home/`, part files). `_HomePageState` holds the game, the setup panel (`_SetupPanel`), the round-table layout (`_TableGeometry`), the on-screen table and hand, bots' turns (`_scheduleBot`, `_botThink`), Dynasty's end-of-round flow (`_DynastyStep`), outcome cards, How to Play (`showRulesDialog`). Test hooks: `HomePageTestHooks.fast()`, `debugYourMove()`. |
-| `lib/models.dart` | `GameState`: players, tasks, King, mode, seals and decrees, Dynasty state (courtiers, loyalty, wounds, reigns, story flags, coffers), JSON save/load. `addTasksUntilTarget` deals each round's tasks. |
-| `lib/engine/cards.dart` | Deck, `deal`, `legalPlays`, `winningPlay`, `Trick`. Pure Dart. |
-| `lib/engine/rules.dart` | `taskRules`: every task as a function of the tricks → `Verdict` (pending/done/failed). |
-| `lib/engine/conflicts.dart` | Which tasks clash; `playableWith`; timing (for seals). |
-| `lib/engine/match.dart` | `MatchState` (on-screen round: hands, tricks, phase) and `MatchAction`s, all JSON-able. Online play builds on this. |
-| `lib/engine/bot.dart` | Cooperative bots that **play fair**: a bot sees only its own hand and what's public. Each decision is scored by many imagined rounds (`choosePickAsync`, `choosePlayAsync`) spread over several imagined deals of the cards it can't see (`samples`, default 8), made by `engine/sampling.dart` from the card tracker's deductions (`engine/inference.dart`: voids, shown cards, the King). The imagined rounds are *guided* (`_Guide`): every player in them mostly plays for their own tasks and feeds teammates the cards they need; and the playouts are *focused*: a look at every option, then the rest on the few that looked best. `omniscient = true` gives the old all-seeing bots (the balance tool's `BALANCE_OMNISCIENT=1`). `test/fairness_test.dart` proves a bot's knowledge, imagined deals and decisions don't depend on hidden cards. `test/tool/bot_strength_test.dart` plays all-seeing against fair bots on the same deals, and measures how often a shown card changes a fair bot's play. |
-| `lib/engine/contest.dart`, `lib/play/contest_table.dart` | The *Trial of Hearts*: a hearts round that settles a divided court in Dynasty. |
-| `lib/courtiers.dart` | `Courtier` enum (titles, shapes, powers), Dynasty `Dilemma`s and `Choice`/`Effect`s, entrances and exits, and every line courtiers say (chatter, retorts, cheers, task quips). |
-| `lib/story.dart` | Tidings (news that opens a round), story arcs with flags, the main Karsk campaign from harvest to war. |
-| `lib/play/throne_room.dart` | The solo Dynasty throne room: figures, speech bubbles, the felt stage set that lowers in, choices from the throne. |
-| `lib/play/card_view.dart`, `lib/widgets.dart` + `lib/ui/`, `lib/theme.dart` | Cards (Court Card faces), tokens, crowns, panels and dialogs; `theme.dart` is the skin (palette, fonts, dialog style). |
-| `lib/net/table_link.dart` | Where moves go (`LocalLink` today); the seam for online play. |
-| `lib/engine/task.dart` | `Task` and `allTasks`, Flutter-free. |
-| `lib/chronicle.dart` | The 24 chapters, `Seals`, `Decree`. |
-| `lib/tutorial.dart` | Tutorial opening pages (`introPages`) and lessons: fixed tasks, a rigged `deal()`, the courtiers' script, coach lines, the suggested card. |
-| `lib/play/tutorial_intro.dart` | The tutorial's opening pages, each waiting for Continue. |
-| `lib/task_help.dart` | Plain-words help for tasks: `explainTask` (every task), `glossary`/`termsIn` (game words, shown as chips in a task's close-up), `taskStatus` (how it's going, for every task). Short corner trackers stay in `taskProgress` (rules.dart). |
-| `test/` | `engine_test.dart` (rules, deals, bots), `widget_test.dart` (UI flows, whole on-screen rounds), `tutorial_test.dart` (each lesson is fair and winnable). |
+| `lib/engine/` | The rules in plain Dart: cards, the task library and rules, `Round` (the one record of a round, its `MatchAction`s, `problem`/`apply`), the fair bots, inference and sampling, the Trial of Hearts. |
+| `lib/game/` | `GameState` (`state.dart`), `GameAction`s, the seeded `Dice`, the dealer, the `Host` that plays the courtiers, seats, setup, saves and their migrations. |
+| `lib/net/` | The `TableLink` every action goes through, the headless table, replay, the fake network, rooms. |
+| `lib/modes/` | Free play, Endless, the Chronicle, the tutorial, the shelved Dynasty's data. |
+| `lib/skin/` | `Skin`, the Court and Plain skins, `SkinScope`/`context.skin`, `Entitlements`, the chrome's strings. |
+| `lib/ui/` | `app.dart`, `table_page.dart` (`HomePage`, still the screen's own state), `controller.dart` (`GameController`: the game, the link, saving), and the page's pieces by family. Test hooks: `HomePageTestHooks.fast()`, `.seed`. |
 
 ### How an on-screen round flows
 
-1. `game.addTasksUntilTarget` sets tasks and bumps `dealId`.
-2. `_syncCards` deals with `MatchState.dealFor`, rejecting deals that make a task impossible, and the King is crowned.
-3. Picking runs clockwise from the King (`game.assign`); bots pick through `_botThink`.
-4. Tricks are played with `_playCard`. Each finished trick is held for `trickPause`, then `_judgeTasks` checks `taskRules`.
-5. The outcome overlay appears. Dynasty goes on to dilemmas, verdicts, deaths and endings.
-
-`setState` is overridden: every change saves the game and nudges `_syncCards` and the bots.
+1. `NextRound` (or a new game) runs `GameState.startRound`: the mode's
+   `RoundSetup`, tasks drawn to the target from the game's dice.
+2. `game/dealer.dart` deals from the seed, refusing deals that make a task
+   impossible; the table sends `Crown` for the King card's holder.
+3. Picks, passes, announcements and plays are `MatchAction`s sent through
+   the link; the `Host` decides the courtiers' and the page paces them.
+4. `Round.apply` judges each finished trick in seal order; the page shows
+   the flips after its trick pause.
+5. The result goes to the mode's `afterRound`; the outcome card shows it.
 
 ## Recent history (newest first)
 
@@ -156,10 +148,9 @@ vs straight, with vs without a part of the page), not across runs.
 
 ## Open threads and ideas
 
-- **Multiplayer/Firebase:** plan in `docs/ONLINE.md`. The seam is `lib/net/table_link.dart`; card plays and shown cards already go through it.
+- **Multiplayer/Firebase:** plan in `docs/ONLINE.md`. The seam is `lib/net/table_link.dart`; every action goes through it, and `net/rooms.dart` has the interfaces a server implements.
 - **Tutorial follow-ups:** more lessons for seals, royal decrees, the speech token (showing a card), and a short Dynasty primer.
-- **`_HomePageState` is very large:** its widgets live in `lib/home/`, and `GameController` (`lib/game/`) owns the game, the table link and debounced saving. Use `setState` when the game changes and `_ui` when only the screen does. Bots, dealing to the screen and trick pauses still live on the page (see README).
-- **Flaky test:** "Stacks for neighbouring seats never overlap" sometimes needs its built-in retry.
+- **`HomePageState` is still large** (`lib/ui/table_page.dart`): the on-screen opponents, the middle and your hand are its methods, tied to the bots' pacing; see "What's still on the page" in `docs/ARCHITECTURE.md`. Use `setState` when the game changes and `_ui` when only the screen does.
 - **Card reveals on screen** exist (`_speak`/`_reveal`) but bots only reveal outside the tutorial.
 
 ## Working agreements

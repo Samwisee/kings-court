@@ -145,7 +145,13 @@ class SeatToken extends StatelessWidget {
             SizedBox(
               height: 14,
               child: isKing
-                  ? const CrownIcon(size: 18)
+                  // In a row, as when it carried the King's wounds: the row
+                  // centres the crown in the slot rather than stretching it
+                  // to the slot's height (docs/DECISIONS.md).
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [CrownIcon(size: 18)],
+                    )
                   : exiled
                       ? Icon(Icons.block, size: 14, color: skin.lost)
                       : null,
