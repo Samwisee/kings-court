@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.ready.outputs.go == 'yes'
         with:
-          node-version: 20
+          node-version: 22
       - name: The rooms' tests
         if: steps.ready.outputs.go == 'yes'
         run: node --test tool/bug_worker/rooms.test.mjs
@@ -84,6 +84,9 @@ jobs:
           rounds=$(curl -s -H "Authorization: Bearer $ROUNDS_READ_KEY" "$URL/rounds?after=0" | grep -c . || true)
           echo "answers: OPTIONS $cors (want 204), reading rounds $read (want 200), $rounds rounds kept so far" | tee -a out/status.txt
           test "$cors" = 204
+      - name: Do rooms work?
+        if: steps.ready.outputs.go == 'yes'
+        run: node tool/bug_worker/rooms.live.mjs "$URL" 2>&1 | tee -a out/status.txt
       - name: Publish to the service branch
         if: always()
         run: |
