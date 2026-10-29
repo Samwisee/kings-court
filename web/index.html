@@ -62,11 +62,33 @@
       var looks = {
         court: {table: '#4E0B18', glow: '#176141', deep: '#0A3622', gold: '#D4A63A', rim: 1, hi: '#F9E08C', lo: '#A57C1B'},
         plain: {table: '#151B24', glow: '#364150', deep: '#1A2230', gold: '#8DB4FF', rim: 0},
-        lacquer: {table: '#0D0606', glow: '#4C2326', deep: '#26090B', gold: '#DDB65E', rim: 1}
+        lacquer: {table: '#0D0606', glow: '#4C2326', deep: '#26090B', gold: '#DDB65E', rim: 1},
+        garden: {table: '#1B2418', glow: '#4E6B54', deep: '#29402E', gold: '#E5A88E', rim: 1},
+        midnight: {table: '#07090F', glow: '#2A354E', deep: '#0E172C', gold: '#C9D2E3', rim: 1},
+        harbour: {table: '#0B1A22', glow: '#274F5D', deep: '#0C2B36', gold: '#F2B950', rim: 0}
+      };
+      // A table chosen in the Look dialog (lib/skin/tailored.dart), saved
+      // after the skin's id as "+t:<table>".
+      var tables = {
+        green: {table: '#4E0B18', glow: '#176141', deep: '#0A3622'},
+        billiard: {table: '#3B2416', glow: '#2C8A4F', deep: '#134628'},
+        sage: {table: '#1B2418', glow: '#52755A', deep: '#29402E'},
+        teal: {table: '#0B1A22', glow: '#1D5768', deep: '#0C2B36'},
+        navy: {table: '#07090F', glow: '#24345A', deep: '#0E172C'},
+        plum: {table: '#140A18', glow: '#563463', deep: '#28152F'},
+        burgundy: {table: '#1A0A0C', glow: '#75293A', deep: '#3A0E16'},
+        walnut: {table: '#1E140D', glow: '#735239', deep: '#3C291B'},
+        slate: {table: '#121519', glow: '#425062', deep: '#1E262E'},
+        charcoal: {table: '#0A0A0A', glow: '#363636', deep: '#171717'}
       };
       var id = 'court';
       try { id = JSON.parse(localStorage.getItem('flutter.kingsCourt.skin')) || id; } catch (e) {}
-      var l = looks[id] || looks.court;
+      var parts = String(id).split('+');
+      var l = Object.assign({}, looks[parts[0]] || looks.court);
+      parts.forEach(function (p) {
+        var t = p.indexOf('t:') === 0 && tables[p.slice(2)];
+        if (t) { l.table = t.table; l.glow = t.glow; l.deep = t.deep; }
+      });
       var root = document.documentElement.style;
       root.setProperty('--table', l.table);
       root.setProperty('--glow', l.glow);

@@ -41,6 +41,7 @@ import '../platform/game_log.dart';
 import '../platform/service.dart';
 import '../platform/settings.dart';
 import '../platform/sfx.dart';
+import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
 import '../skin/skins.dart';
 import '../skin/strings.dart';
@@ -50,6 +51,7 @@ import 'cards/card_view.dart';
 import 'cards/task_chip.dart';
 import 'controller.dart';
 import 'dialogs/courtier_card.dart';
+import 'dialogs/look_dialog.dart';
 import 'dialogs/table_dialogs.dart';
 import 'dialogs/task_close_up.dart';
 import 'menu/menu.dart';
@@ -2255,19 +2257,37 @@ class HomePageState extends State<HomePage>
   Future<void> _nextLesson() => _openSection(game.lesson + 1);
 
   /// Leaves the tutorial for the welcome table, and offers a real game.
-  Future<void> _finishTutorial() async {
-    Analytics.event(['tutorial', 'finished']);
-    _tutorialDone = true;
-    unawaited(_saveSettings());
+  /// Wears [skin]: everything that reads the skin depends on it, so it's
+  /// all drawn again in the new one (the painters compare their skin too).
+  /// Saved once the page is under it.
+  bool _wear(Skin skin) {
+    if (!SkinScope.choose(context, skin)) return false;
+    WidgetsBinding.instance.addPostFrameCallback((_) => mounted ? _saveSettings() : null);
+    return true;
+  }
+
+  /// Back to the front page: the game is kept (Continue takes it up), an
+  /// online one left.
+  Future<void> _mainMenu() async {
+    _leaveRoom();
+    await _ctrl.saveNow();
     _botTimer?.cancel();
     _botTimer = null;
+    if (!mounted) return;
     setState(() {
       game = GameState();
       _resetTable();
     });
     _keepAwake(false);
-    // Any game saved before the tutorial can be continued again.
+    // Every saved game, this one among them, to carry on with.
     await _loadSaved();
+  }
+
+  Future<void> _finishTutorial() async {
+    Analytics.event(['tutorial', 'finished']);
+    _tutorialDone = true;
+    unawaited(_saveSettings());
+    await _mainMenu();
     if (!mounted) return;
     final play = await showReadyDialog(context);
     if (play ?? false) {
@@ -2954,30 +2974,10 @@ class HomePageState extends State<HomePage>
           if (choice == 'share') GameLog.sharing ? 'off' : 'on',
         ]);
         switch (choice) {
-          case 'new':
-            _showSetupDialog();
+          case 'main':
+            unawaited(_mainMenu());
           case 'rules':
-            showRulesPage(context,
-                game: _inGame && !game.isTutorial
-                    ? RulesContext(
-                        modeName: switch (game.mode) {
-                          GameMode.free => 'Free play',
-                          GameMode.endless => 'Endless',
-                          GameMode.chronicle => 'The Chronicle',
-                          GameMode.dynasty => 'Dynasty',
-                          GameMode.tutorial => 'Tutorial',
-                        },
-                        onScreen: _digital,
-                        players: game.players.length,
-                        points: game.target,
-                        seals: [
-                          for (final t in game.tasks)
-                            if (t.seal != null) t.seal!
-                        ]..sort(),
-                        decree: _round.decree?.title,
-                        roles: game.hasRoles,
-                      )
-                    : null);
+            showRulesPage(context, game: RulesContext.of(game));
           case 'shuffle':
             _shuffleTasks();
           case 'upright':
@@ -3001,15 +3001,9 @@ class HomePageState extends State<HomePage>
             setState(() => game = GameState());
             _keepAwake(false);
           case 'skin':
-            final next = skinAfter(context.skin, (s) => SkinScope.owns(context, s));
-            // Everything that reads the skin depends on it, so it's all drawn
-            // again in the new one (the painters compare their skin too).
-            if (next != null && SkinScope.choose(context, next)) {
-              // Saved once the page is under the new skin.
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) _saveSettings();
-              });
-            }
+            showLookDialog(context, wear: _wear);
+          case 'nextLook': // the benchmark's way through every skin
+            if (skinAfter(context.skin, (s) => SkinScope.owns(context, s)) case final next?) _wear(next);
           case 'share':
             setState(() => GameLog.sharing = !GameLog.sharing);
             _saveSettings();
@@ -3028,7 +3022,7 @@ class HomePageState extends State<HomePage>
 
   List<MenuEntry> _menuEntries() => menuEntries(
         room: _room?.room.code,
-        newGame: (_inGame || _saves.isNotEmpty) && _setupArgs == null,
+        mainMenu: _inGame && _setupArgs == null,
         shuffle: _inGame && _setupArgs == null,
         // Only round a real table does the view need turning.
         upright: _inGame && !_digital ? _upright : null,

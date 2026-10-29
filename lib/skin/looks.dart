@@ -115,6 +115,27 @@ enum CourtCardStyle {
   letters,
 }
 
+/// What's printed over a card's back, in its edge colour, faintly.
+enum BackMotif {
+  /// Nothing: the back's colour, its crown and any rule.
+  none,
+
+  /// A fine diagonal lattice.
+  lattice,
+
+  /// Fine diagonal stripes, one way.
+  stripes,
+
+  /// A grid of small dots.
+  dots,
+
+  /// Rays out from the crown.
+  rays,
+
+  /// Rows of gentle waves.
+  waves,
+}
+
 class CardLook {
   const CardLook({
     required this.courtStyle,
@@ -129,6 +150,7 @@ class CardLook {
     this.backRule,
     this.backCrown,
     this.backPatternAlpha = 0.35,
+    this.motif,
   });
 
   final CourtCardStyle courtStyle;
@@ -146,9 +168,43 @@ class CardLook {
   /// Corner radius, as a share of the card's width.
   final double radius;
 
-  /// A fine lattice over the back, in [backEdge] at [backPatternAlpha].
+  /// A fine lattice over the back, in [backEdge] at [backPatternAlpha]
+  /// (or another [motif]).
   final bool backPattern;
   final double backPatternAlpha;
+
+  /// What's over the back; the lattice, or nothing, as [backPattern] says,
+  /// when null.
+  final BackMotif? motif;
+
+  /// The motif over the back, as drawn.
+  BackMotif get backMotif => motif ?? (backPattern ? BackMotif.lattice : BackMotif.none);
+
+  /// This look with another back.
+  CardLook withBack({
+    required Color back,
+    required Color backEdge,
+    required BackMotif motif,
+    double? patternAlpha,
+    Color? backRule,
+    Color? backCrown,
+    List<Color>? taskBack,
+  }) =>
+      CardLook(
+        courtStyle: courtStyle,
+        cloth: cloth,
+        courtFrame: courtFrame,
+        back: back,
+        backEdge: backEdge,
+        radius: radius,
+        backPattern: motif != BackMotif.none,
+        motif: motif,
+        backPatternAlpha: patternAlpha ?? backPatternAlpha,
+        backRule: backRule,
+        backCrown: backCrown,
+        small: small,
+        taskBack: taskBack,
+      );
 
   /// A fine rule inside the back's edge; null for none.
   final Color? backRule;

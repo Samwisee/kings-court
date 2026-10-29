@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
+import '../../game/state.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 
@@ -32,6 +33,25 @@ class RulesContext {
   final List<int> seals;
   final String? decree;
   final bool roles;
+
+  /// The rules as [game] is played (null for none, or the tutorial).
+  static RulesContext? of(GameState game) => game.tasks.isEmpty || game.isTutorial
+      ? null
+      : RulesContext(
+          modeName: switch (game.mode) {
+            GameMode.free => 'Free play',
+            GameMode.endless => 'Endless',
+            GameMode.chronicle => 'The Chronicle',
+            GameMode.dynasty => 'Dynasty',
+            GameMode.tutorial => 'Tutorial',
+          },
+          onScreen: game.digital,
+          players: game.players.length,
+          points: game.target,
+          seals: [for (final t in game.tasks) if (t.seal != null) t.seal!]..sort(),
+          decree: game.round?.decree?.title,
+          roles: game.hasRoles,
+        );
 }
 
 class _Section {

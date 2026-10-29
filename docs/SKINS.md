@@ -64,7 +64,7 @@ Optional: `radius` (corners), `onAccent` (text on accent buttons),
 `players` (the seats' six colours; the default set is kept apart for
 colour-blind players, so change it with care).
 
-Plain (`skin/plain`) is made this way.
+Plain (`skin/plain`), Harbour, Garden and Midnight are made this way.
 
 ## 2. Change a look (the flexible way)
 
@@ -117,3 +117,18 @@ Push and read the screenshots (`shots-<branch>`): `skin-<id>-*.png`. New
 skins' shots are new files, so they don't trip the compare; a change that
 moves the court's or another skin's screenshots does, and goes in
 `tool/shots/expected_changes.txt` with the reason.
+
+## The player's own look
+
+The menu's *Look* opens a dialog (`lib/ui/dialogs/look_dialog.dart`): a
+style (any listed skin), a table and card backs. A table or backs chosen
+make a `TailoredSkin` (`lib/skin/tailored.dart`): the skin, with the felt
+(its shades, the light over it and the table round it) or every card and
+task back changed. It's saved as the skin's id with the choices after it
+(`garden+t:navy+b:sunburst`), and `skinById` wears it again.
+
+To add a table or a back, add a `TableChoice` to `tableChoices` (and its
+colours to the `tables` in `web/index.html`, which `test/skin_test.dart`
+checks) or a `BackChoice` to `backChoices`. A back's motif is one of
+`BackMotif` (`lib/skin/looks.dart`): none, a lattice, stripes, dots, rays
+or waves, drawn in `lib/ui/cards/card_back.dart`.

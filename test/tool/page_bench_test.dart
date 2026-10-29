@@ -110,7 +110,7 @@ void main() {
     for (var k = 0; k < 3; k++) {
       final frames = <double>[];
       final all = Stopwatch()..start();
-      state.debugMenuChoice('skin');
+      state.debugMenuChoice('nextLook');
       for (var i = 0; i < 40; i++) {
         final sw = Stopwatch()..start();
         await tester.pump(const Duration(milliseconds: 16));

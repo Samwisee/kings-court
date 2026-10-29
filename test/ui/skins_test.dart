@@ -7,10 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/skin/entitlements.dart';
+import 'package:kings_court/skin/looks.dart';
 import 'package:kings_court/skin/plain/plain_skin.dart';
 import 'package:kings_court/skin/skin.dart';
 import 'package:kings_court/skin/skin_scope.dart';
 import 'package:kings_court/skin/skins.dart';
+import 'package:kings_court/skin/tailored.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/cards/mini_card.dart';
@@ -59,7 +61,7 @@ void main() {
     expect(chosen, isNull);
   });
 
-  testWidgets('The menu steps through the looks and remembers the one worn', (tester) async {
+  testWidgets('The Look dialog wears a style, a table and backs at once, and remembers them', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
@@ -76,19 +78,40 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Look: Court'));
     await tester.pumpAndSettle();
-    expect(worn().id, 'plain');
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('kingsCourt.skin'), 'plain');
-    // Round them all and back to the court.
-    for (final s in skins.skip(2)) {
-      if (find.text('Look: ${worn().name}').evaluate().isEmpty) {
-        await tester.tap(find.byTooltip('Menu'));
-        await tester.pumpAndSettle();
-      }
-      await tester.tap(find.text('Look: ${worn().name}'));
+    Future<void> choose(String name) async {
+      final f = find.text(name).first;
+      await tester.ensureVisible(f);
+      await tester.tap(f);
       await tester.pumpAndSettle();
-      expect(worn().id, s.id);
     }
+    await choose('Plain');
+    expect(worn().id, 'plain');
+    await choose('Night sky');
+    expect(worn().id, 'plain+t:navy');
+    expect(worn().felt, tableChoices.firstWhere((t) => t.id == 'navy').felt);
+    await choose('Black sunburst');
+    expect(worn().id, 'plain+t:navy+b:sunburst');
+    expect(worn().cardLook.backMotif, BackMotif.rays);
+    // A new style keeps the table and backs chosen.
+    await choose('Garden');
+    expect(worn().id, 'garden+t:navy+b:sunburst');
+    await choose('Garden’s own');
+    expect(worn().id, 'garden+b:sunburst');
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('kingsCourt.skin'), 'garden+b:sunburst');
+  });
+
+  test('A look of your own comes back from its id, choices and all', () {
+    for (final id in ['court', 'lacquer+b:ivory', 'harbour+t:plum', 'midnight+t:slate+b:royal']) {
+      expect(skinById(id).id, id);
+    }
+    expect(skinById('court+t:gone').id, 'court', reason: 'a table no longer offered is dropped');
+    final lacquer = skinById('lacquer+b:ivory');
+    expect(lacquer.parts.cardBack, isNull, reason: 'the chosen backs, not the skin’s own');
+    expect(skinById('lacquer').parts.cardBack, isNotNull);
+    expect(lacquer.gold, skinById('lacquer').gold);
   });
 
   // Every skin listed draws every piece its looks describe, so a new skin

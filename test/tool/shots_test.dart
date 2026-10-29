@@ -409,6 +409,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-3-menu.png'));
+    // The Look dialog, worn in this skin.
+    await tester.tap(find.text('Look: ${skin.name}'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-4-look.png'));
   });
   }
 

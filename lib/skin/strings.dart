@@ -24,6 +24,7 @@ abstract final class Strings {
   static const keyboardShortcuts = 'Keyboard shortcuts';
   static const reportBug = 'Report a bug';
   static const leaveRoom = 'Leave the room';
+  static const mainMenu = 'Main menu';
   static String inviteTo(String room) => 'Invite to room $room';
   static const sharePlayData = 'Share play data';
 
