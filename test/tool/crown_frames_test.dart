@@ -39,4 +39,35 @@ void main() {
           matchesGoldenFile('goldens/crown-${i.toString().padLeft(2, '0')}.png'));
     }
   });
+
+  testWidgets('Into the tutorial, frame by frame', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    Sfx.muteForTests = true;
+    HomePageTestHooks.seed = 7;
+    CharacterToken.alive = true;
+    await loadFonts();
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const TheKingsCourtApp());
+    await tester.pump(const Duration(seconds: 3));
+    await tester.tap(find.text('New game'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Tutorial'));
+    var f = 0;
+    Future<void> frames(int n) async {
+      for (var i = 0; i < n; i++) {
+        await tester.pump(const Duration(milliseconds: 40));
+        await expectLater(find.byType(MaterialApp),
+            matchesGoldenFile('goldens/tut-${(f++).toString().padLeft(3, '0')}.png'));
+      }
+    }
+    await frames(45);
+    for (var i = 0; i < 12 && find.text('Play lesson 1').evaluate().isEmpty; i++) {
+      await tester.tap(find.text('Continue').last);
+      await tester.pump(const Duration(milliseconds: 600));
+    }
+    await tester.tap(find.text('Play lesson 1').last);
+    await frames(60);
+  });
 }
