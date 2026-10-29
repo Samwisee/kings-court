@@ -1,0 +1,1 @@
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_FUNCTION|/home/runner/work/kings-court/kings-court/lib/game/judge.dart|81|15|10|The function 'failReason' isn't defined.
