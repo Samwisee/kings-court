@@ -20,9 +20,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game/state.dart';
 import '../net/table_link.dart';
 import 'build_info.dart';
+import 'service.dart';
 
-/// Where bug reports go; rounds go to its `/rounds`.
-const _service = String.fromEnvironment('BUG_URL');
+/// Rounds go to the service's `/rounds`.
+const _service = serviceUrl;
 
 abstract final class GameLog {
   /// The shape of a record; raise it when the shape changes, so old and
