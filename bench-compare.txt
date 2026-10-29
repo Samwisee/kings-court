@@ -1,0 +1,20 @@
+== main (run 1): the page, mid-round (phone size) ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/base/test/tool/page_bench_test.dart [E]
+== main (run 1): bots, on the Dart VM ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/base/test/tool/bot_bench_test.dart [E]
+== branch (run 1): the page, mid-round (phone size) ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/page_bench_test.dart [E]
+== branch (run 1): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 58 ms (15555 playouts/s), sliced 34 ms (+-23 ms), pick 17 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 28 ms (32143 playouts/s), sliced 25 ms (+-3 ms), pick 14 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 20 ms (44800 playouts/s), sliced 21 ms (+1 ms), pick 15 ms
+== main (run 2): the page, mid-round (phone size) ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/base/test/tool/page_bench_test.dart [E]
+== main (run 2): bots, on the Dart VM ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/base/test/tool/bot_bench_test.dart [E]
+== branch (run 2): the page, mid-round (phone size) ==
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/page_bench_test.dart [E]
+== branch (run 2): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 60 ms (15034 playouts/s), sliced 34 ms (+-26 ms), pick 17 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 28 ms (32143 playouts/s), sliced 24 ms (+-4 ms), pick 14 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 19 ms (46345 playouts/s), sliced 20 ms (+0 ms), pick 15 ms
