@@ -8,7 +8,6 @@ library;
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/decrees.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/engine/task.dart';
@@ -85,7 +84,7 @@ void main() {
   });
 
   test('A card is played in turn, following the suit led', () {
-    final r = table(['Win the 6♣'], king: 0);
+    final r = table(['Win the 6♣']);
     handOut(r);
     expect(r.phase, Phase.playing);
     final lead = r.turn;
@@ -126,12 +125,12 @@ void main() {
   });
 
   test('A lost round stops play; a won one may play itself out', () {
-    final lost = table(['Win the 6♣'], king: 0);
+    final lost = table(['Win the 6♣']);
     handOut(lost);
     lost.mark(lost.tasks[0], TaskStatus.failed);
     expect(lost.outcome, RoundOutcome.lost);
     expect(lost.problem(PlayCard(lost.turn, lost.legalFor(lost.turn).first)), 'The round is lost');
-    final won = table(['Win the 6♣'], king: 0);
+    final won = table(['Win the 6♣']);
     handOut(won);
     won.mark(won.tasks[0], TaskStatus.completed);
     expect(won.outcome, RoundOutcome.won);
