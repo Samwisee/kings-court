@@ -6,7 +6,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../skin/looks.dart';
 import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';

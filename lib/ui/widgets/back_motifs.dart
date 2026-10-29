@@ -113,4 +113,3 @@ class BackLattice extends CustomPainter {
   @override
   bool shouldRepaint(BackLattice old) => old.colour != colour;
 }
-
