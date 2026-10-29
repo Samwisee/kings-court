@@ -51,6 +51,7 @@ import 'dialogs/courtier_card.dart';
 import 'dialogs/table_dialogs.dart';
 import 'dialogs/task_close_up.dart';
 import 'menu/menu.dart';
+import 'menu/menu_entries.dart';
 import 'modes/tutorial/coach.dart';
 import 'modes/tutorial/tutorial_intro.dart';
 import 'overlays/crowning.dart';
@@ -66,6 +67,7 @@ import 'table/dealt_task.dart';
 import 'table/game_bar.dart';
 import 'table/hand_bar.dart';
 import 'table/hand_card.dart';
+import 'table/open_task.dart';
 import 'table/keyboard.dart';
 import 'table/seats.dart';
 import 'table/trick_view.dart';
@@ -2067,48 +2069,28 @@ class HomePageState extends State<HomePage>
                   s
             ];
             final only = !taken && able.length == 1 ? able.single : null;
-            final chip = IgnorePointer(
-              ignoring: taken,
-              child: AnimatedOpacity(
-                key: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
-                duration: Duration.zero,
-                opacity: taken
-                    ? 0
-                    : _yourPick && !_mayTake(t) && only == null
-                        ? 0.5
-                        : 1,
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  TaskChip(
-                    task: t,
-                    points: _points(t),
-                    text: _cardText(t),
-                    color: only == null
-                        ? skin.inkSoft
-                        : game.players[only].color,
-                    width: w,
-                    fontSize: big ? 16 : 13,
-                    focused: _kbRow == 1 && _kbTask == t,
-                    // A tap reads it; press and hold to take it, so taking
-                    // a task is always meant.
-                    onTap: () => _showTaskDetail(t, Offset.zero),
-                    onLongPress: () => _yourPick
-                        ? _takeTask(t)
-                        : _showTaskDetail(t, Offset.zero),
-                  ),
-                  if (only != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                          only == _you
-                              ? 'Only you can take this'
-                              : 'Only ${game.players[only].name} can take this',
-                          style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: game.players[only].color)),
+            final chip = OpenTask(
+              placeKey: _openTaskKeys.putIfAbsent(t, GlobalKey.new),
+              task: t,
+              taken: taken,
+              faded: _yourPick && !_mayTake(t) && only == null,
+              points: _points(t),
+              text: _cardText(t),
+              width: w,
+              fontSize: big ? 16 : 13,
+              focused: _kbRow == 1 && _kbTask == t,
+              only: only == null
+                  ? null
+                  : (
+                      only == _you
+                          ? 'Only you can take this'
+                          : 'Only ${game.players[only].name} can take this',
+                      game.players[only].color
                     ),
-                ]),
-              ),
+              // A tap reads it; press and hold to take it, so taking a
+              // task is always meant.
+              onTap: () => _showTaskDetail(t, Offset.zero),
+              onLongPress: () => _yourPick ? _takeTask(t) : _showTaskDetail(t, Offset.zero),
             );
             if (!measured) return Opacity(opacity: 0, child: chip);
             return DealtTask(
@@ -3082,9 +3064,6 @@ class HomePageState extends State<HomePage>
   /// The menu on the right: the rules, the Chronicle and sound.
   /// One line of the menu: a gold icon and a regal title.
   /// A menu entry; [on] adds a tick box for a setting.
-  MenuEntry _menuItem(String value, IconData icon, String title, {bool? on}) =>
-      (value: value, icon: icon, title: title, on: on);
-
   bool _menuOpen = false;
 
   /// The menu button: its bars fold into a cross while the menu is open.
@@ -3201,34 +3180,14 @@ class HomePageState extends State<HomePage>
         }
   }
 
-  List<MenuEntry> _menuEntries() => [
-        if ((_inGame || _saves.isNotEmpty) && _setupArgs == null)
-          _menuItem('new', Icons.group_add_outlined, Strings.newGame),
-        if (_inGame && _setupArgs == null)
-          _menuItem('shuffle', Icons.style_outlined, Strings.shuffleTasks),
-        _menuItem('rules', Icons.menu_book_outlined, Strings.howToPlay),
+  List<MenuEntry> _menuEntries() => menuEntries(
+        newGame: (_inGame || _saves.isNotEmpty) && _setupArgs == null,
+        shuffle: _inGame && _setupArgs == null,
         // Only round a real table does the view need turning.
-        if (_inGame && !_digital)
-          _menuItem(
-              'upright',
-              _upright ? Icons.laptop_rounded : Icons.table_restaurant_outlined,
-              _upright ? Strings.laptopView : Strings.tableView),
-        _menuItem(
-            'sound',
-            Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-            Strings.sounds,
-            on: Sfx.enabled),
-        // For colour-blind players: no two suits share a colour.
-        _menuItem('suits', Icons.palette_outlined, Strings.fourColourSuits,
-            on: Settings.fourColourSuits),
-        // The look worn; tapped, the next one owned.
-        _menuItem('skin', Icons.brush_outlined, Strings.look(context.skin.name)),
-        // On a computer: the keyboard shortcuts, beside the table.
-        if (_desktop)
-          _menuItem('keys', Icons.keyboard_outlined, Strings.keyboardShortcuts,
-              on: _showKeys),
-        _menuItem('bug', Icons.bug_report_outlined, Strings.reportBug),
-      ];
+        upright: _inGame && !_digital ? _upright : null,
+        look: context.skin.name,
+        keys: _desktop ? _showKeys : null,
+      );
 
   /// What goes with a bug report: where the player is, their settings, and
   /// the whole game as saved with every move of it, so it can be loaded
