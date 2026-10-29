@@ -1,0 +1,241 @@
+{
+  "game": {
+    "players": [
+      {
+        "name": "Player 1",
+        "color": 4293304064
+      },
+      {
+        "name": "Player 2",
+        "color": 4283872489
+      },
+      {
+        "name": "Player 3",
+        "color": 4291590567
+      },
+      {
+        "name": "Player 4",
+        "color": 4278230643
+      }
+    ],
+    "tasks": [
+      {
+        "description": "Win a trick you led",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the Jack and the Queen",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win three tricks in a row",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the first trick with a Court Card",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win a trick with three different suits in it",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the Joker",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      }
+    ],
+    "king": 1,
+    "round": 1,
+    "wins": 0,
+    "losses": 0,
+    "spoke": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "passed": [],
+    "pickTurn": 1,
+    "mode": 0,
+    "chapter": null,
+    "lesson": 0,
+    "surprise": true,
+    "roles": true,
+    "cards": null,
+    "reignWins": 0,
+    "traits": {},
+    "annals": [],
+    "tiding": null,
+    "tidingResolved": false,
+    "facedTidings": [],
+    "chargeSeat": null,
+    "chargeTask": null,
+    "chargeByKing": false,
+    "pendingCharge": null,
+    "sealCount": 0,
+    "decree": 3,
+    "exiled": 0,
+    "courtiers": [
+      5,
+      1,
+      4,
+      0
+    ],
+    "loyalty": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "schemeOf": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "schemeResult": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "powerUsed": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "kingWounds": 0,
+    "kingToughness": 2,
+    "reign": 0,
+    "fallenKings": 0,
+    "reignStartRound": 0,
+    "pendingDecree": null,
+    "pointsBonus": 0,
+    "facedDilemmas": [],
+    "flags": [],
+    "people": [
+      "The Jester",
+      "The Bishop",
+      "The Merchant",
+      "The Duke"
+    ],
+    "traitorRounds": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "pendingDepartures": [],
+    "courtNews": [],
+    "pendingArrivals": [],
+    "reignName": "",
+    "court": [],
+    "standing": {},
+    "schemeBy": {},
+    "traitorFor": {},
+    "courtColor": {},
+    "scenePicked": -1,
+    "coffers": 12,
+    "mainBeatRound": -99,
+    "streak": 0,
+    "bestStreak": 0,
+    "dealId": 1,
+    "seed": 62,
+    "resultRecorded": false
+  },
+  "playerCount": 4,
+  "targetPoints": 9,
+  "cardWidth": 120.0,
+  "dealt": true,
+  "pos": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "tilt": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "savedAt": 1761600000000,
+  "facts": {
+    "mode": "free",
+    "players": [
+      "Player 1",
+      "Player 2",
+      "Player 3",
+      "Player 4"
+    ],
+    "playerCount": 4,
+    "target": 9,
+    "round": 1,
+    "wins": 0,
+    "losses": 0,
+    "streak": 0,
+    "king": 1,
+    "pickTurn": 1,
+    "seals": 0,
+    "decree": "exile",
+    "exiled": 0,
+    "tasks": [
+      {
+        "d": "Win a trick you led",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the Jack and the Queen",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win three tricks in a row",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the first trick with a Court Card",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win a trick with three different suits in it",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the Joker",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      }
+    ],
+    "outcome": "inProgress",
+    "dealId": 1,
+    "seed": 62
+  }
+}

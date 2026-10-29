@@ -1,0 +1,11 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/tool/fixtures/make_saves_test.dart
+00:00 +0: free play on screen, mid-round
+00:00 +1: free play on screen, between picking
+00:00 +2: free play at a real table, with seals and a decree
+00:00 +3: free play at a real table, exile
+00:00 +4: endless, a few rounds in
+00:00 +5: a round just won, not yet dealt again
+00:00 +6: the chronicle, chapter 7
+00:00 +7: the chronicle, King's Command
+00:00 +8: every task in the library, saved and read back
+00:00 +9: All tests passed!

@@ -1,0 +1,257 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/engine_test.dart
+00:00 +0: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The deck has 40 cards and deals evenly, never setting aside the King card
+00:00 +1: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A two-player hand is played to its end
+00:00 +2: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Hands sort ♥ ♠ ♦ ♣, then the Court Cards
+00:00 +3: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Card ids and labels round-trip
+00:00 +4: /home/runner/work/kings-court/kings-court/test/engine_test.dart: You must follow suit, and a Court Card lead needs a Court Card
+00:00 +5: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The highest Court Card wins, otherwise the highest of the suit led
+00:00 +6: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every task has a rule
+00:00 +7: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Rules decide early when they can
+00:00 +8: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every rule reaches a verdict by the end of the round
+00:00 +9: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Bots can play a whole round
+00:00 +10: /home/runner/work/kings-court/kings-court/test/engine_test.dart: A game in progress saves and loads
+00:00 +11: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Illegal moves are refused
+00:00 +12: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Task profiles name real tasks
+00:00 +13: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Clashing tasks are spotted
+00:00 +14: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Rounds never deal tasks that clash
+00:00 +15: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Avoiding something clashes with needing enough of it
+00:00 +16: /home/runner/work/kings-court/kings-court/test/engine_test.dart: No card is avoided by every player
+00:00 +17: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Every task has a tier, and deals keep within the tier limits
+00:00 +18: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Nobody may hold two tasks that work against each other
+00:00 +19: /home/runner/work/kings-court/kings-court/test/engine_test.dart: Progress counts what a task has won so far
+00:00 +20: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The King can never take a task the King card makes impossible
+00:00 +21: /home/runner/work/kings-court/kings-court/test/engine_test.dart: If the King can't take any task, the next player picks first
+00:00 +22: /home/runner/work/kings-court/kings-court/test/engine_test.dart: The same seed deals the same cards and tasks again
+00:04 +23: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:05 +24: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:05 +25: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Welcome screen shows the title and both buttons
+00:05 +26: /home/runner/work/kings-court/kings-court/test/widget_test.dart: After the tutorial, setup no longer says Start here
+00:05 +27: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +28: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +29: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +30: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +31: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +32: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +33: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +34: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +35: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +36: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +37: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +38: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +39: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Taking a task goes through the table link
+00:06 +40: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Starting and finishing rounds are counted
+00:06 +41: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Starting and finishing rounds are counted
+00:06 +42: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Starting and finishing rounds are counted
+00:06 +43: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Starting and finishing rounds are counted
+00:06 +44: /home/runner/work/kings-court/kings-court/test/widget_test.dart: How to play opens as a dialog with the 2-player rules
+00:07 +45: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:07 +46: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:07 +47: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:07 +48: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:07 +49: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:07 +50: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A new round asks for the King before dealing
+00:07 +51: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 2 seats and the dealt tasks fit without scrolling
+00:07 +52: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 6 seats and the dealt tasks fit without scrolling
+00:08 +53: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 6 seats and the dealt tasks fit without scrolling
+00:08 +54: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 6 seats and the dealt tasks fit without scrolling
+00:08 +55: /home/runner/work/kings-court/kings-court/test/widget_test.dart: 6 seats and the dealt tasks fit without scrolling
+00:08 +56: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Dragging a task onto a seat gives it to that player
+00:08 +57: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffle tasks mid-round keeps the round and King
+00:08 +58: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffle tasks mid-round keeps the round and King
+00:08 +59: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffle tasks mid-round keeps the round and King
+00:08 +60: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +61: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +62: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +63: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +64: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +65: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +66: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +67: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +68: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A bug report carries the game, and loads back
+00:09 +69: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Points target can change without a new game
+00:09 +70: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A done task flips over
+
+Warning: A call to tap() with finder "Found 1 widget with type "TableCard" (ignoring all but first): [
+  TableCard,
+]" derived an Offset (Offset(195.0, 356.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#8504f
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#c360c(TextSpan("Win no tricks")), RenderParagraph#d066b@Offset(41.6, 8.6), RenderConstrainedBox#2ea35@Offset(41.6, 8.6), RenderFittedBox#2f5d4@Offset(41.6, 8.6), _RenderLayoutBuilder#48003@Offset(41.6, 8.6), RenderPadding#6ea7c@Offset(41.6, 8.6), RenderFlex#4e43a@Offset(41.6, 27.6), RenderPadding#0adbf@Offset(47.6, 31.6), RenderStack#c45ab@Offset(47.6, 31.6), RenderPadding#fa948@Offset(52.6, 36.6), RenderDecoratedBox#a9d92@Offset(52.6, 36.6), RenderDecoratedBox#1aa52@Offset(52.6, 36.6), RenderConstrainedBox#3f2ca@Offset(52.6, 36.6), RenderPointerListener#695ff@Offset(52.6, 36.6), RenderSemanticsGestureHandler#eda60@Offset(52.6, 36.6), RenderMouseRegion#cf632@Offset(52.6, 36.6), RenderOpacity#ca51e@Offset(52.7, 36.6), RenderStack#4f9d2@Offset(195.0, 296.5), RenderStack#a0fae@Offset(195.0, 296.5), _RenderLayoutBuilder#10ea5@Offset(195.0, 296.5), _RenderLayoutBuilder#3fcea@Offset(195.0, 296.5), RenderStack#fcd4b@Offset(195.0, 296.5), RenderPadding#dbdec@Offset(195.0, 296.5), RenderCustomMultiChildLayoutBox#3a866@Offset(195.0, 356.5), _RenderInkFeatures#15b48@Offset(195.0, 356.5), RenderPhysicalModel#a7c56@Offset(195.0, 356.5), RenderStack#5ab1b@Offset(195.0, 356.5), RenderSemanticsAnnotations#a4aa8@Offset(195.0, 356.5), RenderRepaintBoundary#70173@Offset(195.0, 356.5), RenderIgnorePointer#aa645@Offset(195.0, 356.5), RenderAnimatedOpacity#678e2@Offset(195.0, 356.5), RenderAnimatedOpacity#7b16f@Offset(195.0, 356.5), _RenderColoredBox#1abcb@Offset(195.0, 356.5), RenderAnimatedOpacity#7bc52@Offset(195.0, 356.5), RenderIgnorePointer#c8858@Offset(195.0, 356.5), RenderAnimatedOpacity#47b1d@Offset(195.0, 356.5), RenderRepaintBoundary#43cdc@Offset(195.0, 356.5), RenderSemanticsAnnotations#ed3b5@Offset(195.0, 356.5), RenderOffstage#5742a@Offset(195.0, 356.5), RenderSemanticsAnnotations#19b94@Offset(195.0, 356.5), _RenderTheater#962f0@Offset(195.0, 356.5), RenderAbsorbPointer#05b01@Offset(195.0, 356.5), RenderPointerListener#9acd9@Offset(195.0, 356.5), RenderSemanticsAnnotations#27f1f@Offset(195.0, 356.5), RenderSemanticsAnnotations#d3551@Offset(195.0, 356.5), RenderSemanticsAnnotations#9accf@Offset(195.0, 356.5), RenderSemanticsAnnotations#0d5a6@Offset(195.0, 356.5), RenderTapRegionSurface#3e7eb@Offset(195.0, 356.5), RenderSemanticsAnnotations#ec4b8@Offset(195.0, 356.5), RenderSemanticsAnnotations#90440@Offset(195.0, 356.5), HitTestEntry<HitTestTarget>#9050f(_ReusableRenderView#5ee41), HitTestEntry<HitTestTarget>#e94a7(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:325:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:09 +71: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Stacks for neighbouring seats never overlap
+00:10 +72: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Table cards keep their wording short
+00:10 +73: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The board wording is shorter, with Court Cards as crowns
+00:10 +74: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Court Cards are always capitalised and bold
+00:10 +75: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seat labels are short and never repeat
+00:10 +76: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Holding the felt turns every card towards that seat
+00:10 +77: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Long tasks get taller cards instead of tiny text
+00:10 +78: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Winning a round, then dealing the next with new points
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard,
+]" derived an Offset (Offset(195.0, 273.3)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#d304f
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#7e79e(TextSpan("Win no ")), RenderParagraph#d76d7@Offset(43.8, 9.1), RenderConstrainedBox#a7357@Offset(43.8, 9.1), RenderFittedBox#ea004@Offset(41.6, 8.6), _RenderLayoutBuilder#46c98@Offset(41.6, 8.6), RenderPadding#d31f0@Offset(41.6, 8.6), RenderFlex#ab481@Offset(41.6, 27.6), RenderPadding#05b5f@Offset(47.6, 31.6), RenderStack#d3252@Offset(47.6, 31.6), RenderPadding#82939@Offset(52.6, 36.6), RenderDecoratedBox#65ab5@Offset(52.6, 36.6), RenderDecoratedBox#9861b@Offset(52.6, 36.6), RenderConstrainedBox#a1301@Offset(52.6, 36.6), RenderPointerListener#890f9@Offset(52.6, 36.6), RenderSemanticsGestureHandler#4010f@Offset(52.6, 36.6), RenderMouseRegion#4b987@Offset(52.6, 36.6), RenderOpacity#438f3@Offset(52.7, 36.6), RenderStack#a37e3@Offset(195.0, 213.3), RenderStack#79baa@Offset(195.0, 213.3), _RenderLayoutBuilder#0ee3b@Offset(195.0, 213.3), _RenderLayoutBuilder#50f3c@Offset(195.0, 213.3), RenderStack#5521c@Offset(195.0, 213.3), RenderPadding#10ed4@Offset(195.0, 213.3), RenderCustomMultiChildLayoutBox#85511@Offset(195.0, 273.3), _RenderInkFeatures#8bca6@Offset(195.0, 273.3), RenderPhysicalModel#724cb@Offset(195.0, 273.3), RenderStack#767d5@Offset(195.0, 273.3), RenderSemanticsAnnotations#bd409@Offset(195.0, 273.3), RenderRepaintBoundary#94d16@Offset(195.0, 273.3), RenderIgnorePointer#0b65b@Offset(195.0, 273.3), RenderAnimatedOpacity#f0ed3@Offset(195.0, 273.3), RenderAnimatedOpacity#891c8@Offset(195.0, 273.3), _RenderColoredBox#cbf9a@Offset(195.0, 273.3), RenderAnimatedOpacity#1f604@Offset(195.0, 273.3), RenderIgnorePointer#45c5a@Offset(195.0, 273.3), RenderAnimatedOpacity#6faac@Offset(195.0, 273.3), RenderRepaintBoundary#e50d3@Offset(195.0, 273.3), RenderSemanticsAnnotations#19c2c@Offset(195.0, 273.3), RenderOffstage#be36e@Offset(195.0, 273.3), RenderSemanticsAnnotations#05f09@Offset(195.0, 273.3), _RenderTheater#46f64@Offset(195.0, 273.3), RenderAbsorbPointer#59732@Offset(195.0, 273.3), RenderPointerListener#12c03@Offset(195.0, 273.3), RenderSemanticsAnnotations#eb670@Offset(195.0, 273.3), RenderSemanticsAnnotations#fa84c@Offset(195.0, 273.3), RenderSemanticsAnnotations#21623@Offset(195.0, 273.3), RenderSemanticsAnnotations#0cd69@Offset(195.0, 273.3), RenderTapRegionSurface#253cf@Offset(195.0, 273.3), RenderSemanticsAnnotations#1c1c6@Offset(195.0, 273.3), RenderSemanticsAnnotations#94636@Offset(195.0, 273.3), HitTestEntry<HitTestTarget>#8abeb(_ReusableRenderView#5ee41), HitTestEntry<HitTestTarget>#93e3a(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:494:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard,
+]" derived an Offset (Offset(195.0, 375.8)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#59d55
+The hit test result at that offset is: HitTestResult(RenderParagraph#bee22@Offset(43.3, 31.2), RenderConstrainedBox#91146@Offset(43.3, 31.2), RenderFittedBox#4a594@Offset(41.7, 30.0), _RenderLayoutBuilder#7cafa@Offset(41.7, 30.0), RenderPadding#75cfc@Offset(41.7, 30.0), RenderFlex#49693@Offset(41.7, 49.0), RenderPadding#a736d@Offset(47.7, 53.0), RenderStack#81e19@Offset(47.7, 53.0), RenderPadding#62346@Offset(52.7, 58.0), RenderDecoratedBox#ef90f@Offset(52.7, 58.0), RenderDecoratedBox#a476e@Offset(52.7, 58.0), RenderConstrainedBox#9946f@Offset(52.7, 58.0), RenderPointerListener#300c9@Offset(52.7, 58.0), RenderSemanticsGestureHandler#f0741@Offset(52.7, 58.0), RenderMouseRegion#10d50@Offset(52.7, 58.0), RenderOpacity#b1974@Offset(52.7, 58.0), RenderStack#a37e3@Offset(195.0, 315.8), RenderStack#79baa@Offset(195.0, 315.8), _RenderLayoutBuilder#0ee3b@Offset(195.0, 315.8), _RenderLayoutBuilder#50f3c@Offset(195.0, 315.8), RenderStack#5521c@Offset(195.0, 315.8), RenderPadding#10ed4@Offset(195.0, 315.8), RenderCustomMultiChildLayoutBox#85511@Offset(195.0, 375.8), _RenderInkFeatures#8bca6@Offset(195.0, 375.8), RenderPhysicalModel#724cb@Offset(195.0, 375.8), RenderStack#767d5@Offset(195.0, 375.8), RenderSemanticsAnnotations#bd409@Offset(195.0, 375.8), RenderRepaintBoundary#94d16@Offset(195.0, 375.8), RenderIgnorePointer#0b65b@Offset(195.0, 375.8), RenderAnimatedOpacity#f0ed3@Offset(195.0, 375.8), RenderAnimatedOpacity#891c8@Offset(195.0, 375.8), _RenderColoredBox#cbf9a@Offset(195.0, 375.8), RenderAnimatedOpacity#1f604@Offset(195.0, 375.8), RenderIgnorePointer#45c5a@Offset(195.0, 375.8), RenderAnimatedOpacity#6faac@Offset(195.0, 375.8), RenderRepaintBoundary#e50d3@Offset(195.0, 375.8), RenderSemanticsAnnotations#19c2c@Offset(195.0, 375.8), RenderOffstage#be36e@Offset(195.0, 375.8), RenderSemanticsAnnotations#05f09@Offset(195.0, 375.8), _RenderTheater#46f64@Offset(195.0, 375.8), RenderAbsorbPointer#59732@Offset(195.0, 375.8), RenderPointerListener#12c03@Offset(195.0, 375.8), RenderSemanticsAnnotations#eb670@Offset(195.0, 375.8), RenderSemanticsAnnotations#fa84c@Offset(195.0, 375.8), RenderSemanticsAnnotations#21623@Offset(195.0, 375.8), RenderSemanticsAnnotations#0cd69@Offset(195.0, 375.8), RenderTapRegionSurface#253cf@Offset(195.0, 375.8), RenderSemanticsAnnotations#1c1c6@Offset(195.0, 375.8), RenderSemanticsAnnotations#94636@Offset(195.0, 375.8), HitTestEntry<HitTestTarget>#e5526(_ReusableRenderView#5ee41), HitTestEntry<HitTestTarget>#5996d(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:494:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard,
+]" derived an Offset (Offset(195.0, 485.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#305ce
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#0c1cf(TextSpan("Win a trick you led")), RenderParagraph#09400@Offset(55.0, 20.8), RenderConstrainedBox#7b7fa@Offset(55.0, 20.8), RenderFittedBox#e43f5@Offset(41.6, 15.7), _RenderLayoutBuilder#9147f@Offset(41.6, 15.7), RenderPadding#41de3@Offset(41.6, 15.7), RenderFlex#8b4af@Offset(41.6, 34.7), RenderPadding#e7b05@Offset(47.6, 38.7), RenderStack#291fc@Offset(47.6, 38.7), RenderPadding#c467d@Offset(52.6, 43.7), RenderDecoratedBox#2a862@Offset(52.6, 43.7), RenderDecoratedBox#f747e@Offset(52.6, 43.7), RenderConstrainedBox#31085@Offset(52.6, 43.7), RenderPointerListener#4f05f@Offset(52.6, 43.7), RenderSemanticsGestureHandler#3f38f@Offset(52.6, 43.7), RenderMouseRegion#ce047@Offset(52.6, 43.7), RenderOpacity#a4c2f@Offset(52.7, 43.7), RenderStack#a37e3@Offset(195.0, 425.5), RenderStack#79baa@Offset(195.0, 425.5), _RenderLayoutBuilder#0ee3b@Offset(195.0, 425.5), _RenderLayoutBuilder#50f3c@Offset(195.0, 425.5), RenderStack#5521c@Offset(195.0, 425.5), RenderPadding#10ed4@Offset(195.0, 425.5), RenderCustomMultiChildLayoutBox#85511@Offset(195.0, 485.5), _RenderInkFeatures#8bca6@Offset(195.0, 485.5), RenderPhysicalModel#724cb@Offset(195.0, 485.5), RenderStack#767d5@Offset(195.0, 485.5), RenderSemanticsAnnotations#bd409@Offset(195.0, 485.5), RenderRepaintBoundary#94d16@Offset(195.0, 485.5), RenderIgnorePointer#0b65b@Offset(195.0, 485.5), RenderAnimatedOpacity#f0ed3@Offset(195.0, 485.5), RenderAnimatedOpacity#891c8@Offset(195.0, 485.5), _RenderColoredBox#cbf9a@Offset(195.0, 485.5), RenderAnimatedOpacity#1f604@Offset(195.0, 485.5), RenderIgnorePointer#45c5a@Offset(195.0, 485.5), RenderAnimatedOpacity#6faac@Offset(195.0, 485.5), RenderRepaintBoundary#e50d3@Offset(195.0, 485.5), RenderSemanticsAnnotations#19c2c@Offset(195.0, 485.5), RenderOffstage#be36e@Offset(195.0, 485.5), RenderSemanticsAnnotations#05f09@Offset(195.0, 485.5), _RenderTheater#46f64@Offset(195.0, 485.5), RenderAbsorbPointer#59732@Offset(195.0, 485.5), RenderPointerListener#12c03@Offset(195.0, 485.5), RenderSemanticsAnnotations#eb670@Offset(195.0, 485.5), RenderSemanticsAnnotations#fa84c@Offset(195.0, 485.5), RenderSemanticsAnnotations#21623@Offset(195.0, 485.5), RenderSemanticsAnnotations#0cd69@Offset(195.0, 485.5), RenderTapRegionSurface#253cf@Offset(195.0, 485.5), RenderSemanticsAnnotations#1c1c6@Offset(195.0, 485.5), RenderSemanticsAnnotations#94636@Offset(195.0, 485.5), HitTestEntry<HitTestTarget>#4a924(_ReusableRenderView#5ee41), HitTestEntry<HitTestTarget>#2fe2c(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:494:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to tap() with finder "Found 1 widget with widget matching predicate (ignoring all but first): [
+  TableCard,
+]" derived an Offset (Offset(195.0, 602.3)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#0d16d
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#4a59a(TextSpan("Win a trick everyone followed")), RenderParagraph#84a73@Offset(41.6, 37.1), RenderConstrainedBox#e9261@Offset(41.6, 37.1), RenderFittedBox#f91f2@Offset(41.6, 37.1), _RenderLayoutBuilder#adc4c@Offset(41.6, 37.1), RenderPadding#9a093@Offset(41.6, 37.1), RenderFlex#ac53e@Offset(41.6, 56.1), RenderPadding#70f45@Offset(47.6, 60.1), RenderStack#33080@Offset(47.6, 60.1), RenderPadding#9564e@Offset(52.6, 65.1), RenderDecoratedBox#d2c1b@Offset(52.6, 65.1), RenderDecoratedBox#b04f7@Offset(52.6, 65.1), RenderConstrainedBox#d49f1@Offset(52.6, 65.1), RenderPointerListener#a31b7@Offset(52.6, 65.1), RenderSemanticsGestureHandler#8e953@Offset(52.6, 65.1), RenderMouseRegion#84253@Offset(52.6, 65.1), RenderOpacity#19c36@Offset(52.7, 65.1), RenderStack#a37e3@Offset(195.0, 542.3), RenderStack#79baa@Offset(195.0, 542.3), _RenderLayoutBuilder#0ee3b@Offset(195.0, 542.3), _RenderLayoutBuilder#50f3c@Offset(195.0, 542.3), RenderStack#5521c@Offset(195.0, 542.3), RenderPadding#10ed4@Offset(195.0, 542.3), RenderCustomMultiChildLayoutBox#85511@Offset(195.0, 602.3), _RenderInkFeatures#8bca6@Offset(195.0, 602.3), RenderPhysicalModel#724cb@Offset(195.0, 602.3), RenderStack#767d5@Offset(195.0, 602.3), RenderSemanticsAnnotations#bd409@Offset(195.0, 602.3), RenderRepaintBoundary#94d16@Offset(195.0, 602.3), RenderIgnorePointer#0b65b@Offset(195.0, 602.3), RenderAnimatedOpacity#f0ed3@Offset(195.0, 602.3), RenderAnimatedOpacity#891c8@Offset(195.0, 602.3), _RenderColoredBox#cbf9a@Offset(195.0, 602.3), RenderAnimatedOpacity#1f604@Offset(195.0, 602.3), RenderIgnorePointer#45c5a@Offset(195.0, 602.3), RenderAnimatedOpacity#6faac@Offset(195.0, 602.3), RenderRepaintBoundary#e50d3@Offset(195.0, 602.3), RenderSemanticsAnnotations#19c2c@Offset(195.0, 602.3), RenderOffstage#be36e@Offset(195.0, 602.3), RenderSemanticsAnnotations#05f09@Offset(195.0, 602.3), _RenderTheater#46f64@Offset(195.0, 602.3), RenderAbsorbPointer#59732@Offset(195.0, 602.3), RenderPointerListener#12c03@Offset(195.0, 602.3), RenderSemanticsAnnotations#eb670@Offset(195.0, 602.3), RenderSemanticsAnnotations#fa84c@Offset(195.0, 602.3), RenderSemanticsAnnotations#21623@Offset(195.0, 602.3), RenderSemanticsAnnotations#0cd69@Offset(195.0, 602.3), RenderTapRegionSurface#253cf@Offset(195.0, 602.3), RenderSemanticsAnnotations#1c1c6@Offset(195.0, 602.3), RenderSemanticsAnnotations#94636@Offset(195.0, 602.3), HitTestEntry<HitTestTarget>#45855(_ReusableRenderView#5ee41), HitTestEntry<HitTestTarget>#a53ae(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:494:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:10 +79: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Undo last mark reopens a round ended by mistake
+
+Warning: A call to tap() with finder "Found 1 widget with type "TableCard" (ignoring all but first): [
+  TableCard,
+]" derived an Offset (Offset(195.0, 294.6)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderTransform#13805
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#d3cf1(TextSpan("Win the first trick someone can’t follow")), RenderParagraph#a5109@Offset(58.5, 52.1), RenderConstrainedBox#97022@Offset(58.5, 52.1), RenderFittedBox#b98d9@Offset(41.6, 37.1), _RenderLayoutBuilder#e0b59@Offset(41.6, 37.1), RenderPadding#e8e63@Offset(41.6, 37.1), RenderFlex#f274c@Offset(41.6, 56.1), RenderPadding#71fc1@Offset(47.6, 60.1), RenderStack#b852c@Offset(47.6, 60.1), RenderPadding#ff189@Offset(52.6, 65.1), RenderDecoratedBox#ba2a5@Offset(52.6, 65.1), RenderDecoratedBox#40acc@Offset(52.6, 65.1), RenderConstrainedBox#9650a@Offset(52.6, 65.1), RenderPointerListener#3ccdb@Offset(52.6, 65.1), RenderSemanticsGestureHandler#172a1@Offset(52.6, 65.1), RenderMouseRegion#c4511@Offset(52.6, 65.1), RenderOpacity#6fff8@Offset(52.7, 65.1), RenderStack#463f5@Offset(195.0, 234.6), RenderStack#a6a8f@Offset(195.0, 234.6), _RenderLayoutBuilder#576f4@Offset(195.0, 234.6), _RenderLayoutBuilder#4426f@Offset(195.0, 234.6), RenderStack#2d669@Offset(195.0, 234.6), RenderPadding#aed90@Offset(195.0, 234.6), RenderCustomMultiChildLayoutBox#365ff@Offset(195.0, 294.6), _RenderInkFeatures#0afc3@Offset(195.0, 294.6), RenderPhysicalModel#eede4@Offset(195.0, 294.6), RenderStack#8ec00@Offset(195.0, 294.6), RenderSemanticsAnnotations#8581a@Offset(195.0, 294.6), RenderRepaintBoundary#e6fda@Offset(195.0, 294.6), RenderIgnorePointer#64ae0@Offset(195.0, 294.6), RenderAnimatedOpacity#85a4d@Offset(195.0, 294.6), RenderAnimatedOpacity#337ec@Offset(195.0, 294.6), _RenderColoredBox#36a06@Offset(195.0, 294.6), RenderAnimatedOpacity#44843@Offset(195.0, 294.6), RenderIgnorePointer#472b9@Offset(195.0, 294.6), RenderAnimatedOpacity#0d65c@Offset(195.0, 294.6), RenderRepaintBoundary#b4a60@Offset(195.0, 294.6), RenderSemanticsAnnotations#149e8@Offset(195.0, 294.6), RenderOffstage#fd518@Offset(195.0, 294.6), RenderSemanticsAnnotations#f646f@Offset(195.0, 294.6), _RenderTheater#c500f@Offset(195.0, 294.6), RenderAbsorbPointer#7642b@Offset(195.0, 294.6), RenderPointerListener#ac839@Offset(195.0, 294.6), RenderSemanticsAnnotations#4ae45@Offset(195.0, 294.6), RenderSemanticsAnnotations#27e9d@Offset(195.0, 294.6), RenderSemanticsAnnotations#b3937@Offset(195.0, 294.6), RenderSemanticsAnnotations#4fe15@Offset(195.0, 294.6), RenderTapRegionSurface#856fa@Offset(195.0, 294.6), RenderSemanticsAnnotations#4b6a6@Offset(195.0, 294.6), RenderSemanticsAnnotations#4d25f@Offset(195.0, 294.6), HitTestEntry<HitTestTarget>#6120e(_ReusableRenderView#5ee41), HitTestEntry<HitTestTarget>#2f9ab(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2158:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1942:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1075:7)
+#3      main.<anonymous closure> (file:///home/runner/work/kings-court/kings-court/test/widget_test.dart:524:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:11 +80: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Picking moves clockwise from the King, then Play!
+00:11 +81: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tapping a seat opens the courtier card to mark power and reveal
+00:11 +82: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Without roles, tapping a seat flips its speech token
+00:11 +83: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A saved game can be continued
+00:11 +84: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Campaign streaks rise with wins and reset on a loss
+00:11 +85: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A game survives saving and loading
+00:11 +86: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seals must be completed in order, Ω last
+00:11 +87: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Decrees change who can pick, speak and take tasks
+00:11 +88: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Chronicle chapters unlock in order and award crowns
+00:11 +89: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A Chronicle chapter reads its decree before dealing
+00:12 +90: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every story flag a matter needs can be earned
+00:12 +91: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A story picks up where the King left it
+00:12 +92: /home/runner/work/kings-court/kings-court/test/widget_test.dart: In solo Dynasty each scene seats its own cast from the court
+00:12 +93: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The main story runs from the harvest towards war
+00:12 +94: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every seat gets a different courtier shape
+00:12 +95: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The King keeps the crown until wounds exceed a hidden toughness
+00:12 +96: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Losing all loyalty turns a courtier into an open antagonist
+00:12 +97: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Dilemmas only involve courtiers at the table
+00:12 +98: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A dynasty survives saving and loading
+00:12 +99: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tidings lead to dilemmas that exist
+00:12 +100: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A royal charge deals a house its task, and it counts
+00:12 +101: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The Trial of Hearts plays out fairly
+00:12 +102: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The Trial of Hearts table plays to the end
+00:12 +103: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Overruling the council costs loyalty
+00:12 +104: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Deeds move loyalty: the busiest courtier gains favour
+00:12 +105: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A dynasty ends in a Golden Age, a fall or a usurping
+00:12 +106: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Dynasty goes straight to the story, always on screen
+00:12 +107: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Each way to play keeps its own save
+00:12 +108: /home/runner/work/kings-court/kings-court/test/widget_test.dart: An old single save moves into its slot
+00:12 +109: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seals come in twos or not at all
+00:12 +110: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Seals only sit where they can be kept
+00:12 +111: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every timed task is a real task
+00:12 +112: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Tasks marked any-trick can be done before the last trick
+00:13 +113: /home/runner/work/kings-court/kings-court/test/widget_test.dart: On-screen cards play a whole Free play round
+00:14 +114: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The arrow keys reach the Skip button
+00:14 +115: /home/runner/work/kings-court/kings-court/test/widget_test.dart: S skips showing a card
+00:15 +116: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A courtier can be tapped anywhere on their token
+00:15 +117: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A courtier can be clicked anywhere on their token
+00:15 +118: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The tutorial plays through every lesson, following the coach
+00:16 +119: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Each player may pass on picking once a round
+00:16 +120: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Cards a task needs are crossed out once won
+00:16 +121: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Roman numerals for reigns
+00:16 +122: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Task draw hits the target without repeats
+00:16 +123: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Two players use the 3-player difficulty
+00:16 +124: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Round is won when all tasks complete, lost when any fails
+00:16 +125: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffling mid-round keeps the round number and King
+00:16 +126: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A task only one player can take goes straight to them
+00:16 +127: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The King cannot take King-relative tasks
+00:16 +128: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every task has 6-player points
+00:16 +129: All tests passed!

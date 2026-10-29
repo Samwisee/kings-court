@@ -1,0 +1,306 @@
+{
+  "game": {
+    "players": [
+      {
+        "name": "Player 1",
+        "color": 4293304064
+      },
+      {
+        "name": "Player 2",
+        "color": 4283872489
+      },
+      {
+        "name": "Player 3",
+        "color": 4291590567
+      },
+      {
+        "name": "Player 4",
+        "color": 4278230643
+      },
+      {
+        "name": "Player 5",
+        "color": 4293977154
+      }
+    ],
+    "tasks": [
+      {
+        "description": "Don't win any of the first three tricks",
+        "status": 1,
+        "owner": 2,
+        "seal": null
+      },
+      {
+        "description": "Win no tricks until the King has won one",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the 8♣",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the 3♥",
+        "status": 0,
+        "owner": null,
+        "seal": 1
+      },
+      {
+        "description": "Win the 8♥",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the 2♦",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the trick after the Queen is played",
+        "status": 0,
+        "owner": null,
+        "seal": null
+      },
+      {
+        "description": "Win the trick before the King card is played",
+        "status": 0,
+        "owner": null,
+        "seal": 2
+      }
+    ],
+    "king": 2,
+    "round": 1,
+    "wins": 0,
+    "losses": 0,
+    "spoke": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ],
+    "passed": [],
+    "pickTurn": 3,
+    "mode": 0,
+    "chapter": null,
+    "lesson": 0,
+    "surprise": true,
+    "roles": true,
+    "cards": null,
+    "reignWins": 0,
+    "traits": {},
+    "annals": [],
+    "tiding": null,
+    "tidingResolved": false,
+    "facedTidings": [],
+    "chargeSeat": null,
+    "chargeTask": null,
+    "chargeByKing": false,
+    "pendingCharge": null,
+    "sealCount": 2,
+    "decree": 0,
+    "exiled": null,
+    "courtiers": [
+      2,
+      4,
+      0,
+      3,
+      1
+    ],
+    "loyalty": [
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "schemeOf": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schemeResult": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "powerUsed": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "kingWounds": 0,
+    "kingToughness": 2,
+    "reign": 0,
+    "fallenKings": 0,
+    "reignStartRound": 0,
+    "pendingDecree": null,
+    "pointsBonus": 0,
+    "facedDilemmas": [],
+    "flags": [],
+    "people": [
+      "The General",
+      "The Merchant",
+      "The Duke",
+      "The Spymaster",
+      "The Bishop"
+    ],
+    "traitorRounds": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "pendingDepartures": [],
+    "courtNews": [],
+    "pendingArrivals": [],
+    "reignName": "",
+    "court": [],
+    "standing": {},
+    "schemeBy": {},
+    "traitorFor": {},
+    "courtColor": {},
+    "scenePicked": -1,
+    "coffers": 12,
+    "mainBeatRound": -99,
+    "streak": 0,
+    "bestStreak": 0,
+    "dealId": 1,
+    "seed": 20,
+    "resultRecorded": false
+  },
+  "playerCount": 5,
+  "targetPoints": 12,
+  "cardWidth": 96.0,
+  "dealt": true,
+  "pos": [
+    [
+      0.5471007718647249,
+      0.35338058157550134
+    ],
+    [
+      0.7519799073030662,
+      0.7616572211622143
+    ],
+    [
+      0.46186056703416456,
+      0.3724119205842622
+    ],
+    [
+      0.4966966418590264,
+      0.5917464886986497
+    ],
+    [
+      0.5132123940924191,
+      0.6597064426823098
+    ],
+    [
+      0.5566747602014779,
+      0.7348919928405391
+    ],
+    [
+      0.2825352572453928,
+      0.38126592438833506
+    ],
+    [
+      0.2569378790749446,
+      0.5460146315372485
+    ]
+  ],
+  "tilt": [
+    0.021857374893559323,
+    0.0012236149133844076,
+    0.01377917756417265,
+    -0.013298215109964637,
+    0.02199674107783075,
+    0.006138573961436001,
+    0.03451261326135901,
+    -0.033095395259295446
+  ],
+  "savedAt": 1761600000000,
+  "facts": {
+    "mode": "free",
+    "players": [
+      "Player 1",
+      "Player 2",
+      "Player 3",
+      "Player 4",
+      "Player 5"
+    ],
+    "playerCount": 5,
+    "target": 12,
+    "round": 1,
+    "wins": 0,
+    "losses": 0,
+    "streak": 0,
+    "king": 2,
+    "pickTurn": 3,
+    "seals": 2,
+    "decree": "silence",
+    "exiled": null,
+    "tasks": [
+      {
+        "d": "Don't win any of the first three tricks",
+        "owner": 2,
+        "status": "completed",
+        "seal": null
+      },
+      {
+        "d": "Win no tricks until the King has won one",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the 8♣",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the 3♥",
+        "owner": null,
+        "status": "pending",
+        "seal": 1
+      },
+      {
+        "d": "Win the 8♥",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the 2♦",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the trick after the Queen is played",
+        "owner": null,
+        "status": "pending",
+        "seal": null
+      },
+      {
+        "d": "Win the trick before the King card is played",
+        "owner": null,
+        "status": "pending",
+        "seal": 2
+      }
+    ],
+    "outcome": "inProgress",
+    "dealId": 1,
+    "seed": 20
+  }
+}
