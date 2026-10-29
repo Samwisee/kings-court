@@ -1,0 +1,6 @@
+analyzer issues: 0
+00:23 +171 -4: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffling mid-round keeps the round number and King
+00:23 +172 -4: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A task only one player can take goes straight to them
+00:23 +173 -4: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The King cannot take King-relative tasks
+00:23 +174 -4: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every task has 6-player points
+00:23 +175 -4: Some tests failed.
