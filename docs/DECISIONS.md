@@ -352,3 +352,21 @@ anything, and for Plain to be a design rather than a recolour:
 - Made as one commit for the code and one for the docs, not a commit per
   widget: the Plain skin couldn't compile against the new `Skin` until
   every look existed, and each widget's change is a few lines.
+
+## The court, polished
+
+Two changes to the court's own look, both through its looks so every rich
+skin can have them:
+
+- **Lamp light on the felt** (`TableLook.lamp`, drawn by `FeltLight` under
+  everything on the table): a soft pool of light over the middle, fading
+  to the felt's own colour at the edges, so the table reads as lit rather
+  than flat. Under the cards and seats, not over them: a first try
+  darkened the corners over everything and greyed the hand's end cards,
+  which read as unplayable. Plain has none.
+- **The card back dressed like the Court Cards**: a faint gold lattice and
+  a fine gold rule inside the edge (`CardLook.backPattern`,
+  `backPatternAlpha`, `backRule`), the gilt crown a little smaller.
+- Every in-game court screenshot moves with these (listed in
+  `expected_changes.txt`); the front page, setup, rules and lesson
+  introductions don't. Frame budget kept.

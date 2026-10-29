@@ -80,6 +80,10 @@ class HarbourSkin extends DesignSkin {
 }
 ```
 
+The court's, for instance, sets a pool of lamp light over the felt
+(`TableLook(lamp: 0.07)`) and a ruled, latticed back
+(`CardLook(backPattern: true, backRule: …)`).
+
 Any colour getter (`gold`, `felt`, `dialogTitle`, `theme()` …) can be
 overridden the same way. The court skin (`skin/court`) sets every value by
 hand, which is the furthest this goes: a skin that extends `Skin` directly.
