@@ -237,6 +237,7 @@ class DesignSkin extends Skin {
           innerRule: design.accent.withValues(alpha: 0.4),
           panelRule: design.accent.withValues(alpha: 0.6),
           panelInnerRule: design.accent.withValues(alpha: 0.4),
+          lamp: 0.06,
         )
       : TableLook(
           style: TableStyle.edged,
@@ -284,7 +285,10 @@ class DesignSkin extends Skin {
         back: _rich ? _mix(design.ground, Colors.black, 0.1) : design.accentDeep,
         backEdge: _rich ? design.accent : _mix(design.accentDeep, Colors.white, 0.3),
         radius: _rich ? 0.1 : 0.08,
-        backPattern: !_rich,
+        backPattern: true,
+        backPatternAlpha: _rich ? 0.14 : 0.35,
+        backRule: _rich ? design.accent.withValues(alpha: 0.6) : null,
+        backCrown: _rich ? null : _mix(design.accentDeep, Colors.white, 0.3),
       );
 
   @override

@@ -120,6 +120,51 @@ class _TablePainter extends CustomPainter {
   bool shouldRepaint(_TablePainter old) => false || old.skin != skin;
 }
 
+/// Lamp light on the felt: a pool of light over the middle of the table,
+/// fading to the felt's own colour at its edges. Under everything on the
+/// table, so the cards and seats keep their colours.
+class FeltLight extends StatelessWidget {
+  const FeltLight({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final lamp = context.skin.tableLook.lamp;
+    if (lamp <= 0) return const SizedBox.expand();
+    return CustomPaint(painter: _LampPainter(lamp), size: Size.infinite);
+  }
+}
+
+class _LampPainter extends CustomPainter {
+  const _LampPainter(this.lamp);
+  final double lamp;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Drawn in a square stretched to the felt, so the pool follows its
+    // shape: round on a square table, long on a phone.
+    canvas.save();
+    canvas.translate(size.width / 2, size.height * 0.45);
+    canvas.scale(size.width / 2, size.height / 2);
+    const unit = Rect.fromLTRB(-1.2, -1.2, 1.2, 1.2);
+    canvas.drawRect(
+        unit,
+        Paint()
+          ..shader = RadialGradient(
+            radius: 1 / 1.2,
+            colors: [
+              Color.fromRGBO(255, 255, 255, lamp),
+              Color.fromRGBO(255, 255, 255, lamp * 0.45),
+              const Color(0x00FFFFFF),
+            ],
+            stops: const [0, 0.5, 1],
+          ).createShader(unit));
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_LampPainter old) => old.lamp != lamp;
+}
+
 /// A ring of gold and white sparks flying out from [origin] and fading as
 /// [progress] runs from 0 to 1. Used when the crown lands.
 class SparkBurst extends CustomPainter {

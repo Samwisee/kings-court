@@ -3297,6 +3297,7 @@ class HomePageState extends State<HomePage>
         top: !useTopBar,
         child: Stack(
           children: [
+            if (_inGame) const Positioned.fill(child: RepaintBoundary(child: FeltLight())),
             Positioned.fill(
               child: _inGame
                   ? _digital
@@ -3385,8 +3386,7 @@ class HomePageState extends State<HomePage>
                     child: DecreeOverlay(
                         round: _round,
                         players: game.players,
-                        onAccept: () =>
-                            setState(() => _decreeReadFor = game.dealId))))),
+                        onAccept: () => setState(() => _decreeReadFor = game.dealId))))),
       if (_inGame &&
           _setupArgs == null &&
           game.outcome != RoundOutcome.inProgress &&

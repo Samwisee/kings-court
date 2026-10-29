@@ -36,6 +36,7 @@ class TableLook {
     this.sunk = true,
     this.panelRule,
     this.panelInnerRule,
+    this.lamp = 0,
   });
 
   final TableStyle style;
@@ -55,6 +56,11 @@ class TableLook {
   /// The rules round a panel set on the felt (the card tracker).
   final Color? panelRule;
   final Color? panelInnerRule;
+
+  /// The light of a lamp over the middle of the table: how much white is
+  /// in the felt at its brightest (0 for an even felt, about 0.07 for a
+  /// card room's). It fades to the felt's own colour at the edges.
+  final double lamp;
 }
 
 /// How menus, results and dialogs are framed.
@@ -120,6 +126,9 @@ class CardLook {
     this.backPattern = false,
     this.small,
     this.taskBack,
+    this.backRule,
+    this.backCrown,
+    this.backPatternAlpha = 0.35,
   });
 
   final CourtCardStyle courtStyle;
@@ -137,8 +146,15 @@ class CardLook {
   /// Corner radius, as a share of the card's width.
   final double radius;
 
-  /// A fine lattice over the back.
+  /// A fine lattice over the back, in [backEdge] at [backPatternAlpha].
   final bool backPattern;
+  final double backPatternAlpha;
+
+  /// A fine rule inside the back's edge; null for none.
+  final Color? backRule;
+
+  /// The crown on the back in one colour; null for the skin's gilt crown.
+  final Color? backCrown;
 
   /// Each Court Card's one colour on a small card (a played card, the
   /// tracker); between its cloth's two when null.
