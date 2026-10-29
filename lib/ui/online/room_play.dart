@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import '../../game/seats.dart';
+import '../../game/setup.dart';
 import '../../game/state.dart';
 import '../../net/online_table.dart';
 import '../../platform/game_log.dart';

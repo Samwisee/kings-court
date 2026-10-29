@@ -278,7 +278,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
                   fontSize: 24,
                   color: skin.gold)),
           const SizedBox(width: 4),
-          const CrownIcon(size: 16),
+          const CrownIcon(),
         ]),
         Slider(
           value: target.toDouble(),

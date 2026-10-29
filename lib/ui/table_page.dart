@@ -20,7 +20,6 @@ import '../engine/bot.dart';
 import '../engine/cards.dart';
 import '../engine/conflicts.dart';
 import '../engine/decrees.dart';
-import '../engine/inference.dart';
 import '../engine/round.dart';
 import '../engine/rules.dart';
 import '../engine/task_help.dart';
@@ -971,7 +970,9 @@ class HomePageState extends State<HomePage>
       _resetTable();
     });
     // Anything played before the table was here.
-    table.history.forEach((m) => _onAction(m.action));
+    for (final m in table.history) {
+      _onAction(m.action);
+    }
     _keepAwake(true);
   }
 

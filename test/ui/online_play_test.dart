@@ -3,12 +3,12 @@
 /// end; and the host's device playing the seat of a friend who drops.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
-import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/modes.dart';
 import 'package:kings_court/net/headless_table.dart';
@@ -106,10 +106,10 @@ void main() {
         // it does nothing more).
         if (!thinking && !(drop && dropped)) {
           thinking = true;
-          b.playAs(1).then((moved) {
+          unawaited(b.playAs(1).then((moved) {
             thinking = false;
             if (moved) benMoves++;
-          });
+          }));
         }
         if (drop && !dropped && benMoves >= 2 && !thinking) {
           dropped = true;
