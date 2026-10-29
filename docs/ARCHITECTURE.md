@@ -156,7 +156,7 @@ make one is `docs/SKINS.md`.
 | Moves through the link | 5 kinds | every action |
 | Random choices | unseeded `Random()`s | one seeded `Dice` |
 | The look | `static const`s named in 27 files | a `Skin` from context; three skins, two made from a design alone |
-| Tests | 119 | 205 |
+| Tests | 119 | 217 |
 
 ## Future work
 
