@@ -18,6 +18,7 @@ import '../../net/online_table.dart';
 import '../../net/replay.dart';
 import '../../platform/build_info.dart';
 import '../../platform/game_log.dart';
+import '../../platform/invite.dart';
 import '../../platform/room_socket.dart';
 import '../../platform/service.dart';
 import 'online_setup.dart';
@@ -88,6 +89,7 @@ class RoomPlay {
   static Widget setup(
           {SocketOpener? open,
           int? seed,
+          String? joinCode,
           required VoidCallback onCancel,
           required ValueChanged<OnlineTable> onPlay}) =>
       OnlineSetup(
@@ -96,6 +98,7 @@ class RoomPlay {
           session: session,
           build: buildVersion,
           seed: seed,
+          joinCode: joinCode,
           onCancel: onCancel,
           onPlay: onPlay);
 
@@ -125,6 +128,10 @@ class RoomPlay {
     }
     return game;
   }
+
+  /// Invites someone into the room (it can be joined mid-game): the share
+  /// sheet, or the link copied, when there's no sheet; what to say then.
+  Future<String?> invite() async => await shareInvite(room.code) ? null : 'Invite link copied';
 
   /// The room as a bug report tells it.
   Map<String, dynamic> details() => {
@@ -185,6 +192,16 @@ class RoomPlay {
       await _forget();
     } catch (_) {}
     return null;
+  }
+
+  /// As the game opens: the online game it was closed in, back in its
+  /// seat ([rejoin]), or else the room an invite link ([address]) is for.
+  static Future<({OnlineTable? room, String? invited})> onOpen(
+      {SocketOpener? open, Uri? address}) async {
+    final room = await rejoin(open: open);
+    final invited = room == null ? invitedRoom(address) : null;
+    forgetInvite();
+    return (room: room, invited: invited);
   }
 
   // ------------------------------------------------- someone walked away

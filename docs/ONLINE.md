@@ -89,6 +89,11 @@ reordering, duplicates and a dropped connection.
   rules of rooms.js in Dart); `test/ui/online_play_test.dart` does it from
   the page, with a friend leaving part-way and someone joining part-way.
 
+- **Invites.** The lobby's "Invite friends", and the menu's "Invite to
+  room ABCD" in a game, share a link (`platform/invite.dart`:
+  `…/kings-court/?room=ABCD`) through the phone's share sheet, or copy it
+  where there's none. The link opens the game on the room's join step with
+  the code filled in.
 - **Coming back.** The room a device is playing in is kept on the device
   until it leaves (`RoomPlay`), so opening the game again after closing it
   goes straight back to the seat, if nobody has taken it (the room's

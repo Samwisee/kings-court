@@ -105,6 +105,9 @@ class HomePageTestHooks {
 
   /// Rooms to play multiplayer through, in place of the web service's.
   static SocketOpener? rooms;
+
+  /// The page's address, in place of the one open (an invite link).
+  static Uri? address;
 }
 
 class HomePage extends StatefulWidget {
@@ -455,8 +458,10 @@ class HomePageState extends State<HomePage>
         _progress = Progress(chronicle: progress);
         _saves = saves;
       });
-      final room = await RoomPlay.rejoin(open: HomePageTestHooks.rooms); // closed mid-game
+      // Back to a game the app was closed in, or into one an invite link is for.
+      final (:room, :invited) = await RoomPlay.onOpen(open: HomePageTestHooks.rooms, address: HomePageTestHooks.address);
       if (room != null) mounted && !_inGame ? _playOnline(room) : room.dispose();
+      if (invited != null && mounted) setState(() => (_setupArgs, _onlineSetup, _invited) = ((mode: null, chapter: null), true, invited));
     } catch (_) {
       // No saved game (or storage unavailable): start fresh.
     }
@@ -930,8 +935,10 @@ class HomePageState extends State<HomePage>
 
   RoomPlay? _room;
 
-  /// Multiplayer setup is open, in place of the New Game panel.
+  /// Multiplayer setup is open, in place of the New Game panel; [_invited]
+  /// the room an invite link opened it to join.
   bool _onlineSetup = false;
+  String? _invited;
 
   /// This device moves for the table: the courtiers, the crown, the deal.
   bool get _hostsTable => _room?.hosting ?? true;
@@ -942,7 +949,8 @@ class HomePageState extends State<HomePage>
   Widget _buildOnlineSetup() => RoomPlay.setup(
       open: HomePageTestHooks.rooms,
       seed: HomePageTestHooks.seed,
-      onCancel: () => setState(() => _onlineSetup = false),
+      joinCode: _invited,
+      onCancel: () => setState(() => (_onlineSetup, _invited) = (false, null)),
       onPlay: _playOnline);
 
   /// The room's game has started: it's dealt here as on every device.
@@ -956,7 +964,7 @@ class HomePageState extends State<HomePage>
       setState(() => _room!.nameSeats(game));
     });
     setState(() {
-      _onlineSetup = false;
+      (_onlineSetup, _invited) = (false, null);
       _setupArgs = null;
       _room = room;
       _ctrl.mySeat = room.seat;
@@ -2592,7 +2600,7 @@ class HomePageState extends State<HomePage>
 
   void _closeSetup() => setState(() {
         _setupArgs = null;
-        _onlineSetup = false;
+        (_onlineSetup, _invited) = (false, null);
       });
 
   /// From the menus into a game: the menu fades to the felt, the crown
@@ -2993,6 +3001,8 @@ class HomePageState extends State<HomePage>
             _saveSettings();
           case 'bug':
             showBugReport(context, details: _bugDetails);
+          case 'invite':
+            _room?.invite().then((words) => words != null && mounted ? _showSnack(words, context.skin.feltDeep) : null);
           case 'leave': // a courtier takes your seat; back to the front page
             _leaveRoom();
             setState(() => game = GameState());
@@ -3024,7 +3034,7 @@ class HomePageState extends State<HomePage>
   }
 
   List<MenuEntry> _menuEntries() => menuEntries(
-        online: _room != null,
+        room: _room?.room.code,
         newGame: (_inGame || _saves.isNotEmpty) && _setupArgs == null,
         shuffle: _inGame && _setupArgs == null,
         // Only round a real table does the view need turning.
@@ -3040,27 +3050,16 @@ class HomePageState extends State<HomePage>
       keyboard: _showKeys,
       room: _room?.details());
 
-  PreferredSizeWidget _buildAppBar() {
-    final picker = _round.pickTurn;
-    return GameBar(
-      title: game.mode == GameMode.chronicle && game.chapter != null
-          ? 'Chapter ${game.chapter! + 1}'
-          : game.isTutorial
-              ? 'Lesson ${game.lesson + 1}'
-              : 'Round ${game.roundNumber}',
+  PreferredSizeWidget _buildAppBar() => GameBar(
+      title: GameBar.titleOf(game),
       choosingKing: _choosingKing,
       decree: _round.decree,
       onDecree: () => showDecree(context, _round, game.players),
-      // At a real table: whoever's picking may pass, once a round.
-      passer: !_digital && picker != null && _round.canPass(picker)
-          ? game.players[picker].name
-          : null,
+      passer: GameBar.passerOf(game),
       onPass: () => _pass(_round.pickTurn!),
       target: game.target,
       onPoints: _showPointsDialog,
-      menu: _buildMenu(),
-    );
-  }
+      menu: _buildMenu());
 
   /// The table keeps a fixed text size so its layout always fits; dialogs
   /// and the rules still follow the phone's text size setting.

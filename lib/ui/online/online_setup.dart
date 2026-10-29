@@ -13,6 +13,7 @@ import '../../game/seats.dart';
 import '../../game/setup.dart';
 import '../../game/state.dart';
 import '../../net/online_table.dart';
+import '../../platform/invite.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../setup/setup_frame.dart';
@@ -29,6 +30,7 @@ class OnlineSetup extends StatefulWidget {
     required this.onCancel,
     required this.onPlay,
     this.seed,
+    this.joinCode,
   });
 
   /// How to reach the rooms: the socket, the service's address, this
@@ -46,6 +48,9 @@ class OnlineSetup extends StatefulWidget {
 
   /// A fixed seed for the room's game (tests); a random one otherwise.
   final int? seed;
+
+  /// Opened from an invite link: straight to joining this room.
+  final String? joinCode;
 
   /// The name you went by last time, offered again.
   static String lastName = '';
@@ -67,7 +72,24 @@ class _OnlineSetupState extends State<OnlineSetup> {
   bool surprise = false;
 
   late final _name = TextEditingController(text: OnlineSetup.lastName);
-  final _code = TextEditingController();
+  late final _code = TextEditingController(text: widget.joinCode);
+
+  /// The invite went to the clipboard, not a share sheet: say so.
+  bool _copied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.joinCode != null) {
+      starting = false;
+      step = 1;
+    }
+  }
+
+  Future<void> _invite(String code) async {
+    final shared = await shareInvite(code);
+    if (mounted && !shared) setState(() => _copied = true);
+  }
 
   OnlineTable? _room;
   StreamSubscription<void>? _changes;
@@ -335,7 +357,14 @@ class _OnlineSetupState extends State<OnlineSetup> {
                 letterSpacing: 12,
                 color: skin.gold,
                 shadows: const [Shadow(color: Colors.black54, blurRadius: 12)])),
-        const Text('Friends join with this code from Multiplayer, Join a room.',
+        const SizedBox(height: 4),
+        OutlinedButton.icon(
+          onPressed: () => _invite(room.code),
+          icon: Icon(_copied ? Icons.check_rounded : Icons.ios_share_rounded),
+          label: Text(_copied ? 'Invite link copied' : 'Invite friends'),
+        ),
+        const SizedBox(height: 6),
+        const Text('The link opens the game ready to join. Or they can enter the code under Multiplayer, Join a room.',
             textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, height: 1.35)),
         const SizedBox(height: 16),
         for (var s = 0; s < room.seats.count; s++)

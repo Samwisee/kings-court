@@ -5,6 +5,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
+import '../../engine/round.dart';
+import '../../game/state.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/strings.dart';
 import '../menu/menu.dart';
@@ -39,6 +41,20 @@ class GameBar extends StatelessWidget implements PreferredSizeWidget {
   final int target;
   final VoidCallback onPoints;
   final Widget menu;
+
+  /// What the bar calls [game]: the chapter, the lesson or the round.
+  static String titleOf(GameState game) => game.mode == GameMode.chronicle && game.chapter != null
+      ? 'Chapter ${game.chapter! + 1}'
+      : game.isTutorial
+          ? 'Lesson ${game.lesson + 1}'
+          : 'Round ${game.roundNumber}';
+
+  /// At a real table, whoever's picking may pass, once a round: their name.
+  static String? passerOf(GameState game) {
+    final r = game.round!;
+    final picker = r.pickTurn;
+    return !game.digital && picker != null && r.canPass(picker) ? game.players[picker].name : null;
+  }
 
   @override
   Size get preferredSize => const Size.fromHeight(60);
