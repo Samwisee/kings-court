@@ -89,10 +89,19 @@ reordering, duplicates and a dropped connection.
   rules of rooms.js in Dart); `test/ui/online_play_test.dart` does it from
   the page, with a friend leaving part-way and someone joining part-way.
 
+- **Coming back.** The room a device is playing in is kept on the device
+  until it leaves (`RoomPlay`), so opening the game again after closing it
+  goes straight back to the seat, if nobody has taken it (the room's
+  `rejoin=1`: only the seat this device had, or `gone`).
+- **Walking away.** A move that waits on you for a minute is made by your
+  courtier, on your own device (`RoomPlay.watch`, `Host.standIn`), so
+  nobody is held up by someone who's put their phone down.
+- **Judged alike.** The screen turns tasks over at its own pace, a little
+  after the trick that settles them; play stops at a failed task before it
+  has turned (`Round.lostUnturned`), just where a table that judges as it
+  goes calls the round lost, so every device refuses the same cards.
+
 ## Still to do
 
-- Coming back after the app is closed: the seat is kept, but the page
-  doesn't yet reopen the room.
 - Private hands: today every device deals every hand from the seed. A
   server dealing would send each seat `Round.visibleTo(seat)` instead.
-- An idle player: the host could play a seat that hasn't moved for a while.

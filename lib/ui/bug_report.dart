@@ -15,15 +15,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import '../game/state.dart';
+import '../net/table_link.dart';
+
 import '../platform/analytics.dart';
 import '../platform/build_info.dart';
 import '../platform/crash_reports.dart';
+import '../platform/settings.dart';
+import '../platform/sfx.dart';
 import 'widgets.dart';
 
 /// Where reports go, set when the game is built
 /// (`--dart-define=BUG_URL=https://…`). Empty means copy instead.
 const bugReportUrl = String.fromEnvironment('BUG_URL');
 
+
+/// What goes with a bug report: where the player is, their settings, and
+/// the whole game as saved with every move of it ([game], null off the
+/// table), so it can be loaded (GameState.fromJson) and seen exactly as
+/// they saw it, or played again from the start move by move
+/// (net/replay.dart, tool/replay_report). Online, the [room] too.
+Map<String, dynamic> bugDetails(GameState? game,
+        {required List<Move> moves,
+        required bool settingUp,
+        required bool keyboard,
+        Map<String, dynamic>? room}) =>
+    {
+      'where': {
+        'inGame': game != null,
+        if (game != null) 'mode': game.mode.name,
+        if (game != null) 'round': game.roundNumber,
+        'onScreen': game?.digital ?? false,
+        'settingUp': settingUp,
+        if (room != null) 'room': room,
+      },
+      'settings': {
+        'sound': Sfx.enabled,
+        'fourColourSuits': Settings.fourColourSuits,
+        'keyboard': keyboard,
+      },
+      if (game != null) 'state': game.toJson(),
+      if (moves.isNotEmpty) 'moves': [for (final m in moves) m.toJson()],
+    };
 
 /// Asks what went wrong and sends it. [details] is called when the report
 /// is sent, so it captures the game as it is at that moment.

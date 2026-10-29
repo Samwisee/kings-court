@@ -78,10 +78,18 @@ class _OnlineSetupState extends State<OnlineSetup> {
   @override
   void dispose() {
     _changes?.cancel();
-    if (!_handedOver) _room?.dispose();
+    if (!_handedOver) _quit();
     _name.dispose();
     _code.dispose();
     super.dispose();
+  }
+
+  /// Out of the room for good (someone in it, they're told).
+  void _quit() {
+    if (_room case final room?) {
+      unawaited(room.leave());
+      room.dispose();
+    }
   }
 
   void _go(int to) => setState(() {
@@ -151,7 +159,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
   void _leave({String? problem}) {
     _changes?.cancel();
     _changes = null;
-    _room?.dispose();
+    _quit();
     _room = null;
     _problem = problem;
     _go(1);

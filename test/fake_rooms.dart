@@ -28,7 +28,8 @@ class FakeRooms {
       end.deliver({'t': 'error', 'why': 'no-room'});
       return end;
     }
-    room.come(end, q['session']!, q['name']!, q['build']!, int.tryParse(q['after'] ?? ''));
+    room.come(end, q['session']!, q['name']!, q['build']!, int.tryParse(q['after'] ?? ''),
+        rejoin: q['rejoin'] != null);
     return end;
   }
 }
@@ -48,9 +49,10 @@ class FakeRoom {
 
   int seatOf(String session) => seats.indexWhere((h) => h['who'] == 'person' && h['id'] == session);
 
-  void come(FakeEnd end, String session, String name, String b, int? after) {
+  void come(FakeEnd end, String session, String name, String b, int? after, {bool rejoin = false}) {
     if (b != build) return end.deliver({'t': 'error', 'why': 'version'});
     var seat = seatOf(session);
+    if (seat < 0 && rejoin) return end.deliver({'t': 'error', 'why': 'gone'});
     if (seat < 0) {
       // Before the start an empty seat; after it a courtier's.
       seat = seats.indexWhere((h) => h['who'] == (started ? 'courtier' : 'empty'));

@@ -136,4 +136,30 @@ void main() {
     expect(won.outcome, RoundOutcome.won);
     expect(won.problem(PlayCard(won.turn, won.legalFor(won.turn).first)), isNull);
   });
+
+  test('A table that turns tasks over at its own pace stops play where a judging one would', () {
+    // Played with the judging held back (as the screen does), the round
+    // refuses the next card once a task has failed, exactly where a round
+    // that judges as it goes calls itself lost.
+    var found = false;
+    for (var seed = 1; seed < 60 && !found; seed++) {
+      final slow = table(['Win the first trick', 'Win the 3♥', 'Win the 6♣'], seed: seed);
+      final quick = table(['Win the first trick', 'Win the 3♥', 'Win the 6♣'], seed: seed);
+      handOut(slow);
+      handOut(quick);
+      while (slow.tricks.length < slow.totalTricks && quick.outcome == RoundOutcome.inProgress) {
+        expect(slow.lostUnturned, isFalse);
+        final play = PlayCard(slow.turn, slow.legalFor(slow.turn).first);
+        slow.apply(play, judge: false);
+        quick.apply(play);
+      }
+      if (quick.outcome != RoundOutcome.lost || slow.tricks.length == slow.totalTricks) continue;
+      found = true;
+      expect(slow.outcome, RoundOutcome.inProgress, reason: 'not turned over yet');
+      expect(slow.lostUnturned, isTrue);
+      expect(slow.problem(PlayCard(slow.turn, slow.legalFor(slow.turn).first)), 'The round is lost');
+      expect(quick.problem(PlayCard(quick.turn, quick.legalFor(quick.turn).first)), 'The round is lost');
+    }
+    expect(found, isTrue, reason: 'some seed loses a task part-way');
+  });
 }

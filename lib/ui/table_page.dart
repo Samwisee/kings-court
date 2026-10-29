@@ -455,6 +455,9 @@ class HomePageState extends State<HomePage>
         _progress = Progress(chronicle: progress);
         _saves = saves;
       });
+      // Back to the online game the app was closed in, if the seat's ours.
+      final room = await RoomPlay.rejoin(open: HomePageTestHooks.rooms);
+      if (room != null) mounted && !_inGame ? _playOnline(room) : room.dispose();
     } catch (_) {
       // No saved game (or storage unavailable): start fresh.
     }
@@ -769,6 +772,7 @@ class HomePageState extends State<HomePage>
   PlayingCard? _queued;
 
   void _scheduleBot() {
+    _room?.watch(Host.moment(game), yours: _yourPick || _yourPlay, standIn: _standIn);
     if (_queued != null && _yourPlay) {
       final card = _queued!;
       _queued = null;
@@ -965,9 +969,17 @@ class HomePageState extends State<HomePage>
     _keepAwake(true);
   }
 
+  /// You've been a while: your courtier makes your move.
+  void _standIn() {
+    if (!mounted || !(_yourPick || _yourPlay)) return;
+    _showSnack('You took a while: your courtier moved for you', context.skin.feltDeep);
+    unawaited(Host.standIn(_you, game.players.length, bot: Bot(), send: _link.send).act(game));
+  }
+
   /// Out of the room, back to playing on this device.
   void _leaveRoom() {
     if (_room == null) return;
+    unawaited(_room!.room.leave());
     _room!.close();
     _room = null;
     _ctrl.online = false;
@@ -3022,29 +3034,11 @@ class HomePageState extends State<HomePage>
         share: GameLog.sharing,
       );
 
-  /// What goes with a bug report: where the player is, their settings, and
-  /// the whole game as saved with every move of it, so it can be loaded
-  /// (GameState.fromJson) and seen exactly as they saw it, or played again
-  /// from the start move by move (net/replay.dart, tool/replay_report).
-  Map<String, dynamic> _bugDetails() {
-    final moves = _inGame ? _link.history : const <Move>[];
-    return {
-      'where': {
-        'inGame': _inGame,
-        if (_inGame) 'mode': game.mode.name,
-        if (_inGame) 'round': game.roundNumber,
-        'onScreen': _digital,
-        'settingUp': _setupArgs != null,
-      },
-      'settings': {
-        'sound': Sfx.enabled,
-        'fourColourSuits': Settings.fourColourSuits,
-        'keyboard': _showKeys,
-      },
-      if (_inGame) 'state': game.toJson(),
-      if (moves.isNotEmpty) 'moves': [for (final m in moves) m.toJson()],
-    };
-  }
+  Map<String, dynamic> _bugDetails() => bugDetails(_inGame ? game : null,
+      moves: _inGame ? _link.history : const [],
+      settingUp: _setupArgs != null,
+      keyboard: _showKeys,
+      room: _room?.details());
 
   PreferredSizeWidget _buildAppBar() {
     final picker = _round.pickTurn;

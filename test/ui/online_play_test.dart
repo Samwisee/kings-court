@@ -18,6 +18,7 @@ import 'package:kings_court/net/replay.dart';
 import 'package:kings_court/platform/build_info.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/ui/app.dart';
+import 'package:kings_court/ui/online/room_play.dart';
 import 'package:kings_court/ui/table_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,12 +33,15 @@ void main() {
   tearDown(() {
     HomePageTestHooks.rooms = null;
     HomePageTestHooks.seed = null;
+    RoomPlay.idleLimit = const Duration(seconds: 60);
   });
 
   const names = {
     'together': 'A room started on the page plays a round with a friend’s device to the same end',
     'leaves': 'When a friend leaves part-way, a courtier plays their seat to the end',
     'joins': 'Someone joining part-way takes the courtier’s seat, caught up, and plays to the same end',
+    'idle': 'Someone who doesn’t move for a while has their courtier move for them',
+    'returns': 'Opening the game again after closing it mid-game goes back to the same seat',
   };
   for (final story in names.keys) {
     testWidgets(names[story]!, (tester) async {
@@ -75,8 +79,11 @@ void main() {
       await tester.tap(find.text('Start'));
       await tester.pump();
 
-      final state = tester.state<HomePageState>(find.byType(HomePage));
-      final game = state.game;
+      var state = tester.state<HomePageState>(find.byType(HomePage));
+      var game = state.game;
+      if (story == 'idle') RoomPlay.idleLimit = const Duration(milliseconds: 600);
+      var stoodIn = false;
+      var returned = false;
       expect(game.digital, isTrue);
       expect(game.players.map((p) => p.name).take(2), ['You', 'Ben']);
       expect(ben.started, isTrue);
@@ -121,8 +128,25 @@ void main() {
           await tester.tap(find.text('Announce'));
         } else if (find.text('Got it').evaluate().isNotEmpty) {
           await tester.tap(find.text('Got it').first);
-        } else {
+        } else if (story != 'idle') {
           state.debugYourMove();
+        }
+        if (find.textContaining('your courtier moved for you').evaluate().isNotEmpty) stoodIn = true;
+        if (story == 'returns' && !returned && benMoves >= 2 && !thinking.contains(b)) {
+          returned = true;
+          // The app is closed (the room hears the socket go), then opened.
+          await tester.pumpWidget(const SizedBox());
+          rooms.rooms[code]!.drop(RoomPlay.session);
+          await tester.pumpWidget(const TheKingsCourtApp());
+          for (var k = 0; k < 20; k++) {
+            await tester.pump(const Duration(milliseconds: 30));
+          }
+          state = tester.state<HomePageState>(find.byType(HomePage));
+          game = state.game;
+          expect(game.digital, isTrue, reason: 'straight back to the table');
+          expect(game.players[0].name, 'You');
+          expect(game.players[1].name, 'Ben');
+          expect(rooms.rooms[code]!.seats[0]['connected'], isTrue);
         }
         if (benMoves >= 1 && !thinking.contains(b)) {
           if (story == 'leaves' && !benLeft) {
@@ -155,6 +179,8 @@ void main() {
       // is worded to each ("You won trick 5" is "Ann won trick 5" to Ben).
       String round(GameState g) =>
           jsonEncode(g.round!.toJson()).replaceAll(RegExp(',"why":"[^"]*"'), '');
+      if (story == 'idle') expect(stoodIn, isTrue);
+      if (story == 'returns') expect(returned, isTrue);
       if (story == 'leaves') {
         expect(benLeft, isTrue);
         expect(rooms.rooms[code]!.seats[1]['who'], 'courtier');

@@ -116,12 +116,8 @@ class HeadlessTable {
   Future<bool> playAs(int seat) async {
     prepare();
     if (pending.isNotEmpty || game.outcome != RoundOutcome.inProgress) return false;
-    final only = Seats.of([
-      for (var s = 0; s < game.players.length; s++)
-        s == seat ? const CourtierSeat() : Person('other$s')
-    ]);
-    final person = Host(bot: bot, you: -1, seats: only, send: _send)
-      ..script = rules.script?.call(game) ?? const CourtierScript();
+    final person = Host.standIn(seat, game.players.length,
+        bot: bot, send: _send, script: rules.script?.call(game) ?? const CourtierScript());
     final turn = await person.act(game);
     return turn.decision != null && turn.decision is! YourAnnouncement;
   }

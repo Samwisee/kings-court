@@ -6,8 +6,10 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../game/seats.dart';
 import '../../game/setup.dart';
@@ -37,6 +39,7 @@ class RoomPlay {
       }
       onChange(news);
     });
+    unawaited(_remember());
   }
 
   final OnlineTable room;
@@ -89,7 +92,7 @@ class RoomPlay {
           required ValueChanged<OnlineTable> onPlay}) =>
       OnlineSetup(
           open: open ?? openRoomSocket,
-          service: Uri.parse(hasService ? serviceUrl : 'https://rooms.test'),
+          service: _service,
           session: session,
           build: buildVersion,
           seed: seed,
@@ -123,5 +126,97 @@ class RoomPlay {
     return game;
   }
 
-  void close() => _changes.cancel();
+  /// The room as a bug report tells it.
+  Map<String, dynamic> details() => {
+        'code': room.code,
+        'seat': seat,
+        'hosting': hosting,
+        'status': room.status.name,
+        'seats': room.seats.toJson(),
+      };
+
+  // ------------------------------------------------- coming back to it
+
+  static const _key = 'kingsCourt.room';
+  static Uri get _service => Uri.parse(hasService ? serviceUrl : 'https://rooms.test');
+
+  /// Kept until you leave, so the game can be taken up again after the app
+  /// is closed: the room, and who this device was in it.
+  Future<void> _remember() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _key,
+          jsonEncode({
+            'code': room.code,
+            'session': room.session,
+            'name': room.name,
+            'at': DateTime.now().millisecondsSinceEpoch,
+          }));
+    } catch (_) {}
+  }
+
+  static Future<void> _forget() async {
+    try {
+      await (await SharedPreferences.getInstance()).remove(_key);
+    } catch (_) {}
+  }
+
+  /// The game this device was playing when the app was last closed, back
+  /// in its seat (through [open]'s rooms in tests); null when there's none,
+  /// it's over, or someone else has the seat now.
+  static Future<OnlineTable?> rejoin({SocketOpener? open}) async {
+    if (!hasService && open == null) return null;
+    try {
+      final saved = (await SharedPreferences.getInstance()).getString(_key);
+      if (saved == null) return null;
+      final j = jsonDecode(saved) as Map<String, dynamic>;
+      final age = DateTime.now().millisecondsSinceEpoch - (j['at'] as int);
+      if (age < const Duration(days: 2).inMilliseconds) {
+        final t = await OnlineTable.join(open ?? openRoomSocket, _service,
+            code: j['code'] as String,
+            session: j['session'] as String,
+            name: j['name'] as String,
+            build: buildVersion,
+            rejoin: true);
+        if (t.status == TableStatus.open && t.started) return t;
+        t.dispose();
+      }
+      await _forget();
+    } catch (_) {}
+    return null;
+  }
+
+  // ------------------------------------------------- someone walked away
+
+  /// How long a move waits on you before your courtier makes it, so
+  /// someone who's walked away holds nobody up.
+  static Duration idleLimit = const Duration(seconds: 60);
+  Timer? _idle;
+  String? _idleAt;
+
+  /// The table changed: [moment] is where the game has got to, [yours]
+  /// whether it waits on you. Once it's waited [idleLimit] at the same
+  /// moment, [standIn] makes your move.
+  void watch(String moment, {required bool yours, required VoidCallback standIn}) {
+    if (!yours) {
+      _idle?.cancel();
+      _idleAt = null;
+      return;
+    }
+    if (moment == _idleAt) return;
+    _idleAt = moment;
+    _idle?.cancel();
+    _idle = Timer(idleLimit, () {
+      _idleAt = null;
+      standIn();
+    });
+  }
+
+  /// Out of the room for good: nothing to come back to.
+  void close() {
+    _changes.cancel();
+    _idle?.cancel();
+    unawaited(_forget());
+  }
 }

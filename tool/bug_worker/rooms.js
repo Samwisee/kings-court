@@ -12,7 +12,8 @@
 //   GET /rooms/new?session=&name=&build=&setup=   (WebSocket) a new room;
 //       the creator hosts it, in seat 0
 //   GET /rooms/CODE?session=&name=&build=&after=  (WebSocket) join, or come
-//       back after a drop and catch up on the moves after `after`
+//       back after a drop and catch up on the moves after `after`;
+//       with &rejoin=1, only to take back the seat this session had
 //
 // People come and go freely. Before the start a newcomer takes an empty
 // seat; after it, a courtier's (a device catches up by playing the moves
@@ -32,7 +33,7 @@
 //   {t:"seats", seats, names, host, started}   who sits where, changed
 //   {t:"move", m:<move>}     a move, numbered: {seq, ...action}
 //   {t:"error", why}         then the socket closes: no-room, full,
-//                            version, bad
+//                            version, gone (rejoin: the seat's been taken), bad
 //   {t:"refused", why, a}    a move not accepted (not this device's seat)
 
 const LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ"; // no I, L or O: easy to read out
@@ -124,6 +125,7 @@ export class Room {
     if (m.build && build && build !== m.build) return this.refuse("version");
 
     let seat = m.seats.findIndex((h) => h.who === "person" && h.id === session);
+    if (seat < 0 && q.get("rejoin")) return this.refuse("gone");
     if (seat < 0) {
       // Before the start an empty seat; after it a courtier's, or one
       // whose person has been away a while.

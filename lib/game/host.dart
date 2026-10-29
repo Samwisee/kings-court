@@ -40,6 +40,21 @@ class Host {
   /// dropped. Null means every seat but [you]'s is a courtier's.
   Seats? seats;
 
+  /// A courtier making the move for the person at [seat] alone (one
+  /// who's taking too long, or a test playing them).
+  factory Host.standIn(int seat, int players,
+          {required Bot bot,
+          required void Function(MatchAction move) send,
+          CourtierScript script = const CourtierScript()}) =>
+      Host(
+          bot: bot,
+          you: -1,
+          seats: Seats.of([
+            for (var s = 0; s < players; s++) s == seat ? const CourtierSeat() : Person('other$s')
+          ]),
+          send: send,
+          script: script);
+
   /// Whether this host moves for [seat].
   bool plays(int seat) => seats?.hostPlays(seat) ?? seat != you;
 
@@ -73,7 +88,8 @@ class Host {
       g.round!.hasCards &&
       g.round!.king != null &&
       dealtFor == g.dealId &&
-      g.outcome == RoundOutcome.inProgress;
+      g.outcome == RoundOutcome.inProgress &&
+      !g.round!.lostUnturned;
 
   /// What the round looks like now, to check nothing moved while a
   /// courtier was thinking.

@@ -55,6 +55,7 @@ enum Refusal {
   full('That room is full.'),
   started('That game has already begun.'),
   version('That room is on another version of the game: refresh to update, then try again.'),
+  gone('Your seat in that game has been taken.'),
   unreachable('The room can’t be reached. Check your connection and try again.'),
   bad('Something went wrong joining the room.');
 
@@ -66,6 +67,7 @@ enum Refusal {
         'full' => full,
         'started' => started,
         'version' => version,
+        'gone' => gone,
         _ => bad,
       };
 }
@@ -84,14 +86,17 @@ class OnlineTable implements TableLink {
       _connect(OnlineTable._(open, service, session, name, build,
           _address(service, 'new', {'setup': jsonEncode(setup.toJson())})));
 
-  /// Joins the room [code] (or comes back to it, in the same seat).
+  /// Joins the room [code] (or comes back to it, in the same seat). With
+  /// [rejoin], only to take back the seat [session] had: turned away
+  /// ([Refusal.gone]) if someone else has it now.
   static Future<OnlineTable> join(SocketOpener open, Uri service,
           {required String code,
           required String session,
           required String name,
-          required String build}) =>
+          required String build,
+          bool rejoin = false}) =>
       _connect(OnlineTable._(open, service, session, name, build,
-          _address(service, code.trim().toUpperCase(), const {})));
+          _address(service, code.trim().toUpperCase(), {if (rejoin) 'rejoin': '1'})));
 
   static Uri _address(Uri service, String room, Map<String, String> extra) => service.replace(
         scheme: service.scheme == 'http' ? 'ws' : 'wss',
@@ -182,6 +187,12 @@ class OnlineTable implements TableLink {
   /// Leaves the room for good: a courtier takes the seat.
   Future<void> leave() async {
     if (status == TableStatus.open) _write({'t': 'leave'});
+    await _close();
+  }
+
+  /// Lets the socket go, as when the app is closed: the seat waits a
+  /// while for this device to come back.
+  Future<void> _close() async {
     status = TableStatus.closed;
     _retry?.cancel();
     await _listening?.cancel();
@@ -196,7 +207,7 @@ class OnlineTable implements TableLink {
 
   @override
   void dispose() {
-    unawaited(leave());
+    unawaited(_close());
     _moves.close();
     _changes.close();
   }

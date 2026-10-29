@@ -55,8 +55,9 @@ async function room(ctx = fakeCtx()) {
 }
 
 /// Connects [session]: the client's end, whose .sent is what it received.
-async function connect(r, session, { create = false, after, build = "b1", name = session } = {}) {
+async function connect(r, session, { create = false, after, build = "b1", name = session, rejoin = false } = {}) {
   const q = new URLSearchParams({ session, name, build });
+  if (rejoin) q.set("rejoin", "1");
   if (create) { q.set("create", "1"); q.set("setup", JSON.stringify(setup)); }
   if (after !== undefined) q.set("after", String(after));
   const res = await r.fetch(new Request(`https://x/rooms/ABCD?${q}`));
@@ -148,6 +149,8 @@ test("A device that drops keeps its seat, and catches up when it comes back", as
   const back = await connect(r, "ben", { after: 0 });
   assert.equal(last(back, "hello").seat, 1);
   assert.deepEqual(last(back, "hello").moves.map((m) => m.seq), [1]);
+  // Coming back to a seat only works for whoever had it.
+  assert.equal(last(await connect(r, "zed", { rejoin: true }), "error").why, "gone");
   assert.equal(r.meta.seats[1].connected, true);
   assert.ok(ben);
 });

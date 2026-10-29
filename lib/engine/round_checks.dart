@@ -6,6 +6,7 @@ library;
 import 'cards.dart';
 import 'decrees.dart';
 import 'round.dart';
+import 'task.dart';
 
 extension RoundChecks on Round {
   /// Why [a] isn't allowed right now, or null if it is.
@@ -47,7 +48,7 @@ extension RoundChecks on Round {
       case PlayCard(:final seat, :final card):
         // A won round may play itself out; a lost one stops.
         if (!settled) return 'Not playing yet';
-        if (outcome == RoundOutcome.lost) return 'The round is lost';
+        if (outcome == RoundOutcome.lost || lostUnturned) return 'The round is lost';
         if (tricks.length >= totalTricks) return 'Every card is played';
         if (seat != turn) return 'Not your turn';
         if (!legalFor(seat).contains(card)) {
@@ -56,6 +57,12 @@ extension RoundChecks on Round {
     }
     return null;
   }
+
+  /// The tricks so far have failed a task that hasn't been turned over
+  /// yet (a table that turns them at its own pace): the round is lost,
+  /// though it doesn't say so yet. Every table stops play here alike.
+  bool get lostUnturned =>
+      hasCards && current.isEmpty && judge().any((f) => f.status == TaskStatus.failed);
 
   /// How many cards [seat] holds: counted from their hand, or, in a view
   /// where their hand is hidden, as told.
