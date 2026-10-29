@@ -407,3 +407,24 @@ baseline).
   The wax seals stay red in every skin.
 - **CI retries its result pushes**: two runs side by side sometimes had a
   push of `ci-`, `shots-` or `bench-` refused, failing a green run.
+
+## Switching the look, smoothly
+
+- **The stutter**: a switch rebuilt the whole page in one heavy frame (a
+  walk that marked every element dirty, on top of everything that reads
+  the skin), then Material's theme eased over 200 ms, rebuilding every
+  widget each frame, half in the old look and half the new (the skin's
+  own colours had already snapped).
+- **Now**: the theme changes at once (`themeAnimationDuration: zero`),
+  the dirty-marking walk is gone (everything that reads the skin depends
+  on it, and every painter that takes one compares it), and the change is
+  one deliberate dissolve: a still of the screen is taken, the new look is
+  built under it, and the still fades out over 380 ms (`ui/app.dart`).
+  With reduced motion it simply changes. No screenshot moves.
+- The page benchmark prints the switch's frames (`switching the look`);
+  the test harness rasterises on the CPU, so its numbers aren't a phone's.
+  What a phone or browser pays the first time it draws a look (shaders,
+  glyphs) still happens, but under the still.
+- **The loading screen** is drawn in the look saved last time
+  (`web/index.html` reads it from local storage); `test/skin_test.dart`
+  checks its colours against each skin's.
