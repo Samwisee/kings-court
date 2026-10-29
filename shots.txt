@@ -1,0 +1,23 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart
+lib/main.dart:3328:8: Error: '_crown' is already declared in this scope.
+  void _crown(int index) {
+       ^^^^^^
+lib/main.dart:146:34: Context: Previous declaration of '_crown'.
+  late final AnimationController _crown = AnimationController(
+                                 ^^^^^^
+lib/main.dart:26:1: Error: 'Action' is imported from both 'package:flutter/src/widgets/actions.dart' and 'package:kings_court/engine/round.dart'.
+import 'engine/round.dart';
+^^^^^^
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/test/tool/shots_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/test/tool/shots_test.dart: lib/main.dart:3328:8: Error: '_crown' is already declared in this scope.
+    void _crown(int index) {
+         ^^^^^^
+  lib/main.dart:146:34: Context: Previous declaration of '_crown'.
+    late final AnimationController _crown = AnimationController(
+                                   ^^^^^^
+  lib/main.dart:26:1: Error: 'Action' is imported from both 'package:flutter/src/widgets/actions.dart' and 'package:kings_court/engine/round.dart'.
+  import 'engine/round.dart';
+  ^^^^^^
+  .
+00:00 +0 -1: Some tests failed.
