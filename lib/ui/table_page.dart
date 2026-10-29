@@ -64,6 +64,8 @@ import 'setup/saves.dart';
 import 'setup/setup_panel.dart';
 import 'table/dealt_task.dart';
 import 'table/game_bar.dart';
+import 'table/hand_bar.dart';
+import 'table/hand_card.dart';
 import 'table/keyboard.dart';
 import 'table/seats.dart';
 import 'table/trick_view.dart';
@@ -1427,120 +1429,39 @@ class HomePageState extends State<HomePage>
         child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // One height whatever it holds (two lines of words, a button), so
-          // your hand never moves up or down.
-          SizedBox(
-            height: 56,
-            child: Row(
-            children: [
-              Expanded(
-                child: _barChoice
-                    // A choice with a way out: show a card or skip, pick a
-                    // task or pass. Both right in the middle, where you're
-                    // looking, the button always in the same place.
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                                _speakPromptDue ? 'Show a card, or' : 'Hold a task to take it, or',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                    fontFamily: skin.bodyFont,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    shadows: context.skin.feltShadow,
-                                    color: skin.gold)),
-                          ),
-                          const SizedBox(width: 8),
-                          KeyedSubtree(
-                            key: _kbButtonKey,
-                            child: _speakPromptDue
-                                ? GlowButton(
-                                    key: const ValueKey('skip'),
-                                    label: 'Skip',
-                                    focused: _kbRow == 2,
-                                    onPressed: _skipShowing)
-                                : GlowButton(
-                                    key: const ValueKey('pass'),
-                                    label: 'Pass',
-                                    focused: _kbRow == 2,
-                                    onPressed: _passPick),
-                          ),
-                        ],
-                      )
-                    : AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: TextStyle(
-                      fontFamily: skin.bodyFont,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      shadows: context.skin.feltShadow,
-                      color: yourTurn || _yourPick || _revealing
-                          ? skin.gold
-                          : Colors.white70),
-                  child: SuitText(
-                      _toast != null
-                          ? _toast!
-                          : _revealing
-                          ? 'Tap a card to show it (highest, lowest or only of its suit)'
-                          : _queued != null
-                          ? 'You\u2019ll play the ${_queued!.label} on your turn (tap it again to change your mind)'
-                          : _wantsToSpeak && _playing
-                              ? 'You\u2019ll show a card after this trick'
-                              : _cardStatus,
-                      style: TextStyle(
-                          color: yourTurn || _yourPick || _revealing
-                              ? skin.gold
-                              : Colors.white70),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center),
-                ),
-              ),
-              // The action of the moment, beside what's happening: save
-              // your card for later, or pass on picking.
-
-              // Every card: which are played, which are still to come.
-              if (_round.hasCards)
-                IconButton(
-                  tooltip: 'Card tracker',
-                  onPressed: _showCardTracker,
-                  icon: const TrackerIcon(),
-                ),
-
-              // The speech token: show one card, once a round.
-              SizedBox(
-                width: 44,
-                // While Skip is showing beside it, this is its X: the
-                // two do the same, so they look linked.
-                child: IconButton(
-                  tooltip: _speakPromptDue
-                      ? 'Skip showing a card'
-                      : _revealing
-                          ? 'Don\u2019t show a card'
-                          : 'Show a card (once a round)',
-                  onPressed: _speakPromptDue
-                      ? _skipShowing
-                      : _mayAskToSpeak || _revealing
-                          ? _speak
-                          : null,
-                  icon: _revealing || _speakPromptDue
-                      ? Icon(Icons.close_rounded, color: skin.gold)
-                      : ShowCardIcon(
-                          size: 28,
-                          used: _round.spoke.length > _you && _round.spoke[_you],
-                          color: _wantsToSpeak
-                              ? Colors.white
-                              : _mayAskToSpeak
-                                  ? skin.gold
-                                  : Colors.white24),
-                ),
-              ),
-            ],
-          ),
+          HandBar(
+            choice: !_barChoice
+                ? null
+                : _speakPromptDue
+                    ? HandChoice.show
+                    : HandChoice.pass,
+            buttonKey: _kbButtonKey,
+            buttonFocused: _kbRow == 2,
+            onSkip: _skipShowing,
+            onPass: _passPick,
+            message: _toast != null
+                ? _toast!
+                : _revealing
+                    ? 'Tap a card to show it (highest, lowest or only of its suit)'
+                    : _queued != null
+                        ? 'You\u2019ll play the ${_queued!.label} on your turn (tap it again to change your mind)'
+                        : _wantsToSpeak && _playing
+                            ? 'You\u2019ll show a card after this trick'
+                            : _cardStatus,
+            lit: yourTurn || _yourPick || _revealing,
+            onTracker: _round.hasCards ? _showCardTracker : null,
+            speech: (
+              skipping: _speakPromptDue,
+              revealing: _revealing,
+              asked: _wantsToSpeak,
+              ready: _mayAskToSpeak,
+              used: _round.spoke.length > _you && _round.spoke[_you],
+            ),
+            onSpeak: _speakPromptDue
+                ? _skipShowing
+                : _mayAskToSpeak || _revealing
+                    ? _speak
+                    : null,
           ),
           const SizedBox(height: 2),
           LayoutBuilder(builder: (context, box) {
@@ -1698,40 +1619,17 @@ class HomePageState extends State<HomePage>
                             _handDragCard = null;
                             _snapBack(card.id);
                           },
-                          child: AnimatedScale(
-                            scale: dragging ? 1.1 : 1,
-                            duration: const Duration(milliseconds: 120),
-                            // Dealt face down, then turned up one by one.
-                            child: TweenAnimationBuilder<double>(
-                              key: ValueKey('hand-${game.dealId}-${card.id}'),
-                              tween: Tween(begin: 0, end: 1),
-                              duration: Duration(milliseconds: 420 + i * 70),
-                              curve: Interval((i * 70) / (420 + i * 70), 1,
-                                  curve: Curves.easeOut),
-                              builder: (context, f, child) => FlipIn(
-                                  t: f,
-                                  front: child!,
-                                  back: CardBack(width: cardW)),
-                              child: Stack(clipBehavior: Clip.none, children: [
-                                PlayingCardView(
-                                  card: card,
-                                  width: cardW,
-                                  dimmed: yourTurn && !legal.contains(card),
-                                  glow: (yourTurn && card == _tutorialHint) ||
-                                      _queued == card ||
-                                      chosen,
-                                  marks: _marksFor(card),
-                                ),
-                                // With the shortcuts showing: the key that
-                                // plays it, in the card's bottom corner.
-                                if (_keysShown && i < cardKeyLabels.length)
-                                  Positioned(
-                                    left: cardW * 0.08,
-                                    bottom: cardW * 0.08,
-                                    child: KeyCap(cardKeyLabels[i], size: cardW * 0.2),
-                                  ),
-                              ]),
-                            ),
+                          child: HandCard(
+                            card: card,
+                            width: cardW,
+                            index: i,
+                            dealId: game.dealId,
+                            lifted: dragging,
+                            dimmed: yourTurn && !legal.contains(card),
+                            glow: (yourTurn && card == _tutorialHint) || _queued == card || chosen,
+                            marks: _marksFor(card),
+                            // With the shortcuts showing: the key that plays it.
+                            keyLabel: _keysShown && i < cardKeyLabels.length ? cardKeyLabels[i] : null,
                           ),
                         )),
                         ),
