@@ -52,7 +52,8 @@ void main() {
     expect(r['outcome'], anyOf('won', 'lost'));
     expect(r['moves'], hasLength(link.history.length));
     // The round reads back as it ended.
-    final back = Round.fromJson(Map<String, dynamic>.from(jsonDecode(text)['round'] as Map));
+    final decoded = jsonDecode(text) as Map<String, dynamic>;
+    final back = Round.fromJson(Map<String, dynamic>.from(decoded['round'] as Map));
     expect(back.tasks.map((t) => t.description), game.round!.tasks.map((t) => t.description));
     expect(back.tricks, hasLength(game.round!.tricks.length));
     expect(back.outcome, game.round!.outcome);
