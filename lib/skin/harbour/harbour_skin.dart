@@ -29,7 +29,6 @@ const harbourDesign = SkinDesign(
   lost: Color(0xFFE0533F),
   displayFont: 'AlegreyaSans',
   bodyFont: 'AlegreyaSans',
-  radius: 12,
   cloth: [
     [Color(0xFF6B4BA8), Color(0xFF3B2468)],
     [Color(0xFF1E8A6A), Color(0xFF0E5240)],

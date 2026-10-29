@@ -90,7 +90,7 @@ class _Motif extends CustomPainter {
         final step = math.max(5.0, w / 7);
         final dot = Paint()..color = colour;
         for (var y = step / 2; y < h; y += step) {
-          final odd = ((y / step).floor()).isOdd;
+          final odd = (y / step).floor().isOdd;
           for (var x = odd ? step : step / 2; x < w; x += step) {
             canvas.drawCircle(Offset(x, y), math.max(0.8, w / 40), dot);
           }
