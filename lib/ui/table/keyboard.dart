@@ -2,7 +2,6 @@
 /// your cards, and how the arrow keys move between the places to stop.
 library;
 
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
 import '../round_table/geometry.dart';
