@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import '../../engine/round.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
-import '../cards/card_back.dart';
 import '../cards/card_view.dart';
 import '../cards/mini_card.dart';
 import '../welcome/welcome.dart';
@@ -217,7 +216,7 @@ class YourSeat extends StatelessWidget {
             children: [
               token,
               // Room kept from the start, so nothing shifts when it appears.
-              Opacity(opacity: tallyShown ? 1 : 0, child: TrickPile(won: tallyShown ? won : 0)),
+              Opacity(opacity: tallyShown ? 1 : 0, child: TrickPile(won: tallyShown ? won : 0, cardWidth: 24)),
             ],
           ),
         ),
@@ -277,7 +276,7 @@ class YourSeat extends StatelessWidget {
 /// them (in the card backs worn), with how many beside it. Room is kept
 /// for it with none.
 class TrickPile extends StatelessWidget {
-  const TrickPile({super.key, required this.won, this.cardWidth = 13});
+  const TrickPile({super.key, required this.won, this.cardWidth = 22});
   final int won;
   final double cardWidth;
 
@@ -285,7 +284,7 @@ class TrickPile extends StatelessWidget {
   Widget build(BuildContext context) {
     final h = PlayingCardView.heightFor(cardWidth);
     final shown = math.min(won, 6);
-    final step = cardWidth * 0.3;
+    final step = cardWidth * 0.22;
     return SizedBox(
       height: h + 6,
       child: Row(mainAxisSize: MainAxisSize.min, children: [
