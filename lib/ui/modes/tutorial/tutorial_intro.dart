@@ -30,8 +30,12 @@ Future<String?> showTutorialPages(BuildContext context,
         reverseTransitionDuration: const Duration(milliseconds: 250),
         pageBuilder: (c, a, b) =>
             TutorialIntro(pages: pages, heading: heading, finishLabel: finishLabel),
+        // Going, the pages are gone in the first moments, so their words
+        // never sit over the lesson's as it comes up beneath.
         transitionsBuilder: (c, a, b, child) => FadeTransition(
-            opacity: CurvedAnimation(parent: a, curve: Curves.easeOut), child: child)));
+            opacity: CurvedAnimation(
+                parent: a, curve: Curves.easeOut, reverseCurve: const Interval(0.6, 1)),
+            child: child)));
 
 class TutorialIntro extends StatefulWidget {
   const TutorialIntro(
