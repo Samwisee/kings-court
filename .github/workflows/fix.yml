@@ -39,4 +39,5 @@ jobs:
           git init -q -b "fixed-${GITHUB_REF_NAME#fix-}"
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Fixes for ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "fixed-${GITHUB_REF_NAME#fix-}"
+          # Retried: pushes from runs side by side sometimes fail at first.
+          for i in 1 2 3 4 5; do git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "fixed-${GITHUB_REF_NAME#fix-}" && exit 0; sleep $((i * 5)); done; exit 1

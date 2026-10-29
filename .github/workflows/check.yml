@@ -61,7 +61,8 @@ jobs:
           git init -q -b "ci-${GITHUB_REF_NAME}"
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Check of ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "ci-${GITHUB_REF_NAME}"
+          # Retried: pushes from runs side by side sometimes fail at first.
+          for i in 1 2 3 4 5; do git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "ci-${GITHUB_REF_NAME}" && exit 0; sleep $((i * 5)); done; exit 1
 
   shots:
     runs-on: ubuntu-latest
@@ -101,7 +102,8 @@ jobs:
           git init -q -b "shots-${GITHUB_REF_NAME}"
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Screenshots for ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "shots-${GITHUB_REF_NAME}"
+          # Retried: pushes from runs side by side sometimes fail at first.
+          for i in 1 2 3 4 5; do git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "shots-${GITHUB_REF_NAME}" && exit 0; sleep $((i * 5)); done; exit 1
       - name: Every difference must be explained
         run: test "${{ steps.compare.outputs.code }}" = "0"
 
@@ -149,6 +151,7 @@ jobs:
           git init -q -b "bench-${GITHUB_REF_NAME}"
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Benchmarks for ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "bench-${GITHUB_REF_NAME}"
+          # Retried: pushes from runs side by side sometimes fail at first.
+          for i in 1 2 3 4 5; do git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "bench-${GITHUB_REF_NAME}" && exit 0; sleep $((i * 5)); done; exit 1
       - name: The budget must be kept
         run: test "${{ steps.budget.outputs.code }}" = "0"
