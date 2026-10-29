@@ -10,11 +10,11 @@ import '../../modes/chronicle/chapters.dart';
 import '../../platform/sfx.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
-import '../menu/menu.dart';
 import '../widgets.dart';
 import 'chapter_picker.dart';
 import 'saves.dart';
-import 'transitions.dart';
+import 'setup_frame.dart';
+import 'setup_tiles.dart';
 
 /// What the New Game panel starts with.
 typedef SetupArgs = ({GameMode? mode, int? chapter});
@@ -206,7 +206,7 @@ class _SetupPanelState extends State<SetupPanel> {
             // Dynasty is being remade as a story mode; its tile waits.
             child: Opacity(
               opacity: m == GameMode.dynasty ? 0.55 : 1,
-              child: _ModeTile(
+              child: ModeTile(
                 title: _modeInfo[m]!.$1,
                 badge: m == GameMode.dynasty ? '(Coming soon)' : null,
                 description: _modeInfo[m]!.$2,
@@ -232,7 +232,7 @@ class _SetupPanelState extends State<SetupPanel> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Opacity(
             opacity: onTap == null ? 0.55 : 1,
-            child: _ModeTile(
+            child: ModeTile(
               title: title,
               badge: badge,
               badgeGold: highlight,
@@ -253,7 +253,7 @@ class _SetupPanelState extends State<SetupPanel> {
           for (final s in widget.saves)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _ModeTile(
+              child: ModeTile(
                 title: s.title,
                 icon: Icons.play_arrow_rounded,
                 description: [s.detail, if (s.ago.isNotEmpty) s.ago].join(' · '),
@@ -309,7 +309,7 @@ class _SetupPanelState extends State<SetupPanel> {
             runSpacing: 10,
             children: [
               for (int n = digital ? 3 : minPlayers; n <= maxPlayers; n++)
-                _CountChip(
+                CountChip(
                     n: n, selected: count == n, onTap: () => setState(() => count = n)),
             ],
           ),
@@ -460,7 +460,7 @@ class _SetupPanelState extends State<SetupPanel> {
             runSpacing: 10,
             children: [
               for (int n = 3; n <= maxPlayers; n++)
-                _CountChip(
+                CountChip(
                     n: n, selected: count == n, onTap: () => setState(() => count = n)),
             ],
           ),
@@ -549,7 +549,6 @@ class _SetupPanelState extends State<SetupPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final skin = context.skin;
     final body = switch (_flow[math.min(step, _steps - 1)]) {
       'how' => _howStep(),
       'mode' => _modeStep(),
@@ -557,314 +556,23 @@ class _SetupPanelState extends State<SetupPanel> {
       'names' => _namesStep(),
       _ => _finalStep(),
     };
-    final choosing = step < 2;
-    final last = step == _steps - 1;
     if (step != _shownStep) {
       _forward = step > _shownStep;
       _shownStep = step;
     }
-    final still = MediaQuery.disableAnimationsOf(context);
-
-    // Fills the screen: progress at the top, the step in the middle, and
-    // the buttons fixed in the bottom corners so they never move. Every
-    // word on the felt has the front page's soft shadow.
-    return DefaultTextStyle.merge(
-      style: TextStyle(shadows: skin.feltShadow),
-      child: SizedBox.expand(
-      child: Padding(
-        // Clear of the table's edge and brass inlay all round.
-        padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
-        child: Column(
-          children: [
-            // Progress: one pip per step, with a way back on the first
-            // two (which go on as soon as you choose).
-            Row(
-              children: [
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: AnimatedOpacity(
-                    opacity: choosing && step == 0 && widget.canCancel ? 1 : 0,
-                    duration: const Duration(milliseconds: 250),
-                    child: IgnorePointer(
-                      ignoring: !(choosing && step == 0 && widget.canCancel),
-                      child: IconButton(
-                        tooltip: 'Cancel',
-                        onPressed: _back,
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    // A crown for each step: gold once reached, and the
-                    // current one larger, springing up as you arrive.
-                    children: [
-                      for (int i = 0; i < _steps; i++)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: AnimatedScale(
-                            scale: i == step ? 1.5 : 1,
-                            duration: const Duration(milliseconds: 360),
-                            curve: Curves.easeOutCubic,
-                            child: TweenAnimationBuilder<Color?>(
-                              tween: ColorTween(
-                                  end: i <= step ? skin.gold : Colors.white24),
-                              duration: const Duration(milliseconds: 360),
-                              builder: (context, c, _) =>
-                                  CrownIcon(size: 14, color: c ?? Colors.white24),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: still ? 200 : 460),
-                // The old step goes first, then the new one is dealt in.
-                // Fade out, then fade in.
-                switchInCurve: still
-                    ? Curves.easeOut
-                    : const Interval(0.5, 1, curve: Curves.easeOut),
-                switchOutCurve: still
-                    ? Curves.easeIn
-                    : const Interval(0.5, 1, curve: Curves.easeIn),
-                layoutBuilder: (current, previous) => Stack(
-                  alignment: Alignment.center,
-                  children: [...previous, if (current != null) current],
-                ),
-                transitionBuilder: (child, a) => still
-                    ? FadeTransition(opacity: a, child: child)
-                    : PageTurn(
-                        animation: a,
-                        incoming: child.key == ValueKey(step),
-                        forward: _forward,
-                        style: TurnStyle.fade,
-                        child: child),
-                child: Center(
-                  key: ValueKey(step),
-                  child: SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 440),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: body,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Always there, so the step above never shifts: the buttons
-            // fade in and out instead.
-            const SizedBox(height: 12),
-            // Kept near the step on a wide screen, not out in the corners.
-            // The first step has a way back to where you came from.
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560, minHeight: 56, maxHeight: 56),
-              child: Row(
-              children: [
-                AnimatedOpacity(
-                  opacity: step > 0 || widget.canCancel ? 1 : 0,
-                  duration: const Duration(milliseconds: 250),
-                  child: IgnorePointer(
-                    ignoring: !(step > 0 || widget.canCancel),
-                    child: TextButton(
-                      onPressed: _back,
-                      child: const Text('Back'),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AnimatedOpacity(
-                  opacity: choosing ? 0 : 1,
-                  duration: const Duration(milliseconds: 250),
-                  child: IgnorePointer(
-                  ignoring: choosing,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    // Shrinks rather than cutting the words off.
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: FilledButton(
-                    onPressed: _next,
-                    child: Text(
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        mode == GameMode.tutorial
-                            ? 'Start the tutorial'
-                            : !last
-                                ? 'Next'
-                                : 'Start'),
-                      ),
-                    ),
-                  ),
-                  ),
-                  ),
-                ),
-              ],
-            ),
-            ),
-          ],
-        ),
-      ),
-    ),
-    );
-  }
-}
-
-/// One way to play on the first setup step.
-class _ModeTile extends StatelessWidget {
-  const _ModeTile(
-      {required this.title,
-      this.badge,
-      this.badgeGold = false,
-      this.icon,
-      required this.description,
-      required this.selected,
-      required this.onTap});
-  final String title;
-
-  /// A gold icon at the start of the tile.
-  final IconData? icon;
-
-  /// A note beside the title, such as "(Alpha)" for a mode still taking
-  /// shape.
-  final String? badge;
-
-  /// The badge in gold, for one that invites rather than warns.
-  final bool badgeGold;
-  final String description;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: Material(
-      color: selected ? skin.gold.withValues(alpha: 0x33 / 255) : const Color(0x22000000),
-      // Gold double rule with a jewel in each corner, like the menus.
-      shape: OrnateBorder(skin: context.skin, radius: 12, gems: false),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 9, 12, 10),
-          child: Row(children: [
-            if (icon != null) ...[
-              Icon(icon, color: skin.gold, size: 28),
-              const SizedBox(width: 14),
-            ],
-            Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(title,
-                        style: TextStyle(
-                            fontFamily: skin.displayFont,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                            color: selected ? skin.gold : Colors.white)),
-                  ),
-                  if (badge != null) ...[
-                    const SizedBox(width: 8),
-                    Text(badge!,
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: badgeGold ? skin.gold : Colors.white70)),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 3),
-              Text(description,
-                  style: const TextStyle(
-                      fontSize: 14, height: 1.3, color: Colors.white70)),
-            ],
-          ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: skin.gold),
-          ]),
-        ),
-      ),
-    ),
-    );
-  }
-}
-
-/// A big number to tap for the player count.
-class _CountChip extends StatelessWidget {
-  const _CountChip(
-      {required this.n, required this.selected, required this.onTap});
-  final int n;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: '$n players',
-      excludeSemantics: true,
-      child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
-        onTap: onTap,
-        // A large gold pip: a gold ring, filled with a glowing jewel
-        // when chosen, the number in its middle.
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 58,
-          height: 58,
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0x22000000),
-            border: Border.all(color: skin.gold, width: 2.5),
-            boxShadow: selected
-                ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 12)]
-                : null,
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: selected
-                  ? RadialGradient(
-                      center: const Alignment(-0.3, -0.4),
-                      colors: [skin.goldPale, skin.gold])
-                  : null,
-            ),
-            child: Text('$n',
-                textHeightBehavior: const TextHeightBehavior(
-                    applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
-                style: TextStyle(
-                    fontFamily: skin.displayFont,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 24,
-                    height: 1,
-                    color: selected ? skin.ink : Colors.white,
-                    shadows: selected
-                        ? null
-                        : const [Shadow(color: Colors.black54, blurRadius: 8)])),
-          ),
-        ),
-      )),
+    return SetupFrame(
+      step: step,
+      steps: _steps,
+      forward: _forward,
+      canCancel: widget.canCancel,
+      nextLabel: mode == GameMode.tutorial
+          ? 'Start the tutorial'
+          : step < _steps - 1
+              ? 'Next'
+              : 'Start',
+      onBack: _back,
+      onNext: _next,
+      body: body,
     );
   }
 }

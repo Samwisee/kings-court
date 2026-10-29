@@ -33,8 +33,6 @@ const debts = {
   // The record of a round: its JSON, picks and judging could be
   // extensions once its private helpers are shared.
   'lib/engine/round.dart': 960,
-  // One stateful panel with five steps.
-  'lib/ui/setup/setup_panel.dart': 870,
 };
 
 void main() {
