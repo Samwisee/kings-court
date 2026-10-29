@@ -131,7 +131,7 @@ void main() {
         } else if (story != 'idle') {
           state.debugYourMove();
         }
-        if (find.textContaining('your courtier moved for you').evaluate().isNotEmpty) stoodIn = true;
+        if (find.textContaining('courtier moved for you').evaluate().isNotEmpty) stoodIn = true;
         if (story == 'returns' && !returned && benMoves >= 2 && !thinking.contains(b)) {
           returned = true;
           // The app is closed (the room hears the socket go), then opened.

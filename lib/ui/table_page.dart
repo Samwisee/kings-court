@@ -455,8 +455,7 @@ class HomePageState extends State<HomePage>
         _progress = Progress(chronicle: progress);
         _saves = saves;
       });
-      // Back to the online game the app was closed in, if the seat's ours.
-      final room = await RoomPlay.rejoin(open: HomePageTestHooks.rooms);
+      final room = await RoomPlay.rejoin(open: HomePageTestHooks.rooms); // closed mid-game
       if (room != null) mounted && !_inGame ? _playOnline(room) : room.dispose();
     } catch (_) {
       // No saved game (or storage unavailable): start fresh.
@@ -772,7 +771,8 @@ class HomePageState extends State<HomePage>
   PlayingCard? _queued;
 
   void _scheduleBot() {
-    _room?.watch(Host.moment(game), yours: _yourPick || _yourPlay, standIn: _standIn);
+    _room?.watch(Host.moment(game), yours: _yourPick || _yourPlay, standIn: _standIn,
+        warn: (words) => _showSnack(words, context.skin.feltDeep));
     if (_queued != null && _yourPlay) {
       final card = _queued!;
       _queued = null;
@@ -972,7 +972,7 @@ class HomePageState extends State<HomePage>
   /// You've been a while: your courtier makes your move.
   void _standIn() {
     if (!mounted || !(_yourPick || _yourPlay)) return;
-    _showSnack('You took a while: your courtier moved for you', context.skin.feltDeep);
+    _showSnack('Your courtier moved for you', context.skin.feltDeep);
     unawaited(Host.standIn(_you, game.players.length, bot: Bot(), send: _link.send).act(game));
   }
 

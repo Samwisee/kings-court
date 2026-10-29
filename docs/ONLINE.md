@@ -93,7 +93,7 @@ reordering, duplicates and a dropped connection.
   until it leaves (`RoomPlay`), so opening the game again after closing it
   goes straight back to the seat, if nobody has taken it (the room's
   `rejoin=1`: only the seat this device had, or `gone`).
-- **Walking away.** A move that waits on you for a minute is made by your
+- **Walking away.** A move that waits on you for 20 seconds (warned at 12) is made by your
   courtier, on your own device (`RoomPlay.watch`, `Host.standIn`), so
   nobody is held up by someone who's put their phone down.
 - **Judged alike.** The screen turns tasks over at its own pace, a little

@@ -190,23 +190,34 @@ class RoomPlay {
   // ------------------------------------------------- someone walked away
 
   /// How long a move waits on you before your courtier makes it, so
-  /// someone who's walked away holds nobody up.
-  static Duration idleLimit = const Duration(seconds: 60);
+  /// someone who's walked away holds nobody up; you're warned [warning]
+  /// before.
+  static Duration idleLimit = const Duration(seconds: 20);
+  static const warning = Duration(seconds: 8);
   Timer? _idle;
+  Timer? _warn;
   String? _idleAt;
 
   /// The table changed: [moment] is where the game has got to, [yours]
-  /// whether it waits on you. Once it's waited [idleLimit] at the same
-  /// moment, [standIn] makes your move.
-  void watch(String moment, {required bool yours, required VoidCallback standIn}) {
+  /// whether it waits on you. Once it's waited at the same moment for
+  /// [idleLimit], [standIn] makes your move; [warn] says so a little
+  /// before, in words to show.
+  void watch(String moment,
+      {required bool yours, required VoidCallback standIn, required ValueChanged<String> warn}) {
     if (!yours) {
       _idle?.cancel();
+      _warn?.cancel();
       _idleAt = null;
       return;
     }
     if (moment == _idleAt) return;
     _idleAt = moment;
     _idle?.cancel();
+    _warn?.cancel();
+    if (idleLimit > warning * 2) {
+      _warn = Timer(idleLimit - warning,
+          () => warn('Your move: your courtier takes it in ${warning.inSeconds} seconds'));
+    }
     _idle = Timer(idleLimit, () {
       _idleAt = null;
       standIn();
@@ -217,6 +228,7 @@ class RoomPlay {
   void close() {
     _changes.cancel();
     _idle?.cancel();
+    _warn?.cancel();
     unawaited(_forget());
   }
 }
