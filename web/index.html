@@ -167,14 +167,15 @@
         note.setAttribute('role', 'note');
         var p = document.createElement('p');
         p.textContent = android
-          ? 'The game runs smoother in Chrome.'
-          : 'The game runs smoother in Safari: tap \u2022\u2022\u2022 at the top, then open it in Safari.';
+          ? 'The game runs smoother in your browser.'
+          : 'The game runs smoother in your browser: tap \u2022\u2022\u2022 at the top and open it there.';
         note.appendChild(p);
         if (android) {
           var a = document.createElement('a');
           var here = location.href.replace(/^https?:\/\//, '');
-          a.href = 'intent://' + here + '#Intent;scheme=https;package=com.android.chrome;end';
-          a.textContent = 'Open in Chrome';
+          // No browser named: the phone's own choice opens it.
+          a.href = 'intent://' + here + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+          a.textContent = 'Open in browser';
           note.appendChild(a);
         }
         var ok = document.createElement('button');
