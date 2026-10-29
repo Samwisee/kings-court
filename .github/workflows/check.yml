@@ -91,7 +91,7 @@ jobs:
       - name: Take screenshots
         run: |
           mkdir -p out
-          timeout 900 flutter test test/tool/shots_test.dart --update-goldens --reporter expanded > out/shots.txt 2>&1 || true
+          timeout 900 flutter test test/tool/crown_frames_test.dart --update-goldens --reporter expanded > out/shots.txt 2>&1 || true
           tail -5 out/shots.txt
           python3 tool/ci_annotate.py out/shots.txt || true
           cp test/tool/goldens/*.png out/ 2>/dev/null || true
