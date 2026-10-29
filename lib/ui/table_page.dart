@@ -67,8 +67,8 @@ import 'table/dealt_task.dart';
 import 'table/game_bar.dart';
 import 'table/hand_bar.dart';
 import 'table/hand_card.dart';
-import 'table/open_task.dart';
 import 'table/keyboard.dart';
+import 'table/open_task.dart';
 import 'table/seats.dart';
 import 'table/trick_view.dart';
 import 'tracker/card_tracker.dart';
@@ -1995,7 +1995,6 @@ class HomePageState extends State<HomePage>
   final _middleTasksKey = GlobalKey(debugLabel: 'middle tasks');
 
   Widget _digiMiddle(double width) {
-    final skin = context.skin;
     if (_choosingKing) return const SizedBox.expand();
     final open = [for (final t in game.tasks) if (t.owner == null) t];
     if (open.isEmpty && _landing.isEmpty && _flights.isEmpty) {
