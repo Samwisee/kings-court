@@ -434,7 +434,7 @@ void main() {
     'tavern': TailoredSkin(const TavernSkin(), backChoice: back('crimson'), taskChoice: task('parchment')),
     'tiles': TailoredSkin(const CourtyardSkin(), backChoice: back('royal'), taskChoice: task('blueprint')),
     'antique': TailoredSkin(const LibrarySkin(), faceChoice: faceChoices.firstWhere((f) => f.id == 'antique')),
-    'bistro': TailoredSkin(const SalonSkin(), faceChoice: faceChoices.firstWhere((f) => f.id == 'bistro')),
+    'noir': TailoredSkin(const SalonSkin(), faceChoice: faceChoices.firstWhere((f) => f.id == 'noir')),
   };
 
   for (final MapEntry(key: name, value: skin) in mixes.entries) {
