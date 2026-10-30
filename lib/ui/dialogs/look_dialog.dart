@@ -241,7 +241,7 @@ class _TaskSwatch extends StatelessWidget {
       decoration: BoxDecoration(
         color: look.face,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: skin.outlineColour, width: 1),
+        border: Border.all(color: skin.outlineColour),
       ),
       child: CustomPaint(
         painter: TaskFacePainter(look, reach: EdgeInsets.zero, radius: 6),

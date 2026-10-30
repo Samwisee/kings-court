@@ -145,7 +145,7 @@ class FeltPatternPainter extends CustomPainter {
             ..lineTo(right.dx, right.dy)
             ..lineTo(c.dx, c.dy)
             ..close(),
-          _line(1));
+          _line());
     }
 
     for (var k = 0; k < 8; k++) {
@@ -246,7 +246,7 @@ class FeltPatternPainter extends CustomPainter {
 
   /// Fine stripes, in pairs.
   void _pinstripe(Canvas canvas, Size s) {
-    final line = _line(1);
+    final line = _line();
     final path = Path();
     for (var x = 12.0; x < s.width; x += 30) {
       path
@@ -308,7 +308,7 @@ class FeltPatternPainter extends CustomPainter {
       ..lineTo(c.dx - m * 0.7, c.dy)
       ..close();
     canvas.drawPath(lozenge, _line(1.2));
-    canvas.drawCircle(c, m * 0.22, _line(1));
+    canvas.drawCircle(c, m * 0.22, _line());
   }
 
   /// Squares a shade apart.
@@ -446,7 +446,7 @@ class FeltPatternPainter extends CustomPainter {
           ..close();
       }
     }
-    canvas.drawPath(star, _line(1));
+    canvas.drawPath(star, _line());
     canvas.drawPath(dots, _fill());
   }
 
@@ -454,7 +454,7 @@ class FeltPatternPainter extends CustomPainter {
   void _contours(Canvas canvas, Size s) {
     final rand = math.Random(5);
     final hills = 3 + (s.width * s.height / 400000).round().clamp(0, 5);
-    final line = _line(1);
+    final line = _line();
     final bold = _line(1.6);
     for (var h = 0; h < hills; h++) {
       final c = Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height);

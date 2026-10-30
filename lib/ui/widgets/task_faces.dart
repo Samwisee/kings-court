@@ -3,7 +3,6 @@
 library;
 
 import 'dart:math' as math;
-import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
 
@@ -70,7 +69,7 @@ class TaskFacePainter extends CustomPainter {
         canvas.restore();
       case TaskFrame.stamp:
         final dot = Paint()..color = rule;
-        for (final PathMetric m in (Path()..addRRect(face.deflate(2.6))).computeMetrics()) {
+        for (final m in (Path()..addRRect(face.deflate(2.6))).computeMetrics()) {
           for (var d = 0.0; d < m.length; d += 4) {
             canvas.drawCircle(m.getTangentForOffset(d)!.position, 0.9, dot);
           }

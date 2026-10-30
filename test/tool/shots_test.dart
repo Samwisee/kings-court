@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/round.dart';
-import 'package:kings_court/engine/task.dart';
 import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
@@ -495,7 +494,7 @@ void main() {
                   height: 80,
                   color: t.table,
                   padding: const EdgeInsets.all(8),
-                  child: Container(
+                  child: ColoredBox(
                       color: t.felt,
                       child: CustomPaint(
                           painter: FeltPatternPainter(t.pattern, t.ink, ground: t.felt, scale: 0.5),

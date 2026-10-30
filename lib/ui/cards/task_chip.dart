@@ -224,7 +224,7 @@ class TaskChip extends StatelessWidget {
         // What's printed on the face: drawn out to the border, round the
         // padding.
         painter: TaskFacePainter.prints(look)
-            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 6), radius: 5)
+            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 6))
             : null,
         child: Column(
         mainAxisSize: MainAxisSize.min,
