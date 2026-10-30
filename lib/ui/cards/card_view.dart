@@ -50,13 +50,19 @@ class PlayingCardView extends StatelessWidget {
 
   bool get _isKing => card == PlayingCard.king;
 
-  /// The ink of its rank and suit: the suit's colour, or for a Court Card
-  /// drawn as a letter, its cloth's.
-  Color _inkColour(Skin skin) => card.isCourt && _letters(skin)
-      ? skin.cardLook.cloth[card.rank - 1][0]
-      : skin.suitColour(card.suit);
+  /// The ink of its rank and suit: the suit's colour.
+  Color _inkColour(Skin skin) => skin.suitColour(card.suit);
 
-  static bool _letters(Skin skin) => skin.cardLook.courtStyle == CourtCardStyle.letters;
+  /// What's woven into the Court Cards' cloths, and in what: the faces'
+  /// own art, or else the room's pattern (so the cards match the table),
+  /// or else nothing but each card's own pattern.
+  static (FeltPattern, Color)? _art(Skin skin) {
+    final look = skin.cardLook;
+    if (look.courtPattern case final p?) return (p, look.courtInk ?? skin.gold.withValues(alpha: 0.4));
+    final room = skin.tableLook;
+    if (room.pattern == FeltPattern.none) return null;
+    return (room.pattern, skin.gold.withValues(alpha: 0.45));
+  }
 
   // Its own layer: the emblems are costly to draw, so a card is drawn once and kept while things move around it.
   @override
@@ -84,7 +90,8 @@ class PlayingCardView extends StatelessWidget {
     final look = skin.cardLook;
     // A Court Card's cloth (its emblem on it), or the card stock with the
     // card's letter in its colours.
-    final cloth = card.isCourt && !_letters(skin);
+    // Every Court Card is full art: its emblem on its cloth.
+    final cloth = card.isCourt;
     final h = heightFor(width);
     final outer = width * look.radius;
     final r = BorderRadius.circular(outer - skin.outlineWidth);
@@ -156,8 +163,8 @@ class PlayingCardView extends StatelessWidget {
                   child: CustomPaint(
                       // A face's own art woven into every cloth, or each
                       // card's own pattern.
-                      painter: look.courtPattern case final art?
-                          ? FeltPatternPainter(art, look.courtInk ?? skin.gold.withValues(alpha: 0.4),
+                      painter: _art(skin) != null
+                          ? FeltPatternPainter(_art(skin)!.$1, _art(skin)!.$2,
                               ground: look.cloth[card.rank - 1][1], scale: width / 200)
                           : switch (card.rank) {
                               1 => _Harlequin(),
@@ -217,8 +224,6 @@ class PlayingCardView extends StatelessWidget {
               Positioned.fill(
                 child: CustomPaint(painter: _Emblem(card.rank, look.cloth[card.rank - 1][0])),
               )
-            else if (card.isCourt)
-              _letterFace(look.cloth[card.rank - 1])
             else
               Center(
                 child: Padding(
@@ -302,35 +307,6 @@ class PlayingCardView extends StatelessWidget {
           SuitIcon(card.suit, size: width * 0.18, color: ink),
         ]),
     };
-  }
-
-  /// A Court Card on the card stock: a band of its colour down the side
-  /// and its letter large, the King's with the crown over it.
-  /// A Court Card's face in the letters style: the card's letter in its
-  /// corner, and its emblem on a roundel of its colours in the middle.
-  Widget _letterFace(List<Color> cloth) {
-    final d = width * 0.68;
-    return Positioned.fill(
-      child: Align(
-        alignment: const Alignment(0, 0.2),
-        child: Container(
-          width: d,
-          height: d,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(center: const Alignment(-0.3, -0.4), radius: 1, colors: cloth),
-            boxShadow: [
-              BoxShadow(
-                  color: cloth[1].withValues(alpha: 0.35),
-                  blurRadius: width * 0.05,
-                  offset: Offset(0, width * 0.02)),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: CustomPaint(size: Size(d * 0.9, d), painter: _Emblem(card.rank, cloth[0])),
-        ),
-      ),
-    );
   }
 }
 
