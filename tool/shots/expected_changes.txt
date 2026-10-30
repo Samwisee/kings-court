@@ -76,3 +76,4 @@ skin-harbour-4-look.png: the Look dialog has task cards to choose, and patterned
 *: off the table the felt's pattern is faint and round the edges only, in pages, menus and dialogs
 *: card faces to choose; patterns muted rather than faded at the edges; the title's crown over a lowercase i; no sheen on the felt
 *: styles come dressed (their own faces, backs and task cards), richer card faces, each room's mark in its panels' corners, and the Look page
+*: open tasks keep their places as others are taken
