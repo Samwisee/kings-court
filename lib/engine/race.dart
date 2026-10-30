@@ -51,7 +51,7 @@ class Thought {
 /// for the [next] playouts to run, report each batch's average with
 /// [add], and when [next] has nothing more, take the [best].
 class Race<T> {
-  Race(this.options, this.budget, {this.focus = true, this.adaptive = true, this.stretch = 2.5});
+  Race(this.options, this.budget, {this.focus = true, this.adaptive = true, this.stretch = 2.5, this.outOfTime});
 
   final List<T> options;
   final int budget;
@@ -66,6 +66,11 @@ class Race<T> {
   /// The most thinking a close, consequential decision may take, as a
   /// multiple of [budget].
   final double stretch;
+
+  /// Whether the thinking has run as long as it may in real time: then
+  /// it doesn't go past the usual budget, however close the call (a slow
+  /// phone mustn't keep the table waiting).
+  final bool Function()? outOfTime;
 
   final _sum = <T, double>{};
   final _n = <T, int>{};
@@ -169,7 +174,9 @@ class Race<T> {
   List<(T, int, int)> _extend() {
     _stage = 4;
     final among = focus ? _finalists : options;
-    if (!adaptive || spent >= budget * stretch || !_tooClose(among)) return const [];
+    if (!adaptive || spent >= budget * stretch || (outOfTime?.call() ?? false) || !_tooClose(among)) {
+      return const [];
+    }
     final two = _ranked(among).take(2);
     final each = max(16, (budget * 0.25) ~/ 2);
     return [for (final o in two) (o, playedFor(o), each)];

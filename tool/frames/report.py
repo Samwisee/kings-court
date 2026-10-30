@@ -23,6 +23,7 @@ def main(path):
         print(f"{s['name'][:58]:<58} {s['frames']:>6} {s['dropped']:>7} {s['worstGap']:>7.1f}"
               f"           {s['workP50']:>5.1f} {s['workP90']:>5.1f} {s['workP99']:>5.1f} {s['workMax']:>6.1f}"
               f"  {s['over8']:>4} {s['over16']:>4}   slowest {s['slowest']}"
+              + (f"\n    thinking: {s['slices']} slices, at most {s['slicesBetween']} between two frames, the longest {s['longestSlice']} ms" if s.get('slices') else '')
               + ''.join(f"\n    slow frame {x}" for x in s.get('slow', []))
               + (("\n    own time by name (ms, summed over the scene): " + ', '.join(s['totals'])) if s.get('totals') else '')
               + (f"\n    ERROR {s['error']}" if s.get('error') else '')

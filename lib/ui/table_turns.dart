@@ -150,7 +150,9 @@ extension _Turns on HomePageState {
     }
     _host.bot.budget = HomePageState.botBudget;
     _host.script = _mode.script(game);
-    final moved = await _host.act(game, still: () => mounted, waited: () => turn.elapsed);
+    FrameStats.thinking = true;
+    final moved = await _host.act(game, still: () => mounted, waited: () => turn.elapsed)
+        .whenComplete(() => FrameStats.thinking = false);
     // Nothing may have moved while the bot thought; if it did, the next
     // turn will think again.
     if (moved.stale) return true;

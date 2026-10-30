@@ -19,6 +19,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/menu/menu.dart';
@@ -33,6 +34,7 @@ class Frames {
   final _clock = Stopwatch()..start();
   _Scene? _now;
   final scenes = <_Scene>[];
+  int _slicesAt = 0;
   Duration? _begun;
 
   /// Starts watching: a callback at the start of every frame and one after
@@ -51,6 +53,9 @@ class Frames {
         s.due.add(SchedulerBinding.instance.currentSystemFrameTimeStamp);
         final work = _clock.elapsed - _begun!;
         s.work.add(work);
+        // The courtiers' thinking slices since the last frame: more than one
+        // means thinking ran on past a frame that was due.
+        s.slicesBetween = math.max(s.slicesBetween, Bot.slices - _slicesAt);
         final named = _measures();
         s.measured += named.length;
         if (s.detail) {
@@ -65,6 +70,7 @@ class Frames {
         }
       }
       _begun = null;
+      _slicesAt = Bot.slices;
       SchedulerBinding.instance.scheduleFrameCallback(begin);
     });
     SchedulerBinding.instance.addTimingsCallback((timings) {
@@ -126,6 +132,8 @@ class Frames {
       {bool detail = false, Duration limit = const Duration(seconds: 75)}) async {
     log('start $name');
     final s = _Scene(name)..detail = detail;
+    Bot.longestSlice = Duration.zero;
+    final slices = Bot.slices;
     // In detail, every widget's build and every render object's layout and
     // paint are timed too: slower, but it says where the time goes.
     debugProfileBuildsEnabled = detail;
@@ -140,6 +148,8 @@ class Frames {
       s.error = '$e ${stack.toString().split('\n').take(6).join(' | ')}';
     }
     _now = null;
+    s.slices = Bot.slices - slices;
+    s.longestSlice = Bot.longestSlice;
     debugProfileBuildsEnabled = false;
     debugProfileLayoutsEnabled = false;
     debugProfilePaintsEnabled = false;
@@ -156,6 +166,11 @@ class _Scene {
   String? error;
   int measured = 0;
   bool detail = false;
+
+  /// The courtiers' thinking: slices in the scene, the most between two
+  /// frames, and the longest.
+  int slices = 0, slicesBetween = 0;
+  Duration longestSlice = Duration.zero;
 
   /// In detail: each name's time, summed over the scene's frames.
   final totals = <String, double>{};
@@ -214,6 +229,9 @@ class _Scene {
       'engineMax': e.isEmpty ? 0 : e.last,
       // The slowest frames' work, for finding what they were.
       'measured': measured,
+      'slices': slices,
+      'slicesBetween': slicesBetween,
+      'longestSlice': double.parse(_ms(longestSlice).toStringAsFixed(1)),
       if (detail)
         'totals': [
           for (final e in (totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).take(45))

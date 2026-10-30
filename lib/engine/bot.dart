@@ -149,7 +149,18 @@ class Bot {
   /// by it (game/pacing.dart).
   Thought lastThought = Thought.forced;
 
-  Race<T> _race<T>(List<T> options) => Race(options, budget, focus: focus, adaptive: adaptive);
+  /// A race between [options]; [timed] (thinking a slice at a time, in
+  /// the app) also stops it stretching once [thinkFor] has gone by. The
+  /// headless decisions aren't timed, so a seed always plays the same.
+  Race<T> _race<T>(List<T> options, {bool timed = false}) => Race(options, budget,
+      focus: focus, adaptive: adaptive, outOfTime: timed ? () => _thinking.elapsed > thinkFor : null);
+
+  /// The longest a decision thinks past its usual budget may run, in real
+  /// time, a slice a frame: past it, a close call is settled as it stands.
+  static Duration thinkFor = const Duration(milliseconds: 1500);
+
+  /// How long this decision has been thinking, in real time.
+  final _thinking = Stopwatch();
 
   /// Runs [race] to its end, each option scored by [score] (the average
   /// of n playouts numbered from `from`), and gives its winner.
@@ -327,24 +338,44 @@ class Bot {
   // The same decisions, done a slice at a time so the screen keeps
   // animating while a bot thinks (on the web everything shares one thread).
   // A slice is measured in time, not playouts: think for [sliceTime], then
-  // let a frame draw. (Counting playouts meant dozens of hand-backs per
-  // decision, each a few idle milliseconds on the web.)
+  // wait for [breather] to say the next frame has been drawn. At most one
+  // slice a frame, straight after it, so thinking never holds a frame up.
+  // (A zero-length wait let slices follow each other back to back, and a
+  // frame due meanwhile waited for them.)
 
-  /// How long a bot thinks before giving the screen a turn: half a frame.
-  static Duration sliceTime = const Duration(milliseconds: 8);
+  /// How long a bot thinks before giving the screen its turn: about a
+  /// third of a frame, left after the frame's own work.
+  static Duration sliceTime = const Duration(milliseconds: 5);
+
+  /// Waits for the screen's next turn to be over. Plain Dart has no
+  /// frames, so by default it just lets anything waiting go first; the app
+  /// sets it to wait for the next frame to be drawn (ui/app.dart).
+  static Future<void> Function() breather = () => Future<void>.delayed(Duration.zero);
+
+  /// The slices thought so far, and the longest (for the frame benchmark:
+  /// a slice that runs long holds a frame up).
+  static int slices = 0;
+  static Duration longestSlice = Duration.zero;
 
   /// The current slice's clock (one decision thinks at a time).
   final _clock = Stopwatch();
 
-  void _begin() => _clock
-    ..reset()
-    ..start();
+  void _begin() {
+    _clock
+      ..reset()
+      ..start();
+    _thinking
+      ..reset()
+      ..start();
+  }
 
   /// A frame's turn, when the slice has run its time; null when thinking
   /// can go straight on (so the hot loop needn't wait on a future).
   Future<void>? _breathe() {
     if (_clock.elapsedMicroseconds < sliceTime.inMicroseconds) return null;
-    return Future<void>.delayed(Duration.zero).then((_) => _clock.reset());
+    slices++;
+    if (_clock.elapsed > longestSlice) longestSlice = _clock.elapsed;
+    return breather().then((_) => _clock.reset());
   }
 
   Future<double> _scoreAsync(List<Round> worlds, Map<int, int> assigned,
@@ -376,7 +407,7 @@ class Bot {
     if (options.length == 1) return options.first;
     _begin();
     final worlds = _worldsFor(s, seat);
-    final race = _race(options);
+    final race = _race(options, timed: true);
     final best = await _runAsync(race,
         (i, from, n) => _scoreAsync(worlds, _with(s, i, seat), n, from: from, freeX: true));
     lastPickScore = race.meanOf(best);
@@ -393,7 +424,7 @@ class Bot {
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
     final worlds = _worldsFor(s, seat);
-    return _runAsync(_race(legal),
+    return _runAsync(_race(legal, timed: true),
         (card, from, n) => _scoreAsync(worlds, assigned, n, from: from, first: (seat, card)));
   }
 

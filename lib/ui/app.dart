@@ -6,6 +6,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
+
+import '../engine/bot.dart';
 
 import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
 import '../skin/court/court_skin.dart';
@@ -13,6 +16,7 @@ import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
 import '../skin/tailored.dart';
 import 'table_page.dart';
+import 'widgets/character_token.dart';
 
 class TheKingsCourtApp extends StatefulWidget {
   const TheKingsCourtApp({super.key, this.skin = const CourtSkin()});
@@ -39,6 +43,10 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
   @override
   void initState() {
     super.initState();
+    // The courtiers think a slice after each frame (engine/bot.dart), so
+    // their thinking never holds a frame up. (Widget tests pump their own
+    // frames, and keep the plain wait.)
+    if (!CharacterToken.underTest) Bot.breather = _afterNextFrame;
     colourPage(_skin.table);
     _dissolve = AnimationController(vsync: this, duration: const Duration(milliseconds: 380))
       ..addStatusListener((s) {
@@ -86,6 +94,15 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
       _still?.dispose();
       _still = null;
     });
+  }
+
+  /// Straight after the next frame, when anything on screen is moving;
+  /// with nothing moving there's no frame to keep clear, so a moment's
+  /// wait (for a tap) will do.
+  static Future<void> _afterNextFrame() {
+    final s = SchedulerBinding.instance;
+    if (s.transientCallbackCount > 0 || s.hasScheduledFrame) return s.endOfFrame;
+    return Future<void>.delayed(const Duration(milliseconds: 1));
   }
 
   @override

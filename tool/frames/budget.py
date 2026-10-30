@@ -44,6 +44,13 @@ def main(path):
             broken.append(f"{prefix}: {s['over16']} frames over 16 ms (budget {most_over})")
         if s['workMax'] > longest:
             broken.append(f"{prefix}: a {s['workMax']:.0f} ms frame (budget {longest} ms)")
+    # The courtiers' thinking may never hold a frame up, on any machine: at
+    # most one slice between two frames, and no slice much past its time.
+    for s in scenes:
+        if s.get('slicesBetween', 0) > 1:
+            broken.append(f"{s['name']}: {s['slicesBetween']} thinking slices between two frames (at most 1)")
+        if s.get('longestSlice', 0) > 10:
+            broken.append(f"{s['name']}: a {s['longestSlice']} ms thinking slice (at most 10)")
     if broken:
         for b in broken:
             print(f"::error::Frame budget: {b}")

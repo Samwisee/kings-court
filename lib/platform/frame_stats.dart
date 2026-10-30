@@ -20,6 +20,10 @@ abstract final class FrameStats {
   /// counted under it.
   static String at = 'menus';
 
+  /// A courtier is thinking: frames drawn meanwhile are counted apart
+  /// ('table thinking'), to see what their thinking costs the screen.
+  static bool thinking = false;
+
   /// The frame times' buckets, in ms: a frame is counted in the first it's
   /// under, or past the last.
   static const buckets = [4, 8, 12, 16, 25, 33, 50, 100];
@@ -40,18 +44,33 @@ abstract final class FrameStats {
   @visibleForTesting
   static void debugAdd(List<FrameTiming> timings) => _onTimings(timings);
 
+  /// Recent gaps between frames (4 to 40 ms), for the refresh period.
+  static final _gaps = <double>[];
+
   static void _onTimings(List<FrameTiming> timings) {
     for (final t in timings) {
-      // The refresh period: the shortest gap between frames seen yet (a
-      // 120 Hz screen gives 8.3 ms).
       final vsync = Duration(microseconds: t.timestampInMicroseconds(FramePhase.vsyncStart));
       final last = _lastVsync;
+      var missed = 0;
       if (last != null) {
         final gap = (vsync - last).inMicroseconds / 1000;
-        if (gap >= 4 && gap < _period) _period = gap;
+        // The refresh period: a low quarter of the recent gaps between
+        // frames (a 120 Hz screen gives 8.3 ms). Not the very shortest:
+        // one early frame would make every frame after it look late.
+        if (gap >= 4 && gap < 40) {
+          _gaps.add(gap);
+          if (_gaps.length >= 60) {
+            final sorted = [..._gaps]..sort();
+            _period = sorted[sorted.length ~/ 4];
+            _gaps.removeRange(0, 30);
+          }
+        }
+        // Refreshes that went by with no frame while the screen was moving
+        // (a gap longer than a quarter second is the screen at rest).
+        if (gap < 250) missed = math.max(0, (gap / _period).round() - 1);
       }
       _lastVsync = vsync;
-      (_by[at] ??= _Counts()).add(t.buildDuration, t.rasterDuration, _period);
+      (_by[thinking ? '$at thinking' : at] ??= _Counts()).add(t.buildDuration, t.rasterDuration, _period, missed);
     }
   }
 
@@ -78,6 +97,9 @@ class _Counts {
   /// on the web they're one after the other on one thread, so the frame
   /// missed its refresh.
   int late = 0;
+
+  /// Refreshes that went by with no new frame, while the screen moved.
+  int missed = 0;
   double worst = 0;
   final build = List.filled(FrameStats.buckets.length + 1, 0);
   final raster = List.filled(FrameStats.buckets.length + 1, 0);
@@ -89,9 +111,10 @@ class _Counts {
     return FrameStats.buckets.length;
   }
 
-  void add(Duration b, Duration r, double period) {
+  void add(Duration b, Duration r, double period, int missedBefore) {
     final bm = b.inMicroseconds / 1000, rm = r.inMicroseconds / 1000;
     frames++;
+    missed += missedBefore;
     if (bm + rm > period) late++;
     worst = math.max(worst, bm + rm);
     build[_bucket(bm)]++;
@@ -101,6 +124,7 @@ class _Counts {
   Map<String, Object> toJson() => {
         'frames': frames,
         'late': late,
+        'missed': missed,
         'worst': double.parse(worst.toStringAsFixed(1)),
         'build': build,
         'raster': raster,

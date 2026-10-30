@@ -25,6 +25,11 @@ void main() {
     FrameStats.debugAdd([frame(0, 2, 3), frame(17, 3, 2), frame(34, 10, 12), frame(51, 1, 1)]);
     FrameStats.at = 'livery';
     FrameStats.debugAdd([frame(1000, 40, 70)]);
+    // A frame two refreshes late, while a courtier thinks.
+    FrameStats.at = 'table';
+    FrameStats.thinking = true;
+    FrameStats.debugAdd([frame(1050, 1, 1)]);
+    FrameStats.thinking = false;
     final taken = FrameStats.take()!;
     final table = taken['table']! as Map;
     expect(table['frames'], 4);
@@ -36,7 +41,9 @@ void main() {
     expect(livery['late'], 1);
     expect(livery['raster'], [0, 0, 0, 0, 0, 0, 0, 1, 0]);
     expect(taken['period'], closeTo(16.7, 0.1));
+    expect(table['missed'], 0, reason: 'a frame at every refresh');
     expect(taken['device'], isA<String>());
+    expect((taken['table thinking']! as Map)['missed'], 2);
     expect(FrameStats.take(), isNull, reason: 'taken: counting starts again');
   });
 }
