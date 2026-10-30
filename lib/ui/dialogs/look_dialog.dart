@@ -285,9 +285,8 @@ class _Tabs extends StatelessWidget {
                   onTap: () => onKind(k),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    height: 34,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    alignment: Alignment.center,
+                    // As wide as its word: no alignment, which would stretch it.
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
                       color: k == kind ? skin.gold : Colors.black.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(18),
