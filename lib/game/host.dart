@@ -12,6 +12,7 @@ import '../engine/conflicts.dart';
 import '../engine/round.dart';
 import 'bot_turn.dart';
 import 'dice.dart';
+import 'pacing.dart';
 import 'seats.dart';
 import 'state.dart';
 
@@ -67,6 +68,9 @@ class Host {
   /// A courtier is thinking (a slice at a time, so the screen stays smooth).
   bool busy = false;
 
+  /// How long the courtiers take over their moves (pacing.dart).
+  final pacing = Pacing();
+
   /// The deal the courtiers' dice were last set for.
   int _rolledFor = -1;
 
@@ -103,12 +107,26 @@ class Host {
 
   /// Gives the courtier whose turn it is their move, and sends it. [still]
   /// says whether the table is still there once the courtier has thought.
-  Future<HostTurn> act(GameState g, {bool Function()? still}) async {
+  ///
+  /// With [waited] (how long since the courtier's turn came round), the
+  /// move waits until the courtier has taken as long over it as [pacing]
+  /// says: their thinking counts towards it.
+  Future<HostTurn> act(GameState g, {bool Function()? still, Duration Function()? waited}) async {
     busy = true;
     try {
       _rollFor(g);
       final before = moment(g);
+      bot.lastThought = Thought.usual;
       final decision = await botDecision(g, bot, courtier: plays, script: script);
+      final seat = switch (decision) {
+        BotPicks(:final seat) || BotPasses(:final seat) || BotAnnounces(:final seat) => seat,
+        BotShows(:final seat) || BotPlays(:final seat) => seat,
+        _ => null,
+      };
+      if (waited != null && seat != null) {
+        final rest = pacing.pauseFor(seat, bot.lastThought) - waited();
+        if (rest > Duration.zero) await Future<void>.delayed(rest);
+      }
       if (!(still?.call() ?? true) || moment(g) != before) {
         return (decision: null, stale: true);
       }

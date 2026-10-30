@@ -98,12 +98,16 @@ extension _Turns on HomePageState {
       return;
     }
     if (!_digital || _botTimer != null || _host.busy) return;
-    // Before anyone takes a task, the table pauses a moment so a card can
-    // be shown first.
-    final delay = game.isTutorial ? HomePageState.botDelay * 2 : HomePageState.botDelay;
-    _botTimer = Timer(delay, () {
+    // A courtier takes their time over a move (game/pacing.dart): they
+    // start thinking a moment after their turn comes round (the table
+    // settles; before anyone takes a task, a card can be shown first),
+    // and move once they've taken as long as the move deserves.
+    final usual = game.isTutorial ? HomePageState.botDelay * 2 : HomePageState.botDelay;
+    _host.pacing.usual = usual;
+    final turn = Stopwatch()..start();
+    _botTimer = Timer(usual * 0.25, () {
       _botTimer = null;
-      if (mounted) _botStep();
+      if (mounted) _botStep(turn);
     });
   }
 
@@ -115,16 +119,16 @@ extension _Turns on HomePageState {
     if (_hostsTable) _host.openingShows(game).forEach(_link.send);
   }
 
-  Future<void> _botStep() async {
+  Future<void> _botStep(Stopwatch turn) async {
     if (_host.busy) return;
-    final acted = await _botThink();
+    final acted = await _botThink(turn);
     if (acted && mounted) _scheduleBot();
   }
 
   /// Returns true when a bot acted, so the next one can be scheduled.
   /// What the move is comes from game/host.dart; here is only whether a
   /// courtier may move right now, given what the screen is doing.
-  Future<bool> _botThink() async {
+  Future<bool> _botThink(Stopwatch turn) async {
     if (_autoPlaying ||
         _revealing ||
         _speakPromptDue ||
@@ -146,11 +150,11 @@ extension _Turns on HomePageState {
     }
     _host.bot.budget = HomePageState.botBudget;
     _host.script = _mode.script(game);
-    final turn = await _host.act(game, still: () => mounted);
+    final moved = await _host.act(game, still: () => mounted, waited: () => turn.elapsed);
     // Nothing may have moved while the bot thought; if it did, the next
     // turn will think again.
-    if (turn.stale) return true;
-    switch (turn.decision) {
+    if (moved.stale) return true;
+    switch (moved.decision) {
       case null:
         return false;
       case YourAnnouncement(:final task):

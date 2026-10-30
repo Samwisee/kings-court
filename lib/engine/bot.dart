@@ -4,17 +4,21 @@
 /// many quick playouts of the rest of the round, spread over several
 /// imagined deals, and keeps the one that most often completes every
 /// task. ([omniscient] lets a bot see every hand instead, for the balance
-/// tool and a hard setting.)
+/// tool and a hard setting.) How the thinking is shared between the
+/// options, and when it stops, is race.dart's.
 library;
 
 import 'dart:math';
 
 import 'cards.dart';
 import 'playout.dart';
+import 'race.dart';
 import 'round.dart';
 import 'rules.dart';
 import 'sampling.dart';
 import 'showing.dart';
+
+export 'race.dart' show Thought;
 
 class Bot {
   Bot([Random? random]) : rand = random ?? Random();
@@ -67,33 +71,30 @@ class Bot {
 
   /// The task [seat] should pick.
   int choosePick(Round s, int seat) {
-    final options = [
-      for (int i = 0; i < s.tasks.length; i++)
-        if (s.canTake(i, seat)) i
-    ];
+    final options = _pickable(s, seat);
+    lastThought = Thought.forced;
     if (options.length == 1) return options.first;
-    final per = max(20, budget ~/ options.length);
     final worlds = _worldsFor(s, seat);
-    var best = options.first;
-    var bestScore = -1.0;
-    for (final i in options) {
-      final assigned = {
+    return _run(_race(options),
+        (i, from, n) => _scoreOf(worlds, _with(s, i, seat), n, from: from, freeX: true));
+  }
+
+  /// The tasks [seat] may take.
+  static List<int> _pickable(Round s, int seat) => [
+        for (int i = 0; i < s.tasks.length; i++)
+          if (s.canTake(i, seat)) i
+      ];
+
+  /// The tasks owned so far, and task [i] given to [seat].
+  static Map<int, int> _with(Round s, int i, int seat) => {
         for (int t = 0; t < s.tasks.length; t++)
           if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
         i: seat,
       };
-      final score = _scoreOf(worlds, assigned, per, freeX: true) +
-          rand.nextDouble() * 0.01;
-      if (score > bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-    return best;
-  }
 
   /// The number of tricks [seat] should announce for task [task].
   int chooseX(Round s, int seat, int task) {
+    lastThought = Thought.usual;
     final counts = List.filled(s.totalTricks + 1, 0);
     final all = List.filled(s.totalTricks + 1, 0);
     final assigned = {
@@ -123,13 +124,14 @@ class Bot {
   /// The card [seat] should play.
   PlayingCard choosePlay(Round s, int seat) {
     final legal = s.legalFor(seat);
+    lastThought = Thought.forced;
     if (legal.length == 1) return legal.first;
     final assigned = {
       for (int t = 0; t < s.tasks.length; t++)
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
     final worlds = _worldsFor(s, seat);
-    return _focus(legal, budget,
+    return _run(_race(legal),
         (card, from, n) => _scoreOf(worlds, assigned, n, from: from, first: (seat, card)));
   }
 
@@ -138,46 +140,38 @@ class Bot {
   /// the most thought). Off, every option gets an equal share.
   bool focus = true;
 
-  /// Picks the best of [options] with [total] playouts, by [score] (the
-  /// average of n playouts numbered from `from`), spending them where they
-  /// tell the most.
-  T _focus<T>(List<T> options, int total, double Function(T option, int from, int n) score) {
-    if (!focus) {
-      final per = max(20, total ~/ options.length);
-      var best = options.first;
-      var bestScore = -1.0;
-      for (final o in options) {
-        final v = score(o, 0, per) + rand.nextDouble() * 0.01;
-        if (v > bestScore) {
-          bestScore = v;
-          best = o;
-        }
-      }
-      return best;
-    }
-    // First look: a share of the budget over every option.
-    final first = max(16, (total * 0.4) ~/ options.length);
-    final scores = <T, (double, int)>{
-      for (final o in options) o: (score(o, 0, first), first)
-    };
-    // The best few get the rest, and their scores are pooled.
-    final keep = max(2, (options.length / 3).ceil());
-    final top = options.toList()
-      ..sort((a, b) => scores[b]!.$1.compareTo(scores[a]!.$1));
-    final finalists = top.take(keep).toList();
-    final more = max(16, (total - first * options.length) ~/ finalists.length);
-    var best = finalists.first;
-    var bestScore = -1.0;
-    for (final o in finalists) {
-      final (s1, n1) = scores[o]!;
-      final s2 = score(o, first, more);
-      final pooled = (s1 * n1 + s2 * more) / (n1 + more) + rand.nextDouble() * 0.01;
-      if (pooled > bestScore) {
-        bestScore = pooled;
-        best = o;
+  /// Whether a decision's thinking ends when it's decided (race.dart):
+  /// early once one option is clearly best, later on a close call the
+  /// round turns on. Off, every decision spends the budget.
+  bool adaptive = true;
+
+  /// How the last decision went (race.dart): the table paces the courtier
+  /// by it (game/pacing.dart).
+  Thought lastThought = Thought.forced;
+
+  Race<T> _race<T>(List<T> options) => Race(options, budget, focus: focus, adaptive: adaptive);
+
+  /// Runs [race] to its end, each option scored by [score] (the average
+  /// of n playouts numbered from `from`), and gives its winner.
+  T _run<T>(Race<T> race, double Function(T option, int from, int n) score) {
+    for (var batch = race.next(); batch.isNotEmpty; batch = race.next()) {
+      for (final (o, from, n) in batch) {
+        race.add(o, score(o, from, n), n);
       }
     }
-    return best;
+    lastThought = race.thought;
+    return race.best(rand);
+  }
+
+  /// [_run], a slice at a time.
+  Future<T> _runAsync<T>(Race<T> race, Future<double> Function(T option, int from, int n) score) async {
+    for (var batch = race.next(); batch.isNotEmpty; batch = race.next()) {
+      for (final (o, from, n) in batch) {
+        race.add(o, await score(o, from, n), n);
+      }
+    }
+    lastThought = race.thought;
+    return race.best(rand);
   }
 
   /// How often random playouts from [s] complete the [assigned] tasks:
@@ -376,36 +370,22 @@ class Bot {
   double lastPickScore = 1;
 
   Future<int> choosePickAsync(Round s, int seat) async {
-    final options = [
-      for (int i = 0; i < s.tasks.length; i++)
-        if (s.canTake(i, seat)) i
-    ];
+    final options = _pickable(s, seat);
     lastPickScore = 1;
+    lastThought = Thought.forced;
     if (options.length == 1) return options.first;
     _begin();
-    final per = max(20, budget ~/ options.length);
     final worlds = _worldsFor(s, seat);
-    var best = options.first;
-    var bestScore = -1.0;
-    for (final i in options) {
-      final assigned = {
-        for (int t = 0; t < s.tasks.length; t++)
-          if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
-        i: seat,
-      };
-      final score = await _scoreAsync(worlds, assigned, per, freeX: true) +
-          rand.nextDouble() * 0.01;
-      if (score > bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-    lastPickScore = bestScore;
+    final race = _race(options);
+    final best = await _runAsync(race,
+        (i, from, n) => _scoreAsync(worlds, _with(s, i, seat), n, from: from, freeX: true));
+    lastPickScore = race.meanOf(best);
     return best;
   }
 
   Future<PlayingCard> choosePlayAsync(Round s, int seat) async {
     final legal = s.legalFor(seat);
+    lastThought = Thought.forced;
     if (legal.length == 1) return legal.first;
     _begin();
     final assigned = {
@@ -413,51 +393,12 @@ class Bot {
         if (s.tasks[t].owner != null) t: s.tasks[t].owner!,
     };
     final worlds = _worldsFor(s, seat);
-    return _focusAsync(legal, budget,
+    return _runAsync(_race(legal),
         (card, from, n) => _scoreAsync(worlds, assigned, n, from: from, first: (seat, card)));
   }
 
-  /// [_focus], a slice at a time.
-  Future<T> _focusAsync<T>(List<T> options, int total,
-      Future<double> Function(T option, int from, int n) score) async {
-    if (!focus) {
-      final per = max(20, total ~/ options.length);
-      var best = options.first;
-      var bestScore = -1.0;
-      for (final o in options) {
-        final v = await score(o, 0, per) + rand.nextDouble() * 0.01;
-        if (v > bestScore) {
-          bestScore = v;
-          best = o;
-        }
-      }
-      return best;
-    }
-    final first = max(16, (total * 0.4) ~/ options.length);
-    final scores = <T, (double, int)>{};
-    for (final o in options) {
-      scores[o] = (await score(o, 0, first), first);
-    }
-    final keep = max(2, (options.length / 3).ceil());
-    final top = options.toList()
-      ..sort((a, b) => scores[b]!.$1.compareTo(scores[a]!.$1));
-    final finalists = top.take(keep).toList();
-    final more = max(16, (total - first * options.length) ~/ finalists.length);
-    var best = finalists.first;
-    var bestScore = -1.0;
-    for (final o in finalists) {
-      final (s1, n1) = scores[o]!;
-      final s2 = await score(o, first, more);
-      final pooled = (s1 * n1 + s2 * more) / (n1 + more) + rand.nextDouble() * 0.01;
-      if (pooled > bestScore) {
-        bestScore = pooled;
-        best = o;
-      }
-    }
-    return best;
-  }
-
   Future<int> chooseXAsync(Round s, int seat, int task) async {
+    lastThought = Thought.usual;
     final counts = List.filled(s.totalTricks + 1, 0);
     final all = List.filled(s.totalTricks + 1, 0);
     final assigned = {
