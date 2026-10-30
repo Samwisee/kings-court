@@ -1,0 +1,29 @@
+54 rounds shared, 38 with the table's frame counts
+late: frames whose build and raster together took longer than the screen's refresh
+missed: refreshes that went by with no new frame while the screen was moving (dropped frames)
+'thinking': frames drawn while a courtier was thinking
+worst p90: the slowest frame of a round, 90th percentile across rounds (ms)
+buckets (ms): <4 <8 <12 <16 <25 <33 <50 <100 100+
+
+== by build (newest last) ==
+                                             rounds    frames    late  missed worst p90
+a1e8c8a5 table                                   32    188112   48.4%    0.0%       285  build 184265 1356 1443 467 300 199 54 27 1  raster 55891 125879 4294 765 972 89 192 16 14
+a1e8c8a5 menus                                    1      1939   30.0%    0.0%       694  build 1866 32 6 5 9 6 10 4 1  raster 165 1334 166 129 116 14 8 1 6
+217a605d table                                    6     16347   25.9%    0.0%      1108  build 15693 234 145 35 67 127 45 1 0  raster 11455 4668 105 15 52 10 7 13 22
+217a605d menus                                    3       499    5.8%    0.0%      2078  build 473 15 3 2 6 0 0 0 0  raster 331 130 20 7 3 0 0 1 7
+
+== the newest three builds, by device ==
+                                             rounds    frames    late  missed worst p90
+217a605d iphone chrome menus                      1       355    4.8%    0.0%       156  build 342 6 2 1 4 0 0 0 0  raster 197 129 19 5 3 0 0 1 1
+217a605d iphone chrome table                      4     10897   31.3%    0.0%        64  build 10447 174 102 27 47 82 17 1 0  raster 7410 3352 68 14 38 9 4 2 0
+217a605d iphone safari installed menus            2       144    8.3%    0.0%      2078  build 131 9 1 1 2 0 0 0 0  raster 134 1 1 2 0 0 0 0 6
+217a605d iphone safari installed table            2      5450   15.1%    0.0%      1108  build 5246 60 43 8 20 45 28 0 0  raster 4045 1316 37 1 14 1 3 11 22
+a1e8c8a5 iphone chrome menus                      1      1939   30.0%    0.0%       694  build 1866 32 6 5 9 6 10 4 1  raster 165 1334 166 129 116 14 8 1 6
+a1e8c8a5 iphone chrome table                     32    188112   48.4%    0.0%       285  build 184265 1356 1443 467 300 199 54 27 1  raster 55891 125879 4294 765 972 89 192 16 14
+
+== 217a605d against a1e8c8a5, by device ==
+iphone chrome menus                          missed   0.0% ->   0.0%   stalls a thousand frames   6.2 ->   5.6
+iphone chrome table                          missed   0.0% ->   0.0%   stalls a thousand frames   0.3 ->   0.3
+no device worse
+
+pull: 54 new rounds, up to id 54 
