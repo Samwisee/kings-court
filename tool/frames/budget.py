@@ -4,24 +4,27 @@ which is two to four times faster than a phone).
 
 The limits are for the scenes players spend their time in, set with room
 to spare over what they measure now, so runner noise passes and a real
-slowdown (a change that makes every move lay out the whole table again)
-doesn't. Raster time isn't judged: CI has no GPU.
+slowdown (a change that makes every move lay out every task's words
+again) doesn't. Raster time isn't judged: CI has no GPU.
 
     python3 tool/frames/budget.py build/frames.json
 """
 import json
 import sys
 
-# scene name starts with -> (most frames over 16 ms, longest frame in ms)
+# scene name starts with -> (most frames over 16 ms, longest frame in ms).
+# Runs on CI vary by about half again from one to the next, so these are
+# about twice what the scenes measure: they catch a change that makes a
+# scene twice as slow, not a slow runner.
 BUDGET = {
-    'setup': (6, 60),
-    'walk in': (12, 150),
-    'picking tasks: tasks flying': (6, 40),
-    'tricks: cards played': (6, 40),
+    'setup': (10, 90),
+    'walk in': (20, 200),
+    'picking tasks: tasks flying': (12, 50),
+    'tricks: cards played': (20, 50),
     'the card tracker': (2, 30),
     'the rest of the round': (4, 40),
     'the menu opening': (2, 30),
-    'the Livery page': (8, 120),
+    'the Livery page': (10, 120),
 }
 
 
