@@ -69,7 +69,15 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
       _skin = s;
     });
     colourPage(s.table);
-    if (still != null) _dissolve.forward(from: 0);
+    // The frame that rebuilds everything is a long one: the still holds
+    // through it, and the dissolve starts after, so its first frames
+    // aren't skipped.
+    if (still != null) {
+      _dissolve.value = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _still == still) _dissolve.forward(from: 0);
+      });
+    }
   }
 
   void _drop() {

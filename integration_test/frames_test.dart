@@ -79,10 +79,9 @@ class Frames {
     return out;
   }
 
-  static void _clearMeasures() {
-    web.window.performance.clearMeasures();
-    web.window.performance.clearMarks();
-  }
+  /// Only the measures: Flutter's timeline closes each event against the
+  /// mark it opened with, so clearing marks mid-frame breaks every frame.
+  static void _clearMeasures() => web.window.performance.clearMeasures();
 
   /// A line to the CI job's log server (port 9999), so how far the run got
   /// can be seen even if it hangs.
