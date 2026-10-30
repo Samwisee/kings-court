@@ -64,6 +64,16 @@ class CharacterToken extends StatefulWidget {
   /// The tokens themselves are still between their moments.
   static bool alive = true;
 
+  /// Lets the loops run under a test binding too: the frame benchmark
+  /// (integration_test/frames_test.dart) watches them. Off, a test binding
+  /// keeps them still, as [alive] off does.
+  static bool loopUnderTest = false;
+
+  /// Whether this is a test that wants stillness: a test binding, unless
+  /// [loopUnderTest].
+  static bool get underTest =>
+      !loopUnderTest && WidgetsBinding.instance.runtimeType.toString().contains('Test');
+
   @override
   State<CharacterToken> createState() => _CharacterTokenState();
 }

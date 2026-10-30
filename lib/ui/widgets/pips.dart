@@ -120,16 +120,12 @@ class _GlitterState extends State<Glitter> with SingleTickerProviderStateMixin {
   // while stars twinkle all the way through.
   late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 6500));
 
-  /// Under the test runner nothing loops (a test waits for stillness).
-  static bool get _underTest =>
-      WidgetsBinding.instance.runtimeType.toString().contains('Test');
-
   bool _still = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _still = MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || _underTest;
+    _still = MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || CharacterToken.underTest;  // a test waits for stillness
     if (_still) {
       _c.stop();
     } else if (!_c.isAnimating) {
