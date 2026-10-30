@@ -29,7 +29,7 @@ const data = {
 const debts = {
   // The page: what's left of the one big state after the split (see
   // docs/ARCHITECTURE.md, "What's still on the page").
-  'lib/ui/table_page.dart': 3132,
+  'lib/ui/table_page.dart': 898,
 };
 
 void main() {

@@ -110,12 +110,23 @@ over the table (`tracker/tracker_overlay.dart`). Two pieces of the
 screen's own state have moved off the page too: the task flights
 (`table/task_flights.dart`) and the drag of a card from your hand
 (`table/hand_drag.dart`); the arrow keys' moves are a pure function
-(`table/keyboard.dart`, tested). What's left on `HomePageState` is the
-pacing: the bots' turns, the trick pauses, the judging animations and the
-keyboard focus, and the wiring that hands each piece its inputs. The next
-step is to move that pacing into a `TableUi` beside the controller (the
-flights and the drag are its first parts). `test/file_size_test.dart`
-holds the page to its current length, and the number only goes down.
+(`table/keyboard.dart`, tested).
+
+`HomePageState` itself is split across `part` files, each an extension
+on the state, so they share its fields with nothing changed in how it
+runs: the keys (`table_keys.dart`), whose turn it is and the bots
+(`table_turns.dart`), the moves off the link and the online room
+(`table_moves.dart`), your hand and the tracker (`table_hand.dart`), the
+on-screen table (`table_board.dart`), what a player does there
+(`table_play.dart`), starting games and lessons (`table_setup.dart`),
+and the bar and its menu (`table_menu.dart`). They call `_set` where
+they'd call `setState` (which is for the class itself), and reach the
+state's statics through `HomePageState.`. `table_page.dart` keeps the
+fields, the lifecycle and `build`. The next step is to move the pacing
+(the bots' turns, the trick pauses, the judging animations) into a
+`TableUi` beside the controller, with fields of its own (the flights and
+the drag are its first parts). `test/file_size_test.dart` holds the page
+to its current length, and the number only goes down.
 
 ## Skins
 
