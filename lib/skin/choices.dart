@@ -207,21 +207,10 @@ class FaceChoice {
       this.frameColour,
       this.motif = BackMotif.none,
       this.motifAlpha = 0.08,
-      this.pips = PipStyle.large,
-      this.cloth,
-      this.courtPatterns,
-      this.courtInk,
-      this.courtArch = false});
+      this.pips = PipStyle.large});
   final String id;
   final String name;
 
-  /// The Court Cards' cloths (Joker, Jack, Queen, King: light then dark),
-  /// what's woven into them and in what, and an arch round the emblem;
-  /// the skin's own art when null.
-  final List<List<Color>>? cloth;
-  final List<FeltPattern>? courtPatterns;
-  final Color? courtInk;
-  final bool courtArch;
   final Color card;
   final Color black;
   final Color red;
@@ -251,13 +240,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF2F6B3A),
       font: 'CinzelDecorative',
       frame: FaceFrame.double,
-      frameColour: Color(0xFFC99A2E),
-      cloth: [
-        [Color(0xFF7A5BA8), Color(0xFF2E1F4A)],
-        [Color(0xFF2E7A5A), Color(0xFF0F2E22)],
-        [Color(0xFF3A5BA8), Color(0xFF16244A)],
-        [Color(0xFFB03A3A), Color(0xFF4A1212)],
-      ]),
+      frameColour: Color(0xFFC99A2E)),
   FaceChoice('antique', 'Antique',
       card: Color(0xFFE8D7B4),
       black: Color(0xFF3A2A18),
@@ -268,13 +251,7 @@ const faceChoices = <FaceChoice>[
       font: 'CinzelDecorative',
       frame: FaceFrame.corners,
       frameColour: Color(0xCC6E4A22),
-      motif: BackMotif.dots,
-      cloth: [
-        [Color(0xFF7A5A3A), Color(0xFF2E1E10)],
-        [Color(0xFF5E6B3A), Color(0xFF232A12)],
-        [Color(0xFF4A5A6B), Color(0xFF1A222A)],
-        [Color(0xFF8E3A2A), Color(0xFF34120A)],
-      ]),
+      motif: BackMotif.dots),
   FaceChoice('noir', 'Noir',
       card: Color(0xFF17171A),
       black: Color(0xFFEDE6D6),
@@ -283,13 +260,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF7FD99A),
       frame: FaceFrame.deco,
       frameColour: Color(0xFFD4A63A),
-      font: 'CinzelDecorative',
-      cloth: [
-        [Color(0xFF2A2A30), Color(0xFF0A0A0C)],
-        [Color(0xFF263029), Color(0xFF0A0F0B)],
-        [Color(0xFF262C3A), Color(0xFF0A0D14)],
-        [Color(0xFF3A2426), Color(0xFF100809)],
-      ]),
+      font: 'CinzelDecorative'),
   FaceChoice('modern', 'Modern',
       card: Color(0xFFFFFFFF),
       black: Color(0xFF1B1B1F),
@@ -298,13 +269,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF16A05D),
       radius: 0.16,
       font: 'AlegreyaSans',
-      pips: PipStyle.rank,
-      cloth: [
-        [Color(0xFF7B4FE0), Color(0xFF4A2A9E)],
-        [Color(0xFF16A05D), Color(0xFF0B6B3B)],
-        [Color(0xFF2F6FE0), Color(0xFF1A429E)],
-        [Color(0xFFE5383B), Color(0xFF9E1A1C)],
-      ]),
+      pips: PipStyle.rank),
   FaceChoice('casino', 'Casino',
       card: Color(0xFFFFFFFF),
       black: Color(0xFF000000),
@@ -314,13 +279,7 @@ const faceChoices = <FaceChoice>[
       radius: 0.05,
       frame: FaceFrame.rule,
       frameColour: Color(0x55000000),
-      pips: PipStyle.medallion,
-      cloth: [
-        [Color(0xFF1A1A1A), Color(0xFF000000)],
-        [Color(0xFFC8102E), Color(0xFF5A0612)],
-        [Color(0xFF1A1A1A), Color(0xFF000000)],
-        [Color(0xFFC8102E), Color(0xFF5A0612)],
-      ]),
+      pips: PipStyle.medallion),
   FaceChoice('botanical', 'Botanical',
       card: Color(0xFFF6F3E6),
       black: Color(0xFF22301F),
@@ -328,13 +287,7 @@ const faceChoices = <FaceChoice>[
       blue: Color(0xFF3D6390),
       green: Color(0xFF3E7A45),
       frame: FaceFrame.leaves,
-      frameColour: Color(0xFF5E8A57),
-      cloth: [
-        [Color(0xFF5E7A3A), Color(0xFF253317)],
-        [Color(0xFF3E6B45), Color(0xFF16291A)],
-        [Color(0xFF6B8E5A), Color(0xFF2A3A22)],
-        [Color(0xFF8E6B3A), Color(0xFF3A2A12)],
-      ]),
+      frameColour: Color(0xFF5E8A57)),
   FaceChoice('seaside', 'Seaside',
       card: Color(0xFFEEF6F1),
       black: Color(0xFF1C2B33),
@@ -344,13 +297,7 @@ const faceChoices = <FaceChoice>[
       radius: 0.12,
       motif: BackMotif.waves,
       motifAlpha: 0.1,
-      pips: PipStyle.medallion,
-      cloth: [
-        [Color(0xFF3A8E9E), Color(0xFF12404A)],
-        [Color(0xFF2E8E7A), Color(0xFF0E3A32)],
-        [Color(0xFF2E6BB0), Color(0xFF0E2A4E)],
-        [Color(0xFF5AA0C8), Color(0xFF1A4A66)],
-      ]),
+      pips: PipStyle.medallion),
   FaceChoice('blush', 'Blush',
       card: Color(0xFFFBEDEA),
       black: Color(0xFF2B1E22),
@@ -361,13 +308,7 @@ const faceChoices = <FaceChoice>[
       motif: BackMotif.dots,
       motifAlpha: 0.1,
       frame: FaceFrame.rule,
-      frameColour: Color(0x66B23A48),
-      cloth: [
-        [Color(0xFFB07A9E), Color(0xFF5A3050)],
-        [Color(0xFFC88E8E), Color(0xFF6B3A3A)],
-        [Color(0xFFA08EC8), Color(0xFF4A3A6B)],
-        [Color(0xFFD06A7A), Color(0xFF6B2A34)],
-      ]),
+      frameColour: Color(0x66B23A48)),
   FaceChoice('silver', 'Moonlit',
       card: Color(0xFF1B2440),
       black: Color(0xFFE6EAF2),
@@ -377,13 +318,7 @@ const faceChoices = <FaceChoice>[
       frame: FaceFrame.double,
       frameColour: Color(0x99C9D2E3),
       motif: BackMotif.dots,
-      pips: PipStyle.medallion,
-      cloth: [
-        [Color(0xFF3A4A7A), Color(0xFF141C36)],
-        [Color(0xFF2E4A6B), Color(0xFF101C2E)],
-        [Color(0xFF4A5A8E), Color(0xFF1A2240)],
-        [Color(0xFF5A4A7A), Color(0xFF221A36)],
-      ]),
+      pips: PipStyle.medallion),
   FaceChoice('tarot', 'Tarot',
       card: Color(0xFFF4ECDA),
       black: Color(0xFF2A2030),
@@ -392,17 +327,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF2B6E58),
       font: 'CinzelDecorative',
       frame: FaceFrame.double,
-      frameColour: Color(0xAA8A6A2A),
-      cloth: [
-        [Color(0xFF6B3FA0), Color(0xFF1E0F3A)],
-        [Color(0xFF1E6B5A), Color(0xFF08251F)],
-        [Color(0xFF24408F), Color(0xFF0B1638)],
-        [Color(0xFF8E1E2E), Color(0xFF2E0610)],
-      ],
-      // The night sky, a sea chart, a rose trellis and a deco sunrise.
-      courtPatterns: [FeltPattern.stars, FeltPattern.chart, FeltPattern.trellis, FeltPattern.deco],
-      courtInk: Color(0xCCF6E7B0),
-      courtArch: true),
+      frameColour: Color(0xAA8A6A2A)),
   FaceChoice('brocade', 'Brocade',
       card: Color(0xFFFAF3E6),
       black: Color(0xFF2A1A22),
@@ -410,16 +335,7 @@ const faceChoices = <FaceChoice>[
       blue: Color(0xFF2E4F8E),
       green: Color(0xFF2E6B3A),
       frame: FaceFrame.corners,
-      frameColour: Color(0xAAA57C1B),
-      cloth: [
-        [Color(0xFF7A2E6B), Color(0xFF2E0F28)],
-        [Color(0xFF2E6B3A), Color(0xFF0F2614)],
-        [Color(0xFF2E4F8E), Color(0xFF0F1A36)],
-        [Color(0xFFA33A2E), Color(0xFF3A110C)],
-      ],
-      // Damask, pinstripe, tiles and tooled gilt.
-      courtPatterns: [FeltPattern.damask, FeltPattern.pinstripe, FeltPattern.tiles, FeltPattern.tooled],
-      courtInk: Color(0x66F2D27A)),
+      frameColour: Color(0xAAA57C1B)),
   FaceChoice('gatsby', 'Gatsby',
       card: Color(0xFF141416),
       black: Color(0xFFF0E6CC),
@@ -428,16 +344,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF86D9A4),
       font: 'CinzelDecorative',
       frame: FaceFrame.deco,
-      frameColour: Color(0xFFD4A63A),
-      cloth: [
-        [Color(0xFF2E2240), Color(0xFF0A0712)],
-        [Color(0xFF153A31), Color(0xFF050F0D)],
-        [Color(0xFF1A2746), Color(0xFF060A14)],
-        [Color(0xFF441820), Color(0xFF0F0506)],
-      ],
-      // A chequer, herringbone, pinstripe and the fans.
-      courtPatterns: [FeltPattern.chequer, FeltPattern.herringbone, FeltPattern.pinstripe, FeltPattern.deco],
-      courtInk: Color(0x88D4A63A)),
+      frameColour: Color(0xFFD4A63A)),
   FaceChoice('glass', 'Stained glass',
       card: Color(0xFFFFFFFF),
       black: Color(0xFF15151A),
@@ -446,17 +353,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF1A8A50),
       radius: 0.12,
       frame: FaceFrame.rule,
-      frameColour: Color(0x44000000),
-      cloth: [
-        [Color(0xFF8E5BD6), Color(0xFF3A1F6B)],
-        [Color(0xFF2FA37A), Color(0xFF0E4A36)],
-        [Color(0xFF3F78D9), Color(0xFF163A80)],
-        [Color(0xFFE0473A), Color(0xFF6B1410)],
-      ],
-      // Panes of four kinds: stars, tiles, rays and a trellis.
-      courtPatterns: [FeltPattern.stars, FeltPattern.tiles, FeltPattern.chart, FeltPattern.trellis],
-      courtInk: Color(0x8C101018),
-      courtArch: true),
+      frameColour: Color(0x44000000)),
   FaceChoice('arbour', 'Arbour',
       card: Color(0xFFF5F2E4),
       black: Color(0xFF22301F),
@@ -464,16 +361,7 @@ const faceChoices = <FaceChoice>[
       blue: Color(0xFF3D6390),
       green: Color(0xFF3E7A45),
       frame: FaceFrame.leaves,
-      frameColour: Color(0xFF5E8A57),
-      cloth: [
-        [Color(0xFF6B4E8E), Color(0xFF2A1F3A)],
-        [Color(0xFF4E7A3A), Color(0xFF1F3317)],
-        [Color(0xFF3A6B8E), Color(0xFF152A3A)],
-        [Color(0xFFA3523A), Color(0xFF3A1A10)],
-      ],
-      // A trellis, the hills, a woven flower and marble.
-      courtPatterns: [FeltPattern.trellis, FeltPattern.contours, FeltPattern.damask, FeltPattern.marble],
-      courtInk: Color(0x66F1F6E4)),
+      frameColour: Color(0xFF5E8A57)),
 ];
 
 /// What the seats' tokens are made as (looks.dart: [TokenStyle]).
@@ -500,8 +388,7 @@ TaskChoice? taskById(String? id) => taskChoices.where((k) => k.id == id).firstOr
 FaceChoice? faceById(String? id) => faceChoices.where((f) => f.id == id).firstOrNull;
 
 /// The Court Cards' full art (their cloths, what's woven into them, an
-/// arch round the emblem), chosen apart from the number cards' faces:
-/// every face that comes with art of its own offers it here too.
+/// arch round the emblem), chosen apart from the number cards' faces.
 class CourtChoice {
   const CourtChoice(this.id, this.name, {this.cloth, this.patterns, this.ink, this.arch = false});
   final String id;
@@ -514,29 +401,140 @@ class CourtChoice {
   final bool arch;
 }
 
-/// The Court Card sets' own names (the ids are the faces they came with).
-const _courtNames = {
-  'ivory': 'Regal',
-  'antique': 'Old masters',
-  'noir': 'Onyx',
-  'modern': 'Pop art',
-  'casino': 'High roller',
-  'botanical': 'Verdant',
-  'seaside': 'Tidal',
-  'blush': 'Rosewater',
-  'silver': 'Nocturne',
-  'tarot': 'Tarot',
-  'brocade': 'Brocade',
-  'gatsby': 'Gatsby',
-  'glass': 'Stained glass',
-  'arbour': 'Arbour',
-};
-
-final courtChoices = <CourtChoice>[
-  for (final f in faceChoices)
-    if (f.cloth != null || f.courtPatterns != null)
-      CourtChoice(f.id, _courtNames[f.id] ?? f.name,
-          cloth: f.cloth, patterns: f.courtPatterns, ink: f.courtInk, arch: f.courtArch),
+/// The Court Card sets, each by name: their cloths (Joker, Jack, Queen,
+/// King: light then dark) and, for the full art ones, a pattern woven
+/// into each and an arch round the emblem. Their ids are the faces they
+/// first came with, whose defaults they still are.
+const courtChoices = <CourtChoice>[
+  CourtChoice('ivory',
+      'Regal',
+      cloth: [
+        [Color(0xFF7A5BA8), Color(0xFF2E1F4A)],
+        [Color(0xFF2E7A5A), Color(0xFF0F2E22)],
+        [Color(0xFF3A5BA8), Color(0xFF16244A)],
+        [Color(0xFFB03A3A), Color(0xFF4A1212)],
+      ]),
+  CourtChoice('antique',
+      'Old masters',
+      cloth: [
+        [Color(0xFF7A5A3A), Color(0xFF2E1E10)],
+        [Color(0xFF5E6B3A), Color(0xFF232A12)],
+        [Color(0xFF4A5A6B), Color(0xFF1A222A)],
+        [Color(0xFF8E3A2A), Color(0xFF34120A)],
+      ]),
+  CourtChoice('noir',
+      'Onyx',
+      cloth: [
+        [Color(0xFF2A2A30), Color(0xFF0A0A0C)],
+        [Color(0xFF263029), Color(0xFF0A0F0B)],
+        [Color(0xFF262C3A), Color(0xFF0A0D14)],
+        [Color(0xFF3A2426), Color(0xFF100809)],
+      ]),
+  CourtChoice('modern',
+      'Pop art',
+      cloth: [
+        [Color(0xFF7B4FE0), Color(0xFF4A2A9E)],
+        [Color(0xFF16A05D), Color(0xFF0B6B3B)],
+        [Color(0xFF2F6FE0), Color(0xFF1A429E)],
+        [Color(0xFFE5383B), Color(0xFF9E1A1C)],
+      ]),
+  CourtChoice('casino',
+      'High roller',
+      cloth: [
+        [Color(0xFF1A1A1A), Color(0xFF000000)],
+        [Color(0xFFC8102E), Color(0xFF5A0612)],
+        [Color(0xFF1A1A1A), Color(0xFF000000)],
+        [Color(0xFFC8102E), Color(0xFF5A0612)],
+      ]),
+  CourtChoice('botanical',
+      'Verdant',
+      cloth: [
+        [Color(0xFF5E7A3A), Color(0xFF253317)],
+        [Color(0xFF3E6B45), Color(0xFF16291A)],
+        [Color(0xFF6B8E5A), Color(0xFF2A3A22)],
+        [Color(0xFF8E6B3A), Color(0xFF3A2A12)],
+      ]),
+  CourtChoice('seaside',
+      'Tidal',
+      cloth: [
+        [Color(0xFF3A8E9E), Color(0xFF12404A)],
+        [Color(0xFF2E8E7A), Color(0xFF0E3A32)],
+        [Color(0xFF2E6BB0), Color(0xFF0E2A4E)],
+        [Color(0xFF5AA0C8), Color(0xFF1A4A66)],
+      ]),
+  CourtChoice('blush',
+      'Rosewater',
+      cloth: [
+        [Color(0xFFB07A9E), Color(0xFF5A3050)],
+        [Color(0xFFC88E8E), Color(0xFF6B3A3A)],
+        [Color(0xFFA08EC8), Color(0xFF4A3A6B)],
+        [Color(0xFFD06A7A), Color(0xFF6B2A34)],
+      ]),
+  CourtChoice('silver',
+      'Nocturne',
+      cloth: [
+        [Color(0xFF3A4A7A), Color(0xFF141C36)],
+        [Color(0xFF2E4A6B), Color(0xFF101C2E)],
+        [Color(0xFF4A5A8E), Color(0xFF1A2240)],
+        [Color(0xFF5A4A7A), Color(0xFF221A36)],
+      ]),
+  CourtChoice('tarot',
+      'Tarot',
+      cloth: [
+        [Color(0xFF6B3FA0), Color(0xFF1E0F3A)],
+        [Color(0xFF1E6B5A), Color(0xFF08251F)],
+        [Color(0xFF24408F), Color(0xFF0B1638)],
+        [Color(0xFF8E1E2E), Color(0xFF2E0610)],
+      ],
+      // The night sky, a sea chart, a rose trellis and a deco sunrise.
+      patterns: [FeltPattern.stars, FeltPattern.chart, FeltPattern.trellis, FeltPattern.deco],
+      ink: Color(0xCCF6E7B0),
+      arch: true),
+  CourtChoice('brocade',
+      'Brocade',
+      cloth: [
+        [Color(0xFF7A2E6B), Color(0xFF2E0F28)],
+        [Color(0xFF2E6B3A), Color(0xFF0F2614)],
+        [Color(0xFF2E4F8E), Color(0xFF0F1A36)],
+        [Color(0xFFA33A2E), Color(0xFF3A110C)],
+      ],
+      // Damask, pinstripe, tiles and tooled gilt.
+      patterns: [FeltPattern.damask, FeltPattern.pinstripe, FeltPattern.tiles, FeltPattern.tooled],
+      ink: Color(0x66F2D27A)),
+  CourtChoice('gatsby',
+      'Gatsby',
+      cloth: [
+        [Color(0xFF2E2240), Color(0xFF0A0712)],
+        [Color(0xFF153A31), Color(0xFF050F0D)],
+        [Color(0xFF1A2746), Color(0xFF060A14)],
+        [Color(0xFF441820), Color(0xFF0F0506)],
+      ],
+      // A chequer, herringbone, pinstripe and the fans.
+      patterns: [FeltPattern.chequer, FeltPattern.herringbone, FeltPattern.pinstripe, FeltPattern.deco],
+      ink: Color(0x88D4A63A)),
+  CourtChoice('glass',
+      'Stained glass',
+      cloth: [
+        [Color(0xFF8E5BD6), Color(0xFF3A1F6B)],
+        [Color(0xFF2FA37A), Color(0xFF0E4A36)],
+        [Color(0xFF3F78D9), Color(0xFF163A80)],
+        [Color(0xFFE0473A), Color(0xFF6B1410)],
+      ],
+      // Panes of four kinds: stars, tiles, rays and a trellis.
+      patterns: [FeltPattern.stars, FeltPattern.tiles, FeltPattern.chart, FeltPattern.trellis],
+      ink: Color(0x8C101018),
+      arch: true),
+  CourtChoice('arbour',
+      'Arbour',
+      cloth: [
+        [Color(0xFF6B4E8E), Color(0xFF2A1F3A)],
+        [Color(0xFF4E7A3A), Color(0xFF1F3317)],
+        [Color(0xFF3A6B8E), Color(0xFF152A3A)],
+        [Color(0xFFA3523A), Color(0xFF3A1A10)],
+      ],
+      // A trellis, the hills, a woven flower and marble.
+      patterns: [FeltPattern.trellis, FeltPattern.contours, FeltPattern.damask, FeltPattern.marble],
+      ink: Color(0x66F1F6E4)),
 ];
 
 CourtChoice? courtById(String? id) => courtChoices.where((c) => c.id == id).firstOrNull;

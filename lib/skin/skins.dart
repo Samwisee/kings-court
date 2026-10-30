@@ -31,7 +31,9 @@ const skins = <Skin>[
 ];
 
 /// The tables once chosen apart from the skin (`+t:<table>`), and the
-/// skin each became: worn instead, so a look saved then comes back.
+/// skin each became: worn instead, so a look saved then comes back. Kept
+/// for players who haven't opened the game since; remove after 2027-01,
+/// with its twin in web/index.html.
 const _tableSkins = {
   'sage': 'garden',
   'teal': 'harbour',
