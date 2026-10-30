@@ -287,7 +287,8 @@ The engine was built for this:
 - **Measured** (`tool/bench`, published as `bench.txt` on the `shots`
   branch with every screenshot run): the courtiers decide in 25–65 ms in
   Chrome (900 playouts, about twice that now the playouts are guided)
-  and 5–30 ms on the VM, far under the 700 ms they wait anyway.
+  and 5–30 ms on the VM, well within the pause they take over a move
+  (`game/pacing.dart`).
   A whole-page rebuild mid-round costs the framework about 14 ms in the
   debug test harness, nearly all of it building and laying out the hand
   and the table inside their `LayoutBuilder`s (release on a phone is
@@ -301,6 +302,37 @@ The engine was built for this:
 
 ---
 
+## The courtiers, and playing them headless
+
+- **How they think** (`engine/bot.dart`): each decision imagines the
+  hands it can't see several ways (`sampling.dart`), plays every option
+  out many times in each (`playout.dart`), and keeps the one that most
+  often completes every task: Perfect Information Monte Carlo.
+- **How long** (`engine/race.dart`): a decision is a race between its
+  options. It stops early once one is clearly best, and runs past the
+  usual budget (up to 2.5 times it) while the best two are too close to
+  tell apart on a decision the round turns on. The table paces each
+  courtier by how it went (`game/pacing.dart`): quick over no choice, a
+  visible hesitation over a close call, never twice running. The
+  courtiers don't read each other's pauses, or yours.
+- **Headless** (`bin/selfplay.dart`, `lib/sim/self_play.dart`): the
+  courtiers play seeded rounds on every core, each deal at every rung of
+  a ladder of strength (weak, casual, usual, fixed, strong, seeing), and
+  each round is appended to `selfplay/rounds.jsonl` (kept out of git) in
+  the game's own record shape. It picks up where it stopped.
+
+      dart run bin/selfplay.dart --minutes 60
+      dart run bin/selfplay.dart --minutes 480 --teach    # overnight, with the teacher
+      python3 tool/selfplay/curves.py selfplay/rounds.jsonl --people rounds.jsonl
+
+  `--teach` asks an all-seeing courtier every card play too and logs
+  where it would have played another (`selfplay/disagreements.jsonl`):
+  where the fair courtiers' guesses at hidden hands cost them. The report
+  gives each task's completion at each strength, adaptive thinking
+  against fixed on the same deals, and, with the rounds people shared
+  (`tool/games/pull.py`), which rung plays most like people. Options are
+  at the top of `bin/selfplay.dart`.
+
 ## Tests
 
 - `test/engine_test.dart`: rules, deals, bots.
@@ -310,6 +342,8 @@ The engine was built for this:
 - `test/net_test.dart`: moves to JSON and back, the local link, and the
   engine and game model staying free of Flutter.
 - `test/bot_turn_test.dart`: the courtiers' decisions, without widgets.
+- `test/race_test.dart`: when a decision's thinking stops, and the pauses.
+- `test/self_play_test.dart`: headless rounds replay from their seed.
 - `test/fairness_test.dart`: the courtiers never act on a card they
   can't see.
 - `tool/bench/`: not tests; timings of the bots and the page, published

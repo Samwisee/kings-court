@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/sim/self_play.dart';
 
@@ -51,5 +53,17 @@ void main() {
   test('Every rung on the ladder has its own name', () {
     expect(ladder.map((r) => r.name).toSet().length, ladder.length);
     expect(() => rungNamed('nobody'), throwsArgumentError);
+  });
+
+  test('The engine, the game model and the headless runner stay free of Flutter', () {
+    // The runner is plain Dart (dart run bin/selfplay.dart): anything it
+    // reaches that imports Flutter would stop it running.
+    for (final dir in ['lib/engine', 'lib/game', 'lib/modes', 'lib/sim', 'bin']) {
+      for (final f in Directory(dir).listSync(recursive: true).whereType<File>()) {
+        if (!f.path.endsWith('.dart')) continue;
+        final text = f.readAsStringSync();
+        expect(text.contains("package:flutter/") || text.contains("'dart:ui'"), isFalse, reason: f.path);
+      }
+    }
   });
 }
