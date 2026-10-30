@@ -1,0 +1,113 @@
+Resolving dependencies...
+Downloading packages...
+  async 2.11.0 (2.13.1 available)
+  audioplayers 6.7.1 (6.8.1 available)
+  audioplayers_android 5.2.1 (5.3.0 available)
+  audioplayers_darwin 6.4.0 (6.5.0 available)
+  audioplayers_linux 4.2.1 (4.3.0 available)
+  audioplayers_platform_interface 7.1.1 (7.2.0 available)
+  audioplayers_web 5.2.1 (5.3.0 available)
+  audioplayers_windows 4.3.1 (4.4.1 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  clock 1.1.2 (1.1.3 available)
+  code_assets 1.2.1 (2.1.0 available)
+  crypto 3.0.7 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  flutter_lints 4.0.0 (6.0.0 available)
+  hooks 2.0.2 (2.2.0 available)
+  injector 3.0.0 (4.0.0 available)
+  jni 0.14.2 (1.1.1 available)
+  leak_tracker 11.0.1 (11.0.2 available)
+  lints 4.0.0 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.17.0 (1.19.0 available)
+  objective_c 9.5.0 (9.6.2 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_android 2.2.23 (2.3.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  record_use 0.6.0 (1.1.1 available)
+  sentry 9.30.1 (10.2.0 available)
+  sentry_flutter 9.30.1 (10.2.0 available)
+  shared_preferences_android 2.4.23 (2.5.4 available)
+  shared_preferences_foundation 2.5.7 (2.6.1 available)
+  source_span 1.10.0 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  synchronized 3.4.0+1 (3.5.0 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.10 (0.7.15 available)
+  vector_math 2.2.0 (2.4.4 available)
+  vm_service 14.2.5 (15.4.0 available)
+  wakelock_plus 1.7.0 (1.8.2 available)
+  wakelock_plus_platform_interface 1.6.0 (1.7.0 available)
+  web 1.1.1 (1.1.2 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+45 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart
+Warning: A tag was used that wasn't specified in dart_test.yaml.
+  tool was used in the suite itself
+
+00:00 +0: Tutorial
+00:07 +1: A phone, a big round
+00:09 +2: A laptop window during play
+LAPTOP card Offset(240.5, 209.9) Size(162.0, 230.0)
+LAPTOP card Offset(391.0, 182.9) Size(162.0, 230.0)
+LAPTOP card Offset(543.3, 172.4) Size(162.0, 230.0)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(268.0, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(337.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(276.7, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(354.9, 638.8) Size(73.4, 104.2)
+00:11 +3: A wide screen, on-screen cards
+00:14 +4: A wide screen, round table
+00:15 +5: The Plain skin: front page, setup, a round, the menu
+00:16 +6: The Lacquer skin: front page, setup, a round, the menu
+00:18 +7: The Garden skin: front page, setup, a round, the menu
+00:19 +8: The Midnight skin: front page, setup, a round, the menu
+00:21 +9: The Harbour skin: front page, setup, a round, the menu
+00:22 +10: A look mixed in the Look dialog (stars), at the table
+00:22 +11: A look mixed in the Look dialog (deco), at the table
+00:23 +12: A look mixed in the Look dialog (chart), at the table
+00:23 +13: A look mixed in the Look dialog (tavern), at the table
+00:23 +14: A look mixed in the Look dialog (trellis), at the table
+00:24 +15: A look mixed in the Look dialog (tiles), at the table
+00:25 +16: A look mixed in the Look dialog (map), at the table
+00:25 +17: A look mixed in the Look dialog (damask), at the table
+00:25 +18: A look mixed in the Look dialog (marble), at the table
+00:26 +19: A look mixed in the Look dialog (tooled), at the table
+00:26 +20: A look mixed in the Look dialog (parquet), at the table
+00:27 +21: A look mixed in the Look dialog (chequer), at the table
+00:27 +22: The backs and tables to choose from
+00:27 +23: The Court skin's pieces
+00:27 +24: The Plain skin's pieces
+00:27 +25: The Lacquer skin's pieces
+00:28 +26: The Garden skin's pieces
+00:28 +27: The Midnight skin's pieces
+00:28 +28: The Harbour skin's pieces
+00:28 +29: The front page, wide
+00:28 +30: The Court Cards
+00:28 +31: A throne room on its own
+POS Offset(155.0, 483.4) Size(80.0, 65.0)
+POS Offset(154.7, 145.7) Size(80.0, 65.0)
+POS Offset(295.4, 172.1) Size(80.0, 82.0)
+OPA 1.0
+OPA 1.0
+OPA 1.0
+OPA 1.0
+OPA 1.0
+00:29 +32: All tests passed!
