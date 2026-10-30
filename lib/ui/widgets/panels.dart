@@ -116,7 +116,8 @@ class OrnateCard extends StatelessWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(look.radius - look.edgeWidth),
-                child: RepaintBoundary(child: CustomPaint(painter: _feltOn(skin, look.court.first))),
+                child: RepaintBoundary(
+                    child: EdgesOnly(child: CustomPaint(painter: _feltOn(skin, look.court.first), size: Size.infinite))),
               ),
             ),
           Padding(padding: padding, child: child),
@@ -129,7 +130,7 @@ class OrnateCard extends StatelessWidget {
   /// [ground]: the menus and dialogs dressed like the table.
   static CustomPainter _feltOn(Skin skin, Color ground) {
     final t = skin.tableLook;
-    return FeltPatternPainter(t.pattern, t.patternColour.withValues(alpha: t.patternColour.a * 0.6),
+    return FeltPatternPainter(t.pattern, t.patternColour.withValues(alpha: t.patternColour.a * 0.4),
         ground: ground, scale: 0.75);
   }
 
@@ -171,10 +172,9 @@ class OrnateCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(look.radius - 2),
               child: RepaintBoundary(
-                  child: CustomPaint(
-                      painter: court && skin.tableLook.pattern != FeltPattern.none
-                          ? _feltOn(skin, look.court[1])
-                          : _Damask(ink.withValues(alpha: 0.07)))),
+                  child: court && skin.tableLook.pattern != FeltPattern.none
+                      ? EdgesOnly(child: CustomPaint(painter: _feltOn(skin, look.court[1]), size: Size.infinite))
+                      : CustomPaint(painter: _Damask(ink.withValues(alpha: 0.07)))),
             ),
           ),
           Positioned.fill(

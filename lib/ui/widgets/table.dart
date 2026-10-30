@@ -128,19 +128,26 @@ class _TablePainter extends CustomPainter {
 /// into the felt (felt_patterns.dart). Under everything on the table, so
 /// the cards and seats keep their colours.
 class FeltLight extends StatelessWidget {
-  const FeltLight({super.key});
+  const FeltLight({super.key, this.quiet = false});
+
+  /// Off the table (the front page, setup, the rules): the pattern faint,
+  /// and only round the edges, clear of what's to be read.
+  final bool quiet;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
     final look = skin.tableLook;
     final lamp = look.lamp;
+    final ink = look.patternColour;
     final pattern = look.pattern == FeltPattern.none
         ? null
-        : FeltPatternPainter(look.pattern, look.patternColour, ground: skin.felt);
+        : FeltPatternPainter(look.pattern, quiet ? ink.withValues(alpha: ink.a * 0.45) : ink, ground: skin.felt);
     if (lamp <= 0 && pattern == null) return const SizedBox.expand();
-    return CustomPaint(
-        painter: pattern, foregroundPainter: lamp <= 0 ? null : _LampPainter(lamp), size: Size.infinite);
+    final lit = CustomPaint(foregroundPainter: lamp <= 0 ? null : _LampPainter(lamp), size: Size.infinite);
+    if (pattern == null) return lit;
+    final worked = CustomPaint(painter: pattern, size: Size.infinite);
+    return Stack(fit: StackFit.expand, children: [if (quiet) EdgesOnly(child: worked) else worked, lit]);
   }
 }
 
@@ -148,7 +155,11 @@ class FeltLight extends StatelessWidget {
 /// table, its colour lit from above), what's worked into it with the lamp
 /// over it, and any motion on it (felt_motion.dart). Under [child].
 class FeltGround extends StatelessWidget {
-  const FeltGround({super.key, this.page = false, this.clear = false, this.child});
+  const FeltGround({super.key, this.page = false, this.clear = false, this.quiet = false, this.child});
+
+  /// Off the table: the pattern faint and round the edges, and still
+  /// ([FeltLight.quiet]). A [page] is always quiet.
+  final bool quiet;
 
   /// No felt at all, just [child] (where the felt is behind already).
   final bool clear;
@@ -169,8 +180,8 @@ class FeltGround extends StatelessWidget {
                   center: const Alignment(0, -0.4), radius: 1.2, colors: [skin.felt, skin.feltDeep]))
           : BoxDecoration(color: skin.felt),
       child: Stack(fit: StackFit.expand, children: [
-        const RepaintBoundary(child: FeltLight()),
-        const FeltMotion(),
+        RepaintBoundary(child: FeltLight(quiet: quiet || page)),
+        if (!quiet && !page) const FeltMotion(),
         if (child != null) child!,
       ]),
     );

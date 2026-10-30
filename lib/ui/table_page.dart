@@ -2718,7 +2718,7 @@ class HomePageState extends State<HomePage>
             screen.width - math.max(480.0, screen.height) >= 560;
     return Stack(children: [
     // The felt runs the whole screen, behind the bar too, on every page.
-    const Positioned.fill(child: FeltGround()),
+    Positioned.fill(child: FeltGround(quiet: !_inGame || _setupArgs != null)),
     Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: useTopBar,
@@ -2825,7 +2825,7 @@ class HomePageState extends State<HomePage>
                   child: _setupArgs == null
                       ? const SizedBox.shrink(key: ValueKey('no-setup'))
                       : FeltGround(
-                          key: const ValueKey('setup'),
+                          key: const ValueKey('setup'), quiet: true,
                           // In a game, a fresh felt over the table, so the
                           // setup reads.
                           clear: !_inGame,

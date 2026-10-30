@@ -508,3 +508,22 @@ class FeltPatternPainter extends CustomPainter {
   bool shouldRepaint(FeltPatternPainter old) =>
       old.pattern != pattern || old.ink != ink || old.ground != ground || old.scale != scale;
 }
+
+/// [child] (a pattern) faded away in the middle, where the words are, and
+/// left at the edges: how a page or a menu keeps its room's pattern
+/// without it getting in the way of reading.
+class EdgesOnly extends StatelessWidget {
+  const EdgesOnly({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) => const RadialGradient(
+          radius: 0.95,
+          colors: [Color(0x00000000), Color(0x00000000), Color(0x99000000), Color(0xFF000000)],
+          stops: [0, 0.45, 0.8, 1],
+        ).createShader(bounds),
+        child: child,
+      );
+}

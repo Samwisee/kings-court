@@ -227,7 +227,7 @@ const campaignDesign = SkinDesign(
   bodyFont: 'AlegreyaSans',
   finish: Finish.rich,
   pattern: FeltPattern.contours,
-  patternInk: Color(0x4DE8DDB0),
+  patternInk: Color(0x33E8DDB0),
 );
 
 /// Chequers: a chequered floor in deep claret, and gold for the King.
