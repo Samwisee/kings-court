@@ -107,6 +107,9 @@
   </script>
   <style>
     html, body { margin: 0; background: var(--table, #4E0B18); }
+    /* Scrolling sideways (a row of choices, with a trackpad) never turns
+       into the browser's swipe back to the last page. */
+    html, body { overscroll-behavior: none; }
     /* The page runs under the status bar and the home bar (viewport-fit
        and a see-through status bar), and the game sits in a box inside
        the safe area. (Sized by the window, a phone's home-screen app ran

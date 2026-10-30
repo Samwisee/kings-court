@@ -135,7 +135,12 @@ class _LookPageState extends State<_LookPage> {
                   ),
                 ),
                 SafeArea(
-                  child: Column(children: [
+                  // A column down the middle of a wide screen, not spread to
+                  // its edges.
+                  child: Center(
+                      child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 760),
+                          child: Column(children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 2),
                       child: Align(
@@ -283,7 +288,7 @@ class _LookPageState extends State<_LookPage> {
                           width: double.infinity,
                           child: FilledButton(onPressed: _done, child: const Text('Done'))),
                     ),
-                  ]),
+                  ]))),
                 ),
               ]),
             );
@@ -328,16 +333,30 @@ class _Row extends StatelessWidget {
           ]),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: height,
-          child: ListView.separated(
-            key: ValueKey('look-row-$id'),
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: count,
-            separatorBuilder: (context, i) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => tile(i),
-          ),
+        // On a wide screen every choice shows at once; on a phone they
+        // scroll sideways, built as they come into view.
+        LayoutBuilder(
+          builder: (context, c) => c.maxWidth >= 640
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Wrap(
+                    key: ValueKey('look-row-$id'),
+                    spacing: 10,
+                    runSpacing: 12,
+                    children: [for (var i = 0; i < count; i++) tile(i)],
+                  ),
+                )
+              : SizedBox(
+                  height: height,
+                  child: ListView.separated(
+                    key: ValueKey('look-row-$id'),
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: count,
+                    separatorBuilder: (context, i) => const SizedBox(width: 10),
+                    itemBuilder: (context, i) => tile(i),
+                  ),
+                ),
         ),
       ]),
     );
@@ -345,8 +364,8 @@ class _Row extends StatelessWidget {
 }
 
 /// One choice: its picture over its name, ringed in the accent when
-/// chosen, with a tick.
-class _Tile extends StatelessWidget {
+/// chosen, with a tick; lit, under a pointer, with the hand.
+class _Tile extends StatefulWidget {
   const _Tile({required this.name, required this.selected, required this.onTap, required this.child});
   final String name;
   final bool selected;
@@ -354,54 +373,76 @@ class _Tile extends StatelessWidget {
   final Widget child;
 
   @override
+  State<_Tile> createState() => _TileState();
+}
+
+class _TileState extends State<_Tile> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final selected = widget.selected;
     return Semantics(
       button: true,
       selected: selected,
-      label: name,
+      label: widget.name,
       excludeSemantics: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: SizedBox(
-          width: 100,
-          child: Column(children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 100,
-              height: 84,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: selected ? skin.gold : Colors.white.withValues(alpha: 0.1), width: selected ? 2.5 : 1),
-              ),
-              child: Stack(children: [
-                // Its own layer: drawn once, not again as the row scrolls.
-                Center(child: RepaintBoundary(child: child)),
-                if (selected)
-                  Positioned(
-                    right: 5,
-                    top: 5,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(color: skin.gold, shape: BoxShape.circle),
-                      child: Icon(Icons.check_rounded, size: 13, color: skin.goldInk),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: SizedBox(
+            width: 100,
+            child: Column(children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 100,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: _hover ? 0.32 : 0.22),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: selected
+                          ? skin.gold
+                          : _hover
+                              ? skin.gold.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.1),
+                      width: selected ? 2.5 : 1.5),
+                ),
+                child: Stack(children: [
+                  // Its own layer: drawn once, not again as the row scrolls.
+                  Center(
+                      child: AnimatedScale(
+                          scale: _hover ? 1.06 : 1,
+                          duration: const Duration(milliseconds: 160),
+                          child: RepaintBoundary(child: widget.child))),
+                  if (selected)
+                    Positioned(
+                      right: 5,
+                      top: 5,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(color: skin.gold, shape: BoxShape.circle),
+                        child: Icon(Icons.check_rounded, size: 13, color: skin.goldInk),
+                      ),
                     ),
-                  ),
-              ]),
-            ),
-            const SizedBox(height: 6),
-            Text(name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.15,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? skin.gold : Colors.white70)),
-          ]),
+                ]),
+              ),
+              const SizedBox(height: 6),
+              Text(widget.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.15,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected || _hover ? skin.gold : Colors.white70)),
+            ]),
+          ),
         ),
       ),
     );
