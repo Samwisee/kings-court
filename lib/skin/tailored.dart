@@ -261,8 +261,7 @@ const faceChoices = <FaceChoice>[
       font: 'CinzelDecorative',
       frame: FaceFrame.corners,
       frameColour: Color(0xCC6E4A22),
-      motif: BackMotif.dots,
-      motifAlpha: 0.08),
+      motif: BackMotif.dots),
   FaceChoice('noir', 'Noir',
       card: Color(0xFF17171A),
       black: Color(0xFFEDE6D6),
@@ -335,7 +334,6 @@ const faceChoices = <FaceChoice>[
       frame: FaceFrame.double,
       frameColour: Color(0x99C9D2E3),
       motif: BackMotif.dots,
-      motifAlpha: 0.08,
       pips: PipStyle.medallion),
 ];
 

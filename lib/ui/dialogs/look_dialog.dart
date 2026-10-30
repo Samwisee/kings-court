@@ -21,7 +21,6 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/skins.dart';
 import '../../skin/tailored.dart';
-import '../cards/card_back.dart';
 import '../cards/card_view.dart';
 import '../cards/task_chip.dart';
 import '../widgets.dart';

@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../skin/court/court_skin.dart';
-import '../skin/tailored.dart';
 import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
+import '../skin/tailored.dart';
 import 'table_page.dart';
 
 class TheKingsCourtApp extends StatefulWidget {
