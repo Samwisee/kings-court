@@ -76,11 +76,31 @@ class Frames {
 
   /// What the browser measured since the last clear (Flutter's timeline
   /// in a profile build: build, layout, paint, and with the debugProfile
-  /// flags each widget and render object), the longest of each name.
+  /// flags each widget and render object): each name's own time, summed.
   static Map<String, double> _measures() {
+    // Each measure's own time: its length less the measures inside it
+    // (they nest, a widget's build holding its children's).
+    final list = [
+      for (final e in web.window.performance.getEntriesByType('measure').toDart) (e.name, e.startTime, e.startTime + e.duration)
+    ]..sort((a, b) => a.$2 != b.$2 ? a.$2.compareTo(b.$2) : b.$3.compareTo(a.$3));
     final out = <String, double>{};
-    for (final e in web.window.performance.getEntriesByType('measure').toDart) {
-      out[e.name] = math.max(out[e.name] ?? 0, e.duration);
+    final open = <(String, double, double)>[];
+    final inner = <double>[];
+    void close() {
+      final m = open.removeLast();
+      final kids = inner.removeLast();
+      out[m.$1] = (out[m.$1] ?? 0) + math.max(0, (m.$3 - m.$2) - kids);
+      if (inner.isNotEmpty) inner[inner.length - 1] += m.$3 - m.$2;
+    }
+    for (final m in list) {
+      while (open.isNotEmpty && open.last.$3 <= m.$2) {
+        close();
+      }
+      open.add(m);
+      inner.add(0);
+    }
+    while (open.isNotEmpty) {
+      close();
     }
     _clearMeasures();
     return out;
@@ -247,6 +267,13 @@ void main() {
       await tap(find.text('Start'), then: 7000);
     });
 
+    await frames.scene('picking tasks, in detail (slower: every widget timed)', () async {
+      for (var i = 0; i < 6 && state.game.round?.pickTurn != null; i++) {
+        state.debugYourMove();
+        await wait(700);
+      }
+    }, detail: true);
+
     await frames.scene('picking tasks: tasks flying to their seats', () async {
       for (var i = 0; i < 120 && state.game.round?.pickTurn != null; i++) {
         state.debugYourMove();
@@ -261,13 +288,6 @@ void main() {
         await wait(400);
       }
     });
-
-    await frames.scene('tricks, in detail (slower: every widget timed)', () async {
-      for (var i = 0; i < 8; i++) {
-        state.debugYourMove();
-        await wait(400);
-      }
-    }, detail: true);
 
     await frames.scene('the card tracker sliding in and out', () async {
       await tap(find.byTooltip('Card tracker'), then: 1500);
@@ -302,7 +322,14 @@ void main() {
         ('Tasks', 'tasks'),
         ('Style', 'style'),
       ]) {
-        await tap(find.text(tab), then: 700);
+        // The tab: the highest text of its name (a tile can share it).
+        final named = find.text(tab).evaluate().toList();
+        if (named.isNotEmpty) {
+          named.sort((a, b) => tester.getCenter(find.byElementPredicate((e) => e == a)).dy
+              .compareTo(tester.getCenter(find.byElementPredicate((e) => e == b)).dy));
+          await tester.tap(find.byElementPredicate((e) => e == named.first), warnIfMissed: false);
+          await wait(700);
+        }
         final grid = find.byKey(ValueKey('look-grid-$kind'));
         final tiles = find.descendant(of: grid, matching: find.byType(Semantics));
         final n = tiles.evaluate().length;
