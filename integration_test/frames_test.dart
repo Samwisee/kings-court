@@ -57,7 +57,12 @@ class Frames {
   Future<void> scene(String name, Future<void> Function() run) async {
     final s = _Scene(name);
     _now = s;
-    await run();
+    try {
+      await run();
+    } catch (e, stack) {
+      // A scene that goes wrong is reported, and the rest still run.
+      s.error = '$e ${stack.toString().split('\n').take(6).join(' | ')}';
+    }
     _now = null;
     scenes.add(s);
     // ignore: avoid_print
@@ -68,6 +73,7 @@ class Frames {
 class _Scene {
   _Scene(this.name);
   final String name;
+  String? error;
   final due = <Duration>[];
   final work = <Duration>[];
   final engine = <Duration>[];
@@ -107,6 +113,7 @@ class _Scene {
     final e = [for (final d in engine) _ms(d)]..sort();
     return {
       'name': name,
+      if (error != null) 'error': error!,
       'frames': due.length,
       'period': double.parse(period.toStringAsFixed(2)),
       'dropped': dropped,
@@ -148,7 +155,10 @@ void main() {
       await wait(then);
     }
 
-    await tester.pumpWidget(const TheKingsCourtApp());
+    await frames.scene('starting up', () async {
+      await tester.pumpWidget(const TheKingsCourtApp());
+      await wait(500);
+    });
     await frames.scene('front page: the crown, the flourish, the glitter', () => wait(4000));
 
     await frames.scene('setup: its panels sliding in', () async {
@@ -159,7 +169,7 @@ void main() {
       await tap(find.text('Next'));
     });
 
-    final state = tester.state<HomePageState>(find.byType(HomePage));
+    final state = tester.state<HomePageState>(find.byType(HomePage, skipOffstage: false));
     await frames.scene('walk in, crowning the King, the deal', () async {
       await tap(find.text('Start'), then: 7000);
     });
