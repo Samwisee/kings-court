@@ -1,0 +1,258 @@
+{
+ "game": {
+  "version": 2,
+  "players": [
+   {
+    "name": "You",
+    "color": 4293304064
+   },
+   {
+    "name": "The Jester",
+    "color": 4283872489
+   },
+   {
+    "name": "The Merchant",
+    "color": 4291590567
+   },
+   {
+    "name": "The Bishop",
+    "color": 4278230643
+   }
+  ],
+  "courtiers": [
+   3,
+   5,
+   4,
+   1
+  ],
+  "mode": 1,
+  "target": 6,
+  "chapter": null,
+  "lesson": 0,
+  "surprise": false,
+  "roles": true,
+  "digital": true,
+  "round": {
+   "players": 4,
+   "target": 5,
+   "hands": [
+    [
+     4,
+     21,
+     10,
+     11,
+     16,
+     27,
+     28,
+     33
+    ],
+    [
+     19,
+     22,
+     12,
+     14,
+     15,
+     30,
+     31,
+     34
+    ],
+    [
+     8,
+     18,
+     24,
+     17,
+     32,
+     35,
+     36,
+     39
+    ],
+    [
+     23,
+     25,
+     26,
+     9,
+     13,
+     29,
+     37,
+     38
+    ]
+   ],
+   "setAside": [],
+   "king": 2,
+   "tasks": [
+    {
+     "d": "Win a trick with a 5",
+     "owner": 3,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win all four Aces",
+     "owner": 2,
+     "x": null,
+     "seal": null,
+     "status": 2
+    }
+   ],
+   "pickTurn": null,
+   "passed": [],
+   "spoke": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "picksMade": 0,
+   "sealCount": 0,
+   "decree": null,
+   "exiled": null,
+   "passing": true,
+   "tricks": [
+    {
+     "leader": 2,
+     "seats": [
+      2,
+      3,
+      0,
+      1
+     ],
+     "cards": [
+      3,
+      2,
+      0,
+      5
+     ],
+     "winner": 1
+    },
+    {
+     "leader": 1,
+     "seats": [
+      1,
+      2,
+      3,
+      0
+     ],
+     "cards": [
+      7,
+      6,
+      20,
+      1
+     ],
+     "winner": 1
+    }
+   ],
+   "leader": 1,
+   "currentSeats": [],
+   "current": [],
+   "phase": 3,
+   "dealId": 1,
+   "revealed": {},
+   "revealHint": {},
+   "revealedAt": {}
+  },
+  "roundNumber": 3,
+  "wins": 2,
+  "losses": 0,
+  "streak": 2,
+  "bestStreak": 4,
+  "dealId": 1,
+  "seed": 3,
+  "resultRecorded": false
+ },
+ "cardWidth": 120.0,
+ "dealt": true,
+ "pos": [
+  null,
+  null
+ ],
+ "tilt": [
+  0.0,
+  0.0
+ ],
+ "savedAt": 1761600000000,
+ "facts": {
+  "mode": "endless",
+  "players": [
+   "You",
+   "The Jester",
+   "The Merchant",
+   "The Bishop"
+  ],
+  "playerCount": 4,
+  "target": 6,
+  "round": 3,
+  "wins": 2,
+  "losses": 0,
+  "streak": 2,
+  "king": 2,
+  "pickTurn": null,
+  "seals": 0,
+  "decree": null,
+  "exiled": null,
+  "tasks": [
+   {
+    "d": "Win a trick with a 5",
+    "owner": 3,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win all four Aces",
+    "owner": 2,
+    "status": "failed",
+    "seal": null
+   }
+  ],
+  "outcome": "lost",
+  "dealId": 1,
+  "seed": 3,
+  "hands": [
+   [
+    "5♥",
+    "4♠",
+    "2♦",
+    "3♦",
+    "8♦",
+    "A♣",
+    "2♣",
+    "7♣"
+   ],
+   [
+    "2♠",
+    "5♠",
+    "4♦",
+    "6♦",
+    "7♦",
+    "4♣",
+    "5♣",
+    "8♣"
+   ],
+   [
+    "9♥",
+    "A♠",
+    "7♠",
+    "9♦",
+    "6♣",
+    "9♣",
+    "Joker",
+    "King"
+   ],
+   [
+    "6♠",
+    "8♠",
+    "9♠",
+    "A♦",
+    "5♦",
+    "3♣",
+    "Jack",
+    "Queen"
+   ]
+  ],
+  "tricks": 2,
+  "current": [],
+  "turn": 1,
+  "announced": {},
+  "shown": {}
+ }
+}
