@@ -322,12 +322,16 @@ void main() {
         ('Tasks', 'tasks'),
         ('Style', 'style'),
       ]) {
-        // The tab: the highest text of its name (a tile can share it).
-        final named = find.text(tab).evaluate().toList();
-        if (named.isNotEmpty) {
-          named.sort((a, b) => tester.getCenter(find.byElementPredicate((e) => e == a)).dy
-              .compareTo(tester.getCenter(find.byElementPredicate((e) => e == b)).dy));
-          await tester.tap(find.byElementPredicate((e) => e == named.first), warnIfMissed: false);
+        // The tab: the text of its name on the tabs' row (the Style tab's),
+        // not the header's skin name or a tile's.
+        double dy(Element e) => tester.getCenter(find.byElementPredicate((x) => x == e)).dy;
+        final row = find.text('Style').evaluate().map(dy).firstOrNull;
+        final onRow = [
+          for (final e in find.text(tab).evaluate())
+            if (row == null || (dy(e) - row).abs() < 12) e
+        ];
+        if (onRow.isNotEmpty) {
+          await tester.tap(find.byElementPredicate((e) => e == onRow.first), warnIfMissed: false);
           await wait(700);
         }
         final grid = find.byKey(ValueKey('look-grid-$kind'));
