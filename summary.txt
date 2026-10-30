@@ -1,0 +1,7 @@
+analyzer issues: 0
+lib/ (code): 85.2% of 11971 lines
+01:13 +274: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) deals a full, fair hand
+01:13 +275: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 3 (Court Cards) is won by following the coach
+01:13 +276: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) deals a full, fair hand
+01:13 +277: /home/runner/work/kings-court/kings-court/test/tutorial_test.dart: Lesson 4 (Help each other) is won by following the coach
+01:14 +278: All tests passed!
