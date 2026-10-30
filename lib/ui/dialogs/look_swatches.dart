@@ -120,8 +120,10 @@ class _Tokens extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = look.tokenLook;
+    const shapes = [TokenShape.shield, TokenShape.hexagon, TokenShape.diamond];
     Widget token(int k, double size) => StyledToken(
-          style: l.style == TokenStyle.houses ? TokenStyle.coins : l.style,
+          style: l.style,
+          shape: shapes[k],
           size: size,
           color: look.players[k],
           ring: k == 1 ? look.gold : look.feltDeep,

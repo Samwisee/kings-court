@@ -516,7 +516,8 @@ void main() {
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   for (var k = 0; k < 3; k++)
                     StyledToken(
-                        style: t.style == TokenStyle.houses ? TokenStyle.coins : t.style,
+                        style: t.style,
+                        shape: const [TokenShape.shield, TokenShape.hexagon, TokenShape.diamond][k],
                         size: k == 1 ? 46 : 38,
                         color: court.players[k],
                         ring: k == 1 ? court.gold : court.feltDeep,

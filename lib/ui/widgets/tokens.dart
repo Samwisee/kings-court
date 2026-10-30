@@ -97,6 +97,8 @@ class SeatToken extends StatelessWidget {
     final token = style != TokenStyle.houses
         ? StyledToken(
             style: style,
+            // Every style in the courtier's own house shape.
+            shape: this.shape,
             size: size,
             color: fill,
             ring: ringColor,
