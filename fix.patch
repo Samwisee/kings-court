@@ -1,0 +1,121 @@
+diff --git a/lib/skin/tailored.dart b/lib/skin/tailored.dart
+index 282537d..f579d89 100644
+--- a/lib/skin/tailored.dart
++++ b/lib/skin/tailored.dart
+@@ -7,8 +7,6 @@
+ /// again.
+ library;
+ 
+-export 'choices.dart';
+-
+ import 'package:flutter/material.dart';
+ 
+ import '../engine/cards.dart';
+@@ -18,6 +16,8 @@ import 'looks.dart';
+ import 'parts.dart';
+ import 'skin.dart';
+ 
++export 'choices.dart';
++
+ /// [skin] as it's worn: with its own backs, faces and task cards, if it
+ /// comes with any.
+ Skin dressed(Skin skin) => skin is TailoredSkin ? skin : TailoredSkin.of(skin);
+diff --git a/lib/ui/app.dart b/lib/ui/app.dart
+index 4ac97f5..f915d35 100644
+--- a/lib/ui/app.dart
++++ b/lib/ui/app.dart
+@@ -7,10 +7,10 @@ import 'dart:ui' as ui;
+ import 'package:flutter/material.dart';
+ import 'package:flutter/rendering.dart';
+ 
++import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
+ import '../skin/court/court_skin.dart';
+ import '../skin/skin.dart';
+ import '../skin/skin_scope.dart';
+-import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
+ import '../skin/tailored.dart';
+ import 'table_page.dart';
+ 
+diff --git a/linux/flutter/generated_plugin_registrant.cc b/linux/flutter/generated_plugin_registrant.cc
+index 1830e5c..8690200 100644
+--- a/linux/flutter/generated_plugin_registrant.cc
++++ b/linux/flutter/generated_plugin_registrant.cc
+@@ -7,9 +7,13 @@
+ #include "generated_plugin_registrant.h"
+ 
+ #include <audioplayers_linux/audioplayers_linux_plugin.h>
++#include <sentry_flutter/sentry_flutter_plugin.h>
+ 
+ void fl_register_plugins(FlPluginRegistry* registry) {
+   g_autoptr(FlPluginRegistrar) audioplayers_linux_registrar =
+       fl_plugin_registry_get_registrar_for_plugin(registry, "AudioplayersLinuxPlugin");
+   audioplayers_linux_plugin_register_with_registrar(audioplayers_linux_registrar);
++  g_autoptr(FlPluginRegistrar) sentry_flutter_registrar =
++      fl_plugin_registry_get_registrar_for_plugin(registry, "SentryFlutterPlugin");
++  sentry_flutter_plugin_register_with_registrar(sentry_flutter_registrar);
+ }
+diff --git a/linux/flutter/generated_plugins.cmake b/linux/flutter/generated_plugins.cmake
+index f4bf1dc..220f0c7 100644
+--- a/linux/flutter/generated_plugins.cmake
++++ b/linux/flutter/generated_plugins.cmake
+@@ -4,6 +4,7 @@
+ 
+ list(APPEND FLUTTER_PLUGIN_LIST
+   audioplayers_linux
++  sentry_flutter
+ )
+ 
+ list(APPEND FLUTTER_FFI_PLUGIN_LIST
+diff --git a/macos/Flutter/GeneratedPluginRegistrant.swift b/macos/Flutter/GeneratedPluginRegistrant.swift
+index 290605b..c6f6efe 100644
+--- a/macos/Flutter/GeneratedPluginRegistrant.swift
++++ b/macos/Flutter/GeneratedPluginRegistrant.swift
+@@ -7,12 +7,14 @@ import Foundation
+ 
+ import audioplayers_darwin
+ import package_info_plus
++import sentry_flutter
+ import shared_preferences_foundation
+ import wakelock_plus
+ 
+ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+   AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
+   FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
++  SentryFlutterPlugin.register(with: registry.registrar(forPlugin: "SentryFlutterPlugin"))
+   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
+   WakelockPlusMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockPlusMacosPlugin"))
+ }
+diff --git a/windows/flutter/generated_plugin_registrant.cc b/windows/flutter/generated_plugin_registrant.cc
+index 8b6d468..f9dd88c 100644
+--- a/windows/flutter/generated_plugin_registrant.cc
++++ b/windows/flutter/generated_plugin_registrant.cc
+@@ -6,6 +6,12 @@
+ 
+ #include "generated_plugin_registrant.h"
+ 
++#include <audioplayers_windows/audioplayers_windows_plugin.h>
++#include <sentry_flutter/sentry_flutter_plugin.h>
+ 
+ void RegisterPlugins(flutter::PluginRegistry* registry) {
++  AudioplayersWindowsPluginRegisterWithRegistrar(
++      registry->GetRegistrarForPlugin("AudioplayersWindowsPlugin"));
++  SentryFlutterPluginRegisterWithRegistrar(
++      registry->GetRegistrarForPlugin("SentryFlutterPlugin"));
+ }
+diff --git a/windows/flutter/generated_plugins.cmake b/windows/flutter/generated_plugins.cmake
+index b93c4c3..d9b155a 100644
+--- a/windows/flutter/generated_plugins.cmake
++++ b/windows/flutter/generated_plugins.cmake
+@@ -3,9 +3,12 @@
+ #
+ 
+ list(APPEND FLUTTER_PLUGIN_LIST
++  audioplayers_windows
++  sentry_flutter
+ )
+ 
+ list(APPEND FLUTTER_FFI_PLUGIN_LIST
++  jni
+ )
+ 
+ set(PLUGIN_BUNDLED_LIBRARIES)

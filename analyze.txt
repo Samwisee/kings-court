@@ -1,0 +1,1 @@
+INFO|LINT|EOL_AT_END_OF_FILE|/home/runner/work/kings-court/kings-court/lib/skin/choices.dart|503|86|1|Missing a newline at the end of the file.
