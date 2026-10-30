@@ -269,10 +269,10 @@ class _Tabs extends StatelessWidget {
     final skin = context.skin;
     // All in view at once (wrapping if they must), never scrolled away.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
       child: Wrap(
         alignment: WrapAlignment.center,
-        spacing: 6,
+        spacing: 5,
         runSpacing: 6,
         children: [
           for (final k in _Kind.values)
@@ -286,7 +286,7 @@ class _Tabs extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     // As wide as its word: no alignment, which would stretch it.
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
                       color: k == kind ? skin.gold : Colors.black.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(18),
