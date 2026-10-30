@@ -6,7 +6,7 @@
 /// copy.
 ///
 /// Drawing the picture is slow (a whole screen of pattern, at once), so
-/// the last few are kept and shared: the felt muted on the front page and
+/// the last two are kept and shared: the felt muted on the front page and
 /// full on the table, or a style looked at again in the Livery page, come
 /// back without drawing again. And [PaintedOnce.ready] draws one ahead of
 /// time, at a moment that suits (the table's felt the moment Start is
@@ -31,7 +31,10 @@ class PaintedOnce extends StatefulWidget {
   /// widget showing one, so dropping one from here never pulls a picture
   /// out from under the screen.
   static final _kept = <Object, ui.Image>{};
-  static const _most = 4;
+  // Two: the felt muted and full. Each is a whole screen of pixels (about
+  // 12 MB on a phone), and an installed web app on iOS has little memory
+  // for pictures before drawing stalls.
+  static const _most = 2;
 
   /// The size and density the last picture was drawn at.
   static (Size, double)? _lastAt;
