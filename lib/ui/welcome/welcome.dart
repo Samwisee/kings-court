@@ -39,7 +39,7 @@ class _WelcomeIntroState extends State<WelcomeIntro> {
     super.initState();
     _wait = _firstShow &&
             CharacterToken.alive &&
-            !WidgetsBinding.instance.runtimeType.toString().contains('Test')
+            !CharacterToken.underTest
         ? 0.35
         : 0;
     _firstShow = false;

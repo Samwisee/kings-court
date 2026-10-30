@@ -40,13 +40,11 @@ class _FeltMotionState extends State<FeltMotion> with SingleTickerProviderStateM
   late final _c = AnimationController(vsync: this, duration: const Duration(seconds: 12));
   bool _still = true;
 
-  static bool get _underTest => WidgetsBinding.instance.runtimeType.toString().contains('Test');
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final moves = FeltMotion._kind(context.skin.tableLook.pattern) != null;
-    _still = !moves || MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || _underTest;
+    _still = !moves || MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive || CharacterToken.underTest;
     if (_still) {
       _c.stop();
     } else if (!_c.isAnimating) {

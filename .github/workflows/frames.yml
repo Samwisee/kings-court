@@ -1,0 +1,52 @@
+name: Frames
+
+# The frame benchmark (integration_test/frames_test.dart): the game in
+# Chrome, every animation played, each frame timed. frames.txt is
+# published to the frames-<branch> branch.
+on:
+  push:
+    branches: [main, 'frames-*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frames-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Play every animation
+        run: |
+          "$CHROMEWEBDRIVER/chromedriver" --port=4444 > chromedriver.log 2>&1 &
+          sleep 2
+          set +e
+          timeout 1200 flutter drive --profile -d web-server --browser-name=chrome --driver-port=4444 \
+            --browser-dimension=412,915@2 \
+            --web-browser-flag=--enable-unsafe-swiftshader --web-browser-flag=--ignore-gpu-blocklist \
+            --driver=test_driver/frames_driver.dart --target=integration_test/frames_test.dart > drive.txt 2>&1
+          echo "flutter drive exited $?"
+          grep -E 'FRAMES|rror|Exception|fail' drive.txt | head -60
+          tail -20 drive.txt
+          python3 tool/frames/report.py build/frames.json > frames.txt 2>&1 || cp drive.txt frames.txt
+          cat frames.txt
+      - name: Publish to the frames branch
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp frames.txt drive.txt chromedriver.log /tmp/out/ 2>/dev/null; cp build/frames.json /tmp/out/ 2>/dev/null
+          cd /tmp/out
+          git init -q -b out
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Frames for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "out:frames-${GITHUB_REF_NAME#frames-}"
