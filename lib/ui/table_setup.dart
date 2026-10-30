@@ -264,6 +264,9 @@ extension _Setup on HomePageState {
   void _startFromSetup(SetupResult r) {
     if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive) return _beginFromSetup(r);
     Sfx.fanfare();
+    // The table's felt drawn now, before the walk in moves, so the walk in
+    // doesn't stop to draw it when the table appears beneath it.
+    FeltLight.ready(context.skin);
     // The crown stays for the King on screen, the game set out beneath it;
     // the tutorial's pages come up over the felt once it's gone.
     final tutorial = r.mode == GameMode.tutorial;

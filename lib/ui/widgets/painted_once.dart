@@ -4,6 +4,13 @@
 /// screen again, so a pattern of hundreds of lines would be drawn afresh
 /// for every frame of anything moving anywhere; as a picture it's one
 /// copy.
+///
+/// Drawing the picture is slow (a whole screen of pattern, at once), so
+/// the last few are kept and shared: the felt muted on the front page and
+/// full on the table, or a style looked at again in the Livery page, come
+/// back without drawing again. And [PaintedOnce.ready] draws one ahead of
+/// time, at a moment that suits (the table's felt the moment Start is
+/// pressed, before the walk in begins, so the walk in doesn't stop for it).
 library;
 
 import 'dart:ui' as ui;
@@ -19,6 +26,59 @@ class PaintedOnce extends StatefulWidget {
   /// What's drawn: a new one draws it again.
   final Object id;
   final List<CustomPainter> painters;
+
+  /// The pictures kept, newest last: a handle each, cloned for each
+  /// widget showing one, so dropping one from here never pulls a picture
+  /// out from under the screen.
+  static final _kept = <Object, ui.Image>{};
+  static const _most = 4;
+
+  /// The size and density the last picture was drawn at.
+  static (Size, double)? _lastAt;
+
+  static ui.Image? _take(Object key) {
+    final image = _kept.remove(key);
+    if (image == null) return null;
+    _kept[key] = image;
+    return image.clone();
+  }
+
+  static void _keep(Object key, ui.Image image) {
+    _kept.remove(key)?.dispose();
+    _kept[key] = image;
+    while (_kept.length > _most) {
+      _kept.remove(_kept.keys.first)!.dispose();
+    }
+  }
+
+  static ui.Image? _draw(List<CustomPainter> painters, Size size, double ratio) {
+    try {
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      canvas.scale(ratio);
+      for (final p in painters) {
+        p.paint(canvas, size);
+      }
+      final picture = recorder.endRecording();
+      final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
+      picture.dispose();
+      return image;
+    } catch (_) {
+      // No pictures here: drawn live instead.
+      return null;
+    }
+  }
+
+  /// Draws [painters] for [id] now, at the size the last picture was, so
+  /// it's ready when it's shown: unless it's kept already.
+  static void ready(Object id, List<CustomPainter> painters) {
+    final at = _lastAt;
+    if (at == null) return;
+    final key = (id, at.$1, at.$2);
+    if (_kept.containsKey(key)) return;
+    final image = _draw(painters, at.$1, at.$2);
+    if (image != null) _keep(key, image);
+  }
 
   @override
   State<PaintedOnce> createState() => _PaintedOnceState();
@@ -38,23 +98,17 @@ class _PaintedOnceState extends State<PaintedOnce> {
     final key = (widget.id, size, ratio);
     if (key == _drawn && _image != null) return _image;
     if (size.isEmpty || !size.isFinite) return null;
-    try {
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
-      canvas.scale(ratio);
-      for (final p in widget.painters) {
-        p.paint(canvas, size);
-      }
-      final picture = recorder.endRecording();
-      final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
-      picture.dispose();
-      _image?.dispose();
-      _image = image;
-      _drawn = key;
-    } catch (_) {
-      // No pictures here: drawn live instead.
-      return null;
+    var image = PaintedOnce._take(key);
+    if (image == null) {
+      final drawn = PaintedOnce._draw(widget.painters, size, ratio);
+      if (drawn == null) return null;
+      PaintedOnce._keep(key, drawn);
+      image = drawn.clone();
     }
+    _image?.dispose();
+    _image = image;
+    _drawn = key;
+    PaintedOnce._lastAt = (size, ratio);
     return _image;
   }
 
