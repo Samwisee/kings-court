@@ -254,6 +254,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     CharacterToken.loopUnderTest = true;
     HomePageTestHooks.seed = 7;
+    // The courtiers think as long here as on a phone (CI's processor is
+    // several times faster): their thinking spans as many slices, so the
+    // budget's check that it never holds a frame up means what it says.
+    HomePageState.botBudget = 900 * 6;
     final frames = Frames()..watch();
 
     Future<void> wait(int ms) => tester.binding.delayed(Duration(milliseconds: ms));
