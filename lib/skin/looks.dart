@@ -394,7 +394,7 @@ class CardLook {
         backEdge: backEdge,
         radius: radius ?? this.radius,
         backPattern: backPattern,
-        motif: motif,
+        motif: this.motif,
         backPatternAlpha: backPatternAlpha,
         backRule: backRule,
         backCrown: backCrown,
