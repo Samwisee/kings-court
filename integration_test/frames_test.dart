@@ -227,9 +227,9 @@ void main() {
 
     await frames.scene('the night sky\'s felt: stars twinkling, one shooting', () async {
       await tap(find.byTooltip('Menu'), then: 900);
-      await tap(find.textContaining('Livery: '), then: 1200);
+      await tap(find.textContaining('Livery: '));
       await tap(find.text('Style'), then: 600);
-      final grid = find.byKey(ValueKey('look-grid-style'));
+      final grid = find.byKey(const ValueKey('look-grid-style'));
       final night = find.descendant(of: grid, matching: find.text('Midnight'));
       if (night.evaluate().isNotEmpty) await tap(night, then: 800);
       await tap(find.text('Done'), then: 8000);
