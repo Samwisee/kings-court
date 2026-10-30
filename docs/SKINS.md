@@ -120,7 +120,7 @@ moves the court's or another skin's screenshots does, and goes in
 
 ## The player's own look
 
-The menu's *Look* opens a dialog (`lib/ui/dialogs/look_dialog.dart`): a
+The menu's *Look* opens a dialog (`lib/ui/dialogs/livery_page.dart`): a
 style (any listed skin), a table and card backs. A table or backs chosen
 make a `TailoredSkin` (`lib/skin/tailored.dart`): the skin, with the felt
 (its shades, the light over it and the table round it) or every card and

@@ -107,7 +107,6 @@ class TailoredSkin extends Skin {
     var look = _backed;
     if (f != null) {
       look = look.withFace(
-          courtStyle: f.courtStyle,
           radius: f.radius,
           faceFont: f.font,
           frame: f.frame,

@@ -35,8 +35,8 @@ List<MenuEntry> menuEntries({
       if (upright != null)
         _item('upright', upright ? Icons.laptop_rounded : Icons.table_restaurant_outlined,
             upright ? Strings.laptopView : Strings.tableView),
-      // The look worn; tapped, the Look dialog.
-      _item('skin', Icons.brush_outlined, Strings.look(look)),
+      // The look worn; tapped, the Livery page.
+      _item('skin', Icons.brush_outlined, Strings.livery(look)),
       _item('sound', Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
           Strings.sounds,
           on: Sfx.enabled),

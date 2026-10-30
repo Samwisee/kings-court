@@ -1,5 +1,5 @@
-// The Look page's little pictures of each choice (look_dialog.dart).
-part of 'look_dialog.dart';
+// The Livery page's little pictures of each choice (livery_page.dart).
+part of 'livery_page.dart';
 
 /// A little table: its felt, lit in the middle, with what's worked into
 /// it, set into its rim, with a crown in the accent.

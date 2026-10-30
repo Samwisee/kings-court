@@ -257,7 +257,6 @@ class _ThroneRoomState extends State<ThroneRoom> {
                       : entranceOf(f.role!),
               exit: leaving ? Exit.walk : null,
               size: size,
-              phase: f.id.hashCode % 100 / 100,
               delay: Duration(
                   milliseconds: f.enters && f.enterAt == 0 && !leaving
                       ? 200 + 260 * widget.figures.indexOf(f)

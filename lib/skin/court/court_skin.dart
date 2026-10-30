@@ -136,7 +136,6 @@ class CourtSkin extends Skin {
 
   @override
   CardLook get cardLook => const CardLook(
-        courtStyle: CourtCardStyle.emblems,
         cloth: [
           [Color(0xFF5A2F87), Color(0xFF241238)],
           [Color(0xFF13734A), Color(0xFF062A1B)],

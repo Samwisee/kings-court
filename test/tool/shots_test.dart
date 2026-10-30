@@ -417,7 +417,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-3-menu.png'));
-    // The Look dialog, worn in this skin.
+    // The Livery page, worn in this skin.
     await tester.tap(find.text('Livery: ${skin.name}'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 30));
@@ -446,7 +446,7 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/livery-wide.png'));
   });
 
-  // Looks mixed from the Look dialog's choices, at the table.
+  // Looks mixed from the Livery page's choices, at the table.
   BackChoice back(String id) => backChoices.firstWhere((b) => b.id == id);
   TaskChoice task(String id) => taskChoices.firstWhere((k) => k.id == id);
   final mixes = <String, Skin>{
@@ -459,7 +459,7 @@ void main() {
   };
 
   for (final MapEntry(key: name, value: skin) in mixes.entries) {
-    testWidgets('A look mixed in the Look dialog ($name), at the table', (tester) async {
+    testWidgets('A look mixed in the Livery page ($name), at the table', (tester) async {
       tester.view.physicalSize = const Size(1170, 2532);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -484,7 +484,7 @@ void main() {
     });
   }
 
-  // Every card back and table the Look dialog offers, on the court.
+  // Every card back and table the Livery page offers, on the court.
   testWidgets('The backs and tables to choose from', (tester) async {
     tester.view.physicalSize = const Size(1600, 2400);
     tester.view.devicePixelRatio = 2;

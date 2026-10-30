@@ -315,7 +315,6 @@ class DesignSkin extends Skin {
 
   @override
   CardLook get cardLook => CardLook(
-        courtStyle: _rich ? CourtCardStyle.emblems : CourtCardStyle.letters,
         cloth: design.cloth,
         courtFrame: design.accent.withValues(alpha: 0.6),
         back: _rich ? _mix(design.ground, Colors.black, 0.1) : design.accentDeep,

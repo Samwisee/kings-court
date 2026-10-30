@@ -1,4 +1,4 @@
-/// The courtiers’ living tokens: breathing, arriving, speaking, walking, and their speech bubbles.
+/// The courtiers’ living tokens: arriving, speaking, walking, and their speech bubbles.
 library;
 
 import 'dart:async';
@@ -13,7 +13,7 @@ import 'clamp.dart';
 
 /// How a character token is behaving.
 enum CharacterMood {
-  /// Sitting at the table: a slow, gentle breath (see [CharacterToken.alive]).
+  /// Sitting at the table, still.
   idle,
 
   /// Has something to say: a little wobble and a speech bubble.
@@ -25,7 +25,7 @@ enum CharacterMood {
   /// Displeased: a shake and a red mark.
   angry,
 
-  /// Just arrived at court: springs in, then breathes like the others.
+  /// Just arrived at court: springs in, then sits still like the others.
   arriving,
 
   /// Leaving court: shrinks and fades.
@@ -38,7 +38,6 @@ class CharacterToken extends StatefulWidget {
     super.key,
     required this.child,
     this.mood = CharacterMood.idle,
-    this.phase = 0,
     this.size = 40,
     this.delay = Duration.zero,
     this.entrance,
@@ -48,7 +47,7 @@ class CharacterToken extends StatefulWidget {
   final Widget child;
   final CharacterMood mood;
 
-  /// Makes an entrance in this style, then breathes like the others.
+  /// Makes an entrance in this style, then sits still like the others.
   final Entrance? entrance;
 
   /// Leaves in this style (and stays gone).
@@ -57,13 +56,12 @@ class CharacterToken extends StatefulWidget {
   /// Wait this long before reacting (to take turns down a list).
   final Duration delay;
 
-  /// Offsets the idle breath so a table of tokens doesn't move in step.
-  final double phase;
-
   /// Roughly how big the token is, to scale the hop and the marks.
   final double size;
 
-  /// Idle breathing on or off (off in tests, which wait for stillness).
+  /// Whether anything that loops on its own may run (the felt's motion,
+  /// a waiting button's glow): off in tests, which wait for stillness.
+  /// The tokens themselves are still between their moments.
   static bool alive = true;
 
   @override
@@ -76,15 +74,6 @@ class _CharacterTokenState extends State<CharacterToken>
       vsync: this,
       duration: Duration(
           milliseconds: widget.entrance != null || widget.exit != null ? 1400 : 900));
-  late final AnimationController _breath = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 2800));
-
-  /// Whether it breathes while it sits: never now. The tokens are still
-  /// between the moments they come alive (arriving, speaking, pleased,
-  /// cross, leaving), so nothing on the table moves for no reason, and the
-  /// screen isn't drawn again and again while it waits.
-  bool get _idles => false;
-
   Timer? _wait;
 
   @override
@@ -97,7 +86,6 @@ class _CharacterTokenState extends State<CharacterToken>
         if (mounted) _once.forward();
       });
     }
-    if (_idles && CharacterToken.alive) _breath.repeat();
   }
 
   @override
@@ -105,11 +93,6 @@ class _CharacterTokenState extends State<CharacterToken>
     super.didUpdateWidget(old);
     if (old.mood != widget.mood) {
       _once.forward(from: 0);
-      if (_idles && CharacterToken.alive) {
-        if (!_breath.isAnimating) _breath.repeat();
-      } else {
-        _breath.stop();
-      }
     }
   }
 
@@ -117,22 +100,21 @@ class _CharacterTokenState extends State<CharacterToken>
   void dispose() {
     _wait?.cancel();
     _once.dispose();
-    _breath.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    // Its own layer: a breathing token repaints alone, never the table.
-    // And the token within its own too: breathing only moves and scales
-    // it, so it's drawn once (shadow, glow and all), not every frame.
+    // Its own layer: a token coming alive repaints alone, never the table.
+    // And the token within its own too: its moments only move and scale
+    // it, so it's drawn once (shadow, glow and all), not every frame. Still
+    // between them: nothing on the table moves for no reason.
     return RepaintBoundary(child: AnimatedBuilder(
-      animation: Listenable.merge([_once, _breath]),
+      animation: _once,
       child: RepaintBoundary(child: widget.child),
       builder: (context, child) {
         final t = _once.value;
-        final b = math.sin(2 * math.pi * (_breath.value + widget.phase));
         final s = widget.size;
         var dx = 0.0, dy = 0.0, scale = 1.0, angle = 0.0, opacity = 1.0;
         IconData? mark;
@@ -209,17 +191,13 @@ class _CharacterTokenState extends State<CharacterToken>
               angle = math.pi * 4 * (1 - e);
           }
           if (before) opacity = 0;
-          // Then a gentle bob: moved, never scaled, so its letter
-          // stays crisp and still on it.
-          if (t >= 1) dy += b * s * 0.03;
         } else {
         switch (widget.mood) {
           case CharacterMood.idle:
-            dy = b * s * 0.03;
+            break;
           case CharacterMood.arriving:
             scale = t >= 1 ? 1 : Curves.elasticOut.transform(t);
             opacity = clampD(t * 3, 0, 1);
-            dy = b * s * 0.03;
           case CharacterMood.speaking:
             angle = math.sin(t * math.pi * 6) * 0.1 * (1 - t);
             scale = 1 + 0.08 * math.sin(t * math.pi);

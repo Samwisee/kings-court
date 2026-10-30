@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import '../../skin/looks.dart';
 
 /// Draws [pattern] in [ink] over a felt of [ground], at [scale] (smaller
-/// for a little table in the Look dialog).
+/// for a little table in the Livery page).
 class FeltPatternPainter extends CustomPainter {
   const FeltPatternPainter(this.pattern, this.ink, {required this.ground, this.scale = 1, this.soft = false});
   final FeltPattern pattern;

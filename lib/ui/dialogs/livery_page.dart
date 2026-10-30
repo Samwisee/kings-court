@@ -27,17 +27,17 @@ import '../cards/card_view.dart';
 import '../cards/task_chip.dart';
 import '../widgets.dart';
 
-part 'look_swatches.dart';
+part 'livery_swatches.dart';
 
-/// Opens the Look page; [wear] puts the look on (and keeps it) as it
+/// Opens the Livery page; [wear] puts the look on (and keeps it) as it
 /// closes.
-Future<void> showLookDialog(BuildContext context, {required bool Function(Skin) wear}) {
+Future<void> showLivery(BuildContext context, {required bool Function(Skin) wear}) {
   final worn = context.skin;
   final entitlements = context.getInheritedWidgetOfExactType<SkinScope>()?.entitlements ?? const AllOwned();
   return Navigator.of(context).push(PageRouteBuilder<void>(
     transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (context, a, b) => _LookPage(start: worn, wear: wear, entitlements: entitlements),
+    pageBuilder: (context, a, b) => _LiveryPage(start: worn, wear: wear, entitlements: entitlements),
     transitionsBuilder: (context, a, b, child) {
       final t = CurvedAnimation(parent: a, curve: Curves.easeOutCubic);
       return FadeTransition(
@@ -48,17 +48,17 @@ Future<void> showLookDialog(BuildContext context, {required bool Function(Skin) 
   ));
 }
 
-class _LookPage extends StatefulWidget {
-  const _LookPage({required this.start, required this.wear, required this.entitlements});
+class _LiveryPage extends StatefulWidget {
+  const _LiveryPage({required this.start, required this.wear, required this.entitlements});
   final Skin start;
   final bool Function(Skin) wear;
   final Entitlements entitlements;
 
   @override
-  State<_LookPage> createState() => _LookPageState();
+  State<_LiveryPage> createState() => _LiveryPageState();
 }
 
-class _LookPageState extends State<_LookPage> {
+class _LiveryPageState extends State<_LiveryPage> {
   late Skin _base = TailoredSkin.baseOf(widget.start);
   late BackChoice? _back = _chosen(widget.start)?.backChoice;
   late FaceChoice? _face = _chosen(widget.start)?.faceChoice;

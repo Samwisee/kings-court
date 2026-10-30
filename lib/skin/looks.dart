@@ -307,17 +307,6 @@ enum PipStyle {
   rank,
 }
 
-/// How the Court Cards' faces are drawn.
-enum CourtCardStyle {
-  /// Each on its own patterned cloth with its emblem, framed in gold: the
-  /// printed deck's art.
-  emblems,
-
-  /// A clean face: the card's letter large, its emblem small, on the card
-  /// stock with a coloured band.
-  letters,
-}
-
 /// What's printed over a card's back, in its edge colour, faintly.
 enum BackMotif {
   /// Nothing: the back's colour, its crown and any rule.
@@ -341,7 +330,6 @@ enum BackMotif {
 
 class CardLook {
   const CardLook({
-    required this.courtStyle,
     required this.cloth,
     required this.courtFrame,
     required this.back,
@@ -394,8 +382,7 @@ class CardLook {
   /// This look with other faces: how the Court Cards are drawn, the
   /// corners' rounding and the ranks' face.
   CardLook withFace(
-          {required CourtCardStyle courtStyle,
-          double? radius,
+          {double? radius,
           String? faceFont,
           FaceFrame frame = FaceFrame.none,
           Color? frameColour,
@@ -403,7 +390,6 @@ class CardLook {
           double motifAlpha = 0.08,
           PipStyle pips = PipStyle.large}) =>
       CardLook(
-        courtStyle: courtStyle,
         cloth: cloth,
         courtFrame: courtFrame,
         back: back,
@@ -431,7 +417,6 @@ class CardLook {
   /// This look with other Court Cards: their cloths, what's woven into
   /// them, and an arch round the emblem.
   CardLook withCourt({List<List<Color>>? cloth, List<FeltPattern>? patterns, Color? ink, bool arch = false}) => CardLook(
-        courtStyle: courtStyle,
         cloth: cloth ?? this.cloth,
         courtFrame: courtFrame,
         back: back,
@@ -456,7 +441,6 @@ class CardLook {
         courtRadius: courtRadius,
       );
 
-  final CourtCardStyle courtStyle;
 
   /// Each Court Card's colours, Joker, Jack, Queen, King: light then dark.
   final List<List<Color>> cloth;
@@ -494,7 +478,6 @@ class CardLook {
     List<Color>? taskBack,
   }) =>
       CardLook(
-        courtStyle: courtStyle,
         cloth: cloth,
         courtFrame: courtFrame,
         back: back,

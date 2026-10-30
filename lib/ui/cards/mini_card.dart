@@ -46,9 +46,8 @@ class MiniCard extends StatelessWidget {
     final court = card.isCourt;
     final felt = skin.feltDeep;
     final fade = faint ? 0.55 : 0.0;
-    // A Court Card on its cloth in gold, or (a skin whose Court Cards are
-    // letters) on the card stock in its cloth's colour.
-    final cloth = court && skin.cardLook.courtStyle == CourtCardStyle.emblems;
+    // A Court Card on its cloth in gold: every Court Card is full art.
+    final cloth = court;
     final ink = Color.lerp(
         cloth
             ? skin.gold

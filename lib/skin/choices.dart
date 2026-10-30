@@ -1,4 +1,4 @@
-/// What can be chosen in the Look page beside the style (tailored.dart):
+/// What can be chosen in the Livery page beside the style (tailored.dart):
 /// card backs, task cards, card faces and tokens, each by name.
 library;
 
@@ -201,7 +201,6 @@ class FaceChoice {
       required this.red,
       required this.blue,
       required this.green,
-      this.courtStyle = CourtCardStyle.emblems,
       this.radius,
       this.font,
       this.frame = FaceFrame.none,
@@ -228,7 +227,6 @@ class FaceChoice {
   final Color red;
   final Color blue;
   final Color green;
-  final CourtCardStyle courtStyle;
   final double? radius;
   final String? font;
   final FaceFrame frame;
@@ -283,7 +281,6 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFF2626A),
       blue: Color(0xFF80B4FF),
       green: Color(0xFF7FD99A),
-      courtStyle: CourtCardStyle.letters,
       frame: FaceFrame.deco,
       frameColour: Color(0xFFD4A63A),
       font: 'CinzelDecorative',
@@ -299,7 +296,6 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFE5383B),
       blue: Color(0xFF2F6FE0),
       green: Color(0xFF16A05D),
-      courtStyle: CourtCardStyle.letters,
       radius: 0.16,
       font: 'AlegreyaSans',
       pips: PipStyle.rank,
@@ -331,7 +327,6 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFB0413E),
       blue: Color(0xFF3D6390),
       green: Color(0xFF3E7A45),
-      courtStyle: CourtCardStyle.letters,
       frame: FaceFrame.leaves,
       frameColour: Color(0xFF5E8A57),
       cloth: [
@@ -346,7 +341,6 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFC0392B),
       blue: Color(0xFF2468B0),
       green: Color(0xFF1F7A5A),
-      courtStyle: CourtCardStyle.letters,
       radius: 0.12,
       motif: BackMotif.waves,
       motifAlpha: 0.1,
@@ -363,7 +357,6 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFB23A48),
       blue: Color(0xFF3B5DA0),
       green: Color(0xFF3A7A55),
-      courtStyle: CourtCardStyle.letters,
       radius: 0.14,
       motif: BackMotif.dots,
       motifAlpha: 0.1,
@@ -381,7 +374,6 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFFF7A85),
       blue: Color(0xFF8FC0FF),
       green: Color(0xFF8BE0B0),
-      courtStyle: CourtCardStyle.letters,
       frame: FaceFrame.double,
       frameColour: Color(0x99C9D2E3),
       motif: BackMotif.dots,

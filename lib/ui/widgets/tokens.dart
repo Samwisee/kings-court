@@ -1,4 +1,4 @@
-/// Seat tokens and the courtiers’ living tokens: breathing, arriving, speaking, walking.
+/// Seat tokens and the courtiers’ living tokens: arriving, speaking, walking.
 library;
 
 import 'dart:math' as math;

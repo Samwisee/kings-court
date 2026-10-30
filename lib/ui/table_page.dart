@@ -51,7 +51,7 @@ import 'cards/card_view.dart';
 import 'cards/task_chip.dart';
 import 'controller.dart';
 import 'dialogs/courtier_card.dart';
-import 'dialogs/look_dialog.dart';
+import 'dialogs/livery_page.dart';
 import 'dialogs/table_dialogs.dart';
 import 'dialogs/task_close_up.dart';
 import 'menu/menu.dart';
@@ -1725,13 +1725,12 @@ class HomePageState extends State<HomePage>
 
   Widget _digiToken(int seat, double size, {bool tight = false}) {
     final labels = seatLabels(game.players);
-    // Each courtier breathes, and springs in when they first come to the
+    // Each courtier springs in when they first come to the
     // table; the same courtier keeps the same token as they move seats.
     return CharacterToken(
         key: ValueKey('person-${game.hasRoles && seat < game.courtiers.length ? game.courtiers[seat].name : seat}'),
         mood: CharacterMood.arriving,
         delay: Duration(milliseconds: 150 * seat),
-        phase: seat * 0.37,
         size: size,
         child: KeyedSubtree(
         key: _seatKey(seat),
@@ -2994,8 +2993,8 @@ class HomePageState extends State<HomePage>
             setState(() => game = GameState());
             _keepAwake(false);
           case 'skin':
-            showLookDialog(context, wear: _wear);
-          case 'nextLook': // the benchmark's way through every skin
+            showLivery(context, wear: _wear);
+          case 'nextLivery': // the benchmark's way through every skin
             if (skinAfter(context.skin, (s) => SkinScope.owns(context, s)) case final next?) _wear(next);
           case 'share':
             setState(() => GameLog.sharing = !GameLog.sharing);

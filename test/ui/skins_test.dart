@@ -61,7 +61,7 @@ void main() {
     expect(chosen, isNull);
   });
 
-  testWidgets('The Look page puts a look together and wears it as it closes, and it’s remembered', (tester) async {
+  testWidgets('The Livery page puts a look together and wears it as it closes, and it’s remembered', (tester) async {
     WidgetController.hitTestWarningShouldBeFatal = true;
     addTearDown(() => WidgetController.hitTestWarningShouldBeFatal = false);
     SharedPreferences.setMockInitialValues({});
