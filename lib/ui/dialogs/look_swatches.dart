@@ -166,6 +166,29 @@ class _Tokens extends StatelessWidget {
   }
 }
 
+/// The Jack, Queen and King as [look] draws them, fanned.
+class _Courts extends StatelessWidget {
+  const _Courts(this.look);
+  final Skin look;
+
+  @override
+  Widget build(BuildContext context) => SkinScope(
+        skin: look,
+        child: SizedBox(
+          width: 88,
+          height: 70,
+          child: Stack(children: [
+            for (final (k, card) in const [PlayingCard.jack, PlayingCard.queen, PlayingCard.king].indexed)
+              Positioned(
+                left: 4 + k * 22.0,
+                top: k == 1 ? 2 : 6,
+                child: Transform.rotate(angle: (k - 1) * 0.12, child: PlayingCardView(card: card, width: 38)),
+              ),
+          ]),
+        ),
+      );
+}
+
 /// A card back as [look] draws it.
 class _Back extends StatelessWidget {
   const _Back(this.look);

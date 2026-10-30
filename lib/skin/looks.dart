@@ -395,14 +395,10 @@ class CardLook {
           Color? frameColour,
           BackMotif motif = BackMotif.none,
           double motifAlpha = 0.08,
-          PipStyle pips = PipStyle.large,
-          List<List<Color>>? cloth,
-          FeltPattern? courtPattern,
-          Color? courtInk,
-          bool courtArch = false}) =>
+          PipStyle pips = PipStyle.large}) =>
       CardLook(
         courtStyle: courtStyle,
-        cloth: cloth ?? this.cloth,
+        cloth: cloth,
         courtFrame: courtFrame,
         back: back,
         backEdge: backEdge,
@@ -423,6 +419,33 @@ class CardLook {
         courtPattern: courtPattern,
         courtInk: courtInk,
         courtArch: courtArch,
+      );
+
+  /// This look with other Court Cards: their cloths, what's woven into
+  /// them, and an arch round the emblem.
+  CardLook withCourt({List<List<Color>>? cloth, FeltPattern? pattern, Color? ink, bool arch = false}) => CardLook(
+        courtStyle: courtStyle,
+        cloth: cloth ?? this.cloth,
+        courtFrame: courtFrame,
+        back: back,
+        backEdge: backEdge,
+        radius: radius,
+        backPattern: backPattern,
+        motif: motif,
+        backPatternAlpha: backPatternAlpha,
+        backRule: backRule,
+        backCrown: backCrown,
+        small: small,
+        taskBack: taskBack,
+        faceFont: faceFont,
+        faceFrame: faceFrame,
+        faceFrameColour: faceFrameColour,
+        faceMotif: faceMotif,
+        faceMotifAlpha: faceMotifAlpha,
+        pips: pips,
+        courtPattern: pattern,
+        courtInk: ink,
+        courtArch: arch,
       );
 
   final CourtCardStyle courtStyle;

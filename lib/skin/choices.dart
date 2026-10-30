@@ -501,3 +501,24 @@ TokenChoice? tokenById(String? id) => tokenChoices.where((t) => t.id == id).firs
 BackChoice? backById(String? id) => backChoices.where((b) => b.id == id).firstOrNull;
 TaskChoice? taskById(String? id) => taskChoices.where((k) => k.id == id).firstOrNull;
 FaceChoice? faceById(String? id) => faceChoices.where((f) => f.id == id).firstOrNull;
+
+/// The Court Cards' full art (their cloths, what's woven into them, an
+/// arch round the emblem), chosen apart from the number cards' faces:
+/// every face that comes with art of its own offers it here too.
+class CourtChoice {
+  const CourtChoice(this.id, this.name, {this.cloth, this.pattern, this.ink, this.arch = false});
+  final String id;
+  final String name;
+  final List<List<Color>>? cloth;
+  final FeltPattern? pattern;
+  final Color? ink;
+  final bool arch;
+}
+
+final courtChoices = <CourtChoice>[
+  for (final f in faceChoices)
+    if (f.cloth != null || f.courtPattern != null)
+      CourtChoice(f.id, f.name, cloth: f.cloth, pattern: f.courtPattern, ink: f.courtInk, arch: f.courtArch),
+];
+
+CourtChoice? courtById(String? id) => courtChoices.where((c) => c.id == id).firstOrNull;

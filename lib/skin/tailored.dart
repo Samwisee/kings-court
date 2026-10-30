@@ -27,20 +27,24 @@ Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 /// [base] with [backChoice] backs and [taskChoice] task cards (the skin's
 /// own for either that's null).
 class TailoredSkin extends Skin {
-  const TailoredSkin(this.base, {this.backChoice, this.taskChoice, this.faceChoice, this.tokenChoice});
+  const TailoredSkin(this.base,
+      {this.backChoice, this.taskChoice, this.faceChoice, this.tokenChoice, this.courtChoice});
 
   final Skin base;
   final BackChoice? backChoice;
   final TaskChoice? taskChoice;
   final FaceChoice? faceChoice;
   final TokenChoice? tokenChoice;
+  final CourtChoice? courtChoice;
 
   /// [base] with these choices (and its own defaults for the rest); just
   /// [base] when there's nothing to choose.
-  static Skin of(Skin base, {BackChoice? back, TaskChoice? task, FaceChoice? face, TokenChoice? token}) =>
-      back == null && task == null && face == null && token == null && !hasDefaults(base)
+  static Skin of(Skin base,
+          {BackChoice? back, TaskChoice? task, FaceChoice? face, TokenChoice? token, CourtChoice? court}) =>
+      back == null && task == null && face == null && token == null && court == null && !hasDefaults(base)
           ? base
-          : TailoredSkin(base, backChoice: back, taskChoice: task, faceChoice: face, tokenChoice: token);
+          : TailoredSkin(base,
+              backChoice: back, taskChoice: task, faceChoice: face, tokenChoice: token, courtChoice: court);
 
   /// Whether [skin] comes with backs, faces or task cards of its own
   /// choosing ([Skin.defaultBack] and the rest).
@@ -53,6 +57,10 @@ class TailoredSkin extends Skin {
   FaceChoice? get face => faceChoice ?? faceById(base.defaultFace);
   TokenChoice? get token => tokenChoice ?? tokenById(base.defaultToken);
 
+  /// The Court Cards: chosen, or those that come with the style's own
+  /// faces.
+  CourtChoice? get court => courtChoice ?? courtById(base.defaultFace);
+
   /// [skin] without its choices: the skin they're made on.
   static Skin baseOf(Skin skin) => skin is TailoredSkin ? skin.base : skin;
 
@@ -63,6 +71,7 @@ class TailoredSkin extends Skin {
         if (taskChoice != null) 'k:${taskChoice!.id}',
         if (faceChoice != null) 'f:${faceChoice!.id}',
         if (tokenChoice != null) 'o:${tokenChoice!.id}',
+        if (courtChoice != null) 'c:${courtChoice!.id}',
       ].join('+');
   @override
   String get name => base.name;
@@ -94,20 +103,21 @@ class TailoredSkin extends Skin {
   @override
   CardLook get cardLook {
     final f = face;
-    if (f == null) return _backed;
-    return _backed.withFace(
-        courtStyle: f.courtStyle,
-        radius: f.radius,
-        faceFont: f.font,
-        frame: f.frame,
-        frameColour: f.frameColour,
-        motif: f.motif,
-        motifAlpha: f.motifAlpha,
-        pips: f.pips,
-        cloth: f.cloth,
-        courtPattern: f.courtPattern,
-        courtInk: f.courtInk,
-        courtArch: f.courtArch);
+    final c = court;
+    var look = _backed;
+    if (f != null) {
+      look = look.withFace(
+          courtStyle: f.courtStyle,
+          radius: f.radius,
+          faceFont: f.font,
+          frame: f.frame,
+          frameColour: f.frameColour,
+          motif: f.motif,
+          motifAlpha: f.motifAlpha,
+          pips: f.pips);
+    }
+    if (c != null) look = look.withCourt(cloth: c.cloth, pattern: c.pattern, ink: c.ink, arch: c.arch);
+    return look;
   }
 
   CardLook get _backed {
@@ -129,9 +139,9 @@ class TailoredSkin extends Skin {
   @override
   SkinParts get parts {
     final p = base.parts;
-    if (back == null && face == null) return p;
+    if (back == null && face == null && court == null) return p;
     return SkinParts(
-        cardFace: face == null ? p.cardFace : null,
+        cardFace: face == null && court == null ? p.cardFace : null,
         cardBack: back == null ? p.cardBack : null,
         panel: p.panel,
         table: p.table);

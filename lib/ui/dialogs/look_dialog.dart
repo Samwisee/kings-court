@@ -63,11 +63,12 @@ class _LookPageState extends State<_LookPage> {
   late FaceChoice? _face = _chosen(widget.start)?.faceChoice;
   late TaskChoice? _task = _chosen(widget.start)?.taskChoice;
   late TokenChoice? _token = _chosen(widget.start)?.tokenChoice;
+  late CourtChoice? _court = _chosen(widget.start)?.courtChoice;
   bool _worn = false;
 
   static TailoredSkin? _chosen(Skin s) => s is TailoredSkin ? s : null;
 
-  Skin get _look => TailoredSkin.of(_base, back: _back, task: _task, face: _face, token: _token);
+  Skin get _look => TailoredSkin.of(_base, back: _back, task: _task, face: _face, token: _token, court: _court);
 
   /// A new style comes as it's meant to: its own faces, backs and tasks.
   void _style(Skin s) => setState(() {
@@ -76,6 +77,7 @@ class _LookPageState extends State<_LookPage> {
         _face = null;
         _task = null;
         _token = null;
+        _court = null;
       });
 
   void _done() {
@@ -120,31 +122,11 @@ class _LookPageState extends State<_LookPage> {
                 SafeArea(
                   child: Column(children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 12, 6),
-                      child: Row(children: [
-                        Expanded(child: Text('Look', style: skin.dialogTitle.copyWith(fontSize: 26))),
-                        FilledButton(onPressed: _done, child: const Text('Done')),
-                      ]),
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 2),
+                      child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('Look', style: skin.dialogTitle.copyWith(fontSize: 26))),
                     ),
-                    // The look as it's put together.
-                    SizedBox(
-                      height: clampD(height * 0.3, 190, 290),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 360),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, a) => FadeTransition(
-                              opacity: a,
-                              child: ScaleTransition(scale: Tween(begin: 0.96, end: 1.0).animate(a), child: child)),
-                          layoutBuilder: (current, previous) =>
-                              Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
-                          child: _Preview(key: ValueKey(look.id), look: look),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
                     Expanded(
                       child: ListView(
                         key: const ValueKey('look-rows'),
@@ -179,6 +161,25 @@ class _LookPageState extends State<_LookPage> {
                                     selected: _face?.id == faceChoices[i - 1].id,
                                     onTap: () => setState(() => _face = faceChoices[i - 1]),
                                     child: _Faces(TailoredSkin(base, faceChoice: faceChoices[i - 1])),
+                                  ),
+                          ),
+                          _Row(
+                            id: 'court',
+                            title: 'Court Cards',
+                            chosen: dressed?.court?.name ?? '${base.name}’s',
+                            count: courtChoices.length + 1,
+                            tile: (i) => i == 0
+                                ? _Tile(
+                                    name: '${base.name}’s',
+                                    selected: _court == null,
+                                    onTap: () => setState(() => _court = null),
+                                    child: _Courts(TailoredSkin.of(base)),
+                                  )
+                                : _Tile(
+                                    name: courtChoices[i - 1].name,
+                                    selected: _court?.id == courtChoices[i - 1].id,
+                                    onTap: () => setState(() => _court = courtChoices[i - 1]),
+                                    child: _Courts(TailoredSkin(base, courtChoice: courtChoices[i - 1])),
                                   ),
                           ),
                           _Row(
@@ -239,6 +240,45 @@ class _LookPageState extends State<_LookPage> {
                                   ),
                           ),
                         ],
+                      ),
+                    ),
+                    // A rule between the choices and what they make, so the
+                    // choices scroll away under it rather than stopping short.
+                    Container(height: 1.5, color: skin.gold.withValues(alpha: 0.55)),
+                    // The look as it's put together, and Done, at hand.
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: skin.feltDeep.withValues(alpha: 0.82),
+                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 16, offset: Offset(0, -4))],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 10),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            // The look as it's put together.
+                            SizedBox(
+                              height: clampD(height * 0.27, 180, 270),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 360),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (child, a) => FadeTransition(
+                                      opacity: a,
+                                      child: ScaleTransition(scale: Tween(begin: 0.96, end: 1.0).animate(a), child: child)),
+                                  layoutBuilder: (current, previous) =>
+                                      Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
+                                  child: _Preview(key: ValueKey(look.id), look: look),
+                                ),
+                              ),
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                            child: SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(onPressed: _done, child: const Text('Done'))),
+                          ),
+                        ]),
                       ),
                     ),
                   ]),
@@ -419,10 +459,12 @@ class _Preview extends StatelessWidget {
                         child: Transform.rotate(
                             angle: (k - 1) * 0.12, child: PlayingCardView(card: card, width: cardW)),
                       ),
+                    // The seats.
+                    Positioned(right: 12, top: 8, child: _Tokens(look)),
                     // A pile of tricks won.
                     Positioned(
-                      right: w * 0.08,
-                      top: h * 0.14,
+                      right: w * 0.1,
+                      top: h * 0.3,
                       child: SizedBox(
                         width: cardW * 0.8 + 12,
                         height: PlayingCardView.heightFor(cardW * 0.8) + 8,
