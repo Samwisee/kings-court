@@ -163,6 +163,7 @@ abstract class Skin {
   String? get defaultBack => null;
   String? get defaultFace => null;
   String? get defaultTask => null;
+  String? get defaultToken => null;
 
   /// A task card's face: the card stock and its ink, unless a look says
   /// otherwise.

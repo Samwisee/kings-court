@@ -33,6 +33,7 @@ const midnightDesign = SkinDesign(
   corners: PanelCorners.stars,
   back: 'midnight',
   face: 'silver',
+  token: 'gems',
   task: 'letter',
   pattern: FeltPattern.stars,
   patternInk: Color(0x8CE8EEFF),

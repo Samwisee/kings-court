@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import '../../engine/cards.dart';
 import '../../engine/round.dart';
 import '../../engine/task.dart';
+import '../../game/courtiers.dart';
 import '../../skin/entitlements.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
@@ -59,11 +60,12 @@ class _LookPageState extends State<_LookPage> {
   late BackChoice? _back = _chosen(widget.start)?.backChoice;
   late FaceChoice? _face = _chosen(widget.start)?.faceChoice;
   late TaskChoice? _task = _chosen(widget.start)?.taskChoice;
+  late TokenChoice? _token = _chosen(widget.start)?.tokenChoice;
   bool _worn = false;
 
   static TailoredSkin? _chosen(Skin s) => s is TailoredSkin ? s : null;
 
-  Skin get _look => TailoredSkin.of(_base, back: _back, task: _task, face: _face);
+  Skin get _look => TailoredSkin.of(_base, back: _back, task: _task, face: _face, token: _token);
 
   /// A new style comes as it's meant to: its own faces, backs and tasks.
   void _style(Skin s) => setState(() {
@@ -71,6 +73,7 @@ class _LookPageState extends State<_LookPage> {
         _back = null;
         _face = null;
         _task = null;
+        _token = null;
       });
 
   void _done() {
@@ -193,6 +196,25 @@ class _LookPageState extends State<_LookPage> {
                                     selected: _back?.id == backChoices[i - 1].id,
                                     onTap: () => setState(() => _back = backChoices[i - 1]),
                                     child: _Back(TailoredSkin(base, backChoice: backChoices[i - 1])),
+                                  ),
+                          ),
+                          _Row(
+                            id: 'tokens',
+                            title: 'Tokens',
+                            chosen: dressed?.token?.name ?? '${base.name}’s',
+                            count: tokenChoices.length + 1,
+                            tile: (i) => i == 0
+                                ? _Tile(
+                                    name: '${base.name}’s',
+                                    selected: _token == null,
+                                    onTap: () => setState(() => _token = null),
+                                    child: _Tokens(TailoredSkin.of(base)),
+                                  )
+                                : _Tile(
+                                    name: tokenChoices[i - 1].name,
+                                    selected: _token?.id == tokenChoices[i - 1].id,
+                                    onTap: () => setState(() => _token = tokenChoices[i - 1]),
+                                    child: _Tokens(TailoredSkin(base, tokenChoice: tokenChoices[i - 1])),
                                   ),
                           ),
                           _Row(
@@ -544,6 +566,58 @@ class _Faces extends StatelessWidget {
           ]),
         ),
       );
+}
+
+/// Three seats' tokens as [look] makes them, the middle one the King's.
+class _Tokens extends StatelessWidget {
+  const _Tokens(this.look);
+  final Skin look;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = look.tokenLook;
+    Widget token(int k, double size) => StyledToken(
+          style: l.style == TokenStyle.houses ? TokenStyle.coins : l.style,
+          size: size,
+          color: look.players[k],
+          ring: k == 1 ? look.gold : look.feltDeep,
+          ringWidth: k == 1 ? l.ringWidth + 1 : l.ringWidth,
+          skin: look,
+        );
+    // The skin's own houses: drawn as the seats draw them.
+    if (l.style == TokenStyle.houses) {
+      return SkinScope(
+        skin: look,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          for (final (k, shape) in const [TokenShape.shield, TokenShape.hexagon, TokenShape.diamond].indexed)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 1),
+              child: l.shaped
+                  ? ShapedToken(
+                      shape: shape,
+                      size: k == 1 ? 32 : 24,
+                      color: look.players[k],
+                      ring: k == 1 ? look.gold : look.feltDeep,
+                      ringWidth: l.ringWidth)
+                  : Container(
+                      width: k == 1 ? 32 : 24,
+                      height: k == 1 ? 32 : 24,
+                      decoration: BoxDecoration(
+                          color: look.players[k],
+                          shape: BoxShape.circle,
+                          border: Border.all(color: k == 1 ? look.gold : look.feltDeep, width: l.ringWidth))),
+            ),
+        ]),
+      );
+    }
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      token(0, 24),
+      const SizedBox(width: 2),
+      token(1, 32),
+      const SizedBox(width: 2),
+      token(2, 24),
+    ]);
+  }
 }
 
 /// A card back as [look] draws it.

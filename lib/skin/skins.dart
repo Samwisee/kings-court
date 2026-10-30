@@ -59,7 +59,7 @@ Skin skinById(String? id) {
   final back = backChoices.where((b) => b.id == chosen('b')).firstOrNull;
   final task = taskChoices.where((k) => k.id == chosen('k')).firstOrNull;
   final face = faceChoices.where((f) => f.id == chosen('f')).firstOrNull;
-  return TailoredSkin.of(base, back: back, task: task, face: face);
+  return TailoredSkin.of(base, back: back, task: task, face: face, token: tokenById(chosen('o')));
 }
 
 /// The skin after [worn] in the list that the player [owns], round to the

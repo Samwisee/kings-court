@@ -33,6 +33,7 @@ const harbourDesign = SkinDesign(
   corners: PanelCorners.compass,
   back: 'harbour',
   face: 'seaside',
+  token: 'coins',
   task: 'stamp',
   pattern: FeltPattern.chart,
   patternInk: Color(0x2EF2D49A),

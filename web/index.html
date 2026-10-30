@@ -21,7 +21,7 @@
   <!-- The phone's own width from the start: without it the loading crown
        is drawn on a desktop-width page, then jumps bigger when the game
        sets the viewport. (These are the values the game sets.) -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="A cooperative trick-taking game for 2–6 players.">
   <!-- How a shared link looks in messages and social posts. -->
   <meta property="og:type" content="website">
@@ -37,7 +37,7 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="King's Court">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=2">
 
@@ -107,12 +107,15 @@
   </script>
   <style>
     html, body { margin: 0; background: var(--table, #4E0B18); }
-    /* The game in a box the size of what's on screen. (Sized by the window
-       instead, a phone's home-screen app ran off the bottom: iOS gives it
-       the wrong height.) */
+    /* The page runs under the status bar and the home bar (viewport-fit
+       and a see-through status bar), and the game sits in a box inside
+       the safe area. (Sized by the window, a phone's home-screen app ran
+       off the bottom: iOS gave the page the screen's height, but started
+       it under the status bar.) The table's colour shows round it. */
     #game {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      position: fixed;
+      top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px);
+      left: env(safe-area-inset-left, 0px); right: env(safe-area-inset-right, 0px);
       overflow: hidden; touch-action: none;
     }
     /* The court's own mouse pointers: a gilt arrow, and a gilt hand over

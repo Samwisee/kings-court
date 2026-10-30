@@ -14,6 +14,7 @@ import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
+import 'package:kings_court/skin/looks.dart';
 import 'package:kings_court/skin/midnight/midnight_skin.dart';
 import 'package:kings_court/skin/rooms/room_skins.dart';
 import 'package:kings_court/skin/skin.dart';
@@ -465,7 +466,7 @@ void main() {
 
   // Every card back and table the Look dialog offers, on the court.
   testWidgets('The backs and tables to choose from', (tester) async {
-    tester.view.physicalSize = const Size(1600, 2000);
+    tester.view.physicalSize = const Size(1600, 2400);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     const court = CourtSkin();
@@ -507,6 +508,21 @@ void main() {
                     PlayingCardView(card: PlayingCard.king, width: 44),
                   ]),
                 ),
+            ]),
+            const SizedBox(height: 20),
+            // Every token, three seats each, the King's in the middle.
+            Wrap(spacing: 18, runSpacing: 10, children: [
+              for (final t in tokenChoices)
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  for (var k = 0; k < 3; k++)
+                    StyledToken(
+                        style: t.style == TokenStyle.houses ? TokenStyle.coins : t.style,
+                        size: k == 1 ? 46 : 38,
+                        color: court.players[k],
+                        ring: k == 1 ? court.gold : court.feltDeep,
+                        ringWidth: 2,
+                        skin: court),
+                ]),
             ]),
             const SizedBox(height: 20),
             // Every task card face, a task on each.

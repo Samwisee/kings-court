@@ -154,12 +154,17 @@ class PlayingCardView extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: r,
                   child: CustomPaint(
-                      painter: switch (card.rank) {
-                    1 => _Harlequin(),
-                    2 => _Stripes(),
-                    3 => _Lattice(),
-                    _ => _Sunburst(),
-                  }),
+                      // A face's own art woven into every cloth, or each
+                      // card's own pattern.
+                      painter: look.courtPattern case final art?
+                          ? FeltPatternPainter(art, look.courtInk ?? skin.gold.withValues(alpha: 0.4),
+                              ground: look.cloth[card.rank - 1][1], scale: width / 200)
+                          : switch (card.rank) {
+                              1 => _Harlequin(),
+                              2 => _Stripes(),
+                              3 => _Lattice(),
+                              _ => _Sunburst(),
+                            }),
                 ),
               ),
             // (The Stack already sits inside the coloured border, so the
@@ -180,7 +185,9 @@ class PlayingCardView extends StatelessWidget {
             // Every card has an inner frame, as on the printed deck: gold
             // on the Court Cards, a fine dark rule on the rest (unless a
             // player's colour is already framed in dark).
-            if (cloth)
+            if (cloth && look.courtArch)
+              Positioned.fill(child: CustomPaint(painter: ArchFrame(look.courtFrame, width)))
+            else if (cloth)
             Positioned.fill(
               child: Container(
                 margin: EdgeInsets.all(width * 0.06),

@@ -99,3 +99,42 @@ class FaceFramePainter extends CustomPainter {
   @override
   bool shouldRepaint(FaceFramePainter old) => old.frame != frame || old.colour != colour || old.width != width;
 }
+
+/// The arch round a Court Card's emblem in [colour], with a stone under
+/// it, for a card [width] wide: the tarot's window instead of the plain
+/// frame.
+class ArchFrame extends CustomPainter {
+  const ArchFrame(this.colour, this.width);
+  final Color colour;
+  final double width;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final u = width / 60;
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.8, 1.2 * u)
+      ..color = colour;
+    Path arch(double inset) {
+      final b = (Offset.zero & size).deflate(inset);
+      final r = b.width / 2;
+      return Path()
+        ..moveTo(b.left, b.bottom)
+        ..lineTo(b.left, b.top + r)
+        ..arcToPoint(Offset(b.right, b.top + r), radius: Radius.circular(r))
+        ..lineTo(b.right, b.bottom)
+        ..close();
+    }
+
+    canvas.drawPath(arch(5 * u), line);
+    canvas.drawPath(arch(7.5 * u), line..strokeWidth = math.max(0.5, 0.6 * u));
+    // A keystone at the top, and a sill under the emblem.
+    final top = Offset(size.width / 2, 5 * u);
+    canvas.drawCircle(top, 1.6 * u, Paint()..color = colour);
+    final sill = size.height - 14 * u;
+    canvas.drawLine(Offset(8 * u, sill), Offset(size.width - 8 * u, sill), line..strokeWidth = math.max(0.5, 0.8 * u));
+  }
+
+  @override
+  bool shouldRepaint(ArchFrame old) => old.colour != colour || old.width != width;
+}

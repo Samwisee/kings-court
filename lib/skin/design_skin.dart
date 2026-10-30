@@ -49,6 +49,7 @@ class SkinDesign {
     this.back,
     this.face,
     this.task,
+    this.token,
     this.onAccent,
     this.cloth = const [
       [Color(0xFF5A2F87), Color(0xFF241238)],
@@ -114,6 +115,7 @@ class SkinDesign {
   final String? back;
   final String? face;
   final String? task;
+  final String? token;
 
   /// The corner radius of panels and buttons; cards keep their own.
   final double radius;
@@ -144,6 +146,8 @@ class DesignSkin extends Skin {
   String? get defaultFace => design.face;
   @override
   String? get defaultTask => design.task;
+  @override
+  String? get defaultToken => design.token;
 
   @override
   Color get felt => design.felt;

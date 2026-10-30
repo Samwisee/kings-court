@@ -217,9 +217,21 @@ class FaceChoice {
       this.frameColour,
       this.motif = BackMotif.none,
       this.motifAlpha = 0.08,
-      this.pips = PipStyle.large});
+      this.pips = PipStyle.large,
+      this.cloth,
+      this.courtPattern,
+      this.courtInk,
+      this.courtArch = false});
   final String id;
   final String name;
+
+  /// The Court Cards' cloths (Joker, Jack, Queen, King: light then dark),
+  /// what's woven into them and in what, and an arch round the emblem;
+  /// the skin's own art when null.
+  final List<List<Color>>? cloth;
+  final FeltPattern? courtPattern;
+  final Color? courtInk;
+  final bool courtArch;
   final Color card;
   final Color black;
   final Color red;
@@ -335,11 +347,115 @@ const faceChoices = <FaceChoice>[
       frameColour: Color(0x99C9D2E3),
       motif: BackMotif.dots,
       pips: PipStyle.medallion),
+  FaceChoice('tarot', 'Tarot',
+      card: Color(0xFFF4ECDA),
+      black: Color(0xFF2A2030),
+      red: Color(0xFF9E2236),
+      blue: Color(0xFF2B4A92),
+      green: Color(0xFF2B6E58),
+      font: 'CinzelDecorative',
+      frame: FaceFrame.double,
+      frameColour: Color(0xAA8A6A2A),
+      cloth: [
+        [Color(0xFF6B3FA0), Color(0xFF1E0F3A)],
+        [Color(0xFF1E6B5A), Color(0xFF08251F)],
+        [Color(0xFF24408F), Color(0xFF0B1638)],
+        [Color(0xFF8E1E2E), Color(0xFF2E0610)],
+      ],
+      courtPattern: FeltPattern.stars,
+      courtInk: Color(0xCCF6E7B0),
+      courtArch: true),
+  FaceChoice('brocade', 'Brocade',
+      card: Color(0xFFFAF3E6),
+      black: Color(0xFF2A1A22),
+      red: Color(0xFFA52A3A),
+      blue: Color(0xFF2E4F8E),
+      green: Color(0xFF2E6B3A),
+      frame: FaceFrame.corners,
+      frameColour: Color(0xAAA57C1B),
+      cloth: [
+        [Color(0xFF7A2E6B), Color(0xFF2E0F28)],
+        [Color(0xFF2E6B3A), Color(0xFF0F2614)],
+        [Color(0xFF2E4F8E), Color(0xFF0F1A36)],
+        [Color(0xFFA33A2E), Color(0xFF3A110C)],
+      ],
+      courtPattern: FeltPattern.damask,
+      courtInk: Color(0x66F2D27A)),
+  FaceChoice('gatsby', 'Gatsby',
+      card: Color(0xFF141416),
+      black: Color(0xFFF0E6CC),
+      red: Color(0xFFF26D6D),
+      blue: Color(0xFF8CB8FF),
+      green: Color(0xFF86D9A4),
+      font: 'CinzelDecorative',
+      frame: FaceFrame.deco,
+      frameColour: Color(0xFFD4A63A),
+      cloth: [
+        [Color(0xFF2E2240), Color(0xFF0A0712)],
+        [Color(0xFF153A31), Color(0xFF050F0D)],
+        [Color(0xFF1A2746), Color(0xFF060A14)],
+        [Color(0xFF441820), Color(0xFF0F0506)],
+      ],
+      courtPattern: FeltPattern.deco,
+      courtInk: Color(0x88D4A63A)),
+  FaceChoice('glass', 'Stained glass',
+      card: Color(0xFFFFFFFF),
+      black: Color(0xFF15151A),
+      red: Color(0xFFD12A2A),
+      blue: Color(0xFF2560D0),
+      green: Color(0xFF1A8A50),
+      radius: 0.12,
+      frame: FaceFrame.rule,
+      frameColour: Color(0x44000000),
+      cloth: [
+        [Color(0xFF8E5BD6), Color(0xFF3A1F6B)],
+        [Color(0xFF2FA37A), Color(0xFF0E4A36)],
+        [Color(0xFF3F78D9), Color(0xFF163A80)],
+        [Color(0xFFE0473A), Color(0xFF6B1410)],
+      ],
+      courtPattern: FeltPattern.tiles,
+      courtInk: Color(0x8C101018),
+      courtArch: true),
+  FaceChoice('arbour', 'Arbour',
+      card: Color(0xFFF5F2E4),
+      black: Color(0xFF22301F),
+      red: Color(0xFFB0413E),
+      blue: Color(0xFF3D6390),
+      green: Color(0xFF3E7A45),
+      frame: FaceFrame.leaves,
+      frameColour: Color(0xFF5E8A57),
+      cloth: [
+        [Color(0xFF6B4E8E), Color(0xFF2A1F3A)],
+        [Color(0xFF4E7A3A), Color(0xFF1F3317)],
+        [Color(0xFF3A6B8E), Color(0xFF152A3A)],
+        [Color(0xFFA3523A), Color(0xFF3A1A10)],
+      ],
+      courtPattern: FeltPattern.trellis,
+      courtInk: Color(0x66F1F6E4)),
 ];
 
 /// [skin] as it's worn: with its own backs, faces and task cards, if it
 /// comes with any.
 Skin dressed(Skin skin) => skin is TailoredSkin ? skin : TailoredSkin.of(skin);
+
+/// What the seats' tokens are made as (looks.dart: [TokenStyle]).
+class TokenChoice {
+  const TokenChoice(this.id, this.name, this.style);
+  final String id;
+  final String name;
+  final TokenStyle style;
+}
+
+const tokenChoices = <TokenChoice>[
+  TokenChoice('houses', 'Houses', TokenStyle.houses),
+  TokenChoice('coins', 'Coins', TokenStyle.coins),
+  TokenChoice('gems', 'Gems', TokenStyle.gems),
+  TokenChoice('seals', 'Wax seals', TokenStyle.seals),
+  TokenChoice('chips', 'Casino chips', TokenStyle.chips),
+  TokenChoice('shields', 'Heraldry', TokenStyle.shields),
+];
+
+TokenChoice? tokenById(String? id) => tokenChoices.where((t) => t.id == id).firstOrNull;
 
 BackChoice? backById(String? id) => backChoices.where((b) => b.id == id).firstOrNull;
 TaskChoice? taskById(String? id) => taskChoices.where((k) => k.id == id).firstOrNull;
@@ -350,29 +466,31 @@ Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 /// [base] with [backChoice] backs and [taskChoice] task cards (the skin's
 /// own for either that's null).
 class TailoredSkin extends Skin {
-  const TailoredSkin(this.base, {this.backChoice, this.taskChoice, this.faceChoice});
+  const TailoredSkin(this.base, {this.backChoice, this.taskChoice, this.faceChoice, this.tokenChoice});
 
   final Skin base;
   final BackChoice? backChoice;
   final TaskChoice? taskChoice;
   final FaceChoice? faceChoice;
+  final TokenChoice? tokenChoice;
 
   /// [base] with these choices (and its own defaults for the rest); just
   /// [base] when there's nothing to choose.
-  static Skin of(Skin base, {BackChoice? back, TaskChoice? task, FaceChoice? face}) =>
-      back == null && task == null && face == null && !hasDefaults(base)
+  static Skin of(Skin base, {BackChoice? back, TaskChoice? task, FaceChoice? face, TokenChoice? token}) =>
+      back == null && task == null && face == null && token == null && !hasDefaults(base)
           ? base
-          : TailoredSkin(base, backChoice: back, taskChoice: task, faceChoice: face);
+          : TailoredSkin(base, backChoice: back, taskChoice: task, faceChoice: face, tokenChoice: token);
 
   /// Whether [skin] comes with backs, faces or task cards of its own
   /// choosing ([Skin.defaultBack] and the rest).
   static bool hasDefaults(Skin skin) =>
-      skin.defaultBack != null || skin.defaultFace != null || skin.defaultTask != null;
+      skin.defaultBack != null || skin.defaultFace != null || skin.defaultTask != null || skin.defaultToken != null;
 
   /// What's worn: the choice, or the skin's own default.
   BackChoice? get back => backChoice ?? backById(base.defaultBack);
   TaskChoice? get task => taskChoice ?? taskById(base.defaultTask);
   FaceChoice? get face => faceChoice ?? faceById(base.defaultFace);
+  TokenChoice? get token => tokenChoice ?? tokenById(base.defaultToken);
 
   /// [skin] without its choices: the skin they're made on.
   static Skin baseOf(Skin skin) => skin is TailoredSkin ? skin.base : skin;
@@ -383,6 +501,7 @@ class TailoredSkin extends Skin {
         if (backChoice != null) 'b:${backChoice!.id}',
         if (taskChoice != null) 'k:${taskChoice!.id}',
         if (faceChoice != null) 'f:${faceChoice!.id}',
+        if (tokenChoice != null) 'o:${tokenChoice!.id}',
       ].join('+');
   @override
   String get name => base.name;
@@ -423,7 +542,11 @@ class TailoredSkin extends Skin {
         frameColour: f.frameColour,
         motif: f.motif,
         motifAlpha: f.motifAlpha,
-        pips: f.pips);
+        pips: f.pips,
+        cloth: f.cloth,
+        courtPattern: f.courtPattern,
+        courtInk: f.courtInk,
+        courtArch: f.courtArch);
   }
 
   CardLook get _backed {
@@ -556,7 +679,12 @@ class TailoredSkin extends Skin {
   @override
   PanelLook get panelLook => base.panelLook;
   @override
-  TokenLook get tokenLook => base.tokenLook;
+  TokenLook get tokenLook {
+    final t = token;
+    final own = base.tokenLook;
+    if (t == null) return own;
+    return TokenLook(shaped: own.shaped, ringWidth: own.ringWidth, style: t.style);
+  }
   @override
   ButtonLook get buttonLook => base.buttonLook;
   @override

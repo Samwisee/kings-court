@@ -360,7 +360,17 @@ class CardLook {
     this.faceMotif = BackMotif.none,
     this.faceMotifAlpha = 0.08,
     this.pips = PipStyle.large,
+    this.courtPattern,
+    this.courtInk,
+    this.courtArch = false,
   });
+
+  /// The Court Cards' full art: a pattern woven into each cloth (in
+  /// [courtInk]) instead of each card's own, and an arched frame round the
+  /// emblem instead of the straight one.
+  final FeltPattern? courtPattern;
+  final Color? courtInk;
+  final bool courtArch;
 
   /// What's printed on a card's face: a frame round it (in
   /// [faceFrameColour], or the ink faintly), a faint motif over the stock,
@@ -385,10 +395,14 @@ class CardLook {
           Color? frameColour,
           BackMotif motif = BackMotif.none,
           double motifAlpha = 0.08,
-          PipStyle pips = PipStyle.large}) =>
+          PipStyle pips = PipStyle.large,
+          List<List<Color>>? cloth,
+          FeltPattern? courtPattern,
+          Color? courtInk,
+          bool courtArch = false}) =>
       CardLook(
         courtStyle: courtStyle,
-        cloth: cloth,
+        cloth: cloth ?? this.cloth,
         courtFrame: courtFrame,
         back: back,
         backEdge: backEdge,
@@ -406,6 +420,9 @@ class CardLook {
         faceMotif: motif,
         faceMotifAlpha: motifAlpha,
         pips: pips,
+        courtPattern: courtPattern,
+        courtInk: courtInk,
+        courtArch: courtArch,
       );
 
   final CourtCardStyle courtStyle;
@@ -465,6 +482,9 @@ class CardLook {
         faceMotif: faceMotif,
         faceMotifAlpha: faceMotifAlpha,
         pips: pips,
+        courtPattern: courtPattern,
+        courtInk: courtInk,
+        courtArch: courtArch,
       );
 
   /// A fine rule inside the back's edge; null for none.
@@ -482,8 +502,33 @@ class CardLook {
   final List<Color>? taskBack;
 }
 
+/// What a seat's token is made as.
+enum TokenStyle {
+  /// Each courtier's house shape (or a disc): the skin's own.
+  houses,
+
+  /// A coin, its edge milled.
+  coins,
+
+  /// A cut gem, its facets catching the light.
+  gems,
+
+  /// A wax seal, pressed.
+  seals,
+
+  /// A casino chip, striped round its edge.
+  chips,
+
+  /// A heraldic shield with a bend across it.
+  shields,
+}
+
 class TokenLook {
-  const TokenLook({this.shaped = true, this.ringWidth = 2});
+  const TokenLook({this.shaped = true, this.ringWidth = 2, this.style = TokenStyle.houses});
+
+  /// What the tokens are made as; [shaped] says how [TokenStyle.houses]
+  /// draws them.
+  final TokenStyle style;
 
   /// Each courtier in the shape of their house (a shield, a hexagon…);
   /// otherwise every seat is a disc.

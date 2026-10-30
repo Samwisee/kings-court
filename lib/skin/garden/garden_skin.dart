@@ -34,6 +34,7 @@ const gardenDesign = SkinDesign(
   corners: PanelCorners.leaves,
   back: 'rose',
   face: 'blush',
+  token: 'seals',
   task: 'mint',
   pattern: FeltPattern.trellis,
   patternInk: Color(0x24E5F0D8),
