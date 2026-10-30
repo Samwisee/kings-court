@@ -117,7 +117,7 @@ class OrnateCard extends StatelessWidget {
             Positioned.fill(
               child: CustomPaint(
                   painter: _Filigree((court ? skin.gold : edge).withValues(alpha: 0.55),
-                      corners: look.corners, ruled: true)),
+                      corners: look.corners)),
             ),
           if (court && skin.tableLook.pattern != FeltPattern.none)
             Positioned.fill(
@@ -263,13 +263,12 @@ class _Damask extends CustomPainter {
 /// ([PanelCorners]): the court's curl of filigree (only on an occasion),
 /// or another room's, always.
 class _Filigree extends CustomPainter {
-  _Filigree(this.color, {this.scrolls = true, this.corners = PanelCorners.scrolls, this.ruled = true});
+  _Filigree(this.color, {this.scrolls = true, this.corners = PanelCorners.scrolls});
   final Color color;
 
   /// The court's curls (on an occasion); without them, just the rule.
   final bool scrolls;
   final PanelCorners corners;
-  final bool ruled;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -282,7 +281,7 @@ class _Filigree extends CustomPainter {
     const inset = OrnateCard.ruleInset, r = OrnateCard.ruleRadius;
     final rule = RRect.fromRectAndRadius(
         Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2), const Radius.circular(r));
-    if (ruled && corners != PanelCorners.fans) canvas.drawRRect(rule, line);
+    if (corners != PanelCorners.fans) canvas.drawRRect(rule, line);
     if (corners == PanelCorners.none || corners == PanelCorners.scrolls && !scrolls) return;
 
     // Along the rule.
@@ -459,7 +458,7 @@ class _Filigree extends CustomPainter {
 
   @override
   bool shouldRepaint(_Filigree old) =>
-      old.color != color || old.scrolls != scrolls || old.corners != corners || old.ruled != ruled;
+      old.color != color || old.scrolls != scrolls || old.corners != corners;
 }
 
 /// A rule with a gem in the middle, for under a title.
