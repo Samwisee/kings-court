@@ -101,7 +101,9 @@ class OrnateCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          if (ornament != Ornament.low)
+          // An occasion's band along the top, unless the room marks its
+          // panels in their corners instead.
+          if (ornament != Ornament.low && look.corners == PanelCorners.none)
             Positioned(
               top: 0,
               left: 0,
