@@ -14,7 +14,6 @@ import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
-import 'package:kings_court/skin/looks.dart';
 import 'package:kings_court/skin/midnight/midnight_skin.dart';
 import 'package:kings_court/skin/rooms/room_skins.dart';
 import 'package:kings_court/skin/skin.dart';

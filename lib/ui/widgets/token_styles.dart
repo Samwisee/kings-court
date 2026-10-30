@@ -6,7 +6,6 @@
 library;
 
 import 'dart:math' as math;
-import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
 
@@ -75,7 +74,7 @@ class _StyledPainter extends CustomPainter {
   /// Points round [path]'s edge, [n] of them, evenly.
   static List<Offset> _round(Path path, int n) {
     final pts = <Offset>[];
-    for (final PathMetric m in path.computeMetrics()) {
+    for (final m in path.computeMetrics()) {
       for (var k = 0; k < n; k++) {
         pts.add(m.getTangentForOffset(m.length * k / n)!.position);
       }
@@ -199,7 +198,7 @@ class _StyledPainter extends CustomPainter {
         // A chip: stripes round its edge, and a dashed ring inside.
         canvas.drawPath(outline, Paint()..color = color);
         final band = _scaled(outline, c, 0.9);
-        for (final PathMetric m in band.computeMetrics()) {
+        for (final m in band.computeMetrics()) {
           for (var k = 0; k < 6; k++) {
             final at = m.length * (k + 0.5) / 6;
             canvas.drawPath(
@@ -216,7 +215,7 @@ class _StyledPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = math.max(0.6, r * 0.04)
           ..color = Colors.white.withValues(alpha: 0.7);
-        for (final PathMetric m in inner.computeMetrics()) {
+        for (final m in inner.computeMetrics()) {
           for (var k = 0; k < 16; k++) {
             canvas.drawPath(m.extractPath(m.length * k / 16, m.length * (k + 0.5) / 16), dash);
           }
