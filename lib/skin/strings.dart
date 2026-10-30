@@ -19,7 +19,7 @@ abstract final class Strings {
   static const sounds = 'Sounds';
   static const fourColourSuits = 'Four-colour suits';
   /// The menu's skin choice, naming the one worn.
-  static String look(String name) => 'Look: $name';
+  static String look(String name) => 'Livery: $name';
   static const locked = '(locked)';
   static const keyboardShortcuts = 'Keyboard shortcuts';
   static const reportBug = 'Report a bug';

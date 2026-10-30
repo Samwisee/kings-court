@@ -78,3 +78,4 @@ skin-harbour-4-look.png: the Look dialog has task cards to choose, and patterned
 *: styles come dressed (their own faces, backs and task cards), richer card faces, each room's mark in its panels' corners, and the Look page
 *: open tasks keep their places as others are taken
 *: token styles, more full-art Court Cards, rooms' tokens and faces, the home-screen app in the safe area
+*: Livery: the preview at the top with the whole court and Ace to 4, rows below, Done at the bottom; each Court Card its own design

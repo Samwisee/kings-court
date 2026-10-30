@@ -360,15 +360,16 @@ class CardLook {
     this.faceMotif = BackMotif.none,
     this.faceMotifAlpha = 0.08,
     this.pips = PipStyle.large,
-    this.courtPattern,
+    this.courtPatterns,
     this.courtInk,
     this.courtArch = false,
   });
 
   /// The Court Cards' full art: a pattern woven into each cloth (in
-  /// [courtInk]) instead of each card's own, and an arched frame round the
-  /// emblem instead of the straight one.
-  final FeltPattern? courtPattern;
+  /// [courtInk]), one for each of the Joker, Jack, Queen and King, instead
+  /// of their own; and an arched frame round the emblem instead of the
+  /// straight one.
+  final List<FeltPattern>? courtPatterns;
   final Color? courtInk;
   final bool courtArch;
 
@@ -416,14 +417,14 @@ class CardLook {
         faceMotif: motif,
         faceMotifAlpha: motifAlpha,
         pips: pips,
-        courtPattern: courtPattern,
+        courtPatterns: courtPatterns,
         courtInk: courtInk,
         courtArch: courtArch,
       );
 
   /// This look with other Court Cards: their cloths, what's woven into
   /// them, and an arch round the emblem.
-  CardLook withCourt({List<List<Color>>? cloth, FeltPattern? pattern, Color? ink, bool arch = false}) => CardLook(
+  CardLook withCourt({List<List<Color>>? cloth, List<FeltPattern>? patterns, Color? ink, bool arch = false}) => CardLook(
         courtStyle: courtStyle,
         cloth: cloth ?? this.cloth,
         courtFrame: courtFrame,
@@ -443,7 +444,7 @@ class CardLook {
         faceMotif: faceMotif,
         faceMotifAlpha: faceMotifAlpha,
         pips: pips,
-        courtPattern: pattern,
+        courtPatterns: patterns,
         courtInk: ink,
         courtArch: arch,
       );
@@ -505,7 +506,7 @@ class CardLook {
         faceMotif: faceMotif,
         faceMotifAlpha: faceMotifAlpha,
         pips: pips,
-        courtPattern: courtPattern,
+        courtPatterns: courtPatterns,
         courtInk: courtInk,
         courtArch: courtArch,
       );

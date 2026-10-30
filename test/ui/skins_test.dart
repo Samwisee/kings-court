@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Look: Court'));
+    await tester.tap(find.text('Livery: Court'));
     await tester.pumpAndSettle();
     // Each kind of choice is a row that scrolls sideways.
     Future<void> choose(String row, String name) async {

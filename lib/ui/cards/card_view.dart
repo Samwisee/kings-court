@@ -53,15 +53,14 @@ class PlayingCardView extends StatelessWidget {
   /// The ink of its rank and suit: the suit's colour.
   Color _inkColour(Skin skin) => skin.suitColour(card.suit);
 
-  /// What's woven into the Court Cards' cloths, and in what: the faces'
-  /// own art, or else the room's pattern (so the cards match the table),
-  /// or else nothing but each card's own pattern.
-  static (FeltPattern, Color)? _art(Skin skin) {
+  /// What's woven into this Court Card's cloth, and in what: its own
+  /// pattern from the Court Cards chosen, or else its own art (a
+  /// harlequin, stripes, a lattice, a sunburst), in the style's cloths.
+  (FeltPattern, Color)? _art(Skin skin) {
     final look = skin.cardLook;
-    if (look.courtPattern case final p?) return (p, look.courtInk ?? skin.gold.withValues(alpha: 0.4));
-    final room = skin.tableLook;
-    if (room.pattern == FeltPattern.none) return null;
-    return (room.pattern, skin.gold.withValues(alpha: 0.45));
+    final patterns = look.courtPatterns;
+    if (patterns == null || patterns.length < 4) return null;
+    return (patterns[card.rank - 1], look.courtInk ?? skin.gold.withValues(alpha: 0.4));
   }
 
   // Its own layer: the emblems are costly to draw, so a card is drawn once and kept while things move around it.

@@ -210,7 +210,7 @@ class FaceChoice {
       this.motifAlpha = 0.08,
       this.pips = PipStyle.large,
       this.cloth,
-      this.courtPattern,
+      this.courtPatterns,
       this.courtInk,
       this.courtArch = false});
   final String id;
@@ -220,7 +220,7 @@ class FaceChoice {
   /// what's woven into them and in what, and an arch round the emblem;
   /// the skin's own art when null.
   final List<List<Color>>? cloth;
-  final FeltPattern? courtPattern;
+  final List<FeltPattern>? courtPatterns;
   final Color? courtInk;
   final bool courtArch;
   final Color card;
@@ -407,7 +407,8 @@ const faceChoices = <FaceChoice>[
         [Color(0xFF24408F), Color(0xFF0B1638)],
         [Color(0xFF8E1E2E), Color(0xFF2E0610)],
       ],
-      courtPattern: FeltPattern.stars,
+      // The night sky, a sea chart, a rose trellis and a deco sunrise.
+      courtPatterns: [FeltPattern.stars, FeltPattern.chart, FeltPattern.trellis, FeltPattern.deco],
       courtInk: Color(0xCCF6E7B0),
       courtArch: true),
   FaceChoice('brocade', 'Brocade',
@@ -424,7 +425,8 @@ const faceChoices = <FaceChoice>[
         [Color(0xFF2E4F8E), Color(0xFF0F1A36)],
         [Color(0xFFA33A2E), Color(0xFF3A110C)],
       ],
-      courtPattern: FeltPattern.damask,
+      // Damask, pinstripe, tiles and tooled gilt.
+      courtPatterns: [FeltPattern.damask, FeltPattern.pinstripe, FeltPattern.tiles, FeltPattern.tooled],
       courtInk: Color(0x66F2D27A)),
   FaceChoice('gatsby', 'Gatsby',
       card: Color(0xFF141416),
@@ -441,7 +443,8 @@ const faceChoices = <FaceChoice>[
         [Color(0xFF1A2746), Color(0xFF060A14)],
         [Color(0xFF441820), Color(0xFF0F0506)],
       ],
-      courtPattern: FeltPattern.deco,
+      // A chequer, herringbone, pinstripe and the fans.
+      courtPatterns: [FeltPattern.chequer, FeltPattern.herringbone, FeltPattern.pinstripe, FeltPattern.deco],
       courtInk: Color(0x88D4A63A)),
   FaceChoice('glass', 'Stained glass',
       card: Color(0xFFFFFFFF),
@@ -458,7 +461,8 @@ const faceChoices = <FaceChoice>[
         [Color(0xFF3F78D9), Color(0xFF163A80)],
         [Color(0xFFE0473A), Color(0xFF6B1410)],
       ],
-      courtPattern: FeltPattern.tiles,
+      // Panes of four kinds: stars, tiles, rays and a trellis.
+      courtPatterns: [FeltPattern.stars, FeltPattern.tiles, FeltPattern.chart, FeltPattern.trellis],
       courtInk: Color(0x8C101018),
       courtArch: true),
   FaceChoice('arbour', 'Arbour',
@@ -475,7 +479,8 @@ const faceChoices = <FaceChoice>[
         [Color(0xFF3A6B8E), Color(0xFF152A3A)],
         [Color(0xFFA3523A), Color(0xFF3A1A10)],
       ],
-      courtPattern: FeltPattern.trellis,
+      // A trellis, the hills, a woven flower and marble.
+      courtPatterns: [FeltPattern.trellis, FeltPattern.contours, FeltPattern.damask, FeltPattern.marble],
       courtInk: Color(0x66F1F6E4)),
 ];
 
@@ -506,19 +511,21 @@ FaceChoice? faceById(String? id) => faceChoices.where((f) => f.id == id).firstOr
 /// arch round the emblem), chosen apart from the number cards' faces:
 /// every face that comes with art of its own offers it here too.
 class CourtChoice {
-  const CourtChoice(this.id, this.name, {this.cloth, this.pattern, this.ink, this.arch = false});
+  const CourtChoice(this.id, this.name, {this.cloth, this.patterns, this.ink, this.arch = false});
   final String id;
   final String name;
   final List<List<Color>>? cloth;
-  final FeltPattern? pattern;
+
+  /// One pattern for each of the Joker, Jack, Queen and King.
+  final List<FeltPattern>? patterns;
   final Color? ink;
   final bool arch;
 }
 
 final courtChoices = <CourtChoice>[
   for (final f in faceChoices)
-    if (f.cloth != null || f.courtPattern != null)
-      CourtChoice(f.id, f.name, cloth: f.cloth, pattern: f.courtPattern, ink: f.courtInk, arch: f.courtArch),
+    if (f.cloth != null || f.courtPatterns != null)
+      CourtChoice(f.id, f.name, cloth: f.cloth, patterns: f.courtPatterns, ink: f.courtInk, arch: f.courtArch),
 ];
 
 CourtChoice? courtById(String? id) => courtChoices.where((c) => c.id == id).firstOrNull;

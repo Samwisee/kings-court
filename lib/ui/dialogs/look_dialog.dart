@@ -140,8 +140,25 @@ class _LookPageState extends State<_LookPage> {
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 2),
                       child: Align(
                           alignment: Alignment.centerLeft,
-                          child: Text('Look', style: skin.dialogTitle.copyWith(fontSize: 26))),
+                          child: Text('Livery', style: skin.dialogTitle.copyWith(fontSize: 26))),
                     ),
+                    // The livery as it's put together, changing as you choose.
+                    SizedBox(
+                      height: clampD(height * 0.34, 230, 330),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 360),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder: (child, a) => FadeTransition(
+                            opacity: a,
+                            child: ScaleTransition(scale: Tween(begin: 0.97, end: 1.0).animate(a), child: child)),
+                        layoutBuilder: (current, previous) =>
+                            Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
+                        child: _Preview(key: ValueKey(look.id), look: look),
+                      ),
+                    ),
+                    // A rule under it, so the choices scroll away under it.
+                    Container(height: 1.5, color: skin.gold.withValues(alpha: 0.55)),
                     Expanded(
                       child: ListView(
                         key: const ValueKey('look-rows'),
@@ -257,44 +274,14 @@ class _LookPageState extends State<_LookPage> {
                         ],
                       ),
                     ),
-                    // A rule between the choices and what they make, so the
-                    // choices scroll away under it rather than stopping short.
+                    // A rule over the button, so the choices scroll away
+                    // under it rather than stopping short.
                     Container(height: 1.5, color: skin.gold.withValues(alpha: 0.55)),
-                    // The look as it's put together, and Done, at hand.
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: skin.feltDeep.withValues(alpha: 0.82),
-                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 16, offset: Offset(0, -4))],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 10),
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                            // The look as it's put together.
-                            SizedBox(
-                              height: clampD(height * 0.27, 180, 270),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 360),
-                                  switchInCurve: Curves.easeOutCubic,
-                                  switchOutCurve: Curves.easeInCubic,
-                                  transitionBuilder: (child, a) => FadeTransition(
-                                      opacity: a,
-                                      child: ScaleTransition(scale: Tween(begin: 0.96, end: 1.0).animate(a), child: child)),
-                                  layoutBuilder: (current, previous) =>
-                                      Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
-                                  child: _Preview(key: ValueKey(look.id), look: look),
-                                ),
-                              ),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                            child: SizedBox(
-                                width: double.infinity,
-                                child: FilledButton(onPressed: _done, child: const Text('Done'))),
-                          ),
-                        ]),
-                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(onPressed: _done, child: const Text('Done'))),
                     ),
                   ]),
                 ),
@@ -421,11 +408,20 @@ class _Tile extends StatelessWidget {
   }
 }
 
-/// The look put together: a corner of its table, a hand fanned on it, a
-/// pile of tricks in its backs, and a task.
+/// The livery put together, on the page itself: the Court Cards and the
+/// Ace to the 4 fanned in a hand, the seats' tokens, a pile of tricks in
+/// the backs, and a task.
 class _Preview extends StatelessWidget {
   const _Preview({super.key, required this.look});
   final Skin look;
+
+  static const _courts = [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king];
+  static const _numbers = [
+    PlayingCard(Suit.hearts, 1),
+    PlayingCard(Suit.spades, 2),
+    PlayingCard(Suit.diamonds, 3),
+    PlayingCard(Suit.clubs, 4),
+  ];
 
   @override
   Widget build(BuildContext context) => RepaintBoundary(
@@ -433,85 +429,72 @@ class _Preview extends StatelessWidget {
           skin: look,
           child: Builder(builder: (context) {
             final skin = context.skin;
-            return Container(
-              decoration: BoxDecoration(
-                color: skin.table,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 8))],
-              ),
-              padding: const EdgeInsets.all(7),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: LayoutBuilder(builder: (context, c) {
-                  final w = c.maxWidth, h = c.maxHeight;
-                  final cardW = clampD(h * 0.36, 46, 74);
-                  return Stack(fit: StackFit.expand, children: [
-                    const FeltGround(),
-                    if (skin.tableLook.outerRule case final rule?)
-                      DecoratedBox(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14), border: Border.all(color: rule, width: 2))),
-                    Positioned(
-                      left: 16,
-                      top: 12,
-                      child: Text(skin.name,
-                          style: TextStyle(
-                              fontFamily: skin.displayFont,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 20,
-                              color: skin.gold,
-                              shadows: skin.feltShadow)),
-                    ),
-                    // A hand, fanned.
-                    for (final (k, card) in const [
-                      PlayingCard(Suit.hearts, 7),
-                      PlayingCard(Suit.spades, 1),
-                      PlayingCard.queen,
-                    ].indexed)
+            return LayoutBuilder(builder: (context, c) {
+              final w = c.maxWidth, h = c.maxHeight;
+              final cardW = clampD(math.min(h * 0.27, w * 0.15), 40, 68);
+              final cardH = PlayingCardView.heightFor(cardW);
+              final step = cardW * 0.7;
+              Widget fan(List<PlayingCard> cards, double top) => Stack(clipBehavior: Clip.none, children: [
+                    for (final (k, card) in cards.indexed)
                       Positioned(
-                        left: w * 0.08 + k * cardW * 0.62,
-                        top: h * 0.3 - (k == 1 ? 6 : 0),
+                        left: 18 + k * step,
+                        top: top + ((k - 1.5).abs() * 3),
                         child: Transform.rotate(
-                            angle: (k - 1) * 0.12, child: PlayingCardView(card: card, width: cardW)),
+                            angle: (k - 1.5) * 0.07, child: PlayingCardView(card: card, width: cardW)),
                       ),
-                    // The seats.
-                    Positioned(right: 12, top: 8, child: _Tokens(look)),
-                    // A pile of tricks won.
-                    Positioned(
-                      right: w * 0.1,
-                      top: h * 0.3,
-                      child: SizedBox(
-                        width: cardW * 0.8 + 12,
-                        height: PlayingCardView.heightFor(cardW * 0.8) + 8,
-                        child: Stack(children: [
-                          for (var k = 0; k < 3; k++)
-                            Positioned(
-                              left: k * 5.0,
-                              top: k * 2.0,
-                              child: Transform.rotate(
-                                  angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
-                            ),
-                        ]),
-                      ),
-                    ),
-                    // A task.
-                    Positioned(
-                      right: w * 0.05,
-                      bottom: 10,
-                      child: TaskChip(
-                        task: RoundTask(taskByDescription('Win the first trick')),
-                        points: 2,
-                        text: 'Win the first trick',
-                        color: skin.players[0],
-                        width: math.min(150, w * 0.42),
-                        progress: '0/1',
-                      ),
-                    ),
                   ]);
-                }),
-              ),
-            );
+              final rowGap = math.max(6.0, (h - 40 - cardH * 2) / 3);
+              return Stack(fit: StackFit.expand, children: [
+                Positioned(
+                  left: 20,
+                  top: 6,
+                  child: Text(skin.name,
+                      style: TextStyle(
+                          fontFamily: skin.displayFont,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: skin.gold,
+                          shadows: skin.feltShadow)),
+                ),
+                Positioned.fill(child: fan(_courts, 34 + rowGap * 0.5)),
+                Positioned.fill(child: fan(_numbers, 34 + rowGap * 1.5 + cardH)),
+                // The seats.
+                Positioned(right: 16, top: 6, child: _Tokens(look)),
+                // A pile of tricks won.
+                Positioned(
+                  right: 26,
+                  top: h * 0.3,
+                  child: SizedBox(
+                    width: cardW * 0.8 + 12,
+                    height: PlayingCardView.heightFor(cardW * 0.8) + 8,
+                    child: Stack(children: [
+                      for (var k = 0; k < 3; k++)
+                        Positioned(
+                          left: k * 5.0,
+                          top: k * 2.0,
+                          child: Transform.rotate(
+                              angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
+                        ),
+                    ]),
+                  ),
+                ),
+                // A task.
+                Positioned(
+                  right: 14,
+                  bottom: 10,
+                  child: TaskChip(
+                    task: RoundTask(taskByDescription('Win the first trick')),
+                    points: 2,
+                    text: 'Win the first trick',
+                    color: skin.players[0],
+                    width: math.min(140, w * 0.34),
+                    progress: '0/1',
+                  ),
+                ),
+              ]);
+            });
           }),
         ),
       );
 }
+
