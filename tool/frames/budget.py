@@ -24,7 +24,7 @@ BUDGET = {
     'the card tracker': (2, 30),
     'the rest of the round': (4, 40),
     'the menu opening': (2, 30),
-    'the Livery page': (10, 120),
+    'the Livery page': (20, 120),  # six tabs and their grids: long, and noisy
 }
 
 
