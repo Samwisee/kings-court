@@ -2,7 +2,7 @@ name: Frames
 
 # The frame benchmark (integration_test/frames_test.dart): the game in
 # Chrome, every animation played, each frame timed. frames.txt is
-# published to the frames-<branch> branch.
+# published to the out-frames-<branch> branch.
 on:
   push:
     branches: [main, 'frames-*']
@@ -49,4 +49,4 @@ jobs:
           git init -q -b out
           git config user.name ci && git config user.email ci@example.com
           git add -A && git commit -qm "Frames for ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "out:frames-${GITHUB_REF_NAME#frames-}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" "out:out-frames-${GITHUB_REF_NAME#frames-}"
