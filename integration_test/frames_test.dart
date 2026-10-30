@@ -16,7 +16,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kings_court/engine/round.dart';
@@ -89,7 +88,8 @@ class Frames {
     final s = _Scene(name);
     _now = s;
     try {
-      await run();
+      // A scene that hangs is stopped and reported, so the run still ends.
+      await run().timeout(const Duration(seconds: 75));
     } catch (e, stack) {
       // A scene that goes wrong is reported, and the rest still run.
       s.error = '$e ${stack.toString().split('\n').take(6).join(' | ')}';
@@ -295,21 +295,6 @@ void main() {
     await frames.scene('back to the front page', () async {
       state.debugMenuChoice('main');
       await wait(3000);
-    });
-
-    // The skin change again, with every widget's build and every render
-    // object's layout and paint named, to see where its frames go.
-    await frames.scene('changing skin, in detail (slower: every widget timed)', () async {
-      debugProfileBuildsEnabled = true;
-      debugProfileLayoutsEnabled = true;
-      debugProfilePaintsEnabled = true;
-      for (var i = 0; i < 3; i++) {
-        state.debugMenuChoice('nextLivery');
-        await wait(1200);
-      }
-      debugProfileBuildsEnabled = false;
-      debugProfileLayoutsEnabled = false;
-      debugProfilePaintsEnabled = false;
     });
 
     binding.reportData = {'scenes': [for (final s in frames.scenes) s.toJson()]};
