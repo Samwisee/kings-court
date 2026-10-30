@@ -522,10 +522,29 @@ class CourtChoice {
   final bool arch;
 }
 
+/// The Court Card sets' own names (the ids are the faces they came with).
+const _courtNames = {
+  'ivory': 'Regal',
+  'antique': 'Old masters',
+  'noir': 'Onyx',
+  'modern': 'Pop art',
+  'casino': 'High roller',
+  'botanical': 'Verdant',
+  'seaside': 'Tidal',
+  'blush': 'Rosewater',
+  'silver': 'Nocturne',
+  'tarot': 'Tarot',
+  'brocade': 'Brocade',
+  'gatsby': 'Gatsby',
+  'glass': 'Stained glass',
+  'arbour': 'Arbour',
+};
+
 final courtChoices = <CourtChoice>[
   for (final f in faceChoices)
     if (f.cloth != null || f.courtPatterns != null)
-      CourtChoice(f.id, f.name, cloth: f.cloth, patterns: f.courtPatterns, ink: f.courtInk, arch: f.courtArch),
+      CourtChoice(f.id, _courtNames[f.id] ?? f.name,
+          cloth: f.cloth, patterns: f.courtPatterns, ink: f.courtInk, arch: f.courtArch),
 ];
 
 CourtChoice? courtById(String? id) => courtChoices.where((c) => c.id == id).firstOrNull;

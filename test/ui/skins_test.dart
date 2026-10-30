@@ -80,30 +80,21 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Livery: Court'));
     await tester.pumpAndSettle();
-    // Each kind of choice is a row that scrolls sideways.
-    Future<void> choose(String row, String name) async {
-      final along = find.byKey(ValueKey('look-row-$row'));
-      // The rows go down the page, built as they come into view: from the
-      // top, down to this one.
-      final rows = find.descendant(of: find.byKey(const ValueKey('look-rows')), matching: find.byType(Scrollable)).first;
-      await tester.fling(rows, const Offset(0, 1200), 4000);
+    // A tab for each kind of choice, its choices in a grid.
+    const tabs = {'style': 'Style', 'faces': 'Card faces', 'court': 'Court Cards', 'backs': 'Card backs', 'tasks': 'Task cards'};
+    Future<void> choose(String kind, String name) async {
+      await tester.tap(find.text(tabs[kind]!));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(along, 150, scrollable: rows);
-      await tester.pumpAndSettle();
-      final tile = find.descendant(of: along, matching: find.text(name));
-      await tester.fling(along, const Offset(1200, 0), 4000);
-      await tester.pumpAndSettle();
-      await tester.dragUntilVisible(tile, along, const Offset(-200, 0));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(tile);
+      final grid = find.byKey(ValueKey('look-grid-$kind'));
+      final tile = find.descendant(of: grid, matching: find.text(name));
+      await tester.scrollUntilVisible(tile, 120,
+          scrollable: find.descendant(of: grid, matching: find.byType(Scrollable)).first);
       await tester.pumpAndSettle();
       await tester.tap(tile);
       await tester.pumpAndSettle();
-      expect(find.descendant(of: find.byKey(ValueKey('look-row-$row')), matching: find.bySemanticsLabel(name)), findsWidgets);
-      final chosen = tester.widget<Semantics>(find
-          .ancestor(of: find.descendant(of: along, matching: find.text(name)), matching: find.byType(Semantics))
-          .first);
-      expect(chosen.properties.selected, isTrue, reason: '$name chosen in the $row row');
+      final chosen = tester.widget<Semantics>(
+          find.ancestor(of: find.descendant(of: grid, matching: find.text(name)), matching: find.byType(Semantics)).first);
+      expect(chosen.properties.selected, isTrue, reason: '$name chosen under $kind');
     }
     await choose('style', 'Midnight');
     await choose('backs', 'Black sunburst');

@@ -363,7 +363,12 @@ class CardLook {
     this.courtPatterns,
     this.courtInk,
     this.courtArch = false,
+    this.courtRadius,
   });
+
+  /// The Court Cards' corners, kept when the number cards' faces change
+  /// theirs ([radius] when null).
+  final double? courtRadius;
 
   /// The Court Cards' full art: a pattern woven into each cloth (in
   /// [courtInk]), one for each of the Joker, Jack, Queen and King, instead
@@ -420,6 +425,7 @@ class CardLook {
         courtPatterns: courtPatterns,
         courtInk: courtInk,
         courtArch: courtArch,
+        courtRadius: courtRadius ?? this.radius,
       );
 
   /// This look with other Court Cards: their cloths, what's woven into
@@ -447,6 +453,7 @@ class CardLook {
         courtPatterns: patterns,
         courtInk: ink,
         courtArch: arch,
+        courtRadius: courtRadius,
       );
 
   final CourtCardStyle courtStyle;
@@ -509,6 +516,7 @@ class CardLook {
         courtPatterns: courtPatterns,
         courtInk: courtInk,
         courtArch: courtArch,
+        courtRadius: courtRadius,
       );
 
   /// A fine rule inside the back's edge; null for none.

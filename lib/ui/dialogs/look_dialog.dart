@@ -1,11 +1,11 @@
-/// The Look page: the style the game is dressed in (a skin: its table and
-/// everything round it, menus and pages too, and the card faces, backs
-/// and task cards it comes with), and each of those swapped for another
-/// if you like (skin/tailored.dart). A preview at the top shows the look
-/// as it's put together, changing as you choose; each kind of choice is a
-/// row to scroll sideways. The game behind wears the look once, as you
-/// leave: dressing the whole table again on every tap was what made it
-/// slow.
+/// The Livery page: the style the game is dressed in (a skin: its table
+/// and everything round it, menus and pages too, and the card faces, Court
+/// Cards, backs, tokens and task cards it comes with), and each of those
+/// swapped for another if you like (skin/tailored.dart). A showcase at the
+/// top puts the livery together, each part changing as its choice does;
+/// under it a tab for each kind of choice, its choices in a grid. The game
+/// behind wears the livery once, as you leave: dressing the whole table
+/// again on every tap was what made it slow.
 library;
 
 import 'dart:math' as math;
@@ -67,6 +67,9 @@ class _LookPageState extends State<_LookPage> {
   late CourtChoice? _court = _chosen(widget.start)?.courtChoice;
   bool _worn = false;
 
+  /// The tab open: which kind of choice the grid shows.
+  _Kind _kind = _Kind.style;
+
   static TailoredSkin? _chosen(Skin s) => s is TailoredSkin ? s : null;
 
   Skin get _look => TailoredSkin.of(_base, back: _back, task: _task, face: _face, token: _token, court: _court);
@@ -107,12 +110,10 @@ class _LookPageState extends State<_LookPage> {
   Widget build(BuildContext context) {
     final look = _look;
     // The page round the game (the status bar, the browser's bars) in the
-    // look as it's chosen.
+    // livery as it's chosen.
     colourPage(look.table);
     final base = _base;
-    final dressed = look is TailoredSkin ? look : null;
     final height = MediaQuery.sizeOf(context).height;
-    final styles = [for (final s in skins) if (widget.entitlements.owns(s)) s];
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) _wearNow();
@@ -124,6 +125,7 @@ class _LookPageState extends State<_LookPage> {
           data: look.theme(),
           child: Builder(builder: (context) {
             final skin = context.skin;
+            final rule = Container(height: 1.5, color: skin.gold.withValues(alpha: 0.45));
             return Scaffold(
               backgroundColor: skin.feltDeep,
               body: Stack(children: [
@@ -135,150 +137,25 @@ class _LookPageState extends State<_LookPage> {
                   ),
                 ),
                 SafeArea(
-                  // A column down the middle of a wide screen, not spread to
-                  // its edges.
+                  // A column down the middle of a wide screen.
                   child: Center(
-                      child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 760),
-                          child: Column(children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 2),
-                      child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text('Livery', style: skin.dialogTitle.copyWith(fontSize: 26))),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: Column(children: [
+                        SizedBox(height: clampD(height * 0.36, 250, 350), child: _Showcase(look: look)),
+                        _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look),
+                        rule,
+                        Expanded(child: _grid(context, look)),
+                        rule,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                          child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(onPressed: _done, child: const Text('Done'))),
+                        ),
+                      ]),
                     ),
-                    // The livery as it's put together, changing as you choose.
-                    SizedBox(
-                      height: clampD(height * 0.34, 230, 330),
-                      child: _Preview(look: look),
-                    ),
-                    // A rule under it, so the choices scroll away under it.
-                    Container(height: 1.5, color: skin.gold.withValues(alpha: 0.55)),
-                    Expanded(
-                      child: ListView(
-                        key: const ValueKey('look-rows'),
-                        padding: const EdgeInsets.only(bottom: 24),
-                        children: [
-                          _Row(
-                            id: 'style',
-                            title: 'Style',
-                            chosen: base.name,
-                            count: styles.length,
-                            tile: (i) => _Tile(
-                              name: styles[i].name,
-                              selected: styles[i].id == base.id,
-                              onTap: () => _style(styles[i]),
-                              child: _TableSwatch(styles[i]),
-                            ),
-                          ),
-                          _Row(
-                            id: 'faces',
-                            title: 'Card faces',
-                            chosen: dressed?.face?.name ?? '${base.name}’s',
-                            count: faceChoices.length + 1,
-                            tile: (i) => i == 0
-                                ? _Tile(
-                                    name: '${base.name}’s',
-                                    selected: _face == null,
-                                    onTap: () => setState(() => _face = null),
-                                    child: _Faces(TailoredSkin.of(base)),
-                                  )
-                                : _Tile(
-                                    name: faceChoices[i - 1].name,
-                                    selected: _face?.id == faceChoices[i - 1].id,
-                                    onTap: () => setState(() => _face = faceChoices[i - 1]),
-                                    child: _Faces(TailoredSkin(base, faceChoice: faceChoices[i - 1])),
-                                  ),
-                          ),
-                          _Row(
-                            id: 'court',
-                            title: 'Court Cards',
-                            chosen: dressed?.court?.name ?? '${base.name}’s',
-                            count: courtChoices.length + 1,
-                            tile: (i) => i == 0
-                                ? _Tile(
-                                    name: '${base.name}’s',
-                                    selected: _court == null,
-                                    onTap: () => setState(() => _court = null),
-                                    child: _Courts(TailoredSkin.of(base)),
-                                  )
-                                : _Tile(
-                                    name: courtChoices[i - 1].name,
-                                    selected: _court?.id == courtChoices[i - 1].id,
-                                    onTap: () => setState(() => _court = courtChoices[i - 1]),
-                                    child: _Courts(TailoredSkin(base, courtChoice: courtChoices[i - 1])),
-                                  ),
-                          ),
-                          _Row(
-                            id: 'backs',
-                            title: 'Card backs',
-                            chosen: dressed?.back?.name ?? '${base.name}’s',
-                            count: backChoices.length + 1,
-                            tile: (i) => i == 0
-                                ? _Tile(
-                                    name: '${base.name}’s',
-                                    selected: _back == null,
-                                    onTap: () => setState(() => _back = null),
-                                    child: _Back(TailoredSkin.of(base)),
-                                  )
-                                : _Tile(
-                                    name: backChoices[i - 1].name,
-                                    selected: _back?.id == backChoices[i - 1].id,
-                                    onTap: () => setState(() => _back = backChoices[i - 1]),
-                                    child: _Back(TailoredSkin(base, backChoice: backChoices[i - 1])),
-                                  ),
-                          ),
-                          _Row(
-                            id: 'tokens',
-                            title: 'Tokens',
-                            chosen: dressed?.token?.name ?? '${base.name}’s',
-                            count: tokenChoices.length + 1,
-                            tile: (i) => i == 0
-                                ? _Tile(
-                                    name: '${base.name}’s',
-                                    selected: _token == null,
-                                    onTap: () => setState(() => _token = null),
-                                    child: _Tokens(TailoredSkin.of(base)),
-                                  )
-                                : _Tile(
-                                    name: tokenChoices[i - 1].name,
-                                    selected: _token?.id == tokenChoices[i - 1].id,
-                                    onTap: () => setState(() => _token = tokenChoices[i - 1]),
-                                    child: _Tokens(TailoredSkin(base, tokenChoice: tokenChoices[i - 1])),
-                                  ),
-                          ),
-                          _Row(
-                            id: 'tasks',
-                            title: 'Task cards',
-                            chosen: dressed?.task?.name ?? '${base.name}’s',
-                            count: taskChoices.length + 1,
-                            tile: (i) => i == 0
-                                ? _Tile(
-                                    name: '${base.name}’s',
-                                    selected: _task == null,
-                                    onTap: () => setState(() => _task = null),
-                                    child: _TaskSwatch(TailoredSkin.of(base).taskLook),
-                                  )
-                                : _Tile(
-                                    name: taskChoices[i - 1].name,
-                                    selected: _task?.id == taskChoices[i - 1].id,
-                                    onTap: () => setState(() => _task = taskChoices[i - 1]),
-                                    child: _TaskSwatch(taskChoices[i - 1].look),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // A rule over the button, so the choices scroll away
-                    // under it rather than stopping short.
-                    Container(height: 1.5, color: skin.gold.withValues(alpha: 0.55)),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                      child: SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(onPressed: _done, child: const Text('Done'))),
-                    ),
-                  ]))),
+                  ),
                 ),
               ]),
             );
@@ -287,74 +164,153 @@ class _LookPageState extends State<_LookPage> {
       ),
     );
   }
-}
 
-/// One kind of choice: its name and what's chosen, over a row of tiles
-/// that scrolls sideways (built as they come into view).
-class _Row extends StatelessWidget {
-  const _Row({required this.id, required this.title, required this.chosen, required this.count, required this.tile});
-  final String id;
-  final String title;
-  final String chosen;
-  final int count;
-  final Widget Function(int i) tile;
-
-  static const height = 124.0;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(title,
-                style: TextStyle(
-                    fontFamily: skin.displayFont, fontWeight: FontWeight.w700, fontSize: 18, color: skin.gold)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(chosen,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14, color: Colors.white70)),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 8),
-        // On a wide screen every choice shows at once; on a phone they
-        // scroll sideways, built as they come into view.
-        LayoutBuilder(
-          builder: (context, c) => c.maxWidth >= 640
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Wrap(
-                    key: ValueKey('look-row-$id'),
-                    spacing: 10,
-                    runSpacing: 12,
-                    children: [for (var i = 0; i < count; i++) tile(i)],
-                  ),
-                )
-              : SizedBox(
-                  height: height,
-                  child: ListView.separated(
-                    key: ValueKey('look-row-$id'),
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: count,
-                    separatorBuilder: (context, i) => const SizedBox(width: 10),
-                    itemBuilder: (context, i) => tile(i),
-                  ),
-                ),
-        ),
-      ]),
+  /// The open tab's choices, in a grid of tiles: the style's own first.
+  Widget _grid(BuildContext context, Skin look) {
+    final base = _base;
+    final own = TailoredSkin.of(base);
+    final ownName = '${base.name}’s';
+    final tiles = <Widget>[
+      ...switch (_kind) {
+        _Kind.style => [
+            for (final s in skins)
+              if (widget.entitlements.owns(s))
+                _Tile(name: s.name, selected: s.id == base.id, onTap: () => _style(s), child: _TableSwatch(s)),
+          ],
+        _Kind.faces => [
+            _Tile(name: ownName, selected: _face == null, onTap: () => setState(() => _face = null), child: _Faces(own)),
+            for (final f in faceChoices)
+              _Tile(
+                  name: f.name,
+                  selected: _face?.id == f.id,
+                  onTap: () => setState(() => _face = f),
+                  child: _Faces(TailoredSkin(base, faceChoice: f))),
+          ],
+        _Kind.court => [
+            _Tile(
+                name: ownName, selected: _court == null, onTap: () => setState(() => _court = null), child: _Courts(own)),
+            for (final c in courtChoices)
+              _Tile(
+                  name: c.name,
+                  selected: _court?.id == c.id,
+                  onTap: () => setState(() => _court = c),
+                  child: _Courts(TailoredSkin(base, courtChoice: c))),
+          ],
+        _Kind.backs => [
+            _Tile(name: ownName, selected: _back == null, onTap: () => setState(() => _back = null), child: _Back(own)),
+            for (final b in backChoices)
+              _Tile(
+                  name: b.name,
+                  selected: _back?.id == b.id,
+                  onTap: () => setState(() => _back = b),
+                  child: _Back(TailoredSkin(base, backChoice: b))),
+          ],
+        _Kind.tokens => [
+            _Tile(
+                name: ownName, selected: _token == null, onTap: () => setState(() => _token = null), child: _Tokens(own)),
+            for (final t in tokenChoices)
+              _Tile(
+                  name: t.name,
+                  selected: _token?.id == t.id,
+                  onTap: () => setState(() => _token = t),
+                  child: _Tokens(TailoredSkin(base, tokenChoice: t))),
+          ],
+        _Kind.tasks => [
+            _Tile(
+                name: ownName,
+                selected: _task == null,
+                onTap: () => setState(() => _task = null),
+                child: _TaskSwatch(own.taskLook)),
+            for (final k in taskChoices)
+              _Tile(
+                  name: k.name,
+                  selected: _task?.id == k.id,
+                  onTap: () => setState(() => _task = k),
+                  child: _TaskSwatch(k.look)),
+          ],
+      },
+    ];
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      child: GridView.builder(
+        key: ValueKey('look-grid-${_kind.name}'),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 132, mainAxisExtent: 136, crossAxisSpacing: 10, mainAxisSpacing: 10),
+        itemCount: tiles.length,
+        itemBuilder: (context, i) => tiles[i],
+      ),
     );
   }
 }
 
-/// One choice: its picture over its name, ringed in the accent when
-/// chosen, with a tick; lit, under a pointer, with the hand.
+/// The kinds of choice, a tab each.
+enum _Kind {
+  style('Style'),
+  faces('Card faces'),
+  court('Court Cards'),
+  backs('Card backs'),
+  tokens('Tokens'),
+  tasks('Task cards');
+
+  const _Kind(this.label);
+  final String label;
+}
+
+/// A tab for each kind of choice, the open one filled in the accent.
+class _Tabs extends StatelessWidget {
+  const _Tabs({required this.kind, required this.onKind, required this.look});
+  final _Kind kind;
+  final ValueChanged<_Kind> onKind;
+  final Skin look;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        children: [
+          for (final k in _Kind.values)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: Semantics(
+                button: true,
+                selected: k == kind,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => onKind(k),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: k == kind ? skin.gold : Colors.black.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: skin.gold.withValues(alpha: k == kind ? 1 : 0.35)),
+                      ),
+                      child: Text(k.label,
+                          style: TextStyle(
+                              fontFamily: skin.bodyFont,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: k == kind ? skin.goldInk : Colors.white.withValues(alpha: 0.85))),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One choice: its picture on the livery's felt over its name, ringed and
+/// lit in the accent when chosen; lit, under a pointer, with the hand.
 class _Tile extends StatefulWidget {
   const _Tile({required this.name, required this.selected, required this.onTap, required this.child});
   final String name;
@@ -384,26 +340,27 @@ class _TileState extends State<_Tile> {
         onExit: (_) => setState(() => _hover = false),
         child: GestureDetector(
           onTap: widget.onTap,
-          child: SizedBox(
-            width: 100,
-            child: Column(children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: 100,
-                height: 84,
+          child: Column(children: [
+            Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: _hover ? 0.32 : 0.22),
-                  borderRadius: BorderRadius.circular(14),
+                  gradient: RadialGradient(radius: 0.9, colors: [skin.feltGlow, skin.feltDeep]),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                       color: selected
                           ? skin.gold
                           : _hover
-                              ? skin.gold.withValues(alpha: 0.5)
-                              : Colors.white.withValues(alpha: 0.1),
+                              ? skin.gold.withValues(alpha: 0.6)
+                              : Colors.white.withValues(alpha: 0.12),
                       width: selected ? 2.5 : 1.5),
+                  boxShadow: [
+                    if (selected) BoxShadow(color: skin.gold.withValues(alpha: 0.35), blurRadius: 14),
+                    const BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 3)),
+                  ],
                 ),
                 child: Stack(children: [
-                  // Its own layer: drawn once, not again as the row scrolls.
+                  // Its own layer: drawn once, not again as the grid scrolls.
                   Center(
                       child: AnimatedScale(
                           scale: _hover ? 1.06 : 1,
@@ -411,41 +368,40 @@ class _TileState extends State<_Tile> {
                           child: RepaintBoundary(child: widget.child))),
                   if (selected)
                     Positioned(
-                      right: 5,
-                      top: 5,
+                      right: 6,
+                      top: 6,
                       child: Container(
-                        width: 18,
-                        height: 18,
+                        width: 20,
+                        height: 20,
                         decoration: BoxDecoration(color: skin.gold, shape: BoxShape.circle),
-                        child: Icon(Icons.check_rounded, size: 13, color: skin.goldInk),
+                        child: Icon(Icons.check_rounded, size: 14, color: skin.goldInk),
                       ),
                     ),
                 ]),
               ),
-              const SizedBox(height: 6),
-              Text(widget.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.15,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected || _hover ? skin.gold : Colors.white70)),
-            ]),
-          ),
+            ),
+            const SizedBox(height: 6),
+            Text(widget.name,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: selected || _hover ? skin.gold : Colors.white.withValues(alpha: 0.8))),
+          ]),
         ),
       ),
     );
   }
 }
 
-/// The livery put together, on the page itself: the Court Cards and the
-/// Ace to the 4 fanned in a hand, the seats' tokens, a pile of tricks in
-/// the backs, and a task, as one group in the middle. Each part changes on
-/// its own, as its own choice does (a new back turns over only the pile),
-/// and the lot only when the style does.
-class _Preview extends StatelessWidget {
-  const _Preview({required this.look});
+/// The livery put together, as a showcase: its name, a hand of the Court
+/// Cards over the Ace to the 4, the seats' tokens, a pile of tricks in the
+/// backs and a task, under a soft light. Each part changes on its own, as
+/// its own choice does, and the lot only when the style does.
+class _Showcase extends StatelessWidget {
+  const _Showcase({required this.look});
   final Skin look;
 
   static const _courts = [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king];
@@ -460,114 +416,124 @@ class _Preview extends StatelessWidget {
   Widget build(BuildContext context) {
     final dressed = look is TailoredSkin ? look as TailoredSkin : null;
     final base = TailoredSkin.baseOf(look).id;
-    final face = dressed?.face?.id, court = dressed?.court?.id;
     return SkinScope(
       skin: look,
       child: Builder(builder: (context) {
         final skin = context.skin;
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: LayoutBuilder(builder: (context, c) {
-              final w = c.maxWidth, h = c.maxHeight;
-              final cardW = clampD(math.min(h * 0.27, w * 0.15), 40, 68);
-              final cardH = PlayingCardView.heightFor(cardW);
-              final step = cardW * 0.7;
-              final fanW = 3 * step + cardW + 12;
-              Widget fan(List<PlayingCard> cards) => SizedBox(
-                    width: fanW,
-                    height: cardH + 10,
-                    child: Stack(clipBehavior: Clip.none, children: [
-                      for (final (k, card) in cards.indexed)
+        return LayoutBuilder(builder: (context, c) {
+          final h = c.maxHeight, w = math.min(c.maxWidth, 560.0);
+          final cardW = clampD(math.min((h - 78) / (1.42 * 1.62), w * 0.13), 40, 66);
+          final cardH = PlayingCardView.heightFor(cardW);
+          final step = cardW * 0.66;
+          final fanW = 3 * step + cardW + 10;
+          Widget fan(List<PlayingCard> cards, {required bool high}) => SizedBox(
+                width: fanW,
+                height: cardH + 12,
+                child: Stack(clipBehavior: Clip.none, children: [
+                  for (final (k, card) in cards.indexed)
+                    Positioned(
+                      left: k * step,
+                      top: (k - 1.5).abs() * (high ? 4 : 2),
+                      child: Transform.rotate(
+                          angle: (k - 1.5) * (high ? 0.09 : 0.05), child: PlayingCardView(card: card, width: cardW)),
+                    ),
+                ]),
+              );
+          return Stack(fit: StackFit.expand, children: [
+            // A soft light over the middle.
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                    center: const Alignment(0, 0.15),
+                    radius: 0.75,
+                    colors: [skin.gold.withValues(alpha: 0.16), skin.gold.withValues(alpha: 0)]),
+              ),
+            ),
+            Column(children: [
+              const SizedBox(height: 10),
+              Text('Livery',
+                  style: TextStyle(fontSize: 13, letterSpacing: 1.2, color: Colors.white.withValues(alpha: 0.6))),
+              _Swap(
+                id: base,
+                child: Text(skin.name,
+                    style: TextStyle(
+                        fontFamily: skin.displayFont,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 26,
+                        height: 1.15,
+                        color: skin.gold,
+                        shadows: skin.feltShadow)),
+              ),
+              Expanded(
+                child: Center(
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    // The hand: the Court Cards over the number cards.
+                    SizedBox(
+                      width: fanW,
+                      height: cardH * 1.62 + 12,
+                      child: Stack(clipBehavior: Clip.none, children: [
                         Positioned(
-                          left: k * step,
-                          top: (k - 1.5).abs() * 3,
-                          child: Transform.rotate(
-                              angle: (k - 1.5) * 0.07, child: PlayingCardView(card: card, width: cardW)),
-                        ),
-                    ]),
-                  );
-              final rowGap = math.max(6.0, (h - 40 - cardH * 2) / 3);
-              return Stack(fit: StackFit.expand, children: [
-                Positioned(
-                  left: 20,
-                  top: 6,
-                  child: _Swap(
-                    id: base,
-                    child: Text(skin.name,
-                        style: TextStyle(
-                            fontFamily: skin.displayFont,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 20,
-                            color: skin.gold,
-                            shadows: skin.feltShadow)),
-                  ),
-                ),
-                Positioned(
-                    left: 20, top: 34 + rowGap * 0.5, child: _Swap(id: '$base-$court-$face', child: fan(_courts))),
-                Positioned(
-                    left: 20,
-                    top: 34 + rowGap * 1.5 + cardH,
-                    child: _Swap(id: '$base-$face', child: fan(_numbers))),
-                // The seats.
-                Positioned(
-                    right: 16, top: 6, child: _Swap(id: '$base-${dressed?.token?.id}', child: _Tokens(look))),
-                // A pile of tricks won.
-                Positioned(
-                  right: 26,
-                  top: h * 0.3,
-                  child: _Swap(
-                    id: '$base-${dressed?.back?.id}',
-                    child: SizedBox(
-                      width: cardW * 0.8 + 12,
-                      height: PlayingCardView.heightFor(cardW * 0.8) + 8,
-                      child: Stack(children: [
-                        for (var k = 0; k < 3; k++)
-                          Positioned(
-                            left: k * 5.0,
-                            top: k * 2.0,
-                            child: Transform.rotate(
-                                angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
-                          ),
+                            left: 0,
+                            top: cardH * 0.62,
+                            child: _Swap(id: '$base-${dressed?.face?.id}', child: fan(_numbers, high: false))),
+                        Positioned(
+                            left: 0, top: 0, child: _Swap(id: '$base-${dressed?.court?.id}', child: fan(_courts, high: true))),
                       ]),
                     ),
-                  ),
+                    SizedBox(width: clampD(w * 0.06, 14, 34)),
+                    Column(mainAxisSize: MainAxisSize.min, children: [
+                      _Swap(id: '$base-${dressed?.token?.id}', child: _Tokens(look)),
+                      const SizedBox(height: 10),
+                      _Swap(
+                        id: '$base-${dressed?.back?.id}',
+                        child: SizedBox(
+                          width: cardW * 0.8 + 12,
+                          height: PlayingCardView.heightFor(cardW * 0.8) + 8,
+                          child: Stack(children: [
+                            for (var k = 0; k < 3; k++)
+                              Positioned(
+                                left: k * 5.0,
+                                top: k * 2.0,
+                                child: Transform.rotate(
+                                    angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
+                              ),
+                          ]),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _Swap(
+                        id: '$base-${dressed?.task?.id}',
+                        child: TaskChip(
+                          task: RoundTask(taskByDescription('Win the first trick')),
+                          points: 2,
+                          text: 'Win the first trick',
+                          color: skin.players[0],
+                          width: 124,
+                          progress: '0/1',
+                        ),
+                      ),
+                    ]),
+                  ]),
                 ),
-                // A task.
-                Positioned(
-                  right: 14,
-                  bottom: 10,
-                  child: _Swap(
-                    id: '$base-${dressed?.task?.id}',
-                    child: TaskChip(
-                      task: RoundTask(taskByDescription('Win the first trick')),
-                      points: 2,
-                      text: 'Win the first trick',
-                      color: skin.players[0],
-                      width: math.min(140, w * 0.34),
-                      progress: '0/1',
-                    ),
-                  ),
-                ),
-              ]);
-            }),
-          ),
-        );
+              ),
+              const SizedBox(height: 8),
+            ]),
+          ]);
+        });
       }),
     );
   }
 }
 
-/// One part of the preview, changing (fading and settling in) only when
+/// One part of the showcase, changing (fading and settling in) only when
 /// [id] does, in a layer of its own.
 class _Swap extends StatelessWidget {
   const _Swap({required this.id, required this.child});
   final String id;
   final Widget child;
 
-  // The part carries the look it was drawn in, so the old one fades out
-  // as it was rather than in the new look.
-
+  // The part carries the livery it was drawn in, so the old one fades out
+  // as it was rather than in the new one.
   @override
   Widget build(BuildContext context) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 320),
@@ -576,7 +542,7 @@ class _Swap extends StatelessWidget {
         transitionBuilder: (child, a) => FadeTransition(
             opacity: a, child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: child)),
         layoutBuilder: (current, previous) =>
-            Stack(alignment: Alignment.topLeft, children: [...previous, if (current != null) current]),
+            Stack(alignment: Alignment.center, children: [...previous, if (current != null) current]),
         child: RepaintBoundary(key: ValueKey(id), child: SkinScope(skin: context.skin, child: child)),
       );
 }

@@ -86,7 +86,8 @@ class _TaskSwatch extends StatelessWidget {
   }
 }
 
-/// Two cards' faces as [look] draws them: a number card and a Court Card.
+/// Two number cards' faces as [look] draws them (the Court Cards are
+/// chosen apart).
 class _Faces extends StatelessWidget {
   const _Faces(this.look);
   final Skin look;
@@ -106,7 +107,8 @@ class _Faces extends StatelessWidget {
             Positioned(
                 right: 4,
                 top: 4,
-                child: Transform.rotate(angle: 0.08, child: const PlayingCardView(card: PlayingCard.queen, width: 40))),
+                child: Transform.rotate(
+                    angle: 0.08, child: const PlayingCardView(card: PlayingCard(Suit.spades, 1), width: 40))),
           ]),
         ),
       );

@@ -80,3 +80,4 @@ skin-harbour-4-look.png: the Look dialog has task cards to choose, and patterned
 *: token styles, more full-art Court Cards, rooms' tokens and faces, the home-screen app in the safe area
 *: Livery: the preview at the top with the whole court and Ace to 4, rows below, Done at the bottom; each Court Card its own design
 livery-wide.png: new, the Livery page on a laptop
+*: Livery as a showcase with tabs and a grid; faces and Court Cards apart

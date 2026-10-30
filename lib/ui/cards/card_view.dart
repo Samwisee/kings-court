@@ -92,10 +92,12 @@ class PlayingCardView extends StatelessWidget {
     // Every Court Card is full art: its emblem on its cloth.
     final cloth = card.isCourt;
     final h = heightFor(width);
-    final outer = width * look.radius;
+    final outer = width * (card.isCourt ? look.courtRadius ?? look.radius : look.radius);
     final r = BorderRadius.circular(outer - skin.outlineWidth);
     final corner = TextStyle(
-        fontFamily: look.faceFont ?? (card.isCourt ? skin.displayFont : skin.bodyFont),
+        // The faces chosen print the number cards; the Court Cards keep the
+        // skin's own lettering.
+        fontFamily: card.isCourt ? skin.displayFont : look.faceFont ?? skin.bodyFont,
         fontWeight: FontWeight.w900,
         fontSize: width * (card.isCourt ? 0.3 : 0.26),
         height: 1,
