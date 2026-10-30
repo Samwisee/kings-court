@@ -1,0 +1,26 @@
+Running build hooks...Running build hooks...Playing from seed 0 on 2 cores, at weak, casual, fixed; 4 seeds. Rounds go to out/selfplay/rounds.jsonl, disagreements to out/selfplay/disagreements.jsonl. Ctrl-C stops (what's played is kept).
+
+12 rounds in 0.1 minutes, 181 disagreements.
+  weak: 25.0% won of 4
+  casual: 25.0% won of 4
+  fixed: 50.0% won of 4
+4 deals played at every rung (weak, casual, fixed)
+
+== rounds won ==
+               weak   casual    fixed
+all           25.0%    25.0%    50.0%   (4 deals)
+3 players     33.3%    33.3%    33.3%   (3 deals)
+4 players      0.0%     0.0%   100.0%   (1 deals)
+
+== each task, done when taken, by rung (most swing with skill first) ==
+                                                              weak  casual   fixed   swing   note
+
+== the courtiers' decisions ==
+weak      23.2 decisions a round,  26.9% close calls,   6.5% clear early, 0.8 s a round
+casual    28.8 decisions a round,  14.8% close calls,  10.4% clear early, 0.6 s a round
+fixed     31.5 decisions a round,  19.8% close calls,   0.0% clear early, 1.1 s a round
+
+== disagreements with an all-seeing courtier: 181 ==
+by rung: weak 49, casual 66, fixed 66
+on close calls:  17.1%
+by trick: 1: 25, 2: 23, 3: 24, 4: 19, 5: 18, 6: 20, 7: 12, 8: 8, 9: 9, 10: 9, 11: 6, 12: 8
