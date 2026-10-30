@@ -425,6 +425,26 @@ void main() {
   });
   }
 
+  // The Livery page on a laptop: a column down the middle, every choice
+  // showing.
+  testWidgets('The Livery page on a wide screen', (tester) async {
+    tester.view.physicalSize = const Size(2800, 1800);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    HomePageTestHooks.fast();
+    await tester.pumpWidget(const TheKingsCourtApp(skin: HarbourSkin()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New game'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Livery: Harbour'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/livery-wide.png'));
+  });
+
   // Looks mixed from the Look dialog's choices, at the table.
   BackChoice back(String id) => backChoices.firstWhere((b) => b.id == id);
   TaskChoice task(String id) => taskChoices.firstWhere((k) => k.id == id);
