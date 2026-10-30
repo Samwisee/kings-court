@@ -56,11 +56,14 @@ jobs:
           tail -20 drive.txt
           python3 tool/frames/report.py build/frames.json > frames.txt 2>&1 || cp drive.txt frames.txt
           cat frames.txt
+      - name: Within the frame budget?
+        run: |
+          python3 tool/frames/budget.py build/frames.json | tee budget.txt
       - name: Publish to the frames branch
         if: always()
         run: |
           mkdir -p /tmp/out
-          for f in frames.txt drive.txt chromedriver.log progress.txt logserver.txt build/frames.json; do cp "$f" /tmp/out/ 2>/dev/null || true; done
+          for f in frames.txt budget.txt drive.txt chromedriver.log progress.txt logserver.txt build/frames.json; do cp "$f" /tmp/out/ 2>/dev/null || true; done
           cd /tmp/out
           git init -q -b out
           git config user.name ci && git config user.email ci@example.com
