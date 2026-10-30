@@ -1,0 +1,214 @@
+diff --git a/lib/ui/cards/task_chip.dart b/lib/ui/cards/task_chip.dart
+index 46859da..42e0a47 100644
+--- a/lib/ui/cards/task_chip.dart
++++ b/lib/ui/cards/task_chip.dart
+@@ -224,7 +224,7 @@ class TaskChip extends StatelessWidget {
+         // What's printed on the face: drawn out to the border, round the
+         // padding.
+         painter: TaskFacePainter.prints(look)
+-            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 6), radius: 5)
++            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 6))
+             : null,
+         child: Column(
+         mainAxisSize: MainAxisSize.min,
+diff --git a/lib/ui/dialogs/look_dialog.dart b/lib/ui/dialogs/look_dialog.dart
+index 58b142c..874b9f9 100644
+--- a/lib/ui/dialogs/look_dialog.dart
++++ b/lib/ui/dialogs/look_dialog.dart
+@@ -241,7 +241,7 @@ class _TaskSwatch extends StatelessWidget {
+       decoration: BoxDecoration(
+         color: look.face,
+         borderRadius: BorderRadius.circular(7),
+-        border: Border.all(color: skin.outlineColour, width: 1),
++        border: Border.all(color: skin.outlineColour),
+       ),
+       child: CustomPaint(
+         painter: TaskFacePainter(look, reach: EdgeInsets.zero, radius: 6),
+diff --git a/lib/ui/widgets.dart b/lib/ui/widgets.dart
+index a0fd56c..948d93e 100644
+--- a/lib/ui/widgets.dart
++++ b/lib/ui/widgets.dart
+@@ -14,8 +14,8 @@ export 'widgets/panels.dart';
+ export 'widgets/pips.dart';
+ export 'widgets/seals.dart';
+ export 'widgets/suit_text.dart';
+-export 'widgets/task_faces.dart';
+ export 'widgets/table.dart';
+ export 'widgets/task_card.dart';
++export 'widgets/task_faces.dart';
+ export 'widgets/token_shapes.dart';
+ export 'widgets/tokens.dart';
+diff --git a/lib/ui/widgets/felt_patterns.dart b/lib/ui/widgets/felt_patterns.dart
+index 1c936fc..c570240 100644
+--- a/lib/ui/widgets/felt_patterns.dart
++++ b/lib/ui/widgets/felt_patterns.dart
+@@ -145,7 +145,7 @@ class FeltPatternPainter extends CustomPainter {
+             ..lineTo(right.dx, right.dy)
+             ..lineTo(c.dx, c.dy)
+             ..close(),
+-          _line(1));
++          _line());
+     }
+ 
+     for (var k = 0; k < 8; k++) {
+@@ -246,7 +246,7 @@ class FeltPatternPainter extends CustomPainter {
+ 
+   /// Fine stripes, in pairs.
+   void _pinstripe(Canvas canvas, Size s) {
+-    final line = _line(1);
++    final line = _line();
+     final path = Path();
+     for (var x = 12.0; x < s.width; x += 30) {
+       path
+@@ -308,7 +308,7 @@ class FeltPatternPainter extends CustomPainter {
+       ..lineTo(c.dx - m * 0.7, c.dy)
+       ..close();
+     canvas.drawPath(lozenge, _line(1.2));
+-    canvas.drawCircle(c, m * 0.22, _line(1));
++    canvas.drawCircle(c, m * 0.22, _line());
+   }
+ 
+   /// Squares a shade apart.
+@@ -446,7 +446,7 @@ class FeltPatternPainter extends CustomPainter {
+           ..close();
+       }
+     }
+-    canvas.drawPath(star, _line(1));
++    canvas.drawPath(star, _line());
+     canvas.drawPath(dots, _fill());
+   }
+ 
+@@ -454,7 +454,7 @@ class FeltPatternPainter extends CustomPainter {
+   void _contours(Canvas canvas, Size s) {
+     final rand = math.Random(5);
+     final hills = 3 + (s.width * s.height / 400000).round().clamp(0, 5);
+-    final line = _line(1);
++    final line = _line();
+     final bold = _line(1.6);
+     for (var h = 0; h < hills; h++) {
+       final c = Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height);
+diff --git a/lib/ui/widgets/task_faces.dart b/lib/ui/widgets/task_faces.dart
+index 909befe..422e6f1 100644
+--- a/lib/ui/widgets/task_faces.dart
++++ b/lib/ui/widgets/task_faces.dart
+@@ -3,7 +3,6 @@
+ library;
+ 
+ import 'dart:math' as math;
+-import 'dart:ui' show PathMetric;
+ 
+ import 'package:flutter/material.dart';
+ 
+@@ -70,7 +69,7 @@ class TaskFacePainter extends CustomPainter {
+         canvas.restore();
+       case TaskFrame.stamp:
+         final dot = Paint()..color = rule;
+-        for (final PathMetric m in (Path()..addRRect(face.deflate(2.6))).computeMetrics()) {
++        for (final m in (Path()..addRRect(face.deflate(2.6))).computeMetrics()) {
+           for (var d = 0.0; d < m.length; d += 4) {
+             canvas.drawCircle(m.getTangentForOffset(d)!.position, 0.9, dot);
+           }
+diff --git a/linux/flutter/generated_plugin_registrant.cc b/linux/flutter/generated_plugin_registrant.cc
+index 1830e5c..8690200 100644
+--- a/linux/flutter/generated_plugin_registrant.cc
++++ b/linux/flutter/generated_plugin_registrant.cc
+@@ -7,9 +7,13 @@
+ #include "generated_plugin_registrant.h"
+ 
+ #include <audioplayers_linux/audioplayers_linux_plugin.h>
++#include <sentry_flutter/sentry_flutter_plugin.h>
+ 
+ void fl_register_plugins(FlPluginRegistry* registry) {
+   g_autoptr(FlPluginRegistrar) audioplayers_linux_registrar =
+       fl_plugin_registry_get_registrar_for_plugin(registry, "AudioplayersLinuxPlugin");
+   audioplayers_linux_plugin_register_with_registrar(audioplayers_linux_registrar);
++  g_autoptr(FlPluginRegistrar) sentry_flutter_registrar =
++      fl_plugin_registry_get_registrar_for_plugin(registry, "SentryFlutterPlugin");
++  sentry_flutter_plugin_register_with_registrar(sentry_flutter_registrar);
+ }
+diff --git a/linux/flutter/generated_plugins.cmake b/linux/flutter/generated_plugins.cmake
+index f4bf1dc..220f0c7 100644
+--- a/linux/flutter/generated_plugins.cmake
++++ b/linux/flutter/generated_plugins.cmake
+@@ -4,6 +4,7 @@
+ 
+ list(APPEND FLUTTER_PLUGIN_LIST
+   audioplayers_linux
++  sentry_flutter
+ )
+ 
+ list(APPEND FLUTTER_FFI_PLUGIN_LIST
+diff --git a/macos/Flutter/GeneratedPluginRegistrant.swift b/macos/Flutter/GeneratedPluginRegistrant.swift
+index 290605b..c6f6efe 100644
+--- a/macos/Flutter/GeneratedPluginRegistrant.swift
++++ b/macos/Flutter/GeneratedPluginRegistrant.swift
+@@ -7,12 +7,14 @@ import Foundation
+ 
+ import audioplayers_darwin
+ import package_info_plus
++import sentry_flutter
+ import shared_preferences_foundation
+ import wakelock_plus
+ 
+ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+   AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
+   FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
++  SentryFlutterPlugin.register(with: registry.registrar(forPlugin: "SentryFlutterPlugin"))
+   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
+   WakelockPlusMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockPlusMacosPlugin"))
+ }
+diff --git a/test/tool/shots_test.dart b/test/tool/shots_test.dart
+index e805280..614a6a0 100644
+--- a/test/tool/shots_test.dart
++++ b/test/tool/shots_test.dart
+@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
+ import 'package:flutter_test/flutter_test.dart';
+ import 'package:kings_court/engine/cards.dart';
+ import 'package:kings_court/engine/round.dart';
+-import 'package:kings_court/engine/task.dart';
+ import 'package:kings_court/game/courtiers.dart';
+ import 'package:kings_court/game/state.dart';
+ import 'package:kings_court/modes/tutorial/lessons.dart';
+@@ -495,7 +494,7 @@ void main() {
+                   height: 80,
+                   color: t.table,
+                   padding: const EdgeInsets.all(8),
+-                  child: Container(
++                  child: ColoredBox(
+                       color: t.felt,
+                       child: CustomPaint(
+                           painter: FeltPatternPainter(t.pattern, t.ink, ground: t.felt, scale: 0.5),
+diff --git a/windows/flutter/generated_plugin_registrant.cc b/windows/flutter/generated_plugin_registrant.cc
+index 8b6d468..f9dd88c 100644
+--- a/windows/flutter/generated_plugin_registrant.cc
++++ b/windows/flutter/generated_plugin_registrant.cc
+@@ -6,6 +6,12 @@
+ 
+ #include "generated_plugin_registrant.h"
+ 
++#include <audioplayers_windows/audioplayers_windows_plugin.h>
++#include <sentry_flutter/sentry_flutter_plugin.h>
+ 
+ void RegisterPlugins(flutter::PluginRegistry* registry) {
++  AudioplayersWindowsPluginRegisterWithRegistrar(
++      registry->GetRegistrarForPlugin("AudioplayersWindowsPlugin"));
++  SentryFlutterPluginRegisterWithRegistrar(
++      registry->GetRegistrarForPlugin("SentryFlutterPlugin"));
+ }
+diff --git a/windows/flutter/generated_plugins.cmake b/windows/flutter/generated_plugins.cmake
+index b93c4c3..d9b155a 100644
+--- a/windows/flutter/generated_plugins.cmake
++++ b/windows/flutter/generated_plugins.cmake
+@@ -3,9 +3,12 @@
+ #
+ 
+ list(APPEND FLUTTER_PLUGIN_LIST
++  audioplayers_windows
++  sentry_flutter
+ )
+ 
+ list(APPEND FLUTTER_FFI_PLUGIN_LIST
++  jni
+ )
+ 
+ set(PLUGIN_BUNDLED_LIBRARIES)

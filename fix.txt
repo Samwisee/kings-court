@@ -1,0 +1,26 @@
+Computing fixes in kings-court...
+Applying fixes...
+
+lib/ui/cards/task_chip.dart
+  avoid_redundant_argument_values - 1 fix
+
+lib/ui/dialogs/look_dialog.dart
+  avoid_redundant_argument_values - 1 fix
+
+lib/ui/widgets.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/felt_patterns.dart
+  avoid_redundant_argument_values - 5 fixes
+
+lib/ui/widgets/task_faces.dart
+  omit_local_variable_types - 1 fix
+  unused_import - 1 fix
+
+test/tool/shots_test.dart
+  unnecessary_import - 1 fix
+  use_colored_box - 1 fix
+
+12 fixes made in 6 files.
+Computing fixes in kings-court...
+Nothing to fix!
