@@ -2,10 +2,12 @@ name: Frames
 
 # The frame benchmark (integration_test/frames_test.dart): the game in
 # Chrome, every animation played, each frame timed. frames.txt is
-# published to the out-frames-<branch> branch.
+# published to the out-frames-<branch> branch. It runs on every try-*
+# branch beside Check a branch, and on main; its budget
+# (tool/frames/budget.py) is a gate like the tests.
 on:
   push:
-    branches: [main, 'frames-*']
+    branches: [main, 'frames-*', 'try-*']
   workflow_dispatch:
 
 permissions:

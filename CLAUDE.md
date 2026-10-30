@@ -11,6 +11,40 @@ proved by CI, not by reading. A commit that changes what the player sees
 or how a round plays, on purpose, is written up in `docs/DECISIONS.md`
 with the screenshots it explains (`tool/shots/expected_changes.txt`).
 
+## Performance comes first
+
+The game must hold **60 frames a second on a phone, in the installed
+web app, on every screen**. A change that drops frames is a red commit:
+fixed before anything else, like a failing test.
+
+- **Every branch** (`try-*`) also runs **Frames** (`frames.yml`): the
+  release build in Chrome plays every animated scene
+  (`integration_test/frames_test.dart`) and times each frame. Its verdict
+  is `budget.txt` on `out-frames-<branch>`, the numbers `frames.txt`. It
+  must say "within the frame budget" before main. CI has no GPU, so it
+  judges the Dart side: each scene's frame work, and the courtiers'
+  thinking (at most one slice between two frames, none over 10 ms),
+  which holds on any machine.
+- **Real devices** report too: every shared round carries the frames it
+  drew (`lib/platform/frame_stats.dart`), and the daily **Reports** run
+  (`gh workflow run reports.yml` for one now) writes `frames.txt` on the
+  `reports` branch by build and device, with `missed` (dropped frames)
+  and the raster times. After a deploy that touches the screen, check the
+  new build against the one before it on the same device.
+- **What we've learned costs frames**, so don't:
+  - run work outside a frame for longer than a slice: anything long is
+    split, a slice after each frame (`Bot.breather`);
+  - do something heavy (a whole-page rebuild, drawing a picture with
+    `toImageSync`) in the middle of an animation: do it before it starts,
+    or behind a still (the skin change), or ahead of time
+    (`FeltLight.ready`);
+  - make new inline widgets in text on every build: a `WidgetSpan` whose
+    child isn't the identical widget lays its paragraph out again (use
+    `Same`);
+  - blur large areas, or animate anything under a big `saveLayer`;
+  - clear the browser's performance marks (Flutter's timeline needs them).
+- A new animation or screen gets a scene in the frame benchmark.
+
 ## How the work runs
 
 - There is usually **no Flutter SDK** in the session: CI is the compiler.

@@ -78,6 +78,28 @@ def main(path):
     recent = set(builds[-3:])
     for key in sorted(k for k in by_device if k[0] in recent):
         print(line(f'{key[0]} {key[1]} {key[2]}', by_device[key]))
+    # The newest build against the one before it, on the same device and
+    # place: dropped frames and stalls (frames drawn in 50 ms or more).
+    if len(builds) >= 2:
+        new_b, old_b = builds[-1], builds[-2]
+        print(f'\n== {new_b} against {old_b}, by device ==')
+        worse = []
+        for (b, device, place), s_new in sorted(by_device.items()):
+            if b != new_b or (old_b, device, place) not in by_device:
+                continue
+            s_old = by_device[(old_b, device, place)]
+            def rates(x):
+                missed = 100 * x['missed'] / max(1, x['frames'] + x['missed'])
+                stalls = 1000 * (x['raster'][7] + x['raster'][8] + x['build'][7] + x['build'][8]) / max(1, x['frames'])
+                return missed, stalls
+            (m1, st1), (m0, st0) = rates(s_new), rates(s_old)
+            flag = ''
+            if (m1 > m0 * 1.5 and m1 - m0 > 1) or (st1 > st0 * 2 and st1 - st0 > 0.5):
+                flag = '  WORSE'
+                worse.append(f'{device} {place}')
+            print(f"{device + ' ' + place:<44} missed {m0:5.1f}% -> {m1:5.1f}%   stalls a thousand frames {st0:5.1f} -> {st1:5.1f}{flag}")
+        print('worse on: ' + ', '.join(worse) if worse else 'no device worse')
+
     if not with_frames:
         print('(no rounds with frame counts yet: they start with the build that sends them)')
 
