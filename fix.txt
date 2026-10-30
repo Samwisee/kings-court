@@ -1,0 +1,10 @@
+Computing fixes in kings-court...
+Applying fixes...
+
+lib/ui/widgets/table.dart
+  unnecessary_import - 1 fix
+  unused_import - 1 fix
+
+2 fixes made in 1 file.
+Computing fixes in kings-court...
+Nothing to fix!
