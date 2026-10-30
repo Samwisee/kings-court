@@ -268,12 +268,42 @@ class _Tabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final skin = context.skin;
     // All in view at once (wrapping if they must), never scrolled away.
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(12, 6, 12, 10),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 6,
         runSpacing: 6,
+        children: [
+          for (final k in _Kind.values)
+            Semantics(
+              button: true,
+              selected: k == kind,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => onKind(k),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 34,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: k == kind ? skin.gold : Colors.black.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: skin.gold.withValues(alpha: k == kind ? 1 : 0.35)),
+                    ),
+                    child: Text(k.label,
+                        style: TextStyle(
+                            fontFamily: skin.bodyFont,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: k == kind ? skin.goldInk : Colors.white.withValues(alpha: 0.85))),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
