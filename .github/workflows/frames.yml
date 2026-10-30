@@ -30,6 +30,17 @@ jobs:
       - name: Play every animation
         run: |
           "$CHROMEWEBDRIVER/chromedriver" --port=4444 > chromedriver.log 2>&1 &
+          # The test's progress (Frames.log), kept even if it hangs.
+          python3 -c "
+          import http.server, time
+          class H(http.server.BaseHTTPRequestHandler):
+              def do_POST(self):
+                  n = int(self.headers.get('Content-Length', 0))
+                  open('progress.txt', 'a').write(time.strftime('%H:%M:%S ') + self.rfile.read(n).decode(errors='replace') + chr(10))
+                  self.send_response(204); self.end_headers()
+              def log_message(self, *a): pass
+          http.server.HTTPServer(('localhost', 9999), H).serve_forever()
+          " > logserver.txt 2>&1 &
           sleep 2
           set +e
           # No GPU here, so WebGL is emulated (SwiftShader), far slower than
@@ -49,7 +60,7 @@ jobs:
         if: always()
         run: |
           mkdir -p /tmp/out
-          for f in frames.txt drive.txt chromedriver.log build/frames.json; do cp "$f" /tmp/out/ 2>/dev/null || true; done
+          for f in frames.txt drive.txt chromedriver.log progress.txt logserver.txt build/frames.json; do cp "$f" /tmp/out/ 2>/dev/null || true; done
           cd /tmp/out
           git init -q -b out
           git config user.name ci && git config user.email ci@example.com

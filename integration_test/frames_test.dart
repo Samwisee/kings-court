@@ -84,7 +84,20 @@ class Frames {
     web.window.performance.clearMarks();
   }
 
+  /// A line to the CI job's log server (port 9999), so how far the run got
+  /// can be seen even if it hangs.
+  static void log(String line) {
+    try {
+      web.window.fetch(
+          'http://localhost:9999/log'.toJS,
+          web.RequestInit(method: 'POST', mode: 'no-cors', body: line.toJS));
+    } catch (_) {
+      // No log server: nothing to tell.
+    }
+  }
+
   Future<void> scene(String name, Future<void> Function() run) async {
+    log('start $name');
     final s = _Scene(name);
     _now = s;
     try {
@@ -98,6 +111,7 @@ class Frames {
     scenes.add(s);
     // ignore: avoid_print
     print('FRAMES ${s.line()}');
+    log('done ${s.line()}');
   }
 }
 
@@ -174,6 +188,7 @@ void main() {
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   testWidgets('Every animation, frame by frame', (tester) async {
+    Frames.log('test begins');
     SharedPreferences.setMockInitialValues({});
     CharacterToken.loopUnderTest = true;
     HomePageTestHooks.seed = 7;
@@ -297,6 +312,7 @@ void main() {
       await wait(3000);
     });
 
+    Frames.log('tour over');
     binding.reportData = {'scenes': [for (final s in frames.scenes) s.toJson()]};
     CharacterToken.loopUnderTest = false;
   });
