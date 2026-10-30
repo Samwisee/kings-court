@@ -69,6 +69,14 @@ const backChoices = <BackChoice>[
       crown: Color(0xFFB0B0B0)),
 ];
 
+/// A task card's face (looks.dart: [TaskLook]), by name.
+class TaskChoice {
+  const TaskChoice(this.id, this.name, this.look);
+  final String id;
+  final String name;
+  final TaskLook look;
+}
+
 const taskChoices = <TaskChoice>[
   TaskChoice(
       'stationery',

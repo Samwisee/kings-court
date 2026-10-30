@@ -18,14 +18,6 @@ import 'looks.dart';
 import 'parts.dart';
 import 'skin.dart';
 
-/// A task card's face (looks.dart: [TaskLook]), by name.
-class TaskChoice {
-  const TaskChoice(this.id, this.name, this.look);
-  final String id;
-  final String name;
-  final TaskLook look;
-}
-
 /// [skin] as it's worn: with its own backs, faces and task cards, if it
 /// comes with any.
 Skin dressed(Skin skin) => skin is TailoredSkin ? skin : TailoredSkin.of(skin);
