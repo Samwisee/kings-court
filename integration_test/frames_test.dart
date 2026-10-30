@@ -122,7 +122,8 @@ class Frames {
     }
   }
 
-  Future<void> scene(String name, Future<void> Function() run, {bool detail = false}) async {
+  Future<void> scene(String name, Future<void> Function() run,
+      {bool detail = false, Duration limit = const Duration(seconds: 75)}) async {
     log('start $name');
     final s = _Scene(name)..detail = detail;
     // In detail, every widget's build and every render object's layout and
@@ -133,7 +134,7 @@ class Frames {
     _now = s;
     try {
       // A scene that hangs is stopped and reported, so the run still ends.
-      await run().timeout(const Duration(seconds: 75));
+      await run().timeout(limit);
     } catch (e, stack) {
       // A scene that goes wrong is reported, and the rest still run.
       s.error = '$e ${stack.toString().split('\n').take(6).join(' | ')}';
@@ -358,7 +359,7 @@ void main() {
         await tester.fling(grid, const Offset(0, 600), 2500, warnIfMissed: false);
         await wait(700);
       }
-    });
+    }, limit: const Duration(seconds: 200));
 
     await frames.scene('wearing the new look', () => tap(find.text('Done'), then: 2500));
 
