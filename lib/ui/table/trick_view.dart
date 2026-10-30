@@ -11,10 +11,51 @@ import '../../game/state.dart';
 import '../../skin/theme.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
+import 'seats.dart';
 
 /// How wide trick cards are for a table [width] across with [n] players.
 double trickCardWidth(double width, int n) =>
     clampD((width - 8 * n) / n, 34, width > 600 ? 100 : 64);
+
+/// [trickCards] on the table, where [middle] is the trick's area: cards
+/// come from your [hand] (where each was [launchedFrom], if known) or the
+/// seat that played them ([seatAt]), and a won trick goes to its winner's
+/// pile ([pileAt]). All in the table's coordinates; anything not known
+/// yet, and the cards simply fade in.
+List<Widget> trickCardsOnTable({
+  required Size area,
+  required Round round,
+  required Trick? trick,
+  required bool collecting,
+  required List<Player> players,
+  required int you,
+  required Rect? middle,
+  required Rect? hand,
+  required Offset? Function(PlayingCard card) launchedFrom,
+  required Rect? Function(int seat) seatAt,
+  required Rect? Function(int seat) pileAt,
+}) {
+  Offset? origin(int seat, PlayingCard card) {
+    if (middle == null) return null;
+    final p = seat == you ? launchedFrom(card) ?? hand?.topCenter : seatAt(seat)?.center;
+    return p == null ? null : p - middle.topLeft;
+  }
+
+  ({Offset at, double width})? pile(int seat) {
+    final r = pileAt(seat);
+    if (middle == null || r == null) return null;
+    return (at: r.center - middle.topLeft, width: seat == you ? YourSeat.pileCard : OpponentsRow.pileCard);
+  }
+
+  return trickCards(
+      area: area,
+      round: round,
+      trick: trick,
+      collecting: collecting,
+      players: players,
+      origin: origin,
+      pile: pile);
+}
 
 /// The trick in the middle of the table, in an [area]: each card glides in
 /// from whoever played it ([origin], in the area's coordinates; null to

@@ -2026,41 +2026,20 @@ class HomePageState extends State<HomePage>
   /// Whether your tasks have been scrolled under your token.
   final _youScrolled = ValueNotifier(false);
 
-  /// You, with your tasks beside you.
-  /// The trick in the middle of the table (ui/table/trick_view.dart),
-  /// each card from where it was played: your hand, or a courtier's seat.
-  List<Widget> _trickCards(Size area) {
-    // Where the middle sits on the table, to work out where cards come
-    // from; if it isn't known yet the cards simply fade in.
-    final middle = _rectOn(_middleKey);
-    final hand = _rectOn(_handKey);
-    Offset? origin(int seat, PlayingCard card) {
-      if (middle == null) return null;
-      final p = seat == _you
-          ? _launchFrom[card.id] ?? hand?.topCenter
-          : _rectOn(_seatKey(seat))?.center;
-      return p == null ? null : p - middle.topLeft;
-    }
-
-    // A won trick flies to its winner's pile, turning face down.
-    ({Offset at, double width})? pile(int seat) {
-      final r = _rectOn(_pileKey(seat));
-      if (middle == null || r == null) return null;
-      return (
-        at: r.center - middle.topLeft,
-        width: seat == _you ? YourSeat.pileCard : OpponentsRow.pileCard
-      );
-    }
-
-    return trickCards(
-        area: area,
-        round: _round,
-        trick: _lastTrick,
-        collecting: _collecting,
-        players: game.players,
-        origin: origin,
-        pile: pile);
-  }
+  /// The trick in the middle of the table (ui/table/trick_view.dart):
+  /// each card from where it was played, and a won trick to its pile.
+  List<Widget> _trickCards(Size area) => trickCardsOnTable(
+      area: area,
+      round: _round,
+      trick: _lastTrick,
+      collecting: _collecting,
+      players: game.players,
+      you: _you,
+      middle: _rectOn(_middleKey),
+      hand: _rectOn(_handKey),
+      launchedFrom: (card) => _launchFrom[card.id],
+      seatAt: (seat) => _rectOn(_seatKey(seat)),
+      pileAt: (seat) => _rectOn(_pileKey(seat)));
 
   // ------------------------------------------- powers and reveals on screen
 
