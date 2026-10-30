@@ -12,6 +12,7 @@ export 'widgets/felt_motion.dart';
 export 'widgets/felt_patterns.dart';
 export 'widgets/icons.dart';
 export 'widgets/masonry.dart';
+export 'widgets/painted_once.dart';
 export 'widgets/panels.dart';
 export 'widgets/pips.dart';
 export 'widgets/seals.dart';

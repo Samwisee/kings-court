@@ -107,6 +107,14 @@
   </script>
   <style>
     html, body { margin: 0; background: var(--table, #4E0B18); }
+    /* The game in a box the size of what's on screen. (Sized by the window
+       instead, a phone's home-screen app ran off the bottom: iOS gives it
+       the wrong height.) */
+    #game {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden; touch-action: none;
+    }
     /* The court's own mouse pointers: a gilt arrow, and a gilt hand over
        anything you can press (Flutter marks those with an inline
        "cursor: pointer" on its view, which these win over). The art is
@@ -173,15 +181,20 @@
     #inapp button.quiet { background: transparent; color: #D4A63A; padding: 9px 6px; }
   </style>
   <script>
-    // Inside another app's browser the game is slower, so it draws fewer
-    // pixels there (twice the screen's points at most), and suggests the
-    // phone's own browser once.
+    // On a phone or tablet the game draws at twice the screen's points at
+    // most: a phone's three times is over twice the pixels to draw every
+    // frame, for little you can see. (Desktops keep their own.)
+    (function () {
+      var touch = (navigator.maxTouchPoints || 0) > 0 && !window.matchMedia('(pointer: fine)').matches;
+      if (touch && (window.devicePixelRatio || 1) > 2) {
+        try { Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 2; }, configurable: true }); } catch (e) {}
+      }
+    })();
+    // Inside another app's browser the game is slower: it suggests the
+    // phone's own browser, once.
     (function () {
       var ua = navigator.userAgent || '';
       if (!/FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Line\/|MicroMessenger|Snapchat|musical_ly|BytedanceWebview|TikTok/i.test(ua)) return;
-      if ((window.devicePixelRatio || 1) > 2) {
-        try { Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 2; }, configurable: true }); } catch (e) {}
-      }
       try { if (sessionStorage.getItem('kingsCourt.inAppNoted')) return; } catch (e) {}
       document.addEventListener('DOMContentLoaded', function () {
         var android = /Android/i.test(ua);
@@ -215,6 +228,7 @@
   </script>
 </head>
 <body>
+  <div id="game"></div>
   <div id="loading" aria-label="Loading The King's Court" role="status">
     <svg viewBox="0 0 100 75" aria-hidden="true">
       <defs>

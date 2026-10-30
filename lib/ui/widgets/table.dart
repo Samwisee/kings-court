@@ -11,6 +11,7 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import 'felt_motion.dart';
 import 'felt_patterns.dart';
+import 'painted_once.dart';
 
 /// The felt set into a royal-red table: round the edge of the screen the
 /// table shows, then a thin double brass rule where the felt begins, like
@@ -143,9 +144,11 @@ class FeltLight extends StatelessWidget {
         : FeltPatternPainter(look.pattern, quiet ? ink.withValues(alpha: ink.a * 0.5) : ink,
             ground: skin.felt, soft: quiet);
     if (lamp <= 0 && pattern == null) return const SizedBox.expand();
-    final lit = CustomPaint(foregroundPainter: lamp <= 0 ? null : _LampPainter(lamp), size: Size.infinite);
-    if (pattern == null) return lit;
-    return Stack(fit: StackFit.expand, children: [CustomPaint(painter: pattern, size: Size.infinite), lit]);
+    // Drawn once, then shown as a picture (painted_once.dart).
+    return PaintedOnce(
+      id: (skin.id, quiet),
+      painters: [if (pattern != null) pattern, if (lamp > 0) _LampPainter(lamp)],
+    );
   }
 }
 

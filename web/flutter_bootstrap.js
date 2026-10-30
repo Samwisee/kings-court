@@ -10,4 +10,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-_flutter.loader.load();
+// The game runs in its box (#game in index.html), sized to what's on
+// screen, rather than across the whole window.
+_flutter.loader.load({
+  onEntrypointLoaded: async function (engineInitializer) {
+    const appRunner = await engineInitializer.initializeEngine({
+      hostElement: document.getElementById('game'),
+    });
+    await appRunner.runApp();
+  },
+});
