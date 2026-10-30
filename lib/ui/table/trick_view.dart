@@ -9,6 +9,7 @@ import '../../engine/cards.dart';
 import '../../engine/round.dart';
 import '../../game/state.dart';
 import '../../skin/theme.dart';
+import '../cards/card_back.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
 
@@ -18,8 +19,10 @@ double trickCardWidth(double width, int n) =>
 
 /// The trick in the middle of the table, in an [area]: each card glides in
 /// from whoever played it ([origin], in the area's coordinates; null to
-/// fade in), and once won ([trick], still on the table) sweeps off to the
-/// winner while [collecting].
+/// fade in), and once won ([trick], still on the table) flies to the
+/// winner's pile while [collecting] ([pile]: where it is and how wide its
+/// cards are), turning face down and shrinking to fit it; to the winner
+/// when there's no pile.
 List<Widget> trickCards({
   required Size area,
   required Round round,
@@ -27,6 +30,7 @@ List<Widget> trickCards({
   required bool collecting,
   required List<Player> players,
   required Offset? Function(int seat, PlayingCard card) origin,
+  ({Offset at, double width})? Function(int seat)? pile,
 }) {
   if (!round.hasCards) return [];
   final c = round;
@@ -56,21 +60,34 @@ List<Widget> trickCards({
           glow: trick != null && trick.winner == seat,
         );
         if (trick != null && collecting) {
-          final to = origin(trick.winner, cards[i]) ?? target;
+          final heap = pile?.call(trick.winner);
+          final to = heap?.at ?? origin(trick.winner, cards[i]) ?? target;
+          final small = heap == null ? 0.5 : heap.width / cardW;
+          // One after another, so they gather into the pile.
+          final delay = i * 0.08;
           return TweenAnimationBuilder<double>(
             key: ValueKey('collect-$number-${cards[i].id}'),
             tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 420),
-            curve: Curves.easeInCubic,
-            builder: (context, t, child) {
+            duration: const Duration(milliseconds: 460),
+            curve: Curves.linear,
+            builder: (context, u, child) {
+              final t = Curves.easeInOutCubic.transform(clampD((u - delay) / (1 - delay), 0, 1));
               final p = topLeft(Offset.lerp(target, to, t)!);
               return Positioned(
                 left: p.dx,
                 top: p.dy,
                 child: IgnorePointer(
                   child: Opacity(
-                    opacity: clampD(1 - t, 0, 1),
-                    child: Transform.scale(scale: 1 - 0.5 * t, child: child),
+                    // Without a pile it fades as it goes; into a pile it
+                    // stays, face down, until the pile takes it.
+                    opacity: heap == null ? clampD(1 - t, 0, 1) : 1,
+                    child: Transform.rotate(
+                      angle: t * (i.isEven ? -0.07 : 0.07),
+                      child: Transform.scale(
+                        scale: 1 - (1 - small) * t,
+                        child: FlipIn(t: 1 - clampD(t * 1.8, 0, 1), front: child!, back: CardBack(width: cardW)),
+                      ),
+                    ),
                   ),
                 ),
               );

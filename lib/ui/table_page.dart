@@ -1629,6 +1629,8 @@ class HomePageState extends State<HomePage>
   late final _drag = HandDrag(vsync: this, update: _ui);
 
   GlobalKey _seatKey(int seat) => _seatKeys.putIfAbsent(seat, GlobalKey.new);
+  final _pileKeys = <int, GlobalKey>{};
+  GlobalKey _pileKey(int seat) => _pileKeys.putIfAbsent(seat, GlobalKey.new);
 
   /// Where a widget sat on the on-screen table last frame (safe mid-build).
   Rect? _rectOn(GlobalKey key) {
@@ -1843,6 +1845,7 @@ class HomePageState extends State<HomePage>
       tallyShown: c.hasCards && (_playing || c.tricks.isNotEmpty),
       won: _shownTricksWon,
       tally: (seat) => '${c.hasCards ? c.cardsIn(seat) : 0} cards',
+      pileKey: _pileKey,
       tasks: (seat) => [for (final t in game.tasks) if (t.owner == seat) t],
       task: _miniTask,
       quip: (seat) => _quips[seat],
@@ -1863,6 +1866,7 @@ class HomePageState extends State<HomePage>
         shown: _revealedView(_you),
         tallyShown: _round.hasCards && (_playing || _round.tricks.isNotEmpty),
         won: _shownTricksWon(_you),
+        pileKey: _pileKey(_you),
         tasks: [for (final t in game.tasks) if (t.owner == _you) t],
         task: _miniTask,
         scrolled: _youScrolled,
@@ -2038,13 +2042,24 @@ class HomePageState extends State<HomePage>
       return p == null ? null : p - middle.topLeft;
     }
 
+    // A won trick flies to its winner's pile, turning face down.
+    ({Offset at, double width})? pile(int seat) {
+      final r = _rectOn(_pileKey(seat));
+      if (middle == null || r == null) return null;
+      return (
+        at: r.center - middle.topLeft,
+        width: seat == _you ? YourSeat.pileCard : OpponentsRow.pileCard
+      );
+    }
+
     return trickCards(
         area: area,
         round: _round,
         trick: _lastTrick,
         collecting: _collecting,
         players: game.players,
-        origin: origin);
+        origin: origin,
+        pile: pile);
   }
 
   // ------------------------------------------- powers and reveals on screen
@@ -2724,7 +2739,11 @@ class HomePageState extends State<HomePage>
             _digital &&
             screen.width - math.max(480.0, screen.height) >= 560;
     return Stack(children: [
+    // The felt runs the whole screen, behind the bar too.
+    if (_inGame)
+      Positioned.fill(child: ColoredBox(color: skin.felt, child: const RepaintBoundary(child: FeltLight()))),
     Scaffold(
+      backgroundColor: _inGame ? Colors.transparent : null,
       extendBodyBehindAppBar: useTopBar,
       // The game's bar and the plain one cross-fade, so the round and
       // points don't pop in and out with the setup.
@@ -2762,7 +2781,6 @@ class HomePageState extends State<HomePage>
         top: !useTopBar,
         child: Stack(
           children: [
-            if (_inGame) const Positioned.fill(child: RepaintBoundary(child: FeltLight())),
             Positioned.fill(
               child: _inGame
                   ? _digital

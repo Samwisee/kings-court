@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../engine/round.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import '../cards/card_back.dart';
 import '../cards/card_view.dart';
 import '../cards/mini_card.dart';
 import '../welcome/welcome.dart';
@@ -31,6 +32,7 @@ class OpponentsRow extends StatelessWidget {
     required this.tallyShown,
     required this.won,
     required this.tally,
+    required this.pileKey,
     required this.tasks,
     required this.task,
     required this.quip,
@@ -52,11 +54,16 @@ class OpponentsRow extends StatelessWidget {
   final VoidCallback? Function(int seat) onTap;
 
   /// Whether the tricks won show yet (their room is kept regardless): a
-  /// pile of them face down under each token ([won]), and a word under
-  /// that ([tally]: the cards left).
+  /// pile of them face down under each name ([won]), with a word beside
+  /// it ([tally]: the cards left). [pileKey] marks each pile, for a trick
+  /// to fly to.
   final bool tallyShown;
   final int Function(int seat) won;
   final String Function(int seat) tally;
+  final Key Function(int seat) pileKey;
+
+  /// The width of a card in a courtier's pile.
+  static const pileCard = 16.0;
 
   final List<RoundTask> Function(int seat) tasks;
   final TaskBuilder task;
@@ -108,17 +115,23 @@ class OpponentsRow extends StatelessWidget {
                                     fontSize: 13,
                                     color: Colors.white70,
                                     shadows: context.skin.feltShadow)),
+                            // The tricks won and the cards left, on one
+                            // line, so the tasks start close under.
                             Opacity(
                               opacity: tallyShown ? 1 : 0,
-                              child: TrickPile(won: tallyShown ? won(seat) : 0),
-                            ),
-                            Opacity(
-                              opacity: tallyShown ? 1 : 0,
-                              child: Text(tally(seat),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.fade,
-                                  softWrap: false,
-                                  style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  KeyedSubtree(
+                                      key: pileKey(seat),
+                                      child: TrickPile(won: tallyShown ? won(seat) : 0, cardWidth: pileCard)),
+                                  if (tallyShown && won(seat) > 0) const SizedBox(width: 6),
+                                  Text(tally(seat),
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                                ]),
+                              ),
                             ),
                           ]),
                         )),
@@ -179,10 +192,17 @@ class YourSeat extends StatelessWidget {
     required this.shown,
     required this.tallyShown,
     required this.won,
+    required this.pileKey,
     required this.tasks,
     required this.task,
     required this.scrolled,
   });
+
+  /// The width of a card in your pile.
+  static const pileCard = 24.0;
+
+  /// Marks your pile, for a trick to fly to.
+  final Key pileKey;
 
   final double width;
   final Widget token;
@@ -216,7 +236,9 @@ class YourSeat extends StatelessWidget {
             children: [
               token,
               // Room kept from the start, so nothing shifts when it appears.
-              Opacity(opacity: tallyShown ? 1 : 0, child: TrickPile(won: tallyShown ? won : 0, cardWidth: 24)),
+              Opacity(
+                  opacity: tallyShown ? 1 : 0,
+                  child: KeyedSubtree(key: pileKey, child: TrickPile(won: tallyShown ? won : 0, cardWidth: pileCard))),
             ],
           ),
         ),
@@ -340,10 +362,37 @@ Widget withShownCard(Widget token, Widget? shown, {required double size}) => Sta
 Widget? shownCard(Skin skin, Round round, int seat, Color colour, {double height = 40}) {
   final card = round.revealed[seat];
   if (card == null || !round.hasCards || !round.holds(seat, card)) return null;
+  // Shown with a flourish: out from behind the token, turning face up as
+  // it comes, then what was said about it.
+  return TweenAnimationBuilder<double>(
+    key: ValueKey('shown-$seat-${card.id}'),
+    tween: Tween(begin: 0, end: 1),
+    duration: const Duration(milliseconds: 650),
+    curve: Curves.easeOutBack,
+    builder: (context, t, child) {
+      final flip = clampD(t * 1.5, 0, 1);
+      return Transform.translate(
+        offset: Offset(-height * 0.9 * (1 - clampD(t, 0, 1)), 0),
+        child: Transform.scale(
+          scale: 0.55 + 0.45 * t,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            FlipIn(
+                t: flip,
+                front: MiniCard(card: card, width: height / 1.3, edge: colour),
+                back: CardBack(width: height / 1.3)),
+            Opacity(opacity: clampD((t - 0.6) / 0.4, 0, 1), child: child),
+          ]),
+        ),
+      );
+    },
+    child: _shownTag(skin, round, seat),
+  );
+}
+
+Widget _shownTag(Skin skin, Round round, int seat) {
   return Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      MiniCard(card: card, width: height / 1.3, edge: colour),
       const SizedBox(height: 3),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),

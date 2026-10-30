@@ -116,82 +116,56 @@ class TaskChip extends StatelessWidget {
     // The face worn (a failed task is on the failed card, in the skin's
     // own ink).
     final look = failed ? TaskLook(face: skin.failedCard, ink: skin.ink, inkSoft: skin.inkSoft) : skin.taskLook;
-    // Along the top: points, conditions, and the tracker on the right. On
-    // a very narrow chip the small condition icons give way (they're in
-    // the task's close-up).
+    // One run of words: the points and any conditions first, then the
+    // task, then how far along it is, so a task takes no more lines than
+    // its words do. (On a very narrow chip the small condition icons give
+    // way: they're in the task's close-up.)
     final narrow = width < 72;
-    final top = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text('$points',
-            style: TextStyle(
-                fontFamily: skin.displayFont,
-                fontWeight: FontWeight.w900,
-                fontSize: fontSize + 3,
-                height: 1,
-                color: look.ink)),
-        const SizedBox(width: 2),
-        CrownIcon(size: fontSize * 0.85, color: look.crown ?? skin.goldDeep),
-        if (task.kingCantTake && !narrow) ...[
-          const SizedBox(width: 4),
-          Tooltip(
-              message: "The King can't take this task",
-              child: Icon(Icons.block, size: fontSize + 1, color: look.inkSoft)),
-        ],
-        // Always shown: the words leave "with no Court Cards" to it.
-        if (task.noCourtCards) ...[
-          const SizedBox(width: 4),
-          Tooltip(
-              message: 'No Court Cards in the trick',
-              child: NoCourtIcon(size: fontSize + 2)),
-        ],
-        if (task.hasNotes && !narrow) ...[
-          const SizedBox(width: 3),
-          Tooltip(
-              message: task.notes.join(' '),
-              child: Icon(Icons.info_outline,
-                  size: fontSize + 1, color: look.inkSoft)),
-        ],
-        if (task.seal != null) ...[
-          const SizedBox(width: 3),
-          WaxSeal(seal: task.seal!, size: fontSize + 4),
-        ],
-            ]),
-          ),
-        ),
-        if (failed)
-          Icon(Icons.cancel, size: fontSize + 3, color: skin.lost)
-        else if (progress != null)
-          // Tucked into the top right corner; shrinks to fit a narrow chip
-          // rather than overflowing.
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: math.max(20, (width - 12) * 0.6)),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-            decoration: BoxDecoration(
-              color: look.ink,
-              borderRadius: BorderRadius.circular(8),
+    WidgetSpan icon(Widget child, {double gap = 3}) => WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Padding(padding: EdgeInsets.only(left: gap), child: child));
+    final leading = <InlineSpan>[
+      TextSpan(
+          text: '$points',
+          style: TextStyle(
+              fontFamily: skin.displayFont,
+              fontWeight: FontWeight.w900,
+              fontSize: fontSize + 3,
+              height: 1,
+              color: look.ink)),
+      icon(CrownIcon(size: fontSize * 0.85, color: look.crown ?? skin.goldDeep), gap: 2),
+      if (task.kingCantTake && !narrow)
+        icon(Tooltip(
+            message: "The King can't take this task",
+            child: Icon(Icons.block, size: fontSize + 1, color: look.inkSoft))),
+      // Always shown: the words leave "with no Court Cards" to it.
+      if (task.noCourtCards)
+        icon(Tooltip(message: 'No Court Cards in the trick', child: NoCourtIcon(size: fontSize + 2))),
+      if (task.hasNotes && !narrow)
+        icon(Tooltip(
+            message: task.notes.join(' '),
+            child: Icon(Icons.info_outline, size: fontSize + 1, color: look.inkSoft))),
+      if (task.seal != null) icon(WaxSeal(seal: task.seal!, size: fontSize + 4)),
+      const TextSpan(text: '  '),
+    ];
+    final trailing = <InlineSpan>[
+      if (failed)
+        icon(Icon(Icons.cancel, size: fontSize + 3, color: skin.lost), gap: 5)
+      else if (progress != null)
+        icon(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(color: look.ink, borderRadius: BorderRadius.circular(8)),
+              child: Text(progress!,
+                  style: TextStyle(
+                      fontFamily: skin.bodyFont,
+                      fontSize: fontSize - 1,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                      color: look.pillInk(skin.gold))),
             ),
-            child: Text(progress!,
-                style: TextStyle(
-                    fontFamily: skin.bodyFont,
-                    fontSize: fontSize - 1,
-                    fontWeight: FontWeight.w800,
-                    height: 1.1,
-                    color: look.pillInk(skin.gold))),
-          ),
-            ),
-          ),
-      ],
-    );
+            gap: 5),
+    ];
     // Nobody's yet: just the card in its dark outline (the band is there,
     // in the card's own colour, so nothing shifts once it's taken). A
     // player's colour gets dark lines on both sides.
@@ -202,7 +176,7 @@ class TaskChip extends StatelessWidget {
       child: AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: width,
-      padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 5),
       decoration: BoxDecoration(
         color: look.face,
         borderRadius: BorderRadius.circular(8),
@@ -224,24 +198,21 @@ class TaskChip extends StatelessWidget {
         // What's printed on the face: drawn out to the border, round the
         // padding.
         painter: TaskFacePainter.prints(look)
-            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 6))
+            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 5))
             : null,
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          top,
-          const SizedBox(height: 3),
-          SuitText(text,
+        child: SizedBox(
+          width: double.infinity,
+          child: SuitText(text,
               struck: struck,
               keywords: false,
+              leading: leading,
+              trailing: trailing,
               style: TextStyle(
                   fontSize: fontSize,
-                  height: 1.15,
+                  height: 1.2,
                   fontWeight: FontWeight.w600,
                   color: look.ink)),
-        ],
-      ),
+        ),
       ),
     ),
     );

@@ -20,8 +20,15 @@ class SuitText extends StatelessWidget {
       this.struck = const {},
       this.maxLines,
       this.overflow,
-      this.keywords = true});
+      this.keywords = true,
+      this.leading = const [],
+      this.trailing = const []});
   final String text;
+
+  /// Set before the words and after them, in the same lines (a task's
+  /// points, how far along it is).
+  final List<InlineSpan> leading;
+  final List<InlineSpan> trailing;
   final TextStyle style;
   final TextAlign? textAlign;
   final int? maxLines;
@@ -230,7 +237,7 @@ class SuitText extends StatelessWidget {
       last = m.end;
     }
     if (last < text.length) words(text.substring(last));
-    return Text.rich(TextSpan(style: style, children: spans),
+    return Text.rich(TextSpan(style: style, children: [...leading, ...spans, ...trailing]),
         textAlign: textAlign, maxLines: maxLines, overflow: overflow);
   }
 }
