@@ -44,7 +44,8 @@ jobs:
       - name: Publish to the frames branch
         if: always()
         run: |
-          mkdir -p /tmp/out && cp frames.txt drive.txt chromedriver.log /tmp/out/ 2>/dev/null; cp build/frames.json /tmp/out/ 2>/dev/null
+          mkdir -p /tmp/out
+          for f in frames.txt drive.txt chromedriver.log build/frames.json; do cp "$f" /tmp/out/ 2>/dev/null || true; done
           cd /tmp/out
           git init -q -b out
           git config user.name ci && git config user.email ci@example.com
