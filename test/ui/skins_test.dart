@@ -81,7 +81,9 @@ void main() {
     // Each kind of choice is a row that scrolls sideways.
     Future<void> choose(String row, String name) async {
       final along = find.byKey(ValueKey('look-row-$row'));
-      await tester.ensureVisible(along);
+      // The rows go down the page, built as they come into view.
+      await tester.scrollUntilVisible(along, 150,
+          scrollable: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down));
       await tester.pumpAndSettle();
       final tile = find.descendant(of: along, matching: find.text(name));
       await tester.dragUntilVisible(tile, along, const Offset(-200, 0));
