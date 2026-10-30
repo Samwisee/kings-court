@@ -1,12 +1,9 @@
-/// A look of the player's own: any skin, on a table of their choosing,
-/// with the card backs and task cards they like. The skin gives
-/// everything else; the table changes the felt (its shades, the light on
-/// it and what's worked into it) and the table round it, the backs change
-/// every card back and task back, and the task cards change the tasks'
-/// faces.
+/// A look of the player's own: any skin (its table and everything else),
+/// with the card backs and task cards they like. The backs change every
+/// card back and task back, and the task cards change the tasks' faces.
 ///
 /// Saved as the skin's id with the choices after it
-/// (`court+t:navy+b:rays+k:decree`), so [skinById] (skins.dart) wears it
+/// (`midnight+b:rays+k:decree`), so [skinById] (skins.dart) wears it
 /// again.
 library;
 
@@ -15,27 +12,6 @@ import 'package:flutter/material.dart';
 import 'looks.dart';
 import 'parts.dart';
 import 'skin.dart';
-
-/// A table to play on: the felt, its shadow, the light over it, the table
-/// it's set into (the colour round the edge, and the browser's bars), and
-/// what's worked into the felt, in [ink].
-class TableChoice {
-  const TableChoice(this.id, this.name,
-      {required this.felt,
-      required this.feltDeep,
-      required this.glow,
-      required this.table,
-      this.pattern = FeltPattern.none,
-      this.ink = const Color(0x00000000)});
-  final String id;
-  final String name;
-  final Color felt;
-  final Color feltDeep;
-  final Color glow;
-  final Color table;
-  final FeltPattern pattern;
-  final Color ink;
-}
 
 /// A task card's face (looks.dart: [TaskLook]), by name.
 class TaskChoice {
@@ -66,105 +42,6 @@ class BackChoice {
   final Color? crown;
 }
 
-const tableChoices = <TableChoice>[
-  TableChoice('green', 'Card room',
-      felt: Color(0xFF0F4A2E), feltDeep: Color(0xFF0A3622), glow: Color(0xFF176141), table: Color(0xFF4E0B18)),
-  TableChoice('billiard', 'Billiard hall',
-      felt: Color(0xFF1F6B3A), feltDeep: Color(0xFF134628), glow: Color(0xFF2C8A4F), table: Color(0xFF3B2416)),
-  TableChoice('sage', 'Walled garden',
-      felt: Color(0xFF3F5E45),
-      feltDeep: Color(0xFF29402E),
-      glow: Color(0xFF52755A),
-      table: Color(0xFF1B2418),
-      pattern: FeltPattern.trellis,
-      ink: Color(0x24E5F0D8)),
-  TableChoice('teal', 'Harbour chart',
-      felt: Color(0xFF14404F),
-      feltDeep: Color(0xFF0C2B36),
-      glow: Color(0xFF1D5768),
-      table: Color(0xFF0B1A22),
-      pattern: FeltPattern.chart,
-      ink: Color(0x2EF2D49A)),
-  TableChoice('navy', 'Night sky',
-      felt: Color(0xFF17233F),
-      feltDeep: Color(0xFF0E172C),
-      glow: Color(0xFF24345A),
-      table: Color(0xFF07090F),
-      pattern: FeltPattern.stars,
-      ink: Color(0x8CE8EEFF)),
-  TableChoice('plum', 'Plum damask',
-      felt: Color(0xFF3E2347),
-      feltDeep: Color(0xFF28152F),
-      glow: Color(0xFF563463),
-      table: Color(0xFF140A18),
-      pattern: FeltPattern.damask,
-      ink: Color(0x1AFFE6F5)),
-  TableChoice('burgundy', 'Banker’s stripe',
-      felt: Color(0xFF5A1A24),
-      feltDeep: Color(0xFF3A0E16),
-      glow: Color(0xFF75293A),
-      table: Color(0xFF1A0A0C),
-      pattern: FeltPattern.pinstripe,
-      ink: Color(0x1CFFFFFF)),
-  TableChoice('walnut', 'Tooled leather',
-      felt: Color(0xFF5A3E2A),
-      feltDeep: Color(0xFF3C291B),
-      glow: Color(0xFF735239),
-      table: Color(0xFF1E140D),
-      pattern: FeltPattern.tooled,
-      ink: Color(0x80D4A63A)),
-  TableChoice('tavern', 'Tavern boards',
-      felt: Color(0xFF4A3220),
-      feltDeep: Color(0xFF2E1F14),
-      glow: Color(0xFF5E422B),
-      table: Color(0xFF1A110A),
-      pattern: FeltPattern.planks,
-      ink: Color(0x40000000)),
-  TableChoice('marble', 'Verde marble',
-      felt: Color(0xFF1F3B33),
-      feltDeep: Color(0xFF132621),
-      glow: Color(0xFF2D5247),
-      table: Color(0xFF0D1714),
-      pattern: FeltPattern.marble,
-      ink: Color(0x4DE8F2EC)),
-  TableChoice('deco', 'Ballroom',
-      felt: Color(0xFF181818),
-      feltDeep: Color(0xFF0C0C0C),
-      glow: Color(0xFF2A2722),
-      table: Color(0xFF000000),
-      pattern: FeltPattern.deco,
-      ink: Color(0x47D4A63A)),
-  TableChoice('tiles', 'Courtyard tiles',
-      felt: Color(0xFF173A5E),
-      feltDeep: Color(0xFF0E2640),
-      glow: Color(0xFF22507E),
-      table: Color(0xFF0A1626),
-      pattern: FeltPattern.tiles,
-      ink: Color(0x24F5E6C8)),
-  TableChoice('map', 'Campaign map',
-      felt: Color(0xFF3A4A2C),
-      feltDeep: Color(0xFF253019),
-      glow: Color(0xFF4C5E3A),
-      table: Color(0xFF1A2012),
-      pattern: FeltPattern.contours,
-      ink: Color(0x4DE8DDB0)),
-  TableChoice('chess', 'Chequered hall',
-      felt: Color(0xFF3A1A1E),
-      feltDeep: Color(0xFF24100F),
-      glow: Color(0xFF502629),
-      table: Color(0xFF120707),
-      pattern: FeltPattern.chequer,
-      ink: Color(0x24000000)),
-  TableChoice('slate', 'Slate',
-      felt: Color(0xFF2F3A45), feltDeep: Color(0xFF1E262E), glow: Color(0xFF425062), table: Color(0xFF121519)),
-  TableChoice('charcoal', 'Parquet',
-      felt: Color(0xFF262626),
-      feltDeep: Color(0xFF171717),
-      glow: Color(0xFF363636),
-      table: Color(0xFF0A0A0A),
-      pattern: FeltPattern.herringbone,
-      ink: Color(0x14FFFFFF)),
-];
 
 const backChoices = <BackChoice>[
   BackChoice('crimson', 'Crimson lattice',
@@ -322,21 +199,18 @@ const taskChoices = <TaskChoice>[
 
 Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 
-/// [base] on the [tableChoice] table with [backChoice] backs and
-/// [taskChoice] task cards (the skin's own for any that's null).
+/// [base] with [backChoice] backs and [taskChoice] task cards (the skin's
+/// own for either that's null).
 class TailoredSkin extends Skin {
-  const TailoredSkin(this.base, {this.tableChoice, this.backChoice, this.taskChoice});
+  const TailoredSkin(this.base, {this.backChoice, this.taskChoice});
 
   final Skin base;
-  final TableChoice? tableChoice;
   final BackChoice? backChoice;
   final TaskChoice? taskChoice;
 
   /// [base] with these choices; just [base] when there are none.
-  static Skin of(Skin base, {TableChoice? table, BackChoice? back, TaskChoice? task}) =>
-      table == null && back == null && task == null
-          ? base
-          : TailoredSkin(base, tableChoice: table, backChoice: back, taskChoice: task);
+  static Skin of(Skin base, {BackChoice? back, TaskChoice? task}) =>
+      back == null && task == null ? base : TailoredSkin(base, backChoice: back, taskChoice: task);
 
   /// [skin] without its choices: the skin they're made on.
   static Skin baseOf(Skin skin) => skin is TailoredSkin ? skin.base : skin;
@@ -344,7 +218,6 @@ class TailoredSkin extends Skin {
   @override
   String get id => [
         base.id,
-        if (tableChoice != null) 't:${tableChoice!.id}',
         if (backChoice != null) 'b:${backChoice!.id}',
         if (taskChoice != null) 'k:${taskChoice!.id}',
       ].join('+');
@@ -358,23 +231,17 @@ class TailoredSkin extends Skin {
 
   // The table.
   @override
-  Color get felt => tableChoice?.felt ?? base.felt;
+  Color get felt => base.felt;
   @override
-  Color get feltDeep => tableChoice?.feltDeep ?? base.feltDeep;
+  Color get feltDeep => base.feltDeep;
   @override
-  Color get feltGlow => tableChoice?.glow ?? base.feltGlow;
+  Color get feltGlow => base.feltGlow;
   @override
-  Color get table => tableChoice?.table ?? base.table;
+  Color get table => base.table;
   @override
-  Color get feltLine => tableChoice == null ? base.feltLine : _mix(tableChoice!.felt, Colors.white, 0.12);
-
-  // What's worked into the felt.
+  Color get feltLine => base.feltLine;
   @override
-  TableLook get tableLook {
-    final t = tableChoice;
-    if (t == null) return base.tableLook;
-    return base.tableLook.withPattern(t.pattern, t.ink);
-  }
+  TableLook get tableLook => base.tableLook;
 
   // The task cards.
   @override
@@ -406,12 +273,7 @@ class TailoredSkin extends Skin {
   }
 
   @override
-  ThemeData theme() {
-    final t = base.theme();
-    if (tableChoice == null) return t;
-    return t.copyWith(
-        scaffoldBackgroundColor: felt, appBarTheme: t.appBarTheme.copyWith(backgroundColor: felt));
-  }
+  ThemeData theme() => base.theme();
 
   // Everything else is the skin's.
   @override

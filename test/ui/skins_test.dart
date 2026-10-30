@@ -61,7 +61,7 @@ void main() {
     expect(chosen, isNull);
   });
 
-  testWidgets('The Look dialog wears a style, a table and backs at once, and remembers them', (tester) async {
+  testWidgets('The Look dialog wears a style, backs and task cards, and remembers them', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
@@ -82,31 +82,39 @@ void main() {
       final f = find.text(name).first;
       await tester.ensureVisible(f);
       await tester.tap(f);
+      // The game behind wears it a moment later.
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.pumpAndSettle();
     }
     await choose('Plain');
     expect(worn().id, 'plain');
-    await choose('Night sky');
-    expect(worn().id, 'plain+t:navy');
-    expect(worn().felt, tableChoices.firstWhere((t) => t.id == 'navy').felt);
+    // A style is its table too: Midnight's is the night sky.
+    await choose('Midnight');
+    expect(worn().id, 'midnight');
+    expect(worn().tableLook.pattern, FeltPattern.stars);
     await choose('Black sunburst');
-    expect(worn().id, 'plain+t:navy+b:sunburst');
+    expect(worn().id, 'midnight+b:sunburst');
     expect(worn().cardLook.backMotif, BackMotif.rays);
-    // A new style keeps the table and backs chosen.
+    // A new style keeps the backs chosen.
     await choose('Garden');
-    expect(worn().id, 'garden+t:navy+b:sunburst');
-    await choose('Garden’s own');
     expect(worn().id, 'garden+b:sunburst');
+    await choose('Garden’s own');
+    expect(worn().id, 'garden');
+    await choose('Royal decree');
+    expect(worn().id, 'garden+k:decree');
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('kingsCourt.skin'), 'garden+b:sunburst');
+    expect(prefs.getString('kingsCourt.skin'), 'garden+k:decree');
   });
 
   test('A look of your own comes back from its id, choices and all', () {
-    for (final id in ['court', 'lacquer+b:ivory', 'harbour+t:plum', 'midnight+t:slate+b:royal']) {
+    for (final id in ['court', 'lacquer+b:ivory', 'velvet+b:royal+k:decree', 'ballroom']) {
       expect(skinById(id).id, id);
     }
+    // A table once chosen apart from the skin is the skin it became.
+    expect(skinById('harbour+t:plum').id, 'velvet');
+    expect(skinById('court+t:navy+b:royal').id, 'midnight+b:royal');
     expect(skinById('court+t:gone').id, 'court', reason: 'a table no longer offered is dropped');
     final lacquer = skinById('lacquer+b:ivory');
     expect(lacquer.parts.cardBack, isNull, reason: 'the chosen backs, not the skin’s own');

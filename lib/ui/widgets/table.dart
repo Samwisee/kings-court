@@ -11,6 +11,7 @@ import '../../skin/looks.dart';
 import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import 'felt_motion.dart';
 import 'felt_patterns.dart';
 
 /// The felt set into a royal-red table: round the edge of the screen the
@@ -140,6 +141,39 @@ class FeltLight extends StatelessWidget {
     if (lamp <= 0 && pattern == null) return const SizedBox.expand();
     return CustomPaint(
         painter: pattern, foregroundPainter: lamp <= 0 ? null : _LampPainter(lamp), size: Size.infinite);
+  }
+}
+
+/// The felt itself, filling its place: its colour (or, for a page off the
+/// table, its colour lit from above), what's worked into it with the lamp
+/// over it, and any motion on it (felt_motion.dart). Under [child].
+class FeltGround extends StatelessWidget {
+  const FeltGround({super.key, this.page = false, this.clear = false, this.child});
+
+  /// No felt at all, just [child] (where the felt is behind already).
+  final bool clear;
+
+  /// A page of its own (the rules, the tutorial's start): the felt lit
+  /// from above rather than by the table's lamp.
+  final bool page;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    if (clear) return child ?? const SizedBox.shrink();
+    return DecoratedBox(
+      decoration: page
+          ? BoxDecoration(
+              gradient: RadialGradient(
+                  center: const Alignment(0, -0.4), radius: 1.2, colors: [skin.felt, skin.feltDeep]))
+          : BoxDecoration(color: skin.felt),
+      child: Stack(fit: StackFit.expand, children: [
+        const RepaintBoundary(child: FeltLight()),
+        const FeltMotion(),
+        if (child != null) child!,
+      ]),
+    );
   }
 }
 

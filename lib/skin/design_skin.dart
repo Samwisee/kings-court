@@ -43,6 +43,8 @@ class SkinDesign {
     required this.bodyFont,
     this.finish = Finish.simple,
     this.radius = 12,
+    this.pattern = FeltPattern.none,
+    this.patternInk = const Color(0x00000000),
     this.onAccent,
     this.cloth = const [
       [Color(0xFF5A2F87), Color(0xFF241238)],
@@ -93,6 +95,11 @@ class SkinDesign {
   final String bodyFont;
 
   final Finish finish;
+
+  /// What's worked into the felt (looks.dart), in [patternInk]: on the
+  /// table, and faintly in the menus and pages dressed in this skin.
+  final FeltPattern pattern;
+  final Color patternInk;
 
   /// The corner radius of panels and buttons; cards keep their own.
   final double radius;
@@ -231,7 +238,9 @@ class DesignSkin extends Skin {
       fontFamily: displayFont, fontWeight: FontWeight.w700, fontSize: 22, color: ink);
 
   @override
-  TableLook get tableLook => _rich
+  TableLook get tableLook => _table.withPattern(design.pattern, design.patternInk);
+
+  TableLook get _table => _rich
       ? TableLook(
           style: TableStyle.rimmed,
           outerRule: design.accent.withValues(alpha: 0.8),

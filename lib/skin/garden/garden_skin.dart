@@ -7,6 +7,7 @@ library;
 import 'package:flutter/painting.dart';
 
 import '../design_skin.dart';
+import '../looks.dart';
 
 class GardenSkin extends DesignSkin {
   const GardenSkin() : super(gardenDesign);
@@ -30,6 +31,8 @@ const gardenDesign = SkinDesign(
   lost: Color(0xFFE0614B),
   displayFont: 'CinzelDecorative',
   bodyFont: 'AlegreyaSans',
+  pattern: FeltPattern.trellis,
+  patternInk: Color(0x24E5F0D8),
   finish: Finish.rich,
   cloth: [
     [Color(0xFF6A4C8C), Color(0xFF2E1F42)],

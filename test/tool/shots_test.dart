@@ -14,9 +14,8 @@ import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
-import 'package:kings_court/skin/garden/garden_skin.dart';
-import 'package:kings_court/skin/harbour/harbour_skin.dart';
-import 'package:kings_court/skin/plain/plain_skin.dart';
+import 'package:kings_court/skin/midnight/midnight_skin.dart';
+import 'package:kings_court/skin/rooms/room_skins.dart';
 import 'package:kings_court/skin/skin.dart';
 import 'package:kings_court/skin/skin_scope.dart';
 import 'package:kings_court/skin/skins.dart';
@@ -427,23 +426,15 @@ void main() {
   }
 
   // Looks mixed from the Look dialog's choices, at the table.
-  TableChoice table(String id) => tableChoices.firstWhere((t) => t.id == id);
   BackChoice back(String id) => backChoices.firstWhere((b) => b.id == id);
   TaskChoice task(String id) => taskChoices.firstWhere((k) => k.id == id);
   final mixes = <String, Skin>{
-    'stars': TailoredSkin(const CourtSkin(), tableChoice: table('navy'), backChoice: back('herald'), taskChoice: task('decree')),
-    'deco': TailoredSkin(const CourtSkin(), tableChoice: table('deco'), backChoice: back('sunburst'), taskChoice: task('lacquer')),
-    'chart': TailoredSkin(const HarbourSkin(), tableChoice: table('teal'), backChoice: back('harbour'), taskChoice: task('stamp')),
-    'tavern': TailoredSkin(const CourtSkin(), tableChoice: table('tavern'), backChoice: back('crimson'), taskChoice: task('parchment')),
-    'trellis': TailoredSkin(const GardenSkin(), tableChoice: table('sage'), backChoice: back('rose'), taskChoice: task('mint')),
-    'tiles': TailoredSkin(const CourtSkin(), tableChoice: table('tiles'), backChoice: back('royal'), taskChoice: task('blueprint')),
-    'map': TailoredSkin(const CourtSkin(), tableChoice: table('map'), backChoice: back('emerald'), taskChoice: task('ledger')),
-    'damask': TailoredSkin(const CourtSkin(), tableChoice: table('plum'), backChoice: back('plum'), taskChoice: task('letter')),
-    'marble': TailoredSkin(const CourtSkin(), tableChoice: table('marble'), backChoice: back('ivory'), taskChoice: task('gilt')),
-    'tooled': TailoredSkin(const CourtSkin(), tableChoice: table('walnut'), backChoice: back('crimson'), taskChoice: task('stationery')),
-    'parquet': TailoredSkin(const PlainSkin(), tableChoice: table('charcoal'), backChoice: back('graphite'), taskChoice: task('rose')),
-    'chequer': TailoredSkin(const CourtSkin(), tableChoice: table('chess'), backChoice: back('midnight')),
+    'stars': TailoredSkin(const MidnightSkin(), backChoice: back('herald'), taskChoice: task('decree')),
+    'deco': TailoredSkin(const BallroomSkin(), backChoice: back('sunburst'), taskChoice: task('lacquer')),
+    'tavern': TailoredSkin(const TavernSkin(), backChoice: back('crimson'), taskChoice: task('parchment')),
+    'tiles': TailoredSkin(const CourtyardSkin(), backChoice: back('royal'), taskChoice: task('blueprint')),
   };
+
   for (final MapEntry(key: name, value: skin) in mixes.entries) {
     testWidgets('A look mixed in the Look dialog ($name), at the table', (tester) async {
       tester.view.physicalSize = const Size(1170, 2532);

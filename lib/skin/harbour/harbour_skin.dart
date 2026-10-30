@@ -6,6 +6,7 @@ library;
 import 'package:flutter/painting.dart';
 
 import '../design_skin.dart';
+import '../looks.dart';
 
 class HarbourSkin extends DesignSkin {
   const HarbourSkin() : super(harbourDesign);
@@ -29,6 +30,8 @@ const harbourDesign = SkinDesign(
   lost: Color(0xFFE0533F),
   displayFont: 'AlegreyaSans',
   bodyFont: 'AlegreyaSans',
+  pattern: FeltPattern.chart,
+  patternInk: Color(0x2EF2D49A),
   cloth: [
     [Color(0xFF6B4BA8), Color(0xFF3B2468)],
     [Color(0xFF1E8A6A), Color(0xFF0E5240)],

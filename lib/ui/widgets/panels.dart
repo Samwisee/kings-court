@@ -11,6 +11,7 @@ import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import 'court_dialog.dart';
+import 'felt_patterns.dart';
 import 'icons.dart';
 import 'pips.dart';
 import 'suit_text.dart';
@@ -111,10 +112,25 @@ class OrnateCard extends StatelessWidget {
                 child: Container(height: 5, color: band.first),
               ),
             ),
+          if (court && skin.tableLook.pattern != FeltPattern.none)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(look.radius - look.edgeWidth),
+                child: RepaintBoundary(child: CustomPaint(painter: _feltOn(skin, look.court.first))),
+              ),
+            ),
           Padding(padding: padding, child: child),
         ],
       ),
     );
+  }
+
+  /// What's worked into [skin]'s felt, smaller and fainter, on a panel's
+  /// [ground]: the menus and dialogs dressed like the table.
+  static CustomPainter _feltOn(Skin skin, Color ground) {
+    final t = skin.tableLook;
+    return FeltPatternPainter(t.pattern, t.patternColour.withValues(alpha: t.patternColour.a * 0.6),
+        ground: ground, scale: 0.75);
   }
 
   Widget _ornate(Skin skin) {
@@ -148,12 +164,17 @@ class OrnateCard extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // A faint damask of diamonds across the panel, the double rule
-          // and filigree scrolls in every corner.
+          // A faint damask of diamonds across the panel (or, in the
+          // court's colours, what's worked into the skin's felt), the double
+          // rule and filigree scrolls in every corner.
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(look.radius - 2),
-              child: CustomPaint(painter: _Damask(ink.withValues(alpha: 0.07))),
+              child: RepaintBoundary(
+                  child: CustomPaint(
+                      painter: court && skin.tableLook.pattern != FeltPattern.none
+                          ? _feltOn(skin, look.court[1])
+                          : _Damask(ink.withValues(alpha: 0.07)))),
             ),
           ),
           Positioned.fill(

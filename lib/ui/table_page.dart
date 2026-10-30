@@ -2718,11 +2718,10 @@ class HomePageState extends State<HomePage>
             _digital &&
             screen.width - math.max(480.0, screen.height) >= 560;
     return Stack(children: [
-    // The felt runs the whole screen, behind the bar too.
-    if (_inGame)
-      Positioned.fill(child: ColoredBox(color: skin.felt, child: const RepaintBoundary(child: FeltLight()))),
+    // The felt runs the whole screen, behind the bar too, on every page.
+    const Positioned.fill(child: FeltGround()),
     Scaffold(
-      backgroundColor: _inGame ? Colors.transparent : null,
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: useTopBar,
       // The game's bar and the plain one cross-fade, so the round and
       // points don't pop in and out with the setup.
@@ -2826,10 +2825,11 @@ class HomePageState extends State<HomePage>
                       children: [...previous, if (current != null) current]),
                   child: _setupArgs == null
                       ? const SizedBox.shrink(key: ValueKey('no-setup'))
-                      : ColoredBox(
+                      : FeltGround(
                           key: const ValueKey('setup'),
-                          // In a game, wash the table out so the setup reads.
-                          color: _inGame ? skin.felt : Colors.transparent,
+                          // In a game, a fresh felt over the table, so the
+                          // setup reads.
+                          clear: !_inGame,
                           child: Center(
                               child: SetupSwitch(online: _online != null, child: _online != null ? _buildOnlineSetup() : _buildSetupPanel())),
                         ),

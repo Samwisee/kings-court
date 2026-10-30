@@ -8,6 +8,7 @@ export 'widgets/candles.dart';
 export 'widgets/character_token.dart';
 export 'widgets/clamp.dart';
 export 'widgets/court_dialog.dart';
+export 'widgets/felt_motion.dart';
 export 'widgets/felt_patterns.dart';
 export 'widgets/icons.dart';
 export 'widgets/panels.dart';

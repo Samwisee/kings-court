@@ -72,3 +72,4 @@ skin-lacquer-4-look.png: the Look dialog has task cards to choose, and patterned
 skin-garden-4-look.png: the Look dialog has task cards to choose, and patterned tables
 skin-midnight-4-look.png: the Look dialog has task cards to choose, and patterned tables
 skin-harbour-4-look.png: the Look dialog has task cards to choose, and patterned tables
+*: styles and tables are one now: the felt (its pattern and lamp) on every page and behind the bar, ten new rooms, the menus and dialogs dressed with each room's pattern

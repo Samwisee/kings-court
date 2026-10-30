@@ -91,10 +91,14 @@ class CourtDialog extends StatelessWidget {
                 // keyboard up), so the title and the buttons stay in view.
                 Flexible(
                   child: SingleChildScrollView(
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: align,
-                        children: [child]),
+                    // Its own layer, so scrolling moves it rather than
+                    // drawing it all again.
+                    child: RepaintBoundary(
+                      child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: align,
+                          children: [child]),
+                    ),
                   ),
                 ),
                 if (actions.isNotEmpty) ...[

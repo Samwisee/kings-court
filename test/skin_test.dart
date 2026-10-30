@@ -76,13 +76,5 @@ void main() {
       expect(values, contains("gold: '${hex(skin.gold)}'"), reason: skin.id);
       expect(values, contains('rim: ${skin.tableLook.style == TableStyle.rimmed ? 1 : 0}'), reason: skin.id);
     }
-    // And every table the Look dialog offers.
-    for (final t in tableChoices) {
-      final entry = RegExp('${t.id}: \\{([^}]*)\\}').allMatches(html).last;
-      final values = entry.group(1)!;
-      expect(values, contains("table: '${hex(t.table)}'"), reason: t.id);
-      expect(values, contains("glow: '${hex(t.glow)}'"), reason: t.id);
-      expect(values, contains("deep: '${hex(t.feltDeep)}'"), reason: t.id);
-    }
   });
 }

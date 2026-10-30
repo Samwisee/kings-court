@@ -210,14 +210,8 @@ class _RulesPageState extends State<RulesPage> {
     ];
     return Scaffold(
       backgroundColor: skin.feltDeep,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -0.4),
-            radius: 1.2,
-            colors: [skin.felt, skin.feltDeep],
-          ),
-        ),
+      body: FeltGround(
+        page: true,
         child: SafeArea(
           child: Stack(children: [
           Positioned.fill(

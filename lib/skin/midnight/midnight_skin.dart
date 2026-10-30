@@ -6,6 +6,7 @@ library;
 import 'package:flutter/painting.dart';
 
 import '../design_skin.dart';
+import '../looks.dart';
 
 class MidnightSkin extends DesignSkin {
   const MidnightSkin() : super(midnightDesign);
@@ -29,6 +30,8 @@ const midnightDesign = SkinDesign(
   lost: Color(0xFFE5604C),
   displayFont: 'CinzelDecorative',
   bodyFont: 'AlegreyaSans',
+  pattern: FeltPattern.stars,
+  patternInk: Color(0x8CE8EEFF),
   finish: Finish.rich,
   cloth: [
     [Color(0xFF4E3A86), Color(0xFF1F1640)],

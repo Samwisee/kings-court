@@ -68,14 +68,8 @@ class _TutorialIntroState extends State<TutorialIntro> {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       backgroundColor: skin.feltDeep,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -0.4),
-            radius: 1.2,
-            colors: [skin.felt, skin.feltDeep],
-          ),
-        ),
+      body: FeltGround(
+        page: true,
         child: SafeArea(
           child: Stack(children: [
             Positioned.fill(

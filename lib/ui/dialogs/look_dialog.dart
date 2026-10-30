@@ -1,13 +1,15 @@
-/// The Look dialog: the style the game is dressed in (a skin), the table
-/// it's played on, the backs of the cards, and the task cards
-/// (skin/tailored.dart), to mix and match. Each choice is worn at once, so
+/// The Look dialog: the style the game is dressed in (a skin: its table
+/// and everything round it, menus and pages too), the backs of the cards,
+/// and the task cards (skin/tailored.dart), to mix and match. Each choice is worn at once, so
 /// the game behind the dialog shows it.
 library;
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/entitlements.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
@@ -21,20 +23,53 @@ import '../widgets.dart';
 Future<void> showLookDialog(BuildContext context, {required bool Function(Skin) wear}) =>
     showDialog<void>(context: context, builder: (_) => _LookDialog(wear: wear));
 
-class _LookDialog extends StatelessWidget {
+class _LookDialog extends StatefulWidget {
   const _LookDialog({required this.wear});
   final bool Function(Skin) wear;
 
   @override
+  State<_LookDialog> createState() => _LookDialogState();
+}
+
+class _LookDialogState extends State<_LookDialog> {
+  /// What's chosen: the dialog wears it at once; the game behind it, a
+  /// moment later (dressing the whole table again is the dear part), and
+  /// only the last of several quick taps.
+  Skin? _chosen;
+  Timer? _wearing;
+
+  void _choose(Skin s) {
+    setState(() => _chosen = s);
+    _wearing?.cancel();
+    _wearing = Timer(const Duration(milliseconds: 140), () => widget.wear(s));
+  }
+
+  @override
+  void dispose() {
+    // Closed before it was worn: worn now.
+    if (_wearing?.isActive ?? false) {
+      _wearing!.cancel();
+      widget.wear(_chosen!);
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final worn = context.skin;
+    final worn = _chosen ?? context.skin;
+    return SkinScope(
+      skin: worn,
+      entitlements: context.getInheritedWidgetOfExactType<SkinScope>()?.entitlements ?? const AllOwned(),
+      child: Theme(data: worn.theme(), child: Builder(builder: (context) => _dialog(context, worn))),
+    );
+  }
+
+  Widget _dialog(BuildContext context, Skin worn) {
     final base = TailoredSkin.baseOf(worn);
-    final table = worn is TailoredSkin ? worn.tableChoice : null;
     final back = worn is TailoredSkin ? worn.backChoice : null;
     final task = worn is TailoredSkin ? worn.taskChoice : null;
-    Skin made(Skin base, TableChoice? table, BackChoice? back, [TaskChoice? task]) =>
-        TailoredSkin.of(base, table: table, back: back, task: task);
-    void choose(Skin s) => wear(s);
+    Skin made(Skin base, BackChoice? back, [TaskChoice? task]) => TailoredSkin.of(base, back: back, task: task);
+    void choose(Skin s) => _choose(s);
 
     return CourtDialog(
       title: 'Look',
@@ -43,47 +78,36 @@ class _LookDialog extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Heading('Style', 'The whole dress of the game: its colours, cards, panels and seats.'),
+          const _Heading('Style', 'The room you play in: its table, and the menus and pages to match.'),
           _Choices(children: [
             for (final s in skins)
               if (SkinScope.owns(context, s))
                 _Choice(
                   name: s.name,
                   selected: s.id == base.id,
-                  onTap: () => choose(made(s, table, back, task)),
-                  child: _TableSwatch(felt: s.felt, deep: s.feltDeep, rim: s.table, accent: s.gold),
+                  onTap: () => choose(made(s, back, task)),
+                  child: _TableSwatch(
+                      felt: s.felt,
+                      deep: s.feltDeep,
+                      rim: s.table,
+                      accent: s.gold,
+                      pattern: s.tableLook.pattern,
+                      ink: s.tableLook.patternColour),
                 ),
-          ]),
-          const _Heading('Table', 'The felt you play on.'),
-          _Choices(children: [
-            _Choice(
-              name: '${base.name}’s own',
-              selected: table == null,
-              onTap: () => choose(made(base, null, back, task)),
-              child: _TableSwatch(felt: base.felt, deep: base.feltDeep, rim: base.table, accent: base.gold),
-            ),
-            for (final t in tableChoices)
-              _Choice(
-                name: t.name,
-                selected: table?.id == t.id,
-                onTap: () => choose(made(base, t, back, task)),
-                child: _TableSwatch(
-                    felt: t.felt, deep: t.feltDeep, rim: t.table, accent: base.gold, pattern: t.pattern, ink: t.ink),
-              ),
           ]),
           const _Heading('Card backs', 'On every hand you can’t see, the tricks each player has won, and the tasks done.'),
           _Choices(children: [
             _Choice(
               name: '${base.name}’s own',
               selected: back == null,
-              onTap: () => choose(made(base, table, null, task)),
-              child: _Back(made(base, null, null)),
+              onTap: () => choose(made(base, null, task)),
+              child: _Back(base),
             ),
             for (final b in backChoices)
               _Choice(
                 name: b.name,
                 selected: back?.id == b.id,
-                onTap: () => choose(made(base, table, b, task)),
+                onTap: () => choose(made(base, b, task)),
                 child: _Back(TailoredSkin(base, backChoice: b)),
               ),
           ]),
@@ -92,14 +116,14 @@ class _LookDialog extends StatelessWidget {
             _Choice(
               name: '${base.name}’s own',
               selected: task == null,
-              onTap: () => choose(made(base, table, back)),
+              onTap: () => choose(made(base, back)),
               child: _TaskSwatch(base.taskLook),
             ),
             for (final k in taskChoices)
               _Choice(
                 name: k.name,
                 selected: task?.id == k.id,
-                onTap: () => choose(made(base, table, back, k)),
+                onTap: () => choose(made(base, back, k)),
                 child: _TaskSwatch(k.look),
               ),
           ]),
@@ -148,7 +172,8 @@ class _Choice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return Semantics(
+    // Each its own layer: drawn once, not again as the dialog scrolls.
+    return RepaintBoundary(child: Semantics(
       button: true,
       selected: selected,
       label: name,
@@ -175,7 +200,7 @@ class _Choice extends StatelessWidget {
           ]),
         ),
       ),
-    );
+    ));
   }
 }
 

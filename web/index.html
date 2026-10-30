@@ -65,36 +65,31 @@
         lacquer: {table: '#0D0606', glow: '#4C2326', deep: '#26090B', gold: '#DDB65E', rim: 1},
         garden: {table: '#1B2418', glow: '#4E6B54', deep: '#29402E', gold: '#E5A88E', rim: 1},
         midnight: {table: '#07090F', glow: '#2A354E', deep: '#0E172C', gold: '#C9D2E3', rim: 1},
-        harbour: {table: '#0B1A22', glow: '#274F5D', deep: '#0C2B36', gold: '#F2B950', rim: 0}
+        harbour: {table: '#0B1A22', glow: '#274F5D', deep: '#0C2B36', gold: '#F2B950', rim: 0},
+        velvet: {table: '#140A18', glow: '#4D3556', deep: '#28152F', gold: '#E5C07B', rim: 1},
+        counting: {table: '#1A0A0C', glow: '#672C36', deep: '#3A0E16', gold: '#D4A63A', rim: 1},
+        library: {table: '#1E140D', glow: '#674D3B', deep: '#3C291B', gold: '#D4A63A', rim: 1},
+        tavern: {table: '#1A110A', glow: '#584232', deep: '#2E1F14', gold: '#E0A84E', rim: 0},
+        marble: {table: '#0D1714', glow: '#314B43', deep: '#132621', gold: '#D9C9A0', rim: 1},
+        ballroom: {table: '#000000', glow: '#2A2A2A', deep: '#0C0C0C', gold: '#D4A63A', rim: 1},
+        courtyard: {table: '#0A1626', glow: '#2A4A6B', deep: '#0E2640', gold: '#F2C46D', rim: 0},
+        campaign: {table: '#1A2012', glow: '#4A583D', deep: '#253019', gold: '#E8D49A', rim: 1},
+        chequers: {table: '#120707', glow: '#4A2C30', deep: '#24100F', gold: '#D4A63A', rim: 1},
+        salon: {table: '#0A0A0A', glow: '#373737', deep: '#171717', gold: '#ECE4D4', rim: 0}
       };
-      // A table chosen in the Look dialog (lib/skin/tailored.dart), saved
-      // after the skin's id as "+t:<table>".
-      var tables = {
-        green: {table: '#4E0B18', glow: '#176141', deep: '#0A3622'},
-        billiard: {table: '#3B2416', glow: '#2C8A4F', deep: '#134628'},
-        sage: {table: '#1B2418', glow: '#52755A', deep: '#29402E'},
-        teal: {table: '#0B1A22', glow: '#1D5768', deep: '#0C2B36'},
-        navy: {table: '#07090F', glow: '#24345A', deep: '#0E172C'},
-        plum: {table: '#140A18', glow: '#563463', deep: '#28152F'},
-        burgundy: {table: '#1A0A0C', glow: '#75293A', deep: '#3A0E16'},
-        walnut: {table: '#1E140D', glow: '#735239', deep: '#3C291B'},
-        tavern: {table: '#1A110A', glow: '#5E422B', deep: '#2E1F14'},
-        marble: {table: '#0D1714', glow: '#2D5247', deep: '#132621'},
-        deco: {table: '#000000', glow: '#2A2722', deep: '#0C0C0C'},
-        tiles: {table: '#0A1626', glow: '#22507E', deep: '#0E2640'},
-        map: {table: '#1A2012', glow: '#4C5E3A', deep: '#253019'},
-        chess: {table: '#120707', glow: '#502629', deep: '#24100F'},
-        slate: {table: '#121519', glow: '#425062', deep: '#1E262E'},
-        charcoal: {table: '#0A0A0A', glow: '#363636', deep: '#171717'}
-      };
+      // A table once chosen apart from the skin, saved as "+t:<table>": the
+      // skin it became (lib/skin/skins.dart).
+      var tableSkins = {sage: 'garden', teal: 'harbour', navy: 'midnight', plum: 'velvet',
+        burgundy: 'counting', walnut: 'library', tavern: 'tavern', marble: 'marble', deco: 'ballroom',
+        tiles: 'courtyard', map: 'campaign', chess: 'chequers', charcoal: 'salon'};
       var id = 'court';
       try { id = JSON.parse(localStorage.getItem('flutter.kingsCourt.skin')) || id; } catch (e) {}
       var parts = String(id).split('+');
-      var l = Object.assign({}, looks[parts[0]] || looks.court);
+      var room = parts[0];
       parts.forEach(function (p) {
-        var t = p.indexOf('t:') === 0 && tables[p.slice(2)];
-        if (t) { l.table = t.table; l.glow = t.glow; l.deep = t.deep; }
+        if (p.indexOf('t:') === 0 && tableSkins[p.slice(2)]) room = tableSkins[p.slice(2)];
       });
+      var l = Object.assign({}, looks[room] || looks.court);
       var root = document.documentElement.style;
       root.setProperty('--table', l.table);
       root.setProperty('--glow', l.glow);
