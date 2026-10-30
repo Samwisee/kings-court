@@ -81,7 +81,7 @@ void main() {
     await tester.tap(find.text('Livery: Court'));
     await tester.pumpAndSettle();
     // A tab for each kind of choice, its choices in a grid.
-    const tabs = {'style': 'Style', 'faces': 'Card faces', 'court': 'Court Cards', 'backs': 'Card backs', 'tasks': 'Task cards'};
+    const tabs = {'style': 'Style', 'faces': 'Faces', 'court': 'Court', 'backs': 'Backs', 'tasks': 'Tasks'};
     Future<void> choose(String kind, String name) async {
       await tester.tap(find.text(tabs[kind]!));
       await tester.pumpAndSettle();

@@ -247,11 +247,11 @@ class _LookPageState extends State<_LookPage> {
 /// The kinds of choice, a tab each.
 enum _Kind {
   style('Style'),
-  faces('Card faces'),
-  court('Court Cards'),
-  backs('Card backs'),
+  faces('Faces'),
+  court('Court'),
+  backs('Backs'),
   tokens('Tokens'),
-  tasks('Task cards');
+  tasks('Tasks');
 
   const _Kind(this.label);
   final String label;
@@ -267,43 +267,14 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        children: [
-          for (final k in _Kind.values)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: Semantics(
-                button: true,
-                selected: k == kind,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => onKind(k),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: k == kind ? skin.gold : Colors.black.withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: skin.gold.withValues(alpha: k == kind ? 1 : 0.35)),
-                      ),
-                      child: Text(k.label,
-                          style: TextStyle(
-                              fontFamily: skin.bodyFont,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w700,
-                              color: k == kind ? skin.goldInk : Colors.white.withValues(alpha: 0.85))),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+    // All in view at once (wrapping if they must), never scrolled away.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 6,
+        runSpacing: 6,
+        children: [        ],
       ),
     );
   }
@@ -422,7 +393,7 @@ class _Showcase extends StatelessWidget {
         final skin = context.skin;
         return LayoutBuilder(builder: (context, c) {
           final h = c.maxHeight, w = math.min(c.maxWidth, 560.0);
-          final cardW = clampD(math.min((h - 78) / (1.42 * 1.62), w * 0.13), 40, 66);
+          final cardW = clampD(math.min((h - 78) / (1.42 * 1.85), w * 0.13), 40, 66);
           final cardH = PlayingCardView.heightFor(cardW);
           final step = cardW * 0.66;
           final fanW = 3 * step + cardW + 10;
@@ -467,17 +438,17 @@ class _Showcase extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    // The hand: the Court Cards over the number cards.
+                    // The hand: the Court Cards, and the number cards in front of them.
                     SizedBox(
                       width: fanW,
-                      height: cardH * 1.62 + 12,
+                      height: cardH * 1.82 + 12,
                       child: Stack(clipBehavior: Clip.none, children: [
                         Positioned(
-                            left: 0,
-                            top: cardH * 0.62,
-                            child: _Swap(id: '$base-${dressed?.face?.id}', child: fan(_numbers, high: false))),
-                        Positioned(
                             left: 0, top: 0, child: _Swap(id: '$base-${dressed?.court?.id}', child: fan(_courts, high: true))),
+                        Positioned(
+                            left: 0,
+                            top: cardH * 0.82,
+                            child: _Swap(id: '$base-${dressed?.face?.id}', child: fan(_numbers, high: false))),
                       ]),
                     ),
                     SizedBox(width: clampD(w * 0.06, 14, 34)),
