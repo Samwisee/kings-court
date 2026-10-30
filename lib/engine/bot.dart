@@ -345,7 +345,7 @@ class Bot {
 
   /// How long a bot thinks before giving the screen its turn: about a
   /// third of a frame, left after the frame's own work.
-  static Duration sliceTime = const Duration(milliseconds: 5);
+  static Duration sliceTime = const Duration(milliseconds: 8);
 
   /// Waits for the screen's next turn to be over. Plain Dart has no
   /// frames, so by default it just lets anything waiting go first; the app

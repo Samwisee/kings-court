@@ -46,7 +46,7 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
     // The courtiers think a slice after each frame (engine/bot.dart), so
     // their thinking never holds a frame up. (Widget tests pump their own
     // frames, and keep the plain wait.)
-    if (!CharacterToken.underTest) Bot.breather = _afterNextFrame;
+    if (false && !CharacterToken.underTest) Bot.breather = _afterNextFrame; // A/B: the old way
     colourPage(_skin.table);
     _dissolve = AnimationController(vsync: this, duration: const Duration(milliseconds: 380))
       ..addStatusListener((s) {
