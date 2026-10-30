@@ -340,7 +340,14 @@ void main() {
             await wait(900);
           }
         }
-        if (grid.evaluate().isEmpty) throw StateError('no $kind grid');
+        if (grid.evaluate().isEmpty) {
+          final shown = [
+            for (final e in find.byType(Text).evaluate())
+              if ((e.widget as Text).data case final t?)
+                '$t@${tester.getCenter(find.byElementPredicate((x) => x == e)).dy.round()}'
+          ];
+          throw StateError('no $kind grid; texts: ${shown.take(40).join(', ')}');
+        }
         await tester.fling(grid, const Offset(0, -300), 1500, warnIfMissed: false);
         await wait(900);
         // And back, so the tabs are in reach again.

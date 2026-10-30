@@ -39,7 +39,7 @@ def main(path):
             continue
         s = found[0]
         if s.get('error'):
-            broken.append(f"{prefix}: {s['error'][:120]}")
+            broken.append(f"{prefix}: {s['error'][:900]}")
         if s['over16'] > most_over:
             broken.append(f"{prefix}: {s['over16']} frames over 16 ms (budget {most_over})")
         if s['workMax'] > longest:
