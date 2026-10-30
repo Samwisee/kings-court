@@ -7,8 +7,6 @@
 /// again.
 library;
 
-export 'choices.dart';
-
 import 'package:flutter/material.dart';
 
 import '../engine/cards.dart';
@@ -17,6 +15,8 @@ import 'choices.dart';
 import 'looks.dart';
 import 'parts.dart';
 import 'skin.dart';
+
+export 'choices.dart';
 
 /// [skin] as it's worn: with its own backs, faces and task cards, if it
 /// comes with any.

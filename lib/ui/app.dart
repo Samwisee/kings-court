@@ -7,10 +7,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
 import '../skin/court/court_skin.dart';
 import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
-import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
 import '../skin/tailored.dart';
 import 'table_page.dart';
 
