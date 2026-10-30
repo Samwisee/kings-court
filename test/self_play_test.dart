@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kings_court/sim/self_play.dart';
+import 'package:kings_court/game/self_play.dart';
 
 Map<String, Object?> sp(Map<String, Object?> record) => record['selfplay']! as Map<String, Object?>;
 
@@ -55,14 +55,16 @@ void main() {
     expect(() => rungNamed('nobody'), throwsArgumentError);
   });
 
-  test('The engine, the game model and the headless runner stay free of Flutter', () {
-    // The runner is plain Dart (dart run bin/selfplay.dart): anything it
-    // reaches that imports Flutter would stop it running.
-    for (final dir in ['lib/engine', 'lib/game', 'lib/modes', 'lib/sim', 'bin']) {
-      for (final f in Directory(dir).listSync(recursive: true).whereType<File>()) {
-        if (!f.path.endsWith('.dart')) continue;
-        final text = f.readAsStringSync();
-        expect(text.contains("package:flutter/") || text.contains("'dart:ui'"), isFalse, reason: f.path);
+  test('The headless runner reaches only the plain Dart layers', () {
+    // It runs with plain Dart (dart run bin/selfplay.dart). The layers it
+    // may use are kept free of Flutter by layers_test.dart.
+    const pure = {'engine', 'game', 'net', 'modes'};
+    for (final f in Directory('bin').listSync(recursive: true).whereType<File>()) {
+      for (final m in RegExp(r"import '([^']+)'").allMatches(f.readAsStringSync())) {
+        final target = m.group(1)!;
+        if (target.startsWith('dart:')) continue;
+        final layer = RegExp(r'^package:kings_court/(\w+)/').firstMatch(target)?.group(1);
+        expect(pure.contains(layer), isTrue, reason: '${f.path} imports $target');
       }
     }
   });

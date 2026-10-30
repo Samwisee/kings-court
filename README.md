@@ -315,7 +315,7 @@ The engine was built for this:
   courtier by how it went (`game/pacing.dart`): quick over no choice, a
   visible hesitation over a close call, never twice running. The
   courtiers don't read each other's pauses, or yours.
-- **Headless** (`bin/selfplay.dart`, `lib/sim/self_play.dart`): the
+- **Headless** (`bin/selfplay.dart`, `lib/game/self_play.dart`): the
   courtiers play seeded rounds on every core, each deal at every rung of
   a ladder of strength (weak, casual, usual, fixed, strong, seeing), and
   each round is appended to `selfplay/rounds.jsonl` (kept out of git) in

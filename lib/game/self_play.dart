@@ -19,7 +19,7 @@ import '../engine/conflicts.dart';
 import '../engine/round.dart';
 import '../engine/rules.dart';
 import '../engine/showing.dart';
-import '../game/state.dart';
+import 'state.dart';
 
 /// How well a table of courtiers plays: their thinking budget, how many
 /// imagined deals they think across, whether they see every hand, and

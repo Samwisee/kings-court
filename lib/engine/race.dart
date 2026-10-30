@@ -24,7 +24,7 @@ class Thought {
   static const forced = Thought();
 
   /// A decision made the usual way, with no race (an announcement).
-  static const usual = Thought(options: 2, spent: 1, budget: 1);
+  static const usual = Thought(options: 2, spent: 1);
 
   final int options;
   final int spent;

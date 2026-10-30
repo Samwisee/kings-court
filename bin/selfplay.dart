@@ -1,7 +1,7 @@
 /// The headless runner: the courtiers play round after round with no
 /// screen, on every core, and every round goes to a JSON-lines file in
 /// the shape the game sends (lib/platform/game_log.dart), with the run's
-/// own details under "selfplay" (lib/sim/self_play.dart).
+/// own details under "selfplay" (lib/game/self_play.dart).
 ///
 /// Each seed deals one round, and it's played at every rung of strength
 /// asked for, so the rungs can be compared on the same deals. A run picks
@@ -37,7 +37,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:kings_court/sim/self_play.dart';
+import 'package:kings_court/game/self_play.dart';
 
 class _Job {
   _Job(this.port, this.worker, this.workers, this.from, this.until, this.deadline, this.players, this.targets,

@@ -61,7 +61,7 @@ void main() {
   });
 
   test('Courtiers take a moment over no choice, less over an easy one, longer over a close call', () {
-    final pace = Pacing(usual: const Duration(milliseconds: 700));
+    final pace = Pacing();
     expect(pace.pauseFor(1, Thought.forced), lessThan(const Duration(milliseconds: 700)));
     expect(pace.pauseFor(1, const Thought(options: 3, spent: 400, budget: 900, clear: true)),
         lessThan(const Duration(milliseconds: 700)));
