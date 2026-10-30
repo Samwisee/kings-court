@@ -112,6 +112,13 @@ class OrnateCard extends StatelessWidget {
                 child: Container(height: 5, color: band.first),
               ),
             ),
+          // The room's mark in the corners, inside a fine rule.
+          if (look.corners != PanelCorners.none)
+            Positioned.fill(
+              child: CustomPaint(
+                  painter: _Filigree((court ? skin.gold : edge).withValues(alpha: 0.55),
+                      corners: look.corners, ruled: true)),
+            ),
           if (court && skin.tableLook.pattern != FeltPattern.none)
             Positioned.fill(
               child: ClipRRect(
@@ -180,7 +187,7 @@ class OrnateCard extends StatelessWidget {
           Positioned.fill(
             child: CustomPaint(
                 painter: _Filigree(ruleColour(ink),
-                    scrolls: ornament != Ornament.low)),
+                    scrolls: ornament != Ornament.low, corners: look.corners)),
           ),
           // A win glitters: a sheen sweeps the gold and stars twinkle.
           if (won && !court || ornament == Ornament.high)
@@ -252,13 +259,17 @@ class _Damask extends CustomPainter {
   bool shouldRepaint(_Damask old) => old.color != color;
 }
 
-/// The rule inside the edge, with a curl in each corner.
+/// The rule inside the edge, with the room's mark in each corner
+/// ([PanelCorners]): the court's curl of filigree (only on an occasion),
+/// or another room's, always.
 class _Filigree extends CustomPainter {
-  _Filigree(this.color, {this.scrolls = true});
+  _Filigree(this.color, {this.scrolls = true, this.corners = PanelCorners.scrolls, this.ruled = true});
   final Color color;
 
-  /// A curl in each corner; without it, just the rule inside the edge.
+  /// The court's curls (on an occasion); without them, just the rule.
   final bool scrolls;
+  final PanelCorners corners;
+  final bool ruled;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -267,31 +278,165 @@ class _Filigree extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = OrnateCard.ruleWidth
       ..strokeCap = StrokeCap.round;
+    final fill = Paint()..color = color;
     const inset = OrnateCard.ruleInset, r = OrnateCard.ruleRadius;
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2),
-            const Radius.circular(r)),
-        line);
-    if (!scrolls) return;
-    line.strokeWidth = 1.6;
-    // A scroll in the top-left corner, mirrored into the others.
+    final rule = RRect.fromRectAndRadius(
+        Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2), const Radius.circular(r));
+    if (ruled && corners != PanelCorners.fans) canvas.drawRRect(rule, line);
+    if (corners == PanelCorners.none || corners == PanelCorners.scrolls && !scrolls) return;
+
+    // Along the rule.
+    switch (corners) {
+      case PanelCorners.studs:
+        final m = (Path()..addRRect(rule)).computeMetrics();
+        for (final pm in m) {
+          for (var d = 0.0; d < pm.length; d += 22) {
+            final p = pm.getTangentForOffset(d)!.position;
+            canvas.drawCircle(p, 2.2, fill);
+            canvas.drawCircle(p.translate(-0.6, -0.6), 0.8, Paint()..color = Colors.white.withValues(alpha: 0.35));
+          }
+        }
+        return;
+      case PanelCorners.tooled:
+        canvas.drawRRect(rule.deflate(4), line..strokeWidth = 0.8);
+        final m = (Path()..addRRect(rule.deflate(2))).computeMetrics();
+        for (final pm in m) {
+          for (var d = 0.0; d < pm.length; d += 9) {
+            canvas.drawCircle(pm.getTangentForOffset(d)!.position, 0.8, fill);
+          }
+        }
+        line.strokeWidth = OrnateCard.ruleWidth;
+      case PanelCorners.fans:
+        // The rule stepped in at each corner.
+        const s = 8.0;
+        final b = rule.outerRect;
+        final p = Path()
+          ..moveTo(b.left + 2 * s, b.top)
+          ..lineTo(b.right - 2 * s, b.top)
+          ..lineTo(b.right - 2 * s, b.top + s)
+          ..lineTo(b.right - s, b.top + s)
+          ..lineTo(b.right - s, b.top + 2 * s)
+          ..lineTo(b.right, b.top + 2 * s)
+          ..lineTo(b.right, b.bottom - 2 * s)
+          ..lineTo(b.right - s, b.bottom - 2 * s)
+          ..lineTo(b.right - s, b.bottom - s)
+          ..lineTo(b.right - 2 * s, b.bottom - s)
+          ..lineTo(b.right - 2 * s, b.bottom)
+          ..lineTo(b.left + 2 * s, b.bottom)
+          ..lineTo(b.left + 2 * s, b.bottom - s)
+          ..lineTo(b.left + s, b.bottom - s)
+          ..lineTo(b.left + s, b.bottom - 2 * s)
+          ..lineTo(b.left, b.bottom - 2 * s)
+          ..lineTo(b.left, b.top + 2 * s)
+          ..lineTo(b.left + s, b.top + 2 * s)
+          ..lineTo(b.left + s, b.top + s)
+          ..lineTo(b.left + 2 * s, b.top + s)
+          ..close();
+        canvas.drawPath(p, line);
+      default:
+        break;
+    }
+
+    // In each corner, drawn for the top left and mirrored.
     void corner(double sx, double sy, Offset o) {
       canvas.save();
       canvas.translate(o.dx, o.dy);
       canvas.scale(sx, sy);
-      // Just the curl: the second rule, the arc hugging the corner and
-      // the gem are gone, so the corner stays quiet.
-      final scroll = Path()
-        ..moveTo(14, 26)
-        ..cubicTo(14, 18, 18, 14, 26, 14)
-        ..moveTo(26, 14)
-        ..cubicTo(32, 14, 34, 20, 30, 22)
-        ..cubicTo(27, 24, 24, 21, 26, 19)
-        ..moveTo(14, 26)
-        ..cubicTo(14, 32, 20, 34, 22, 30)
-        ..cubicTo(24, 27, 21, 24, 19, 26);
-      canvas.drawPath(scroll, line);
+      switch (corners) {
+        case PanelCorners.scrolls:
+          line.strokeWidth = 1.6;
+          canvas.drawPath(
+              Path()
+                ..moveTo(14, 26)
+                ..cubicTo(14, 18, 18, 14, 26, 14)
+                ..moveTo(26, 14)
+                ..cubicTo(32, 14, 34, 20, 30, 22)
+                ..cubicTo(27, 24, 24, 21, 26, 19)
+                ..moveTo(14, 26)
+                ..cubicTo(14, 32, 20, 34, 22, 30)
+                ..cubicTo(24, 27, 21, 24, 19, 26),
+              line);
+        case PanelCorners.fans:
+          const c = Offset(14, 14);
+          for (var k = 1; k <= 3; k++) {
+            canvas.drawArc(Rect.fromCircle(center: c, radius: k * 7.0), 0, math.pi / 2, false, line..strokeWidth = 1);
+          }
+          for (var k = 0; k <= 4; k++) {
+            final a = k * math.pi / 8;
+            canvas.drawLine(c + Offset(math.cos(a), math.sin(a)) * 7, c + Offset(math.cos(a), math.sin(a)) * 21, line);
+          }
+        case PanelCorners.tooled:
+          canvas.drawPath(
+              Path()
+                ..moveTo(16, 16)
+                ..cubicTo(26, 18, 28, 26, 22, 30)
+                ..cubicTo(16, 26, 14, 20, 16, 16)
+                ..moveTo(16, 16)
+                ..cubicTo(18, 26, 26, 28, 30, 22),
+              line..strokeWidth = 1.2);
+          canvas.drawCircle(const Offset(15, 15), 1.8, fill);
+        case PanelCorners.stars:
+          _star(canvas, const Offset(20, 20), 6, fill);
+          canvas.drawCircle(const Offset(34, 16), 1.3, fill);
+          canvas.drawCircle(const Offset(16, 34), 1.0, fill);
+          canvas.drawLine(const Offset(20, 20), const Offset(34, 16), line..strokeWidth = 0.6);
+        case PanelCorners.compass:
+          const c = Offset(20, 20);
+          _star(canvas, c, 8, fill);
+          for (var k = 0; k < 4; k++) {
+            final a = k * math.pi / 2 + math.pi / 4;
+            canvas.drawLine(c + Offset(math.cos(a), math.sin(a)) * 3, c + Offset(math.cos(a), math.sin(a)) * 6,
+                line..strokeWidth = 1);
+          }
+          canvas.drawCircle(c, 10, line..strokeWidth = 0.8);
+        case PanelCorners.leaves:
+          for (var k = 0; k < 3; k++) {
+            canvas.save();
+            canvas.translate(14, 14);
+            canvas.rotate(math.pi / 4 + (k - 1) * 0.6);
+            canvas.drawOval(const Rect.fromLTWH(-2.5, 3, 5, 13), fill);
+            canvas.restore();
+          }
+        case PanelCorners.brackets:
+          canvas.drawPath(
+              Path()
+                ..moveTo(14, 30)
+                ..lineTo(14, 14)
+                ..lineTo(30, 14),
+              line..strokeWidth = 1.6);
+        case PanelCorners.damask:
+          canvas.save();
+          canvas.translate(22, 22);
+          for (var k = 0; k < 4; k++) {
+            canvas.rotate(math.pi / 2);
+            canvas.drawPath(
+                Path()
+                  ..moveTo(0, -2)
+                  ..cubicTo(-4, -6, -3, -11, 0, -12)
+                  ..cubicTo(3, -11, 4, -6, 0, -2),
+                fill);
+          }
+          canvas.restore();
+        case PanelCorners.chequer:
+          for (var y = 0; y < 3; y++) {
+            for (var x = 0; x < 3; x++) {
+              if ((x + y).isEven) canvas.drawRect(Rect.fromLTWH(13 + x * 5.0, 13 + y * 5.0, 5, 5), fill);
+            }
+          }
+        case PanelCorners.lozenge:
+          canvas.drawPath(
+              Path()
+                ..moveTo(20, 11)
+                ..lineTo(27, 20)
+                ..lineTo(20, 29)
+                ..lineTo(13, 20)
+                ..close(),
+              line..strokeWidth = 1.2);
+          canvas.drawCircle(const Offset(20, 20), 2, fill);
+        case PanelCorners.none:
+        case PanelCorners.studs:
+          break;
+      }
       canvas.restore();
     }
 
@@ -301,8 +446,20 @@ class _Filigree extends CustomPainter {
     corner(-1, -1, Offset(size.width - 4, size.height - 4));
   }
 
+  static void _star(Canvas canvas, Offset c, double r, Paint paint) {
+    final p = Path()
+      ..moveTo(c.dx, c.dy - r)
+      ..quadraticBezierTo(c.dx, c.dy, c.dx + r, c.dy)
+      ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy + r)
+      ..quadraticBezierTo(c.dx, c.dy, c.dx - r, c.dy)
+      ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy - r)
+      ..close();
+    canvas.drawPath(p, paint);
+  }
+
   @override
-  bool shouldRepaint(_Filigree old) => old.color != color || old.scrolls != scrolls;
+  bool shouldRepaint(_Filigree old) =>
+      old.color != color || old.scrolls != scrolls || old.corners != corners || old.ruled != ruled;
 }
 
 /// A rule with a gem in the middle, for under a title.

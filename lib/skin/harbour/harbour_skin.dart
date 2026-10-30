@@ -30,6 +30,10 @@ const harbourDesign = SkinDesign(
   lost: Color(0xFFE0533F),
   displayFont: 'AlegreyaSans',
   bodyFont: 'AlegreyaSans',
+  corners: PanelCorners.compass,
+  back: 'harbour',
+  face: 'seaside',
+  task: 'stamp',
   pattern: FeltPattern.chart,
   patternInk: Color(0x2EF2D49A),
   cloth: [

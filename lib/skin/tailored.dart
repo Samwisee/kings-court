@@ -200,8 +200,9 @@ const taskChoices = <TaskChoice>[
 ];
 
 /// The faces of the playing cards: the stock, the suits' inks (four-colour
-/// ♦ and ♣ too), how the Court Cards are drawn, the corners and the ranks'
-/// face. Light stock only, so every card reads the same way.
+/// ♦ and ♣ too), how the Court Cards are drawn, the corners, the ranks'
+/// face, what's printed round the face and over it, and how a number card
+/// shows its suit. Dark stock takes light inks.
 class FaceChoice {
   const FaceChoice(this.id, this.name,
       {required this.card,
@@ -211,7 +212,12 @@ class FaceChoice {
       required this.green,
       this.courtStyle = CourtCardStyle.emblems,
       this.radius,
-      this.font});
+      this.font,
+      this.frame = FaceFrame.none,
+      this.frameColour,
+      this.motif = BackMotif.none,
+      this.motifAlpha = 0.08,
+      this.pips = PipStyle.large});
   final String id;
   final String name;
   final Color card;
@@ -222,6 +228,11 @@ class FaceChoice {
   final CourtCardStyle courtStyle;
   final double? radius;
   final String? font;
+  final FaceFrame frame;
+  final Color? frameColour;
+  final BackMotif motif;
+  final double motifAlpha;
+  final PipStyle pips;
 }
 
 const faceChoices = <FaceChoice>[
@@ -231,44 +242,66 @@ const faceChoices = <FaceChoice>[
       red: Color(0xFFC8102E),
       blue: Color(0xFF1A5BC8),
       green: Color(0xFF13793A)),
-  FaceChoice('ivory', 'Ivory',
+  FaceChoice('ivory', 'Gilt ivory',
       card: Color(0xFFFBF4E2),
       black: Color(0xFF2A2118),
       red: Color(0xFFA3242F),
       blue: Color(0xFF2A4F8F),
       green: Color(0xFF2F6B3A),
-      font: 'CinzelDecorative'),
+      font: 'CinzelDecorative',
+      frame: FaceFrame.double,
+      frameColour: Color(0xFFC99A2E)),
   FaceChoice('antique', 'Antique',
-      card: Color(0xFFEADCC0),
+      card: Color(0xFFE8D7B4),
       black: Color(0xFF3A2A18),
       red: Color(0xFF8E2A1E),
       blue: Color(0xFF2E5A88),
       green: Color(0xFF3E6B2E),
-      radius: 0.07,
-      font: 'CinzelDecorative'),
-  FaceChoice('parlour', 'Parlour',
-      card: Color(0xFFF7F3EA),
-      black: Color(0xFF1E1E24),
-      red: Color(0xFFB3263A),
-      blue: Color(0xFF2D56A8),
-      green: Color(0xFF2B7A4B),
-      courtStyle: CourtCardStyle.letters),
-  FaceChoice('bistro', 'Bistro',
-      card: Color(0xFFFFFDF8),
-      black: Color(0xFF1B1B1B),
-      red: Color(0xFFD2232A),
-      blue: Color(0xFF1F63D1),
-      green: Color(0xFF1E8A45),
+      radius: 0.06,
+      font: 'CinzelDecorative',
+      frame: FaceFrame.corners,
+      frameColour: Color(0xCC6E4A22),
+      motif: BackMotif.dots,
+      motifAlpha: 0.08),
+  FaceChoice('noir', 'Noir',
+      card: Color(0xFF17171A),
+      black: Color(0xFFEDE6D6),
+      red: Color(0xFFF2626A),
+      blue: Color(0xFF80B4FF),
+      green: Color(0xFF7FD99A),
       courtStyle: CourtCardStyle.letters,
-      radius: 0.15,
-      font: 'AlegreyaSans'),
+      frame: FaceFrame.deco,
+      frameColour: Color(0xFFD4A63A),
+      font: 'CinzelDecorative'),
+  FaceChoice('modern', 'Modern',
+      card: Color(0xFFFFFFFF),
+      black: Color(0xFF1B1B1F),
+      red: Color(0xFFE5383B),
+      blue: Color(0xFF2F6FE0),
+      green: Color(0xFF16A05D),
+      courtStyle: CourtCardStyle.letters,
+      radius: 0.16,
+      font: 'AlegreyaSans',
+      pips: PipStyle.rank),
   FaceChoice('casino', 'Casino',
       card: Color(0xFFFFFFFF),
       black: Color(0xFF000000),
       red: Color(0xFFE10600),
       blue: Color(0xFF0050D8),
       green: Color(0xFF00843D),
-      radius: 0.05),
+      radius: 0.05,
+      frame: FaceFrame.rule,
+      frameColour: Color(0x55000000),
+      pips: PipStyle.medallion),
+  FaceChoice('botanical', 'Botanical',
+      card: Color(0xFFF6F3E6),
+      black: Color(0xFF22301F),
+      red: Color(0xFFB0413E),
+      blue: Color(0xFF3D6390),
+      green: Color(0xFF3E7A45),
+      courtStyle: CourtCardStyle.letters,
+      frame: FaceFrame.leaves,
+      frameColour: Color(0xFF5E8A57)),
   FaceChoice('seaside', 'Seaside',
       card: Color(0xFFEEF6F1),
       black: Color(0xFF1C2B33),
@@ -276,15 +309,43 @@ const faceChoices = <FaceChoice>[
       blue: Color(0xFF2468B0),
       green: Color(0xFF1F7A5A),
       courtStyle: CourtCardStyle.letters,
-      radius: 0.12),
+      radius: 0.12,
+      motif: BackMotif.waves,
+      motifAlpha: 0.1,
+      pips: PipStyle.medallion),
   FaceChoice('blush', 'Blush',
       card: Color(0xFFFBEDEA),
       black: Color(0xFF2B1E22),
       red: Color(0xFFB23A48),
       blue: Color(0xFF3B5DA0),
       green: Color(0xFF3A7A55),
-      courtStyle: CourtCardStyle.letters),
+      courtStyle: CourtCardStyle.letters,
+      radius: 0.14,
+      motif: BackMotif.dots,
+      motifAlpha: 0.1,
+      frame: FaceFrame.rule,
+      frameColour: Color(0x66B23A48)),
+  FaceChoice('silver', 'Moonlit',
+      card: Color(0xFF1B2440),
+      black: Color(0xFFE6EAF2),
+      red: Color(0xFFFF7A85),
+      blue: Color(0xFF8FC0FF),
+      green: Color(0xFF8BE0B0),
+      courtStyle: CourtCardStyle.letters,
+      frame: FaceFrame.double,
+      frameColour: Color(0x99C9D2E3),
+      motif: BackMotif.dots,
+      motifAlpha: 0.08,
+      pips: PipStyle.medallion),
 ];
+
+/// [skin] as it's worn: with its own backs, faces and task cards, if it
+/// comes with any.
+Skin dressed(Skin skin) => skin is TailoredSkin ? skin : TailoredSkin.of(skin);
+
+BackChoice? backById(String? id) => backChoices.where((b) => b.id == id).firstOrNull;
+TaskChoice? taskById(String? id) => taskChoices.where((k) => k.id == id).firstOrNull;
+FaceChoice? faceById(String? id) => faceChoices.where((f) => f.id == id).firstOrNull;
 
 Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 
@@ -298,11 +359,22 @@ class TailoredSkin extends Skin {
   final TaskChoice? taskChoice;
   final FaceChoice? faceChoice;
 
-  /// [base] with these choices; just [base] when there are none.
+  /// [base] with these choices (and its own defaults for the rest); just
+  /// [base] when there's nothing to choose.
   static Skin of(Skin base, {BackChoice? back, TaskChoice? task, FaceChoice? face}) =>
-      back == null && task == null && face == null
+      back == null && task == null && face == null && !hasDefaults(base)
           ? base
           : TailoredSkin(base, backChoice: back, taskChoice: task, faceChoice: face);
+
+  /// Whether [skin] comes with backs, faces or task cards of its own
+  /// choosing ([Skin.defaultBack] and the rest).
+  static bool hasDefaults(Skin skin) =>
+      skin.defaultBack != null || skin.defaultFace != null || skin.defaultTask != null;
+
+  /// What's worn: the choice, or the skin's own default.
+  BackChoice? get back => backChoice ?? backById(base.defaultBack);
+  TaskChoice? get task => taskChoice ?? taskById(base.defaultTask);
+  FaceChoice? get face => faceChoice ?? faceById(base.defaultFace);
 
   /// [skin] without its choices: the skin they're made on.
   static Skin baseOf(Skin skin) => skin is TailoredSkin ? skin.base : skin;
@@ -338,18 +410,26 @@ class TailoredSkin extends Skin {
 
   // The task cards.
   @override
-  TaskLook get taskLook => taskChoice?.look ?? base.taskLook;
+  TaskLook get taskLook => task?.look ?? base.taskLook;
 
   // The backs, and the faces.
   @override
   CardLook get cardLook {
-    final f = faceChoice;
-    final faced = f == null ? _backed : _backed.withFace(courtStyle: f.courtStyle, radius: f.radius, faceFont: f.font);
-    return faced;
+    final f = face;
+    if (f == null) return _backed;
+    return _backed.withFace(
+        courtStyle: f.courtStyle,
+        radius: f.radius,
+        faceFont: f.font,
+        frame: f.frame,
+        frameColour: f.frameColour,
+        motif: f.motif,
+        motifAlpha: f.motifAlpha,
+        pips: f.pips);
   }
 
   CardLook get _backed {
-    final b = backChoice;
+    final b = back;
     if (b == null) return base.cardLook;
     return base.cardLook.withBack(
       back: b.back,
@@ -367,10 +447,10 @@ class TailoredSkin extends Skin {
   @override
   SkinParts get parts {
     final p = base.parts;
-    if (backChoice == null && faceChoice == null) return p;
+    if (back == null && face == null) return p;
     return SkinParts(
-        cardFace: faceChoice == null ? p.cardFace : null,
-        cardBack: backChoice == null ? p.cardBack : null,
+        cardFace: face == null ? p.cardFace : null,
+        cardBack: back == null ? p.cardBack : null,
         panel: p.panel,
         table: p.table);
   }
@@ -378,7 +458,7 @@ class TailoredSkin extends Skin {
   /// The suits as the faces chosen print them.
   @override
   Color suitColour(Suit s) {
-    final f = faceChoice;
+    final f = face;
     if (f == null) return base.suitColour(s);
     return switch (s) {
       Suit.hearts => f.red,
@@ -394,17 +474,17 @@ class TailoredSkin extends Skin {
 
   // Everything else is the skin's.
   @override
-  Color get card => faceChoice?.card ?? base.card;
+  Color get card => face?.card ?? base.card;
   @override
   Color get ink => base.ink;
   @override
   Color get inkSoft => base.inkSoft;
   @override
-  Color get cardRed => faceChoice?.red ?? base.cardRed;
+  Color get cardRed => face?.red ?? base.cardRed;
   @override
-  Color get diamondBlue => faceChoice?.blue ?? base.diamondBlue;
+  Color get diamondBlue => face?.blue ?? base.diamondBlue;
   @override
-  Color get clubGreen => faceChoice?.green ?? base.clubGreen;
+  Color get clubGreen => face?.green ?? base.clubGreen;
   @override
   Color get gold => base.gold;
   @override

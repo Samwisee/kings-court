@@ -189,6 +189,22 @@ class PlayingCardView extends StatelessWidget {
                 ),
               ),
             ),
+            // On the card stock: anything printed over it, and its frame.
+            if (!cloth && look.faceMotif != BackMotif.none)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: r,
+                  child: CustomPaint(
+                      painter: backMotifPainter(
+                          look.faceMotif, _inkColour(skin).withValues(alpha: look.faceMotifAlpha))),
+                ),
+              ),
+            if (!cloth && look.faceFrame != FaceFrame.none)
+              Positioned.fill(
+                child: CustomPaint(
+                    painter: FaceFramePainter(look.faceFrame,
+                        look.faceFrameColour ?? _inkColour(skin).withValues(alpha: 0.35), width)),
+              ),
             if (cloth)
               Positioned.fill(
                 child: CustomPaint(painter: _Emblem(card.rank, look.cloth[card.rank - 1][0])),
@@ -251,7 +267,34 @@ class PlayingCardView extends StatelessWidget {
     );
   }
 
-  Widget _face(Skin skin) => SuitIcon(card.suit, size: width * 0.44, color: _inkColour(skin));
+  /// A number card's middle, as the faces say ([PipStyle]).
+  Widget _face(Skin skin) {
+    final ink = _inkColour(skin);
+    return switch (skin.cardLook.pips) {
+      PipStyle.large => SuitIcon(card.suit, size: width * 0.44, color: ink),
+      PipStyle.medallion => Container(
+          width: width * 0.56,
+          height: width * 0.56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: ink.withValues(alpha: 0.12),
+            border: Border.all(color: ink.withValues(alpha: 0.45), width: math.max(1, width * 0.02)),
+          ),
+          alignment: Alignment.center,
+          child: SuitIcon(card.suit, size: width * 0.32, color: ink),
+        ),
+      PipStyle.rank => Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(card.rankLabel,
+              style: TextStyle(
+                  fontFamily: skin.cardLook.faceFont ?? skin.displayFont,
+                  fontWeight: FontWeight.w900,
+                  fontSize: width * 0.5,
+                  height: 0.95,
+                  color: ink)),
+          SuitIcon(card.suit, size: width * 0.18, color: ink),
+        ]),
+    };
+  }
 
   /// A Court Card on the card stock: a band of its colour down the side
   /// and its letter large, the King's with the crown over it.
@@ -465,4 +508,97 @@ class _Lattice extends CustomPainter {
 
   @override
   bool shouldRepaint(_Lattice old) => false;
+}
+
+/// What's printed round a card's face, inside its edge ([FaceFrame]), in
+/// [colour], for a card [width] wide.
+class FaceFramePainter extends CustomPainter {
+  const FaceFramePainter(this.frame, this.colour, this.width);
+  final FaceFrame frame;
+  final Color colour;
+  final double width;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final u = width / 60;
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.7, 1.1 * u)
+      ..color = colour;
+    final inset = 4.5 * u;
+    final box = (Offset.zero & size).deflate(inset);
+    final rr = RRect.fromRectAndRadius(box, Radius.circular(3 * u));
+    switch (frame) {
+      case FaceFrame.none:
+        break;
+      case FaceFrame.rule:
+        canvas.drawRRect(rr, line);
+      case FaceFrame.double:
+        canvas.drawRRect(rr, line);
+        canvas.drawRRect(rr.deflate(2.2 * u), line..strokeWidth = math.max(0.5, 0.6 * u));
+      case FaceFrame.corners:
+        final l = 10 * u;
+        final p = Path();
+        for (final (c, sx, sy) in [
+          (box.topLeft, 1.0, 1.0),
+          (box.topRight, -1.0, 1.0),
+          (box.bottomLeft, 1.0, -1.0),
+          (box.bottomRight, -1.0, -1.0),
+        ]) {
+          p
+            ..moveTo(c.dx, c.dy + sy * l)
+            ..lineTo(c.dx, c.dy)
+            ..lineTo(c.dx + sx * l, c.dy)
+            ..moveTo(c.dx + sx * 2.5 * u, c.dy + sy * l * 0.7)
+            ..quadraticBezierTo(c.dx + sx * 2.5 * u, c.dy + sy * 2.5 * u, c.dx + sx * l * 0.7, c.dy + sy * 2.5 * u);
+        }
+        canvas.drawPath(p, line);
+      case FaceFrame.deco:
+        // A rule stepped in twice at each corner, and a fan in the bottom one.
+        final s = 3.2 * u;
+        final p = Path()
+          ..moveTo(box.left + 2 * s, box.top)
+          ..lineTo(box.right - 2 * s, box.top)
+          ..lineTo(box.right - 2 * s, box.top + s)
+          ..lineTo(box.right - s, box.top + s)
+          ..lineTo(box.right - s, box.top + 2 * s)
+          ..lineTo(box.right, box.top + 2 * s)
+          ..lineTo(box.right, box.bottom - 2 * s)
+          ..lineTo(box.right - s, box.bottom - 2 * s)
+          ..lineTo(box.right - s, box.bottom - s)
+          ..lineTo(box.right - 2 * s, box.bottom - s)
+          ..lineTo(box.right - 2 * s, box.bottom)
+          ..lineTo(box.left + 2 * s, box.bottom)
+          ..lineTo(box.left + 2 * s, box.bottom - s)
+          ..lineTo(box.left + s, box.bottom - s)
+          ..lineTo(box.left + s, box.bottom - 2 * s)
+          ..lineTo(box.left, box.bottom - 2 * s)
+          ..lineTo(box.left, box.top + 2 * s)
+          ..lineTo(box.left + s, box.top + 2 * s)
+          ..lineTo(box.left + s, box.top + s)
+          ..lineTo(box.left + 2 * s, box.top + s)
+          ..close();
+        canvas.drawPath(p, line);
+        final c = Offset(box.center.dx, box.bottom - 1.5 * s);
+        for (var k = 1; k <= 3; k++) {
+          canvas.drawArc(Rect.fromCircle(center: c, radius: k * 2.6 * u), math.pi, math.pi, false,
+              line..strokeWidth = math.max(0.5, 0.7 * u));
+        }
+      case FaceFrame.leaves:
+        canvas.drawRRect(rr, line..strokeWidth = math.max(0.5, 0.7 * u));
+        final leaf = Paint()..color = colour;
+        for (final (c, a) in [(box.topRight, 2.4), (box.bottomLeft, -0.75)]) {
+          for (var k = 0; k < 3; k++) {
+            canvas.save();
+            canvas.translate(c.dx, c.dy);
+            canvas.rotate(a + (k - 1) * 0.55);
+            canvas.drawOval(Rect.fromLTWH(-1.6 * u, 1.5 * u, 3.2 * u, 7 * u), leaf);
+            canvas.restore();
+          }
+        }
+    }
+  }
+
+  @override
+  bool shouldRepaint(FaceFramePainter old) => old.frame != frame || old.colour != colour || old.width != width;
 }

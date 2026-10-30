@@ -61,7 +61,7 @@ void main() {
     expect(chosen, isNull);
   });
 
-  testWidgets('The Look dialog wears a style, backs and task cards, and remembers them', (tester) async {
+  testWidgets('The Look page puts a look together and wears it as it closes, and it’s remembered', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
@@ -78,36 +78,28 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Look: Court'));
     await tester.pumpAndSettle();
-    Future<void> choose(String name, {int at = 0}) async {
-      final f = find.text(name).at(at);
-      await tester.ensureVisible(f);
-      await tester.tap(f);
-      // The game behind wears it a moment later.
-      await tester.pump(const Duration(milliseconds: 200));
+    // Each kind of choice is a row that scrolls sideways.
+    Future<void> choose(String row, String name) async {
+      final along = find.byKey(ValueKey('look-row-$row'));
+      await tester.ensureVisible(along);
+      await tester.pumpAndSettle();
+      final tile = find.descendant(of: along, matching: find.text(name));
+      await tester.dragUntilVisible(tile, along, const Offset(-200, 0));
+      await tester.tap(tile);
       await tester.pumpAndSettle();
     }
-    await choose('Plain');
-    expect(worn().id, 'plain');
-    // A style is its table too: Midnight's is the night sky.
-    await choose('Midnight');
-    expect(worn().id, 'midnight');
-    expect(worn().tableLook.pattern, FeltPattern.stars);
-    await choose('Black sunburst');
-    expect(worn().id, 'midnight+b:sunburst');
-    expect(worn().cardLook.backMotif, BackMotif.rays);
-    // A new style keeps the backs chosen.
-    await choose('Garden');
-    expect(worn().id, 'garden+b:sunburst');
-    // The backs' own (after the faces' own, in the dialog).
-    await choose('Garden’s own', at: 1);
-    expect(worn().id, 'garden');
-    await choose('Royal decree');
-    expect(worn().id, 'garden+k:decree');
-    await choose('Antique');
-    expect(worn().id, 'garden+k:decree+f:antique');
-    expect(worn().card, faceChoices.firstWhere((f) => f.id == 'antique').card);
+    await choose('style', 'Midnight');
+    await choose('backs', 'Black sunburst');
+    // A new style comes with its own faces, backs and tasks.
+    await choose('style', 'Garden');
+    await choose('tasks', 'Royal decree');
+    await choose('faces', 'Antique');
+    expect(worn().id, 'court', reason: 'the game behind wears it as the page closes');
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
+    expect(worn().id, 'garden+k:decree+f:antique');
+    expect(worn().cardLook.backMotif, BackMotif.waves, reason: 'Garden’s own backs: rose tide');
+    expect(worn().card, faceChoices.firstWhere((f) => f.id == 'antique').card);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('kingsCourt.skin'), 'garden+k:decree+f:antique');
   });

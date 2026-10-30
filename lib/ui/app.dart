@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../skin/court/court_skin.dart';
+import '../skin/tailored.dart';
 import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
 import 'table_page.dart';
@@ -24,7 +25,7 @@ class TheKingsCourtApp extends StatefulWidget {
 
 class _TheKingsCourtAppState extends State<TheKingsCourtApp>
     with SingleTickerProviderStateMixin {
-  late Skin _skin = widget.skin;
+  late Skin _skin = dressed(widget.skin);
 
   /// The whole screen, to hold as a still while the look changes.
   final _screen = GlobalKey();
@@ -47,7 +48,8 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
   /// Changes the look in one go: the new one is built under a still of the
   /// old (the frame that rebuilds everything is never seen), which then
   /// dissolves. With animations turned off it simply changes.
-  void _choose(Skin s) {
+  void _choose(Skin chosen) {
+    final s = dressed(chosen);
     if (s == _skin) return;
     final quiet = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
     ui.Image? still;

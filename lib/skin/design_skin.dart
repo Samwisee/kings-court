@@ -45,6 +45,10 @@ class SkinDesign {
     this.radius = 12,
     this.pattern = FeltPattern.none,
     this.patternInk = const Color(0x00000000),
+    this.corners,
+    this.back,
+    this.face,
+    this.task,
     this.onAccent,
     this.cloth = const [
       [Color(0xFF5A2F87), Color(0xFF241238)],
@@ -101,6 +105,16 @@ class SkinDesign {
   final FeltPattern pattern;
   final Color patternInk;
 
+  /// What's in the corners of its menus and dialogs (looks.dart); the
+  /// court's scrolls for a rich finish, nothing for a simple one, when null.
+  final PanelCorners? corners;
+
+  /// The card backs, card faces and task cards it comes with (ids in
+  /// tailored.dart); its own when null.
+  final String? back;
+  final String? face;
+  final String? task;
+
   /// The corner radius of panels and buttons; cards keep their own.
   final double radius;
 
@@ -124,6 +138,12 @@ class DesignSkin extends Skin {
   String get id => design.id;
   @override
   String get name => design.name;
+  @override
+  String? get defaultBack => design.back;
+  @override
+  String? get defaultFace => design.face;
+  @override
+  String? get defaultTask => design.task;
 
   @override
   Color get felt => design.felt;
@@ -271,6 +291,7 @@ class DesignSkin extends Skin {
         wonMedallion: [goldPale, design.accent],
         lostMedallion: [_mix(design.lost, Colors.black, 0.45), _mix(design.lost, Colors.black, 0.75)],
         radius: design.radius + 6,
+        corners: design.corners ?? PanelCorners.scrolls,
       );
     }
     return PanelLook(
@@ -284,6 +305,7 @@ class DesignSkin extends Skin {
       lostMedallion: [design.lost, design.lost],
       radius: design.radius + 4,
       edgeWidth: 1,
+      corners: design.corners ?? PanelCorners.none,
     );
   }
 

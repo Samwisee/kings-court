@@ -211,9 +211,13 @@ class PanelLook {
     required this.lostMedallion,
     this.radius = 18,
     this.edgeWidth = 2.5,
+    this.corners = PanelCorners.scrolls,
   });
 
   final PanelStyle style;
+
+  /// What's in a panel's corners, inside its rule.
+  final PanelCorners corners;
 
   /// The ground (top left to bottom right) of a panel in the court's own
   /// colours (menus, settings), of a won result, and of a lost one.
@@ -228,6 +232,79 @@ class PanelLook {
 
   final double radius;
   final double edgeWidth;
+}
+
+/// What's set in a panel's corners (and along its rule), the room's own
+/// mark on every menu and dialog.
+enum PanelCorners {
+  /// Nothing: just the panel (and its rule, if it has one).
+  none,
+
+  /// A curl of filigree: the court's.
+  scrolls,
+
+  /// Art deco fans, the rule stepped in at each corner.
+  fans,
+
+  /// A gilt leaf in each corner and a tooled line of dots along the rule.
+  tooled,
+
+  /// A small star in each corner, with a pair of fainter ones.
+  stars,
+
+  /// A compass point in each corner.
+  compass,
+
+  /// Brass studs along the rule.
+  studs,
+
+  /// A sprig of leaves in each corner.
+  leaves,
+
+  /// A fine bracket in each corner.
+  brackets,
+
+  /// A woven flower in each corner.
+  damask,
+
+  /// A little chequer in each corner.
+  chequer,
+
+  /// A lozenge in each corner, as on a marble floor's border.
+  lozenge,
+}
+
+/// What's printed round a playing card's face, inside its edge.
+enum FaceFrame {
+  /// Just the stock.
+  none,
+
+  /// A fine rule.
+  rule,
+
+  /// A double rule.
+  double,
+
+  /// Ornate brackets in the corners.
+  corners,
+
+  /// Art deco: stepped corners.
+  deco,
+
+  /// A sprig of leaves in two corners.
+  leaves,
+}
+
+/// How a number card's suit is shown in its middle.
+enum PipStyle {
+  /// One large pip.
+  large,
+
+  /// The pip on a roundel of its colour.
+  medallion,
+
+  /// The rank itself, large, with a small pip under it.
+  rank,
 }
 
 /// How the Court Cards' faces are drawn.
@@ -278,7 +355,21 @@ class CardLook {
     this.backPatternAlpha = 0.35,
     this.motif,
     this.faceFont,
+    this.faceFrame = FaceFrame.none,
+    this.faceFrameColour,
+    this.faceMotif = BackMotif.none,
+    this.faceMotifAlpha = 0.08,
+    this.pips = PipStyle.large,
   });
+
+  /// What's printed on a card's face: a frame round it (in
+  /// [faceFrameColour], or the ink faintly), a faint motif over the stock,
+  /// and how a number card shows its suit.
+  final FaceFrame faceFrame;
+  final Color? faceFrameColour;
+  final BackMotif faceMotif;
+  final double faceMotifAlpha;
+  final PipStyle pips;
 
   /// The face the ranks are printed in; the skin's own when null (its
   /// display face for Court Cards, its body face for the rest).
@@ -286,7 +377,16 @@ class CardLook {
 
   /// This look with other faces: how the Court Cards are drawn, the
   /// corners' rounding and the ranks' face.
-  CardLook withFace({required CourtCardStyle courtStyle, double? radius, String? faceFont}) => CardLook(
+  CardLook withFace(
+          {required CourtCardStyle courtStyle,
+          double? radius,
+          String? faceFont,
+          FaceFrame frame = FaceFrame.none,
+          Color? frameColour,
+          BackMotif motif = BackMotif.none,
+          double motifAlpha = 0.08,
+          PipStyle pips = PipStyle.large}) =>
+      CardLook(
         courtStyle: courtStyle,
         cloth: cloth,
         courtFrame: courtFrame,
@@ -301,6 +401,11 @@ class CardLook {
         small: small,
         taskBack: taskBack,
         faceFont: faceFont,
+        faceFrame: frame,
+        faceFrameColour: frameColour,
+        faceMotif: motif,
+        faceMotifAlpha: motifAlpha,
+        pips: pips,
       );
 
   final CourtCardStyle courtStyle;
@@ -355,6 +460,11 @@ class CardLook {
         small: small,
         taskBack: taskBack,
         faceFont: faceFont,
+        faceFrame: faceFrame,
+        faceFrameColour: faceFrameColour,
+        faceMotif: faceMotif,
+        faceMotifAlpha: faceMotifAlpha,
+        pips: pips,
       );
 
   /// A fine rule inside the back's edge; null for none.

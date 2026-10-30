@@ -157,6 +157,13 @@ abstract class Skin {
 
   SkinParts get parts => const SkinParts();
 
+  /// The card backs, card faces and task cards this skin comes with (by
+  /// their ids in tailored.dart), the player free to choose others; null
+  /// for its own.
+  String? get defaultBack => null;
+  String? get defaultFace => null;
+  String? get defaultTask => null;
+
   /// A task card's face: the card stock and its ink, unless a look says
   /// otherwise.
   TaskLook get taskLook => TaskLook(face: card, ink: ink, inkSoft: inkSoft);
