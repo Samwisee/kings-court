@@ -58,6 +58,7 @@ jobs:
           cat frames.txt
       - name: Within the frame budget?
         run: |
+          set -o pipefail
           python3 tool/frames/budget.py build/frames.json | tee budget.txt
       - name: Publish to the frames branch
         if: always()
