@@ -15,11 +15,13 @@ import 'dart:js_interop';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/ui/app.dart';
+import 'package:kings_court/ui/menu/menu.dart';
 import 'package:kings_court/ui/table_page.dart';
 import 'package:kings_court/ui/widgets/character_token.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,6 +53,11 @@ class Frames {
         s.work.add(work);
         final named = _measures();
         s.measured += named.length;
+        if (s.detail) {
+          for (final e in named.entries) {
+            s.totals[e.key] = (s.totals[e.key] ?? 0) + e.value;
+          }
+        }
         if (work.inMicroseconds > 12000 && s.slow.length < 12) {
           final top = named.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
           s.slow.add('${(work.inMicroseconds / 1000).toStringAsFixed(1)} ms: '
@@ -95,9 +102,14 @@ class Frames {
     }
   }
 
-  Future<void> scene(String name, Future<void> Function() run) async {
+  Future<void> scene(String name, Future<void> Function() run, {bool detail = false}) async {
     log('start $name');
-    final s = _Scene(name);
+    final s = _Scene(name)..detail = detail;
+    // In detail, every widget's build and every render object's layout and
+    // paint are timed too: slower, but it says where the time goes.
+    debugProfileBuildsEnabled = detail;
+    debugProfileLayoutsEnabled = detail;
+    debugProfilePaintsEnabled = detail;
     _now = s;
     try {
       // A scene that hangs is stopped and reported, so the run still ends.
@@ -107,6 +119,9 @@ class Frames {
       s.error = '$e ${stack.toString().split('\n').take(6).join(' | ')}';
     }
     _now = null;
+    debugProfileBuildsEnabled = false;
+    debugProfileLayoutsEnabled = false;
+    debugProfilePaintsEnabled = false;
     scenes.add(s);
     // ignore: avoid_print
     print('FRAMES ${s.line()}');
@@ -119,6 +134,10 @@ class _Scene {
   final String name;
   String? error;
   int measured = 0;
+  bool detail = false;
+
+  /// In detail: each name's time, summed over the scene's frames.
+  final totals = <String, double>{};
   final slow = <String>[];
   final due = <Duration>[];
   final work = <Duration>[];
@@ -174,6 +193,11 @@ class _Scene {
       'engineMax': e.isEmpty ? 0 : e.last,
       // The slowest frames' work, for finding what they were.
       'measured': measured,
+      if (detail)
+        'totals': [
+          for (final e in (totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).take(45))
+            '${e.key} ${e.value.toStringAsFixed(0)}'
+        ],
       'slow': slow,
       'slowest': [for (final m in w.reversed.take(5)) double.parse(m.toStringAsFixed(1))],
     };
@@ -238,6 +262,13 @@ void main() {
       }
     });
 
+    await frames.scene('tricks, in detail (slower: every widget timed)', () async {
+      for (var i = 0; i < 8; i++) {
+        state.debugYourMove();
+        await wait(400);
+      }
+    }, detail: true);
+
     await frames.scene('the card tracker sliding in and out', () async {
       await tap(find.byTooltip('Card tracker'), then: 1500);
       // A tap on the felt above it puts it away.
@@ -255,7 +286,8 @@ void main() {
 
     await frames.scene('the menu opening and closing', () async {
       await tap(find.byTooltip('Menu'), then: 1200);
-      await tester.binding.handlePopRoute();
+      final menu = find.byType(OrnateMenu);
+      if (menu.evaluate().isNotEmpty) Navigator.of(tester.element(menu)).pop();
       await wait(900);
     });
 
@@ -310,6 +342,13 @@ void main() {
       state.debugMenuChoice('main');
       await wait(3000);
     });
+
+    await frames.scene('changing skin, in detail (slower: every widget timed)', () async {
+      for (var i = 0; i < 2; i++) {
+        state.debugMenuChoice('nextLivery');
+        await wait(1500);
+      }
+    }, detail: true);
 
     Frames.log('tour over');
     binding.reportData = {'scenes': [for (final s in frames.scenes) s.toJson()]};
