@@ -88,7 +88,7 @@ class PlayingCardView extends StatelessWidget {
     final outer = width * look.radius;
     final r = BorderRadius.circular(outer - skin.outlineWidth);
     final corner = TextStyle(
-        fontFamily: card.isCourt ? skin.displayFont : skin.bodyFont,
+        fontFamily: look.faceFont ?? (card.isCourt ? skin.displayFont : skin.bodyFont),
         fontWeight: FontWeight.w900,
         fontSize: width * (card.isCourt ? 0.3 : 0.26),
         height: 1,

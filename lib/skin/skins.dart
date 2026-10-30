@@ -58,7 +58,8 @@ Skin skinById(String? id) {
   final base = skins.firstWhere((s) => s.id == room, orElse: () => skins.first);
   final back = backChoices.where((b) => b.id == chosen('b')).firstOrNull;
   final task = taskChoices.where((k) => k.id == chosen('k')).firstOrNull;
-  return TailoredSkin.of(base, back: back, task: task);
+  final face = faceChoices.where((f) => f.id == chosen('f')).firstOrNull;
+  return TailoredSkin.of(base, back: back, task: task, face: face);
 }
 
 /// The skin after [worn] in the list that the player [owns], round to the

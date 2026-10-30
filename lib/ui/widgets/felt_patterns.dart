@@ -12,11 +12,17 @@ import '../../skin/looks.dart';
 /// Draws [pattern] in [ink] over a felt of [ground], at [scale] (smaller
 /// for a little table in the Look dialog).
 class FeltPatternPainter extends CustomPainter {
-  const FeltPatternPainter(this.pattern, this.ink, {required this.ground, this.scale = 1});
+  const FeltPatternPainter(this.pattern, this.ink, {required this.ground, this.scale = 1, this.soft = false});
   final FeltPattern pattern;
   final Color ink;
   final Color ground;
   final double scale;
+
+  /// Softened, as if seen through a little haze (off the table, behind
+  /// words): the lines wider and fainter, so their edges blur together.
+  /// (Wider rather than truly blurred: a blur on every line would cost
+  /// every frame.)
+  final bool soft;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -60,9 +66,10 @@ class FeltPatternPainter extends CustomPainter {
 
   Paint _line([double width = 1, double alpha = 1]) => Paint()
     ..style = PaintingStyle.stroke
-    ..strokeWidth = width
+    ..strokeWidth = soft ? width * 2.2 : width
+    ..strokeCap = soft ? StrokeCap.round : StrokeCap.butt
     ..isAntiAlias = true
-    ..color = ink.withValues(alpha: ink.a * alpha);
+    ..color = ink.withValues(alpha: ink.a * alpha * (soft ? 0.55 : 1));
 
   Paint _fill([double alpha = 1]) => Paint()..color = ink.withValues(alpha: ink.a * alpha);
 
@@ -506,24 +513,5 @@ class FeltPatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(FeltPatternPainter old) =>
-      old.pattern != pattern || old.ink != ink || old.ground != ground || old.scale != scale;
-}
-
-/// [child] (a pattern) faded away in the middle, where the words are, and
-/// left at the edges: how a page or a menu keeps its room's pattern
-/// without it getting in the way of reading.
-class EdgesOnly extends StatelessWidget {
-  const EdgesOnly({super.key, required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => ShaderMask(
-        blendMode: BlendMode.dstIn,
-        shaderCallback: (bounds) => const RadialGradient(
-          radius: 0.95,
-          colors: [Color(0x00000000), Color(0x00000000), Color(0x99000000), Color(0xFF000000)],
-          stops: [0, 0.45, 0.8, 1],
-        ).createShader(bounds),
-        child: child,
-      );
+      old.pattern != pattern || old.ink != ink || old.ground != ground || old.scale != scale || old.soft != soft;
 }

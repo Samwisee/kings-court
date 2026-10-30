@@ -117,7 +117,7 @@ class OrnateCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(look.radius - look.edgeWidth),
                 child: RepaintBoundary(
-                    child: EdgesOnly(child: CustomPaint(painter: _feltOn(skin, look.court.first), size: Size.infinite))),
+                    child: CustomPaint(painter: _feltOn(skin, look.court.first), size: Size.infinite)),
               ),
             ),
           Padding(padding: padding, child: child),
@@ -126,12 +126,12 @@ class OrnateCard extends StatelessWidget {
     );
   }
 
-  /// What's worked into [skin]'s felt, smaller and fainter, on a panel's
-  /// [ground]: the menus and dialogs dressed like the table.
+  /// What's worked into [skin]'s felt, smaller, muted and softened, on a
+  /// panel's [ground]: the menus and dialogs dressed like the table.
   static CustomPainter _feltOn(Skin skin, Color ground) {
     final t = skin.tableLook;
-    return FeltPatternPainter(t.pattern, t.patternColour.withValues(alpha: t.patternColour.a * 0.4),
-        ground: ground, scale: 0.75);
+    return FeltPatternPainter(t.pattern, t.patternColour.withValues(alpha: t.patternColour.a * 0.35),
+        ground: ground, scale: 0.75, soft: true);
   }
 
   Widget _ornate(Skin skin) {
@@ -173,7 +173,7 @@ class OrnateCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(look.radius - 2),
               child: RepaintBoundary(
                   child: court && skin.tableLook.pattern != FeltPattern.none
-                      ? EdgesOnly(child: CustomPaint(painter: _feltOn(skin, look.court[1]), size: Size.infinite))
+                      ? CustomPaint(painter: _feltOn(skin, look.court[1]), size: Size.infinite)
                       : CustomPaint(painter: _Damask(ink.withValues(alpha: 0.07)))),
             ),
           ),

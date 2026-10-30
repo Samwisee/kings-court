@@ -433,6 +433,8 @@ void main() {
     'deco': TailoredSkin(const BallroomSkin(), backChoice: back('sunburst'), taskChoice: task('lacquer')),
     'tavern': TailoredSkin(const TavernSkin(), backChoice: back('crimson'), taskChoice: task('parchment')),
     'tiles': TailoredSkin(const CourtyardSkin(), backChoice: back('royal'), taskChoice: task('blueprint')),
+    'antique': TailoredSkin(const LibrarySkin(), faceChoice: faceChoices.firstWhere((f) => f.id == 'antique')),
+    'bistro': TailoredSkin(const SalonSkin(), faceChoice: faceChoices.firstWhere((f) => f.id == 'bistro')),
   };
 
   for (final MapEntry(key: name, value: skin) in mixes.entries) {
@@ -463,7 +465,7 @@ void main() {
 
   // Every card back and table the Look dialog offers, on the court.
   testWidgets('The backs and tables to choose from', (tester) async {
-    tester.view.physicalSize = const Size(1600, 1700);
+    tester.view.physicalSize = const Size(1600, 2000);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     const court = CourtSkin();
@@ -491,6 +493,19 @@ void main() {
                           painter: FeltPatternPainter(t.tableLook.pattern, t.tableLook.patternColour,
                               ground: t.felt, scale: 0.5),
                           size: Size.infinite)),
+                ),
+            ]),
+            const SizedBox(height: 20),
+            // Every card face: a number card and a Court Card in each.
+            Wrap(spacing: 14, runSpacing: 10, children: [
+              for (final f in faceChoices)
+                SkinScope(
+                  skin: TailoredSkin(court, faceChoice: f),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    PlayingCardView(card: PlayingCard(Suit.diamonds, 7), width: 44),
+                    SizedBox(width: 4),
+                    PlayingCardView(card: PlayingCard.king, width: 44),
+                  ]),
                 ),
             ]),
             const SizedBox(height: 20),

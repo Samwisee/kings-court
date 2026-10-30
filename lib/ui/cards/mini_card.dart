@@ -79,7 +79,7 @@ class MiniCard extends StatelessWidget {
               TextSpan(
                   text: card.rankLabel,
                   style: TextStyle(
-                      fontFamily: court ? skin.displayFont : skin.bodyFont,
+                      fontFamily: skin.cardLook.faceFont ?? (court ? skin.displayFont : skin.bodyFont),
                       fontWeight: FontWeight.w900,
                       fontSize: width * 0.5)),
               if (!court) ...[

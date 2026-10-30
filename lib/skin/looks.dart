@@ -277,7 +277,31 @@ class CardLook {
     this.backCrown,
     this.backPatternAlpha = 0.35,
     this.motif,
+    this.faceFont,
   });
+
+  /// The face the ranks are printed in; the skin's own when null (its
+  /// display face for Court Cards, its body face for the rest).
+  final String? faceFont;
+
+  /// This look with other faces: how the Court Cards are drawn, the
+  /// corners' rounding and the ranks' face.
+  CardLook withFace({required CourtCardStyle courtStyle, double? radius, String? faceFont}) => CardLook(
+        courtStyle: courtStyle,
+        cloth: cloth,
+        courtFrame: courtFrame,
+        back: back,
+        backEdge: backEdge,
+        radius: radius ?? this.radius,
+        backPattern: backPattern,
+        motif: motif,
+        backPatternAlpha: backPatternAlpha,
+        backRule: backRule,
+        backCrown: backCrown,
+        small: small,
+        taskBack: taskBack,
+        faceFont: faceFont,
+      );
 
   final CourtCardStyle courtStyle;
 
@@ -330,6 +354,7 @@ class CardLook {
         backCrown: backCrown,
         small: small,
         taskBack: taskBack,
+        faceFont: faceFont,
       );
 
   /// A fine rule inside the back's edge; null for none.

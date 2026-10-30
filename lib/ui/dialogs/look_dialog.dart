@@ -15,7 +15,9 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/skins.dart';
 import '../../skin/tailored.dart';
+import '../../engine/cards.dart';
 import '../cards/card_back.dart';
+import '../cards/card_view.dart';
 import '../widgets.dart';
 
 /// Opens the Look dialog; [wear] puts a look on (and keeps it), and says
@@ -68,7 +70,9 @@ class _LookDialogState extends State<_LookDialog> {
     final base = TailoredSkin.baseOf(worn);
     final back = worn is TailoredSkin ? worn.backChoice : null;
     final task = worn is TailoredSkin ? worn.taskChoice : null;
-    Skin made(Skin base, BackChoice? back, [TaskChoice? task]) => TailoredSkin.of(base, back: back, task: task);
+    final face = worn is TailoredSkin ? worn.faceChoice : null;
+    Skin made(Skin base, BackChoice? back, [TaskChoice? task, FaceChoice? f]) =>
+        TailoredSkin.of(base, back: back, task: task, face: f);
     void choose(Skin s) => _choose(s);
 
     return CourtDialog(
@@ -85,7 +89,7 @@ class _LookDialogState extends State<_LookDialog> {
                 _Choice(
                   name: s.name,
                   selected: s.id == base.id,
-                  onTap: () => choose(made(s, back, task)),
+                  onTap: () => choose(made(s, back, task, face)),
                   child: _TableSwatch(
                       felt: s.felt,
                       deep: s.feltDeep,
@@ -95,19 +99,35 @@ class _LookDialogState extends State<_LookDialog> {
                       ink: s.tableLook.patternColour),
                 ),
           ]),
+          const _Heading('Card faces', 'The cards in your hand and on the table: their stock, inks and Court Cards.'),
+          _Choices(children: [
+            _Choice(
+              name: '${base.name}’s own',
+              selected: face == null,
+              onTap: () => choose(made(base, back, task)),
+              child: _Faces(base),
+            ),
+            for (final f in faceChoices)
+              _Choice(
+                name: f.name,
+                selected: face?.id == f.id,
+                onTap: () => choose(made(base, back, task, f)),
+                child: _Faces(TailoredSkin(base, faceChoice: f)),
+              ),
+          ]),
           const _Heading('Card backs', 'On every hand you can’t see, the tricks each player has won, and the tasks done.'),
           _Choices(children: [
             _Choice(
               name: '${base.name}’s own',
               selected: back == null,
-              onTap: () => choose(made(base, null, task)),
+              onTap: () => choose(made(base, null, task, face)),
               child: _Back(base),
             ),
             for (final b in backChoices)
               _Choice(
                 name: b.name,
                 selected: back?.id == b.id,
-                onTap: () => choose(made(base, b, task)),
+                onTap: () => choose(made(base, b, task, face)),
                 child: _Back(TailoredSkin(base, backChoice: b)),
               ),
           ]),
@@ -116,14 +136,14 @@ class _LookDialogState extends State<_LookDialog> {
             _Choice(
               name: '${base.name}’s own',
               selected: task == null,
-              onTap: () => choose(made(base, back)),
+              onTap: () => choose(made(base, back, null, face)),
               child: _TaskSwatch(base.taskLook),
             ),
             for (final k in taskChoices)
               _Choice(
                 name: k.name,
                 selected: task?.id == k.id,
-                onTap: () => choose(made(base, back, k)),
+                onTap: () => choose(made(base, back, k, face)),
                 child: _TaskSwatch(k.look),
               ),
           ]),
@@ -291,6 +311,25 @@ class _TaskSwatch extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Two cards' faces as [look] draws them: a number card and a Court Card.
+class _Faces extends StatelessWidget {
+  const _Faces(this.look);
+  final Skin look;
+
+  @override
+  Widget build(BuildContext context) => SkinScope(
+        skin: look,
+        child: const SizedBox(
+          width: 66,
+          height: 56,
+          child: Stack(children: [
+            Positioned(left: 4, top: 4, child: PlayingCardView(card: PlayingCard(Suit.hearts, 7), width: 34)),
+            Positioned(right: 2, top: 2, child: PlayingCardView(card: PlayingCard.queen, width: 34)),
+          ]),
+        ),
+      );
 }
 
 /// A card back as [look] draws it.

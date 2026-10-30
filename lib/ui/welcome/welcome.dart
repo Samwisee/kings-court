@@ -186,6 +186,9 @@ class ReachRight extends CustomClipper<Rect> {
 class _CrownedTitle extends StatelessWidget {
   const _CrownedTitle();
 
+  /// Whether the title's face sets lowercase as small capitals.
+  static bool _capitals(Skin skin) => skin.displayFont == 'CinzelDecorative';
+
   static TextStyle _style(Skin skin) => TextStyle(
       fontFamily: skin.displayFont,
       fontWeight: FontWeight.w900,
@@ -209,9 +212,13 @@ class _CrownedTitle extends StatelessWidget {
               Text('i', style: _style(context.skin)),
               // Just over the I, a hair left of the glyph's box to sit on
               // its stroke, with the same soft shadow as the letters.
+              // In a capital face (Cinzel's small capitals) the I stands tall
+              // and the crown floats over it; in a lowercase face it sits
+              // lower, over the i's stem, in place of its dot.
               Positioned(
-                top: -_style(context.skin).fontSize! * 0.36,
-                left: -_style(context.skin).fontSize! * 0.3 + _style(context.skin).fontSize! * 0.045,
+                top: _style(context.skin).fontSize! * (_capitals(context.skin) ? -0.36 : -0.09),
+                left: -_style(context.skin).fontSize! * 0.3 +
+                    (_capitals(context.skin) ? _style(context.skin).fontSize! * 0.045 : 0),
                 right: -_style(context.skin).fontSize! * 0.3,
                 child: Center(
                   child: Stack(clipBehavior: Clip.none, children: [

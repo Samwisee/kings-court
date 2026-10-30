@@ -1,8 +1,7 @@
 /// A little life on the felt of the premium rooms, over what's worked into
 /// it (felt_patterns.dart): stars twinkle and one shoots across the night
 /// sky, fireflies drift over the garden trellis, a lighthouse's beam turns
-/// over the harbour chart, the tavern's lamp flickers, and a sheen passes
-/// over lacquer, marble, velvet and gilt now and then. Faint, slow and
+/// over the harbour chart, and the tavern's lamp flickers. Faint, slow and
 /// cheap: a handful of shapes in a layer of their own. Still when motion
 /// is turned down, and under the test runner.
 library;
@@ -27,14 +26,6 @@ class FeltMotion extends StatefulWidget {
         FeltPattern.trellis => _Kind.fireflies,
         FeltPattern.chart => _Kind.beam,
         FeltPattern.planks => _Kind.lamp,
-        FeltPattern.deco ||
-        FeltPattern.marble ||
-        FeltPattern.damask ||
-        FeltPattern.tooled ||
-        FeltPattern.chequer ||
-        FeltPattern.tiles ||
-        FeltPattern.pinstripe =>
-          _Kind.sheen,
         _ => null,
       };
 
@@ -42,7 +33,7 @@ class FeltMotion extends StatefulWidget {
   State<FeltMotion> createState() => _FeltMotionState();
 }
 
-enum _Kind { stars, fireflies, beam, lamp, sheen }
+enum _Kind { stars, fireflies, beam, lamp }
 
 class _FeltMotionState extends State<FeltMotion> with SingleTickerProviderStateMixin {
   // One long cycle; each motion takes its own time within it.
@@ -104,8 +95,6 @@ class _MotionPainter extends CustomPainter {
         _beam(canvas, size, t);
       case _Kind.lamp:
         _lamp(canvas, size, t);
-      case _Kind.sheen:
-        _sheen(canvas, size, t);
     }
   }
 
@@ -196,30 +185,6 @@ class _MotionPainter extends CustomPainter {
             const Color(0xFFFFC46B).withValues(alpha: 0.09 * flicker),
             const Color(0x00FFC46B),
           ]).createShader(Rect.fromCircle(center: c, radius: r)));
-  }
-
-  /// A band of light passing slowly across, once a cycle.
-  void _sheen(Canvas canvas, Size s, double t) {
-    const length = 0.22;
-    if (t > length) return;
-    final u = Curves.easeInOut.transform(t / length);
-    final w = s.width + s.height;
-    final x = -s.height + u * (w + s.height * 0.5);
-    final band = Path()
-      ..moveTo(x, 0)
-      ..lineTo(x + 140, 0)
-      ..lineTo(x + 140 + s.height * 0.6, s.height)
-      ..lineTo(x + s.height * 0.6, s.height)
-      ..close();
-    final fade = math.sin(u * math.pi);
-    canvas.drawPath(
-        band,
-        Paint()
-          ..shader = LinearGradient(colors: [
-            Colors.white.withValues(alpha: 0),
-            Colors.white.withValues(alpha: 0.05 * fade),
-            Colors.white.withValues(alpha: 0),
-          ]).createShader(Rect.fromLTWH(x, 0, 140 + s.height * 0.6, s.height)));
   }
 
   @override

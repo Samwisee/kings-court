@@ -12,6 +12,7 @@ import 'package:kings_court/skin/plain/plain_skin.dart';
 import 'package:kings_court/skin/skin.dart';
 import 'package:kings_court/skin/skin_scope.dart';
 import 'package:kings_court/skin/skins.dart';
+import 'package:kings_court/skin/tailored.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/cards/mini_card.dart';
@@ -77,8 +78,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Look: Court'));
     await tester.pumpAndSettle();
-    Future<void> choose(String name) async {
-      final f = find.text(name).first;
+    Future<void> choose(String name, {int at = 0}) async {
+      final f = find.text(name).at(at);
       await tester.ensureVisible(f);
       await tester.tap(f);
       // The game behind wears it a moment later.
@@ -97,18 +98,22 @@ void main() {
     // A new style keeps the backs chosen.
     await choose('Garden');
     expect(worn().id, 'garden+b:sunburst');
-    await choose('Garden’s own');
+    // The backs' own (after the faces' own, in the dialog).
+    await choose('Garden’s own', at: 1);
     expect(worn().id, 'garden');
     await choose('Royal decree');
     expect(worn().id, 'garden+k:decree');
+    await choose('Antique');
+    expect(worn().id, 'garden+k:decree+f:antique');
+    expect(worn().card, faceChoices.firstWhere((f) => f.id == 'antique').card);
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('kingsCourt.skin'), 'garden+k:decree');
+    expect(prefs.getString('kingsCourt.skin'), 'garden+k:decree+f:antique');
   });
 
   test('A look of your own comes back from its id, choices and all', () {
-    for (final id in ['court', 'lacquer+b:ivory', 'velvet+b:royal+k:decree', 'ballroom']) {
+    for (final id in ['court', 'lacquer+b:ivory', 'velvet+b:royal+k:decree', 'ballroom+f:casino']) {
       expect(skinById(id).id, id);
     }
     // A table once chosen apart from the skin is the skin it became.

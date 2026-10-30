@@ -130,8 +130,8 @@ class _TablePainter extends CustomPainter {
 class FeltLight extends StatelessWidget {
   const FeltLight({super.key, this.quiet = false});
 
-  /// Off the table (the front page, setup, the rules): the pattern faint,
-  /// and only round the edges, clear of what's to be read.
+  /// Off the table (the front page, setup, the rules): the pattern muted,
+  /// so it doesn't get in the way of what's to be read.
   final bool quiet;
 
   @override
@@ -142,12 +142,12 @@ class FeltLight extends StatelessWidget {
     final ink = look.patternColour;
     final pattern = look.pattern == FeltPattern.none
         ? null
-        : FeltPatternPainter(look.pattern, quiet ? ink.withValues(alpha: ink.a * 0.45) : ink, ground: skin.felt);
+        : FeltPatternPainter(look.pattern, quiet ? ink.withValues(alpha: ink.a * 0.5) : ink,
+            ground: skin.felt, soft: quiet);
     if (lamp <= 0 && pattern == null) return const SizedBox.expand();
     final lit = CustomPaint(foregroundPainter: lamp <= 0 ? null : _LampPainter(lamp), size: Size.infinite);
     if (pattern == null) return lit;
-    final worked = CustomPaint(painter: pattern, size: Size.infinite);
-    return Stack(fit: StackFit.expand, children: [if (quiet) EdgesOnly(child: worked) else worked, lit]);
+    return Stack(fit: StackFit.expand, children: [CustomPaint(painter: pattern, size: Size.infinite), lit]);
   }
 }
 
@@ -157,7 +157,7 @@ class FeltLight extends StatelessWidget {
 class FeltGround extends StatelessWidget {
   const FeltGround({super.key, this.page = false, this.clear = false, this.quiet = false, this.child});
 
-  /// Off the table: the pattern faint and round the edges, and still
+  /// Off the table: the pattern muted, and still
   /// ([FeltLight.quiet]). A [page] is always quiet.
   final bool quiet;
 
