@@ -479,7 +479,7 @@ void main() {
             ]),
             const SizedBox(height: 30),
             Wrap(spacing: 14, runSpacing: 10, children: [
-              for (final t in tableChoices)
+              for (final t in skins)
                 Container(
                   width: 96,
                   height: 64,
@@ -488,7 +488,8 @@ void main() {
                   child: ColoredBox(
                       color: t.felt,
                       child: CustomPaint(
-                          painter: FeltPatternPainter(t.pattern, t.ink, ground: t.felt, scale: 0.5),
+                          painter: FeltPatternPainter(t.tableLook.pattern, t.tableLook.patternColour,
+                              ground: t.felt, scale: 0.5),
                           size: Size.infinite)),
                 ),
             ]),

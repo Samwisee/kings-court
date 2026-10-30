@@ -90,7 +90,7 @@ class _MotionPainter extends CustomPainter {
   final Color ink;
   final Animation<double> time;
 
-  Color _ink(double alpha) => ink.withValues(alpha: clampDouble(alpha, 0, 1));
+  Color _ink(double alpha) => ink.withValues(alpha: alpha.clamp(0.0, 1.0));
 
   @override
   void paint(Canvas canvas, Size size) {

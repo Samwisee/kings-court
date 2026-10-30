@@ -12,7 +12,6 @@ import 'package:kings_court/skin/plain/plain_skin.dart';
 import 'package:kings_court/skin/skin.dart';
 import 'package:kings_court/skin/skin_scope.dart';
 import 'package:kings_court/skin/skins.dart';
-import 'package:kings_court/skin/tailored.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/cards/mini_card.dart';

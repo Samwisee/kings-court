@@ -2703,7 +2703,6 @@ class HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final skin = context.skin;
     // One page: the felt is always there. Before a game it shows the
     // crown and the main buttons; New Game opens its panel on the table.
     // On a wide screen the on-screen table sits in the middle with room
