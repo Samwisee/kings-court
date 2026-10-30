@@ -2736,7 +2736,7 @@ class HomePageState extends State<HomePage>
               ? KeyedSubtree(key: const ValueKey('game-bar'), child: HomePageTestHooks.skip.contains('bar') ? AppBar(toolbarHeight: 60, backgroundColor: Colors.transparent) : _buildAppBar())
               : AppBar(
                   key: const ValueKey('plain-bar'),
-                  toolbarHeight: 60,
+                  toolbarHeight: 60, backgroundColor: Colors.transparent,
                   actions: [
                     // Not on the front page, which is just the title and
                     // its buttons; it fades in with setup.
