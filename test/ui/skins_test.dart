@@ -89,6 +89,8 @@ void main() {
       await tester.scrollUntilVisible(along, 150, scrollable: rows);
       await tester.pumpAndSettle();
       final tile = find.descendant(of: along, matching: find.text(name));
+      await tester.fling(along, const Offset(1200, 0), 4000);
+      await tester.pumpAndSettle();
       await tester.dragUntilVisible(tile, along, const Offset(-200, 0));
       await tester.tap(tile);
       await tester.pumpAndSettle();
