@@ -87,7 +87,9 @@ class _StyledPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero);
     final r = size.shortestSide / 2;
-    final outline = shape == null ? (Path()..addOval(Rect.fromCircle(center: c, radius: r))) : tokenPath(shape!, size);
+    // A casino chip is round whatever the house: the rest take its shape.
+    final round = shape == null || style == TokenStyle.chips;
+    final outline = round ? (Path()..addOval(Rect.fromCircle(center: c, radius: r))) : tokenPath(shape!, size);
     final bounds = outline.getBounds();
 
     canvas.drawPath(

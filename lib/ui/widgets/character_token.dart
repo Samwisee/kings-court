@@ -209,17 +209,15 @@ class _CharacterTokenState extends State<CharacterToken>
               angle = math.pi * 4 * (1 - e);
           }
           if (before) opacity = 0;
-          if (t >= 1) {
-            dy += b * s * 0.03;
-            scale *= 1 + 0.015 * b;
-          }
+          // Then a gentle bob: moved, never scaled, so its letter
+          // stays crisp and still on it.
+          if (t >= 1) dy += b * s * 0.03;
         } else {
         switch (widget.mood) {
           case CharacterMood.idle:
             dy = b * s * 0.03;
-            scale = 1 + 0.015 * b;
           case CharacterMood.arriving:
-            scale = Curves.elasticOut.transform(t) + 0.015 * b;
+            scale = t >= 1 ? 1 : Curves.elasticOut.transform(t);
             opacity = clampD(t * 3, 0, 1);
             dy = b * s * 0.03;
           case CharacterMood.speaking:

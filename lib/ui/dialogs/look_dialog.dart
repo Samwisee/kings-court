@@ -16,6 +16,7 @@ import '../../engine/cards.dart';
 import '../../engine/round.dart';
 import '../../engine/task.dart';
 import '../../game/courtiers.dart';
+import '../../platform/page_colour.dart' if (dart.library.js_interop) '../../platform/page_colour_web.dart';
 import '../../skin/entitlements.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
@@ -88,12 +89,26 @@ class _LookPageState extends State<_LookPage> {
   void _wearNow() {
     if (_worn) return;
     _worn = true;
-    if (_look.id != widget.start.id) widget.wear(_look);
+    if (_look.id != widget.start.id) {
+      widget.wear(_look);
+    } else {
+      colourPage(widget.start.table);
+    }
+  }
+
+  @override
+  void dispose() {
+    // Left without wearing it: the page's own colour back.
+    if (!_worn) colourPage(widget.start.table);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final look = _look;
+    // The page round the game (the status bar, the browser's bars) in the
+    // look as it's chosen.
+    colourPage(look.table);
     final base = _base;
     final dressed = look is TailoredSkin ? look : null;
     final height = MediaQuery.sizeOf(context).height;
