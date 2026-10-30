@@ -37,6 +37,7 @@ import '../modes/tutorial/lessons.dart';
 import '../net/online_table.dart';
 import '../net/table_link.dart';
 import '../platform/analytics.dart';
+import '../platform/frame_stats.dart';
 import '../platform/game_log.dart';
 import '../platform/service.dart';
 import '../platform/settings.dart';
@@ -247,6 +248,7 @@ class HomePageState extends State<HomePage>
       c.value;
     }
     _loadSaved();
+    FrameStats.start();
     HardwareKeyboard.instance.addHandler(_onKey);
   }
 
@@ -679,6 +681,7 @@ class HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    FrameStats.at = _inGame ? 'table' : 'menus';
     // One page: the felt is always there. Before a game it shows the
     // crown and the main buttons; New Game opens its panel on the table.
     // On a wide screen the on-screen table sits in the middle with room

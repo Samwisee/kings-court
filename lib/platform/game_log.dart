@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game/state.dart';
 import '../net/table_link.dart';
 import 'build_info.dart';
+import 'frame_stats.dart';
 import 'service.dart';
 
 /// Rounds go to the service's `/rounds`.
@@ -89,6 +90,8 @@ abstract final class GameLog {
       // hand), every task with its owner and how it went, the tricks.
       'round': r.toJson(),
       'moves': [for (final m in moves) m.toJson()],
+      // How smoothly it drew since the last record (frame_stats.dart).
+      if (FrameStats.take() case final frames?) 'frames': frames,
     };
   }
 

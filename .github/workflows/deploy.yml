@@ -18,6 +18,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # To publish what it found to the ci-main branch.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -41,11 +44,27 @@ jobs:
           tail -5 test.txt
           if [ $code -ne 0 ]; then python3 tool/ci_annotate.py test.txt; fi
           exit $code
+      # What the analyzer and the tests said, on the ci-main branch, so it
+      # can be read where the run's logs can't.
+      - name: Publish to the ci-main branch
+        if: always()
+        run: |
+          mkdir -p /tmp/out
+          cp analyze.txt test.txt /tmp/out/ 2>/dev/null || true
+          { echo "commit ${GITHUB_SHA}"; grep -cE '\|' analyze.txt 2>/dev/null | sed 's/^/analyzer issues: /'; tail -3 test.txt 2>/dev/null; } > /tmp/out/summary.txt
+          cd /tmp/out
+          git init -q -b ci-main
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Test and deploy for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" ci-main || echo "::warning::Could not publish ci-main"
 
   # Builds and publishes even if a test fails, so there's always something
   # to play; the test job shows what broke.
   build:
     runs-on: ubuntu-latest
+    # To publish its log to the ci-main-build branch.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -56,13 +75,17 @@ jobs:
       - run: flutter pub get
       # BUILD names the commit in bug reports; BUG_URL is where they go (the
       # repo variable BUG_REPORT_URL, the Cloudflare Worker in tool/bug_worker).
-      - run: >-
-          flutter build web --release --base-href /kings-court/
-          --dart-define=BUILD=${GITHUB_SHA::8}
-          --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }}
-          --dart-define=SENTRY_DSN=${{ vars.SENTRY_DSN }}
-          --dart-define=GOATCOUNTER=${{ vars.GOATCOUNTER_CODE }}
-          --source-maps
+      - name: Build
+        run: |
+          set -o pipefail
+          flutter build web --release --base-href /kings-court/ \
+            --dart-define=BUILD=${GITHUB_SHA::8} \
+            --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }} \
+            --dart-define=SENTRY_DSN=${{ vars.SENTRY_DSN }} \
+            --dart-define=GOATCOUNTER=${{ vars.GOATCOUNTER_CODE }} \
+            --source-maps 2>&1 | tee build.txt
+          # How much a player downloads: the game's code, and everything.
+          { echo; echo "main.dart.js: $(du -k build/web/main.dart.js | cut -f1) KB"; echo "the whole site: $(du -sk build/web | cut -f1) KB (with source maps)"; } | tee -a build.txt
       # Source maps go to Sentry (when it's set up) so crash reports show the
       # Dart lines, then are left off the published site.
       - name: Upload source maps
@@ -90,6 +113,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
+      - name: Publish to the ci-main-build branch
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp build.txt /tmp/out/ 2>/dev/null || echo "no build log" > /tmp/out/build.txt
+          cd /tmp/out
+          git init -q -b out
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Build for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" out:ci-main-build || echo "::warning::Could not publish ci-main-build"
 
   deploy:
     needs: build

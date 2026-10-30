@@ -1,0 +1,75 @@
+name: Reports
+
+# What players' devices report, as counts, every day: how smoothly the game
+# draws (frames.txt, from the rounds people share), the crashes Sentry has
+# seen (crashes.txt: signatures, no messages) and the bug reports filed
+# (bugs.txt: counts). Published to the reports branch, which is public, so
+# nothing in it is about a player.
+on:
+  schedule:
+    - cron: '17 19 * * *'
+  push:
+    branches: [main]
+    paths: ['tool/reports/**', '.github/workflows/reports.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  group: reports
+  cancel-in-progress: true
+
+jobs:
+  reports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frames from the rounds people shared
+        env:
+          READ_KEY: ${{ secrets.ROUNDS_READ_KEY }}
+          BUG_URL: ${{ vars.BUG_REPORT_URL }}
+        run: |
+          mkdir -p out
+          GAME_SERVICE=$(echo "$BUG_URL" | grep -oE 'https://[^/]+')
+          if [ -z "$READ_KEY" ] || [ -z "$GAME_SERVICE" ]; then
+            echo "Not set up: needs the ROUNDS_READ_KEY secret and the BUG_REPORT_URL variable" > out/frames.txt
+          else
+            export GAME_SERVICE
+            python3 tool/games/pull.py /tmp/rounds.jsonl > /tmp/pull.txt 2>&1 || cat /tmp/pull.txt
+            python3 tool/reports/frames.py /tmp/rounds.jsonl > out/frames.txt 2>&1 || echo "report failed" >> out/frames.txt
+          fi
+          cat out/frames.txt
+      - name: Crashes Sentry has seen
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ] || [ -z "$SENTRY_ORG" ] || [ -z "$SENTRY_PROJECT" ]; then
+            echo "Not set up: needs the SENTRY_AUTH_TOKEN secret and the SENTRY_ORG and SENTRY_PROJECT variables" > out/crashes.txt
+          else
+            curl -s -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+              "https://sentry.io/api/0/projects/$SENTRY_ORG/$SENTRY_PROJECT/issues/?statsPeriod=14d&limit=100" \
+              | python3 tool/reports/crashes.py > out/crashes.txt
+          fi
+          cat out/crashes.txt
+      - name: Bug reports filed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          open=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '[.[] | select(.title | startswith("Bug:"))] | length')
+          closed=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=closed&per_page=100" --jq '[.[] | select(.title | startswith("Bug:"))] | length')
+          week=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=all&per_page=100&since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)" --jq '[.[] | select(.title | startswith("Bug:"))] | length')
+          echo "bug reports: $open open, $closed closed, $week filed or changed in the last 7 days" | tee out/bugs.txt
+      - name: Publish to the reports branch
+        if: always()
+        run: |
+          cd out
+          echo "Reports for $(date -u +%Y-%m-%d), ${GITHUB_SHA::8}" > when.txt
+          git init -q -b reports
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Reports for $(date -u +%Y-%m-%d)"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" reports

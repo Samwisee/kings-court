@@ -16,6 +16,7 @@ import '../../engine/cards.dart';
 import '../../engine/round.dart';
 import '../../engine/task.dart';
 import '../../game/courtiers.dart';
+import '../../platform/frame_stats.dart';
 import '../../platform/page_colour.dart' if (dart.library.js_interop) '../../platform/page_colour_web.dart';
 import '../../skin/entitlements.dart';
 import '../../skin/looks.dart';
@@ -99,10 +100,19 @@ class _LiveryPageState extends State<_LiveryPage> {
     }
   }
 
+  final _wasAt = FrameStats.at;
+
+  @override
+  void initState() {
+    super.initState();
+    FrameStats.at = 'livery';
+  }
+
   @override
   void dispose() {
     // Left without wearing it: the page's own colour back.
     if (!_worn) colourPage(widget.start.table);
+    FrameStats.at = _wasAt;
     super.dispose();
   }
 
