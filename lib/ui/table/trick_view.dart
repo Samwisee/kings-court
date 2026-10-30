@@ -9,7 +9,6 @@ import '../../engine/cards.dart';
 import '../../engine/round.dart';
 import '../../game/state.dart';
 import '../../skin/theme.dart';
-import '../cards/card_back.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
 
@@ -69,7 +68,6 @@ List<Widget> trickCards({
             key: ValueKey('collect-$number-${cards[i].id}'),
             tween: Tween(begin: 0, end: 1),
             duration: const Duration(milliseconds: 460),
-            curve: Curves.linear,
             builder: (context, u, child) {
               final t = Curves.easeInOutCubic.transform(clampD((u - delay) / (1 - delay), 0, 1));
               final p = topLeft(Offset.lerp(target, to, t)!);
