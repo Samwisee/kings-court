@@ -1,0 +1,286 @@
+{
+ "game": {
+  "version": 2,
+  "players": [
+   {
+    "name": "You",
+    "color": 4293304064
+   },
+   {
+    "name": "The Spymaster",
+    "color": 4283872489
+   },
+   {
+    "name": "The General",
+    "color": 4291590567
+   },
+   {
+    "name": "The Bishop",
+    "color": 4278230643
+   }
+  ],
+  "courtiers": [
+   0,
+   3,
+   2,
+   1
+  ],
+  "mode": 2,
+  "target": 6,
+  "chapter": 5,
+  "lesson": 0,
+  "surprise": false,
+  "roles": true,
+  "digital": true,
+  "round": {
+   "players": 4,
+   "target": 5,
+   "hands": [
+    [
+     2,
+     8,
+     9,
+     11,
+     14,
+     28,
+     30,
+     34,
+     35,
+     36
+    ],
+    [
+     0,
+     3,
+     5,
+     7,
+     23,
+     24,
+     26,
+     31,
+     37,
+     39
+    ],
+    [
+     1,
+     4,
+     6,
+     18,
+     21,
+     25,
+     10,
+     13,
+     16,
+     17
+    ],
+    [
+     19,
+     20,
+     22,
+     12,
+     15,
+     27,
+     29,
+     32,
+     33,
+     38
+    ]
+   ],
+   "setAside": [],
+   "king": 1,
+   "tasks": [
+    {
+     "d": "Win the Jack",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first two tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any trick the King leads",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 2♥ and the 3♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the A♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    }
+   ],
+   "pickTurn": 1,
+   "passed": [],
+   "spoke": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "picksMade": 0,
+   "sealCount": 0,
+   "decree": 1,
+   "exiled": null,
+   "passing": true,
+   "tricks": [],
+   "leader": 1,
+   "currentSeats": [],
+   "current": [],
+   "phase": 0,
+   "dealId": 1,
+   "revealed": {},
+   "revealHint": {},
+   "revealedAt": {}
+  },
+  "roundNumber": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "bestStreak": 0,
+  "dealId": 1,
+  "seed": 8,
+  "resultRecorded": false
+ },
+ "cardWidth": 120.0,
+ "dealt": true,
+ "pos": [
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "tilt": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "savedAt": 1761600000000,
+ "facts": {
+  "mode": "chronicle",
+  "players": [
+   "You",
+   "The Spymaster",
+   "The General",
+   "The Bishop"
+  ],
+  "playerCount": 4,
+  "target": 6,
+  "round": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "king": 1,
+  "pickTurn": 1,
+  "seals": 0,
+  "decree": "kingsCommand",
+  "exiled": null,
+  "tasks": [
+   {
+    "d": "Win the Jack",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first two tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any trick the King leads",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 2♥ and the 3♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the A♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   }
+  ],
+  "outcome": "inProgress",
+  "dealId": 1,
+  "seed": 8,
+  "hands": [
+   [
+    "3♥",
+    "9♥",
+    "A♦",
+    "3♦",
+    "6♦",
+    "2♣",
+    "4♣",
+    "8♣",
+    "9♣",
+    "Joker"
+   ],
+   [
+    "A♥",
+    "4♥",
+    "6♥",
+    "8♥",
+    "6♠",
+    "7♠",
+    "9♠",
+    "5♣",
+    "Jack",
+    "King"
+   ],
+   [
+    "2♥",
+    "5♥",
+    "7♥",
+    "A♠",
+    "4♠",
+    "8♠",
+    "2♦",
+    "5♦",
+    "8♦",
+    "9♦"
+   ],
+   [
+    "2♠",
+    "3♠",
+    "5♠",
+    "4♦",
+    "7♦",
+    "A♣",
+    "3♣",
+    "6♣",
+    "7♣",
+    "Queen"
+   ]
+  ],
+  "tricks": 0,
+  "current": [],
+  "turn": 1,
+  "announced": {},
+  "shown": {}
+ }
+}
