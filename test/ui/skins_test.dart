@@ -83,7 +83,7 @@ void main() {
       final along = find.byKey(ValueKey('look-row-$row'));
       // The rows go down the page, built as they come into view.
       await tester.scrollUntilVisible(along, 150,
-          scrollable: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down));
+          scrollable: find.descendant(of: find.byKey(const ValueKey('look-rows')), matching: find.byType(Scrollable)).first);
       await tester.pumpAndSettle();
       final tile = find.descendant(of: along, matching: find.text(name));
       await tester.dragUntilVisible(tile, along, const Offset(-200, 0));

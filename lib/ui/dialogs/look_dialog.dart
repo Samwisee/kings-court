@@ -142,6 +142,7 @@ class _LookPageState extends State<_LookPage> {
                     const SizedBox(height: 6),
                     Expanded(
                       child: ListView(
+                        key: const ValueKey('look-rows'),
                         padding: const EdgeInsets.only(bottom: 24),
                         children: [
                           _Row(
