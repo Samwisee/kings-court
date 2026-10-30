@@ -25,11 +25,18 @@ class TaskFacePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final face = RRect.fromRectAndRadius(reach.inflateRect(Offset.zero & size), Radius.circular(radius));
     final rule = look.rule;
+    // The motif in tiles a small card wide, so it's as fine on a wide
+    // card as a narrow one.
     if (backMotifPainter(look.motif, look.ink.withValues(alpha: look.motifAlpha)) case final motif?) {
       canvas.save();
       canvas.clipRRect(face);
-      canvas.translate(face.left, face.top);
-      motif.paint(canvas, face.outerRect.size);
+      const tile = 44.0;
+      for (var x = face.left; x < face.right; x += tile) {
+        canvas.save();
+        canvas.translate(x, face.top);
+        motif.paint(canvas, Size(tile, face.height));
+        canvas.restore();
+      }
       canvas.restore();
     }
     Paint line(double w) => Paint()
@@ -43,8 +50,9 @@ class TaskFacePainter extends CustomPainter {
         canvas.drawRRect(face.deflate(2.5), line(1.2));
         canvas.drawRRect(face.deflate(4.8), line(0.6));
       case TaskFrame.corners:
-        final r = face.deflate(3).outerRect;
-        final l = math.min(11.0, math.min(r.width, r.height) / 3);
+        // Short, and close to the edge, clear of the points and words.
+        final r = face.deflate(2).outerRect;
+        final l = math.min(7.0, math.min(r.width, r.height) / 4);
         final p = Path();
         for (final (c, sx, sy) in [
           (r.topLeft, 1.0, 1.0),
@@ -56,7 +64,6 @@ class TaskFacePainter extends CustomPainter {
             ..moveTo(c.dx, c.dy + sy * l)
             ..lineTo(c.dx, c.dy)
             ..lineTo(c.dx + sx * l, c.dy);
-          canvas.drawCircle(c + Offset(sx * 3.2, sy * 3.2), 1.1, Paint()..color = rule);
         }
         canvas.drawPath(p, line(1.4));
       case TaskFrame.ribbon:

@@ -472,7 +472,7 @@ void main() {
 
   // Every card back and table the Look dialog offers, on the court.
   testWidgets('The backs and tables to choose from', (tester) async {
-    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.physicalSize = const Size(1600, 1700);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     const court = CourtSkin();
@@ -482,16 +482,16 @@ void main() {
         backgroundColor: court.felt,
         body: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Wrap(spacing: 14, children: [
+            Wrap(spacing: 14, runSpacing: 10, children: [
               for (final b in backChoices)
-                SkinScope(skin: TailoredSkin(court, backChoice: b), child: const CardBack(width: 90)),
+                SkinScope(skin: TailoredSkin(court, backChoice: b), child: const CardBack(width: 64)),
             ]),
             const SizedBox(height: 30),
-            Wrap(spacing: 14, children: [
+            Wrap(spacing: 14, runSpacing: 10, children: [
               for (final t in tableChoices)
                 Container(
-                  width: 110,
-                  height: 80,
+                  width: 96,
+                  height: 64,
                   color: t.table,
                   padding: const EdgeInsets.all(8),
                   child: ColoredBox(
@@ -501,7 +501,7 @@ void main() {
                           size: Size.infinite)),
                 ),
             ]),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
             // Every task card face, a task on each.
             Wrap(spacing: 14, runSpacing: 14, children: [
               for (final k in taskChoices)
