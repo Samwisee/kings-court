@@ -79,11 +79,11 @@ class _CharacterTokenState extends State<CharacterToken>
   late final AnimationController _breath = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 2800));
 
-  bool get _idles =>
-      widget.exit == null &&
-      (widget.entrance != null ||
-          widget.mood == CharacterMood.idle ||
-          widget.mood == CharacterMood.arriving);
+  /// Whether it breathes while it sits: never now. The tokens are still
+  /// between the moments they come alive (arriving, speaking, pleased,
+  /// cross, leaving), so nothing on the table moves for no reason, and the
+  /// screen isn't drawn again and again while it waits.
+  bool get _idles => false;
 
   Timer? _wait;
 
