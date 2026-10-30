@@ -150,17 +150,7 @@ class _LookPageState extends State<_LookPage> {
                     // The livery as it's put together, changing as you choose.
                     SizedBox(
                       height: clampD(height * 0.34, 230, 330),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 360),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        transitionBuilder: (child, a) => FadeTransition(
-                            opacity: a,
-                            child: ScaleTransition(scale: Tween(begin: 0.97, end: 1.0).animate(a), child: child)),
-                        layoutBuilder: (current, previous) =>
-                            Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
-                        child: _Preview(key: ValueKey(look.id), look: look),
-                      ),
+                      child: _Preview(look: look),
                     ),
                     // A rule under it, so the choices scroll away under it.
                     Container(height: 1.5, color: skin.gold.withValues(alpha: 0.55)),
@@ -451,9 +441,11 @@ class _TileState extends State<_Tile> {
 
 /// The livery put together, on the page itself: the Court Cards and the
 /// Ace to the 4 fanned in a hand, the seats' tokens, a pile of tricks in
-/// the backs, and a task.
+/// the backs, and a task, as one group in the middle. Each part changes on
+/// its own, as its own choice does (a new back turns over only the pile),
+/// and the lot only when the style does.
 class _Preview extends StatelessWidget {
-  const _Preview({super.key, required this.look});
+  const _Preview({required this.look});
   final Skin look;
 
   static const _courts = [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king];
@@ -465,76 +457,126 @@ class _Preview extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => RepaintBoundary(
-        child: SkinScope(
-          skin: look,
-          child: Builder(builder: (context) {
-            final skin = context.skin;
-            return LayoutBuilder(builder: (context, c) {
+  Widget build(BuildContext context) {
+    final dressed = look is TailoredSkin ? look as TailoredSkin : null;
+    final base = TailoredSkin.baseOf(look).id;
+    final face = dressed?.face?.id, court = dressed?.court?.id;
+    return SkinScope(
+      skin: look,
+      child: Builder(builder: (context) {
+        final skin = context.skin;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: LayoutBuilder(builder: (context, c) {
               final w = c.maxWidth, h = c.maxHeight;
               final cardW = clampD(math.min(h * 0.27, w * 0.15), 40, 68);
               final cardH = PlayingCardView.heightFor(cardW);
               final step = cardW * 0.7;
-              Widget fan(List<PlayingCard> cards, double top) => Stack(clipBehavior: Clip.none, children: [
-                    for (final (k, card) in cards.indexed)
-                      Positioned(
-                        left: 18 + k * step,
-                        top: top + ((k - 1.5).abs() * 3),
-                        child: Transform.rotate(
-                            angle: (k - 1.5) * 0.07, child: PlayingCardView(card: card, width: cardW)),
-                      ),
-                  ]);
+              final fanW = 3 * step + cardW + 12;
+              Widget fan(List<PlayingCard> cards) => SizedBox(
+                    width: fanW,
+                    height: cardH + 10,
+                    child: Stack(clipBehavior: Clip.none, children: [
+                      for (final (k, card) in cards.indexed)
+                        Positioned(
+                          left: k * step,
+                          top: (k - 1.5).abs() * 3,
+                          child: Transform.rotate(
+                              angle: (k - 1.5) * 0.07, child: PlayingCardView(card: card, width: cardW)),
+                        ),
+                    ]),
+                  );
               final rowGap = math.max(6.0, (h - 40 - cardH * 2) / 3);
               return Stack(fit: StackFit.expand, children: [
                 Positioned(
                   left: 20,
                   top: 6,
-                  child: Text(skin.name,
-                      style: TextStyle(
-                          fontFamily: skin.displayFont,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
-                          color: skin.gold,
-                          shadows: skin.feltShadow)),
+                  child: _Swap(
+                    id: base,
+                    child: Text(skin.name,
+                        style: TextStyle(
+                            fontFamily: skin.displayFont,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            color: skin.gold,
+                            shadows: skin.feltShadow)),
+                  ),
                 ),
-                Positioned.fill(child: fan(_courts, 34 + rowGap * 0.5)),
-                Positioned.fill(child: fan(_numbers, 34 + rowGap * 1.5 + cardH)),
+                Positioned(
+                    left: 20, top: 34 + rowGap * 0.5, child: _Swap(id: '$base-$court-$face', child: fan(_courts))),
+                Positioned(
+                    left: 20,
+                    top: 34 + rowGap * 1.5 + cardH,
+                    child: _Swap(id: '$base-$face', child: fan(_numbers))),
                 // The seats.
-                Positioned(right: 16, top: 6, child: _Tokens(look)),
+                Positioned(
+                    right: 16, top: 6, child: _Swap(id: '$base-${dressed?.token?.id}', child: _Tokens(look))),
                 // A pile of tricks won.
                 Positioned(
                   right: 26,
                   top: h * 0.3,
-                  child: SizedBox(
-                    width: cardW * 0.8 + 12,
-                    height: PlayingCardView.heightFor(cardW * 0.8) + 8,
-                    child: Stack(children: [
-                      for (var k = 0; k < 3; k++)
-                        Positioned(
-                          left: k * 5.0,
-                          top: k * 2.0,
-                          child: Transform.rotate(
-                              angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
-                        ),
-                    ]),
+                  child: _Swap(
+                    id: '$base-${dressed?.back?.id}',
+                    child: SizedBox(
+                      width: cardW * 0.8 + 12,
+                      height: PlayingCardView.heightFor(cardW * 0.8) + 8,
+                      child: Stack(children: [
+                        for (var k = 0; k < 3; k++)
+                          Positioned(
+                            left: k * 5.0,
+                            top: k * 2.0,
+                            child: Transform.rotate(
+                                angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
+                          ),
+                      ]),
+                    ),
                   ),
                 ),
                 // A task.
                 Positioned(
                   right: 14,
                   bottom: 10,
-                  child: TaskChip(
-                    task: RoundTask(taskByDescription('Win the first trick')),
-                    points: 2,
-                    text: 'Win the first trick',
-                    color: skin.players[0],
-                    width: math.min(140, w * 0.34),
-                    progress: '0/1',
+                  child: _Swap(
+                    id: '$base-${dressed?.task?.id}',
+                    child: TaskChip(
+                      task: RoundTask(taskByDescription('Win the first trick')),
+                      points: 2,
+                      text: 'Win the first trick',
+                      color: skin.players[0],
+                      width: math.min(140, w * 0.34),
+                      progress: '0/1',
+                    ),
                   ),
                 ),
               ]);
-            });
-          }),
-        ),
+            }),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+/// One part of the preview, changing (fading and settling in) only when
+/// [id] does, in a layer of its own.
+class _Swap extends StatelessWidget {
+  const _Swap({required this.id, required this.child});
+  final String id;
+  final Widget child;
+
+  // The part carries the look it was drawn in, so the old one fades out
+  // as it was rather than in the new look.
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+        duration: const Duration(milliseconds: 320),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, a) => FadeTransition(
+            opacity: a, child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: child)),
+        layoutBuilder: (current, previous) =>
+            Stack(alignment: Alignment.topLeft, children: [...previous, if (current != null) current]),
+        child: RepaintBoundary(key: ValueKey(id), child: SkinScope(skin: context.skin, child: child)),
       );
 }
