@@ -268,13 +268,12 @@ class _Tabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final skin = context.skin;
     // All in view at once (wrapping if they must), never scrolled away.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(12, 6, 12, 10),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 6,
         runSpacing: 6,
-        children: [        ],
       ),
     );
   }
