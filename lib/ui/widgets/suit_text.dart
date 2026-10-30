@@ -8,6 +8,7 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import 'icons.dart';
 import 'panels.dart';
+import 'same.dart';
 
 /// Game text with suits printed in their card colours (♥ ♦ in red,
 /// ♠ ♣ in black) and the term "Court Cards" always capitalised and set a
@@ -82,7 +83,7 @@ class SuitText extends StatelessWidget {
     final colour = skin.suitColour(suit);
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
-      child: Opacity(
+      child: Same.of(('card', rank, symbol, done, fs, colour, skin.card, skin.outlineColour, skin.bodyFont), () => Opacity(
         opacity: done ? 0.5 : 1,
         child: Container(
           margin: EdgeInsets.symmetric(horizontal: fs * 0.08),
@@ -106,39 +107,42 @@ class SuitText extends StatelessWidget {
             SuitIcon(suit, size: fs * 0.74, color: colour),
           ]),
         ),
-      ),
+      )),
     );
   }
 
   /// A game word in gold, a little bolder; tap it to read what it means.
   InlineSpan _keyword(
-          BuildContext context, String word, String term, TextStyle base, bool dark) =>
-      WidgetSpan(
-        alignment: PlaceholderAlignment.baseline,
-        baseline: TextBaseline.alphabetic,
-        child: Semantics(
-          button: true,
-          hint: 'What it means',
-          child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+      BuildContext context, String word, String term, TextStyle base, bool dark) {
+    final colour = dark ? context.skin.gold : context.skin.goldDeep;
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: Same.of(('word', word, term, base, colour), () => Semantics(
+        button: true,
+        hint: 'What it means',
+        child: MouseRegion(cursor: SystemMouseCursors.click, child: Builder(
+          // Its own context: the word may be shown again in another
+          // paragraph (Same), so it can't keep the first one's.
+          builder: (context) => GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => showTermDialog(context, term),
-            child: Text(word,
-                style: base.copyWith(
-                    color: dark ? context.skin.gold : context.skin.goldDeep,
-                    fontWeight: FontWeight.w700)),
-          )),
-        ),
-      );
+            child: Text(word, style: base.copyWith(color: colour, fontWeight: FontWeight.w700)),
+          ),
+        )),
+      )),
+    );
+  }
 
   InlineSpan _suit(String symbol, Color colour) {
     final size = (style.fontSize ?? 14) * 0.8;
     return WidgetSpan(
         alignment: PlaceholderAlignment.middle,
-        child: Padding(
+        child: Same.of(('suit', symbol, size, colour), () => Padding(
           padding: EdgeInsets.symmetric(horizontal: size * 0.04),
           child: SuitIcon(Suit.values.firstWhere((s) => s.symbol == symbol),
               size: size, color: colour),
-        ));
+        )));
   }
 
   @override
@@ -205,23 +209,23 @@ class SuitText extends StatelessWidget {
         final size = (style.fontSize ?? 14) * 0.95;
         spans.add(WidgetSpan(
             alignment: PlaceholderAlignment.middle,
-            child: Padding(
+            child: Same.of(('court', token, size), () => Padding(
               padding: EdgeInsets.symmetric(horizontal: size * 0.08),
               child: token == noCourt
                   ? NoCourtIcon(size: size)
                   : CourtCardIcon(size: size * 1.05),
-            )));
+            ))));
       } else if (token == showButton || token == trackerButton) {
         final size = (style.fontSize ?? 14) * 1.25;
         final c = dark ? skin.gold : skin.goldDeep;
         spans.add(WidgetSpan(
             alignment: PlaceholderAlignment.middle,
-            child: Padding(
+            child: Same.of(('button', token, size, c), () => Padding(
               padding: EdgeInsets.symmetric(horizontal: size * 0.08),
               child: token == showButton
                   ? ShowCardIcon(size: size, color: c)
                   : TrackerIcon(size: size, color: c),
-            )));
+            ))));
       } else if (token.length == 1) {
         spans.add(_suit(token, suitColour(token)));
       } else {

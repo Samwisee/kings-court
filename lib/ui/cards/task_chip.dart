@@ -12,6 +12,7 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
+import '../widgets/same.dart';
 import 'card_view.dart';
 import 'mini_card.dart';
 
@@ -121,9 +122,13 @@ class TaskChip extends StatelessWidget {
     // its words do. (On a very narrow chip the small condition icons give
     // way: they're in the task's close-up.)
     final narrow = width < 72;
-    WidgetSpan icon(Widget child, {double gap = 3}) => WidgetSpan(
+    // Each icon the same widget while it shows the same (Same), so the
+    // task's words aren't laid out again on every rebuild of the table.
+    WidgetSpan icon(Object what, Widget Function() child, {double gap = 3}) => WidgetSpan(
         alignment: PlaceholderAlignment.middle,
-        child: Padding(padding: EdgeInsets.only(left: gap), child: child));
+        child: Same.of(('task icon', what, gap),
+            () => Padding(padding: EdgeInsets.only(left: gap), child: child())));
+    final crown = look.crown ?? skin.goldDeep;
     final leading = <InlineSpan>[
       TextSpan(
           text: '$points',
@@ -133,27 +138,29 @@ class TaskChip extends StatelessWidget {
               fontSize: fontSize + 3,
               height: 1,
               color: look.ink)),
-      icon(CrownIcon(size: fontSize * 0.85, color: look.crown ?? skin.goldDeep), gap: 2),
+      icon(('crown', fontSize, crown), () => CrownIcon(size: fontSize * 0.85, color: crown), gap: 2),
       if (task.kingCantTake && !narrow)
-        icon(Tooltip(
+        icon(('not the King', fontSize, look.inkSoft), () => Tooltip(
             message: "The King can't take this task",
             child: Icon(Icons.block, size: fontSize + 1, color: look.inkSoft))),
       // Always shown: the words leave "with no Court Cards" to it.
       if (task.noCourtCards)
-        icon(Tooltip(message: 'No Court Cards in the trick', child: NoCourtIcon(size: fontSize + 2))),
+        icon(('no court', fontSize),
+            () => Tooltip(message: 'No Court Cards in the trick', child: NoCourtIcon(size: fontSize + 2))),
       if (task.hasNotes && !narrow)
-        icon(Tooltip(
+        icon(('notes', task.notes.join(' '), fontSize, look.inkSoft), () => Tooltip(
             message: task.notes.join(' '),
             child: Icon(Icons.info_outline, size: fontSize + 1, color: look.inkSoft))),
-      if (task.seal != null) icon(WaxSeal(seal: task.seal!, size: fontSize + 4)),
+      if (task.seal != null) icon(('seal', task.seal, fontSize), () => WaxSeal(seal: task.seal!, size: fontSize + 4)),
       const TextSpan(text: '  '),
     ];
     final trailing = <InlineSpan>[
       if (failed)
-        icon(Icon(Icons.cancel, size: fontSize + 3, color: skin.lost), gap: 5)
+        icon(('failed', fontSize, skin.lost), () => Icon(Icons.cancel, size: fontSize + 3, color: skin.lost), gap: 5)
       else if (progress != null)
         icon(
-            Container(
+            ('progress', progress, fontSize, look.ink, look.pillInk(skin.gold), skin.bodyFont),
+            () => Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(color: look.ink, borderRadius: BorderRadius.circular(8)),
               child: Text(progress!,
