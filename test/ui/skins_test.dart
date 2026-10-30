@@ -69,7 +69,7 @@ void main() {
     HomePageTestHooks.fast();
     await tester.pumpWidget(const TheKingsCourtApp());
     await tester.pumpAndSettle();
-    Skin worn() => SkinScope.of(tester.element(find.byType(HomePage)));
+    Skin worn() => SkinScope.of(tester.element(find.byType(HomePage, skipOffstage: false)));
     expect(worn().id, 'court');
     // No menu on the front page; it's there once setup opens.
     await tester.tap(find.text('New game'));
