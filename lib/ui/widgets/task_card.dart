@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
 import '../../game/state.dart';
+import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
@@ -16,6 +17,7 @@ import 'icons.dart';
 import 'seals.dart';
 import 'suit_text.dart';
 import 'table.dart';
+import 'task_faces.dart';
 
 /// One pip per task: hollow while pending, green when done, red when failed.
 class TaskPips extends StatelessWidget {
@@ -206,6 +208,8 @@ class TableCard extends StatelessWidget {
     final indexSize = _indexSize(width);
     final iconSize = indexSize * 0.8;
     final failed = task.isFailed;
+    // A failed task is on the failed card, in the skin's own ink.
+    final look = failed ? TaskLook(face: skin.failedCard, ink: skin.ink, inkSoft: skin.inkSoft) : skin.taskLook;
     final top = Row(
       children: [
         Expanded(
@@ -219,15 +223,15 @@ class TableCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                       fontSize: indexSize,
                       height: 1,
-                      color: skin.ink)),
+                      color: look.ink)),
               const SizedBox(width: 2),
-              CrownIcon(size: indexSize * 0.7, color: skin.goldDeep),
+              CrownIcon(size: indexSize * 0.7, color: look.crown ?? skin.goldDeep),
               // Conditions that don't fit in words: tap the card to read.
               if (task.kingCantTake) ...[
                 const SizedBox(width: 4),
                 Tooltip(
                   message: "The King can't take this task",
-                  child: Icon(Icons.block, size: iconSize, color: skin.inkSoft),
+                  child: Icon(Icons.block, size: iconSize, color: look.inkSoft),
                 ),
               ],
               if (task.noCourtCards) ...[
@@ -242,7 +246,7 @@ class TableCard extends StatelessWidget {
                 Tooltip(
                   message: task.notes.join(' '),
                   child: Icon(Icons.info_outline,
-                      size: iconSize, color: skin.inkSoft),
+                      size: iconSize, color: look.inkSoft),
                 ),
               ],
               if (task.seal != null) ...[
@@ -263,7 +267,7 @@ class TableCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: skin.ink,
+                  color: look.ink,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(progress!,
@@ -272,7 +276,7 @@ class TableCard extends StatelessWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
-                        color: skin.gold)),
+                        color: look.pillInk(skin.gold))),
               ),
             ),
           ),
@@ -286,12 +290,14 @@ class TableCard extends StatelessWidget {
       height: _height,
       foregroundDecoration: _edge(skin),
       decoration: _frame(skin, 
-        failed ? skin.failedCard : skin.card,
-        border: failed ? skin.lost : owner?.color ?? skin.card,
+        failed ? skin.failedCard : look.face,
+        border: failed ? skin.lost : owner?.color ?? look.face,
         borderWidth: 2.5,
       ),
       child: Stack(
         children: [
+          if (!failed && TaskFacePainter.prints(look))
+            Positioned.fill(child: CustomPaint(painter: TaskFacePainter(look, reach: EdgeInsets.zero))),
           Padding(
             padding: const EdgeInsets.fromLTRB(_pad, _pad - 2, _pad, _pad),
             child: Column(
@@ -310,7 +316,7 @@ class TableCard extends StatelessWidget {
                           width: c.maxWidth,
                           child: SuitText(text ?? task.description,
                               keywords: false,
-                              style: skin.taskText.copyWith(fontWeight: FontWeight.w600)),
+                              style: skin.taskText.copyWith(fontWeight: FontWeight.w600, color: look.ink)),
                         ),
                       ),
                     ),

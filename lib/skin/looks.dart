@@ -37,7 +37,24 @@ class TableLook {
     this.panelRule,
     this.panelInnerRule,
     this.lamp = 0,
+    this.pattern = FeltPattern.none,
+    this.patternColour = const Color(0x00000000),
   });
+
+  /// This look with [pattern] worked into the felt in [colour].
+  TableLook withPattern(FeltPattern pattern, Color colour) => TableLook(
+        style: style,
+        rim: rim,
+        radius: radius,
+        outerRule: outerRule,
+        innerRule: innerRule,
+        sunk: sunk,
+        panelRule: panelRule,
+        panelInnerRule: panelInnerRule,
+        lamp: lamp,
+        pattern: pattern,
+        patternColour: colour,
+      );
 
   final TableStyle style;
 
@@ -61,6 +78,115 @@ class TableLook {
   /// in the felt at its brightest (0 for an even felt, about 0.07 for a
   /// card room's). It fades to the felt's own colour at the edges.
   final double lamp;
+
+  /// What's worked into the felt, faintly, in [patternColour]
+  /// (ui/widgets/felt_patterns.dart).
+  final FeltPattern pattern;
+  final Color patternColour;
+}
+
+/// What's worked into a table's felt, under everything on it.
+enum FeltPattern {
+  /// An even felt.
+  none,
+
+  /// A garden trellis: a diamond lattice with a leaf at each crossing.
+  trellis,
+
+  /// A sea chart: a compass rose in the middle and rhumb lines out from it.
+  chart,
+
+  /// A night sky: scattered stars, a few bright, and a constellation.
+  stars,
+
+  /// Damask: rows of a woven flower, turned each row.
+  damask,
+
+  /// Fine pinstripes, in pairs.
+  pinstripe,
+
+  /// Tooled leather: a gilt rule inside the edge with a flourish in each
+  /// corner.
+  tooled,
+
+  /// A chequer, the squares a shade apart.
+  chequer,
+
+  /// The boards of a tavern table, with their grain.
+  planks,
+
+  /// Marble's veins.
+  marble,
+
+  /// Art deco: rows of fans, one over the next.
+  deco,
+
+  /// Tiles, each with a four-leaved star.
+  tiles,
+
+  /// A campaign map's contour lines round a few hills.
+  contours,
+
+  /// Herringbone parquet.
+  herringbone,
+}
+
+/// The frame printed on a task card's face, inside its edge.
+enum TaskFrame {
+  /// Just the card.
+  plain,
+
+  /// A fine double rule inside the edge.
+  ruled,
+
+  /// A bracket in each corner.
+  corners,
+
+  /// A band across the top, under the points.
+  ribbon,
+
+  /// A dotted rule, like a stamp's perforations.
+  stamp,
+
+  /// A rule down the left, like a ledger's margin.
+  ledger,
+}
+
+/// How a task card's face is drawn: its stock, the ink on it, the points'
+/// crown, the frame printed on it, and anything faint over the stock.
+class TaskLook {
+  const TaskLook({
+    required this.face,
+    required this.ink,
+    required this.inkSoft,
+    this.crown,
+    this.frame = TaskFrame.plain,
+    this.frameColour,
+    this.motif = BackMotif.none,
+    this.motifAlpha = 0.08,
+  });
+
+  final Color face;
+  final Color ink;
+  final Color inkSoft;
+
+  /// The crown by the points; the skin's deep gold when null.
+  final Color? crown;
+  final TaskFrame frame;
+
+  /// The frame's colour; the soft ink, faintly, when null.
+  final Color? frameColour;
+
+  /// A motif over the stock, in the ink at [motifAlpha].
+  final BackMotif motif;
+  final double motifAlpha;
+
+  /// The frame's colour as drawn.
+  Color get rule => frameColour ?? inkSoft.withValues(alpha: 0.45);
+
+  /// The words on a pill of [ink] (how far along a task is): [gold] on
+  /// dark ink, the stock on light.
+  Color pillInk(Color gold) => ink.computeLuminance() > 0.4 ? face : gold;
 }
 
 /// How menus, results and dialogs are framed.

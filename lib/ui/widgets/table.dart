@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../skin/looks.dart';
 import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import 'felt_patterns.dart';
 
 /// The felt set into a royal-red table: round the edge of the screen the
 /// table shows, then a thin double brass rule where the felt begins, like
@@ -121,16 +123,23 @@ class _TablePainter extends CustomPainter {
 }
 
 /// Lamp light on the felt: a pool of light over the middle of the table,
-/// fading to the felt's own colour at its edges. Under everything on the
-/// table, so the cards and seats keep their colours.
+/// fading to the felt's own colour at its edges, over whatever's worked
+/// into the felt (felt_patterns.dart). Under everything on the table, so
+/// the cards and seats keep their colours.
 class FeltLight extends StatelessWidget {
   const FeltLight({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final lamp = context.skin.tableLook.lamp;
-    if (lamp <= 0) return const SizedBox.expand();
-    return CustomPaint(painter: _LampPainter(lamp), size: Size.infinite);
+    final skin = context.skin;
+    final look = skin.tableLook;
+    final lamp = look.lamp;
+    final pattern = look.pattern == FeltPattern.none
+        ? null
+        : FeltPatternPainter(look.pattern, look.patternColour, ground: skin.felt);
+    if (lamp <= 0 && pattern == null) return const SizedBox.expand();
+    return CustomPaint(
+        painter: pattern, foregroundPainter: lamp <= 0 ? null : _LampPainter(lamp), size: Size.infinite);
   }
 }
 

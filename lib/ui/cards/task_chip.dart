@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../engine/round.dart';
+import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
@@ -112,6 +113,9 @@ class TaskChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final skin = context.skin;
     final done = task.isCompleted, failed = task.isFailed;
+    // The face worn (a failed task is on the failed card, in the skin's
+    // own ink).
+    final look = failed ? TaskLook(face: skin.failedCard, ink: skin.ink, inkSoft: skin.inkSoft) : skin.taskLook;
     // Along the top: points, conditions, and the tracker on the right. On
     // a very narrow chip the small condition icons give way (they're in
     // the task's close-up).
@@ -130,14 +134,14 @@ class TaskChip extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 fontSize: fontSize + 3,
                 height: 1,
-                color: skin.ink)),
+                color: look.ink)),
         const SizedBox(width: 2),
-        CrownIcon(size: fontSize * 0.85, color: skin.goldDeep),
+        CrownIcon(size: fontSize * 0.85, color: look.crown ?? skin.goldDeep),
         if (task.kingCantTake && !narrow) ...[
           const SizedBox(width: 4),
           Tooltip(
               message: "The King can't take this task",
-              child: Icon(Icons.block, size: fontSize + 1, color: skin.inkSoft)),
+              child: Icon(Icons.block, size: fontSize + 1, color: look.inkSoft)),
         ],
         // Always shown: the words leave "with no Court Cards" to it.
         if (task.noCourtCards) ...[
@@ -151,7 +155,7 @@ class TaskChip extends StatelessWidget {
           Tooltip(
               message: task.notes.join(' '),
               child: Icon(Icons.info_outline,
-                  size: fontSize + 1, color: skin.inkSoft)),
+                  size: fontSize + 1, color: look.inkSoft)),
         ],
         if (task.seal != null) ...[
           const SizedBox(width: 3),
@@ -173,7 +177,7 @@ class TaskChip extends StatelessWidget {
               child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
             decoration: BoxDecoration(
-              color: skin.ink,
+              color: look.ink,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(progress!,
@@ -182,7 +186,7 @@ class TaskChip extends StatelessWidget {
                     fontSize: fontSize - 1,
                     fontWeight: FontWeight.w800,
                     height: 1.1,
-                    color: skin.gold)),
+                    color: look.pillInk(skin.gold))),
           ),
             ),
           ),
@@ -200,10 +204,10 @@ class TaskChip extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
       decoration: BoxDecoration(
-        color: failed ? skin.failedCard : skin.card,
+        color: look.face,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: failed ? skin.lost : neutral ? skin.card : color,
+            color: failed ? skin.lost : neutral ? look.face : color,
             width: 2.5 + 2 * skin.outlineWidth),
         boxShadow: [
           const BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
@@ -216,7 +220,13 @@ class TaskChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
       ),
-      child: Column(
+      child: CustomPaint(
+        // What's printed on the face: drawn out to the border, round the
+        // padding.
+        painter: TaskFacePainter.prints(look)
+            ? TaskFacePainter(look, reach: const EdgeInsets.fromLTRB(6, 4, 6, 6), radius: 5)
+            : null,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -229,8 +239,9 @@ class TaskChip extends StatelessWidget {
                   fontSize: fontSize,
                   height: 1.15,
                   fontWeight: FontWeight.w600,
-                  color: skin.ink)),
+                  color: look.ink)),
         ],
+      ),
       ),
     ),
     );

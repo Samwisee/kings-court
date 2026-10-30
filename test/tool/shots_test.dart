@@ -8,16 +8,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/cards.dart';
+import 'package:kings_court/engine/round.dart';
+import 'package:kings_court/engine/task.dart';
 import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
+import 'package:kings_court/skin/garden/garden_skin.dart';
+import 'package:kings_court/skin/harbour/harbour_skin.dart';
+import 'package:kings_court/skin/plain/plain_skin.dart';
+import 'package:kings_court/skin/skin.dart';
 import 'package:kings_court/skin/skin_scope.dart';
 import 'package:kings_court/skin/skins.dart';
 import 'package:kings_court/skin/tailored.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
+import 'package:kings_court/ui/cards/task_chip.dart';
 import 'package:kings_court/ui/dynasty/hall_pieces.dart';
 import 'package:kings_court/ui/dynasty/throne_room.dart';
 import 'package:kings_court/ui/table_page.dart';
@@ -420,6 +427,50 @@ void main() {
   });
   }
 
+  // Looks mixed from the Look dialog's choices, at the table.
+  TableChoice table(String id) => tableChoices.firstWhere((t) => t.id == id);
+  BackChoice back(String id) => backChoices.firstWhere((b) => b.id == id);
+  TaskChoice task(String id) => taskChoices.firstWhere((k) => k.id == id);
+  final mixes = <String, Skin>{
+    'stars': TailoredSkin(const CourtSkin(), tableChoice: table('navy'), backChoice: back('herald'), taskChoice: task('decree')),
+    'deco': TailoredSkin(const CourtSkin(), tableChoice: table('deco'), backChoice: back('sunburst'), taskChoice: task('lacquer')),
+    'chart': TailoredSkin(const HarbourSkin(), tableChoice: table('teal'), backChoice: back('harbour'), taskChoice: task('stamp')),
+    'tavern': TailoredSkin(const CourtSkin(), tableChoice: table('tavern'), backChoice: back('crimson'), taskChoice: task('parchment')),
+    'trellis': TailoredSkin(const GardenSkin(), tableChoice: table('sage'), backChoice: back('rose'), taskChoice: task('mint')),
+    'tiles': TailoredSkin(const CourtSkin(), tableChoice: table('tiles'), backChoice: back('royal'), taskChoice: task('blueprint')),
+    'map': TailoredSkin(const CourtSkin(), tableChoice: table('map'), backChoice: back('emerald'), taskChoice: task('ledger')),
+    'damask': TailoredSkin(const CourtSkin(), tableChoice: table('plum'), backChoice: back('plum'), taskChoice: task('letter')),
+    'marble': TailoredSkin(const CourtSkin(), tableChoice: table('marble'), backChoice: back('ivory'), taskChoice: task('gilt')),
+    'tooled': TailoredSkin(const CourtSkin(), tableChoice: table('walnut'), backChoice: back('crimson'), taskChoice: task('stationery')),
+    'parquet': TailoredSkin(const PlainSkin(), tableChoice: table('charcoal'), backChoice: back('graphite'), taskChoice: task('rose')),
+    'chequer': TailoredSkin(const CourtSkin(), tableChoice: table('chess'), backChoice: back('midnight')),
+  };
+  for (final MapEntry(key: name, value: skin) in mixes.entries) {
+    testWidgets('A look mixed in the Look dialog ($name), at the table', (tester) async {
+      tester.view.physicalSize = const Size(1170, 2532);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      HomePageTestHooks.fast();
+      await tester.pumpWidget(TheKingsCourtApp(skin: skin));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New game'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Single player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Free play'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('4').last);
+      await tester.pumpAndSettle();
+      if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      for (var i = 0; i < 160; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/mix-$name.png'));
+    });
+  }
+
   // Every card back and table the Look dialog offers, on the court.
   testWidgets('The backs and tables to choose from', (tester) async {
     tester.view.physicalSize = const Size(1600, 900);
@@ -444,7 +495,29 @@ void main() {
                   height: 80,
                   color: t.table,
                   padding: const EdgeInsets.all(8),
-                  child: Container(color: t.felt),
+                  child: Container(
+                      color: t.felt,
+                      child: CustomPaint(
+                          painter: FeltPatternPainter(t.pattern, t.ink, ground: t.felt, scale: 0.5),
+                          size: Size.infinite)),
+                ),
+            ]),
+            const SizedBox(height: 30),
+            // Every task card face, a task on each.
+            Wrap(spacing: 14, runSpacing: 14, children: [
+              for (final k in taskChoices)
+                SkinScope(
+                  skin: TailoredSkin(court, taskChoice: k),
+                  child: SizedBox(
+                    width: 130,
+                    child: TaskChip(
+                        task: RoundTask(taskByDescription('Win the first three tricks')),
+                        points: 3,
+                        text: 'Win the first three tricks',
+                        color: court.players[k.id.length % 4],
+                        width: 130,
+                        progress: '1/3'),
+                  ),
                 ),
             ]),
           ]),

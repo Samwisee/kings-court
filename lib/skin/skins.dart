@@ -19,7 +19,7 @@ const skins = <Skin>[
   HarbourSkin(),
 ];
 
-/// The skin saved as [id] (with any table and backs chosen for it, see
+/// The skin saved as [id] (with any table, backs and task cards chosen for it, see
 /// tailored.dart); the default for none, or one that's gone.
 Skin skinById(String? id) {
   final parts = (id ?? '').split('+');
@@ -28,8 +28,8 @@ Skin skinById(String? id) {
       parts.skip(1).where((p) => p.startsWith('$key:')).map((p) => p.substring(key.length + 1)).firstOrNull;
   final table = tableChoices.where((t) => t.id == chosen('t')).firstOrNull;
   final back = backChoices.where((b) => b.id == chosen('b')).firstOrNull;
-  if (table == null && back == null) return base;
-  return TailoredSkin(base, tableChoice: table, backChoice: back);
+  final task = taskChoices.where((k) => k.id == chosen('k')).firstOrNull;
+  return TailoredSkin.of(base, table: table, back: back, task: task);
 }
 
 /// The skin after [worn] in the list that the player [owns], round to the

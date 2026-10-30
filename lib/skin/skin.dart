@@ -157,6 +157,10 @@ abstract class Skin {
 
   SkinParts get parts => const SkinParts();
 
+  /// A task card's face: the card stock and its ink, unless a look says
+  /// otherwise.
+  TaskLook get taskLook => TaskLook(face: card, ink: ink, inkSoft: inkSoft);
+
   /// The Material theme: buttons, dialogs, the app bar, in this look.
   ThemeData theme();
 }
