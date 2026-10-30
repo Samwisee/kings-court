@@ -32,11 +32,13 @@ jobs:
           "$CHROMEWEBDRIVER/chromedriver" --port=4444 > chromedriver.log 2>&1 &
           sleep 2
           set +e
-          # No GPU here: WebGL would be emulated, far slower than any phone's
-          # GPU. Without it CanvasKit draws on the CPU, which is closer.
-          timeout 1200 flutter drive --profile -d web-server --browser-name=chrome --driver-port=4444 \
-            --browser-dimension=412,915@2 \
-            --web-browser-flag=--disable-3d-apis \
+          # No GPU here, so WebGL is emulated (SwiftShader), far slower than
+          # a phone's GPU: drawn at 1x to keep frames coming. The work
+          # numbers (build, layout, paint) are the ones to trust; real
+          # devices' raster times come from the reports branch.
+          timeout 900 flutter drive --profile -d web-server --browser-name=chrome --driver-port=4444 \
+            --browser-dimension=412,915@1 \
+            --web-browser-flag=--enable-unsafe-swiftshader --web-browser-flag=--ignore-gpu-blocklist \
             --driver=test_driver/frames_driver.dart --target=integration_test/frames_test.dart > drive.txt 2>&1
           echo "flutter drive exited $?"
           grep -E 'FRAMES|rror|Exception|fail' drive.txt | head -60
