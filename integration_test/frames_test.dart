@@ -11,11 +11,12 @@
 ///       --target=integration_test/frames_test.dart
 library;
 
+import 'dart:js_interop';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kings_court/engine/round.dart';
@@ -23,6 +24,7 @@ import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/table_page.dart';
 import 'package:kings_court/ui/widgets/character_token.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web/web.dart' as web;
 
 /// Every frame of each scene: when it was due (the screen's refresh it
 /// was drawn for) and how long its work took, start to finish.
@@ -36,13 +38,25 @@ class Frames {
   /// it's drawn, which asks for the next frame, so frames come at every
   /// refresh and a slow one shows as a gap.
   void watch() {
-    void begin(Duration _) => _begun = _clock.elapsed;
+    void begin(Duration _) {
+      _begun = _clock.elapsed;
+      _clearMeasures();
+    }
+
     SchedulerBinding.instance.scheduleFrameCallback(begin);
     SchedulerBinding.instance.addPersistentFrameCallback((_) {
       final s = _now;
       if (s != null && _begun != null) {
         s.due.add(SchedulerBinding.instance.currentSystemFrameTimeStamp);
-        s.work.add(_clock.elapsed - _begun!);
+        final work = _clock.elapsed - _begun!;
+        s.work.add(work);
+        final named = _measures();
+        s.measured += named.length;
+        if (work.inMicroseconds > 12000 && s.slow.length < 12) {
+          final top = named.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+          s.slow.add('${(work.inMicroseconds / 1000).toStringAsFixed(1)} ms: '
+              '${top.take(8).map((e) => '${e.key} ${e.value.toStringAsFixed(1)}').join(', ')}');
+        }
       }
       _begun = null;
       SchedulerBinding.instance.scheduleFrameCallback(begin);
@@ -52,6 +66,23 @@ class Frames {
         _now?.engine.add(t.totalSpan);
       }
     });
+  }
+
+  /// What the browser measured since the last clear (Flutter's timeline
+  /// in a profile build: build, layout, paint, and with the debugProfile
+  /// flags each widget and render object), the longest of each name.
+  static Map<String, double> _measures() {
+    final out = <String, double>{};
+    for (final e in web.window.performance.getEntriesByType('measure').toDart) {
+      out[e.name] = math.max(out[e.name] ?? 0, e.duration);
+    }
+    _clearMeasures();
+    return out;
+  }
+
+  static void _clearMeasures() {
+    web.window.performance.clearMeasures();
+    web.window.performance.clearMarks();
   }
 
   Future<void> scene(String name, Future<void> Function() run) async {
@@ -74,6 +105,8 @@ class _Scene {
   _Scene(this.name);
   final String name;
   String? error;
+  int measured = 0;
+  final slow = <String>[];
   final due = <Duration>[];
   final work = <Duration>[];
   final engine = <Duration>[];
@@ -127,6 +160,8 @@ class _Scene {
       'engineP90': _at(e, 0.9),
       'engineMax': e.isEmpty ? 0 : e.last,
       // The slowest frames' work, for finding what they were.
+      'measured': measured,
+      'slow': slow,
       'slowest': [for (final m in w.reversed.take(5)) double.parse(m.toStringAsFixed(1))],
     };
   }
@@ -191,10 +226,9 @@ void main() {
 
     await frames.scene('the card tracker sliding in and out', () async {
       await tap(find.byTooltip('Card tracker'), then: 1500);
-      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      // A tap on the felt above it puts it away.
+      await tester.tapAt(const Offset(200, 60));
       await wait(1200);
-      // A tap on the felt puts it away if the key didn't.
-      await tap(find.byTooltip('Card tracker'), then: 1200);
     });
 
     await frames.scene('the rest of the round, the tasks judged, the outcome', () async {
@@ -205,10 +239,15 @@ void main() {
       await wait(4000);
     });
 
-    await frames.scene('the menu opening', () => tap(find.byTooltip('Menu'), then: 1200));
+    await frames.scene('the menu opening and closing', () async {
+      await tap(find.byTooltip('Menu'), then: 1200);
+      await tester.binding.handlePopRoute();
+      await wait(900);
+    });
 
     await frames.scene('the Livery page: opening, each tab, a choice in each', () async {
-      await tap(find.textContaining('Livery: '), then: 1500);
+      state.debugMenuChoice('skin');
+      await wait(1500);
       for (final (tab, kind) in [
         ('Faces', 'faces'),
         ('Court', 'court'),
@@ -228,6 +267,7 @@ void main() {
             await wait(900);
           }
         }
+        if (grid.evaluate().isEmpty) throw StateError('no $kind grid');
         await tester.fling(grid, const Offset(0, -300), 1500, warnIfMissed: false);
         await wait(900);
       }
@@ -236,8 +276,8 @@ void main() {
     await frames.scene('wearing the new look', () => tap(find.text('Done'), then: 2500));
 
     await frames.scene('the night sky\'s felt: stars twinkling, one shooting', () async {
-      await tap(find.byTooltip('Menu'), then: 900);
-      await tap(find.textContaining('Livery: '));
+      state.debugMenuChoice('skin');
+      await wait(1200);
       await tap(find.text('Style'), then: 600);
       final grid = find.byKey(const ValueKey('look-grid-style'));
       final night = find.descendant(of: grid, matching: find.text('Midnight'));
@@ -255,6 +295,21 @@ void main() {
     await frames.scene('back to the front page', () async {
       state.debugMenuChoice('main');
       await wait(3000);
+    });
+
+    // The skin change again, with every widget's build and every render
+    // object's layout and paint named, to see where its frames go.
+    await frames.scene('changing skin, in detail (slower: every widget timed)', () async {
+      debugProfileBuildsEnabled = true;
+      debugProfileLayoutsEnabled = true;
+      debugProfilePaintsEnabled = true;
+      for (var i = 0; i < 3; i++) {
+        state.debugMenuChoice('nextLivery');
+        await wait(1200);
+      }
+      debugProfileBuildsEnabled = false;
+      debugProfileLayoutsEnabled = false;
+      debugProfilePaintsEnabled = false;
     });
 
     binding.reportData = {'scenes': [for (final s in frames.scenes) s.toJson()]};
