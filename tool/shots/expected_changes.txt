@@ -4,3 +4,10 @@
 # taken (keep the `~` lines: those screenshots vary from run to run and are
 # never compared).
 ~zz-room.png: the throne room's figures move on a clock of their own, so it varies run to run (shelved Dynasty; not guarded)
+phone-2.png: the courtiers think as long as a move deserves (engine/race.dart), so some of their picks and plays differ
+phone-3.png: the courtiers think as long as a move deserves, so some of their picks and plays differ
+phone-4.png: the courtiers think as long as a move deserves, so some of their picks and plays differ
+laptop-2.png: the courtiers think as long as a move deserves, so some of their picks and plays differ
+laptop-3.png: the courtiers think as long as a move deserves, so some of their picks and plays differ
+laptop-4.png: the courtiers think as long as a move deserves, so some of their picks and plays differ
+laptop-5.png: the courtiers think as long as a move deserves, so some of their picks and plays differ

@@ -47,7 +47,11 @@ void main() {
       const budget = 900;
       final s = fresh();
       settle(s);
-      final bot = Bot(Random(1))..budget = budget;
+      // Raw speed: every decision spends the budget (adaptive thinking would
+      // stop some early and stretch others, and the count below assumes not).
+      final bot = Bot(Random(1))
+        ..budget = budget
+        ..adaptive = false;
       final legal = s.legalFor(s.turn).length;
 
       // Straight through.

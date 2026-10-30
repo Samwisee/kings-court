@@ -50,3 +50,6 @@ print-out/
 
 # Rounds fetched with tool/games/pull.py
 *.jsonl
+
+# The headless runner's rounds (bin/selfplay.dart)
+selfplay/
