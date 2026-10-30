@@ -60,7 +60,7 @@ void main() {
     // may use are kept free of Flutter by layers_test.dart.
     const pure = {'engine', 'game', 'net', 'modes'};
     for (final f in Directory('bin').listSync(recursive: true).whereType<File>()) {
-      for (final m in RegExp(r"import '([^']+)'").allMatches(f.readAsStringSync())) {
+      for (final m in RegExp("import '([^']+)'").allMatches(f.readAsStringSync())) {
         final target = m.group(1)!;
         if (target.startsWith('dart:')) continue;
         final layer = RegExp(r'^package:kings_court/(\w+)/').firstMatch(target)?.group(1);
