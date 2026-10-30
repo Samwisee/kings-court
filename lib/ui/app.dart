@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart';
 import '../skin/court/court_skin.dart';
 import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
+import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
 import '../skin/tailored.dart';
 import 'table_page.dart';
 
@@ -38,6 +39,7 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
   @override
   void initState() {
     super.initState();
+    colourPage(_skin.table);
     _dissolve = AnimationController(vsync: this, duration: const Duration(milliseconds: 380))
       ..addStatusListener((s) {
         if (s == AnimationStatus.completed) _drop();
@@ -66,6 +68,7 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
       _still = still;
       _skin = s;
     });
+    colourPage(s.table);
     if (still != null) _dissolve.forward(from: 0);
   }
 
