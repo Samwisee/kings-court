@@ -343,6 +343,9 @@ void main() {
         if (grid.evaluate().isEmpty) throw StateError('no $kind grid');
         await tester.fling(grid, const Offset(0, -300), 1500, warnIfMissed: false);
         await wait(900);
+        // And back, so the tabs are in reach again.
+        await tester.fling(grid, const Offset(0, 600), 2500, warnIfMissed: false);
+        await wait(700);
       }
     });
 
