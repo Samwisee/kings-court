@@ -38,8 +38,10 @@ jobs:
             echo "Not set up: needs the ROUNDS_READ_KEY secret and the BUG_REPORT_URL variable" > out/frames.txt
           else
             export GAME_SERVICE
-            python3 tool/games/pull.py /tmp/rounds.jsonl > /tmp/pull.txt 2>&1 || cat /tmp/pull.txt
+            python3 tool/games/pull.py /tmp/rounds.jsonl > /tmp/pull.txt 2>&1 || echo "(pulling the rounds failed)" >> /tmp/pull.txt
             python3 tool/reports/frames.py /tmp/rounds.jsonl > out/frames.txt 2>&1 || echo "report failed" >> out/frames.txt
+            # How the pull went: the count of rounds, or the error (never the key).
+            { echo; echo "pull: $(tail -3 /tmp/pull.txt | tr '\n' ' ')"; } >> out/frames.txt
           fi
           cat out/frames.txt
       - name: Crashes Sentry has seen

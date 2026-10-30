@@ -28,7 +28,8 @@ def main(path):
     with open(path, 'a') as out:
         while True:
             req = urllib.request.Request(f'{base}/rounds?after={after}',
-                                         headers={'Authorization': f'Bearer {key}'})
+                                         headers={'Authorization': f'Bearer {key}',
+                                                  'User-Agent': 'kings-court-reports/1'})
             with urllib.request.urlopen(req, timeout=60) as r:
                 lines = [l for l in r.read().decode().splitlines() if l.strip()]
             if not lines:
