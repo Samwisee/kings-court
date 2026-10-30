@@ -114,11 +114,17 @@ class Race<T> {
 
   /// Too close to call, on a decision the round turns on: the best two
   /// within the noise, and the leader neither sure to win nor sure to
-  /// lose.
+  /// lose. Two options that fare all but the same aren't a dilemma: every
+  /// option is played against the same imagined futures, so two cards
+  /// that are as good as each other (a 2 or a 3 nobody needs) come out
+  /// nearly level, and either will do.
   bool _tooClose(Iterable<T> among) {
-    final (_, z, lead) = _lead(among);
-    return z < 1.5 && lead > 0.05 && lead < 0.95;
+    final (gap, z, lead) = _lead(among);
+    return z < 1.5 && gap > interchangeable && lead > 0.05 && lead < 0.95;
   }
+
+  /// How near two options' averages are for them to count as the same.
+  static const interchangeable = 0.004;
 
   /// The next playouts to run, as (option, from, count); empty when the
   /// race is over.

@@ -32,6 +32,13 @@ void main() {
     expect(race.spent, lessThanOrEqualTo(900 * 2.5 + 2 * 112));
   });
 
+  test("Options that fare the same aren't a dilemma: either will do", () {
+    final race = Race(['a', 'b', 'c'], 900);
+    final t = run(race, {'a': 0.5, 'b': 0.5, 'c': 0.1});
+    expect(t.close, isFalse);
+    expect(race.spent, lessThanOrEqualTo(900));
+  });
+
   test("A close call that can't change the outcome isn't stretched", () {
     final sure = Race(['a', 'b'], 900);
     run(sure, {'a': 1.0, 'b': 0.99});
@@ -60,7 +67,7 @@ void main() {
     expect(from['a'], from['b']);
   });
 
-  test('Courtiers take a moment over no choice, less over an easy one, longer over a close call', () {
+  test('Courtiers take a moment over no choice, less over an easy one, longer over a close call, now and then', () {
     final pace = Pacing();
     expect(pace.pauseFor(1, Thought.forced), lessThan(const Duration(milliseconds: 700)));
     expect(pace.pauseFor(1, const Thought(options: 3, spent: 400, budget: 900, clear: true)),
@@ -68,10 +75,12 @@ void main() {
     final close = pace.pauseFor(1, const Thought(options: 3, spent: 2000, budget: 900, close: true));
     expect(close, greaterThan(const Duration(milliseconds: 1050)));
     expect(close, lessThanOrEqualTo(const Duration(milliseconds: 2450)));
-    // Not twice running from the same courtier; another may.
-    expect(pace.pauseFor(1, const Thought(options: 3, spent: 2000, budget: 900, close: true)),
-        const Duration(milliseconds: 700));
-    expect(pace.pauseFor(2, const Thought(options: 3, spent: 2000, budget: 900, close: true)),
-        greaterThan(const Duration(milliseconds: 1050)));
+    // Once in four of their moves, at most; another courtier may meanwhile.
+    const hard = Thought(options: 3, spent: 2000, budget: 900, close: true);
+    for (var i = 0; i < Pacing.spacing - 1; i++) {
+      expect(pace.pauseFor(1, hard), const Duration(milliseconds: 700));
+    }
+    expect(pace.pauseFor(2, hard), greaterThan(const Duration(milliseconds: 1050)));
+    expect(pace.pauseFor(1, hard), greaterThan(const Duration(milliseconds: 1050)));
   });
 }
