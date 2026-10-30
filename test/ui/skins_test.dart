@@ -62,6 +62,8 @@ void main() {
   });
 
   testWidgets('The Look page puts a look together and wears it as it closes, and it’s remembered', (tester) async {
+    WidgetController.hitTestWarningShouldBeFatal = true;
+    addTearDown(() => WidgetController.hitTestWarningShouldBeFatal = false);
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
@@ -92,8 +94,16 @@ void main() {
       await tester.fling(along, const Offset(1200, 0), 4000);
       await tester.pumpAndSettle();
       await tester.dragUntilVisible(tile, along, const Offset(-200, 0));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
       await tester.tap(tile);
       await tester.pumpAndSettle();
+      expect(find.descendant(of: find.byKey(ValueKey('look-row-$row')), matching: find.bySemanticsLabel(name)), findsWidgets);
+      final chosen = tester.widget<Semantics>(find
+          .ancestor(of: find.descendant(of: along, matching: find.text(name)), matching: find.byType(Semantics))
+          .first);
+      expect(chosen.properties.selected, isTrue, reason: '$name chosen in the $row row');
     }
     await choose('style', 'Midnight');
     await choose('backs', 'Black sunburst');
