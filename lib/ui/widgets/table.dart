@@ -138,17 +138,28 @@ class FeltLight extends StatelessWidget {
     final skin = context.skin;
     final look = skin.tableLook;
     final lamp = look.lamp;
-    final ink = look.patternColour;
-    final pattern = look.pattern == FeltPattern.none
-        ? null
-        : FeltPatternPainter(look.pattern, quiet ? ink.withValues(alpha: ink.a * 0.5) : ink,
-            ground: skin.felt, soft: quiet);
-    if (lamp <= 0 && pattern == null) return const SizedBox.expand();
+    if (lamp <= 0 && look.pattern == FeltPattern.none) return const SizedBox.expand();
     // Drawn once, then shown as a picture (painted_once.dart).
-    return PaintedOnce(
-      id: (skin.id, quiet),
-      painters: [if (pattern != null) pattern, if (lamp > 0) _LampPainter(lamp)],
-    );
+    return PaintedOnce(id: (skin.id, quiet), painters: _painters(skin, quiet: quiet));
+  }
+
+  static List<CustomPainter> _painters(Skin skin, {required bool quiet}) {
+    final look = skin.tableLook;
+    final ink = look.patternColour;
+    return [
+      if (look.pattern != FeltPattern.none)
+        FeltPatternPainter(look.pattern, quiet ? ink.withValues(alpha: ink.a * 0.5) : ink,
+            ground: skin.felt, soft: quiet),
+      if (look.lamp > 0) _LampPainter(look.lamp),
+    ];
+  }
+
+  /// Draws [skin]'s felt now, ahead of it being shown ([PaintedOnce.ready]):
+  /// the table's felt when a game is about to start.
+  static void ready(Skin skin, {bool quiet = false}) {
+    final look = skin.tableLook;
+    if (look.lamp <= 0 && look.pattern == FeltPattern.none) return;
+    PaintedOnce.ready((skin.id, quiet), _painters(skin, quiet: quiet));
   }
 }
 
