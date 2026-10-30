@@ -24,7 +24,7 @@ def main(path):
               f"           {s['workP50']:>5.1f} {s['workP90']:>5.1f} {s['workP99']:>5.1f} {s['workMax']:>6.1f}"
               f"  {s['over8']:>4} {s['over16']:>4}   slowest {s['slowest']}"
               + ''.join(f"\n    slow frame {x}" for x in s.get('slow', []))
-              + (("\n    time by name (ms, summed, inclusive): " + ', '.join(s['totals'])) if s.get('totals') else '')
+              + (("\n    own time by name (ms, summed over the scene): " + ', '.join(s['totals'])) if s.get('totals') else '')
               + (f"\n    ERROR {s['error']}" if s.get('error') else '')
               + (f"  engine p90 {s['engineP90']:.1f} max {s['engineMax']:.1f}" if s.get('engineMax') else ''))
     pct = 100 * total_dropped / max(1, total_frames + total_dropped)
