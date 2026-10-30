@@ -52,4 +52,4 @@ print-out/
 *.jsonl
 
 # The headless runner's rounds (bin/selfplay.dart)
-selfplay/
+/selfplay/
