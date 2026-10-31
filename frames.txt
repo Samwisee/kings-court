@@ -1,0 +1,96 @@
+scene                                                      frames dropped  gap ms  work ms:   p50   p90   p99    max    >8  >16
+starting up                                                    26      40   600.0             2.7  13.2 416.4  416.4     3    2   slowest [416.4, 17.4, 13.2, 4.5, 4.4]
+    slow frame 416.4 ms: BUILD 347.9, COMPOSITING 38.5, LAYOUT 18.0, PAINT 5.0, SEMANTICS 1.9, Semantics.updateChildren 1.8, Semantics.ensureSemanticsNode 0.6, Semantics.ensureGeometry 0.5
+    slow frame 13.2 ms: BUILD 9.5, Semantics.updateChildren 0.7, PAINT 0.6, LAYOUT 0.5, Animate 0.4, COMPOSITING 0.4, Semantics.ensureSemanticsNode 0.3, LAYOUT (root) 0.2
+    slow frame 17.4 ms: LAYOUT 13.5, BUILD 1.3, Animate 0.7, COMPOSITING 0.5, SEMANTICS 0.4, Semantics.updateChildren 0.3, RenderSemanticsAnnotations.getDryBaseline 0.1, LAYOUT (root) 0.1  engine p90 29.9 max 565.2
+front page: the crown, the flourish, the glitter               24     222  1049.9             2.3   4.9  73.2   73.2     2    2   slowest [73.2, 24.3, 4.9, 4.9, 3.4]
+    slow frame 24.3 ms: PAINT (root) 18.7, SEMANTICS 2.1, BUILD 1.0, COMPOSITING 0.6, Semantics.updateChildren 0.5, Semantics.ensureSemanticsNode 0.4, Semantics.ensureGeometry 0.3, LAYOUT (root) 0.2
+    slow frame 73.2 ms: Semantics.updateChildren 27.0, LAYOUT 22.1, SEMANTICS 8.6, PAINT (root) 8.0, COMPOSITING 4.6, BUILD 1.6, Semantics.ensureGeometry 0.6, Semantics.ensureSemanticsNode 0.3  engine p90 401.4 max 1055.5
+setup: its panels sliding in                                  120     105   233.4             0.9   4.0  27.6   32.8     6    3   slowest [32.8, 27.6, 19.3, 10.4, 8.4]
+    slow frame 32.8 ms: BUILD 17.6, LAYOUT 11.8, PAINT 1.1, Semantics.updateChildren 0.4, Semantics.ensureGeometry 0.3, Animate 0.2, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 19.3 ms: BUILD 10.0, LAYOUT (root) 5.8, PAINT 0.9, Semantics.updateChildren 0.7, Semantics.ensureGeometry 0.5, SEMANTICS (root) 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 27.6 ms: BUILD 12.0, LAYOUT 9.4, PAINT (root) 1.6, Semantics.ensureGeometry 1.2, Semantics.updateChildren 0.8, SEMANTICS 0.7, COMPOSITING 0.4, UPDATING COMPOSITING BITS 0.3  engine p90 43.2 max 223.0
+walk in, crowning the King, the deal                          102      35   316.8             3.4   9.8  43.8   80.2    14    7   slowest [80.2, 43.8, 35.9, 22.3, 22]
+    slow frame 80.2 ms: BUILD 42.6, LAYOUT (root) 16.1, PAINT 9.8, SEMANTICS 5.6, Semantics.updateChildren 2.4, FINALIZE TREE 1.3, Semantics.ensureGeometry 0.7, Semantics.ensureSemanticsNode 0.5
+    slow frame 21.3 ms: PAINT (root) 5.8, BUILD 4.7, SEMANTICS 3.6, FINALIZE TREE 3.0, LAYOUT (root) 2.2, Animate 0.6, Semantics.updateChildren 0.6, Semantics.ensureGeometry 0.3
+    slow frame 12.8 ms: BUILD 3.9, PAINT (root) 3.9, LAYOUT 2.3, Semantics.updateChildren 0.5, COMPOSITING 0.3, Semantics.ensureGeometry 0.3, FINALIZE TREE 0.3, SEMANTICS 0.3
+    slow frame 22.3 ms: BUILD 12.7, LAYOUT 2.7, PAINT (root) 2.7, SEMANTICS 1.5, Semantics.updateChildren 0.8, Semantics.ensureGeometry 0.5, Semantics.ensureSemanticsNode 0.3, LAYOUT (root) 0.2
+    slow frame 19.3 ms: BUILD 10.1, LAYOUT (root) 2.7, PAINT (root) 2.5, SEMANTICS (root) 1.4, Semantics.updateChildren 0.9, Animate 0.6, Semantics.ensureGeometry 0.5, Semantics.ensureSemanticsNode 0.3
+    slow frame 12.8 ms: LAYOUT 7.1, SEMANTICS 1.5, BUILD 1.3, PAINT 1.2, Semantics.ensureGeometry 0.4, COMPOSITING 0.3, Semantics.ensureSemanticsNode 0.3, Semantics.updateChildren 0.3
+    slow frame 43.8 ms: LAYOUT (root) 32.9, PAINT (root) 4.1, SEMANTICS 1.8, BUILD 1.8, Animate 1.4, Semantics.updateChildren 0.5, Semantics.ensureSemanticsNode 0.3, Semantics.ensureGeometry 0.3
+    slow frame 35.9 ms: BUILD 18.1, LAYOUT 7.3, SEMANTICS 4.3, PAINT (root) 3.2, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.5, Semantics.ensureSemanticsNode 0.4, COMPOSITING 0.3
+    slow frame 22.0 ms: BUILD 15.9, PAINT 2.2, LAYOUT (root) 1.5, Semantics.updateChildren 0.8, SEMANTICS 0.5, Semantics.ensureSemanticsNode 0.4, Animate 0.4, COMPOSITING 0.2  engine p90 97.6 max 314.5
+picking tasks, in detail (slower: every widget timed)          78      19   183.3             1.0  55.8  70.3   70.3    20   11   slowest [70.3, 69.9, 63.7, 61.8, 61.5]
+    thinking: 63 slices, at most 1 between two frames, the longest 6.4 ms
+    slow frame 61.8 ms: Positioned 2.8, RenderConstrainedBox 2.3, Padding 2.2, Transform 1.9, Text 1.9, Stack 1.7, RenderParagraph 1.7, Semantics.updateChildren 1.6
+    slow frame 58.7 ms: Positioned 3.0, Transform 2.1, SizedBox 2.0, Semantics 1.9, SEMANTICS (root) 1.7, BUILD 1.5, RenderStack 1.5, RenderConstrainedBox 1.4
+    slow frame 63.7 ms: Positioned 3.4, RenderConstrainedBox 2.8, Padding 2.0, SEMANTICS 1.9, Transform 1.8, RenderOpacity 1.8, Container 1.7, Semantics.updateChildren 1.7
+    slow frame 20.1 ms: RenderConstrainedBox 3.0, SEMANTICS 1.7, RenderTransform 1.5, Semantics.updateChildren 0.7, RenderIgnorePointer 0.5, _RenderLayoutBuilder 0.5, RenderSemanticsAnnotations 0.5, RenderCustomPaint 0.5
+    slow frame 70.3 ms: Positioned 3.6, RenderConstrainedBox 3.6, SizedBox 2.3, Semantics 2.2, Padding 2.0, Text 2.0, SEMANTICS (root) 1.8, _GestureSemantics 1.7
+    slow frame 69.9 ms: Text 3.7, Positioned 2.9, RenderConstrainedBox 2.2, RenderParagraph 2.1, Padding 2.1, RenderStack 1.8, Semantics.updateChildren 1.7, SEMANTICS 1.7
+    slow frame 16.5 ms: RenderConstrainedBox 1.6, RenderTransform 1.2, SEMANTICS 1.2, RenderIgnorePointer 0.7, RenderSemanticsAnnotations 0.7, Opacity 0.5, TweenAnimationBuilder<double> 0.4, PAINT (root) 0.4
+    slow frame 61.5 ms: Positioned 2.7, Padding 2.1, Text 1.9, Transform 1.9, SEMANTICS 1.8, SizedBox 1.7, Stack 1.6, _GestureSemantics 1.4
+    slow frame 59.0 ms: SizedBox 4.7, Positioned 3.0, Semantics.updateChildren 2.8, Text 1.9, SEMANTICS (root) 1.6, RenderPositionedBox 1.5, Transform 1.5, Padding 1.5
+    slow frame 54.1 ms: Positioned 3.7, RenderConstrainedBox 2.2, Padding 1.7, RenderTransform 1.7, Transform 1.7, Semantics.updateChildren 1.7, Stack 1.4, SizedBox 1.3
+    slow frame 55.8 ms: Positioned 3.3, RenderConstrainedBox 2.1, Semantics.updateChildren 1.6, RenderTransform 1.5, SizedBox 1.5, SEMANTICS 1.4, Text 1.4, Padding 1.3
+    slow frame 14.7 ms: SEMANTICS (root) 1.8, RenderTransform 1.5, RenderConstrainedBox 1.3, Semantics.updateChildren 0.7, RenderPadding 0.5, RenderSemanticsAnnotations 0.4, RenderClipRect 0.4, RenderCustomPaint 0.4
+    own time by name (ms, summed over the scene): RenderConstrainedBox 35, Positioned 29, RenderTransform 27, Semantics.updateChildren 20, SEMANTICS 18, SizedBox 17, Text 17, Padding 17, COMPOSITING 16, Transform 16, SEMANTICS (root) 16, Semantics 13, Stack 12, RenderStack 12, AnimatedPositioned 11, RenderPadding 11, RenderSemanticsAnnotations 11, _GestureSemantics 11, BUILD 10, RenderParagraph 10, AnimatedScale 10, KeyedSubtree 9, Listener0 9, RawGestureDetector 9, Opacity 9, DecoratedBox 9, LAYOUT (root) 8, _RenderLayoutBuilder 8, RenderCustomPaint 8, Center 8, Semantics.ensureGeometry 8, TweenAnimationBuilder<double> 8, Container 7, MouseRegion 7, CustomPaint 7, PAINT (root) 7, RenderDecoratedBox 7, FlipIn 7, RenderOpacity 7, RepaintBoundary 6, RenderPositionedBox 6, ScaleTransition 6, GestureDetector 6, Animate 6, RenderFlex 6  engine p90 108.0 max 176.2
+picking tasks: tasks flying to their seats                     48      14    66.7             2.4  14.0  23.4   23.4     5    3   slowest [23.4, 19.4, 18.6, 15, 14]
+    thinking: 27 slices, at most 1 between two frames, the longest 5.1 ms
+    slow frame 18.6 ms: BUILD 10.4, LAYOUT (root) 2.4, PAINT (root) 1.9, Semantics.updateChildren 1.6, SEMANTICS 1.2, COMPOSITING 0.3, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.1
+    slow frame 19.4 ms: BUILD 10.2, LAYOUT (root) 2.3, SEMANTICS 2.0, Semantics.updateChildren 1.8, PAINT 1.4, Semantics.ensureGeometry 0.6, Animate 0.2, COMPOSITING 0.2
+    slow frame 15.0 ms: BUILD 8.3, PAINT (root) 1.8, Semantics.updateChildren 1.2, SEMANTICS (root) 1.1, LAYOUT 1.1, Animate 0.4, FINALIZE TREE 0.4, Semantics.ensureGeometry 0.3
+    slow frame 14.0 ms: BUILD 8.1, SEMANTICS 1.2, PAINT 1.1, Semantics.updateChildren 1.0, LAYOUT (root) 1.0, FINALIZE TREE 0.4, COMPOSITING 0.2, Semantics.ensureGeometry 0.2
+    slow frame 23.4 ms: BUILD 11.9, LAYOUT 4.6, PAINT (root) 2.5, SEMANTICS 1.5, Semantics.updateChildren 1.3, COMPOSITING 0.4, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2  engine p90 53.8 max 60.1
+tricks: cards played, flown to the piles                      435     174   233.2             0.8   3.5  16.3   24.8    13    6   slowest [24.8, 17.6, 17.3, 16.6, 16.3]
+    thinking: 177 slices, at most 1 between two frames, the longest 6.1 ms
+    slow frame 17.3 ms: BUILD 8.8, LAYOUT (root) 2.7, PAINT 1.8, SEMANTICS (root) 1.3, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.3, FINALIZE TREE 0.3, COMPOSITING 0.2
+    slow frame 16.3 ms: BUILD 9.1, LAYOUT 2.4, SEMANTICS 1.4, PAINT (root) 1.2, Semantics.updateChildren 0.9, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 16.1 ms: BUILD 8.7, LAYOUT (root) 2.3, PAINT 1.3, SEMANTICS 1.3, Semantics.updateChildren 1.1, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 16.6 ms: BUILD 8.6, LAYOUT (root) 2.0, PAINT (root) 1.5, SEMANTICS 1.5, Semantics.updateChildren 1.1, Semantics.ensureSemanticsNode 0.4, FINALIZE TREE 0.4, Semantics.ensureGeometry 0.4
+    slow frame 15.8 ms: BUILD 8.2, LAYOUT 2.8, PAINT (root) 1.4, Semantics.updateChildren 1.1, SEMANTICS 1.1, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2, COMPOSITING 0.2
+    slow frame 14.4 ms: BUILD 8.3, LAYOUT 1.3, SEMANTICS 1.2, PAINT 1.1, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 14.6 ms: BUILD 7.9, LAYOUT (root) 2.1, SEMANTICS 1.3, PAINT 1.1, Semantics.updateChildren 0.9, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 14.0 ms: BUILD 7.8, LAYOUT 1.8, PAINT (root) 1.3, SEMANTICS 1.1, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, LAYOUT (root) 0.1
+    slow frame 17.6 ms: BUILD 10.4, LAYOUT (root) 2.8, PAINT 1.2, Semantics.updateChildren 1.1, SEMANTICS 1.0, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 14.9 ms: BUILD 8.4, LAYOUT 1.7, PAINT 1.3, Semantics.updateChildren 1.1, SEMANTICS 0.9, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.3, FINALIZE TREE 0.2
+    slow frame 15.1 ms: BUILD 8.2, LAYOUT (root) 2.4, PAINT (root) 1.5, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.4, SEMANTICS 0.3, FINALIZE TREE 0.3, COMPOSITING 0.3
+    slow frame 24.8 ms: BUILD 13.3, LAYOUT (root) 7.4, PAINT 1.2, Semantics.updateChildren 0.9, FINALIZE TREE 0.4, SEMANTICS 0.3, Semantics.ensureGeometry 0.3, COMPOSITING 0.2  engine p90 55.0 max 236.4
+the card tracker sliding in and out                            52       0    66.7             0.7   0.9   1.2    1.2     0    0   slowest [1.2, 1.2, 1, 0.9, 0.9]  engine p90 55.8 max 57.9
+the rest of the round, the tasks judged, the outcome           74       0    66.7             0.7   0.9   1.4    1.4     0    0   slowest [1.4, 1.3, 1.3, 1.1, 1]  engine p90 55.8 max 57.6
+the menu opening and closing                                   41       0    66.8             0.8   1.0   1.7    1.7     0    0   slowest [1.7, 1.4, 1.2, 1.1, 1]  engine p90 56.1 max 58.0
+the Livery page: opening, each tab, a choice in each          606     187   716.6             1.0   4.1  22.3   53.1    31   12   slowest [53.1, 35.2, 33.3, 30.9, 24.5]
+    slow frame 53.1 ms: BUILD 27.4, LAYOUT (root) 22.2, SEMANTICS 0.7, UPDATING COMPOSITING BITS 0.5, Semantics.updateChildren 0.5, Semantics.ensureSemanticsNode 0.4, PAINT 0.3, PAINT (root) 0.2
+    slow frame 24.5 ms: PAINT 16.8, SEMANTICS 3.4, Semantics.updateChildren 1.4, BUILD 0.8, Semantics.ensureGeometry 0.7, Semantics.ensureSemanticsNode 0.5, COMPOSITING 0.3, Animate 0.3
+    slow frame 35.2 ms: BUILD 19.3, LAYOUT 12.6, PAINT (root) 0.9, Semantics.updateChildren 0.5, Semantics.ensureGeometry 0.5, SEMANTICS 0.4, SEMANTICS (root) 0.2, UPDATING COMPOSITING BITS (root) 0.2
+    slow frame 13.4 ms: PAINT (root) 8.4, SEMANTICS 2.2, BUILD 0.8, Semantics.ensureGeometry 0.6, Semantics.updateChildren 0.5, Animate 0.2, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 12.7 ms: BUILD 7.9, LAYOUT (root) 1.7, SEMANTICS (root) 1.6, COMPOSITING 0.2, Semantics.updateChildren 0.2, Semantics.ensureGeometry 0.2, UPDATING COMPOSITING BITS (root) 0.1, PAINT 0.1
+    slow frame 33.3 ms: BUILD 19.1, LAYOUT (root) 11.1, PAINT (root) 1.0, SEMANTICS (root) 0.7, Semantics.updateChildren 0.6, UPDATING COMPOSITING BITS (root) 0.3, Semantics.ensureGeometry 0.2, Semantics.ensureSemanticsNode 0.1
+    slow frame 30.9 ms: PAINT 26.0, SEMANTICS 2.2, BUILD 0.9, Semantics.updateChildren 0.7, Semantics.ensureGeometry 0.4, COMPOSITING 0.3, Animate 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 23.5 ms: BUILD 15.0, FINALIZE TREE 2.4, SEMANTICS 1.6, PAINT (root) 1.4, Semantics.ensureGeometry 0.8, Semantics.updateChildren 0.7, COMPOSITING 0.3, Semantics.ensureSemanticsNode 0.3
+    slow frame 20.1 ms: BUILD 15.5, PAINT (root) 1.1, Semantics.updateChildren 1.1, Semantics.ensureGeometry 0.6, SEMANTICS 0.4, Semantics.ensureSemanticsNode 0.4, LAYOUT (root) 0.2, COMPOSITING 0.2
+    slow frame 16.0 ms: PAINT (root) 13.7, SEMANTICS 1.1, LAYOUT (root) 0.3, Semantics.ensureGeometry 0.2, Semantics.ensureSemanticsNode 0.2, Semantics.updateChildren 0.1, FINALIZE TREE 0.1, COMPOSITING 0.1
+    slow frame 22.3 ms: BUILD 12.1, LAYOUT 5.5, PAINT 1.2, Semantics.updateChildren 0.8, SEMANTICS 0.6, Semantics.ensureGeometry 0.5, Semantics.ensureSemanticsNode 0.4, COMPOSITING 0.3
+    slow frame 13.3 ms: PAINT (root) 5.2, BUILD 2.8, FINALIZE TREE 2.1, SEMANTICS 1.6, Animate 0.4, Semantics.updateChildren 0.4, Semantics.ensureGeometry 0.2, Semantics.ensureSemanticsNode 0.2  engine p90 295.5 max 714.4
+wearing the new look                                           42       6   200.1             0.7   1.0  11.9   11.9     2    0   slowest [11.9, 8.3, 3.7, 1.2, 1]  engine p90 58.2 max 202.4
+the night sky's felt: stars twinkling, one shooting           144      57  1766.6             1.0   1.4  73.5  148.1     7    6   slowest [148.1, 73.5, 25.8, 21, 18.5]
+    slow frame 25.8 ms: BUILD 15.4, LAYOUT (root) 7.6, SEMANTICS 1.0, UPDATING COMPOSITING BITS 0.4, UPDATING COMPOSITING BITS (root) 0.2, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2, Animate 0.1
+    slow frame 21.0 ms: PAINT (root) 15.4, SEMANTICS 2.7, Semantics.updateChildren 1.1, BUILD 0.7, Semantics.ensureGeometry 0.3, LAYOUT (root) 0.2, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.1
+    slow frame 148.1 ms: BUILD 140.5, LAYOUT (root) 3.6, PAINT (root) 1.2, Semantics.updateChildren 0.7, COMPOSITING 0.5, SEMANTICS 0.4, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2
+    slow frame 17.6 ms: PAINT (root) 11.4, SEMANTICS 2.7, BUILD 1.2, Semantics.updateChildren 0.7, Animate 0.5, LAYOUT 0.3, COMPOSITING 0.3, Semantics.ensureGeometry 0.3
+    slow frame 73.5 ms: BUILD 47.6, PAINT (root) 17.2, LAYOUT 4.2, Semantics.updateChildren 1.7, SEMANTICS 0.7, COMPOSITING 0.5, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.3
+    slow frame 18.5 ms: BUILD 5.0, SEMANTICS 4.6, PAINT (root) 2.9, FINALIZE TREE 1.9, Semantics.updateChildren 1.4, LAYOUT (root) 1.1, Animate 0.7, COMPOSITING 0.3  engine p90 120.6 max 451.1
+changing skin, five times                                      91      57   933.3             0.9   6.5 120.3  120.3     6    5   slowest [120.3, 111.4, 95.8, 81.8, 54.3]
+    slow frame 95.8 ms: BUILD 50.7, PAINT 24.5, LAYOUT (root) 12.6, SEMANTICS 1.9, Semantics.updateChildren 1.5, COMPOSITING 0.8, FINALIZE TREE 0.7, Semantics.ensureGeometry 0.4
+    slow frame 120.3 ms: BUILD 97.1, PAINT (root) 10.8, LAYOUT 6.1, Semantics.updateChildren 1.8, SEMANTICS (root) 1.5, COMPOSITING 0.7, FINALIZE TREE 0.7, Semantics.ensureSemanticsNode 0.4
+    slow frame 54.3 ms: BUILD 35.0, PAINT (root) 13.8, LAYOUT (root) 2.6, Semantics.updateChildren 1.3, COMPOSITING 0.7, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2, UPDATING COMPOSITING BITS (root) 0.1
+    slow frame 111.4 ms: BUILD 90.9, PAINT (root) 14.1, LAYOUT (root) 2.7, Semantics.updateChildren 1.5, COMPOSITING 0.9, Semantics.ensureGeometry 0.4, Semantics.ensureSemanticsNode 0.2, UPDATING COMPOSITING BITS (root) 0.2
+    slow frame 81.8 ms: BUILD 61.4, PAINT 9.1, LAYOUT (root) 5.9, SEMANTICS 1.5, Semantics.updateChildren 1.4, COMPOSITING 0.6, FINALIZE TREE 0.5, Semantics.ensureGeometry 0.3  engine p90 69.4 max 344.0
+back to the front page                                         20       0   200.1             2.5   6.3  59.5   59.5     1    1   slowest [59.5, 6.3, 3.9, 3.4, 3.3]
+    slow frame 59.5 ms: BUILD 46.5, LAYOUT (root) 7.6, FINALIZE TREE 3.2, PAINT (root) 0.5, SEMANTICS 0.5, UPDATING COMPOSITING BITS (root) 0.2, Semantics.updateChildren 0.2, Semantics.ensureSemanticsNode 0.2  engine p90 192.0 max 199.4
+changing skin, in detail (slower: every widget timed)          14       6   950.0             1.0  60.5 222.7  222.7     2    2   slowest [222.7, 60.5, 7.2, 6.2, 5.6]
+    slow frame 60.5 ms: BUILD 21.9, RenderCustomPaint 10.2, Positioned 2.5, DecoratedBox 1.2, RenderRepaintBoundary 1.1, TheKingsCourtApp 1.0, PAINT (root) 0.9, RenderSemanticsAnnotations 0.8
+    slow frame 222.7 ms: BUILD 194.8, RenderCustomPaint 3.5, Positioned 1.8, RenderRepaintBoundary 1.1, RenderPadding 0.9, TheKingsCourtApp 0.9, DecoratedBox 0.8, RenderFlex 0.7
+    own time by name (ms, summed over the scene): BUILD 217, RenderCustomPaint 14, Positioned 4, TheKingsCourtApp 4, COMPOSITING 3, RenderRepaintBoundary 2, Semantics 2, DecoratedBox 2, PAINT (root) 2, RenderSemanticsAnnotations 2, RenderPadding 2, RenderFlex 2, Semantics.updateChildren 2, Padding 2, LAYOUT (root) 1, SEMANTICS 1, RenderConstrainedBox 1, Builder 1, RenderParagraph 1, _FocusInheritedScope 1, RenderClipRRect 1, SEMANTICS (root) 1, Focus 1, Animate 1, RepaintBoundary 1, IgnorePointer 1, RenderOpacity 1, LayoutId 1, _RenderLayoutBuilder 1, _InheritedTheme 1, _OverlayEntryWidget 1, _ActionsScope 1, IconTheme 1, UnmanagedRestorationScope 1, FadeTransition 1, _RenderInkFeatures 1, Text 1, LAYOUT 1, Stack 1, RenderTransform 1, Semantics.ensureGeometry 1, Semantics.ensureSemanticsNode 1, RenderDecoratedBox 1, Column 1, _MaterialInterior 1  engine p90 338.3 max 581.5
+
+in all: 1917 frames drawn, 922 refreshes missed (32.5%)
