@@ -1,0 +1,5 @@
+commit 961cdf6420795d79b76264114c870c8b6b48dc0f
+analyzer issues: 0
+00:52 +290: /home/runner/work/kings-court/kings-court/test/self_play_test.dart: Every rung on the ladder has its own name
+00:52 +291: /home/runner/work/kings-court/kings-court/test/self_play_test.dart: The headless runner reaches only the plain Dart layers
+00:52 +292: All tests passed!
