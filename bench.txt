@@ -1,0 +1,37 @@
+== bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 78 ms (11500 playouts/s), sliced 44 ms (+-34 ms), pick 21 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 41 ms (21951 playouts/s), sliced 31 ms (+-10 ms), pick 22 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 26 ms (34462 playouts/s), sliced 26 ms (+0 ms), pick 20 ms
+== bots, in Chrome (as players see it) ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 303 ms (2957 playouts/s), sliced 422 ms (+119 ms), pick 159 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 202 ms (4463 playouts/s), sliced 320 ms (+119 ms), pick 143 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 190 ms (4724 playouts/s), sliced 290 ms (+100 ms), pick 152 ms
+== bot strength: random vs guided playouts, same deals ==
+4 players, target 10, 60 rounds:  [seeing:b900] 40% (645 ms a round)  [fair:s8:b900] 22% (826 ms a round)
+  shown cards:  [fair:s8:b900] of 208 plays after a card was shown, 27% change without it, 32% change on rethinking
+4 players, target 14, 60 rounds:  [seeing:b900] 17% (739 ms a round)  [fair:s8:b900] 12% (941 ms a round)
+  shown cards:  [fair:s8:b900] of 196 plays after a card was shown, 35% change without it, 38% change on rethinking
+== the page, mid-round (phone size) ==
+a change to the game (setState): 17.0 ms a frame
+a change to the screen only (_ui): 15.8 ms a frame
+a frame with nothing changed: 1.7 ms a frame
+the framework's work a frame: build 1.6 ms, layout 9.7 ms, paint 0.7 ms
+  without the table: 7.4 ms a frame
+ so the table costs about 8.5 ms
+  without the table: build 1.4 ms, layout 4.8 ms, paint 0.3 ms
+  without the hand: 7.4 ms a frame
+ so the hand costs about 8.4 ms
+  without the hand: build 1.4 ms, layout 4.0 ms, paint 0.2 ms
+  without the bar: 10.6 ms a frame
+ so the bar costs about 5.2 ms
+  without the bar: build 0.8 ms, layout 6.7 ms, paint 0.8 ms
+  without the trim: 9.9 ms a frame
+ so the trim costs about 6.0 ms
+  without the trim: build 1.3 ms, layout 6.5 ms, paint 0.8 ms
+switching the look: 40 frames, the first 61.3 ms, the slowest 61.3 ms, 299 ms in all
+switching the look: 40 frames, the first 64.7 ms, the slowest 64.7 ms, 226 ms in all
+switching the look: 26 frames, the first 93.0 ms, the slowest 93.0 ms, 195 ms in all
+ after a change, save (scheduling): 0.02 ms
+ after a change, syncCards: 0.01 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
