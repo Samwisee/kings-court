@@ -1,0 +1,382 @@
+BALANCE REPORT  2026-10-27 07:10:45.552607Z
+5907 rounds, bots see every card (best case), 900 playouts per decision.
+
+WIN RATE BY TABLE SIZE AND TARGET
+players  target  rounds  won  tasks (average)
+      3       5     247   88%  2.8
+      3       8     247   66%  4.1
+      3      11     247   47%  5.1
+      3      14     246   23%  5.7
+      3      17     246   11%  6.4
+      3      20     246    4%  6.9
+      4       5     246   83%  2.5
+      4       8     246   55%  3.8
+      4      11     246   38%  4.4
+      4      14     246   16%  5.3
+      4      17     246    7%  5.6
+      4      20     246    2%  6.1
+      5       5     246   72%  2.5
+      5       8     246   49%  3.5
+      5      11     246   26%  4.1
+      5      14     246   11%  4.6
+      5      17     246    3%  4.9
+      5      20     246    2%  5.3
+      6       5     246   76%  2.2
+      6       8     246   52%  3.1
+      6      11     246   28%  3.5
+      6      14     246   10%  3.7
+      6      17     246    4%  4.2
+      6      20     246    0%  4.6
+
+WIN RATE BY NUMBER OF PRECISE TASKS (exactly / only / same / as many)
+0    36%  (3562 rounds)
+1    26%  (2345 rounds)
+
+WIN RATE BY NUMBER OF TASKS
+ 1   73%  (101 rounds)
+ 2   63%  (568 rounds)
+ 3   51%  (1140 rounds)
+ 4   30%  (1458 rounds)
+ 5   20%  (1234 rounds)
+ 6   15%  (839 rounds)
+ 7   17%  (400 rounds)
+ 8   14%  (134 rounds)
+ 9    9%  (32 rounds)
+10    0%  (1 rounds)
+
+TASKS, HARDEST FIRST: round win rate with it on the table, times it was dealt, times it failed itself
+(task dealt fewer than 6 times are left out)
+  7%   335  fail 305  Win all four 8s
+  8%   352  fail 309  Win all four 2s
+  8%   298  fail 260  Win more tricks than the rest of the court put together
+ 10%   282  fail 232  Win a trick with a 2
+ 11%   348  fail 286  Win all nine cards of any one suit
+ 13%   331  fail 239  Win the first three tricks
+ 13%   291  fail 220  Win the 8♦ with a Court Card
+ 13%   328  fail 241  Win the 7♥ with a Court Card
+ 13%   343  fail 257  Win any 7 with another 7
+ 13%   134  fail 107  Win only the first trick
+ 14%   369  fail 300  Win a 9 with a 5
+ 15%   271  fail 193  Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)
+ 15%   323  fail 244  Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)
+ 16%   148  fail 119  Win only the last trick
+ 16%   313  fail 219  Win a trick of only even cards: 2s, 4s, 6s and 8s
+ 16%   108  fail  76  Win exactly three Court Cards (redeal if one player has all four)
+ 16%   291  fail 214  Win a trick with a 3
+ 17%   259  fail 187  Win the first and the last trick
+ 18%   317  fail 234  Win the A♥ in the last trick
+ 18%   203  fail 124  Win the 2♥ and the 3♦
+ 18%   124  fail  83  Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)
+ 18%   328  fail 233  Win the 2♦, 4♣ and 6♥
+ 18%   288  fail 181  Win the 4♥ and the 9♠
+ 19%   124  fail  89  Win exactly four tricks
+ 19%   266  fail 157  Win at least six ♣ cards
+ 19%   283  fail 159  Win a trick with a 4
+ 19%   130  fail  99  Win exactly one ♦ and one ♠ card
+ 19%   249  fail 160  Win more tricks than the King
+ 19%   248  fail 157  Win the 9♥ and the 2♣
+ 19%   320  fail 203  Win the 7♣, 8♣ and 9♣
+ 21%   222  fail 126  Win the 2♠ and the 8♦
+ 21%   292  fail 174  Win at least three 4s
+ 22%   124  fail  87  Win exactly three tricks, and they're in a row
+ 22%   258  fail 153  Win the 3♦ and the 6♠
+ 23%   124  fail  78  Win exactly three 5s
+ 23%   106  fail  60  Win exactly one Court Card (redeal if one player has all four)
+ 23%   252  fail 151  Win the 6♥ and the 3♠
+ 24%   113  fail  73  Win exactly three ♥ cards
+ 24%   205  fail 127  Win more tricks than anyone else
+ 25%   266  fail 144  Win the 7♦ and the 4♣
+ 25%   248  fail 122  Win a 9 with a Court Card
+ 26%   236  fail 120  Win a 2 with a 6
+ 27%    93  fail  57  Win the same number of tricks as the King
+ 27%   279  fail 141  Win a trick with as many ♥ cards as ♣ cards (at least one of each)
+ 27%   260  fail 144  Win the A♣ and the 5♥
+ 27%   248  fail 147  Win at least three 7s
+ 27%   335  fail  87  Win the Queen
+ 28%   269  fail 147  Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s
+ 28%   100  fail  60  Win exactly two tricks, and they're in a row
+ 28%   249  fail 115  Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards
+ 28%   248  fail 111  Win the first two tricks
+ 29%   221  fail 136  Win fewer tricks than anyone else
+ 29%   246  fail 142  Don't win any ♦ or ♠ cards
+ 29%   264  fail 128  Win at least five ♦ cards
+ 29%   276  fail 104  Win at least four ♠ cards
+ 30%   253  fail 123  Win a trick with a 5
+ 30%   259  fail 128  Win a trick with as many ♦ cards as ♠ cards (at least one of each)
+ 30%   261  fail 109  Win a trick where every card is higher than 5
+ 30%   214  fail 114  Don't win two tricks in a row
+ 30%   116  fail  52  Don't win any tricks
+ 30%   112  fail  71  Win exactly two ♦ cards
+ 30%   230  fail 130  Don't lead a trick with a ♦, ♠ or ♣ card
+ 31%   256  fail 148  Don't win any ♦ cards
+ 31%    96  fail  49  Win exactly X tricks, written down in secret before the first trick
+ 31%   288  fail 158  Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)
+ 31%   265  fail 111  Win at least two 9s
+ 31%   265  fail 109  Win a trick with a 6
+ 32%   250  fail 132  Don't win any 7s or 8s
+ 32%   304  fail 110  Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards
+ 32%   241  fail 134  Don't win any ♥ or ♣ cards
+ 32%   211  fail 117  Don't win any 4s
+ 32%   350  fail  98  Win the 3♥
+ 33%    86  fail  42  Win exactly two 3s
+ 33%    89  fail  50  Win exactly one trick
+ 33%   331  fail  78  Win a trick containing an Ace and a 9
+ 33%   223  fail 113  Win no ♠ cards
+ 33%   363  fail  68  Win a trick led with a Court Card
+ 33%   262  fail 132  Win three tricks in a row
+ 33%   216  fail 114  Don't win any ♥ cards
+ 33%   243  fail  69  Win the 4♠
+ 34%   260  fail  73  Win the 6♣
+ 34%   369  fail  99  Win a mixed-suit trick with no Court Cards
+ 34%   269  fail  95  Win a trick totalling exactly 20 or 21
+ 35%   101  fail  56  Win exactly two tricks
+ 35%   250  fail  99  Win a card of every suit (Court Cards don't count)
+ 35%   203  fail 104  Don't win any Aces or 2s
+ 35%   265  fail 139  Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)
+ 35%   258  fail 143  Win the last trick
+ 35%   340  fail  87  Win the 2♦
+ 35%   257  fail  76  Win a trick where every card is lower than 7, with no Court Cards
+ 36%   250  fail  96  Don't win any of the first five tricks
+ 36%   264  fail  82  Win a trick with a 7
+ 36%   263  fail  88  Win two tricks in a row
+ 37%   308  fail  83  Win the 8♣
+ 37%   248  fail  63  Win the 9♠
+ 37%   253  fail  74  Win the A♦
+ 37%   211  fail 103  Don't win any 6s
+ 38%   191  fail  93  Win no Court Cards
+ 38%   113  fail  53  Win exactly X tricks, said out loud before the first trick
+ 38%   265  fail  88  Win at least two Aces
+ 39%   250  fail  79  Don't win any of the first four tricks
+ 40%   207  fail  94  Don't win any Aces
+ 41%   100  fail  50  Win as many ♠ cards as ♣ cards (at least one of each)
+ 41%   301  fail  19  Win the first trick
+ 41%   222  fail 102  Don't lead a trick with a ♦ or ♠ card
+ 42%   198  fail  90  Win fewer tricks than the King
+ 44%   221  fail  49  Don't win any of the first three tricks
+ 51%   104  fail  41  Win exactly one ♠ card
+
+POINTS SCALE (points per unit of hardness, -ln(chance of success)): 3: 3.07, 4: 3.05, 5: 3.26, 6: 4.02
+
+POINTS FROM DIFFICULTY (3 / 4 / 5 / 6 players): fail rate, points now, points suggested
+(! = 2 or more off at some table size)
+   3/3/5/12%  1/1/1/1  ->  1/1/1/1   Win the first trick
+22/18/14/21%  1/1/1/1  ->  1/1/1/1   Win a trick led with a Court Card
+21/20/20/30%  1/1/1/2  ->  1/1/1/1   Don't win any of the first three tricks
+27/24/23/21%  1/1/1/1  ->  1/1/1/1   Win a trick containing an Ace and a 9
+23/21/33/24%  1/1/1/2  ->  1/1/1/1   Win the 9♠
+18/27/28/28%  1/1/1/1  ->  1/1/1/1   Win the 2♦
+24/23/27/29%  1/1/1/1  ->  1/1/1/1   Win the Queen
+32/28/25/24%  1/1/1/1  ->  1/1/1/1   Win a mixed-suit trick with no Court Cards
+29/24/30/25%  1/1/1/1  ->  1/1/1/1   Win the 8♣
+26/28/29/28%  1/1/1/1  ->  1/1/1/1   Win the 3♥
+24/31/25/34%  1/1/1/2  ->  1/1/1/2   Win the 6♣
+28/30/29/27%  1/1/1/2  ->  1/1/1/1   Win the 4♠
+29/27/28/34%  1/1/1/2  ->  1/1/1/2   Win the A♦
+16/24/36/49%  1/1/2/4  ->  1/1/1/3   Win a trick where every card is lower than 7, with no Court Cards
+26/27/32/42%  1/1/1/3  ->  1/1/1/2   Win a trick with a 7
+24/29/41/32%  1/1/1/2  ->  1/1/2/2   Don't win any of the first four tricks
+30/32/36/34%  1/2/1/2  ->  1/1/1/2   Win at least two Aces
+29/34/31/41%  1/1/2/2  ->  1/1/1/2   Win two tricks in a row
+22/31/32/62%  1/1/1/5  ->  1/1/1/4   Win a trick totalling exactly 20 or 21
+26/38/43/38%  1/1/1/2  ->  1/1/2/2   Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards
+48/31/33/38%  1/1/1/2  ->  2/1/1/2   Win at least four ♠ cards
+30/43/41/41%  1/2/1/2  ->  1/2/2/2   Don't win any of the first five tricks
+34/39/36/47%  2/3/3/2  ->  1/1/1/3 ! Win exactly one ♠ card
+42/40/39/36%  2/2/2/3  ->  2/2/2/2   Win a card of every suit (Court Cards don't count)
+26/33/51/62%  1/1/2/4  ->  1/1/2/4   Win a trick with a 6
+29/27/56/69%  1/1/3/6  ->  1/1/3/5   Win a trick where every card is higher than 5
+40/46/44/38%  1/2/2/2  ->  2/2/2/2   Win at least two 9s
+26/45/51/63%  1/2/2/4  ->  1/2/2/4   Win the first two tricks
+32/45/52/52%  2/3/2/2  ->  1/2/2/3   Don't win any tricks
+56/40/43/41%  2/2/2/2  ->  2/2/2/2   Don't win any Aces
+46/42/54/37%  2/2/2/2  ->  2/2/3/2   Win fewer tricks than the King
+44/48/42/49%  2/2/2/2  ->  2/2/2/3   Don't lead a trick with a ♦ or ♠ card
+38/40/55/55%  1/2/3/4  ->  1/2/3/3   Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards
+48/54/45/41%  3/2/3/4  ->  2/2/2/2 ! Win exactly X tricks, said out loud before the first trick
+41/56/50/47%  2/2/2/3  ->  2/2/2/3   Win at least five ♦ cards
+33/42/58/68%  1/2/3/5  ->  1/2/3/5   Win a trick with a 5
+51/50/47/46%  2/2/2/2  ->  2/2/2/2   Win no Court Cards
+54/53/46/41%  2/2/2/2  ->  2/2/2/2   Don't win any 6s
+47/56/47/45%  2/2/3/3  ->  2/2/2/2   Win exactly two 3s
+55/53/55/34%  2/2/2/2  ->  2/2/3/2   Win a 9 with a Court Card
+50/55/47/43%  2/2/2/3  ->  2/2/2/2   Win a trick with as many ♦ cards as ♠ cards (at least one of each)
+51/45/56/46%  3/3/3/4  ->  2/2/3/2 ! Win as many ♠ cards as ♣ cards (at least one of each)
+38/44/60/64%  1/2/4/5  ->  1/2/3/4   Win three tricks in a row
+50/55/50/47%  2/2/2/2  ->  2/2/2/3   Win a trick with as many ♥ cards as ♣ cards (at least one of each)
+57/50/43/52%  2/2/2/3  ->  3/2/2/3   Win no ♠ cards
+35/50/56/65%  1/2/2/5  ->  1/2/3/4   Win a 2 with a 6
+44/58/53/48%  2/2/2/3  ->  2/3/2/3   Win exactly X tricks, written down in secret before the first trick
+56/53/50/44%  3/2/2/2  ->  3/2/2/2   Don't win any Aces or 2s
+53/55/52/49%  2/3/2/2  ->  2/2/2/3   Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)
+57/55/49/48%  2/2/3/3  ->  3/2/2/3   Don't win any ♥ cards
+60/59/48/38%  3/3/2/3  ->  3/3/2/2   Don't win any 7s or 8s
+58/53/54/48%  2/2/2/2  ->  3/2/3/3   Don't win two tricks in a row
+45/55/61/57%  2/3/4/4  ->  2/2/3/3   Win the 7♦ and the 4♣
+31/44/72/77%  1/2/4/7  ->  1/2/4/6   Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s
+50/57/64/49%  2/3/3/3  ->  2/3/3/3   Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)
+48/56/61/58%  2/3/3/4  ->  2/2/3/3   Win the A♣ and the 5♥
+52/63/56/52%  3/3/2/3  ->  2/3/3/3   Win the last trick
+54/62/57/49%  2/2/3/3  ->  2/3/3/3   Win exactly two tricks
+54/57/53/57%  2/2/2/3  ->  2/3/2/3   Don't win any 4s
+64/55/53/45%  3/2/2/3  ->  3/2/2/2   Don't win any ♥ or ♣ cards
+56/57/51/60%  3/2/2/3  ->  3/3/2/4   Win exactly one trick
+41/59/59/71%  2/3/4/6  ->  2/3/3/5   Win a trick with a 4
+65/56/53/46%  3/2/2/2  ->  3/2/2/2   Don't lead a trick with a ♦, ♠ or ♣ card
+58/62/51/55%  2/3/3/5  ->  3/3/2/3 ! Win exactly one Court Card (redeal if one player has all four)
+51/53/61/62%  2/2/3/4  ->  2/2/3/4   Win the 2♠ and the 8♦
+65/57/55/51%  3/3/2/3  ->  3/3/3/3   Don't win any ♦ or ♠ cards
+59/59/56/56%  3/2/2/3  ->  3/3/3/3   Don't win any ♦ cards
+53/59/63/62%  2/3/3/4  ->  2/3/3/4   Win at least six ♣ cards
+39/68/55/79%  2/3/4/5  ->  2/4/3/6   Win at least three 7s
+59/59/62/57%  2/3/3/4  ->  3/3/3/3   Win the 3♦ and the 6♠
+48/66/63/66%  3/3/4/5  ->  2/3/3/4   Win at least three 4s
+50/68/59/61%  2/3/4/4  ->  2/4/3/4   Win the 6♥ and the 3♠
+62/60/56/63%  3/3/3/4  ->  3/3/3/4   Win exactly two tricks, and they're in a row
+52/65/64/64%  2/3/3/5  ->  2/3/3/4   Win the 2♥ and the 3♦
+62/65/65/53%  4/3/3/5  ->  3/3/3/3 ! Win the same number of tricks as the King
+53/63/60/75%  3/2/3/6  ->  2/3/3/6   Win fewer tricks than anyone else
+56/64/62/69%  3/3/3/4  ->  3/3/3/5   Win more tricks than anyone else
+53/64/69/67%  2/3/3/5  ->  2/3/4/5   Win the 4♥ and the 9♠
+58/66/59/69%  3/4/4/6  ->  3/3/3/5   Win exactly three 5s
+52/61/73/67%  2/3/3/4  ->  2/3/4/4   Win the 9♥ and the 2♣
+62/58/70/65%  3/3/3/4  ->  3/3/4/4   Win exactly two ♦ cards
+54/65/71/65%  3/3/4/5  ->  2/3/4/4   Win the 7♣, 8♣ and 9♣
+68/62/63/62%  4/3/5/5  ->  3/3/3/4 ! Win more tricks than the King
+63/59/74/60%  2/3/4/3  ->  3/3/4/4   Win exactly three ♥ cards
+70/64/69/66%  4/4/5/5  ->  4/3/4/4   Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)
+41/63/85/90%  2/3/7/7  ->  2/3/6/7   Win a trick of only even cards: 2s, 4s, 6s and 8s
+74/78/65/63%  4/4/5/5  ->  4/5/3/4 ! Win exactly three tricks, and they're in a row
+67/75/70/70%  3/4/5/5  ->  3/4/4/5   Win exactly three Court Cards (redeal if one player has all four)
+65/75/74/74%  4/4/6/7  ->  3/4/4/5 ! Win the 2♦, 4♣ and 6♥
+66/79/68/72%  3/4/4/7  ->  3/5/4/5 ! Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)
+67/65/76/82%  4/3/4/7  ->  3/3/5/7   Win exactly four tricks
+62/72/76/86%  3/5/5/5  ->  3/4/5/7 ! Win the first and the last trick
+51/70/88/88%  3/5/7/7  ->  2/4/7/7   Win the first three tricks
+77/70/73/74%  5/4/4/5  ->  4/4/4/5   Win the 7♥ with a Court Card
+49/74/86/90%  2/4/5/7  ->  2/4/6/7   Win a trick with a 3
+73/68/83/74%  4/5/5/5  ->  4/3/6/5 ! Win the A♥ in the last trick
+74/72/76/80%  5/5/4/7  ->  4/4/5/6   Win any 7 with another 7
+67/80/74/82%  3/4/5/7  ->  3/5/4/7   Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)
+75/77/75/76%  4/4/4/6  ->  4/4/5/6   Win the 8♦ with a Court Card
+79/77/70/77%  5/5/4/4  ->  5/5/4/6 ! Win exactly one ♦ and one ♠ card
+90/78/71/76%  7/5/3/3  ->  7/5/4/6 ! Win only the first trick
+89/83/74/69%  6/4/4/4  ->  7/5/4/5   Win only the last trick
+82/84/78/80%  5/5/6/7  ->  5/6/5/7   Win a 9 with a 5
+78/82/86/83%  4/5/6/6  ->  5/5/6/7   Win all nine cards of any one suit
+74/82/85/91%  3/4/6/7  ->  4/5/6/7   Win a trick with a 2
+78/89/91/91%  3/6/7/7  ->  5/7/7/7 ! Win more tricks than the rest of the court put together
+81/87/93/95%  5/7/7/7  ->  5/6/7/7   Win all four 2s
+84/94/92/95%  4/6/7/7  ->  6/7/7/7 ! Win all four 8s
+
+SUGGESTED POINTS, ready to paste: description | three | four | five | six
+POINTS|Win more tricks than anyone else|3|3|3|5
+POINTS|Win more tricks than the rest of the court put together|5|7|7|7
+POINTS|Win fewer tricks than anyone else|2|3|3|6
+POINTS|Win more tricks than the King|3|3|3|4
+POINTS|Win fewer tricks than the King|2|2|3|2
+POINTS|Win the same number of tricks as the King|3|3|3|3
+POINTS|Win a trick where every card is lower than 7, with no Court Cards|1|1|1|3
+POINTS|Win a trick where every card is higher than 5|1|1|3|5
+POINTS|Win a trick with a 6|1|1|2|4
+POINTS|Win a trick with a 5|1|2|3|5
+POINTS|Win a trick with a 3|2|4|6|7
+POINTS|Win a 2 with a 6|1|2|3|4
+POINTS|Win a 9 with a 5|5|6|5|7
+POINTS|Win any 7 with another 7|4|4|5|6
+POINTS|Win a trick with a 2|4|5|6|7
+POINTS|Win the 3♥|1|1|1|1
+POINTS|Win the A♦|1|1|1|2
+POINTS|Win the 4♠|1|1|1|1
+POINTS|Win the 6♣|1|1|1|2
+POINTS|Win all four 2s|5|6|7|7
+POINTS|Win at least three 4s|2|3|3|4
+POINTS|Win at least three 7s|2|4|3|6
+POINTS|Win at least two 9s|2|2|2|2
+POINTS|Win all four 8s|6|7|7|7
+POINTS|Win exactly three 5s|3|3|3|5
+POINTS|Win exactly two 3s|2|2|2|2
+POINTS|Win the 7♣, 8♣ and 9♣|2|3|4|4
+POINTS|Win the 4♥ and the 9♠|2|3|4|5
+POINTS|Win the 2♠ and the 8♦|2|2|3|4
+POINTS|Win the 6♥ and the 3♠|2|4|3|4
+POINTS|Win the 7♦ and the 4♣|2|2|3|3
+POINTS|Win the A♣ and the 5♥|2|2|3|3
+POINTS|Win the 9♥ and the 2♣|2|3|4|4
+POINTS|Win the 3♦ and the 6♠|3|3|3|3
+POINTS|Win the 2♦, 4♣ and 6♥|3|4|4|5
+POINTS|Win the A♥ in the last trick|4|3|6|5
+POINTS|Win exactly one ♦ and one ♠ card|5|5|4|6
+POINTS|Win at least six ♣ cards|2|3|3|4
+POINTS|Win at least five ♦ cards|2|2|2|3
+POINTS|Win exactly three ♥ cards|3|3|4|4
+POINTS|Win exactly two ♦ cards|3|3|4|4
+POINTS|Win exactly one ♠ card|1|1|1|3
+POINTS|Win no ♠ cards|3|2|2|3
+POINTS|Win a card of every suit (Court Cards don't count)|2|2|2|2
+POINTS|Win all nine cards of any one suit|5|5|6|7
+POINTS|Win a trick of only even cards: 2s, 4s, 6s and 8s|2|3|6|7
+POINTS|Win a trick of only odd cards: Aces, 3s, 5s, 7s and 9s|1|2|4|6
+POINTS|Win a trick totalling more than 21 / 26 / 30 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards|1|1|2|2
+POINTS|Win a trick totalling less than 9 / 13 / 17 / 21 (2–3 / 4 / 5 / 6 players), with no Court Cards|1|2|3|3
+POINTS|Win a trick totalling exactly 20 or 21|1|1|1|4
+POINTS|Win exactly one Court Card (redeal if one player has all four)|3|3|2|3
+POINTS|Win the Joker and no other Court Card (redeal if one player has the Joker and King, or the Joker, Jack and Queen)|3|5|4|7
+POINTS|Win the Jack and no other Court Card (redeal if one player has the Jack and King, or the Joker, Jack and Queen)|3|5|4|5
+POINTS|Win the Queen|1|1|1|1
+POINTS|Win exactly two Court Cards (redeal if one player has the Jack, Queen and King)|4|3|4|4
+POINTS|Win exactly three Court Cards (redeal if one player has all four)|3|4|4|5
+POINTS|Win no Court Cards|2|2|2|2
+POINTS|Win the 7♥ with a Court Card|4|4|4|5
+POINTS|Win the 8♦ with a Court Card|4|4|5|6
+POINTS|Don't lead a trick with a ♦, ♠ or ♣ card|3|2|2|2
+POINTS|Don't lead a trick with a ♦ or ♠ card|2|2|2|3
+POINTS|Don't win any ♥ cards|3|2|2|3
+POINTS|Don't win any ♦ cards|3|3|3|3
+POINTS|Don't win any ♥ or ♣ cards|3|2|2|2
+POINTS|Don't win any ♦ or ♠ cards|3|3|3|3
+POINTS|Don't win any 7s or 8s|3|3|2|2
+POINTS|Don't win any 6s|2|2|2|2
+POINTS|Don't win any 4s|2|3|2|3
+POINTS|Don't win any Aces|2|2|2|2
+POINTS|Don't win any Aces or 2s|3|2|2|2
+POINTS|Don't win any of the first four tricks|1|1|2|2
+POINTS|Don't win any of the first three tricks|1|1|1|1
+POINTS|Don't win any of the first five tricks|1|2|2|2
+POINTS|Don't win any tricks|1|2|2|3
+POINTS|Don't win two tricks in a row|3|2|3|3
+POINTS|Win the last trick|2|3|3|3
+POINTS|Win the first three tricks|2|4|7|7
+POINTS|Win the first two tricks|1|2|2|4
+POINTS|Win the first trick|1|1|1|1
+POINTS|Win the first and the last trick|3|4|5|7
+POINTS|Win only the last trick|7|5|4|5
+POINTS|Win only the first trick|7|5|4|6
+POINTS|Win exactly one trick|3|3|2|4
+POINTS|Win exactly two tricks|2|3|3|3
+POINTS|Win two tricks in a row|1|1|1|2
+POINTS|Win three tricks in a row|1|2|3|4
+POINTS|Win exactly four tricks|3|3|5|7
+POINTS|Win exactly three tricks, and they're in a row|4|5|3|4
+POINTS|Win exactly two tricks, and they're in a row|3|3|3|4
+POINTS|Win exactly X tricks, said out loud before the first trick|2|2|2|2
+POINTS|Win exactly X tricks, written down in secret before the first trick|2|3|2|3
+POINTS|Win as many ♠ cards as ♣ cards (at least one of each)|2|2|3|2
+POINTS|Win a trick with as many ♥ cards as ♣ cards (at least one of each)|2|2|2|3
+POINTS|Win a trick with as many ♦ cards as ♠ cards (at least one of each)|2|2|2|2
+POINTS|Win more ♠ cards than ♥ cards (winning no ♥ cards is fine)|2|3|3|3
+POINTS|Win more ♣ cards than ♦ cards (winning no ♦ cards is fine)|2|2|2|3
+POINTS|Win a mixed-suit trick with no Court Cards|1|1|1|1
+POINTS|Win a trick with a 4|2|3|3|5
+POINTS|Win a trick with a 7|1|1|1|2
+POINTS|Win the 2♦|1|1|1|1
+POINTS|Win the 8♣|1|1|1|1
+POINTS|Win the 9♠|1|1|1|1
+POINTS|Win the 2♥ and the 3♦|2|3|3|4
+POINTS|Win at least two Aces|1|1|1|2
+POINTS|Win at least four ♠ cards|2|1|1|2
+POINTS|Win a trick containing an Ace and a 9|1|1|1|1
+POINTS|Win a trick led with a Court Card|1|1|1|1
+POINTS|Win a 9 with a Court Card|2|2|3|2
+
+WORST PAIRS (dealt together at least 30 times)
+  0%   30  Win any 7 with another 7  +  Win at least three 4s

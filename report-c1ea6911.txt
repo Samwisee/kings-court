@@ -1,0 +1,167 @@
+BALANCE REPORT  2026-10-26 13:48:32.683131Z
+39390 rounds, bots see every card (best case), 160 playouts per decision.
+
+WIN RATE BY TABLE SIZE AND TARGET
+players  target  rounds  won
+      3       6    2626   65%
+      3      10    2626   33%
+      3      14    2626   15%
+      3      18    2626    4%
+      3      22    2626    1%
+      4       6    2626   65%
+      4      10    2626   37%
+      4      14    2626   16%
+      4      18    2626    5%
+      4      22    2626    1%
+      5       6    2626   61%
+      5      10    2626   33%
+      5      14    2626   13%
+      5      18    2626    5%
+      5      22    2626    1%
+
+WIN RATE BY NUMBER OF "EXACT" TASKS (exactly / only / same / as many)
+0    36%  (10975 rounds)
+1    26%  (14662 rounds)
+2+   11%  (13753 rounds)
+
+WIN RATE BY NUMBER OF TASKS
+ 1   54%  (52 rounds)
+ 2   58%  (3062 rounds)
+ 3   56%  (5354 rounds)
+ 4   35%  (5396 rounds)
+ 5   23%  (5385 rounds)
+ 6   14%  (5352 rounds)
+ 7    7%  (5165 rounds)
+ 8    4%  (4366 rounds)
+ 9    3%  (2981 rounds)
+10    2%  (1542 rounds)
+11    2%  (575 rounds)
+12    1%  (144 rounds)
+13    0%  (16 rounds)
+
+TASKS, HARDEST FIRST: round win rate with it on the table, times it was dealt, times it failed itself
+(task dealt fewer than 6 times are left out)
+  6%  1729  fail 1561  Win all four 3s
+  6%  1520  fail 1371  Win all four 9s
+  7%  1871  fail 1681  Win an 8 with a 4
+  7%  1877  fail 1608  Win every card of at least one suit (Court Cards don't count)
+  8%  2079  fail 1780  Win any 6 with another 6
+  8%  2064  fail 1690  Win at least seven ♦ cards
+  8%  1995  fail 1661  Win the 7♥ with a Court Card
+  8%  2034  fail 1636  Win the 9♣ with a Court Card
+  9%  1765  fail 1518  Win only the first trick
+  9%  1873  fail 1645  Win exactly one ♥ and one ♣ card
+  9%  1793  fail 1582  Win only the last trick
+  9%  1887  fail 1410  Win the first three tricks
+ 10%  2025  fail 1668  Win the Jack and no other Court Card (redeal if one player holds the Jack and King, or the Joker, Jack and Queen)
+ 10%  1883  fail 1568  Win a trick with a 2
+ 10%  1830  fail 1539  Win more tricks than everyone else together
+ 11%  1712  fail 1441  Win the 2♣ in the last trick
+ 11%  1854  fail 1471  Win the 3♣, 4♦ and 5♦
+ 11%  1956  fail 1660  Win exactly three tricks, and they're in a row
+ 11%  2031  fail 1602  Win the Joker and no other Court Card (redeal if one player holds the Joker and King, or the Joker, Jack and Queen)
+ 11%  1969  fail 1584  Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)
+ 12%  1833  fail 1395  Win a trick with a 3
+ 12%  2313  fail 1865  Win more tricks than the King
+ 12%  2086  fail 1546  Win the A♠, 2♠ and 3♠
+ 12%  2279  fail 1630  Win the 5♠ and the 8♥
+ 13%  2220  fail 1575  Win the 6♠ and the 7♦
+ 13%  2489  fail 1743  Win the A♥ and the 7♣
+ 13%  2023  fail 1577  Win exactly four tricks
+ 13%  2253  fail 1599  Win the 5♥ and the 6♦
+ 14%  1906  fail 1445  Win exactly three 6s
+ 14%  2273  fail 1539  Win the 5♣ and the 8♠
+ 14%  1847  fail 1383  Win exactly three Court Cards (redeal if one player holds all four)
+ 14%  1933  fail 1433  Win exactly one Court Card (redeal if one player holds all four)
+ 14%  1643  fail 1266  Win the first and the last trick
+ 14%  2106  fail 1463  Win the 9♦ and the 7♠
+ 14%  2223  fail 1515  Win the 9♥ and the 8♦
+ 14%  1897  fail 1260  Win a trick of only even numbers (that means only 2s, 4s, 6s and 8s)
+ 15%  2066  fail 1607  Win exactly two tricks, and they're in a row
+ 15%  1777  fail 1258  Win at least three 9s
+ 15%  1946  fail 1495  Win the same number of tricks as the King
+ 15%  2077  fail 1260  Win three tricks in a row
+ 15%  2832  fail 1295  Win the first two tricks
+ 15%  1841  fail 1318  Win at least three 5s
+ 15%  2851  fail 1470  Win a 5 with a 7
+ 15%  2002  fail 1314  Don't win any tricks
+ 16%  2157  fail 1210  Win a trick with a 5
+ 16%  2080  fail 1538  Win more tricks than everyone else
+ 16%  2091  fail 1421  Win a trick with as many ♥ cards as ♠ cards (you must win at least one of each)
+ 16%  1941  fail 1310  Win a trick totalling less than 8 / 12 / 16 / 20 (2–3 / 4 / 5 / 6 players), with no Court Cards
+ 16%  2105  fail 1393  Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)
+ 16%  2040  fail 1288  Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards
+ 16%  2447  fail 1783  Win exactly two tricks
+ 17%  2086  fail 1011  Win a trick with a 6
+ 17%  2095  fail 1208  Win at least five ♥ cards
+ 17%  3894  fail 1512  Win the Queen
+ 17%  2077  fail 907  Win a trick where every card is higher than 5
+ 17%  1915  fail 1386  Win exactly two ♠ cards
+ 17%  3923  fail 1662  Win the 6♣
+ 18%  1937  fail 1428  Win exactly two ♣ cards
+ 18%  2378  fail 1701  Win exactly one trick
+ 18%  2092  fail 1512  Don't win any ♥ or ♠ cards
+ 18%  2083  fail 1531  Don't win any Aces, 2s or 3s
+ 18%  2009  fail 1415  Win exactly X tricks, kept secret (write X down and keep it hidden)
+ 18%  3911  fail 2753  Win more ♥ cards than ♣ cards (winning no ♣ cards is fine)
+ 18%  2334  fail 1197  Win at least two 7s
+ 18%  2056  fail 1453  Don't win any ♦ or ♣ cards
+ 18%  1804  fail 1344  Win as many ♥ cards as ♦ cards (you must win at least one of each)
+ 18%  2116  fail 957  Win a trick where every card is lower than 7, with no Court Cards
+ 18%  3932  fail 1731  Win the 4♠
+ 18%  3846  fail 1655  Win the A♦
+ 19%  2025  fail 1348  Win exactly two 9s
+ 19%  2281  fail 1666  Win fewer tricks than everyone else
+ 19%  2458  fail 1693  Don't win any Aces
+ 19%  2331  fail 1631  Win exactly X tricks, announced to everyone
+ 19%  1991  fail 1417  Win exactly one ♥ card
+ 19%  3814  fail 1605  Win the 3♥
+ 19%  3927  fail 2717  Win more ♦ cards than ♠ cards (winning no ♠ cards is fine)
+ 19%  1943  fail 1017  Win a trick of only odd numbers (that means only Aces, 3s, 5s, 7s and 9s)
+ 19%  2113  fail 1471  Win the last trick
+ 19%  2484  fail 1719  Don't win any ♣ cards
+ 19%  2154  fail 1514  Don't win any 8s or 9s
+ 20%  3953  fail 1704  Win two tricks in a row
+ 20%  2086  fail 1240  Win at least one card of each suit (Court Cards don't count)
+ 20%  2434  fail 1656  Don't win any ♦ cards
+ 20%  2337  fail 1593  Don't win two tricks in a row
+ 20%  2545  fail 1719  Win no ♥ cards
+ 20%  2006  fail 1377  Don't lead a trick with a ♥, ♦ or ♠ card
+ 20%  2898  fail 1027  Don't win any of the first three tricks
+ 21%  1965  fail 812  Win a trick totalling exactly 22 or 23
+ 21%  2384  fail 1614  Win fewer tricks than the King
+ 21%  3909  fail 2643  Don't win any 9s
+ 21%  3439  fail 2279  Don't lead a trick with a ♥ or ♣ card
+ 21%  2920  fail 1985  Don't win any 5s
+ 21%  2129  fail 1122  Don't win any of the first five tricks
+ 21%  2272  fail 988  Win a mixed-suit trick with no Court Cards
+ 22%  2706  fail 1192  Don't win any of the first four tricks
+ 22%  3848  fail 2516  Win no Court Cards
+ 22%  3288  fail 170  Win the first trick
+
+WORST PAIRS (dealt together at least 5 times)
+  0%   81  Win all four 3s  +  Win the 7♥ with a Court Card
+  0%   89  Win exactly two Court Cards (redeal if one player holds the Jack, Queen and King)  +  Win more tricks than everyone else together
+  0%   65  Win all four 9s  +  Win the 2♣ in the last trick
+  0%   63  Win all four 9s  +  Win the same number of tricks as the King
+  0%   59  Win all four 9s  +  Win exactly three 6s
+  0%   76  Win all four 9s  +  Win the A♠, 2♠ and 3♠
+  0%   92  Win at least seven ♦ cards  +  Win exactly one ♥ and one ♣ card
+  0%   80  Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)  +  Win all four 3s
+  0%   76  Win an 8 with a 4  +  Win only the first trick
+  0%   68  Win a trick totalling more than 23 / 28 / 31 / 34 (2–3 / 4 / 5 / 6 players), with no Court Cards  +  Win all four 9s
+  0%   63  Win all four 9s  +  Win more tricks than everyone else together
+  0%   91  Win at least seven ♦ cards  +  Win the 3♣, 4♦ and 5♦
+  0%   76  Win all four 3s  +  Win the first three tricks
+  0%   69  Win exactly one ♥ and one ♣ card  +  Win the 2♣ in the last trick
+  0%   82  Win more tricks than everyone else together  +  Win the same number of tricks as the King
+  0%  110  Win all four 3s  +  Win the A♥ and the 7♣
+  0%   74  Win all four 3s  +  Win more tricks than everyone else together
+  0%   64  Win a trick with a 2  +  Win all four 9s
+  0%   97  Win an 8 with a 4  +  Win the 5♠ and the 8♥
+  0%   54  Win all four 3s  +  Win exactly one ♥ and one ♣ card
+  0%   92  Win a trick with as many ♣ cards as ♦ cards (you must win at least one of each)  +  Win the 7♥ with a Court Card
+  0%   55  Win all four 3s  +  Win all four 9s
+  0%   87  Win a trick where every card is lower than 7, with no Court Cards  +  Win all four 3s
+  0%  104  Win a trick where every card is higher than 5  +  Win the 7♥ with a Court Card
+  0%   64  Win an 8 with a 4  +  Win the first and the last trick
