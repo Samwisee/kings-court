@@ -78,14 +78,16 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          flutter build web --release --base-href /kings-court/ \
+          # --wasm: WebAssembly as well as JavaScript; web/flutter_bootstrap.js
+          # picks which a browser gets.
+          flutter build web --release --wasm --base-href /kings-court/ \
             --dart-define=BUILD=${GITHUB_SHA::8} \
             --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }} \
             --dart-define=SENTRY_DSN=${{ vars.SENTRY_DSN }} \
             --dart-define=GOATCOUNTER=${{ vars.GOATCOUNTER_CODE }} \
             --source-maps 2>&1 | tee build.txt
           # How much a player downloads: the game's code, and everything.
-          { echo; echo "main.dart.js: $(du -k build/web/main.dart.js | cut -f1) KB"; echo "the whole site: $(du -sk build/web | cut -f1) KB (with source maps)"; } | tee -a build.txt
+          { echo; echo "main.dart.js: $(du -k build/web/main.dart.js | cut -f1) KB, main.dart.wasm: $(du -k build/web/main.dart.wasm | cut -f1) KB"; echo "the whole site: $(du -sk build/web | cut -f1) KB (with source maps)"; } | tee -a build.txt
       # Source maps go to Sentry (when it's set up) so crash reports show the
       # Dart lines, then are left off the published site.
       - name: Upload source maps
@@ -106,10 +108,10 @@ jobs:
       - name: Bust caches
         run: |
           v=${GITHUB_SHA::8}
-          sed -i "s/main\.dart\.js/main.dart.js?v=$v/g" build/web/flutter_bootstrap.js
+          sed -i "s/main\.dart\.js/main.dart.js?v=$v/g; s/main\.dart\.wasm/main.dart.wasm?v=$v/g; s/main\.dart\.mjs/main.dart.mjs?v=$v/g" build/web/flutter_bootstrap.js
           sed -i "s/flutter_bootstrap\.js/flutter_bootstrap.js?v=$v/" build/web/index.html
           rm -f build/web/flutter_service_worker.js
-          grep -o 'main.dart.js[^"]*' build/web/flutter_bootstrap.js | head -2
+          grep -o 'main.dart.[a-z]*js[^"]*\|main.dart.wasm[^"]*' build/web/flutter_bootstrap.js | head -4
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
