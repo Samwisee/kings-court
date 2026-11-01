@@ -104,20 +104,25 @@ void _pharaoh(_Pen pen, int rank) {
       pen.gild(cloth);
       pen.canvas.save();
       pen.canvas.clipPath(cloth);
-      for (var y = 22.0; y < 92; y += 8) {
-        pen.canvas.drawRect(Rect.fromLTWH(0, y, 100, 3.6), Paint()..color = _lapis);
+      for (var y = 24.0; y < 92; y += 9) {
+        pen.canvas.drawRect(Rect.fromLTWH(0, y, 100, 4.5), Paint()..color = _lapis);
       }
       pen.canvas.restore();
       pen.edge(cloth, 2);
-      pen.fill(
-          Path()
-            ..moveTo(36, 56)
-            ..lineTo(36, 40)
-            ..quadraticBezierTo(50, 34, 64, 40)
-            ..lineTo(64, 56)
-            ..quadraticBezierTo(50, 80, 36, 56)
-            ..close(),
-          pen.cloth);
+      // The face: gold, its eyes lined in kohl, the false beard under it.
+      pen.fill(_rect(45, 62, 55, 82, 2), _lapis);
+      pen.gild(Path()
+        ..moveTo(36, 40)
+        ..quadraticBezierTo(50, 34, 64, 40)
+        ..lineTo(64, 54)
+        ..quadraticBezierTo(50, 74, 36, 54)
+        ..close());
+      for (final s in const [-1.0, 1.0]) {
+        pen.ink(Path()
+          ..moveTo(50 + s * 4, 48)
+          ..lineTo(50 + s * 11, 47)
+          ..lineTo(50 + s * 14, 49), null, 1.2);
+      }
       pen.gild(_rect(30, 32, 70, 40, 2));
       // The cobra.
       pen.gild(Path()

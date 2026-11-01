@@ -342,7 +342,7 @@ const setCourts = <CourtChoice>[
         [Color(0xFFC8102E), Color(0xFF5A0612)],
         [Color(0xFF13734A), Color(0xFF05301E)],
       ],
-      patterns: [FeltPattern.baize, FeltPattern.chequer, FeltPattern.chequer, FeltPattern.baize],
+      patterns: [FeltPattern.baize, FeltPattern.baize, FeltPattern.baize, FeltPattern.baize],
       ink: Color(0x55F2D27A),
       emblems: EmblemSet.royale),
   CourtChoice('atelier', 'Atelier',

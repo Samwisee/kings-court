@@ -335,7 +335,7 @@ class _Emblem extends CustomPainter {
   static const _grow = 1.15;
 
   /// A room's emblem's size on the printed card, in millimetres.
-  static const _setBox = Size(33, 33);
+  static const _setBox = Size(39, 39);
 
   @override
   void paint(Canvas canvas, Size size) {
