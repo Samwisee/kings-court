@@ -143,12 +143,9 @@ class _PriceTag extends StatelessWidget {
 /// The grid's scrollbar in the livery's own colours: a slim thumb in its
 /// accent on a dark track, always showing, so there's plainly more below.
 class _LiveryScrollbar extends StatelessWidget {
-  const _LiveryScrollbar({required this.controller, required this.child, this.top = 0});
+  const _LiveryScrollbar({required this.controller, required this.child});
   final ScrollController controller;
   final Widget child;
-
-  /// Where its track starts: below what stays pinned at the top.
-  final double top;
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +165,6 @@ class _LiveryScrollbar extends StatelessWidget {
         trackBorderColor: Colors.transparent,
         crossAxisMargin: 6,
         mainAxisMargin: 10,
-        padding: EdgeInsets.only(top: top),
         child: child,
       ),
     );
