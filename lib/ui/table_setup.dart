@@ -248,6 +248,10 @@ extension _Setup on HomePageState {
   }
 
   /// Opens the New Game panel on the table.
+  ///
+  /// Pass it on as a closure (`() => _showSetupDialog()`), not torn off:
+  /// compiled to WebAssembly, a tear-off of a method with optional
+  /// parameters, used as a plain callback, traps ("unreachable").
   void _showSetupDialog(
       {GameMode? startMode, int? startChapter, bool continuing = false}) {
     _set(() {
