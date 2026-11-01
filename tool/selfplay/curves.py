@@ -51,7 +51,8 @@ def main(args):
     for r in read(path):
         sp = r.get('selfplay')
         if sp:
-            by_seed[sp['seed']][sp['rung']] = r
+            # Only what the report reads: a night's run is hundreds of MB.
+            by_seed[sp['seed']][sp['rung']] = {'players': r['players'], 'outcome': r['outcome'], 'selfplay': sp}
     rungs = [r for r in ORDER if any(r in v for v in by_seed.values())]
     seeds = [s for s, v in by_seed.items() if all(r in v for r in rungs)]
     print(f"{len(seeds)} deals played at every rung ({', '.join(rungs)})\n")
