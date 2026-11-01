@@ -20,13 +20,14 @@ import 'table_page.dart';
 import 'widgets/character_token.dart';
 
 class TheKingsCourtApp extends StatefulWidget {
-  const TheKingsCourtApp({super.key, this.skin = const CourtSkin(), this.entitlements = startingEntitlements});
+  const TheKingsCourtApp({super.key, this.skin = const CourtSkin(), this.entitlements});
 
   /// The skin it opens in.
   final Skin skin;
 
-  /// Which skins the player may wear, and what the rest cost.
-  final Entitlements entitlements;
+  /// Which skins the player may wear, and what the rest cost: by default
+  /// the store's sample prices, with [skin] the player's own.
+  final Entitlements? entitlements;
 
   @override
   State<TheKingsCourtApp> createState() => _TheKingsCourtAppState();
@@ -35,6 +36,7 @@ class TheKingsCourtApp extends StatefulWidget {
 class _TheKingsCourtAppState extends State<TheKingsCourtApp>
     with SingleTickerProviderStateMixin {
   late Skin _skin = dressed(widget.skin);
+  late final Entitlements _entitlements = widget.entitlements ?? (Shop(samplePrices)..keep(widget.skin));
 
   /// The whole screen, to hold as a still while the look changes.
   final _screen = GlobalKey();
@@ -119,7 +121,7 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
   @override
   Widget build(BuildContext context) => SkinScope(
         skin: _skin,
-        entitlements: widget.entitlements,
+        entitlements: _entitlements,
         onChoose: _choose,
         child: MaterialApp(
           title: "The King's Court",

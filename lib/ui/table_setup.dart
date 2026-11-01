@@ -17,7 +17,7 @@ extension _Setup on HomePageState {
       _showKeys = prefs.getBool(HomePageState._keysKey) ?? false;
       await GameLog.load(prefs);
       final skin = prefs.getString(HomePageState._skinKey);
-      if (skin != null && mounted) SkinScope.choose(context, skinById(skin));
+      if (skin != null && mounted) SkinScope.restore(context, skinById(skin));
       final saves = await readSaves(prefs);
       // Anyone with a saved game has played already.
       _tutorialDone = (prefs.getBool(HomePageState._tutorialDoneKey) ?? false) || saves.isNotEmpty;

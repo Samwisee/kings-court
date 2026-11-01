@@ -14,7 +14,6 @@ import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
-import 'package:kings_court/skin/entitlements.dart';
 import 'package:kings_court/skin/harbour/harbour_skin.dart';
 import 'package:kings_court/skin/midnight/midnight_skin.dart';
 import 'package:kings_court/skin/rooms/room_skins.dart';
@@ -419,7 +418,7 @@ void main() {
     }
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/skin-${skin.id}-3-menu.png'));
     // The Livery page, worn in this skin.
-    await tester.tap(find.text('Livery: ${skin.name}'));
+    await tester.tap(find.text('Store'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
@@ -440,14 +439,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Livery: Harbour'));
+    await tester.tap(find.text('Store'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/livery-wide.png'));
   });
 
-  // The Livery page as the shop will be (with the preview's sample prices):
+  // The store (with its sample prices):
   // on a laptop as it opens, and on a phone with Ballroom, which is for
   // sale, tried on.
   for (final (name, size, ratio) in const [
@@ -459,13 +458,13 @@ void main() {
       tester.view.devicePixelRatio = ratio;
       addTearDown(tester.view.reset);
       HomePageTestHooks.fast();
-      await tester.pumpWidget(const TheKingsCourtApp(skin: HarbourSkin(), entitlements: Shop(samplePrices)));
+      await tester.pumpWidget(const TheKingsCourtApp(skin: HarbourSkin()));
       await tester.pumpAndSettle();
       await tester.tap(find.text('New game'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Menu'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Livery: Harbour'));
+      await tester.tap(find.text('Store'));
       for (var i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 30));
       }

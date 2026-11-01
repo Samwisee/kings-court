@@ -1,8 +1,7 @@
 part of 'livery_page.dart';
 
 /// The shop's one case, in the style's own panel colours: a fine gold
-/// edge with a second rule inside it, a small gem at each corner of the
-/// rule. No blurred shadow (on the web every frame draws one again, and
+/// edge with a second rule inside it. No blurred shadow (on the web every frame draws one again, and
 /// this page is the phone's slowest already): a hard one, a step below.
 class _Case extends StatelessWidget {
   const _Case({required this.child});
@@ -19,12 +18,6 @@ class _Case extends StatelessWidget {
   Widget build(BuildContext context) {
     final skin = context.skin;
     final radius = math.min(skin.panelLook.radius, 20.0);
-    Widget gem() => Transform.rotate(
-        angle: math.pi / 4,
-        child: Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: skin.gold, border: Border.all(color: skin.goldDeep, width: 0.8))));
     return DecoratedBox(
       decoration: BoxDecoration(
         color: ground(skin),
@@ -36,8 +29,8 @@ class _Case extends StatelessWidget {
         Positioned.fill(
           child: ClipRRect(borderRadius: BorderRadius.circular(radius - 2), child: child),
         ),
-        // The rule inside the edge, and its gems: over the contents, not
-        // in the way of them.
+        // The rule inside the edge: over the contents, not in the way of
+        // them.
         Positioned.fill(
           child: IgnorePointer(
             child: Padding(
@@ -51,60 +44,13 @@ class _Case extends StatelessWidget {
             ),
           ),
         ),
-        for (final (x, y) in const [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)])
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Align(
-                alignment: Alignment(x, y),
-                child: Padding(padding: const EdgeInsets.all(1), child: gem()),
-              ),
-            ),
-          ),
       ]),
     );
   }
 }
 
-/// A header at the top of the shop's scroll that shrinks from [max] to
-/// [min] as the shelves come up: its [child] laid out once, at [max], and
-/// only scaled (scaling is cheap; laying the showcase out again on every
-/// frame of a scroll wouldn't be).
-class _Shrinking extends SliverPersistentHeaderDelegate {
-  _Shrinking({required this.max, required this.min, required this.child});
-  final double max, min;
-  final Widget child;
-
-  @override
-  double get maxExtent => max;
-  @override
-  double get minExtent => min;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    if (max == min) return SizedBox(height: max, child: child);
-    final h = (max - shrinkOffset).clamp(min, max);
-    // On the case's own ground: scaled down, it leaves room at its sides,
-    // and the shelves mustn't show through there.
-    return ColoredBox(color: _Case.ground(context.skin), child: ClipRect(
-      child: OverflowBox(
-        alignment: Alignment.topCenter,
-        minHeight: max,
-        maxHeight: max,
-        child: Transform.scale(
-          scale: h / max,
-          alignment: Alignment.topCenter,
-          child: SizedBox(height: max, child: child),
-        ),
-      ),
-    ));
-  }
-
-  @override
-  bool shouldRebuild(_Shrinking old) => old.max != max || old.min != min || old.child != child;
-}
-
-/// The counter at the foot of the case: wear what's chosen (or just leave,
-/// if nothing changed); for a style tried on that's for sale, buy it, or
+/// The counter at the foot of the case: choose what's put together (or
+/// just leave, if nothing changed); for a style tried on that's for sale, buy it, or
 /// take it off.
 class _Counter extends StatelessWidget {
   const _Counter(
@@ -147,7 +93,7 @@ class _Counter extends StatelessWidget {
                   key: const ValueKey('livery-wear'),
                   style: FilledButton.styleFrom(minimumSize: const Size(200, 46)),
                   onPressed: onWear,
-                  child: Text(changed ? 'Wear $name' : 'Done')),
+                  child: Text(changed ? 'Choose' : 'Done')),
           ],
         ),
       ),
@@ -229,13 +175,12 @@ class _LiveryScrollbar extends StatelessWidget {
   }
 }
 
-/// The shop window: the livery put together on a lit stage under its
-/// name on a hanging sign; a hand of the Court Cards over the Ace to the 4,
-/// a pile of tricks in the backs, the seats' tokens and a task. A style for
-/// sale says it's being tried on, and its price. Each part changes on its own, as
-/// its own choice does, and the lot only when the style does. Wide, the
-/// hand is in the middle, the backs to its left and the tokens and task to
-/// its right; narrow, the backs go with the tokens and task.
+/// The shop window: the livery put together on its own table, under the
+/// store's hanging sign and the style's name; a hand of the Court Cards
+/// over the Ace to the 4 (the 4 face down, to show the backs), the seats'
+/// tokens and a task. A style for sale says it's being tried on, and its
+/// price. Each part changes on its own, as
+/// its own choice does, and the lot only when the style does.
 class _Showcase extends StatelessWidget {
   const _Showcase({required this.look, this.price});
   final Skin look;
@@ -267,7 +212,8 @@ class _Showcase extends StatelessWidget {
           final step = cardW * 0.66;
           final fanW = 3 * step + cardW + 10;
           final gap = clampD(w * 0.05, 14, 36);
-          Widget fan(List<PlayingCard> cards, {required bool high}) => SizedBox(
+          // [faceDown] of them turned over at the end, to show the backs.
+          Widget fan(List<PlayingCard> cards, {required bool high, int faceDown = 0}) => SizedBox(
                 width: fanW,
                 height: cardH + 12,
                 child: Stack(clipBehavior: Clip.none, children: [
@@ -276,7 +222,10 @@ class _Showcase extends StatelessWidget {
                       left: k * step,
                       top: (k - 1.5).abs() * (high ? 4 : 2),
                       child: Transform.rotate(
-                          angle: (k - 1.5) * (high ? 0.09 : 0.05), child: PlayingCardView(card: card, width: cardW)),
+                          angle: (k - 1.5) * (high ? 0.09 : 0.05),
+                          child: k >= cards.length - faceDown
+                              ? CardBack(width: cardW)
+                              : PlayingCardView(card: card, width: cardW)),
                     ),
                 ]),
               );
@@ -288,24 +237,12 @@ class _Showcase extends StatelessWidget {
               Positioned(
                   left: 0,
                   top: cardH * 0.82,
-                  child: _Swap(id: '$base-${dressed?.face?.id}', child: fan(_numbers, high: false))),
+                  // The last turned over: the backs, without a pile of
+                  // their own.
+                  child: _Swap(
+                      id: '$base-${dressed?.face?.id}-${dressed?.back?.id}',
+                      child: fan(_numbers, high: false, faceDown: 1))),
             ]),
-          );
-          final backW = cardW * (wide ? 0.95 : 0.8);
-          final backs = _Swap(
-            id: '$base-${dressed?.back?.id}',
-            child: SizedBox(
-              width: backW + 12,
-              height: PlayingCardView.heightFor(backW) + 8,
-              child: Stack(children: [
-                for (var k = 0; k < 3; k++)
-                  Positioned(
-                    left: k * 5.0,
-                    top: k * 2.0,
-                    child: Transform.rotate(angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: backW)),
-                  ),
-              ]),
-            ),
           );
           final tokens = _Swap(id: '$base-${dressed?.token?.id}', child: _Tokens(look));
           final task = _Swap(
@@ -319,25 +256,11 @@ class _Showcase extends StatelessWidget {
               progress: '0/1',
             ),
           );
-          final scene = wide
-              ? Row(mainAxisSize: MainAxisSize.min, children: [
-                  backs,
-                  SizedBox(width: gap),
-                  hand,
-                  SizedBox(width: gap),
-                  Column(mainAxisSize: MainAxisSize.min, children: [tokens, const SizedBox(height: 14), task]),
-                ])
-              : Row(mainAxisSize: MainAxisSize.min, children: [
-                  hand,
-                  SizedBox(width: gap),
-                  Column(mainAxisSize: MainAxisSize.min, children: [
-                    tokens,
-                    const SizedBox(height: 10),
-                    backs,
-                    const SizedBox(height: 10),
-                    task,
-                  ]),
-                ]);
+          final scene = Row(mainAxisSize: MainAxisSize.min, children: [
+            hand,
+            SizedBox(width: gap),
+            Column(mainAxisSize: MainAxisSize.min, children: [tokens, SizedBox(height: wide ? 18 : 14), task]),
+          ]);
           final frame = BorderRadius.circular(12);
           return Padding(
             // The window, set into the case.
@@ -345,52 +268,40 @@ class _Showcase extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: frame,
-                border: Border.all(color: skin.gold.withValues(alpha: 0.3)),
-                gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color.lerp(skin.feltDeep, Colors.black, 0.45)!, skin.feltDeep]),
+                border: Border.all(color: skin.gold.withValues(alpha: 0.35)),
+                color: skin.felt,
               ),
               child: ClipRRect(
                 borderRadius: frame,
                 child: Stack(fit: StackFit.expand, children: [
-                  // A spotlight from above, and its pool on the stage.
+                  // The style's own table, its pattern and lamp (drawn once
+                  // into a picture, and still).
+                  _Swap(id: 'felt-$base', child: const FeltLight()),
+                  // A spotlight from above.
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
                           center: const Alignment(0, -1.3),
                           radius: 1.5,
-                          colors: [skin.gold.withValues(alpha: 0.22), skin.gold.withValues(alpha: 0)]),
-                    ),
-                  ),
-                  // The stage: a floor a shade darker, its front edge gilt.
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: h * 0.2,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: skin.gold.withValues(alpha: 0.28))),
-                        gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.black.withValues(alpha: 0.12), Colors.black.withValues(alpha: 0.3)]),
-                      ),
+                          colors: [skin.gold.withValues(alpha: 0.18), skin.gold.withValues(alpha: 0)]),
                     ),
                   ),
                   Column(children: [
-                    _Swap(id: base, child: _Sign(name: skin.name)),
+                    const _Sign(name: 'Store'),
+                    // The style shown, and when it's for sale, its price.
                     SizedBox(
-                      height: 20,
-                      child: price == null
-                          ? null
-                          : Center(
-                              child: Text('Trying on · $price',
-                                  style: TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white.withValues(alpha: 0.75)))),
+                      height: 22,
+                      child: Center(
+                        child: _Swap(
+                          id: '$base-$price',
+                          child: Text(price == null ? skin.name : '${skin.name} · trying on · $price',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  shadows: skin.feltShadow)),
+                        ),
+                      ),
                     ),
                     Expanded(child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: scene))),
                     SizedBox(height: h * 0.05),
@@ -405,8 +316,8 @@ class _Showcase extends StatelessWidget {
   }
 }
 
-/// The shop's sign: the style's name on a plaque, hung from two fine
-/// chains from the top of the window.
+/// The shop's sign: a name on a plaque, hung from two fine chains from the
+/// top of the window.
 class _Sign extends StatelessWidget {
   const _Sign({required this.name});
   final String name;

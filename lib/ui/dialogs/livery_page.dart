@@ -178,8 +178,8 @@ class _LiveryPageState extends State<_LiveryPage> {
                 ),
                 SafeArea(
                   // One case down the middle of a wide screen: the shop
-                  // window at the top (shrinking as the shelves scroll),
-                  // the sections, the shelves, and the counter.
+                  // window at the top, the sections, the shelves, and the
+                  // counter.
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 760),
@@ -187,27 +187,16 @@ class _LiveryPageState extends State<_LiveryPage> {
                         padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                         child: _Case(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                            // The shop window and the sections stay put; only
+                            // the shelves scroll.
+                            SizedBox(height: windowH, child: _Showcase(look: look, price: price)),
+                            SizedBox(
+                                height: 54,
+                                child: _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look)),
                             Expanded(
                               child: _LiveryScrollbar(
                                 controller: _scroll,
-                                top: windowH * 0.55 + 54,
                                 child: CustomScrollView(key: const ValueKey('livery-shelves'), controller: _scroll, slivers: [
-                                  SliverPersistentHeader(
-                                    pinned: true,
-                                    delegate: _Shrinking(
-                                      max: windowH,
-                                      min: windowH * 0.55,
-                                      child: _Showcase(look: look, price: price),
-                                    ),
-                                  ),
-                                  SliverPersistentHeader(
-                                    pinned: true,
-                                    delegate: _Shrinking(
-                                      max: 54,
-                                      min: 54,
-                                      child: _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look),
-                                    ),
-                                  ),
                                   SliverPadding(
                                     // Room on the right for the scrollbar.
                                     padding: const EdgeInsets.fromLTRB(14, 12, 22, 16),

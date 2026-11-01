@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Livery: Court'));
+    await tester.tap(find.text('Store'));
     await tester.pumpAndSettle();
     // A tab for each kind of choice, its choices in a grid.
     const tabs = {'style': 'Style', 'faces': 'Faces', 'court': 'Court', 'backs': 'Backs', 'tasks': 'Tasks'};
@@ -106,8 +106,7 @@ void main() {
     await choose('tasks', 'Royal decree');
     await choose('faces', 'Antique');
     expect(worn().id, 'court', reason: 'the game behind wears it as the page closes');
-    // The counter names what you'll wear.
-    await tester.tap(find.text('Wear Garden'));
+    await tester.tap(find.text('Choose'));
     await tester.pumpAndSettle();
     expect(worn().id, 'garden+k:decree+f:antique');
     expect(worn().cardLook.backMotif, BackMotif.waves, reason: 'Garden’s own backs: rose tide');

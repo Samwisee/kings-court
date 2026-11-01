@@ -1,8 +1,7 @@
-/// Which skins this player may wear, and what the others cost. Every skin
-/// is everyone's today ([AllOwned]). [Shop] is the shop's answer: what's
-/// for sale and what's been bought. It isn't open yet: a build made with
-/// `--dart-define=SHOP_PREVIEW=true` shows the Livery page as a shop, with
-/// [samplePrices], so it can be seen and tried; nothing can be bought.
+/// Which skins this player may wear, and what the others cost. [Shop] is
+/// the store's answer: what's for sale and what's owned. The store shows
+/// [samplePrices] for now: nothing can be bought yet (Buy says the store
+/// opens soon), and a style a player already wore is theirs to keep.
 library;
 
 import 'skin.dart';
@@ -12,6 +11,10 @@ abstract class Entitlements {
   const Entitlements();
 
   bool owns(Skin skin);
+
+  /// [skin] is the player's to keep (one they wore before there was a
+  /// store, say).
+  void keep(Skin skin) {}
 
   /// What [skin] costs, as shown (say 'A$3'), when it's for sale and not
   /// owned; null otherwise.
@@ -29,10 +32,15 @@ class AllOwned extends Entitlements {
 /// and owned once [bought]; every other skin is free. A skin dressed with
 /// other choices (a [TailoredSkin]) is its style's.
 class Shop extends Entitlements {
-  const Shop(this.prices, {this.bought = const {}});
+  Shop(this.prices, {Set<String>? bought}) : bought = {...?bought};
 
   final Map<String, String> prices;
+
+  /// The ids of the styles owned.
   final Set<String> bought;
+
+  @override
+  void keep(Skin skin) => bought.add(TailoredSkin.baseOf(skin).id);
 
   @override
   bool owns(Skin skin) {
@@ -44,11 +52,7 @@ class Shop extends Entitlements {
   String? priceOf(Skin skin) => owns(skin) ? null : prices[TailoredSkin.baseOf(skin).id];
 }
 
-/// Whether this build shows the shop as it will be (with [samplePrices]).
-const shopPreview = bool.fromEnvironment('SHOP_PREVIEW');
-
-/// A sample of what might be for sale, for the preview: placeholders, not
-/// decided prices.
+/// A sample of what might be for sale: placeholders, not decided prices.
 const samplePrices = {
   'midnight': r'A$2',
   'velvet': r'A$2',
@@ -57,6 +61,3 @@ const samplePrices = {
   'chequers': r'A$3',
   'salon': r'A$3',
 };
-
-/// What the game starts with: everything owned, or the preview's shop.
-const Entitlements startingEntitlements = shopPreview ? Shop(samplePrices) : AllOwned();

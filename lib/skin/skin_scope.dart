@@ -38,6 +38,15 @@ class SkinScope extends InheritedWidget {
     return true;
   }
 
+  /// Puts back the skin the player last wore (saved before the game was
+  /// closed): theirs to keep, whatever the store would now charge for it.
+  static void restore(BuildContext context, Skin skin) {
+    final scope = context.getInheritedWidgetOfExactType<SkinScope>();
+    if (scope == null || scope.onChoose == null) return;
+    scope.entitlements.keep(skin);
+    scope.onChoose!(skin);
+  }
+
   /// Whether the player may wear [skin].
   static bool owns(BuildContext context, Skin skin) =>
       context.getInheritedWidgetOfExactType<SkinScope>()?.entitlements.owns(skin) ?? true;

@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/round.dart';
+import 'package:kings_court/skin/entitlements.dart';
 import 'package:kings_court/ui/app.dart';
 import 'package:kings_court/ui/menu/menu.dart';
 import 'package:kings_court/ui/table_page.dart';
@@ -250,7 +251,9 @@ void main() {
     }
 
     await frames.scene('starting up', () async {
-      await tester.pumpWidget(const TheKingsCourtApp());
+      // Every style owned, so the benchmark wears each the same way it always
+      // has, whatever the store charges.
+      await tester.pumpWidget(const TheKingsCourtApp(entitlements: AllOwned()));
       await wait(500);
     });
     await frames.scene('front page: the crown, the flourish, the glitter', () => wait(4000));
