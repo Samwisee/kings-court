@@ -11,6 +11,7 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
+import 'emblems/set_emblems.dart';
 import 'face_frame.dart';
 
 export 'card_back.dart';
@@ -224,7 +225,7 @@ class PlayingCardView extends StatelessWidget {
               ),
             if (cloth)
               Positioned.fill(
-                child: CustomPaint(painter: _Emblem(card.rank, look.cloth[card.rank - 1][0])),
+                child: CustomPaint(painter: _Emblem(card.rank, look.cloth[card.rank - 1][0], look.courtEmblems)),
               )
             else
               Center(
@@ -323,22 +324,31 @@ double _mm(Size size) => size.width / 63;
 /// A Court Card's emblem, placed as on the printed card (a touch larger,
 /// to read at a glance in a hand).
 class _Emblem extends CustomPainter {
-  _Emblem(this.rank, this.cloth);
+  _Emblem(this.rank, this.cloth, this.set);
 
   final int rank;
   final Color cloth;
 
+  /// A room's own emblems; the court's when null.
+  final EmblemSet? set;
+
   static const _grow = 1.15;
+
+  /// A room's emblem's size on the printed card, in millimetres.
+  static const _setBox = Size(33, 33);
 
   @override
   void paint(Canvas canvas, Size size) {
     final mm = _mm(size) * _grow;
-    final (bounds, anchor, box, draw) = switch (rank) {
-      1 => (jesterBounds, jesterAnchor, emblemBox, paintJester),
-      2 => (jackBounds, jackAnchor, jackBox, paintJack),
-      3 => (tiaraBounds, tiaraAnchor, emblemBox, paintTiara),
-      _ => (kingBounds, kingAnchor, kingBox, paintKing),
-    };
+    final own = set;
+    final (bounds, anchor, box, draw) = own != null
+        ? (setEmblemBounds, setEmblemAnchor, _setBox, (Canvas c, double ow, Color cloth) => paintSetEmblem(c, own, rank, ow, cloth))
+        : switch (rank) {
+            1 => (jesterBounds, jesterAnchor, emblemBox, paintJester),
+            2 => (jackBounds, jackAnchor, jackBox, paintJack),
+            3 => (tiaraBounds, tiaraAnchor, emblemBox, paintTiara),
+            _ => (kingBounds, kingAnchor, kingBox, paintKing),
+          };
     final s = math.min(box.width * mm / bounds.width, box.height * mm / bounds.height);
     // The outline is the same weight whatever the emblem's scale, and never
     // thinner than a hairline.
@@ -356,7 +366,7 @@ class _Emblem extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_Emblem old) => old.rank != rank || old.cloth != cloth;
+  bool shouldRepaint(_Emblem old) => old.rank != rank || old.cloth != cloth || old.set != set;
 }
 
 /// The Joker's cloth: a field of diamonds.

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/looks.dart';
 import '../../skin/skin_scope.dart';
+import 'back_motifs_more.dart';
 
 /// The skin's card back (its colour and motif) filling the box, under
 /// [child], in corners of [radius]: what a done task turns over to show.
@@ -36,7 +37,8 @@ class BackGround extends StatelessWidget {
 CustomPainter? backMotifPainter(BackMotif motif, Color colour) => switch (motif) {
       BackMotif.none => null,
       BackMotif.lattice => BackLattice(colour),
-      _ => _Motif(motif, colour),
+      BackMotif.stripes || BackMotif.dots || BackMotif.rays || BackMotif.waves => _Motif(motif, colour),
+      _ => SetMotif(motif, colour),
     };
 
 /// The motifs beside the lattice (looks.dart: [BackMotif]).
@@ -83,8 +85,7 @@ class _Motif extends CustomPainter {
           }
           canvas.drawPath(p, line);
         }
-      case BackMotif.none:
-      case BackMotif.lattice:
+      default:
         break;
     }
   }

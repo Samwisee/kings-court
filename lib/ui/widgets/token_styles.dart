@@ -14,6 +14,7 @@ import '../../skin/effects.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import 'token_shapes.dart';
+import 'token_styles_more.dart';
 
 Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 
@@ -90,7 +91,8 @@ class _StyledPainter extends CustomPainter {
     final r = size.shortestSide / 2;
     // A casino chip is round whatever the house: the rest take its shape.
     final round = shape == null || style == TokenStyle.chips;
-    final outline = round ? (Path()..addOval(Rect.fromCircle(center: c, radius: r))) : tokenPath(shape!, size);
+    final outline = setTokenOutline(style, size) ??
+        (round ? (Path()..addOval(Rect.fromCircle(center: c, radius: r))) : tokenPath(shape!, size));
     final bounds = outline.getBounds();
 
     canvas.drawPath(
@@ -242,6 +244,9 @@ class _StyledPainter extends CustomPainter {
               ..color = _mix(color, Colors.black, 0.3));
       case TokenStyle.houses:
         canvas.drawPath(outline, Paint()..color = color);
+      default:
+        // The rooms' own (token_styles_more.dart).
+        paintSetToken(canvas, style, outline, size, color, skin);
     }
     // The dark line just inside the ring.
     canvas.drawPath(

@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'looks.dart';
+import 'sets/set_choices.dart';
 
 /// A card back: its colour, its edge (and the motif in it), what's over
 /// it, how strongly, a rule inside the edge, and the crown's colour (the
@@ -67,6 +68,7 @@ const backChoices = <BackChoice>[
       alpha: 0.2,
       rule: false,
       crown: Color(0xFFB0B0B0)),
+  ...setBacks,
 ];
 
 /// A task card's face (looks.dart: [TaskLook]), by name.
@@ -188,6 +190,7 @@ const taskChoices = <TaskChoice>[
           frameColour: Color(0x8CFFFFFF),
           motif: BackMotif.lattice,
           motifAlpha: 0.1)),
+  ...setTasks,
 ];
 
 /// The faces of the playing cards: the stock, the suits' inks (four-colour
@@ -362,6 +365,7 @@ const faceChoices = <FaceChoice>[
       green: Color(0xFF3E7A45),
       frame: FaceFrame.leaves,
       frameColour: Color(0xFF5E8A57)),
+  ...setFaces,
 ];
 
 /// What the seats' tokens are made as (looks.dart: [TokenStyle]).
@@ -379,6 +383,7 @@ const tokenChoices = <TokenChoice>[
   TokenChoice('seals', 'Wax seals', TokenStyle.seals),
   TokenChoice('chips', 'Casino chips', TokenStyle.chips),
   TokenChoice('shields', 'Heraldry', TokenStyle.shields),
+  ...setTokens,
 ];
 
 TokenChoice? tokenById(String? id) => tokenChoices.where((t) => t.id == id).firstOrNull;
@@ -390,8 +395,11 @@ FaceChoice? faceById(String? id) => faceChoices.where((f) => f.id == id).firstOr
 /// The Court Cards' full art (their cloths, what's woven into them, an
 /// arch round the emblem), chosen apart from the number cards' faces.
 class CourtChoice {
-  const CourtChoice(this.id, this.name, {this.cloth, this.patterns, this.ink, this.arch = false});
+  const CourtChoice(this.id, this.name, {this.cloth, this.patterns, this.ink, this.arch = false, this.emblems});
   final String id;
+
+  /// Emblems of the set's own; the court's when null.
+  final EmblemSet? emblems;
   final String name;
   final List<List<Color>>? cloth;
 
@@ -535,6 +543,7 @@ const courtChoices = <CourtChoice>[
       // A trellis, the hills, a woven flower and marble.
       patterns: [FeltPattern.trellis, FeltPattern.contours, FeltPattern.damask, FeltPattern.marble],
       ink: Color(0x66F1F6E4)),
+  ...setCourts,
 ];
 
 CourtChoice? courtById(String? id) => courtChoices.where((c) => c.id == id).firstOrNull;

@@ -524,7 +524,7 @@ void main() {
 
   // Every card back and table the Livery page offers, on the court.
   testWidgets('The backs and tables to choose from', (tester) async {
-    tester.view.physicalSize = const Size(1600, 2400);
+    tester.view.physicalSize = const Size(1600, 3600);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     const court = CourtSkin();
@@ -620,7 +620,8 @@ void main() {
         for (var i = 0; i < 4; i++) Player('P$i', colorValue: skin.players[i].toARGB32())
       ];
       await tester.pumpWidget(SkinScope(
-        skin: skin,
+        // As it's worn: with its own backs, faces and tokens.
+        skin: dressed(skin),
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: skin.theme(),

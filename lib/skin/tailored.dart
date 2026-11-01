@@ -115,7 +115,9 @@ class TailoredSkin extends Skin {
           motifAlpha: f.motifAlpha,
           pips: f.pips);
     }
-    if (c != null) look = look.withCourt(cloth: c.cloth, patterns: c.patterns, ink: c.ink, arch: c.arch);
+    if (c != null) {
+      look = look.withCourt(cloth: c.cloth, patterns: c.patterns, ink: c.ink, arch: c.arch, emblems: c.emblems);
+    }
     return look;
   }
 
