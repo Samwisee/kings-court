@@ -1,0 +1,90 @@
+Computing fixes in kings-court...
+Applying fixes...
+
+lib/skin/design_skin.dart
+  directives_ordering - 1 fix
+
+lib/skin/lacquer/lacquer_skin.dart
+  directives_ordering - 1 fix
+
+lib/skin/theme.dart
+  directives_ordering - 1 fix
+
+lib/ui/cards/card_back.dart
+  directives_ordering - 1 fix
+
+lib/ui/cards/card_view.dart
+  directives_ordering - 1 fix
+
+lib/ui/cards/task_chip.dart
+  directives_ordering - 1 fix
+
+lib/ui/dialogs/livery_page.dart
+  directives_ordering - 1 fix
+
+lib/ui/dynasty/hall_pieces.dart
+  directives_ordering - 1 fix
+
+lib/ui/modes/tutorial/coach.dart
+  directives_ordering - 1 fix
+
+lib/ui/modes/tutorial/tutorial_intro.dart
+  directives_ordering - 1 fix
+
+lib/ui/online/online_setup.dart
+  directives_ordering - 1 fix
+
+lib/ui/overlays/crowning.dart
+  directives_ordering - 1 fix
+
+lib/ui/overlays/play_flourish.dart
+  directives_ordering - 1 fix
+
+lib/ui/rules/rules_page.dart
+  directives_ordering - 1 fix
+
+lib/ui/setup/setup_panel.dart
+  directives_ordering - 1 fix
+
+lib/ui/setup/setup_tiles.dart
+  directives_ordering - 1 fix
+
+lib/ui/setup/transitions.dart
+  directives_ordering - 1 fix
+
+lib/ui/table/dealt_task.dart
+  directives_ordering - 1 fix
+
+lib/ui/table/game_bar.dart
+  directives_ordering - 1 fix
+
+lib/ui/welcome/welcome.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/buttons.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/character_token.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/panels.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/pips.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/seals.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/task_card.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/token_styles.dart
+  directives_ordering - 1 fix
+
+lib/ui/widgets/tokens.dart
+  directives_ordering - 1 fix
+
+28 fixes made in 28 files.
+Computing fixes in kings-court...
+Nothing to fix!

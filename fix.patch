@@ -1,0 +1,626 @@
+diff --git a/lib/skin/design_skin.dart b/lib/skin/design_skin.dart
+index 05f15cb..ddf11b5 100644
+--- a/lib/skin/design_skin.dart
++++ b/lib/skin/design_skin.dart
+@@ -7,10 +7,10 @@ library;
+ 
+ import 'package:flutter/material.dart';
+ 
++import 'effects.dart';
+ import 'fields.dart';
+ import 'looks.dart';
+ import 'skin.dart';
+-import 'effects.dart';
+ 
+ /// How dressed up a designed skin is.
+ enum Finish {
+diff --git a/lib/skin/lacquer/lacquer_skin.dart b/lib/skin/lacquer/lacquer_skin.dart
+index 5dffb2a..ead63b7 100644
+--- a/lib/skin/lacquer/lacquer_skin.dart
++++ b/lib/skin/lacquer/lacquer_skin.dart
+@@ -8,8 +8,8 @@ import 'dart:math' as math;
+ import 'package:flutter/widgets.dart';
+ 
+ import '../design_skin.dart';
+-import '../parts.dart';
+ import '../effects.dart';
++import '../parts.dart';
+ 
+ class LacquerSkin extends DesignSkin {
+   const LacquerSkin() : super(lacquerDesign);
+diff --git a/lib/skin/theme.dart b/lib/skin/theme.dart
+index 70ff390..c7ff351 100644
+--- a/lib/skin/theme.dart
++++ b/lib/skin/theme.dart
+@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
+ import '../engine/cards.dart';
+ import '../game/state.dart';
+ import '../platform/settings.dart';
+-import 'fields.dart';
+ import 'effects.dart';
++import 'fields.dart';
+ 
+ /// The King's Court palette: card table felt, white card stock, card-red
+ /// and black suits, and brass gold reserved for the King.
+diff --git a/lib/ui/cards/card_back.dart b/lib/ui/cards/card_back.dart
+index 48cf435..c6c1cf8 100644
+--- a/lib/ui/cards/card_back.dart
++++ b/lib/ui/cards/card_back.dart
+@@ -6,12 +6,12 @@ import 'dart:math' as math;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/parts.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+ import 'card_view.dart';
+-import '../../skin/effects.dart';
+ 
+ /// The back of a card, for hands you can't see and cards being dealt.
+ class CardBack extends StatelessWidget {
+diff --git a/lib/ui/cards/card_view.dart b/lib/ui/cards/card_view.dart
+index 03675cd..2bc67a6 100644
+--- a/lib/ui/cards/card_view.dart
++++ b/lib/ui/cards/card_view.dart
+@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
+ 
+ import '../../engine/cards.dart';
+ import '../../skin/court/emblems.g.dart';
++import '../../skin/effects.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/parts.dart';
+ import '../../skin/skin.dart';
+@@ -11,7 +12,6 @@ import '../../skin/skin_scope.dart';
+ import '../../skin/theme.dart';
+ import '../widgets.dart';
+ import 'face_frame.dart';
+-import '../../skin/effects.dart';
+ 
+ export 'card_back.dart';
+ 
+diff --git a/lib/ui/cards/task_chip.dart b/lib/ui/cards/task_chip.dart
+index 198c55b..a7e1f9b 100644
+--- a/lib/ui/cards/task_chip.dart
++++ b/lib/ui/cards/task_chip.dart
+@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
+ 
+ import '../../engine/cards.dart';
+ import '../../engine/round.dart';
++import '../../skin/effects.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+@@ -15,7 +16,6 @@ import '../widgets.dart';
+ import '../widgets/same.dart';
+ import 'card_view.dart';
+ import 'mini_card.dart';
+-import '../../skin/effects.dart';
+ 
+ /// A task card on its way from the middle of the table to whoever took it,
+ /// shrinking as it goes.
+diff --git a/lib/ui/dialogs/livery_page.dart b/lib/ui/dialogs/livery_page.dart
+index 7a01770..2d0dd76 100644
+--- a/lib/ui/dialogs/livery_page.dart
++++ b/lib/ui/dialogs/livery_page.dart
+@@ -18,6 +18,7 @@ import '../../engine/task.dart';
+ import '../../game/courtiers.dart';
+ import '../../platform/frame_stats.dart';
+ import '../../platform/page_colour.dart' if (dart.library.js_interop) '../../platform/page_colour_web.dart';
++import '../../skin/effects.dart';
+ import '../../skin/entitlements.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/skin.dart';
+@@ -27,7 +28,6 @@ import '../../skin/tailored.dart';
+ import '../cards/card_view.dart';
+ import '../cards/task_chip.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ part 'livery_swatches.dart';
+ 
+diff --git a/lib/ui/dynasty/hall_pieces.dart b/lib/ui/dynasty/hall_pieces.dart
+index 23c78eb..c936859 100644
+--- a/lib/ui/dynasty/hall_pieces.dart
++++ b/lib/ui/dynasty/hall_pieces.dart
+@@ -4,10 +4,10 @@ library;
+ import 'package:flutter/material.dart';
+ 
+ import '../../game/courtiers.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ /// Someone in the throne room.
+ class HallFigure {
+diff --git a/lib/ui/modes/tutorial/coach.dart b/lib/ui/modes/tutorial/coach.dart
+index 81e8889..1a12345 100644
+--- a/lib/ui/modes/tutorial/coach.dart
++++ b/lib/ui/modes/tutorial/coach.dart
+@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
+ import '../../../engine/cards.dart';
+ import '../../../game/state.dart';
+ import '../../../modes/tutorial/lessons.dart';
++import '../../../skin/effects.dart';
+ import '../../../skin/skin_scope.dart';
+ import '../../widgets.dart';
+-import '../../../skin/effects.dart';
+ 
+ /// What the tutorial's coach says right now: nothing outside a tutorial
+ /// round in progress; the lesson's intro while the table is [settingUp]
+diff --git a/lib/ui/modes/tutorial/tutorial_intro.dart b/lib/ui/modes/tutorial/tutorial_intro.dart
+index 4cf036e..b1b6dea 100644
+--- a/lib/ui/modes/tutorial/tutorial_intro.dart
++++ b/lib/ui/modes/tutorial/tutorial_intro.dart
+@@ -14,11 +14,11 @@ import '../../../engine/round.dart';
+ import '../../../game/courtiers.dart';
+ import '../../../game/state.dart';
+ import '../../../modes/tutorial/lessons.dart';
++import '../../../skin/effects.dart';
+ import '../../../skin/skin_scope.dart';
+ import '../../cards/card_view.dart';
+ import '../../widgets.dart';
+ import 'intro_preview.dart';
+-import '../../../skin/effects.dart';
+ 
+ const _shadow = [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)];
+ 
+diff --git a/lib/ui/online/online_setup.dart b/lib/ui/online/online_setup.dart
+index a2c3d8b..e813f65 100644
+--- a/lib/ui/online/online_setup.dart
++++ b/lib/ui/online/online_setup.dart
+@@ -14,12 +14,12 @@ import '../../game/setup.dart';
+ import '../../game/state.dart';
+ import '../../net/online_table.dart';
+ import '../../platform/invite.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import '../setup/setup_frame.dart';
+ import '../setup/setup_tiles.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ class OnlineSetup extends StatefulWidget {
+   const OnlineSetup({
+diff --git a/lib/ui/overlays/crowning.dart b/lib/ui/overlays/crowning.dart
+index 15aecf6..389651b 100644
+--- a/lib/ui/overlays/crowning.dart
++++ b/lib/ui/overlays/crowning.dart
+@@ -10,10 +10,10 @@ import 'dart:math' as math;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ /// The crown flies from [from] to the new King at [to] and lands in a
+ /// burst of gold, "Long live the King" glows, and every other seat in
+diff --git a/lib/ui/overlays/play_flourish.dart b/lib/ui/overlays/play_flourish.dart
+index 9199b36..e6d37bc 100644
+--- a/lib/ui/overlays/play_flourish.dart
++++ b/lib/ui/overlays/play_flourish.dart
+@@ -3,9 +3,9 @@ library;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ class PlayFlourish extends StatelessWidget {
+   const PlayFlourish({super.key, required this.animation});
+diff --git a/lib/ui/rules/rules_page.dart b/lib/ui/rules/rules_page.dart
+index 5a595d6..fd69a4a 100644
+--- a/lib/ui/rules/rules_page.dart
++++ b/lib/ui/rules/rules_page.dart
+@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
+ 
+ import '../../engine/decrees.dart';
+ import '../../game/state.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ /// Which games a section of the rules is about.
+ enum RulesFor { all, onScreen, inPerson, twoPlayer }
+diff --git a/lib/ui/setup/setup_panel.dart b/lib/ui/setup/setup_panel.dart
+index 01c98dd..99d138f 100644
+--- a/lib/ui/setup/setup_panel.dart
++++ b/lib/ui/setup/setup_panel.dart
+@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
+ import '../../game/state.dart';
+ import '../../modes/chronicle/chapters.dart';
+ import '../../platform/sfx.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+@@ -15,7 +16,6 @@ import 'chapter_picker.dart';
+ import 'saves.dart';
+ import 'setup_frame.dart';
+ import 'setup_tiles.dart';
+-import '../../skin/effects.dart';
+ 
+ /// What the New Game panel starts with.
+ typedef SetupArgs = ({GameMode? mode, int? chapter});
+diff --git a/lib/ui/setup/setup_tiles.dart b/lib/ui/setup/setup_tiles.dart
+index 7413a44..c908e25 100644
+--- a/lib/ui/setup/setup_tiles.dart
++++ b/lib/ui/setup/setup_tiles.dart
+@@ -3,9 +3,9 @@ library;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import '../menu/menu.dart';
+-import '../../skin/effects.dart';
+ 
+ /// One way to play on the first setup step.
+ class ModeTile extends StatelessWidget {
+diff --git a/lib/ui/setup/transitions.dart b/lib/ui/setup/transitions.dart
+index f4d8b98..07686d0 100644
+--- a/lib/ui/setup/transitions.dart
++++ b/lib/ui/setup/transitions.dart
+@@ -5,8 +5,8 @@ import 'dart:math' as math;
+ 
+ import 'package:flutter/material.dart';
+ 
+-import '../../skin/skin_scope.dart';
+ import '../../skin/effects.dart';
++import '../../skin/skin_scope.dart';
+ 
+ /// The ways a setup page can turn to the next. [fade] is the one in use:
+ /// the old page fades out, then the new one fades in. The others were
+diff --git a/lib/ui/table/dealt_task.dart b/lib/ui/table/dealt_task.dart
+index 1fd06d2..346bf46 100644
+--- a/lib/ui/table/dealt_task.dart
++++ b/lib/ui/table/dealt_task.dart
+@@ -7,10 +7,10 @@ import 'dart:math' as math;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import '../cards/card_view.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ class DealtTask extends StatelessWidget {
+   const DealtTask({
+diff --git a/lib/ui/table/game_bar.dart b/lib/ui/table/game_bar.dart
+index 97bbc89..b864727 100644
+--- a/lib/ui/table/game_bar.dart
++++ b/lib/ui/table/game_bar.dart
+@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
+ import '../../engine/decrees.dart';
+ import '../../engine/round.dart';
+ import '../../game/state.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import '../../skin/strings.dart';
+ import '../menu/menu.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ class GameBar extends StatelessWidget implements PreferredSizeWidget {
+   const GameBar({
+diff --git a/lib/ui/welcome/welcome.dart b/lib/ui/welcome/welcome.dart
+index 788c83d..27f94b9 100644
+--- a/lib/ui/welcome/welcome.dart
++++ b/lib/ui/welcome/welcome.dart
+@@ -7,13 +7,13 @@ import 'dart:ui' as ui;
+ import 'package:flutter/material.dart';
+ 
+ import '../../engine/cards.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import '../../skin/strings.dart';
+ import '../cards/card_view.dart';
+ import '../overlays/crowning.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ /// The opening flourish on the front page: the four Court Cards rise and
+ /// fan out wide, with a burst of sparks. It plays once (about two seconds)
+diff --git a/lib/ui/widgets/buttons.dart b/lib/ui/widgets/buttons.dart
+index 3f867e9..710a016 100644
+--- a/lib/ui/widgets/buttons.dart
++++ b/lib/ui/widgets/buttons.dart
+@@ -3,9 +3,9 @@ library;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import '../widgets.dart';
+-import '../../skin/effects.dart';
+ 
+ /// A button that softly pulses with a gold glow, to draw the eye.
+ class GlowButton extends StatefulWidget {
+diff --git a/lib/ui/widgets/character_token.dart b/lib/ui/widgets/character_token.dart
+index 17f0d17..d315797 100644
+--- a/lib/ui/widgets/character_token.dart
++++ b/lib/ui/widgets/character_token.dart
+@@ -7,10 +7,10 @@ import 'dart:math' as math;
+ import 'package:flutter/material.dart';
+ 
+ import '../../game/courtiers.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+ import 'clamp.dart';
+-import '../../skin/effects.dart';
+ 
+ /// How a character token is behaving.
+ enum CharacterMood {
+diff --git a/lib/ui/widgets/panels.dart b/lib/ui/widgets/panels.dart
+index 0ef32ef..cc50aef 100644
+--- a/lib/ui/widgets/panels.dart
++++ b/lib/ui/widgets/panels.dart
+@@ -6,6 +6,7 @@ import 'dart:math' as math;
+ import 'package:flutter/material.dart';
+ 
+ import '../../engine/task_help.dart';
++import '../../skin/effects.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/parts.dart';
+ import '../../skin/skin.dart';
+@@ -15,7 +16,6 @@ import 'felt_patterns.dart';
+ import 'icons.dart';
+ import 'pips.dart';
+ import 'suit_text.dart';
+-import '../../skin/effects.dart';
+ 
+ export '../../skin/looks.dart' show Ornament;
+ 
+diff --git a/lib/ui/widgets/pips.dart b/lib/ui/widgets/pips.dart
+index acb7a2c..0e65f1d 100644
+--- a/lib/ui/widgets/pips.dart
++++ b/lib/ui/widgets/pips.dart
+@@ -6,9 +6,9 @@ import 'dart:ui' as ui;
+ 
+ import 'package:flutter/material.dart';
+ 
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import 'character_token.dart';
+-import '../../skin/effects.dart';
+ 
+ /// The court's on/off mark: a gold ring, filled with a gold jewel when on.
+ /// Used for every setting in place of switches and tick boxes.
+diff --git a/lib/ui/widgets/seals.dart b/lib/ui/widgets/seals.dart
+index 438e5aa..7bfc76d 100644
+--- a/lib/ui/widgets/seals.dart
++++ b/lib/ui/widgets/seals.dart
+@@ -4,10 +4,10 @@ library;
+ import 'package:flutter/material.dart';
+ 
+ import '../../engine/decrees.dart';
++import '../../skin/effects.dart';
+ import '../../skin/skin_scope.dart';
+ import 'clamp.dart';
+ import 'icons.dart';
+-import '../../skin/effects.dart';
+ 
+ /// A red wax seal pressed with its order: I, II, III or Ω for last.
+ class WaxSeal extends StatelessWidget {
+diff --git a/lib/ui/widgets/task_card.dart b/lib/ui/widgets/task_card.dart
+index 12454c0..1d3b202 100644
+--- a/lib/ui/widgets/task_card.dart
++++ b/lib/ui/widgets/task_card.dart
+@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
+ 
+ import '../../engine/round.dart';
+ import '../../game/state.dart';
++import '../../skin/effects.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+@@ -18,7 +19,6 @@ import 'seals.dart';
+ import 'suit_text.dart';
+ import 'table.dart';
+ import 'task_faces.dart';
+-import '../../skin/effects.dart';
+ 
+ /// One pip per task: hollow while pending, green when done, red when failed.
+ class TaskPips extends StatelessWidget {
+diff --git a/lib/ui/widgets/token_styles.dart b/lib/ui/widgets/token_styles.dart
+index cab628e..cb725f8 100644
+--- a/lib/ui/widgets/token_styles.dart
++++ b/lib/ui/widgets/token_styles.dart
+@@ -10,10 +10,10 @@ import 'dart:math' as math;
+ import 'package:flutter/material.dart';
+ 
+ import '../../game/courtiers.dart';
++import '../../skin/effects.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/skin.dart';
+ import 'token_shapes.dart';
+-import '../../skin/effects.dart';
+ 
+ Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
+ 
+diff --git a/lib/ui/widgets/tokens.dart b/lib/ui/widgets/tokens.dart
+index bd3fde1..65c9898 100644
+--- a/lib/ui/widgets/tokens.dart
++++ b/lib/ui/widgets/tokens.dart
+@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
+ 
+ import '../../game/courtiers.dart';
+ import '../../game/state.dart';
++import '../../skin/effects.dart';
+ import '../../skin/looks.dart';
+ import '../../skin/skin.dart';
+ import '../../skin/skin_scope.dart';
+@@ -16,7 +17,6 @@ import 'icons.dart';
+ import 'table.dart';
+ import 'token_shapes.dart';
+ import 'token_styles.dart';
+-import '../../skin/effects.dart';
+ 
+ /// A player's seat: a coloured token with their seat number or initials.
+ /// The King's seat gets a gold ring and a crown. During play the token
+diff --git a/linux/flutter/generated_plugin_registrant.cc b/linux/flutter/generated_plugin_registrant.cc
+index 1830e5c..8690200 100644
+--- a/linux/flutter/generated_plugin_registrant.cc
++++ b/linux/flutter/generated_plugin_registrant.cc
+@@ -7,9 +7,13 @@
+ #include "generated_plugin_registrant.h"
+ 
+ #include <audioplayers_linux/audioplayers_linux_plugin.h>
++#include <sentry_flutter/sentry_flutter_plugin.h>
+ 
+ void fl_register_plugins(FlPluginRegistry* registry) {
+   g_autoptr(FlPluginRegistrar) audioplayers_linux_registrar =
+       fl_plugin_registry_get_registrar_for_plugin(registry, "AudioplayersLinuxPlugin");
+   audioplayers_linux_plugin_register_with_registrar(audioplayers_linux_registrar);
++  g_autoptr(FlPluginRegistrar) sentry_flutter_registrar =
++      fl_plugin_registry_get_registrar_for_plugin(registry, "SentryFlutterPlugin");
++  sentry_flutter_plugin_register_with_registrar(sentry_flutter_registrar);
+ }
+diff --git a/linux/flutter/generated_plugins.cmake b/linux/flutter/generated_plugins.cmake
+index f4bf1dc..220f0c7 100644
+--- a/linux/flutter/generated_plugins.cmake
++++ b/linux/flutter/generated_plugins.cmake
+@@ -4,6 +4,7 @@
+ 
+ list(APPEND FLUTTER_PLUGIN_LIST
+   audioplayers_linux
++  sentry_flutter
+ )
+ 
+ list(APPEND FLUTTER_FFI_PLUGIN_LIST
+diff --git a/macos/Flutter/GeneratedPluginRegistrant.swift b/macos/Flutter/GeneratedPluginRegistrant.swift
+index 290605b..c6f6efe 100644
+--- a/macos/Flutter/GeneratedPluginRegistrant.swift
++++ b/macos/Flutter/GeneratedPluginRegistrant.swift
+@@ -7,12 +7,14 @@ import Foundation
+ 
+ import audioplayers_darwin
+ import package_info_plus
++import sentry_flutter
+ import shared_preferences_foundation
+ import wakelock_plus
+ 
+ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+   AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
+   FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
++  SentryFlutterPlugin.register(with: registry.registrar(forPlugin: "SentryFlutterPlugin"))
+   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
+   WakelockPlusMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockPlusMacosPlugin"))
+ }
+diff --git a/pubspec.lock b/pubspec.lock
+index 83c5f33..bd053a5 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -198,6 +198,11 @@ packages:
+     description: flutter
+     source: sdk
+     version: "0.0.0"
++  flutter_driver:
++    dependency: "direct dev"
++    description: flutter
++    source: sdk
++    version: "0.0.0"
+   flutter_lints:
+     dependency: "direct dev"
+     description:
+@@ -216,6 +221,11 @@ packages:
+     description: flutter
+     source: sdk
+     version: "0.0.0"
++  fuchsia_remote_debug_protocol:
++    dependency: transitive
++    description: flutter
++    source: sdk
++    version: "0.0.0"
+   glob:
+     dependency: transitive
+     description:
+@@ -264,6 +274,11 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "3.0.0"
++  integration_test:
++    dependency: "direct dev"
++    description: flutter
++    source: sdk
++    version: "0.0.0"
+   jni:
+     dependency: transitive
+     description:
+@@ -597,6 +612,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "1.2.0"
++  sync_http:
++    dependency: transitive
++    description:
++      name: sync_http
++      sha256: "7f0cd72eca000d2e026bcd6f990b81d0ca06022ef4e32fb257b30d3d1014a961"
++      url: "https://pub.dev"
++    source: hosted
++    version: "0.3.1"
+   synchronized:
+     dependency: transitive
+     description:
+@@ -701,6 +724,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "3.0.3"
++  webdriver:
++    dependency: transitive
++    description:
++      name: webdriver
++      sha256: "28b82ec894fed45dd71c23ba62d1af973ed97dd59a4f5790a4d38b0b13e5657e"
++      url: "https://pub.dev"
++    source: hosted
++    version: "3.2.0"
+   win32:
+     dependency: transitive
+     description:
+diff --git a/windows/flutter/generated_plugin_registrant.cc b/windows/flutter/generated_plugin_registrant.cc
+index 8b6d468..f9dd88c 100644
+--- a/windows/flutter/generated_plugin_registrant.cc
++++ b/windows/flutter/generated_plugin_registrant.cc
+@@ -6,6 +6,12 @@
+ 
+ #include "generated_plugin_registrant.h"
+ 
++#include <audioplayers_windows/audioplayers_windows_plugin.h>
++#include <sentry_flutter/sentry_flutter_plugin.h>
+ 
+ void RegisterPlugins(flutter::PluginRegistry* registry) {
++  AudioplayersWindowsPluginRegisterWithRegistrar(
++      registry->GetRegistrarForPlugin("AudioplayersWindowsPlugin"));
++  SentryFlutterPluginRegisterWithRegistrar(
++      registry->GetRegistrarForPlugin("SentryFlutterPlugin"));
+ }
+diff --git a/windows/flutter/generated_plugins.cmake b/windows/flutter/generated_plugins.cmake
+index b93c4c3..d9b155a 100644
+--- a/windows/flutter/generated_plugins.cmake
++++ b/windows/flutter/generated_plugins.cmake
+@@ -3,9 +3,12 @@
+ #
+ 
+ list(APPEND FLUTTER_PLUGIN_LIST
++  audioplayers_windows
++  sentry_flutter
+ )
+ 
+ list(APPEND FLUTTER_FFI_PLUGIN_LIST
++  jni
+ )
+ 
+ set(PLUGIN_BUNDLED_LIBRARIES)
