@@ -59,6 +59,8 @@
 #                                         when worse (the device lab uses it)
 #   PLATFORMS="chrome safari"             the default set (else all)
 #   LIMIT_MIN=30                          minutes before a run is stopped
+#   START_MIN=4                           on the web, minutes for the app to
+#                                         come up before the run is stopped
 #   BROWSER_SIZE=1440,900                 this computer's browser windows (a
 #                                         laptop's; a phone is its own size)
 #
@@ -94,6 +96,7 @@ REPORT=""
 SUMMARY=""
 PLATFORMS=""
 LIMIT_MIN=30
+START_MIN=4
 BROWSER_SIZE=1440,900
 for c in tool/devices.conf devices.conf; do [ -f "$c" ] && . "./$c" && break; done
 [ -n "$TARGET" ] || TARGET=$(ls integration_test/*_test.dart 2>/dev/null | head -1)
@@ -323,7 +326,31 @@ android_info() {
   echo "chrome: $(adb -s "$phone" shell dumpsys package com.android.chrome | grep -m1 versionName | tr -d '\r ')"
 }
 
-# Runs flutter drive with [args] for [platform], stopped after LIMIT_MIN.
+# On the web: stops a run whose app never comes up (the driver keeps
+# finding no Flutter app on the page) after START_MIN minutes, not
+# LIMIT_MIN. [log] is the WebDriver's log, or "safari" for Safari's newest.
+watch_start() {
+  local pid=$1 dir=$2 log=$3 first="" f
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 10
+    f=$log
+    [ "$log" = safari ] && f=$(ls -t "$HOME/Library/Logs/com.apple.WebDriver"/*.txt 2>/dev/null | head -1)
+    [ -n "$f" ] && [ -f "$f" ] || continue
+    grep -q -E 'RESPONSE ExecuteScript "function"|"value":"function"' "$f" && return
+    if grep -q 'flutterDriver' "$f"; then
+      [ -n "$first" ] || first=$SECONDS
+      if [ $(( SECONDS - first )) -ge $(( START_MIN * 60 )) ]; then
+        echo "never started: after $START_MIN minutes the page still had no Flutter app on it; the browser's console says why (console.log, or for Safari its Web Inspector)" >"$dir/.never"
+        kill "$pid" 2>/dev/null
+        return
+      fi
+    fi
+  done
+}
+
+# Runs flutter drive with [args] for [platform], stopped after LIMIT_MIN
+# (on the web, after START_MIN if the app never comes up: set [watch]).
+watch=""
 drive() {
   local p=$1
   shift
@@ -337,13 +364,17 @@ drive() {
   drive_pid=$pid
   ( sleep $((LIMIT_MIN * 60)) && { echo timedout >"$dir/.timedout"; kill "$pid" 2>/dev/null; } ) 2>/dev/null &
   local dog=$!
+  local eye=""
+  if [ -n "$watch" ]; then watch_start "$pid" "$dir" "$watch" & eye=$!; fi
   wait "$pid"
   local rc=$?
   drive_pid=""
   pkill -P "$dog" 2>/dev/null; kill "$dog" 2>/dev/null
+  [ -n "$eye" ] && { pkill -P "$eye" 2>/dev/null; kill "$eye" 2>/dev/null; }
   local took=$(( SECONDS - t0 ))
   local how
-  if [ -f "$dir/.timedout" ]; then how="timed out"; rm -f "$dir/.timedout"
+  if [ -f "$dir/.never" ]; then how=$(cat "$dir/.never"); rm -f "$dir/.never"
+  elif [ -f "$dir/.timedout" ]; then how="timed out"; rm -f "$dir/.timedout"
   elif [ $rc -eq 0 ]; then how=passed
   else how="failed (exit $rc)"; fi
   echo "$how in $((took / 60))m$((took % 60))s" >"$dir/status.txt"
@@ -352,7 +383,7 @@ drive() {
     [ -n "$REPORT" ] && $REPORT "$dir/result.json" >"$dir/report.txt" 2>&1
   fi
   echo "   $how in $((took / 60))m$((took % 60))s: $dir/"
-  if [ "$how" != passed ]; then
+  if [ "$how" != passed ] && [ "${how#never}" = "$how" ]; then
     grep -E -i 'error|exception|failed|unable|could not|timed out|denied|remote automation|signing|provision' "$dir/drive.log" \
       | grep -v -i 'debug\]\|0 errors' | tail -8 | sed 's/^/     /'
   fi
@@ -397,6 +428,7 @@ for p in "${here_too[@]}"; do
         adb -s "$phone" reverse tcp:8780 tcp:8780 >/dev/null
         bg "$driver" --port=4445 --verbose --log-path="$dir/driver.log"
         sleep 2
+        watch=$dir/driver.log
         drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8780 \
           --browser-name=android-chrome --no-android-emulator --driver-port=4445
         stop_bg
@@ -412,6 +444,7 @@ for p in "${here_too[@]}"; do
       android_info >"$dir/device.txt" 2>&1
       adb -s "$phone" logcat -c
       bg sh -c "exec adb -s '$phone' logcat -v threadtime >'$dir/device.log' 2>&1"
+      watch=""
       drive "$p" -d "$phone"
       stop_bg
       grep -E ' (flutter|DartVM|Flutter|AndroidRuntime) *:|FATAL|ANR' "$dir/device.log" >"$dir/console.log"
@@ -426,6 +459,7 @@ for p in "${here_too[@]}"; do
       else
         echo "For the iPhone's own log: brew install libimobiledevice" >"$dir/device.log"
       fi
+      watch=""
       drive "$p" -d "$id"
       stop_bg
       grep -E 'flutter: |Dart|EXC_|crash|Terminated' "$dir/drive.log" >"$dir/console.log" ;;
@@ -436,6 +470,7 @@ for p in "${here_too[@]}"; do
       if driver=$(chromedriver_for "$chrome"); then
         bg "$driver" --port=4446 --verbose --enable-chrome-logs --log-path="$dir/driver.log"
         sleep 2
+        watch=$dir/driver.log
         drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8781 \
           --browser-name=chrome --no-headless --browser-dimension="$BROWSER_SIZE" --driver-port=4446
         stop_bg
@@ -450,6 +485,7 @@ for p in "${here_too[@]}"; do
       before=$(ls "$logs" 2>/dev/null)
       bg /usr/bin/safaridriver --port 4447 --diagnose
       sleep 2
+      watch=safari
       drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8782 \
         --browser-name=safari --driver-port=4447 --browser-dimension="$BROWSER_SIZE"
       stop_bg
@@ -466,6 +502,7 @@ for p in "${here_too[@]}"; do
       echo "== $p: the Mac app${name:+ ($name)}"
       { sw_vers; sysctl -n machdep.cpu.brand_string; system_profiler SPDisplaysDataType 2>/dev/null | grep -E 'Chipset|Resolution|Refresh|Type'; pmset -g therm 2>/dev/null; } >"$dir/device.txt" 2>&1
       [ -n "$name" ] && bg sh -c "exec log stream --style compact --level debug --predicate 'process == \"$name\"' >'$dir/device.log' 2>&1"
+      watch=""
       drive "$p" -d macos
       stop_bg
       grep -E 'flutter: |Dart|crash|EXC_' "$dir/drive.log" >"$dir/console.log"
