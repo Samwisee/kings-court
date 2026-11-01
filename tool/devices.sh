@@ -6,6 +6,8 @@
 #   bash tool/devices.sh chrome safari       only these
 #   bash tool/devices.sh --list              what's reachable, then stop
 #   bash tool/devices.sh --one-at-a-time     no two platforms at once
+#   bash tool/devices.sh --wasm              the web build as WebAssembly
+#                                            (skwasm), not JavaScript
 #   bash tool/devices.sh --dart-define=K=V   passed to every build (and named
 #                                            in the run's folder, to compare)
 #
@@ -101,17 +103,19 @@ tag=""
 into=""        # the run's folder, when this is the computer's lane of a run
 lanes=1
 cli_defines=()
+web_args=()
 next=""
 for a in "$@"; do
   if [ "$next" = into ]; then into=$a; next=""; continue; fi
   case "$a" in
     --list) listing=1 ;;
     --one-at-a-time) lanes="" ;;
+    --wasm) web_args+=(--wasm); cli_defines+=(--wasm); tag="$tag-wasm" ;;
     --into) next=into ;;
     --dart-define=*) DEFINES+=("$a"); cli_defines+=("$a"); d=${a#--dart-define=}; tag="$tag-${d%%=*}" ;;
     -h|--help) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) if [[ " $all " == *" $a "* ]]; then want+=("$a"); else
-         echo "Don't know \"$a\". Platforms: $all; options: --list, --one-at-a-time, --dart-define=K=V."; exit 1; fi ;;
+         echo "Don't know \"$a\". Platforms: $all; options: --list, --one-at-a-time, --wasm, --dart-define=K=V."; exit 1; fi ;;
   esac
 done
 [ ${#want[@]} -gt 0 ] || want=(${PLATFORMS:-$all})
@@ -221,7 +225,7 @@ flutter pub get >"$run/pub-get${into:+-computer}.log" 2>&1 || { echo "flutter pu
 
 # --- Helpers ------------------------------------------------------------------
 bg_pids=()
-bg() { "$@" & bg_pids+=($!); }
+bg() { "$@" & bg_pids+=($!); disown $! 2>/dev/null; }
 stop_bg() {
   for p in "${bg_pids[@]}"; do kill "$p" 2>/dev/null; done
   sleep 1
@@ -354,7 +358,7 @@ for p in "${here_too[@]}"; do
         adb -s "$phone" reverse tcp:8780 tcp:8780 >/dev/null
         bg "$driver" --port=4445 --verbose --log-path="$dir/driver.log"
         sleep 2
-        drive "$p" -d web-server --web-hostname 127.0.0.1 --web-port 8780 \
+        drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8780 \
           --browser-name=android-chrome --no-android-emulator --driver-port=4445
         stop_bg
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
@@ -390,7 +394,7 @@ for p in "${here_too[@]}"; do
       if driver=$(chromedriver_for "$chrome"); then
         bg "$driver" --port=4446 --verbose --enable-chrome-logs --log-path="$dir/driver.log"
         sleep 2
-        drive "$p" -d web-server --web-hostname 127.0.0.1 --web-port 8781 \
+        drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8781 \
           --browser-name=chrome --no-headless --browser-dimension="$BROWSER_SIZE" --driver-port=4446
         stop_bg
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
@@ -404,7 +408,7 @@ for p in "${here_too[@]}"; do
       before=$(ls "$logs" 2>/dev/null)
       bg /usr/bin/safaridriver --port 4447 --diagnose
       sleep 2
-      drive "$p" -d web-server --web-hostname 127.0.0.1 --web-port 8782 \
+      drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8782 \
         --browser-name=safari --driver-port=4447 --browser-dimension="$BROWSER_SIZE"
       stop_bg
       : >"$dir/driver.log"
@@ -434,7 +438,7 @@ done
 done_here=()
 for p in "${want[@]}"; do [ -f "$run/$p/result.json" ] && done_here+=("$p"); done
 {
-  echo "$(date): $TARGET, $MODE ${DEFINES[*]}"
+  echo "$(date): $TARGET, $MODE ${DEFINES[*]} ${web_args[*]}"
   echo
   for p in "${want[@]}"; do
     if [ -f "$run/$p/status.txt" ]; then printf '  %-15s %s\n' "$p" "$(head -1 "$run/$p/status.txt")"
