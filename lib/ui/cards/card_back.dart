@@ -84,33 +84,59 @@ class _BackRule extends CustomPainter {
 
 /// Turns a card over: the back while [face] runs from 0 to 0.5, the front
 /// after, like a card flipped on the table.
+///
+/// With [backFillsFront], the back is drawn at the front's size, and both
+/// stay built the whole way over: the front is built once, as the flip
+/// starts, rather than when it first shows mid-turn (a task card is a lot
+/// to build, and a deal turns several at once), and nothing is needed just
+/// to give the back the front's size. Without it, the back is its own
+/// size (a card back), and only the side showing is built.
+///
+/// The transform stays once it's face up, as no transform at all (a plain
+/// one: no perspective, which on the web can cut a card off as it's
+/// drawn), so landing doesn't build the card again either.
 class FlipIn extends StatelessWidget {
-  const FlipIn(
-      {super.key, required this.t, required this.front, required this.back});
+  const FlipIn({super.key, required this.t, required this.front, required this.back, this.backFillsFront = false});
   final double t;
   final Widget front;
   final Widget back;
+  final bool backFillsFront;
 
   @override
   Widget build(BuildContext context) {
-    // Once face up, no 3D transform at all: on the web a lingering
-    // perspective layer can cut a card off as it's drawn.
-    if (t >= 1) return front;
-    final angle = (1 - t) * math.pi;
+    final done = t >= 1;
+    final angle = done ? 0.0 : (1 - t) * math.pi;
     final showBack = angle > math.pi / 2;
+    final turned = Transform(alignment: Alignment.center, transform: Matrix4.identity()..rotateY(math.pi), child: back);
     return Transform(
       alignment: Alignment.center,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.0015)
-        ..rotateY(angle),
-      child: showBack
-          ? Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..rotateY(math.pi),
-              child: back)
-          : front,
+      transform: done
+          ? Matrix4.identity()
+          : (Matrix4.identity()
+            ..setEntry(3, 2, 0.0015)
+            ..rotateY(angle)),
+      child: backFillsFront
+          ? Stack(children: [
+              _Side(shown: !showBack, child: front),
+              Positioned.fill(child: _Side(shown: showBack, child: turned)),
+            ])
+          : showBack
+              ? turned
+              : front,
     );
   }
+}
+
+/// One side of a card turning over: built and laid out all the way over,
+/// drawn (and read out, and touchable) only while it's the side showing.
+class _Side extends StatelessWidget {
+  const _Side({required this.shown, required this.child});
+  final bool shown;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Visibility(visible: shown, maintainState: true, maintainAnimation: true, maintainSize: true, child: child);
 }
 
 /// A deck being shuffled: the two halves part and riffle together a few

@@ -59,32 +59,25 @@ class DealtTask extends StatelessWidget {
               child: FlipIn(
                 t: clampD(dc * 1.5 - 0.3, 0, 1),
                 front: child!,
-                // The back is exactly the size of the front.
-                back: Stack(children: [
-                  Opacity(opacity: 0, child: child),
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: skin.cardLook.taskBack ??
-                              [
-                                skin.cardLook.back,
-                                Color.lerp(skin.cardLook.back, Colors.black, 0.5)!
-                              ],
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: skin.gold, width: 1.5),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black45, blurRadius: blurs ? 6 : 0, offset: Offset(0, 3)),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: const CrownIcon(size: 26),
+                // The back, at the front's size.
+                backFillsFront: true,
+                back: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: skin.cardLook.taskBack ??
+                          [skin.cardLook.back, Color.lerp(skin.cardLook.back, Colors.black, 0.5)!],
                     ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: skin.gold, width: 1.5),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black45, blurRadius: blurs ? 6 : 0, offset: Offset(0, 3)),
+                    ],
                   ),
-                ]),
+                  alignment: Alignment.center,
+                  child: const CrownIcon(size: 26),
+                ),
               ),
             ),
           ),

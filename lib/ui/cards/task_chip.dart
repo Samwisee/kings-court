@@ -243,10 +243,9 @@ class TaskChip extends StatelessWidget {
         builder: (context, d, _) => FlipIn(
           t: 1 - d,
           front: front,
-          back: Stack(children: [
-            Opacity(opacity: 0, child: front),
-            Positioned.fill(
-              child: CustomPaint(
+          // The back, at the front's size.
+          backFillsFront: true,
+          back: CustomPaint(
               foregroundPainter: InnerEdge(radius: 8, inset: 2.5 + skin.outlineWidth),
               child: Container(
                 decoration: BoxDecoration(
@@ -275,8 +274,6 @@ class TaskChip extends StatelessWidget {
                 ))),
               ),
               ),
-            ),
-          ]),
         ),
       ),
       )),
