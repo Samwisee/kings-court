@@ -360,10 +360,12 @@ void main() {
           ];
           throw StateError('no $kind grid; texts: ${shown.take(40).join(', ')}');
         }
-        await tester.fling(grid, const Offset(0, -300), 1500, warnIfMissed: false);
+        // The shop's one scroll: the window shrinks, the shelves go by.
+        final shelves = find.byKey(const ValueKey('livery-shelves'));
+        await tester.fling(shelves, const Offset(0, -300), 1500, warnIfMissed: false);
         await wait(900);
         // And back, so the tabs are in reach again.
-        await tester.fling(grid, const Offset(0, 600), 2500, warnIfMissed: false);
+        await tester.fling(shelves, const Offset(0, 600), 2500, warnIfMissed: false);
         await wait(700);
       }
     }, limit: const Duration(seconds: 200));
