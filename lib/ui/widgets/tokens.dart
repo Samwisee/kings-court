@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
 import '../../game/state.dart';
+import '../../skin/effects.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
@@ -16,7 +17,6 @@ import 'icons.dart';
 import 'table.dart';
 import 'token_shapes.dart';
 import 'token_styles.dart';
-import '../../skin/effects.dart';
 
 /// A player's seat: a coloured token with their seat number or initials.
 /// The King's seat gets a gold ring and a crown. During play the token

@@ -10,10 +10,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 /// The crown flies from [from] to the new King at [to] and lands in a
 /// burst of gold, "Long live the King" glows, and every other seat in

@@ -6,12 +6,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 import 'card_view.dart';
-import '../../skin/effects.dart';
 
 /// The back of a card, for hands you can't see and cards being dealt.
 class CardBack extends StatelessWidget {

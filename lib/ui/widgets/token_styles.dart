@@ -10,10 +10,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
+import '../../skin/effects.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import 'token_shapes.dart';
-import '../../skin/effects.dart';
 
 Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 

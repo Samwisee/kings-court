@@ -18,6 +18,7 @@ import '../../engine/task.dart';
 import '../../game/courtiers.dart';
 import '../../platform/frame_stats.dart';
 import '../../platform/page_colour.dart' if (dart.library.js_interop) '../../platform/page_colour_web.dart';
+import '../../skin/effects.dart';
 import '../../skin/entitlements.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
@@ -27,7 +28,6 @@ import '../../skin/tailored.dart';
 import '../cards/card_view.dart';
 import '../cards/task_chip.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 part 'livery_swatches.dart';
 

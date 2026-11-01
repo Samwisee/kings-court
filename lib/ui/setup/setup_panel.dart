@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../game/state.dart';
 import '../../modes/chronicle/chapters.dart';
 import '../../platform/sfx.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
@@ -15,7 +16,6 @@ import 'chapter_picker.dart';
 import 'saves.dart';
 import 'setup_frame.dart';
 import 'setup_tiles.dart';
-import '../../skin/effects.dart';
 
 /// What the New Game panel starts with.
 typedef SetupArgs = ({GameMode? mode, int? chapter});

@@ -14,12 +14,12 @@ import '../../game/setup.dart';
 import '../../game/state.dart';
 import '../../net/online_table.dart';
 import '../../platform/invite.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../setup/setup_frame.dart';
 import '../setup/setup_tiles.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 class OnlineSetup extends StatefulWidget {
   const OnlineSetup({

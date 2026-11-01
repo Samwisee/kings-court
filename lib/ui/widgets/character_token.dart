@@ -7,10 +7,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import 'clamp.dart';
-import '../../skin/effects.dart';
 
 /// How a character token is behaving.
 enum CharacterMood {

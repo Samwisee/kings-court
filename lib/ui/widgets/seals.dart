@@ -4,10 +4,10 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import 'clamp.dart';
 import 'icons.dart';
-import '../../skin/effects.dart';
 
 /// A red wax seal pressed with its order: I, II, III or Ω for last.
 class WaxSeal extends StatelessWidget {

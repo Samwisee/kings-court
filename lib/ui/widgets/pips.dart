@@ -6,9 +6,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import 'character_token.dart';
-import '../../skin/effects.dart';
 
 /// The court's on/off mark: a gold ring, filled with a gold jewel when on.
 /// Used for every setting in place of switches and tick boxes.

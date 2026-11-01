@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../engine/task_help.dart';
+import '../../skin/effects.dart';
 import '../../skin/looks.dart';
 import '../../skin/parts.dart';
 import '../../skin/skin.dart';
@@ -15,7 +16,6 @@ import 'felt_patterns.dart';
 import 'icons.dart';
 import 'pips.dart';
 import 'suit_text.dart';
-import '../../skin/effects.dart';
 
 export '../../skin/looks.dart' show Ornament;
 

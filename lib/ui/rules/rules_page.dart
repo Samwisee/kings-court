@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
 
 import '../../engine/decrees.dart';
 import '../../game/state.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 /// Which games a section of the rules is about.
 enum RulesFor { all, onScreen, inPerson, twoPlayer }

@@ -3,9 +3,9 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 /// A button that softly pulses with a gold glow, to draw the eye.
 class GlowButton extends StatefulWidget {

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/cards.dart';
 import '../../engine/round.dart';
+import '../../skin/effects.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
@@ -15,7 +16,6 @@ import '../widgets.dart';
 import '../widgets/same.dart';
 import 'card_view.dart';
 import 'mini_card.dart';
-import '../../skin/effects.dart';
 
 /// A task card on its way from the middle of the table to whoever took it,
 /// shrinking as it goes.

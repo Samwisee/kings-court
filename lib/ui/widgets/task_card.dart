@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../engine/round.dart';
 import '../../game/state.dart';
+import '../../skin/effects.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
@@ -18,7 +19,6 @@ import 'seals.dart';
 import 'suit_text.dart';
 import 'table.dart';
 import 'task_faces.dart';
-import '../../skin/effects.dart';
 
 /// One pip per task: hollow while pending, green when done, red when failed.
 class TaskPips extends StatelessWidget {

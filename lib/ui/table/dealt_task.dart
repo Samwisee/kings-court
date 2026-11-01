@@ -7,10 +7,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 class DealtTask extends StatelessWidget {
   const DealtTask({

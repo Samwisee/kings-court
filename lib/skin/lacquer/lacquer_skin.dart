@@ -8,8 +8,8 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../design_skin.dart';
-import '../parts.dart';
 import '../effects.dart';
+import '../parts.dart';
 
 class LacquerSkin extends DesignSkin {
   const LacquerSkin() : super(lacquerDesign);

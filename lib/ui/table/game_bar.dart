@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import '../../engine/decrees.dart';
 import '../../engine/round.dart';
 import '../../game/state.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/strings.dart';
 import '../menu/menu.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 class GameBar extends StatelessWidget implements PreferredSizeWidget {
   const GameBar({

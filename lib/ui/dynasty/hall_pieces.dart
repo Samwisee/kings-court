@@ -4,10 +4,10 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../game/courtiers.dart';
+import '../../skin/effects.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 /// Someone in the throne room.
 class HallFigure {

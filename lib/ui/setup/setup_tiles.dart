@@ -3,9 +3,9 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import '../menu/menu.dart';
-import '../../skin/effects.dart';
 
 /// One way to play on the first setup step.
 class ModeTile extends StatelessWidget {

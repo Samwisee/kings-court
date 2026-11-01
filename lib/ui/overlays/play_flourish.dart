@@ -3,9 +3,9 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../skin/effects.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
-import '../../skin/effects.dart';
 
 class PlayFlourish extends StatelessWidget {
   const PlayFlourish({super.key, required this.animation});

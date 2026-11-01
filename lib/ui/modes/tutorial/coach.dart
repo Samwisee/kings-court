@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
 import '../../../engine/cards.dart';
 import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
+import '../../../skin/effects.dart';
 import '../../../skin/skin_scope.dart';
 import '../../widgets.dart';
-import '../../../skin/effects.dart';
 
 /// What the tutorial's coach says right now: nothing outside a tutorial
 /// round in progress; the lesson's intro while the table is [settingUp]

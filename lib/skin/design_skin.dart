@@ -7,10 +7,10 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'effects.dart';
 import 'fields.dart';
 import 'looks.dart';
 import 'skin.dart';
-import 'effects.dart';
 
 /// How dressed up a designed skin is.
 enum Finish {

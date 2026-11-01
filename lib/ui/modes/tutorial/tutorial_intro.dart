@@ -14,11 +14,11 @@ import '../../../engine/round.dart';
 import '../../../game/courtiers.dart';
 import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
+import '../../../skin/effects.dart';
 import '../../../skin/skin_scope.dart';
 import '../../cards/card_view.dart';
 import '../../widgets.dart';
 import 'intro_preview.dart';
-import '../../../skin/effects.dart';
 
 const _shadow = [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)];
 
