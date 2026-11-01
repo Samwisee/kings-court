@@ -36,6 +36,9 @@
 #                             the test's own output, and any failure
 #   <platform>/console.log    what the app printed (the browser's console on
 #                             the web; the app's own output natively)
+#   <platform>/page.log       on the web, what the page itself sent of its
+#                             console, if its index.html sends it (see
+#                             page_console below): Safari's only console
 #   <platform>/device.log     the device's system log while it ran (Android's
 #                             logcat, the iPhone's syslog, the Mac's log)
 #   <platform>/driver.log     the WebDriver's log (Chrome, Safari)
@@ -268,6 +271,31 @@ chromedriver_for() {
   [ -x "$d" ] && echo "$d"
 }
 
+# The page's own console, for any browser: a project's web/index.html can
+# send it, on a local test server, to the page's port + 1000 (kings-court's
+# does; see there), and this keeps each line in [file]. Safari's driver
+# doesn't pass the console on, so for Safari it's the only way to see it.
+page_console() {
+  local port=$1 file=$2
+  cat >"$drivers/console_server.py" <<'EOF'
+import sys, time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+port, path, start = int(sys.argv[1]), sys.argv[2], time.time()
+class H(BaseHTTPRequestHandler):
+    def do_POST(self):
+        body = self.rfile.read(int(self.headers.get('Content-Length') or 0)).decode('utf-8', 'replace')
+        with open(path, 'a') as f:
+            f.write(f"{time.time() - start:8.2f}  {body}\n")
+        self.send_response(204); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
+    def do_OPTIONS(self):
+        self.send_response(204); self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Headers', '*'); self.end_headers()
+    def log_message(self, *a): pass
+HTTPServer(('127.0.0.1', port), H).serve_forever()
+EOF
+  bg python3 "$drivers/console_server.py" "$port" "$file"
+}
+
 # The browser's console, out of ChromeDriver's verbose log.
 console_from_chromedriver() {
   python3 - "$1" <<'EOF'
@@ -340,7 +368,7 @@ watch_start() {
     if grep -q 'flutterDriver' "$f"; then
       [ -n "$first" ] || first=$SECONDS
       if [ $(( SECONDS - first )) -ge $(( START_MIN * 60 )) ]; then
-        echo "never started: after $START_MIN minutes the page still had no Flutter app on it; the browser's console says why (console.log, or for Safari its Web Inspector)" >"$dir/.never"
+        echo "never started: after $START_MIN minutes the page still had no Flutter app on it; the browser's console says why (console.log, page.log)" >"$dir/.never"
         kill "$pid" 2>/dev/null
         return
       fi
@@ -426,6 +454,8 @@ for p in "${here_too[@]}"; do
         adb -s "$phone" logcat -c
         bg sh -c "exec adb -s '$phone' logcat -v threadtime >'$dir/device.log' 2>&1"
         adb -s "$phone" reverse tcp:8780 tcp:8780 >/dev/null
+        adb -s "$phone" reverse tcp:9780 tcp:9780 >/dev/null
+        page_console 9780 "$dir/page.log"
         bg "$driver" --port=4445 --verbose --log-path="$dir/driver.log"
         sleep 2
         watch=$dir/driver.log
@@ -468,6 +498,7 @@ for p in "${here_too[@]}"; do
       echo "== $p $chrome on this computer, $BROWSER_SIZE"
       echo "Chrome $chrome" >"$dir/device.txt"
       if driver=$(chromedriver_for "$chrome"); then
+        page_console 9781 "$dir/page.log"
         bg "$driver" --port=4446 --verbose --enable-chrome-logs --log-path="$dir/driver.log"
         sleep 2
         watch=$dir/driver.log
@@ -483,6 +514,7 @@ for p in "${here_too[@]}"; do
       echo "Safari $(defaults read /Applications/Safari.app/Contents/Info CFBundleShortVersionString 2>/dev/null)" >"$dir/device.txt"
       logs=$HOME/Library/Logs/com.apple.WebDriver
       before=$(ls "$logs" 2>/dev/null)
+      page_console 9782 "$dir/page.log"
       bg /usr/bin/safaridriver --port 4447 --diagnose
       sleep 2
       watch=safari
@@ -493,7 +525,8 @@ for p in "${here_too[@]}"; do
       for f in $(ls "$logs" 2>/dev/null); do
         echo "$before" | grep -qx "$f" || { echo "== $f"; cat "$logs/$f"; } >>"$dir/driver.log"
       done
-      echo "Safari's WebDriver doesn't pass on the page's console; see drive.log for the test's own output." >"$dir/console.log"
+      if [ -s "$dir/page.log" ]; then cp "$dir/page.log" "$dir/console.log"
+      else echo "Nothing came from the page: Safari's driver doesn't pass its console on, and the page didn't send it (see page_console in tool/devices.sh)." >"$dir/console.log"; fi
       if grep -q -i 'remote automation\|safaridriver --enable' "$dir/drive.log"; then
         echo "   Safari needs, once: Develop > Allow Remote Automation, and in a terminal: safaridriver --enable"
       fi ;;

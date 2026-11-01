@@ -1,6 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script>
+    // On a local test server only (tool/devices.sh), never the real site:
+    // the page's console and errors go to the run's log server, on the
+    // page's port + 1000, so a browser whose driver doesn't pass the
+    // console on (Safari's) still shows it, start-up failures included.
+    (function () {
+      if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname) || !location.port) return;
+      var url = 'http://127.0.0.1:' + (Number(location.port) + 1000) + '/console';
+      function send(level, args) {
+        try {
+          var text = Array.prototype.map.call(args, function (a) {
+            if (typeof a === 'string') return a;
+            if (a && a.stack) return a.stack;
+            try { return JSON.stringify(a); } catch (e) { return String(a); }
+          }).join(' ');
+          navigator.sendBeacon(url, level + ' ' + text);
+        } catch (e) { /* no log server: nothing to tell */ }
+      }
+      ['log', 'info', 'warn', 'error', 'debug'].forEach(function (k) {
+        var original = console[k];
+        console[k] = function () { send(k, arguments); return original.apply(console, arguments); };
+      });
+      window.addEventListener('error', function (e) {
+        send('error', [e.message + ' (' + e.filename + ':' + e.lineno + ')' + (e.error && e.error.stack ? '\n' + e.error.stack : '')]);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        send('error', ['unhandled rejection: ' + ((e.reason && e.reason.stack) || e.reason)]);
+      });
+    })();
+  </script>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
