@@ -51,7 +51,7 @@ sleep 2
 echo "The game opens in Chrome on the phone. Leave it alone until it's done (about 10 minutes)."
 flutter pub get >/dev/null
 flutter drive --profile -d web-server --web-hostname 127.0.0.1 --web-port 8780 \
-  --browser-name=android-chrome --driver-port=4445 \
+  --browser-name=android-chrome --no-android-emulator --driver-port=4445 \
   --dart-define=FRAMES_REAL_DEVICE=true \
   --driver=test_driver/frames_driver.dart --target=integration_test/frames_test.dart \
   2>&1 | tee build/android-drive.txt
