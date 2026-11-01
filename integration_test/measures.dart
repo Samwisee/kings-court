@@ -3,8 +3,11 @@
 /// server. Frames are still timed, by the engine and by the test.
 library;
 
+import 'package:flutter/foundation.dart';
+
 Map<String, double> timelineMeasures() => const {};
 
 void clearTimelineMeasures() {}
 
-void logLine(String line) {}
+/// How far the run got, in flutter drive's output (tool/devices.sh keeps it).
+void logLine(String line) => debugPrint(line);

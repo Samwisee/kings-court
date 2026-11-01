@@ -54,7 +54,8 @@
 #   SUMMARY="python3 tool/summary.py"     given the run folder and platforms
 #   PLATFORMS="chrome safari"             the default set (else all)
 #   LIMIT_MIN=30                          minutes before a run is stopped
-#   WEB_SIZE=412,915@2                    the browser window, in CSS pixels
+#   BROWSER_SIZE=1440,900                 this computer's browser windows (a
+#                                         laptop's; a phone is its own size)
 #
 # Once, per device:
 #   Android  Settings > About phone: tap Build number 7 times; Developer
@@ -86,7 +87,7 @@ REPORT=""
 SUMMARY=""
 PLATFORMS=""
 LIMIT_MIN=30
-WEB_SIZE=412,915@2
+BROWSER_SIZE=1440,900
 for c in tool/devices.conf devices.conf; do [ -f "$c" ] && . "./$c" && break; done
 [ -n "$TARGET" ] || TARGET=$(ls integration_test/*_test.dart 2>/dev/null | head -1)
 [ -n "$DRIVER" ] || DRIVER=test_driver/integration_test.dart
@@ -384,13 +385,13 @@ for p in "${here_too[@]}"; do
       grep -E 'flutter: |Dart|EXC_|crash|Terminated' "$dir/drive.log" >"$dir/console.log" ;;
     chrome)
       chrome=$("$chrome_app" --version | awk '{print $NF}')
-      echo "== $p $chrome on this computer, $WEB_SIZE"
+      echo "== $p $chrome on this computer, $BROWSER_SIZE"
       echo "Chrome $chrome" >"$dir/device.txt"
       if driver=$(chromedriver_for "$chrome"); then
         bg "$driver" --port=4446 --verbose --enable-chrome-logs --log-path="$dir/driver.log"
         sleep 2
         drive "$p" -d web-server --web-hostname 127.0.0.1 --web-port 8781 \
-          --browser-name=chrome --no-headless --browser-dimension="$WEB_SIZE" --driver-port=4446
+          --browser-name=chrome --no-headless --browser-dimension="$BROWSER_SIZE" --driver-port=4446
         stop_bg
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
       else
@@ -404,7 +405,7 @@ for p in "${here_too[@]}"; do
       bg /usr/bin/safaridriver --port 4447 --diagnose
       sleep 2
       drive "$p" -d web-server --web-hostname 127.0.0.1 --web-port 8782 \
-        --browser-name=safari --driver-port=4447 --browser-dimension="$WEB_SIZE"
+        --browser-name=safari --driver-port=4447 --browser-dimension="$BROWSER_SIZE"
       stop_bg
       : >"$dir/driver.log"
       for f in $(ls "$logs" 2>/dev/null); do

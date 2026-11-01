@@ -7,6 +7,7 @@ library;
 import 'dart:js_interop';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 /// What the browser measured since the last clear: each name's own time
@@ -44,9 +45,14 @@ Map<String, double> timelineMeasures() {
 /// mark it opened with, so clearing marks mid-frame breaks every frame.
 void clearTimelineMeasures() => web.window.performance.clearMeasures();
 
-/// A line to the CI job's log server (port 9999), so how far the run got
-/// can be seen even if it hangs.
+/// How far the run got, seen even if it hangs: on a real device in the
+/// browser's console (tool/devices.sh keeps it); in CI to the job's log
+/// server (port 9999), which only runs there.
 void logLine(String line) {
+  if (const bool.fromEnvironment('FRAMES_REAL_DEVICE')) {
+    debugPrint(line);
+    return;
+  }
   try {
     web.window.fetch('http://localhost:9999/log'.toJS, web.RequestInit(method: 'POST', mode: 'no-cors', body: line.toJS));
   } catch (_) {
