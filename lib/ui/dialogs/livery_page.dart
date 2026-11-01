@@ -30,6 +30,7 @@ import '../cards/task_chip.dart';
 import '../widgets.dart';
 
 part 'livery_showcase.dart';
+part 'livery_store.dart';
 part 'livery_swatches.dart';
 
 /// Opens the Livery page; [wear] puts the look on (and keeps it) as it
@@ -95,23 +96,13 @@ class _LiveryPageState extends State<_LiveryPage> {
     Navigator.of(context).pop();
   }
 
-  /// Back to what was worn when the shop opened.
-  void _takeOff() => setState(() {
-        _base = TailoredSkin.baseOf(widget.start);
-        _back = _chosen(widget.start)?.backChoice;
-        _face = _chosen(widget.start)?.faceChoice;
-        _task = _chosen(widget.start)?.taskChoice;
-        _token = _chosen(widget.start)?.tokenChoice;
-        _court = _chosen(widget.start)?.courtChoice;
-      });
-
-  /// Buying: the shop isn't open yet, so it says so.
-  void _buy(String price) => showDialog<void>(
+  /// Buying: the store isn't open yet, so it says so.
+  void _buy(String what, String price) => showDialog<void>(
         context: context,
         builder: (context) => CourtDialog(
-          title: 'The shop opens soon',
+          title: 'The store opens soon',
           actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Keep looking'))],
-          child: Text('${_base.name} will be $price. Until the shop opens, try on whatever you like here.',
+          child: Text('$what will be $price. Until the store opens, look at anything you like here.',
               textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, height: 1.35)),
         ),
       );
@@ -165,7 +156,7 @@ class _LiveryPageState extends State<_LiveryPage> {
           child: Builder(builder: (context) {
             final skin = context.skin;
             final price = widget.entitlements.priceOf(look);
-            final windowH = clampD(height * 0.34, 230, 330);
+            final windowH = clampD(height * 0.3, 200, 300);
             return Scaffold(
               backgroundColor: skin.feltDeep,
               body: Stack(children: [
@@ -187,8 +178,9 @@ class _LiveryPageState extends State<_LiveryPage> {
                         padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                         child: _Case(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                            // The shop window and the sections stay put; only
-                            // the shelves scroll.
+                            // The store's name, the window, and the sections
+                            // stay put; only the shelves scroll.
+                            const _StoreHeading(),
                             SizedBox(height: windowH, child: _Showcase(look: look, price: price)),
                             SizedBox(
                                 height: 54,
@@ -199,16 +191,9 @@ class _LiveryPageState extends State<_LiveryPage> {
                                 child: CustomScrollView(key: const ValueKey('livery-shelves'), controller: _scroll, slivers: [
                                   SliverPadding(
                                     // Room on the right for the scrollbar.
-                                    padding: const EdgeInsets.fromLTRB(14, 12, 22, 16),
-                                    sliver: SliverGrid(
-                                      key: ValueKey('look-grid-${_kind.name}'),
-                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                          maxCrossAxisExtent: 132,
-                                          mainAxisExtent: 136,
-                                          crossAxisSpacing: 10,
-                                          mainAxisSpacing: 12),
-                                      delegate: SliverChildListDelegate(_tiles(look)),
-                                    ),
+                                    padding: const EdgeInsets.fromLTRB(_Store.gutter, 14, _Store.gutter + 10, 16),
+                                    sliver: SliverMainAxisGroup(
+                                        key: ValueKey('look-grid-${_kind.name}'), slivers: _shelves(look)),
                                   ),
                                 ]),
                               ),
@@ -217,9 +202,8 @@ class _LiveryPageState extends State<_LiveryPage> {
                               look: look,
                               price: price,
                               changed: look.id != widget.start.id,
-                              onWear: _done,
-                              onBuy: () => _buy(price!),
-                              onTakeOff: _takeOff,
+                              onChoose: _done,
+                              onBuy: () => _buy(base.name, price!),
                             ),
                           ]),
                         ),
@@ -235,6 +219,41 @@ class _LiveryPageState extends State<_LiveryPage> {
     );
   }
 
+  static SliverGrid _grid(List<Widget> tiles) => SliverGrid(
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 140, mainAxisExtent: 150, crossAxisSpacing: 10, mainAxisSpacing: 12),
+        delegate: SliverChildListDelegate(tiles),
+      );
+
+  /// The open section's shelves. Styles: those for sale first (with the
+  /// offer of every one at once), then the player's own. Anything else:
+  /// one shelf, the style's own first.
+  List<Widget> _shelves(Skin look) {
+    if (_kind != _Kind.style) return [_grid(_tiles(look))];
+    final forSale = [for (final s in skins) if (widget.entitlements.priceOf(s) != null) s];
+    final yours = [for (final s in skins) if (widget.entitlements.priceOf(s) == null) s];
+    final inUse = TailoredSkin.baseOf(widget.start).id;
+    Widget tile(Skin s) => _Tile(
+        name: s.name,
+        selected: s.id == _base.id,
+        inUse: s.id == inUse,
+        fresh: _newStyles.contains(s.id),
+        price: widget.entitlements.priceOf(s),
+        onTap: () => _style(s),
+        child: _TableSwatch(s));
+    if (forSale.isEmpty) return [_grid([for (final s in yours) tile(s)])];
+    return [
+      SliverToBoxAdapter(
+          child: _ShelfHeading(
+              title: 'For sale',
+              offer: _BundleOffer(price: _bundlePrice, onTap: () => _buy('Every style', _bundlePrice)))),
+      _grid([for (final s in forSale) tile(s)]),
+      const SliverToBoxAdapter(child: SizedBox(height: 18)),
+      const SliverToBoxAdapter(child: _ShelfHeading(title: 'Yours')),
+      _grid([for (final s in yours) tile(s)]),
+    ];
+  }
+
   /// The open section's choices, a tile each: the style's own first.
   List<Widget> _tiles(Skin look) {
     final base = _base;
@@ -242,17 +261,7 @@ class _LiveryPageState extends State<_LiveryPage> {
     final ownName = '${base.name}’s';
     final tiles = <Widget>[
       ...switch (_kind) {
-        _Kind.style => [
-            // Every style, those for sale with their price.
-            for (final s in skins)
-              _Tile(
-                  name: s.name,
-                  selected: s.id == base.id,
-                  wearing: s.id == TailoredSkin.baseOf(widget.start).id,
-                  price: widget.entitlements.priceOf(s),
-                  onTap: () => _style(s),
-                  child: _TableSwatch(s)),
-          ],
+        _Kind.style => <Widget>[],
         _Kind.faces => [
             _Tile(name: ownName, selected: _face == null, onTap: () => setState(() => _face = null), child: _Faces(own)),
             for (final f in faceChoices)
@@ -388,107 +397,3 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-/// One choice: its picture on the livery's felt over its name, ringed and
-/// lit in the accent when chosen; lit, under a pointer, with the hand.
-class _Tile extends StatefulWidget {
-  const _Tile(
-      {required this.name,
-      required this.selected,
-      required this.onTap,
-      required this.child,
-      this.wearing = false,
-      this.price});
-  final String name;
-  final bool selected;
-
-  /// What's worn now: ribboned.
-  final bool wearing;
-
-  /// For sale: its price, on a tag.
-  final String? price;
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  State<_Tile> createState() => _TileState();
-}
-
-class _TileState extends State<_Tile> {
-  bool _hover = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    final selected = widget.selected;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: [widget.name, if (widget.wearing) 'wearing', if (widget.price != null) 'for sale, ${widget.price}'].join(', '),
-      excludeSemantics: true,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: Column(children: [
-            Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                // Lifted off the shelf under a pointer.
-                transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(radius: 0.9, colors: [skin.feltGlow, skin.feltDeep]),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: selected
-                          ? skin.gold
-                          : _hover
-                              ? skin.gold.withValues(alpha: 0.6)
-                              : Colors.white.withValues(alpha: 0.12),
-                      width: selected ? 2.5 : 1.5),
-                  boxShadow: [
-                    if (selected) BoxShadow(color: skin.gold.withValues(alpha: 0.35), blurRadius: blurs ? 14 : 0),
-                    const BoxShadow(color: Colors.black38, blurRadius: blurs ? 6 : 0, offset: Offset(0, 3)),
-                  ],
-                ),
-                child: Stack(children: [
-                  // Its own layer: drawn once, not again as the grid scrolls.
-                  Center(
-                      child: AnimatedScale(
-                          scale: _hover ? 1.06 : 1,
-                          duration: const Duration(milliseconds: 160),
-                          child: RepaintBoundary(child: widget.child))),
-                  if (widget.wearing)
-                    Positioned(left: 6, top: 6, child: _Badge(text: 'Wearing', fill: skin.gold, ink: skin.goldInk)),
-                  if (widget.price case final price?)
-                    Positioned(right: 6, bottom: 6, child: _PriceTag(price: price)),
-                  if (selected)
-                    Positioned(
-                      right: 6,
-                      top: 6,
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(color: skin.gold, shape: BoxShape.circle),
-                        child: Icon(Icons.check_rounded, size: 14, color: skin.goldInk),
-                      ),
-                    ),
-                ]),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(widget.name,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    color: selected || _hover ? skin.gold : Colors.white.withValues(alpha: 0.8))),
-          ]),
-        ),
-      ),
-    );
-  }
-}

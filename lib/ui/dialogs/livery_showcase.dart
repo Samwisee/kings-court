@@ -17,7 +17,7 @@ class _Case extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    final radius = math.min(skin.panelLook.radius, 20.0);
+    const radius = _Store.caseRadius;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: ground(skin),
@@ -44,97 +44,6 @@ class _Case extends StatelessWidget {
             ),
           ),
         ),
-      ]),
-    );
-  }
-}
-
-/// The counter at the foot of the case: choose what's put together (or
-/// just leave, if nothing changed); for a style tried on that's for sale, buy it, or
-/// take it off.
-class _Counter extends StatelessWidget {
-  const _Counter(
-      {required this.look,
-      required this.price,
-      required this.changed,
-      required this.onWear,
-      required this.onBuy,
-      required this.onTakeOff});
-  final Skin look;
-  final String? price;
-  final bool changed;
-  final VoidCallback onWear, onBuy, onTakeOff;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    final name = TailoredSkin.baseOf(look).name;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
-        border: Border(top: BorderSide(color: skin.gold.withValues(alpha: 0.35), width: 1.5)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 10,
-          runSpacing: 6,
-          children: [
-            if (price case final price?) ...[
-              FilledButton(
-                  style: FilledButton.styleFrom(minimumSize: const Size(200, 46)),
-                  onPressed: onBuy,
-                  child: Text('Buy $name · $price')),
-              TextButton(onPressed: onTakeOff, child: const Text('Take it off')),
-            ] else
-              FilledButton(
-                  key: const ValueKey('livery-wear'),
-                  style: FilledButton.styleFrom(minimumSize: const Size(200, 46)),
-                  onPressed: onWear,
-                  child: Text(changed ? 'Choose' : 'Done')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A small pill on a tile: what's worn.
-class _Badge extends StatelessWidget {
-  const _Badge({required this.text, required this.fill, required this.ink});
-  final String text;
-  final Color fill, ink;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(9)),
-        child: Text(text, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: ink)),
-      );
-}
-
-/// A price tag on a tile for sale: a little lock and the price, gold on
-/// the style's dark.
-class _PriceTag extends StatelessWidget {
-  const _PriceTag({required this.price});
-  final String price;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(5, 2, 7, 2),
-      decoration: BoxDecoration(
-        color: skin.feltDeep.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: skin.gold.withValues(alpha: 0.85)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.lock_rounded, size: 11, color: skin.gold),
-        const SizedBox(width: 3),
-        Text(price, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: skin.gold)),
       ]),
     );
   }
@@ -257,10 +166,10 @@ class _Showcase extends StatelessWidget {
             SizedBox(width: gap),
             Column(mainAxisSize: MainAxisSize.min, children: [tokens, SizedBox(height: wide ? 18 : 14), task]),
           ]);
-          final frame = BorderRadius.circular(12);
+          final frame = BorderRadius.circular(_Store.windowRadius);
           return Padding(
             // The window, set into the case.
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+            padding: const EdgeInsets.fromLTRB(_Store.gutter, 6, _Store.gutter, 4),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: frame,
@@ -283,24 +192,19 @@ class _Showcase extends StatelessWidget {
                     ),
                   ),
                   Column(children: [
-                    const _Sign(name: 'Store'),
-                    // The style shown, and when it's for sale, its price.
-                    SizedBox(
-                      height: 22,
-                      child: Center(
-                        child: _Swap(
-                          id: '$base-$price',
-                          child: Text(price == null ? skin.name : '${skin.name} · trying on · $price',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white.withValues(alpha: 0.85),
-                                  shadows: skin.feltShadow)),
-                        ),
+                    Expanded(
+                        child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+                      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: scene)),
+                    )),
+                    // The nameplate: the style, and its price if it's for sale.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: _Swap(id: '$base-$price', child: _Nameplate(name: skin.name, price: price)),
                       ),
                     ),
-                    Expanded(child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: scene))),
-                    SizedBox(height: h * 0.05),
                   ]),
                 ]),
               ),
@@ -312,36 +216,31 @@ class _Showcase extends StatelessWidget {
   }
 }
 
-/// The shop's sign: a name on a plaque, hung from two fine chains from the
-/// top of the window.
-class _Sign extends StatelessWidget {
-  const _Sign({required this.name});
+/// The window's nameplate: the style's name, and its price if it's for
+/// sale, on a dark plate.
+class _Nameplate extends StatelessWidget {
+  const _Nameplate({required this.name, this.price});
   final String name;
+  final String? price;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    final chain = Container(width: 1.2, height: 12, color: skin.gold.withValues(alpha: 0.6));
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Row(mainAxisSize: MainAxisSize.min, children: [chain, const SizedBox(width: 120), chain]),
-      Container(
-        padding: const EdgeInsets.fromLTRB(18, 3, 18, 5),
-        decoration: BoxDecoration(
-          color: Color.lerp(skin.feltDeep, Colors.black, 0.3),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: skin.gold.withValues(alpha: 0.85), width: 1.5),
-          boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 2))],
-        ),
-        child: Text(name,
-            style: TextStyle(
-                fontFamily: skin.displayFont,
-                fontWeight: FontWeight.w800,
-                fontSize: 24,
-                height: 1.15,
-                color: skin.gold,
-                shadows: skin.feltShadow)),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 4, 8, 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: skin.gold.withValues(alpha: 0.45)),
       ),
-    ]);
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(name,
+            style: TextStyle(
+                fontFamily: skin.displayFont, fontSize: 17, fontWeight: FontWeight.w800, color: skin.gold)),
+        if (price case final price?) ...[const SizedBox(width: 10), _PriceTag(price: price)],
+        if (price == null) const SizedBox(width: 4),
+      ]),
+    );
   }
 }
 
