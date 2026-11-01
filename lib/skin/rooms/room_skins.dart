@@ -147,15 +147,15 @@ class MarbleSkin extends DesignSkin {
 const marbleDesign = SkinDesign(
   id: 'marble',
   name: 'Marble hall',
-  ground: Color(0xFF0D1714),
-  felt: Color(0xFF1F3B33),
-  feltDeep: Color(0xFF132621),
-  surface: Color(0xFF1A3029),
+  ground: Color(0xFF0A1311),
+  felt: Color(0xFF24493F),
+  feltDeep: Color(0xFF132B25),
+  surface: Color(0xFF183630),
   card: Color(0xFFFAF7F0),
   ink: Color(0xFF1F1B16),
   inkSoft: Color(0xFF655D52),
-  accent: Color(0xFFD9C9A0),
-  accentDeep: Color(0xFF9E8E66),
+  accent: Color(0xFFE3D3A8),
+  accentDeep: Color(0xFFA6956A),
   onAccent: Color(0xFF1E1A10),
   red: Color(0xFFB8243A),
   won: Color(0xFF5FBF7A),
@@ -169,7 +169,7 @@ const marbleDesign = SkinDesign(
   token: 'gems',
   task: 'gilt',
   pattern: FeltPattern.marble,
-  patternInk: Color(0x4DE8F2EC),
+  patternInk: Color(0x4CEFF4EE),
 );
 
 /// Ballroom: black lacquer and gold fans, as in a ballroom of the twenties.
@@ -270,37 +270,39 @@ const campaignDesign = SkinDesign(
   patternInk: Color(0x33E8DDB0),
 );
 
-/// Chequers: a chequered floor in deep claret, and gold for the King.
-class ChequersSkin extends DesignSkin {
-  const ChequersSkin() : super(chequersDesign);
+/// Casino: green baize inside a gilt rail, the suits worked faintly into
+/// the cloth, chips for the seats, and gold and red. (It was Chequers:
+/// saved looks still find it, see skins.dart.)
+class CasinoSkin extends DesignSkin {
+  const CasinoSkin() : super(casinoDesign);
 }
 
-const chequersDesign = SkinDesign(
-  id: 'chequers',
-  name: 'Chequers',
-  ground: Color(0xFF120707),
-  felt: Color(0xFF3A1A1E),
-  feltDeep: Color(0xFF24100F),
-  surface: Color(0xFF2E1517),
+const casinoDesign = SkinDesign(
+  id: 'casino',
+  name: 'Casino',
+  ground: Color(0xFF07140D),
+  felt: Color(0xFF0F5A3A),
+  feltDeep: Color(0xFF083823),
+  surface: Color(0xFF0C2E1F),
   card: Color(0xFFFAF7F0),
   ink: Color(0xFF1F1B16),
   inkSoft: Color(0xFF655D52),
-  accent: Color(0xFFD4A63A),
-  accentDeep: Color(0xFF9C7420),
+  accent: Color(0xFFD9B044),
+  accentDeep: Color(0xFF9C7A20),
   onAccent: Color(0xFF2A1A04),
-  red: Color(0xFFB8243A),
-  won: Color(0xFF5FBF7A),
+  red: Color(0xFFC21E2E),
+  won: Color(0xFF6FD08A),
   lost: Color(0xFFE0614B),
   displayFont: 'CinzelDecorative',
   bodyFont: 'AlegreyaSans',
   finish: Finish.rich,
-  corners: PanelCorners.chequer,
+  corners: PanelCorners.studs,
   back: 'crimson',
   face: 'casino',
   token: 'chips',
   task: 'decree',
-  pattern: FeltPattern.chequer,
-  patternInk: Color(0x24000000),
+  pattern: FeltPattern.baize,
+  patternInk: Color(0x33E9D9A6),
 );
 
 /// Salon: herringbone parquet in charcoal, and pale linen for the accent.
@@ -332,4 +334,172 @@ const salonDesign = SkinDesign(
   task: 'rose',
   pattern: FeltPattern.herringbone,
   patternInk: Color(0x14FFFFFF),
+);
+
+/// Riviera: a seaside summer under a cabana's striped awning, in sea-glass
+/// blue and coral.
+class RivieraSkin extends DesignSkin {
+  const RivieraSkin() : super(rivieraDesign);
+}
+
+const rivieraDesign = SkinDesign(
+  id: 'riviera',
+  name: 'Riviera',
+  ground: Color(0xFF0B2A33),
+  felt: Color(0xFF2B7480),
+  feltDeep: Color(0xFF1A525C),
+  surface: Color(0xFF15434C),
+  card: Color(0xFFFCF8EF),
+  ink: Color(0xFF1F2A2E),
+  inkSoft: Color(0xFF5E6C70),
+  accent: Color(0xFFF4906C),
+  accentDeep: Color(0xFFC25F3E),
+  onAccent: Color(0xFF3A1408),
+  red: Color(0xFFD0384A),
+  won: Color(0xFF6FD3A0),
+  lost: Color(0xFFF07B5A),
+  displayFont: 'AlegreyaSans',
+  bodyFont: 'AlegreyaSans',
+  corners: PanelCorners.brackets,
+  back: 'rose',
+  face: 'seaside',
+  token: 'gems',
+  task: 'mint',
+  pattern: FeltPattern.awning,
+  patternInk: Color(0x1CFFF6E8),
+);
+
+/// Winter palace: ice and silver, snowflakes on a frosted cloth, and ferns
+/// of frost grown in at the corners.
+class WinterSkin extends DesignSkin {
+  const WinterSkin() : super(winterDesign);
+}
+
+const winterDesign = SkinDesign(
+  id: 'winter',
+  name: 'Winter palace',
+  ground: Color(0xFF0A121D),
+  felt: Color(0xFF34536F),
+  feltDeep: Color(0xFF1F354B),
+  surface: Color(0xFF1B2D42),
+  card: Color(0xFFFAFCFF),
+  ink: Color(0xFF17202B),
+  inkSoft: Color(0xFF5A6675),
+  accent: Color(0xFFDDE9F5),
+  accentDeep: Color(0xFF93A9C2),
+  onAccent: Color(0xFF14202E),
+  red: Color(0xFFB8243A),
+  won: Color(0xFF7FD6B0),
+  lost: Color(0xFFE77A66),
+  displayFont: 'CinzelDecorative',
+  bodyFont: 'AlegreyaSans',
+  finish: Finish.rich,
+  corners: PanelCorners.stars,
+  back: 'silver',
+  face: 'silver',
+  token: 'gems',
+  task: 'letter',
+  pattern: FeltPattern.frost,
+  patternInk: Color(0x38E8F4FF),
+);
+
+/// Egyptian: lapis and gold, rows of lotus and papyrus between zigzag
+/// bands, as painted on a tomb's wall.
+class EgyptianSkin extends DesignSkin {
+  const EgyptianSkin() : super(egyptianDesign);
+}
+
+const egyptianDesign = SkinDesign(
+  id: 'egyptian',
+  name: 'Egyptian',
+  ground: Color(0xFF0A0E22),
+  felt: Color(0xFF1F3A78),
+  feltDeep: Color(0xFF12224B),
+  surface: Color(0xFF172B5A),
+  card: Color(0xFFF7EFDC),
+  ink: Color(0xFF241A10),
+  inkSoft: Color(0xFF6B5A44),
+  accent: Color(0xFFE2B53E),
+  accentDeep: Color(0xFFA47C1E),
+  onAccent: Color(0xFF2A1C04),
+  red: Color(0xFFB5352A),
+  won: Color(0xFF5FBF7A),
+  lost: Color(0xFFE0614B),
+  displayFont: 'CinzelDecorative',
+  bodyFont: 'AlegreyaSans',
+  finish: Finish.rich,
+  corners: PanelCorners.tooled,
+  back: 'royal',
+  face: 'antique',
+  token: 'shields',
+  task: 'gilt',
+  pattern: FeltPattern.lotus,
+  patternInk: Color(0x30E2B53E),
+);
+
+/// Galleon: a captain's treasure map on the table, brass fittings, and
+/// doubloons for the seats.
+class GalleonSkin extends DesignSkin {
+  const GalleonSkin() : super(galleonDesign);
+}
+
+const galleonDesign = SkinDesign(
+  id: 'galleon',
+  name: 'Galleon',
+  ground: Color(0xFF150E08),
+  felt: Color(0xFF5A4530),
+  feltDeep: Color(0xFF3A2C1D),
+  surface: Color(0xFF30241A),
+  card: Color(0xFFF6EEDB),
+  ink: Color(0xFF2A1C10),
+  inkSoft: Color(0xFF6E5A44),
+  accent: Color(0xFFCDA65C),
+  accentDeep: Color(0xFF8E6E30),
+  onAccent: Color(0xFF24180A),
+  red: Color(0xFFA8302A),
+  won: Color(0xFF6CC28A),
+  lost: Color(0xFFE0614B),
+  displayFont: 'CinzelDecorative',
+  bodyFont: 'AlegreyaSans',
+  finish: Finish.rich,
+  corners: PanelCorners.studs,
+  back: 'crimson',
+  face: 'tarot',
+  token: 'coins',
+  task: 'parchment',
+  pattern: FeltPattern.map,
+  patternInk: Color(0x38F0DEB4),
+);
+
+/// Scopa: a trattoria's red-and-white gingham, cream and gold, olive
+/// sprigs in the corners, and coins for the seats.
+class ScopaSkin extends DesignSkin {
+  const ScopaSkin() : super(scopaDesign);
+}
+
+const scopaDesign = SkinDesign(
+  id: 'scopa',
+  name: 'Scopa',
+  ground: Color(0xFF1C0907),
+  felt: Color(0xFF8E2A22),
+  feltDeep: Color(0xFF611A15),
+  surface: Color(0xFF461511),
+  card: Color(0xFFFCF8EE),
+  ink: Color(0xFF231A12),
+  inkSoft: Color(0xFF6A5C4C),
+  accent: Color(0xFFF0D48A),
+  accentDeep: Color(0xFFB8973E),
+  onAccent: Color(0xFF2A1C04),
+  red: Color(0xFFC0242E),
+  won: Color(0xFF8BCF6A),
+  lost: Color(0xFFF2A36B),
+  displayFont: 'AlegreyaSans',
+  bodyFont: 'AlegreyaSans',
+  corners: PanelCorners.leaves,
+  back: 'emerald',
+  face: 'classic',
+  token: 'coins',
+  task: 'stationery',
+  pattern: FeltPattern.gingham,
+  patternInk: Color(0x24FFF4E2),
 );

@@ -60,6 +60,18 @@ class FeltPatternPainter extends CustomPainter {
         _contours(canvas, s);
       case FeltPattern.herringbone:
         _herringbone(canvas, s);
+      case FeltPattern.awning:
+        _awning(canvas, s);
+      case FeltPattern.frost:
+        _frost(canvas, s);
+      case FeltPattern.lotus:
+        _lotus(canvas, s);
+      case FeltPattern.map:
+        _map(canvas, s);
+      case FeltPattern.gingham:
+        _gingham(canvas, s);
+      case FeltPattern.baize:
+        _baize(canvas, s);
     }
     canvas.restore();
   }
@@ -363,29 +375,82 @@ class FeltPatternPainter extends CustomPainter {
     }
   }
 
-  /// Veins wandering across, thick and thin.
+  /// Polished marble, laid in slabs: each slab clouded a little lighter or
+  /// darker, its veins tapering and branching, fainter threads between,
+  /// the joints fine pale lines, and a round inlay in the middle of the
+  /// floor. (Drawn once, so the clouds' soft gradients cost nothing after.)
   void _marble(Canvas canvas, Size s) {
     final rand = math.Random(11);
-    final veins = (s.width * s.height / 70000).round().clamp(4, 40);
-    for (var v = 0; v < veins; v++) {
-      var p = Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height);
-      var a = rand.nextDouble() * math.pi * 2;
-      final path = Path()..moveTo(p.dx, p.dy);
-      for (var k = 0; k < 14; k++) {
-        a += (rand.nextDouble() - 0.5) * 1.1;
-        final mid = p + Offset(math.cos(a), math.sin(a)) * 22;
-        a += (rand.nextDouble() - 0.5) * 0.6;
-        final next = mid + Offset(math.cos(a), math.sin(a)) * 22;
-        path.quadraticBezierTo(mid.dx, mid.dy, next.dx, next.dy);
-        p = next;
-        // A thread branching off, now and then.
-        if (rand.nextDouble() < 0.2) {
-          final b = a + (rand.nextBool() ? 0.9 : -0.9);
-          canvas.drawLine(p, p + Offset(math.cos(b), math.sin(b)) * (20 + rand.nextDouble() * 40), _line(0.6, 0.6));
-        }
-      }
-      canvas.drawPath(path, _line(0.6 + rand.nextDouble() * 1.8, 0.5 + rand.nextDouble() * 0.5));
+    const slab = 240.0;
+    // The clouds: soft patches of the vein colour, and of shadow.
+    for (var k = 0; k < (s.width * s.height / 26000).round().clamp(6, 80); k++) {
+      final c = Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height);
+      final r = 60 + rand.nextDouble() * 140;
+      final light = rand.nextBool();
+      final tint = light ? ink.withValues(alpha: ink.a * 0.22) : const Color(0x2A000000);
+      canvas.drawCircle(
+          c,
+          r,
+          Paint()
+            ..shader = RadialGradient(colors: [tint, tint.withValues(alpha: 0)])
+                .createShader(Rect.fromCircle(center: c, radius: r)));
     }
+    // The veins: long, wandering, thick in the middle and thin at each end.
+    void vein(Offset start, double angle, int steps, double width, double alpha) {
+      var p = start;
+      var a = angle;
+      for (var k = 0; k < steps; k++) {
+        a += (rand.nextDouble() - 0.5) * 0.7;
+        final next = p + Offset(math.cos(a), math.sin(a)) * (14 + rand.nextDouble() * 10);
+        final taper = math.sin((k + 0.5) / steps * math.pi);
+        canvas.drawLine(p, next, _line(0.35 + width * taper, alpha * (0.4 + 0.6 * taper))..strokeCap = StrokeCap.round);
+        // Threads off it, now and then.
+        if (rand.nextDouble() < 0.12) {
+          final b = a + (rand.nextBool() ? 0.8 : -0.8);
+          var q = next;
+          var ba = b;
+          for (var t = 0; t < 4 + rand.nextInt(5); t++) {
+            ba += (rand.nextDouble() - 0.5) * 0.9;
+            final qn = q + Offset(math.cos(ba), math.sin(ba)) * 12;
+            canvas.drawLine(q, qn, _line(0.5, alpha * 0.5));
+            q = qn;
+          }
+        }
+        p = next;
+      }
+    }
+    final veins = (s.width * s.height / 60000).round().clamp(4, 40);
+    for (var v = 0; v < veins; v++) {
+      vein(Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height), rand.nextDouble() * math.pi * 2,
+          14 + rand.nextInt(14), 1.2 + rand.nextDouble() * 1.6, 0.55 + rand.nextDouble() * 0.45);
+    }
+    // Fainter threads everywhere between.
+    for (var v = 0; v < veins * 2; v++) {
+      vein(Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height), rand.nextDouble() * math.pi * 2,
+          6 + rand.nextInt(6), 0.3, 0.35);
+    }
+    // The slabs' joints.
+    final joint = _line(1, 0.55);
+    for (var x = slab; x < s.width; x += slab) {
+      canvas.drawLine(Offset(x, 0), Offset(x, s.height), joint);
+    }
+    for (var y = slab; y < s.height; y += slab) {
+      canvas.drawLine(Offset(0, y), Offset(s.width, y), joint);
+    }
+    // The inlay in the middle: a ring of a darker stone, and a lozenge.
+    final c = Offset(s.width / 2, s.height * 0.45);
+    final r = math.min(s.width, s.height) * 0.16;
+    canvas.drawCircle(c, r, _line(2.2, 0.7));
+    canvas.drawCircle(c, r * 0.86, _line(0.8, 0.6));
+    canvas.drawCircle(c, r * 0.86, Paint()..color = const Color(0x1A000000));
+    final lozenge = Path()
+      ..moveTo(c.dx, c.dy - r * 0.8)
+      ..lineTo(c.dx + r * 0.8, c.dy)
+      ..lineTo(c.dx, c.dy + r * 0.8)
+      ..lineTo(c.dx - r * 0.8, c.dy)
+      ..close();
+    canvas.drawPath(lozenge, _line(1.2, 0.65));
+    canvas.drawCircle(c, r * 0.22, _fill(0.35));
   }
 
   /// Rows of fans, each row over the one before.
@@ -509,6 +574,302 @@ class FeltPatternPainter extends CustomPainter {
       }
     }
     canvas.drawPath(path, _line(1.1));
+  }
+
+  /// A cabana's awning: broad stripes down the cloth, every other one
+  /// filled, under a valance of scallops along the top.
+  void _awning(Canvas canvas, Size s) {
+    const stripe = 46.0;
+    const drop = 30.0;
+    final fill = _fill(0.55);
+    final edge = _line(1, 0.8);
+    for (var x = 0.0; x < s.width; x += stripe * 2) {
+      canvas.drawRect(Rect.fromLTWH(x, drop, stripe, s.height), fill);
+      canvas.drawLine(Offset(x + 4, drop), Offset(x + 4, s.height), _line(0.7, 0.5));
+      canvas.drawLine(Offset(x + stripe - 4, drop), Offset(x + stripe - 4, s.height), _line(0.7, 0.5));
+    }
+    // The valance: a scallop under each stripe, filled like the stripe.
+    for (var x = 0.0, k = 0; x < s.width; x += stripe, k++) {
+      final scallop = Path()
+        ..moveTo(x, 0)
+        ..lineTo(x, drop - stripe / 2)
+        ..arcToPoint(Offset(x + stripe, drop - stripe / 2), radius: const Radius.circular(stripe / 2), clockwise: false)
+        ..lineTo(x + stripe, 0)
+        ..close();
+      if (k.isEven) canvas.drawPath(scallop, _fill(0.75));
+      canvas.drawPath(scallop, edge);
+    }
+    canvas.drawLine(const Offset(0, 6), Offset(s.width, 6), _line(1.4, 0.8));
+  }
+
+  /// Frost: snowflakes of six arms, each arm feathered, scattered large and
+  /// small; and ferns of ice grown in from the corners.
+  void _frost(Canvas canvas, Size s) {
+    final rand = math.Random(5);
+    void flake(Offset c, double r, double alpha) {
+      final line = _line(r > 18 ? 1.2 : 0.9, alpha)..strokeCap = StrokeCap.round;
+      for (var k = 0; k < 6; k++) {
+        final a = k * math.pi / 3 + 0.26;
+        final d = Offset(math.cos(a), math.sin(a));
+        canvas.drawLine(c, c + d * r, line);
+        for (final f in const [0.45, 0.72]) {
+          final at = c + d * r * f;
+          for (final side in const [-1.0, 1.0]) {
+            final b = a + side * 0.75;
+            canvas.drawLine(at, at + Offset(math.cos(b), math.sin(b)) * r * 0.28, line);
+          }
+        }
+      }
+      canvas.drawCircle(c, r * 0.12, line);
+    }
+    final n = (s.width * s.height / 22000).round().clamp(6, 60);
+    for (var k = 0; k < n; k++) {
+      final big = rand.nextDouble() < 0.25;
+      flake(Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height),
+          big ? 22 + rand.nextDouble() * 14 : 6 + rand.nextDouble() * 8, big ? 0.75 : 0.5);
+    }
+    // Ice ferns from each corner: a stem that wanders in, fronds off it.
+    void fern(Offset start, double angle, double length, int depth) {
+      var p = start;
+      var a = angle;
+      final steps = (length / 10).round();
+      for (var k = 0; k < steps; k++) {
+        a += (rand.nextDouble() - 0.5) * 0.25;
+        final next = p + Offset(math.cos(a), math.sin(a)) * 10;
+        canvas.drawLine(p, next, _line(depth == 0 ? 1.1 : 0.6, depth == 0 ? 0.7 : 0.5));
+        if (depth < 2 && k.isOdd) {
+          fern(next, a + (k % 4 == 1 ? 0.9 : -0.9), length * (0.35 - k / steps * 0.25), depth + 1);
+        }
+        p = next;
+      }
+    }
+    for (final (corner, angle) in [
+      (Offset.zero, math.pi / 4),
+      (Offset(s.width, 0), math.pi * 3 / 4),
+      (Offset(0, s.height), -math.pi / 4),
+      (Offset(s.width, s.height), -math.pi * 3 / 4),
+    ]) {
+      for (var k = -1; k <= 1; k++) {
+        fern(corner, angle + k * 0.32, 150 + rand.nextDouble() * 90, 0);
+      }
+    }
+  }
+
+  /// Egyptian bands: between pairs of rules with a zigzag in them, rows of
+  /// lotus flowers and papyrus buds on their stems, turn and turn about.
+  void _lotus(Canvas canvas, Size s) {
+    const band = 26.0;
+    const row = 132.0;
+    final rule = _line(1.2);
+    final fine = _line(0.9, 0.85);
+    for (var y = 0.0; y < s.height + row; y += row) {
+      // The border band: two rules and a zigzag.
+      canvas.drawLine(Offset(0, y), Offset(s.width, y), rule);
+      canvas.drawLine(Offset(0, y + band), Offset(s.width, y + band), rule);
+      final zig = Path()..moveTo(0, y + band - 4);
+      for (var x = 0.0, k = 0; x <= s.width + 14; x += 14, k++) {
+        zig.lineTo(x, k.isEven ? y + band - 4 : y + 4);
+      }
+      canvas.drawPath(zig, fine);
+      // The row of flowers under it.
+      final base = y + row - 8;
+      for (var x = 30.0, k = 0; x < s.width + 40; x += 60, k++) {
+        final stem = Offset(x, base);
+        final head = Offset(x, y + band + 40);
+        canvas.drawLine(stem, head + const Offset(0, 14), fine);
+        if (k.isEven) {
+          // A lotus: a tall middle petal and a petal curling out each side.
+          final petal = Path()
+            ..moveTo(head.dx, head.dy + 14)
+            ..quadraticBezierTo(head.dx - 9, head.dy, head.dx, head.dy - 16)
+            ..quadraticBezierTo(head.dx + 9, head.dy, head.dx, head.dy + 14);
+          canvas.drawPath(petal, _fill(0.55));
+          canvas.drawPath(petal, fine);
+          for (final side in const [-1.0, 1.0]) {
+            final p = Path()
+              ..moveTo(head.dx, head.dy + 14)
+              ..quadraticBezierTo(head.dx + side * 20, head.dy + 8, head.dx + side * 18, head.dy - 8)
+              ..quadraticBezierTo(head.dx + side * 10, head.dy + 2, head.dx, head.dy + 14);
+            canvas.drawPath(p, fine);
+          }
+        } else {
+          // A papyrus bud: a fan closed to a point.
+          final bud = Path()
+            ..moveTo(head.dx, head.dy + 14)
+            ..lineTo(head.dx - 11, head.dy - 6)
+            ..quadraticBezierTo(head.dx, head.dy - 14, head.dx + 11, head.dy - 6)
+            ..close();
+          canvas.drawPath(bud, fine);
+          for (final dx in const [-5.0, 0.0, 5.0]) {
+            canvas.drawLine(Offset(head.dx, head.dy + 12), Offset(head.dx + dx, head.dy - 6), _line(0.6, 0.6));
+          }
+        }
+      }
+    }
+  }
+
+  /// A treasure map: a stretch of coast with hatching along its shore,
+  /// waves out at sea, a dashed course to an X, a compass rose, and a rope
+  /// laid round the edge.
+  void _map(Canvas canvas, Size s) {
+    final rand = math.Random(17);
+    final line = _line(1.2);
+    final fine = _line(0.8, 0.7);
+    // The coast: an island's outline off one side, its shore hatched.
+    final island = Path();
+    final c = Offset(s.width * 0.22, s.height * 0.58);
+    final rx = s.width * 0.2, ry = s.height * 0.16;
+    for (var k = 0; k <= 36; k++) {
+      final a = k / 36 * math.pi * 2;
+      final wobble = 1 + (math.sin(a * 3 + 1) * 0.12 + math.sin(a * 7) * 0.06);
+      final p = c + Offset(math.cos(a) * rx * wobble, math.sin(a) * ry * wobble);
+      k == 0 ? island.moveTo(p.dx, p.dy) : island.lineTo(p.dx, p.dy);
+    }
+    island.close();
+    canvas.drawPath(island, _fill(0.18));
+    canvas.drawPath(island, line);
+    for (var k = 0; k < 60; k++) {
+      final a = k / 60 * math.pi * 2;
+      final wobble = 1 + (math.sin(a * 3 + 1) * 0.12 + math.sin(a * 7) * 0.06);
+      final p = c + Offset(math.cos(a) * rx * wobble, math.sin(a) * ry * wobble);
+      final out = Offset(math.cos(a), math.sin(a)) * 9;
+      canvas.drawLine(p + out * 0.4, p + out, fine);
+    }
+    // Waves out at sea.
+    for (var k = 0; k < (s.width * s.height / 30000).round().clamp(4, 40); k++) {
+      final p = Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height);
+      if ((p - c).dx.abs() < rx * 1.3 && (p - c).dy.abs() < ry * 1.4) continue;
+      final w = Path()
+        ..moveTo(p.dx, p.dy)
+        ..quadraticBezierTo(p.dx + 6, p.dy - 5, p.dx + 12, p.dy)
+        ..quadraticBezierTo(p.dx + 18, p.dy - 5, p.dx + 24, p.dy);
+      canvas.drawPath(w, fine);
+    }
+    // The course: dashed, from the far side to the X on the island.
+    final x = c + Offset(rx * 0.25, -ry * 0.15);
+    final course = Path()
+      ..moveTo(s.width * 0.9, s.height * 0.12)
+      ..cubicTo(s.width * 0.75, s.height * 0.42, s.width * 0.55, s.height * 0.2, x.dx, x.dy);
+    for (final m in course.computeMetrics()) {
+      for (var d = 0.0; d < m.length - 14; d += 16) {
+        canvas.drawPath(m.extractPath(d, d + 9), _line(1.6, 0.85));
+      }
+    }
+    final xs = _line(2.6)..strokeCap = StrokeCap.round;
+    canvas.drawLine(x + const Offset(-9, -9), x + const Offset(9, 9), xs);
+    canvas.drawLine(x + const Offset(9, -9), x + const Offset(-9, 9), xs);
+    // A compass rose in the top corner.
+    final rose = Offset(s.width * 0.2, s.height * 0.16);
+    final rr = math.min(s.width, s.height) * 0.08;
+    canvas.drawCircle(rose, rr, fine);
+    canvas.drawCircle(rose, rr * 0.75, fine);
+    for (var k = 0; k < 8; k++) {
+      final a = k * math.pi / 4;
+      final len = k.isEven ? rr * 1.25 : rr * 0.75;
+      final tip = rose + Offset(math.cos(a), math.sin(a)) * len;
+      final l = rose + Offset(math.cos(a + math.pi / 2), math.sin(a + math.pi / 2)) * rr * 0.14;
+      final r = rose + Offset(math.cos(a - math.pi / 2), math.sin(a - math.pi / 2)) * rr * 0.14;
+      final point = Path()
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(l.dx, l.dy)
+        ..lineTo(r.dx, r.dy)
+        ..close();
+      canvas.drawPath(point, k.isEven ? _fill(0.6) : fine);
+    }
+    // A rope round the edge: a twist of short slanted strokes.
+    const inset = 14.0;
+    final rope = Rect.fromLTRB(inset, inset, s.width - inset, s.height - inset);
+    final twist = _line(1.6, 0.8)..strokeCap = StrokeCap.round;
+    void along(Offset a, Offset b) {
+      final len = (b - a).distance;
+      final d = (b - a) / len;
+      final n = Offset(-d.dy, d.dx);
+      for (var t = 0.0; t < len; t += 7) {
+        final p = a + d * t;
+        canvas.drawLine(p - n * 3.5, p + d * 5 + n * 3.5, twist);
+      }
+    }
+    along(rope.topLeft, rope.topRight);
+    along(rope.topRight, rope.bottomRight);
+    along(rope.bottomRight, rope.bottomLeft);
+    along(rope.bottomLeft, rope.topLeft);
+  }
+
+  /// Gingham: bands of the ink across and down, half as strong, so where
+  /// they cross they're as strong again.
+  void _gingham(Canvas canvas, Size s) {
+    const step = 34.0;
+    final band = _fill(0.5);
+    for (var x = 0.0; x < s.width; x += step * 2) {
+      canvas.drawRect(Rect.fromLTWH(x, 0, step, s.height), band);
+    }
+    for (var y = 0.0; y < s.height; y += step * 2) {
+      canvas.drawRect(Rect.fromLTWH(0, y, s.width, step), band);
+    }
+  }
+
+  /// A casino's baize: a gilt rail, two fine lines round an oval inset
+  /// from the edge, and the four suits in rows across the cloth.
+  void _baize(Canvas canvas, Size s) {
+    const step = 84.0;
+    var row = 0;
+    for (var y = step / 2; y < s.height + step; y += step * 0.86, row++) {
+      for (var x = (row.isOdd ? step / 2 : 0.0) + step / 2, k = row; x < s.width + step; x += step, k++) {
+        _suit(canvas, Offset(x, y), 9, k % 4, _fill(0.5));
+      }
+    }
+    final rail = Rect.fromLTRB(s.width * 0.05, s.height * 0.06, s.width * 0.95, s.height * 0.94);
+    final r = Radius.circular(math.min(rail.width, rail.height) / 2);
+    canvas.drawRRect(RRect.fromRectAndRadius(rail, r), _line(2.4, 1));
+    canvas.drawRRect(RRect.fromRectAndRadius(rail.deflate(7), r), _line(0.9, 0.8));
+  }
+
+  /// A suit's mark, [size] across: spades, hearts, diamonds, clubs for
+  /// [which] 0 to 3.
+  void _suit(Canvas canvas, Offset c, double size, int which, Paint paint) {
+    final h = size;
+    switch (which) {
+      case 1: // hearts
+        final p = Path()
+          ..moveTo(c.dx, c.dy + h)
+          ..cubicTo(c.dx - h * 1.6, c.dy - h * 0.2, c.dx - h * 0.6, c.dy - h * 1.3, c.dx, c.dy - h * 0.4)
+          ..cubicTo(c.dx + h * 0.6, c.dy - h * 1.3, c.dx + h * 1.6, c.dy - h * 0.2, c.dx, c.dy + h)
+          ..close();
+        canvas.drawPath(p, paint);
+      case 2: // diamonds
+        final p = Path()
+          ..moveTo(c.dx, c.dy - h)
+          ..lineTo(c.dx + h * 0.72, c.dy)
+          ..lineTo(c.dx, c.dy + h)
+          ..lineTo(c.dx - h * 0.72, c.dy)
+          ..close();
+        canvas.drawPath(p, paint);
+      case 3: // clubs
+        canvas.drawCircle(c + Offset(0, -h * 0.45), h * 0.42, paint);
+        canvas.drawCircle(c + Offset(-h * 0.45, h * 0.15), h * 0.42, paint);
+        canvas.drawCircle(c + Offset(h * 0.45, h * 0.15), h * 0.42, paint);
+        canvas.drawPath(
+            Path()
+              ..moveTo(c.dx, c.dy)
+              ..lineTo(c.dx + h * 0.25, c.dy + h)
+              ..lineTo(c.dx - h * 0.25, c.dy + h)
+              ..close(),
+            paint);
+      default: // spades
+        final p = Path()
+          ..moveTo(c.dx, c.dy - h)
+          ..cubicTo(c.dx + h * 1.6, c.dy + h * 0.1, c.dx + h * 0.6, c.dy + h * 1.0, c.dx, c.dy + h * 0.3)
+          ..cubicTo(c.dx - h * 0.6, c.dy + h * 1.0, c.dx - h * 1.6, c.dy + h * 0.1, c.dx, c.dy - h)
+          ..close();
+        canvas.drawPath(p, paint);
+        canvas.drawPath(
+            Path()
+              ..moveTo(c.dx, c.dy + h * 0.2)
+              ..lineTo(c.dx + h * 0.25, c.dy + h)
+              ..lineTo(c.dx - h * 0.25, c.dy + h)
+              ..close(),
+            paint);
+    }
   }
 
   @override

@@ -129,6 +129,26 @@ enum FeltPattern {
 
   /// Herringbone parquet.
   herringbone,
+
+  /// A cabana's awning: broad stripes under a scalloped valance.
+  awning,
+
+  /// Frost: snowflakes, and ice ferns grown in from the corners.
+  frost,
+
+  /// Egyptian bands: rows of lotus and papyrus between zigzag borders.
+  lotus,
+
+  /// A treasure map: a coastline, a dashed course to an X, a compass rose
+  /// and a rope round the edge.
+  map,
+
+  /// A gingham tablecloth.
+  gingham,
+
+  /// A casino's baize: the gilt rail round the table, and the suits worked
+  /// faintly into the cloth.
+  baize,
 }
 
 /// The frame printed on a task card's face, inside its edge.
