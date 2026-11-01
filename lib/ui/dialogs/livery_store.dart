@@ -93,6 +93,11 @@ class _TileState extends State<_Tile> {
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(_Store.tileRadius),
+            ),
+            // The ring over the picture and the footer, not under them, so
+            // its corners stay round.
+            foregroundDecoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_Store.tileRadius),
               border: Border.all(
                   color: selected
                       ? skin.gold
@@ -233,21 +238,31 @@ class _BundleOffer extends StatelessWidget {
 }
 
 /// The counter at the foot of the case. A style for sale: its name, that
-/// it's theirs to keep, and Buy. Anything else: Choose (or Done, if nothing
-/// changed).
+/// it's theirs to keep, and Buy (with Choose beside it while the store's
+/// not open and it may be worn anyway). Anything else: Choose (or Done, if
+/// nothing changed).
 class _Counter extends StatelessWidget {
   const _Counter(
-      {required this.look, required this.price, required this.changed, required this.onChoose, required this.onBuy});
+      {required this.look,
+      required this.price,
+      required this.changed,
+      required this.mayWear,
+      required this.onChoose,
+      required this.onBuy});
   final Skin look;
   final String? price;
-  final bool changed;
+  final bool changed, mayWear;
   final VoidCallback onChoose, onBuy;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
     final name = TailoredSkin.baseOf(look).name;
-    final button = FilledButton.styleFrom(minimumSize: const Size(150, 46));
+    final choose = FilledButton(
+        key: const ValueKey('livery-wear'),
+        style: FilledButton.styleFrom(minimumSize: const Size(150, 46)),
+        onPressed: onChoose,
+        child: Text(changed ? 'Choose' : 'Done'));
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.2),
@@ -256,33 +271,50 @@ class _Counter extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
         child: price == null
-            ? Center(
-                child: FilledButton(
-                    key: const ValueKey('livery-wear'),
-                    style: button,
-                    onPressed: onChoose,
-                    child: Text(changed ? 'Choose' : 'Done')))
-            : Row(children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    Text(name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontFamily: skin.displayFont,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: skin.gold)),
-                    const SizedBox(height: 2),
-                    Text('Yours to keep.',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
-                  ]),
-                ),
-                const SizedBox(width: 12),
-                FilledButton(style: button, onPressed: onBuy, child: Text('Buy · $price')),
-              ]),
+            ? Center(child: choose)
+            : LayoutBuilder(builder: (context, c) {
+                // Narrow: the buttons only, the name's in the window above.
+                final roomy = c.maxWidth >= 420;
+                final buy = FilledButton(
+                    style: FilledButton.styleFrom(minimumSize: const Size(128, 46)),
+                    onPressed: onBuy,
+                    child: Text('Buy · $price'));
+                final wear = mayWear
+                    ? OutlinedButton(
+                        key: const ValueKey('livery-wear'),
+                        style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(104, 46),
+                            foregroundColor: skin.gold,
+                            side: BorderSide(color: skin.gold.withValues(alpha: 0.8), width: 1.5)),
+                        onPressed: onChoose,
+                        child: Text(changed ? 'Choose' : 'Done'))
+                    : null;
+                return Row(mainAxisAlignment: roomy ? MainAxisAlignment.start : MainAxisAlignment.center, children: [
+                  if (roomy) ...[
+                    Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                        Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontFamily: skin.displayFont,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: skin.gold)),
+                        const SizedBox(height: 2),
+                        Text('Yours to keep.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
+                      ]),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  if (wear != null) ...[wear, const SizedBox(width: 10)],
+                  buy,
+                ]);
+              }),
       ),
     );
   }

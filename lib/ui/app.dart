@@ -36,7 +36,7 @@ class TheKingsCourtApp extends StatefulWidget {
 class _TheKingsCourtAppState extends State<TheKingsCourtApp>
     with SingleTickerProviderStateMixin {
   late Skin _skin = dressed(widget.skin);
-  late final Entitlements _entitlements = widget.entitlements ?? (Shop(samplePrices)..keep(widget.skin));
+  late final Entitlements _entitlements = widget.entitlements ?? (Shop(samplePrices, open: false)..keep(widget.skin));
 
   /// The whole screen, to hold as a still while the look changes.
   final _screen = GlobalKey();

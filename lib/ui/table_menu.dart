@@ -79,7 +79,7 @@ extension _Menu on HomePageState {
           case 'skin':
             showLivery(context, wear: _wear);
           case 'nextLivery': // the benchmark's way through every skin
-            if (skinAfter(context.skin, (s) => SkinScope.owns(context, s)) case final next?) _wear(next);
+            if (skinAfter(context.skin, (s) => SkinScope.mayWear(context, s)) case final next?) _wear(next);
           case 'share':
             _set(() => GameLog.sharing = !GameLog.sharing);
             _saveSettings();

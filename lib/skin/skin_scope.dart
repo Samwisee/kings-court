@@ -28,10 +28,10 @@ class SkinScope extends InheritedWidget {
       context.dependOnInheritedWidgetOfExactType<SkinScope>()?.skin ??
       const CourtSkin();
 
-  /// Changes the skin to [skin], if the player owns it; whether it did.
+  /// Changes the skin to [skin], if the player may wear it; whether it did.
   static bool choose(BuildContext context, Skin skin) {
     final scope = context.getInheritedWidgetOfExactType<SkinScope>();
-    if (scope == null || scope.onChoose == null || !scope.entitlements.owns(skin)) {
+    if (scope == null || scope.onChoose == null || !scope.entitlements.mayWear(skin)) {
       return false;
     }
     scope.onChoose!(skin);
@@ -48,8 +48,8 @@ class SkinScope extends InheritedWidget {
   }
 
   /// Whether the player may wear [skin].
-  static bool owns(BuildContext context, Skin skin) =>
-      context.getInheritedWidgetOfExactType<SkinScope>()?.entitlements.owns(skin) ?? true;
+  static bool mayWear(BuildContext context, Skin skin) =>
+      context.getInheritedWidgetOfExactType<SkinScope>()?.entitlements.mayWear(skin) ?? true;
 
   @override
   bool updateShouldNotify(SkinScope old) => old.skin != skin;

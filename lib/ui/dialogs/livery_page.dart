@@ -109,9 +109,9 @@ class _LiveryPageState extends State<_LiveryPage> {
   void _wearNow() {
     if (_worn) return;
     _worn = true;
-    // Only what's owned is worn: a style tried on and not bought is left
-    // in the shop.
-    if (_look.id != widget.start.id && widget.entitlements.owns(_look)) {
+    // Only what may be worn is: once the store opens, a style tried on and
+    // not bought is left in the shop.
+    if (_look.id != widget.start.id && widget.entitlements.mayWear(_look)) {
       widget.wear(_look);
     } else {
       colourPage(widget.start.table);
@@ -201,6 +201,7 @@ class _LiveryPageState extends State<_LiveryPage> {
                               look: look,
                               price: price,
                               changed: look.id != widget.start.id,
+                              mayWear: widget.entitlements.mayWear(look),
                               onChoose: _done,
                               onBuy: () => _buy(base.name, price!),
                             ),

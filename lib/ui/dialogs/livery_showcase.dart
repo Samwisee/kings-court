@@ -26,8 +26,13 @@ class _Case extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4))],
       ),
       child: Stack(children: [
+        // Inside the edge, so nothing in the case (the sections' ground,
+        // the counter's) is drawn over it: one unbroken line all round.
         Positioned.fill(
-          child: ClipRRect(borderRadius: BorderRadius.circular(radius - 2), child: child),
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: ClipRRect(borderRadius: BorderRadius.circular(radius - 2), child: child),
+          ),
         ),
         // The rule inside the edge: over the contents, not in the way of
         // them.

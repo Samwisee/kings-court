@@ -1,7 +1,8 @@
-/// Which skins this player may wear, and what the others cost. [Shop] is
-/// the store's answer: what's for sale and what's owned. The store shows
-/// [samplePrices] for now: nothing can be bought yet (Buy says the store
-/// opens soon), and a style a player already wore is theirs to keep.
+/// Which skins this player owns, which they may wear, and what the others
+/// cost. [Shop] is the store's answer: what's for sale and what's owned.
+/// The store shows [samplePrices] for now: nothing can be bought yet (Buy
+/// says the store opens soon), so until it opens every style may be worn,
+/// priced or not; and a style a player already wore is theirs to keep.
 library;
 
 import 'skin.dart';
@@ -11,6 +12,10 @@ abstract class Entitlements {
   const Entitlements();
 
   bool owns(Skin skin);
+
+  /// Whether [skin] may be worn: what's owned, and (before the store
+  /// opens) what's for sale too.
+  bool mayWear(Skin skin) => owns(skin);
 
   /// [skin] is the player's to keep (one they wore before there was a
   /// store, say).
@@ -32,9 +37,13 @@ class AllOwned extends Entitlements {
 /// and owned once [bought]; every other skin is free. A skin dressed with
 /// other choices (a [TailoredSkin]) is its style's.
 class Shop extends Entitlements {
-  Shop(this.prices, {Set<String>? bought}) : bought = {...?bought};
+  Shop(this.prices, {Set<String>? bought, this.open = true}) : bought = {...?bought};
 
   final Map<String, String> prices;
+
+  /// Before the store opens ([open] false), what's for sale may be worn
+  /// anyway, its price shown beside it.
+  final bool open;
 
   /// The ids of the styles owned.
   final Set<String> bought;
@@ -47,6 +56,9 @@ class Shop extends Entitlements {
     final id = TailoredSkin.baseOf(skin).id;
     return !prices.containsKey(id) || bought.contains(id);
   }
+
+  @override
+  bool mayWear(Skin skin) => !open || owns(skin);
 
   @override
   String? priceOf(Skin skin) => owns(skin) ? null : prices[TailoredSkin.baseOf(skin).id];

@@ -56,7 +56,7 @@ void main() {
           ctx = c;
           return const SizedBox();
         })));
-    expect(SkinScope.owns(ctx, skins[1]), isFalse);
+    expect(SkinScope.mayWear(ctx, skins[1]), isFalse);
     expect(SkinScope.choose(ctx, skins[1]), isFalse);
     expect(chosen, isNull);
   });

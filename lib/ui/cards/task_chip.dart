@@ -258,20 +258,27 @@ class TaskChip extends StatelessWidget {
                   border: Border.all(color: skin.outlineColour, width: skin.outlineWidth),
                 ),
                 // The card backs worn, under what it was worth.
-                child: BackGround(radius: 6, child: Center(child: Row(
+                // Done: just what it was worth, the number and the crown
+                // centred on one line and shrunk to fit a one-line chip.
+                child: BackGround(radius: 6, child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Done: just what it was worth.
                     Text('$points',
+                        textHeightBehavior: const TextHeightBehavior(
+                            applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
                         style: TextStyle(
                             fontFamily: skin.displayFont,
                             fontWeight: FontWeight.w900,
                             fontSize: fontSize * 2.2,
+                            height: 1,
+                            leadingDistribution: TextLeadingDistribution.even,
                             color: skin.gold)),
                     const SizedBox(width: 4),
                     CrownIcon(size: fontSize * 1.5),
                   ],
-                ))),
+                ))))),
               ),
               ),
         ),
