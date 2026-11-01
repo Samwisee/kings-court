@@ -186,7 +186,12 @@ class _ShelfHeading extends StatelessWidget {
                 fontFamily: skin.displayFont, fontSize: 17, fontWeight: FontWeight.w800, color: skin.gold)),
         const SizedBox(width: 10),
         Expanded(child: Container(height: 1, color: skin.gold.withValues(alpha: 0.25))),
-        if (offer != null) ...[const SizedBox(width: 10), offer!],
+
+        // The offer shrinks to fit a narrow screen rather than overflow it.
+        if (offer != null) ...[
+          const SizedBox(width: 10),
+          Flexible(flex: 3, child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: offer)),
+        ],
       ]),
     );
   }
@@ -219,7 +224,7 @@ class _BundleOffer extends StatelessWidget {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.auto_awesome_rounded, size: 14, color: skin.gold),
               const SizedBox(width: 5),
-              Text('Get every style · $price',
+              Text('Every style · $price',
                   style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: skin.gold)),
             ]),
           ),
