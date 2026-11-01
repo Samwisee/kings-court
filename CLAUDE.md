@@ -31,6 +31,13 @@ fixed before anything else, like a failing test.
   `reports` branch by build and device, with `missed` (dropped frames)
   and the raster times. After a deploy that touches the screen, check the
   new build against the one before it on the same device.
+- **On Sam's devices**: `bash tool/devices.sh` (on his Mac) runs the frame
+  benchmark on every device it finds (an Android phone's Chrome, an
+  iPhone's app, Chrome and Safari on the Mac, the Mac app; `--list` shows
+  which) and keeps every log a platform in `build/devices/<date>/`
+  (`tool/devices.conf` says what it runs). With the Mac linked, read them
+  at `~/mnt/owner/dev/kings-court-git/build/devices/latest/`.
+  `--dart-define=NO_BLUR=true` draws every blur unblurred, to measure them.
 - **What we've learned costs frames**, so don't:
   - run work outside a frame for longer than a slice: anything long is
     split, a slice after each frame (`Bot.breather`);

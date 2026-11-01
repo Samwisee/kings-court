@@ -1,4 +1,4 @@
-"""The frame benchmark's platforms side by side (tool/perf.sh): for each
+"""The frame benchmark's platforms side by side (tool/devices.sh): for each
 scene, how long a frame took on each, in two numbers.
 
   draw: the engine's whole frame, its drawing included (90th percentile,
@@ -7,7 +7,7 @@ scene, how long a frame took on each, in two numbers.
   work: the app's own work in the frame (99th percentile, ms): building,
         laying out and painting, before the drawing.
 
-    python3 tool/frames/summary.py build/perf android chrome macos
+    python3 tool/frames/summary.py build/devices/latest android-chrome chrome safari
 """
 import json
 import os
@@ -17,7 +17,9 @@ import sys
 def main(folder, names):
     runs = {}
     for n in names:
-        path = os.path.join(folder, f'{n}.json')
+        path = os.path.join(folder, n, 'result.json')
+        if not os.path.exists(path):
+            path = os.path.join(folder, f'{n}.json')
         if os.path.exists(path):
             data = json.load(open(path))
             runs[n] = {s['name']: s for s in (data.get('scenes') or data.get('frames', {}).get('scenes') or [])}
