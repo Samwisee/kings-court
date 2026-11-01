@@ -820,7 +820,7 @@ class FeltPatternPainter extends CustomPainter {
     }
     final rail = Rect.fromLTRB(s.width * 0.05, s.height * 0.06, s.width * 0.95, s.height * 0.94);
     final r = Radius.circular(math.min(rail.width, rail.height) / 2);
-    canvas.drawRRect(RRect.fromRectAndRadius(rail, r), _line(2.4, 1));
+    canvas.drawRRect(RRect.fromRectAndRadius(rail, r), _line(2.4));
     canvas.drawRRect(RRect.fromRectAndRadius(rail.deflate(7), r), _line(0.9, 0.8));
   }
 
