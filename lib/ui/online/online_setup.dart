@@ -19,6 +19,7 @@ import '../../skin/skin_scope.dart';
 import '../setup/setup_frame.dart';
 import '../setup/setup_tiles.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 class OnlineSetup extends StatefulWidget {
   const OnlineSetup({
@@ -198,7 +199,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
       fontWeight: FontWeight.w700,
       fontSize: 26,
       color: skin.gold,
-      shadows: const [Shadow(color: Colors.black54, blurRadius: 12)]);
+      shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0)]);
 
   Widget _chooseStep() {
     Widget tile(String title, String description, IconData icon, bool start) => Padding(
@@ -356,7 +357,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
                 fontSize: 48,
                 letterSpacing: 12,
                 color: skin.gold,
-                shadows: const [Shadow(color: Colors.black54, blurRadius: 12)])),
+                shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0)])),
         const SizedBox(height: 4),
         OutlinedButton.icon(
           onPressed: () => _invite(room.code),

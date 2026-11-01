@@ -27,6 +27,7 @@ import '../../skin/tailored.dart';
 import '../cards/card_view.dart';
 import '../cards/task_chip.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 part 'livery_swatches.dart';
 
@@ -364,8 +365,8 @@ class _TileState extends State<_Tile> {
                               : Colors.white.withValues(alpha: 0.12),
                       width: selected ? 2.5 : 1.5),
                   boxShadow: [
-                    if (selected) BoxShadow(color: skin.gold.withValues(alpha: 0.35), blurRadius: 14),
-                    const BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 3)),
+                    if (selected) BoxShadow(color: skin.gold.withValues(alpha: 0.35), blurRadius: blurs ? 14 : 0),
+                    const BoxShadow(color: Colors.black38, blurRadius: blurs ? 6 : 0, offset: Offset(0, 3)),
                   ],
                 ),
                 child: Stack(children: [

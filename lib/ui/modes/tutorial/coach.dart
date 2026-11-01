@@ -11,6 +11,7 @@ import '../../../game/state.dart';
 import '../../../modes/tutorial/lessons.dart';
 import '../../../skin/skin_scope.dart';
 import '../../widgets.dart';
+import '../../../skin/effects.dart';
 
 /// What the tutorial's coach says right now: nothing outside a tutorial
 /// round in progress; the lesson's intro while the table is [settingUp]
@@ -86,7 +87,7 @@ class Coach extends StatelessWidget {
                 border: Border.all(color: skin.gold.withValues(alpha: 0.7), width: 1.4),
                 boxShadow: const [
                   BoxShadow(
-                      color: Colors.black45, blurRadius: 10, offset: Offset(0, 3))
+                      color: Colors.black45, blurRadius: blurs ? 10 : 0, offset: Offset(0, 3))
                 ],
               ),
               child: Column(

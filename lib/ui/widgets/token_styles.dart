@@ -13,6 +13,7 @@ import '../../game/courtiers.dart';
 import '../../skin/looks.dart';
 import '../../skin/skin.dart';
 import 'token_shapes.dart';
+import '../../skin/effects.dart';
 
 Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 
@@ -96,13 +97,13 @@ class _StyledPainter extends CustomPainter {
         outline.shift(const Offset(0, 2)),
         Paint()
           ..color = Colors.black38
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+          ..maskFilter = (blurs ? const MaskFilter.blur(BlurStyle.normal, 3) : null));
     if (glow) {
       canvas.drawPath(
           outline,
           Paint()
             ..color = skin.gold
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
+            ..maskFilter = (blurs ? const MaskFilter.blur(BlurStyle.normal, 10) : null));
     }
     canvas.save();
     canvas.clipPath(outline);

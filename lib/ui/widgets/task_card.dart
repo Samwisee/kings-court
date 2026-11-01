@@ -18,6 +18,7 @@ import 'seals.dart';
 import 'suit_text.dart';
 import 'table.dart';
 import 'task_faces.dart';
+import '../../skin/effects.dart';
 
 /// One pip per task: hollow while pending, green when done, red when failed.
 class TaskPips extends StatelessWidget {
@@ -165,7 +166,7 @@ class TableCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black45,
-            blurRadius: lifted ? 14 : 4,
+            blurRadius: blurs ? (lifted ? 14 : 4) : 0,
             offset: Offset(0, lifted ? 7 : 2),
           ),
         ],
@@ -427,7 +428,7 @@ class DeckStack extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: skin.gold, width: 1.5),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black38, blurRadius: 4),
+                    BoxShadow(color: Colors.black38, blurRadius: blurs ? 4 : 0),
                   ],
                 ),
                 alignment: Alignment.center,

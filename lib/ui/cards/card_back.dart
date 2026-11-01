@@ -11,6 +11,7 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 import 'card_view.dart';
+import '../../skin/effects.dart';
 
 /// The back of a card, for hands you can't see and cards being dealt.
 class CardBack extends StatelessWidget {
@@ -37,7 +38,7 @@ class CardBack extends StatelessWidget {
         borderRadius: radius,
         border: Border.all(color: look.backEdge, width: 1.5 + skin.outlineWidth),
         boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(color: Colors.black45, blurRadius: blurs ? 4 : 0, offset: Offset(0, 2)),
         ],
       ),
       foregroundDecoration: BoxDecoration(

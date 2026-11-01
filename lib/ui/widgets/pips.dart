@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/skin_scope.dart';
 import 'character_token.dart';
+import '../../skin/effects.dart';
 
 /// The court's on/off mark: a gold ring, filled with a gold jewel when on.
 /// Used for every setting in place of switches and tick boxes.
@@ -29,7 +30,7 @@ class GoldPip extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: gold, width: 2),
         boxShadow: on && enabled
-            ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 8)]
+            ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: blurs ? 8 : 0)]
             : null,
       ),
       padding: EdgeInsets.all(size * 0.17),

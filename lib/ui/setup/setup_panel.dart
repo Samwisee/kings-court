@@ -15,6 +15,7 @@ import 'chapter_picker.dart';
 import 'saves.dart';
 import 'setup_frame.dart';
 import 'setup_tiles.dart';
+import '../../skin/effects.dart';
 
 /// What the New Game panel starts with.
 typedef SetupArgs = ({GameMode? mode, int? chapter});
@@ -190,7 +191,7 @@ class _SetupPanelState extends State<SetupPanel> {
       fontSize: 26,
       color: skin.gold,
       // The same soft shadow as the title on the front page.
-      shadows: const [Shadow(color: Colors.black54, blurRadius: 12)]);
+      shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0)]);
 
   Widget _modeStep() {
     return Column(

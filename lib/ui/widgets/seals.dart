@@ -7,6 +7,7 @@ import '../../engine/decrees.dart';
 import '../../skin/skin_scope.dart';
 import 'clamp.dart';
 import 'icons.dart';
+import '../../skin/effects.dart';
 
 /// A red wax seal pressed with its order: I, II, III or Ω for last.
 class WaxSeal extends StatelessWidget {
@@ -33,7 +34,7 @@ class WaxSeal extends StatelessWidget {
           ),
           border: Border.all(color: const Color(0xFF7A0B1C)),
           boxShadow: const [
-            BoxShadow(color: Colors.black38, blurRadius: 2, offset: Offset(0, 1)),
+            BoxShadow(color: Colors.black38, blurRadius: blurs ? 2 : 0, offset: Offset(0, 1)),
           ],
         ),
         child: Text(label,
@@ -78,7 +79,7 @@ class DecreeScroll extends StatelessWidget {
           color: skin.parchment, // parchment
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: skin.goldDeep, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
+          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: blurs ? 24 : 0)],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

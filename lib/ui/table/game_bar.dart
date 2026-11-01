@@ -11,6 +11,7 @@ import '../../skin/skin_scope.dart';
 import '../../skin/strings.dart';
 import '../menu/menu.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 class GameBar extends StatelessWidget implements PreferredSizeWidget {
   const GameBar({
@@ -83,7 +84,7 @@ class GameBar extends StatelessWidget implements PreferredSizeWidget {
                       fontWeight: FontWeight.w700,
                       fontSize: 22,
                       color: skin.gold,
-                      shadows: const [Shadow(color: Colors.black54, blurRadius: 10)])),
+                      shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)])),
             ),
             if (choosingKing) ...[
               const SizedBox(width: 12),
@@ -143,7 +144,7 @@ class GameBar extends StatelessWidget implements PreferredSizeWidget {
                           fontSize: 22,
                           height: 1,
                           color: skin.gold,
-                          shadows: const [Shadow(blurRadius: 6)])),
+                          shadows: const [Shadow(blurRadius: blurs ? 6 : 0)])),
                   const SizedBox(width: 5),
                   const CrownIcon(size: 18),
                 ],

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 /// A button that softly pulses with a gold glow, to draw the eye.
 class GlowButton extends StatefulWidget {
@@ -82,7 +83,7 @@ class _GlowButtonState extends State<GlowButton>
         child: DecoratedBox(
           decoration: ShapeDecoration(
             shape: shape,
-            shadows: [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 10)],
+            shadows: [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: blurs ? 10 : 0)],
           ),
           child: button,
         ),
@@ -101,7 +102,7 @@ class _GlowButtonState extends State<GlowButton>
               boxShadow: [
                 BoxShadow(
                     color: skin.gold.withValues(alpha: 0.3 + 0.5 * _pulse.value),
-                    blurRadius: 10 + 12 * _pulse.value,
+                    blurRadius: blurs ? 10 + 12 * _pulse.value : 0,
                     spreadRadius: 1.5),
               ],
             ),

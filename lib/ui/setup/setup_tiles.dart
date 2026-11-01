@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/skin_scope.dart';
 import '../menu/menu.dart';
+import '../../skin/effects.dart';
 
 /// One way to play on the first setup step.
 class ModeTile extends StatelessWidget {
@@ -121,7 +122,7 @@ class CountChip extends StatelessWidget {
             color: const Color(0x22000000),
             border: Border.all(color: skin.gold, width: 2.5),
             boxShadow: selected
-                ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: 12)]
+                ? [BoxShadow(color: skin.gold.withValues(alpha: 0.45), blurRadius: blurs ? 12 : 0)]
                 : null,
           ),
           child: AnimatedContainer(
@@ -146,7 +147,7 @@ class CountChip extends StatelessWidget {
                     color: selected ? skin.ink : Colors.white,
                     shadows: selected
                         ? null
-                        : const [Shadow(color: Colors.black54, blurRadius: 8)])),
+                        : const [Shadow(color: Colors.black54, blurRadius: blurs ? 8 : 0)])),
           ),
         ),
       )),

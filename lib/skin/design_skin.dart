@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'fields.dart';
 import 'looks.dart';
 import 'skin.dart';
+import 'effects.dart';
 
 /// How dressed up a designed skin is.
 enum Finish {
@@ -214,8 +215,8 @@ class DesignSkin extends Skin {
   String get bodyFont => design.bodyFont;
   @override
   List<Shadow> get feltShadow => _rich
-      ? const [Shadow(color: Colors.black54, blurRadius: 10)]
-      : const [Shadow(color: Colors.black38, blurRadius: 5)];
+      ? const [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)]
+      : const [Shadow(color: Colors.black38, blurRadius: blurs ? 5 : 0)];
   @override
   TextStyle get taskText => TextStyle(
       fontFamily: bodyFont,

@@ -4,6 +4,7 @@ import '../engine/cards.dart';
 import '../game/state.dart';
 import '../platform/settings.dart';
 import 'fields.dart';
+import 'effects.dart';
 
 /// The King's Court palette: card table felt, white card stock, card-red
 /// and black suits, and brass gold reserved for the King.
@@ -115,7 +116,7 @@ const taskTextStyle = TextStyle(
 );
 
 /// The soft shadow under words and icons on the felt.
-const feltShadow = [Shadow(color: Colors.black54, blurRadius: 10)];
+const feltShadow = [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)];
 
 /// Every dialog and pop-up's look, in one place.
 class DialogStyle {

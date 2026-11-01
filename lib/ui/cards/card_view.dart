@@ -11,6 +11,7 @@ import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
 import 'face_frame.dart';
+import '../../skin/effects.dart';
 
 export 'card_back.dart';
 
@@ -131,13 +132,13 @@ class PlayingCardView extends StatelessWidget {
         radius: outer,
         shadows: [
           if (glow)
-            BoxShadow(color: skin.gold, blurRadius: 14)
+            BoxShadow(color: skin.gold, blurRadius: blurs ? 14 : 0)
           else if (marks.isNotEmpty)
-            BoxShadow(color: marks.first.withValues(alpha: 0.85), blurRadius: 10)
+            BoxShadow(color: marks.first.withValues(alpha: 0.85), blurRadius: blurs ? 10 : 0)
           else if (_isKing)
-            BoxShadow(color: skin.gold.withValues(alpha: 0x88 / 255), blurRadius: 8)
+            BoxShadow(color: skin.gold.withValues(alpha: 0x88 / 255), blurRadius: blurs ? 8 : 0)
           else
-            const BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+            const BoxShadow(color: Colors.black45, blurRadius: blurs ? 4 : 0, offset: Offset(0, 2)),
         ],
         child: Container(
         decoration: BoxDecoration(

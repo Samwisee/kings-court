@@ -15,6 +15,7 @@ import '../widgets.dart';
 import '../widgets/same.dart';
 import 'card_view.dart';
 import 'mini_card.dart';
+import '../../skin/effects.dart';
 
 /// A task card on its way from the middle of the table to whoever took it,
 /// shrinking as it goes.
@@ -191,10 +192,10 @@ class TaskChip extends StatelessWidget {
             color: failed ? skin.lost : neutral ? look.face : color,
             width: 2.5 + 2 * skin.outlineWidth),
         boxShadow: [
-          const BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 1)),
+          const BoxShadow(color: Colors.black38, blurRadius: blurs ? 3 : 0, offset: Offset(0, 1)),
           if (focused)
             BoxShadow(
-                color: skin.gold.withValues(alpha: 0.9), blurRadius: 12, spreadRadius: 2),
+                color: skin.gold.withValues(alpha: 0.9), blurRadius: blurs ? 12 : 0, spreadRadius: 2),
         ],
       ),
       foregroundDecoration: BoxDecoration(

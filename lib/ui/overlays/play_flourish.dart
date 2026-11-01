@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 class PlayFlourish extends StatelessWidget {
   const PlayFlourish({super.key, required this.animation});
@@ -33,7 +34,7 @@ class PlayFlourish extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                       fontSize: 56,
                       color: skin.gold,
-                      shadows: const [Shadow(color: Colors.black87, blurRadius: 16)])),
+                      shadows: const [Shadow(color: Colors.black87, blurRadius: blurs ? 16 : 0)])),
             ),
           ),
         );

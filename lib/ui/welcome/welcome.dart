@@ -13,6 +13,7 @@ import '../../skin/strings.dart';
 import '../cards/card_view.dart';
 import '../overlays/crowning.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 /// The opening flourish on the front page: the four Court Cards rise and
 /// fan out wide, with a burst of sparks. It plays once (about two seconds)
@@ -195,7 +196,7 @@ class _CrownedTitle extends StatelessWidget {
       fontSize: 44,
       height: 1.05,
       color: skin.gold,
-      shadows: const [Shadow(color: Colors.black54, blurRadius: 12)]);
+      shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0)]);
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +224,7 @@ class _CrownedTitle extends StatelessWidget {
                 child: Center(
                   child: Stack(clipBehavior: Clip.none, children: [
                     ImageFiltered(
-                      imageFilter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                      imageFilter: ui.ImageFilter.blur(sigmaX: blurs ? 6 : 0, sigmaY: blurs ? 6 : 0),
                       child: CrownIcon(
                           size: _style(context.skin).fontSize! * 0.5, color: Colors.black54),
                     ),

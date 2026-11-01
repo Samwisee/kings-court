@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 /// The crown flies from [from] to the new King at [to] and lands in a
 /// burst of gold, "Long live the King" glows, and every other seat in
@@ -83,7 +84,7 @@ class CrowningScene extends StatelessWidget {
                         fontSize: 30,
                         color: skin.gold,
                         shadows: const [
-                          Shadow(color: Colors.black54, blurRadius: 12),
+                          Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0),
                         ])),
               ),
             ),
@@ -144,7 +145,7 @@ List<Widget> _trumpet(
             child: Icon(Icons.campaign_rounded,
                 size: size,
                 color: gold,
-                shadows: const [Shadow(color: Colors.black54, blurRadius: 6)]),
+                shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 6 : 0)]),
           ),
         ),
       ),
@@ -166,7 +167,7 @@ List<Widget> _trumpet(
                 style: TextStyle(
                     fontSize: 18,
                     color: gold,
-                    shadows: const [Shadow(color: Colors.black54, blurRadius: 4)])),
+                    shadows: const [Shadow(color: Colors.black54, blurRadius: blurs ? 4 : 0)])),
           ),
         );
       }(),

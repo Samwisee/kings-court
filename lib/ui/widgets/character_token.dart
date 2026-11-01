@@ -10,6 +10,7 @@ import '../../game/courtiers.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import 'clamp.dart';
+import '../../skin/effects.dart';
 
 /// How a character token is behaving.
 enum CharacterMood {
@@ -270,7 +271,7 @@ class _CharacterTokenState extends State<CharacterToken>
                 child: Opacity(
                   opacity: markOpacity,
                   child: Icon(mark, size: s * 0.45, color: markColor, shadows: const [
-                    Shadow(color: Colors.black54, blurRadius: 4),
+                    Shadow(color: Colors.black54, blurRadius: blurs ? 4 : 0),
                   ]),
                 ),
               ),
@@ -355,7 +356,7 @@ class _SpeechBubbleState extends State<SpeechBubble>
             color: skin.ivory,
             borderRadius: BorderRadius.circular(14),
             boxShadow: const [
-              BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 2)),
+              BoxShadow(color: Colors.black38, blurRadius: blurs ? 8 : 0, offset: Offset(0, 2)),
             ],
           ),
           child: Column(

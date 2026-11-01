@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../skin/skin_scope.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 class DealtTask extends StatelessWidget {
   const DealtTask({
@@ -76,7 +77,7 @@ class DealtTask extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: skin.gold, width: 1.5),
                         boxShadow: const [
-                          BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(0, 3)),
+                          BoxShadow(color: Colors.black45, blurRadius: blurs ? 6 : 0, offset: Offset(0, 3)),
                         ],
                       ),
                       alignment: Alignment.center,

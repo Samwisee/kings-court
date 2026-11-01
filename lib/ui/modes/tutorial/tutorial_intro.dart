@@ -18,8 +18,9 @@ import '../../../skin/skin_scope.dart';
 import '../../cards/card_view.dart';
 import '../../widgets.dart';
 import 'intro_preview.dart';
+import '../../../skin/effects.dart';
 
-const _shadow = [Shadow(color: Colors.black54, blurRadius: 10)];
+const _shadow = [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)];
 
 /// Opens a part of the tutorial: [pages], then [finishLabel] to go on.
 Future<String?> showTutorialPages(BuildContext context,
@@ -172,7 +173,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                                             fontSize: 27,
                                             color: skin.gold,
                                             shadows: const [
-                                              Shadow(color: Colors.black54, blurRadius: 12)
+                                              Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0)
                                             ])),
                                   ),
                                   const SizedBox(height: 18),
@@ -187,7 +188,7 @@ class _TutorialIntroState extends State<TutorialIntro> {
                                               height: 1.45,
                                               color: Colors.white,
                                               shadows: [
-                                                Shadow(color: Colors.black38, blurRadius: 6)
+                                                Shadow(color: Colors.black38, blurRadius: blurs ? 6 : 0)
                                               ])),
                                     ),
                                 ],

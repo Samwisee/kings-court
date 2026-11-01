@@ -7,6 +7,7 @@ import '../../game/courtiers.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 /// Someone in the throne room.
 class HallFigure {
@@ -85,7 +86,7 @@ class HeraldScroll extends StatelessWidget {
             color: context.skin.parchment,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: context.skin.goldDeep, width: 2),
-            boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 14)],
+            boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: blurs ? 14 : 0)],
           ),
           child: Text(text,
               textAlign: TextAlign.center,

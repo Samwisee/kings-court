@@ -15,6 +15,7 @@ import 'felt_patterns.dart';
 import 'icons.dart';
 import 'pips.dart';
 import 'suit_text.dart';
+import '../../skin/effects.dart';
 
 export '../../skin/looks.dart' show Ornament;
 
@@ -96,7 +97,7 @@ class OrnateCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(look.radius),
         border: Border.all(color: edge, width: look.edgeWidth),
         boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 24, offset: Offset(0, 10)),
+          BoxShadow(color: Colors.black45, blurRadius: blurs ? 24 : 0, offset: Offset(0, 10)),
         ],
       ),
       child: Stack(
@@ -163,11 +164,11 @@ class OrnateCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(look.radius),
         border: Border.all(color: edge, width: look.edgeWidth),
         boxShadow: [
-          const BoxShadow(color: Colors.black54, blurRadius: 28, offset: Offset(0, 8)),
+          const BoxShadow(color: Colors.black54, blurRadius: blurs ? 28 : 0, offset: Offset(0, 8)),
           BoxShadow(
               color: (won || court ? skin.gold : skin.lost)
                   .withValues(alpha: court ? 0.2 : 0.35),
-              blurRadius: 40,
+              blurRadius: blurs ? 40 : 0,
               spreadRadius: 2),
         ],
       ),
@@ -222,7 +223,7 @@ class OrnateCard extends StatelessWidget {
                         : look.lostMedallion,
                   ),
                   border: Border.all(color: edge, width: 2.5),
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: blurs ? 8 : 0)],
                 ),
                 alignment: Alignment.center,
                 child: CrownIcon(size: 30, color: won && !court ? skin.ink : skin.gold),

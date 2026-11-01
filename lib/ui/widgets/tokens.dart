@@ -16,6 +16,7 @@ import 'icons.dart';
 import 'table.dart';
 import 'token_shapes.dart';
 import 'token_styles.dart';
+import '../../skin/effects.dart';
 
 /// A player's seat: a coloured token with their seat number or initials.
 /// The King's seat gets a gold ring and a crown. During play the token
@@ -119,11 +120,11 @@ class SeatToken extends StatelessWidget {
               border: Border.all(color: ringColor, width: ringWidth),
               boxShadow: [
                 if (highlighted)
-                  BoxShadow(color: skin.gold, blurRadius: 14)
+                  BoxShadow(color: skin.gold, blurRadius: blurs ? 14 : 0)
                 else
                   const BoxShadow(
                       color: Colors.black38,
-                      blurRadius: 4,
+                      blurRadius: blurs ? 4 : 0,
                       offset: Offset(0, 2)),
               ],
             ),
@@ -392,14 +393,14 @@ class _TokenPainter extends CustomPainter {
       path.shift(const Offset(0, 2)),
       Paint()
         ..color = Colors.black38
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+        ..maskFilter = (blurs ? const MaskFilter.blur(BlurStyle.normal, 3) : null),
     );
     if (glow) {
       canvas.drawPath(
         path,
         Paint()
           ..color = skin.gold
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+          ..maskFilter = (blurs ? const MaskFilter.blur(BlurStyle.normal, 10) : null),
       );
     }
     canvas.drawPath(path, Paint()..color = color);

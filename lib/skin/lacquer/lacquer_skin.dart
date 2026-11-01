@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 
 import '../design_skin.dart';
 import '../parts.dart';
+import '../effects.dart';
 
 class LacquerSkin extends DesignSkin {
   const LacquerSkin() : super(lacquerDesign);
@@ -61,7 +62,7 @@ Widget _back(BuildContext context, CardBackSpec spec) {
         borderRadius: BorderRadius.circular(w * 0.1),
         border: Border.all(color: lacquerDesign.accent, width: 1.6),
         boxShadow: const [
-          BoxShadow(color: Color(0x73000000), blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(color: Color(0x73000000), blurRadius: blurs ? 4 : 0, offset: Offset(0, 2)),
         ],
       ),
       child: CustomPaint(

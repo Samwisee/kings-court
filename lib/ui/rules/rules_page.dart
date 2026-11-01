@@ -11,6 +11,7 @@ import '../../engine/decrees.dart';
 import '../../game/state.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
+import '../../skin/effects.dart';
 
 /// Which games a section of the rules is about.
 enum RulesFor { all, onScreen, inPerson, twoPlayer }
@@ -160,9 +161,9 @@ Future<void> showRulesPage(BuildContext context, {RulesContext? game}) =>
             opacity: CurvedAnimation(parent: a, curve: Curves.easeOut),
             child: child)));
 
-const _shadow = [Shadow(color: Colors.black54, blurRadius: 10)];
+const _shadow = [Shadow(color: Colors.black54, blurRadius: blurs ? 10 : 0)];
 const _ruleStyle = TextStyle(
-    fontSize: 16, height: 1.45, color: Colors.white, shadows: [Shadow(color: Colors.black38, blurRadius: 6)]);
+    fontSize: 16, height: 1.45, color: Colors.white, shadows: [Shadow(color: Colors.black38, blurRadius: blurs ? 6 : 0)]);
 
 /// The rules, on the felt like the rest of the court: gold headings, each
 /// section on its own dark panel, and an index of gold tabs to jump about.
@@ -242,7 +243,7 @@ class _RulesPageState extends State<RulesPage> {
                                 fontSize: 26,
                                 color: skin.gold,
                                 shadows: const [
-                                  Shadow(color: Colors.black54, blurRadius: 12)
+                                  Shadow(color: Colors.black54, blurRadius: blurs ? 12 : 0)
                                 ])),
                       ),
                     ),
