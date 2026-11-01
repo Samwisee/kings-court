@@ -29,6 +29,7 @@ import '../cards/card_view.dart';
 import '../cards/task_chip.dart';
 import '../widgets.dart';
 
+part 'livery_showcase.dart';
 part 'livery_swatches.dart';
 
 /// Opens the Livery page; [wear] puts the look on (and keeps it) as it
@@ -72,6 +73,10 @@ class _LiveryPageState extends State<_LiveryPage> {
   /// The tab open: which kind of choice the grid shows.
   _Kind _kind = _Kind.style;
 
+  /// A scroll position for each tab's grid (two are on screen as the tabs
+  /// cross-fade, so they can't share one).
+  final _scrolls = {for (final k in _Kind.values) k: ScrollController()};
+
   static TailoredSkin? _chosen(Skin s) => s is TailoredSkin ? s : null;
 
   Skin get _look => TailoredSkin.of(_base, back: _back, task: _task, face: _face, token: _token, court: _court);
@@ -114,6 +119,9 @@ class _LiveryPageState extends State<_LiveryPage> {
     // Left without wearing it: the page's own colour back.
     if (!_worn) colourPage(widget.start.table);
     FrameStats.at = _wasAt;
+    for (final c in _scrolls.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -136,7 +144,6 @@ class _LiveryPageState extends State<_LiveryPage> {
           data: look.theme(),
           child: Builder(builder: (context) {
             final skin = context.skin;
-            final rule = Container(height: 1.5, color: skin.gold.withValues(alpha: 0.45));
             return Scaffold(
               backgroundColor: skin.feltDeep,
               body: Stack(children: [
@@ -148,23 +155,35 @@ class _LiveryPageState extends State<_LiveryPage> {
                   ),
                 ),
                 SafeArea(
-                  // A column down the middle of a wide screen.
+                  // A column down the middle of a wide screen: the showcase
+                  // and the choices each in a panel of the style's own.
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 760),
-                      child: Column(children: [
-                        SizedBox(height: clampD(height * 0.36, 250, 350), child: _Showcase(look: look)),
-                        _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look),
-                        rule,
-                        Expanded(child: _grid(context, look)),
-                        rule,
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                          child: SizedBox(
-                              width: double.infinity,
-                              child: FilledButton(onPressed: _done, child: const Text('Done'))),
-                        ),
-                      ]),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                        child: Column(children: [
+                          _Enclosure(
+                              child: SizedBox(height: clampD(height * 0.34, 230, 330), child: _Showcase(look: look))),
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: _Enclosure(
+                              child: Column(children: [
+                                _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look),
+                                Container(height: 1.5, color: skin.gold.withValues(alpha: 0.35)),
+                                Expanded(child: _grid(context, look)),
+                              ]),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: FilledButton(
+                                style: FilledButton.styleFrom(minimumSize: const Size(200, 46)),
+                                onPressed: _done,
+                                child: const Text('Done')),
+                          ),
+                        ]),
+                      ),
                     ),
                   ),
                 ),
@@ -241,15 +260,21 @@ class _LiveryPageState extends State<_LiveryPage> {
           ],
       },
     ];
+    final scroll = _scrolls[_kind]!;
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 220),
-      child: GridView.builder(
+      child: _LiveryScrollbar(
         key: ValueKey('look-grid-${_kind.name}'),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 132, mainAxisExtent: 136, crossAxisSpacing: 10, mainAxisSpacing: 10),
-        itemCount: tiles.length,
-        itemBuilder: (context, i) => tiles[i],
+        controller: scroll,
+        child: GridView.builder(
+          controller: scroll,
+          // Room on the right for the scrollbar.
+          padding: const EdgeInsets.fromLTRB(14, 14, 22, 18),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 132, mainAxisExtent: 136, crossAxisSpacing: 10, mainAxisSpacing: 10),
+          itemCount: tiles.length,
+          itemBuilder: (context, i) => tiles[i],
+        ),
       ),
     );
   }
@@ -404,155 +429,4 @@ class _TileState extends State<_Tile> {
       ),
     );
   }
-}
-
-/// The livery put together, as a showcase: its name, a hand of the Court
-/// Cards over the Ace to the 4, the seats' tokens, a pile of tricks in the
-/// backs and a task, under a soft light. Each part changes on its own, as
-/// its own choice does, and the lot only when the style does.
-class _Showcase extends StatelessWidget {
-  const _Showcase({required this.look});
-  final Skin look;
-
-  static const _courts = [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king];
-  static const _numbers = [
-    PlayingCard(Suit.hearts, 1),
-    PlayingCard(Suit.spades, 2),
-    PlayingCard(Suit.diamonds, 3),
-    PlayingCard(Suit.clubs, 4),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final dressed = look is TailoredSkin ? look as TailoredSkin : null;
-    final base = TailoredSkin.baseOf(look).id;
-    return SkinScope(
-      skin: look,
-      child: Builder(builder: (context) {
-        final skin = context.skin;
-        return LayoutBuilder(builder: (context, c) {
-          final h = c.maxHeight, w = math.min(c.maxWidth, 560.0);
-          final cardW = clampD(math.min((h - 78) / (1.42 * 1.85), w * 0.13), 40, 66);
-          final cardH = PlayingCardView.heightFor(cardW);
-          final step = cardW * 0.66;
-          final fanW = 3 * step + cardW + 10;
-          Widget fan(List<PlayingCard> cards, {required bool high}) => SizedBox(
-                width: fanW,
-                height: cardH + 12,
-                child: Stack(clipBehavior: Clip.none, children: [
-                  for (final (k, card) in cards.indexed)
-                    Positioned(
-                      left: k * step,
-                      top: (k - 1.5).abs() * (high ? 4 : 2),
-                      child: Transform.rotate(
-                          angle: (k - 1.5) * (high ? 0.09 : 0.05), child: PlayingCardView(card: card, width: cardW)),
-                    ),
-                ]),
-              );
-          return Stack(fit: StackFit.expand, children: [
-            // A soft light over the middle.
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                    center: const Alignment(0, 0.15),
-                    radius: 0.75,
-                    colors: [skin.gold.withValues(alpha: 0.16), skin.gold.withValues(alpha: 0)]),
-              ),
-            ),
-            Column(children: [
-              const SizedBox(height: 10),
-              Text('Livery',
-                  style: TextStyle(fontSize: 13, letterSpacing: 1.2, color: Colors.white.withValues(alpha: 0.6))),
-              _Swap(
-                id: base,
-                child: Text(skin.name,
-                    style: TextStyle(
-                        fontFamily: skin.displayFont,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 26,
-                        height: 1.15,
-                        color: skin.gold,
-                        shadows: skin.feltShadow)),
-              ),
-              Expanded(
-                child: Center(
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    // The hand: the Court Cards, and the number cards in front of them.
-                    SizedBox(
-                      width: fanW,
-                      height: cardH * 1.82 + 12,
-                      child: Stack(clipBehavior: Clip.none, children: [
-                        Positioned(
-                            left: 0, top: 0, child: _Swap(id: '$base-${dressed?.court?.id}', child: fan(_courts, high: true))),
-                        Positioned(
-                            left: 0,
-                            top: cardH * 0.82,
-                            child: _Swap(id: '$base-${dressed?.face?.id}', child: fan(_numbers, high: false))),
-                      ]),
-                    ),
-                    SizedBox(width: clampD(w * 0.06, 14, 34)),
-                    Column(mainAxisSize: MainAxisSize.min, children: [
-                      _Swap(id: '$base-${dressed?.token?.id}', child: _Tokens(look)),
-                      const SizedBox(height: 10),
-                      _Swap(
-                        id: '$base-${dressed?.back?.id}',
-                        child: SizedBox(
-                          width: cardW * 0.8 + 12,
-                          height: PlayingCardView.heightFor(cardW * 0.8) + 8,
-                          child: Stack(children: [
-                            for (var k = 0; k < 3; k++)
-                              Positioned(
-                                left: k * 5.0,
-                                top: k * 2.0,
-                                child: Transform.rotate(
-                                    angle: (k.isEven ? -1 : 1) * 0.06, child: CardBack(width: cardW * 0.8)),
-                              ),
-                          ]),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _Swap(
-                        id: '$base-${dressed?.task?.id}',
-                        child: TaskChip(
-                          task: RoundTask(taskByDescription('Win the first trick')),
-                          points: 2,
-                          text: 'Win the first trick',
-                          color: skin.players[0],
-                          width: 124,
-                          progress: '0/1',
-                        ),
-                      ),
-                    ]),
-                  ]),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ]),
-          ]);
-        });
-      }),
-    );
-  }
-}
-
-/// One part of the showcase, changing (fading and settling in) only when
-/// [id] does, in a layer of its own.
-class _Swap extends StatelessWidget {
-  const _Swap({required this.id, required this.child});
-  final String id;
-  final Widget child;
-
-  // The part carries the livery it was drawn in, so the old one fades out
-  // as it was rather than in the new one.
-  @override
-  Widget build(BuildContext context) => AnimatedSwitcher(
-        duration: const Duration(milliseconds: 320),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: (child, a) => FadeTransition(
-            opacity: a, child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: child)),
-        layoutBuilder: (current, previous) =>
-            Stack(alignment: Alignment.center, children: [...previous, if (current != null) current]),
-        child: RepaintBoundary(key: ValueKey(id), child: SkinScope(skin: context.skin, child: child)),
-      );
 }
