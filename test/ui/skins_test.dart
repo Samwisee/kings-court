@@ -87,11 +87,13 @@ void main() {
       await tester.pumpAndSettle();
       final grid = find.byKey(ValueKey('look-grid-$kind'));
       final tile = find.descendant(of: grid, matching: find.text(name));
+      final shelves =
+          find.descendant(of: find.byKey(const ValueKey('livery-shelves')), matching: find.byType(Scrollable)).first;
+      // From the top: the tabs share the shelves' scroll.
+      tester.state<ScrollableState>(shelves).position.jumpTo(0);
+      await tester.pumpAndSettle();
       // The shelves build their tiles as they come into view.
-      await tester.scrollUntilVisible(tile, 120,
-          scrollable: find
-              .descendant(of: find.byKey(const ValueKey('livery-shelves')), matching: find.byType(Scrollable))
-              .first);
+      await tester.scrollUntilVisible(tile, 120, scrollable: shelves);
       await tester.pumpAndSettle();
       await tester.tap(tile);
       await tester.pumpAndSettle();
