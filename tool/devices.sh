@@ -238,8 +238,22 @@ stop_bg() {
   bg_pids=()
 }
 lane=""
-cleanup() { stop_bg; [ -n "$lane" ] && kill "$lane" 2>/dev/null; [ -x "$adb" ] && [ -n "$phone" ] && adb -s "$phone" reverse --remove-all >/dev/null 2>&1; }
+drive_pid=""
+cleanup() {
+  [ -n "$drive_pid" ] && kill "$drive_pid" 2>/dev/null
+  stop_bg
+  # The other lane ignores Ctrl-C (a background job in a script does), so
+  # it's told to stop, and stops its own drive and drivers.
+  if [ -n "$lane" ]; then
+    [ -f "$run/.lane" ] && kill "$(cat "$run/.lane")" 2>/dev/null
+    kill "$lane" 2>/dev/null
+  fi
+  [ -n "$into" ] && rm -f "$run/.lane"
+  [ -x "$adb" ] && [ -n "$phone" ] && adb -s "$phone" reverse --remove-all >/dev/null 2>&1
+}
 trap cleanup EXIT
+trap 'exit 143' TERM
+[ -n "$into" ] && echo $$ >"$run/.lane"
 trap 'echo; echo "Stopped. What ran is in $run/"; exit 130' INT
 
 # The ChromeDriver for Chrome [version], fetched once.
@@ -320,10 +334,12 @@ drive() {
   local t0=$SECONDS
   flutter drive -v $MODE "$@" "${DEFINES[@]}" --driver="$DRIVER" --target="$TARGET" >"$dir/drive.log" 2>&1 &
   local pid=$!
+  drive_pid=$pid
   ( sleep $((LIMIT_MIN * 60)) && { echo timedout >"$dir/.timedout"; kill "$pid" 2>/dev/null; } ) 2>/dev/null &
   local dog=$!
   wait "$pid"
   local rc=$?
+  drive_pid=""
   pkill -P "$dog" 2>/dev/null; kill "$dog" 2>/dev/null
   local took=$(( SECONDS - t0 ))
   local how
@@ -348,12 +364,16 @@ if [ -z "$into" ] && [ -n "$lanes" ] && [ ${#phones[@]} -gt 0 ] && [ ${#computer
   # This computer's platforms in a copy of the project, beside the phones.
   copy=${TMPDIR:-/tmp}/devices-$(basename "$project")
   copy=${copy%/}
+  # Not copied: what's built, and CocoaPods' files, which find the
+  # packages by a path relative to the project (../../../.pub-cache) that
+  # leads nowhere from the copy; they're made again there.
+  skip=(build .dart_tool .git macos/Pods macos/Flutter/ephemeral ios/Pods ios/Flutter/ephemeral ios/.symlinks)
   echo "Phones and this computer side by side; this computer's lines start [here]."
   if command -v rsync >/dev/null; then
-    rsync -a --delete --exclude /build --exclude /.dart_tool --exclude /.git ./ "$copy/"
+    rsync -a --delete "${skip[@]/#/--exclude=/}" ./ "$copy/"
   else
     rm -rf "$copy" && mkdir -p "$copy"
-    tar -cf - --exclude ./build --exclude ./.dart_tool --exclude ./.git . | tar -C "$copy" -xf -
+    tar -cf - "${skip[@]/#/--exclude=./}" . | tar -C "$copy" -xf -
   fi
   ( cd "$copy" && DEVICES_DRIVERS="$drivers" bash "$self" --into "$project/$run" "${cli_defines[@]}" "${computer[@]}" 2>&1 \
       | while IFS= read -r l; do echo "[here] $l"; done ) &

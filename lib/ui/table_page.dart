@@ -783,7 +783,12 @@ class HomePageState extends State<HomePage>
                                 child: WelcomeScreen(
                                     hasSaves: _saves.isNotEmpty,
                                     onContinue: _showContinue,
-                                    onNewGame: _showSetupDialog)),
+                                    // A closure, not a tear-off: compiled to
+                                    // WebAssembly, tearing off a method with
+                                    // optional parameters for a plain
+                                    // callback traps ("unreachable").
+                                    // ignore: unnecessary_lambdas
+                                    onNewGame: () => _showSetupDialog())),
                           ),
                         ),
                       ],
