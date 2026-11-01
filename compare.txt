@@ -1,0 +1,168 @@
+baseline 51c9f28b39ef68314f2da65190ad73e90ceb400c
+same    court-cards.png
+same    laptop-0.png
+same    laptop-1.png
+differs laptop-2.png: 144078 of 3327456 pixels (4.33%), box (396, 340, 1796, 1490)  [expected: the courtiers think as long as a move deserves, so some of their picks and plays differ]
+differs laptop-3.png: 144078 of 3327456 pixels (4.33%), box (396, 340, 1796, 1490)  [expected: the courtiers think as long as a move deserves, so some of their picks and plays differ]
+differs laptop-4.png: 144078 of 3327456 pixels (4.33%), box (396, 340, 1796, 1490)  [expected: the courtiers think as long as a move deserves, so some of their picks and plays differ]
+differs laptop-5.png: 144078 of 3327456 pixels (4.33%), box (396, 340, 1796, 1490)  [expected: the courtiers think as long as a move deserves, so some of their picks and plays differ]
+same    laptop-how.png
+new     livery-shop-phone.png
+new     livery-shop-wide.png
+differs livery-wide.png: 2531502 of 5040000 pixels (50.23%), box (640, 0, 2160, 1788)
+same    looks-choices.png
+same    mix-antique.png
+same    mix-deco.png
+same    mix-noir.png
+same    mix-stars.png
+same    mix-tavern.png
+same    mix-tiles.png
+same    phone-0.png
+same    phone-1.png
+differs phone-2.png: 27254 of 2962440 pixels (0.92%), box (90, 576, 1128, 2484)  [expected: the courtiers think as long as a move deserves (engine/race.dart), so some of their picks and plays differ]
+differs phone-3.png: 28290 of 2962440 pixels (0.95%), box (90, 576, 1128, 2484)  [expected: the courtiers think as long as a move deserves, so some of their picks and plays differ]
+differs phone-4.png: 28290 of 2962440 pixels (0.95%), box (90, 576, 1128, 2484)  [expected: the courtiers think as long as a move deserves, so some of their picks and plays differ]
+same    skin-ballroom-0-welcome.png
+same    skin-ballroom-1-setup.png
+same    skin-ballroom-2-table.png
+differs skin-ballroom-3-menu.png: 9518 of 2962440 pixels (0.32%), box (307, 1030, 885, 1080)
+differs skin-ballroom-4-look.png: 2640327 of 2962440 pixels (89.13%), box (0, 0, 1170, 2514)
+same    skin-ballroom-pieces.png
+same    skin-campaign-0-welcome.png
+same    skin-campaign-1-setup.png
+same    skin-campaign-2-table.png
+differs skin-campaign-3-menu.png: 9188 of 2962440 pixels (0.31%), box (307, 1030, 897, 1080)
+differs skin-campaign-4-look.png: 2678210 of 2962440 pixels (90.41%), box (0, 0, 1170, 2514)
+same    skin-campaign-pieces.png
+same    skin-chequers-0-welcome.png
+same    skin-chequers-1-setup.png
+same    skin-chequers-2-table.png
+differs skin-chequers-3-menu.png: 9467 of 2962440 pixels (0.32%), box (307, 1030, 881, 1082)
+differs skin-chequers-4-look.png: 2683780 of 2962440 pixels (90.59%), box (0, 0, 1170, 2514)
+same    skin-chequers-pieces.png
+same    skin-counting-0-welcome.png
+same    skin-counting-1-setup.png
+same    skin-counting-2-table.png
+differs skin-counting-3-menu.png: 13542 of 2962440 pixels (0.46%), box (307, 1000, 910, 1104)
+differs skin-counting-4-look.png: 2666348 of 2962440 pixels (90.01%), box (0, 0, 1170, 2514)
+same    skin-counting-pieces.png
+same    skin-court-pieces.png
+same    skin-courtyard-0-welcome.png
+same    skin-courtyard-1-setup.png
+same    skin-courtyard-2-table.png
+differs skin-courtyard-3-menu.png: 6728 of 2962440 pixels (0.23%), box (486, 1025, 928, 1075)
+differs skin-courtyard-4-look.png: 2662901 of 2962440 pixels (89.89%), box (0, 0, 1170, 2514)
+same    skin-courtyard-pieces.png
+same    skin-garden-0-welcome.png
+same    skin-garden-1-setup.png
+same    skin-garden-2-table.png
+differs skin-garden-3-menu.png: 8659 of 2962440 pixels (0.29%), box (307, 1030, 835, 1080)
+differs skin-garden-4-look.png: 2677965 of 2962440 pixels (90.40%), box (0, 0, 1170, 2514)
+same    skin-garden-pieces.png
+same    skin-harbour-0-welcome.png
+same    skin-harbour-1-setup.png
+same    skin-harbour-2-table.png
+differs skin-harbour-3-menu.png: 6265 of 2962440 pixels (0.21%), box (486, 1025, 897, 1075)
+differs skin-harbour-4-look.png: 2667060 of 2962440 pixels (90.03%), box (0, 0, 1170, 2514)
+same    skin-harbour-pieces.png
+same    skin-lacquer-0-welcome.png
+same    skin-lacquer-1-setup.png
+same    skin-lacquer-2-table.png
+differs skin-lacquer-3-menu.png: 9103 of 2962440 pixels (0.31%), box (307, 1030, 856, 1082)
+differs skin-lacquer-4-look.png: 2661583 of 2962440 pixels (89.84%), box (0, 0, 1170, 2514)
+same    skin-lacquer-pieces.png
+same    skin-library-0-welcome.png
+same    skin-library-1-setup.png
+same    skin-library-2-table.png
+differs skin-library-3-menu.png: 8741 of 2962440 pixels (0.30%), box (307, 1030, 826, 1080)
+differs skin-library-4-look.png: 2675384 of 2962440 pixels (90.31%), box (0, 0, 1170, 2514)
+same    skin-library-pieces.png
+same    skin-marble-0-welcome.png
+same    skin-marble-1-setup.png
+same    skin-marble-2-table.png
+differs skin-marble-3-menu.png: 10323 of 2962440 pixels (0.35%), box (307, 1030, 973, 1080)
+differs skin-marble-4-look.png: 2676314 of 2962440 pixels (90.34%), box (0, 0, 1170, 2514)
+same    skin-marble-pieces.png
+same    skin-midnight-0-welcome.png
+same    skin-midnight-1-setup.png
+same    skin-midnight-2-table.png
+differs skin-midnight-3-menu.png: 9485 of 2962440 pixels (0.32%), box (307, 1030, 891, 1080)
+differs skin-midnight-4-look.png: 2685818 of 2962440 pixels (90.66%), box (0, 0, 1170, 2514)
+same    skin-midnight-pieces.png
+same    skin-plain-0-welcome.png
+same    skin-plain-1-setup.png
+same    skin-plain-2-table.png
+differs skin-plain-3-menu.png: 5393 of 2962440 pixels (0.18%), box (486, 1025, 831, 1075)
+differs skin-plain-4-look.png: 2641301 of 2962440 pixels (89.16%), box (0, 0, 1170, 2514)
+same    skin-plain-pieces.png
+same    skin-salon-0-welcome.png
+same    skin-salon-1-setup.png
+same    skin-salon-2-table.png
+differs skin-salon-3-menu.png: 5511 of 2962440 pixels (0.19%), box (486, 1025, 839, 1075)
+differs skin-salon-4-look.png: 2637633 of 2962440 pixels (89.04%), box (0, 0, 1170, 2514)
+same    skin-salon-pieces.png
+same    skin-tavern-0-welcome.png
+same    skin-tavern-1-setup.png
+same    skin-tavern-2-table.png
+differs skin-tavern-3-menu.png: 5658 of 2962440 pixels (0.19%), box (486, 1025, 861, 1075)
+differs skin-tavern-4-look.png: 2642550 of 2962440 pixels (89.20%), box (0, 0, 1170, 2514)
+same    skin-tavern-pieces.png
+same    skin-velvet-0-welcome.png
+same    skin-velvet-1-setup.png
+same    skin-velvet-2-table.png
+differs skin-velvet-3-menu.png: 7774 of 2962440 pixels (0.26%), box (307, 1023, 801, 1080)
+differs skin-velvet-4-look.png: 2675529 of 2962440 pixels (90.32%), box (0, 0, 1170, 2514)
+same    skin-velvet-pieces.png
+same    tut-0-intro-0.png
+same    tut-0-intro-1.png
+same    tut-0-intro-2.png
+same    tut-0-intro-3.png
+same    tut-0-intro-4.png
+same    tut-0-play.png
+same    tut-0-welcome.png
+same    tut-1a-pick.png
+same    tut-1b-play.png
+same    tut-1c-done.png
+same    tut-2-intro-0.png
+same    tut-2-intro-1.png
+same    tut-2-intro-2.png
+same    tut-2a-pick.png
+same    tut-2b-play.png
+same    tut-2c-done.png
+same    tut-3-intro-0.png
+same    tut-3-intro-1.png
+same    tut-3a-pick.png
+same    tut-3b-play.png
+same    tut-3c-done.png
+same    tut-4-intro-0.png
+same    tut-4-intro-1.png
+same    tut-4-intro-2.png
+same    tut-4-intro-3.png
+same    tut-4a-pick.png
+same    tut-4b-play.png
+same    tut-4c-done.png
+same    tut-5-ready.png
+same    tut-outro-0.png
+same    tut-outro-1.png
+same    wide-0-modes.png
+same    wide-screen-1.png
+differs wide-screen-4-four-colour.png: 1246 of 2073600 pixels (0.06%), box (1632, 343, 1797, 361)
+same    wide-screen-5-cards.png
+same    wide-screen-6-hand.png
+same    wide-screen-bug.png
+differs wide-screen-menu.png: 1246 of 2073600 pixels (0.06%), box (1632, 343, 1797, 361)
+same    wide-screen-points.png
+same    wide-table-1.png
+same    wide-table-2-task.png
+same    wide-table-bug.png
+differs wide-table-menu.png: 1246 of 2073600 pixels (0.06%), box (1632, 394, 1797, 412)
+same    wide-table-points.png
+same    wide-welcome.png
+unstable zz-room.png  [the throne room's figures move on a clock of their own, so it varies run to run (shelved Dynasty; not guarded)]
+same    zz-turn-0.png
+same    zz-turn-1.png
+same    zz-turn-2.png
+same    zz-turn-3.png
+same    zz-turn-4.png
+same    zz-turn-5.png
+122 same, 36 unexplained
