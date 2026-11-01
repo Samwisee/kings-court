@@ -1,0 +1,112 @@
+== main (run 1): the page, mid-round (phone size) ==
+a change to the game (setState): 9.9 ms a frame
+a change to the screen only (_ui): 10.5 ms a frame
+a frame with nothing changed: 1.2 ms a frame
+the framework's work a frame: build 1.0 ms, layout 5.1 ms, paint 0.4 ms
+  without the table: 4.4 ms a frame
+ so the table costs about 6.1 ms
+  without the table: build 0.8 ms, layout 2.4 ms, paint 0.2 ms
+  without the hand: 5.3 ms a frame
+ so the hand costs about 5.2 ms
+  without the hand: build 0.9 ms, layout 2.3 ms, paint 0.1 ms
+  without the bar: 6.3 ms a frame
+ so the bar costs about 4.2 ms
+  without the bar: build 0.5 ms, layout 3.7 ms, paint 0.5 ms
+  without the trim: 5.7 ms a frame
+ so the trim costs about 4.9 ms
+  without the trim: build 0.7 ms, layout 3.3 ms, paint 0.5 ms
+switching the look: 40 frames, the first 41.3 ms, the slowest 41.3 ms, 183 ms in all
+switching the look: 40 frames, the first 46.1 ms, the slowest 46.1 ms, 164 ms in all
+switching the look: 26 frames, the first 76.1 ms, the slowest 76.1 ms, 142 ms in all
+ after a change, save (scheduling): 0.01 ms
+ after a change, syncCards: 0.00 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
+== main (run 1): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 45 ms (19933 playouts/s), sliced 24 ms (+-21 ms), pick 13 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 25 ms (35526 playouts/s), sliced 17 ms (+-8 ms), pick 13 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 16 ms (57191 playouts/s), sliced 16 ms (+0 ms), pick 13 ms
+== branch (run 1): the page, mid-round (phone size) ==
+a change to the game (setState): 9.9 ms a frame
+a change to the screen only (_ui): 8.2 ms a frame
+a frame with nothing changed: 1.0 ms a frame
+the framework's work a frame: build 1.0 ms, layout 4.8 ms, paint 0.4 ms
+  without the table: 4.1 ms a frame
+ so the table costs about 4.1 ms
+  without the table: build 0.8 ms, layout 2.3 ms, paint 0.3 ms
+  without the hand: 4.6 ms a frame
+ so the hand costs about 3.6 ms
+  without the hand: build 1.2 ms, layout 2.6 ms, paint 0.2 ms
+  without the bar: 6.0 ms a frame
+ so the bar costs about 2.2 ms
+  without the bar: build 0.7 ms, layout 4.2 ms, paint 0.5 ms
+  without the trim: 5.4 ms a frame
+ so the trim costs about 2.8 ms
+  without the trim: build 0.8 ms, layout 3.5 ms, paint 0.5 ms
+switching the look: 40 frames, the first 50.0 ms, the slowest 50.0 ms, 206 ms in all
+switching the look: 40 frames, the first 52.4 ms, the slowest 52.4 ms, 127 ms in all
+switching the look: 26 frames, the first 59.6 ms, the slowest 59.6 ms, 110 ms in all
+ after a change, save (scheduling): 0.01 ms
+ after a change, syncCards: 0.00 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
+== branch (run 1): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 44 ms (20542 playouts/s), sliced 25 ms (+-19 ms), pick 13 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 27 ms (33333 playouts/s), sliced 19 ms (+-8 ms), pick 14 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 18 ms (49778 playouts/s), sliced 17 ms (+-1 ms), pick 17 ms
+== main (run 2): the page, mid-round (phone size) ==
+a change to the game (setState): 9.7 ms a frame
+a change to the screen only (_ui): 8.9 ms a frame
+a frame with nothing changed: 1.0 ms a frame
+the framework's work a frame: build 1.0 ms, layout 4.9 ms, paint 0.4 ms
+  without the table: 3.8 ms a frame
+ so the table costs about 5.1 ms
+  without the table: build 0.9 ms, layout 2.4 ms, paint 0.2 ms
+  without the hand: 3.7 ms a frame
+ so the hand costs about 5.3 ms
+  without the hand: build 0.9 ms, layout 2.4 ms, paint 0.2 ms
+  without the bar: 6.0 ms a frame
+ so the bar costs about 2.9 ms
+  without the bar: build 0.5 ms, layout 3.5 ms, paint 0.5 ms
+  without the trim: 5.2 ms a frame
+ so the trim costs about 3.7 ms
+  without the trim: build 1.1 ms, layout 4.1 ms, paint 0.6 ms
+switching the look: 40 frames, the first 46.1 ms, the slowest 46.1 ms, 197 ms in all
+switching the look: 40 frames, the first 49.4 ms, the slowest 49.4 ms, 133 ms in all
+switching the look: 26 frames, the first 82.9 ms, the slowest 82.9 ms, 143 ms in all
+ after a change, save (scheduling): 0.01 ms
+ after a change, syncCards: 0.00 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
+== main (run 2): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 48 ms (18818 playouts/s), sliced 27 ms (+-21 ms), pick 13 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 27 ms (32927 playouts/s), sliced 18 ms (+-9 ms), pick 14 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 19 ms (47158 playouts/s), sliced 16 ms (+-3 ms), pick 13 ms
+== branch (run 2): the page, mid-round (phone size) ==
+a change to the game (setState): 8.5 ms a frame
+a change to the screen only (_ui): 8.2 ms a frame
+a frame with nothing changed: 1.0 ms a frame
+the framework's work a frame: build 1.0 ms, layout 4.8 ms, paint 0.4 ms
+  without the table: 3.9 ms a frame
+ so the table costs about 4.4 ms
+  without the table: build 0.8 ms, layout 2.2 ms, paint 0.2 ms
+  without the hand: 4.1 ms a frame
+ so the hand costs about 4.1 ms
+  without the hand: build 1.1 ms, layout 2.7 ms, paint 0.2 ms
+  without the bar: 5.9 ms a frame
+ so the bar costs about 2.4 ms
+  without the bar: build 0.7 ms, layout 3.9 ms, paint 0.5 ms
+  without the trim: 7.9 ms a frame
+ so the trim costs about 0.4 ms
+  without the trim: build 1.4 ms, layout 5.3 ms, paint 0.7 ms
+switching the look: 40 frames, the first 44.1 ms, the slowest 44.1 ms, 207 ms in all
+switching the look: 40 frames, the first 49.4 ms, the slowest 49.4 ms, 138 ms in all
+switching the look: 26 frames, the first 64.3 ms, the slowest 64.3 ms, 117 ms in all
+ after a change, save (scheduling): 0.01 ms
+ after a change, syncCards: 0.00 ms
+ after a change, taskFlights: 0.00 ms
+ after a change, scheduleBot: 0.00 ms
+== branch (run 2): bots, on the Dart VM ==
+3 players: 5 tasks, 13 legal plays, 897 playouts: play 45 ms (19787 playouts/s), sliced 25 ms (+-21 ms), pick 13 ms
+4 players: 5 tasks, 10 legal plays, 900 playouts: play 25 ms (36000 playouts/s), sliced 17 ms (+-8 ms), pick 13 ms
+5 players: 3 tasks, 8 legal plays, 896 playouts: play 15 ms (59733 playouts/s), sliced 15 ms (+0 ms), pick 12 ms
