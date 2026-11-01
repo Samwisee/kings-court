@@ -346,6 +346,13 @@ android_rest() {
   adb -s "$phone" shell input keyevent KEYCODE_SLEEP >/dev/null 2>&1
 }
 
+# The phone's Chrome version: the newest listed (an updated Chrome is
+# listed beside the version the phone came with, and either can be first).
+android_chrome() {
+  adb -s "$phone" shell dumpsys package com.android.chrome | grep versionName | sed 's/.*versionName=//' | tr -d '\r ' |
+    python3 -c "import sys; v = [l.strip() for l in sys.stdin if l.strip()]; print(max(v, key=lambda x: [int(p) if p.isdigit() else 0 for p in x.split('.')]) if v else '')"
+}
+
 android_info() {
   echo "== $(date)"
   for k in ro.product.manufacturer ro.product.model ro.build.version.release ro.build.version.sdk ro.hardware ro.board.platform; do
@@ -355,7 +362,7 @@ android_info() {
   echo "refresh: $(adb -s "$phone" shell dumpsys display | grep -m3 -o 'fps=[0-9.]*\|renderFrameRate [0-9.]*' | tr '\n' ' ')"
   adb -s "$phone" shell dumpsys battery | grep -E 'level|temperature|status|AC powered|USB powered' | tr -d '\r'
   adb -s "$phone" shell dumpsys thermalservice 2>/dev/null | grep -E 'Thermal Status|mType=|mStatus' | head -20 | tr -d '\r'
-  echo "chrome: $(adb -s "$phone" shell dumpsys package com.android.chrome | grep -m1 versionName | tr -d '\r ')"
+  echo "chrome: $(android_chrome)"
 }
 
 # On the web: stops a run whose app never comes up (the driver keeps
@@ -456,7 +463,7 @@ for p in "${here_too[@]}"; do
   mkdir -p "$dir"
   case $p in
     android-chrome)
-      chrome=$(adb -s "$phone" shell dumpsys package com.android.chrome | grep -m1 versionName | sed 's/.*versionName=//' | tr -d '\r')
+      chrome=$(android_chrome)
       echo "== $p: $(adb -s "$phone" shell getprop ro.product.model | tr -d '\r'), Chrome $chrome"
       android_awake
       android_info >"$dir/device.txt" 2>&1
