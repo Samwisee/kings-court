@@ -25,7 +25,7 @@ class _Case extends StatelessWidget {
             width: 7,
             height: 7,
             decoration: BoxDecoration(color: skin.gold, border: Border.all(color: skin.goldDeep, width: 0.8))));
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: ground(skin),
         borderRadius: BorderRadius.circular(radius),
@@ -194,7 +194,7 @@ class _PriceTag extends StatelessWidget {
 /// The grid's scrollbar in the livery's own colours: a slim thumb in its
 /// accent on a dark track, always showing, so there's plainly more below.
 class _LiveryScrollbar extends StatelessWidget {
-  const _LiveryScrollbar({super.key, required this.controller, required this.child});
+  const _LiveryScrollbar({required this.controller, required this.child});
   final ScrollController controller;
   final Widget child;
 
