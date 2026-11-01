@@ -18,7 +18,11 @@ import sys
 # scene twice as slow, not a slow runner.
 BUDGET = {
     'setup': (10, 90),
-    'walk in': (20, 200),
+    # Start to the deal, in three (until they've run on CI a few times,
+    # each has the whole walk in's old budget).
+    'Start:': (20, 200),
+    'the walk in': (20, 200),
+    'crowning the King': (20, 200),
     'picking tasks: tasks flying': (12, 50),
     'tricks: cards played': (20, 50),
     'the card tracker': (2, 30),

@@ -25,6 +25,7 @@ def main(path):
               f"  {s['over8']:>4} {s['over16']:>4}   slowest {s['slowest']}"
               + (f"\n    thinking: {s['slices']} slices, at most {s['slicesBetween']} between two frames, the longest {s['longestSlice']} ms" if s.get('slices') else '')
               + ''.join(f"\n    slow frame {x}" for x in s.get('slow', []))
+              + ''.join(f"\n    long frame at {x}" for x in s.get('long', []))
               + (("\n    own time by name (ms, summed over the scene): " + ', '.join(s['totals'])) if s.get('totals') else '')
               + (f"\n    ERROR {s['error']}" if s.get('error') else '')
               + (f"  engine p90 {s['engineP90']:.1f} max {s['engineMax']:.1f}" if s.get('engineMax') else ''))

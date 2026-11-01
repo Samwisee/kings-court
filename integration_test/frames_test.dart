@@ -12,6 +12,7 @@
 library;
 
 import 'dart:math' as math;
+import 'dart:ui' show FramePhase;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -74,8 +75,18 @@ class Frames {
       SchedulerBinding.instance.scheduleFrameCallback(begin);
     });
     SchedulerBinding.instance.addTimingsCallback((timings) {
+      final s = _now;
+      if (s == null) return;
       for (final t in timings) {
-        _now?.engine.add(t.totalSpan);
+        s.engine.add(t.totalSpan);
+        // The long ones, with when they came in the scene, and whether
+        // the app's work or the drawing took the time.
+        final at = t.timestampInMicroseconds(FramePhase.vsyncStart);
+        s.firstVsync ??= at;
+        if (t.totalSpan.inMilliseconds >= 50 && s.long.length < 20) {
+          s.long.add('${((at - s.firstVsync!) / 1e6).toStringAsFixed(2)} s: ${_Scene._ms(t.totalSpan).toStringAsFixed(0)} ms '
+              '(work ${_Scene._ms(t.buildDuration).toStringAsFixed(0)}, drawing ${_Scene._ms(t.rasterDuration).toStringAsFixed(0)})');
+        }
       }
     });
   }
@@ -131,6 +142,11 @@ class _Scene {
   /// In detail: each name's time, summed over the scene's frames.
   final totals = <String, double>{};
   final slow = <String>[];
+
+  /// Frames of 50 ms or more, by the engine's count: when in the scene,
+  /// and the app's work against the drawing.
+  final long = <String>[];
+  int? firstVsync;
   final due = <Duration>[];
   final work = <Duration>[];
   final engine = <Duration>[];
@@ -194,6 +210,7 @@ class _Scene {
             '${e.key} ${e.value.toStringAsFixed(0)}'
         ],
       'slow': slow,
+      'long': long,
       'slowest': [for (final m in w.reversed.take(5)) double.parse(m.toStringAsFixed(1))],
     };
   }
@@ -247,8 +264,15 @@ void main() {
     });
 
     final state = tester.state<HomePageState>(find.byType(HomePage, skipOffstage: false));
-    await frames.scene('walk in, crowning the King, the deal', () async {
-      await tap(find.text('Start'), then: 7000);
+    // In three, to say which moment a long frame is in.
+    await frames.scene('Start: its first second (the walk in begins)', () async {
+      await tap(find.text('Start'), then: 1000);
+    });
+    await frames.scene('the walk in, its next two seconds', () async {
+      await wait(2000);
+    });
+    await frames.scene('crowning the King, the deal', () async {
+      await wait(4000);
     });
 
     await frames.scene('picking tasks, in detail (slower: every widget timed)', () async {
