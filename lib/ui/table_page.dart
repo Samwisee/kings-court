@@ -844,7 +844,7 @@ class HomePageState extends State<HomePage>
               animation: _walkIn.animation,
               waiting: _walkIn.waiting,
               handedOver: _walkIn.handedOver,
-              keepCover: _walkIn.keepCover)),
+              keepCover: _walkIn.keepCover, warming: _walkIn.warming)),
       // The brass inlay runs round the whole screen, the top bar included,
       // so it sits the same distance from every edge.
       // Its own layer: the trim (with its soft shadow) is painted once, not

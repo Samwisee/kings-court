@@ -185,11 +185,16 @@ class CoronationOverlay extends StatelessWidget {
       required this.animation,
       required this.waiting,
       required this.handedOver,
-      this.keepCover = false});
+      this.keepCover = false,
+      this.warming = false});
 
   final Animation<double> animation;
   final bool waiting;
   final bool handedOver;
+
+  /// Under the still felt, before the crown comes: the crown and its
+  /// sparks drawn all but unseen ([WalkIn.warming]).
+  final bool warming;
 
   /// The felt stays over the screen once the crown has gone, for what
   /// comes next to come up over it (the tutorial's pages).
@@ -210,7 +215,12 @@ class CoronationOverlay extends StatelessWidget {
           final grow = iv(c, 0.6, Curves.easeOutBack);
           // A crown waiting for the King holds still, full size.
           final lift = waiting ? 0.0 : iv(0.65, 1, Curves.easeInCubic);
-          final spark = iv(0.4, 0.9);
+          // Under the still felt, the crown and a burst of its sparks are
+          // drawn all but unseen, once: what a phone draws for the first
+          // time is slow (a frame of 100 ms as the crown came), and here
+          // nothing's moving to stop.
+          final warm = warming && t <= c;
+          final spark = warm ? 0.5 : iv(0.4, 0.9);
           final size = MediaQuery.sizeOf(context);
           final crown = math.min(size.width, size.height) * 0.28;
           final centre = Offset(size.width / 2, size.height / 2);
@@ -230,11 +240,14 @@ class CoronationOverlay extends StatelessWidget {
                   ),
                 ),
               Positioned.fill(
-                child: CustomPaint(
+                child: Opacity(
+                  opacity: warm ? 0.01 : 1,
+                  child: CustomPaint(
                   painter: spark > 0 && spark < 1
                       ? IntroSparks(skin: context.skin, 
                           origin: centre, progress: spark, scale: crown / 70)
                       : null,
+                ),
                 ),
               ),
               if (!handedOver)
@@ -242,7 +255,7 @@ class CoronationOverlay extends StatelessWidget {
                   left: centre.dx - crown / 2,
                   top: centre.dy - crown * 0.375 - lift * crown * 0.8,
                   child: Opacity(
-                    opacity: iv(c, c + 0.12) * (1 - lift),
+                    opacity: warm ? 0.01 : iv(c, c + 0.12) * (1 - lift),
                     child: Transform.scale(
                       scale: waiting && t > 0.6 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
                       // Drawn once, glow and all, then only moved, scaled and
@@ -326,6 +339,10 @@ class WalkIn {
   /// The felt stays once the crown has gone (see [CoronationOverlay]).
   bool keepCover = false;
 
+  /// Under the still felt: the crown and its sparks drawn once, all but
+  /// unseen, so their first drawing isn't when they first move.
+  bool warming = false;
+
   /// Where the felt has covered the screen and nothing else has begun:
   /// the still moment [start]'s underCover runs in.
   static const covered = 0.3;
@@ -354,6 +371,12 @@ class WalkIn {
     animation.animateTo(covered).whenCompleteOrCancel(() async {
       if (_gone) return;
       if (underCover != null) await underCover();
+      if (_gone) return;
+      warming = true;
+      changed();
+      await WidgetsBinding.instance.endOfFrame;
+      await WidgetsBinding.instance.endOfFrame;
+      warming = false;
       if (!_gone) _finish(onDone, stillDue);
     });
   }
