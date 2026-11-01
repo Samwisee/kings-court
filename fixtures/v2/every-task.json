@@ -1,0 +1,1802 @@
+{
+ "game": {
+  "version": 2,
+  "players": [
+   {
+    "name": "Player 1",
+    "color": 4293304064
+   },
+   {
+    "name": "Player 2",
+    "color": 4283872489
+   },
+   {
+    "name": "Player 3",
+    "color": 4291590567
+   },
+   {
+    "name": "Player 4",
+    "color": 4278230643
+   }
+  ],
+  "courtiers": [
+   2,
+   1,
+   4,
+   0
+  ],
+  "mode": 0,
+  "target": 10,
+  "chapter": null,
+  "lesson": 0,
+  "surprise": false,
+  "roles": true,
+  "digital": false,
+  "round": {
+   "players": 4,
+   "target": 5,
+   "hands": [],
+   "setAside": [],
+   "king": 0,
+   "tasks": [
+    {
+     "d": "Win more tricks than anyone else",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win fewer tricks than anyone else",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win more tricks than the King",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win fewer tricks than the King",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the same number of tricks as the King",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly as many tricks as the player on your left",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with a 5",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with a 7",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with the Joker",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with the Jack",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Queen with the King",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 7♥ with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a 9 with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick led with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick containing an Ace and a 9",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with exactly two Court Cards in it",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with three different suits in it",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick where no one followed suit",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with a card just one above the card led",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win two tricks with cards of the same rank",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick you led",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick as the last to play",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick the King leads",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the trick right after the King wins one",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the trick after the Queen is played",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first trick",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first two tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first trick with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the last trick",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the last trick with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the second-to-last trick",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly one trick",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly two tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly three tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win two tricks in a row",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win three tricks in a row",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly X tricks, named before the first trick",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 3♥",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the A♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 6♣",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 2♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 8♣",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 9♠",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Queen",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Joker",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Jack",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Jack and the Queen",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the Joker, the Jack and the Queen",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 2♥ and the 3♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the A♥ and the 9♥",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 5♠ and the 5♣",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 7♥ and the 7♣",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 3♦, 6♦ and 9♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win all four Aces",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least two Aces",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least three 7s",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least three 6s",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly two 4s",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least four ♠ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least five ♦ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least five ♣ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly three ♥ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly two ♦ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win two tricks led with a ♥",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win no ♠ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win no Court Cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly one Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly two Court Cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any ♥ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any ♣ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any ♦ or ♠ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any Aces",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any 9s",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any 5s",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any of the first three tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't lead a trick with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win no tricks until the King has won one",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the card you showed",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a card someone else showed",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the trick right after you show a card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win the card you showed",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win a trick before you've shown a card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win two tricks that each hold a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the trick before the King card is played",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first trick a Court Card falls in",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the last trick a Court Card falls in",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any trick the King leads",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick where everyone followed suit",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win two tricks in a row led with the same suit",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win tricks led with three different suits",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the trick right after you lose one with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the last trick with a plain card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 5♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 8♥",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the A♠",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 2♣ and the 8♠",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 6♥ and the 4♦",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least three 8s",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win exactly one ♣ card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least six ♥ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win no ♦ cards",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any of the first two tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win any of the first four tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the first three tricks",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win only the first trick",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win at least one card of each suit",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Never win two tricks in a row",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with a 9",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win more ♠ cards than anyone else",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win your first trick with a Court Card",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick that holds a 2 and a 9",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the trick in which someone first runs out of a suit",
+     "owner": null,
+     "x": null,
+     "seal": null,
+     "status": 0
+    }
+   ],
+   "pickTurn": 0,
+   "passed": [],
+   "spoke": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "picksMade": 0,
+   "sealCount": 0,
+   "decree": null,
+   "exiled": null,
+   "passing": true,
+   "tricks": [],
+   "leader": 0,
+   "currentSeats": [],
+   "current": [],
+   "phase": 0,
+   "dealId": 1,
+   "revealed": {},
+   "revealHint": {},
+   "revealedAt": {}
+  },
+  "roundNumber": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "bestStreak": 0,
+  "dealId": 1,
+  "seed": 1,
+  "resultRecorded": false
+ },
+ "cardWidth": 120.0,
+ "dealt": true,
+ "pos": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "tilt": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "savedAt": 1761600000000,
+ "facts": {
+  "mode": "free",
+  "players": [
+   "Player 1",
+   "Player 2",
+   "Player 3",
+   "Player 4"
+  ],
+  "playerCount": 4,
+  "target": 10,
+  "round": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "king": 0,
+  "pickTurn": 0,
+  "seals": 0,
+  "decree": null,
+  "exiled": null,
+  "tasks": [
+   {
+    "d": "Win more tricks than anyone else",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win fewer tricks than anyone else",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win more tricks than the King",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win fewer tricks than the King",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the same number of tricks as the King",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly as many tricks as the player on your left",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with a 5",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with a 7",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with the Joker",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with the Jack",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Queen with the King",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 7♥ with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a 9 with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick led with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick containing an Ace and a 9",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with exactly two Court Cards in it",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with three different suits in it",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick where no one followed suit",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with a card just one above the card led",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win two tricks with cards of the same rank",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick you led",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick as the last to play",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick the King leads",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the trick right after the King wins one",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the trick after the Queen is played",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first trick",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first two tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first trick with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the last trick",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the last trick with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the second-to-last trick",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly one trick",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly two tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly three tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win two tricks in a row",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win three tricks in a row",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly X tricks, named before the first trick",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 3♥",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the A♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 6♣",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 2♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 8♣",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 9♠",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Queen",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Joker",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Jack",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Jack and the Queen",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the Joker, the Jack and the Queen",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 2♥ and the 3♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the A♥ and the 9♥",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 5♠ and the 5♣",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 7♥ and the 7♣",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 3♦, 6♦ and 9♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win all four Aces",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least two Aces",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least three 7s",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least three 6s",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly two 4s",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least four ♠ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least five ♦ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least five ♣ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly three ♥ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly two ♦ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win two tricks led with a ♥",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win no ♠ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win no Court Cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly one Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly two Court Cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any ♥ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any ♣ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any ♦ or ♠ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any Aces",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any 9s",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any 5s",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any of the first three tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't lead a trick with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win no tricks until the King has won one",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the card you showed",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a card someone else showed",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the trick right after you show a card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win the card you showed",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win a trick before you've shown a card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win two tricks that each hold a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the trick before the King card is played",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first trick a Court Card falls in",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the last trick a Court Card falls in",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any trick the King leads",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick where everyone followed suit",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win two tricks in a row led with the same suit",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win tricks led with three different suits",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the trick right after you lose one with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the last trick with a plain card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 5♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 8♥",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the A♠",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 2♣ and the 8♠",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 6♥ and the 4♦",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least three 8s",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win exactly one ♣ card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least six ♥ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win no ♦ cards",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any of the first two tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win any of the first four tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the first three tricks",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win only the first trick",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win at least one card of each suit",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Never win two tricks in a row",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with a 9",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win more ♠ cards than anyone else",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win your first trick with a Court Card",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick that holds a 2 and a 9",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the trick in which someone first runs out of a suit",
+    "owner": null,
+    "status": "pending",
+    "seal": null
+   }
+  ],
+  "outcome": "inProgress",
+  "dealId": 1,
+  "seed": 1
+ }
+}
