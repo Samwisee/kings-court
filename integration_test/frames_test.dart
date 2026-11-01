@@ -142,7 +142,7 @@ class Frames {
     _now = s;
     try {
       // A scene that hangs is stopped and reported, so the run still ends.
-      await run().timeout(limit);
+      await run().timeout(realDevice ? limit * 3 : limit);
     } catch (e, stack) {
       // A scene that goes wrong is reported, and the rest still run.
       s.error = '$e ${stack.toString().split('\n').take(6).join(' | ')}';
@@ -245,6 +245,10 @@ class _Scene {
   String line() => toJson().toString();
 }
 
+/// Run on a real phone (tool/frames/iphone.sh), not CI's Chrome: the
+/// courtiers think as in the game, and every scene may take longer.
+const realDevice = bool.fromEnvironment('FRAMES_REAL_DEVICE');
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
@@ -254,10 +258,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     CharacterToken.loopUnderTest = true;
     HomePageTestHooks.seed = 7;
-    // The courtiers think as long here as on a phone (CI's processor is
+    // On CI the courtiers think as long as on a phone (CI's processor is
     // several times faster): their thinking spans as many slices, so the
-    // budget's check that it never holds a frame up means what it says.
-    HomePageState.botBudget = 900 * 6;
+    // budget's check that it never holds a frame up means what it says. On
+    // a real phone (tool/frames/iphone.sh) they think as they do in the game.
+    if (!realDevice) HomePageState.botBudget = 900 * 6;
     final frames = Frames()..watch();
 
     Future<void> wait(int ms) => tester.binding.delayed(Duration(milliseconds: ms));
