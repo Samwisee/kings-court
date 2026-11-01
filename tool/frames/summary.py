@@ -14,6 +14,27 @@ import os
 import sys
 
 
+def refresh(scenes):
+    """The screen's refresh (ms): the shortest any scene kept to. A scene
+    that couldn't keep up settles into every second refresh, and its own
+    period says 22 ms on a 90 Hz screen; the screen's didn't change."""
+    periods = [s['period'] for s in scenes.values() if s.get('period') and s.get('frames')]
+    return min(periods) if periods else 16.7
+
+
+def missed(scenes):
+    """(frames, refreshes missed, % missed) over these scenes, against the
+    screen's own refresh."""
+    screen = refresh(scenes)
+    frames = refreshes = 0
+    for s in scenes.values():
+        if not s.get('frames'):
+            continue
+        frames += s['frames']
+        refreshes += max(s['frames'], round((s['frames'] + s['dropped']) * s['period'] / screen))
+    return frames, refreshes - frames, 100 * (refreshes - frames) / max(1, refreshes)
+
+
 def main(folder, names):
     runs = {}
     for n in names:
@@ -41,15 +62,14 @@ def main(folder, names):
             if not x:
                 cells.append(f"{'-':>24}")
                 continue
-            flag = ' !' if x.get('error') else ''
+            flag = ' !' if x.get('error') or not x.get('frames') else ''
             cells.append(f"{x.get('engineP90', 0):>10.1f} / {x.get('workP99', 0):>6.1f}{flag:>4}  ")
         print(f"{s[:55]:<56}" + ''.join(cells))
     print()
     for n, r in runs.items():
-        frames = sum(x['frames'] for x in r.values())
-        dropped = sum(x['dropped'] for x in r.values())
-        print(f"{n}: {frames} frames, {dropped} refreshes missed ({100 * dropped / max(1, frames + dropped):.1f}%)")
-    print("\n'!' marks a scene that went wrong (its report says what).")
+        frames, missed_, rate = missed(r)
+        print(f"{n}: {frames} frames, {missed_} refreshes missed ({rate:.1f}%) at {1000 / refresh(r):.0f} Hz")
+    print("\n'!' marks a scene that went wrong or drew nothing (its report says what).")
 
 
 if __name__ == '__main__':

@@ -54,6 +54,9 @@
 #   RESULT=build/integration_response_data.json   the file the driver writes
 #   REPORT="python3 tool/report.py"       given result.json, prints a report
 #   SUMMARY="python3 tool/summary.py"     given the run folder and platforms
+#   COMPARE="python3 tool/compare.py"     given this run's folder and earlier
+#                                         ones: prints what changed, exits 1
+#                                         when worse (the device lab uses it)
 #   PLATFORMS="chrome safari"             the default set (else all)
 #   LIMIT_MIN=30                          minutes before a run is stopped
 #   BROWSER_SIZE=1440,900                 this computer's browser windows (a
@@ -62,6 +65,8 @@
 # Once, per device:
 #   Android  Settings > About phone: tap Build number 7 times; Developer
 #            options: USB debugging on; plug in and allow this computer.
+#            For runs nobody's watching: Screen lock: None (the script
+#            wakes the phone before a run and lets it sleep after).
 #            Needs Node (npx) to fetch the ChromeDriver for its Chrome.
 #   iPhone   Plug in, unlock, Trust; on iOS 16+ Settings > Privacy &
 #            Security > Developer Mode. Needs Xcode and a signing team set in
@@ -279,6 +284,19 @@ while i < len(lines):
 EOF
 }
 
+# Wakes the phone, past its lock screen (with no PIN), and keeps it awake
+# while it runs; then lets it sleep again.
+android_awake() {
+  adb -s "$phone" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
+  adb -s "$phone" shell wm dismiss-keyguard >/dev/null 2>&1
+  adb -s "$phone" shell svc power stayon true >/dev/null 2>&1
+  sleep 1
+}
+android_rest() {
+  adb -s "$phone" shell svc power stayon false >/dev/null 2>&1
+  adb -s "$phone" shell input keyevent KEYCODE_SLEEP >/dev/null 2>&1
+}
+
 android_info() {
   echo "== $(date)"
   for k in ro.product.manufacturer ro.product.model ro.build.version.release ro.build.version.sdk ro.hardware ro.board.platform; do
@@ -351,6 +369,7 @@ for p in "${here_too[@]}"; do
     android-chrome)
       chrome=$(adb -s "$phone" shell dumpsys package com.android.chrome | grep -m1 versionName | sed 's/.*versionName=//' | tr -d '\r')
       echo "== $p: $(adb -s "$phone" shell getprop ro.product.model | tr -d '\r'), Chrome $chrome"
+      android_awake
       android_info >"$dir/device.txt" 2>&1
       if driver=$(chromedriver_for "$chrome"); then
         adb -s "$phone" logcat -c
@@ -363,18 +382,21 @@ for p in "${here_too[@]}"; do
         stop_bg
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
         android_info >>"$dir/device.txt" 2>&1
+        android_rest
       else
         echo "   couldn't fetch a ChromeDriver for Chrome $chrome (needs Node's npx)" | tee "$dir/status.txt"
       fi ;;
     android-app)
       echo "== $p: $(adb -s "$phone" shell getprop ro.product.model | tr -d '\r')"
+      android_awake
       android_info >"$dir/device.txt" 2>&1
       adb -s "$phone" logcat -c
       bg sh -c "exec adb -s '$phone' logcat -v threadtime >'$dir/device.log' 2>&1"
       drive "$p" -d "$phone"
       stop_bg
       grep -E ' (flutter|DartVM|Flutter|AndroidRuntime) *:|FATAL|ANR' "$dir/device.log" >"$dir/console.log"
-      android_info >>"$dir/device.txt" 2>&1 ;;
+      android_info >>"$dir/device.txt" 2>&1
+      android_rest ;;
     iphone)
       id=$(echo "$iphone" | cut -f1)
       echo "== $p: $(echo "$iphone" | cut -f6), $(echo "$iphone" | cut -f5)"
