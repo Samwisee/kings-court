@@ -73,9 +73,8 @@ class _LiveryPageState extends State<_LiveryPage> {
   /// The tab open: which kind of choice the grid shows.
   _Kind _kind = _Kind.style;
 
-  /// A scroll position for each tab's grid (two are on screen as the tabs
-  /// cross-fade, so they can't share one).
-  final _scrolls = {for (final k in _Kind.values) k: ScrollController()};
+  /// The shop's one scroll: the window shrinks, then the shelves go by.
+  final _scroll = ScrollController();
 
   static TailoredSkin? _chosen(Skin s) => s is TailoredSkin ? s : null;
 
@@ -96,10 +95,33 @@ class _LiveryPageState extends State<_LiveryPage> {
     Navigator.of(context).pop();
   }
 
+  /// Back to what was worn when the shop opened.
+  void _takeOff() => setState(() {
+        _base = TailoredSkin.baseOf(widget.start);
+        _back = _chosen(widget.start)?.backChoice;
+        _face = _chosen(widget.start)?.faceChoice;
+        _task = _chosen(widget.start)?.taskChoice;
+        _token = _chosen(widget.start)?.tokenChoice;
+        _court = _chosen(widget.start)?.courtChoice;
+      });
+
+  /// Buying: the shop isn't open yet, so it says so.
+  void _buy(String price) => showDialog<void>(
+        context: context,
+        builder: (context) => CourtDialog(
+          title: 'The shop opens soon',
+          actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Keep looking'))],
+          child: Text('${_base.name} will be $price. Until the shop opens, try on whatever you like here.',
+              textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, height: 1.35)),
+        ),
+      );
+
   void _wearNow() {
     if (_worn) return;
     _worn = true;
-    if (_look.id != widget.start.id) {
+    // Only what's owned is worn: a style tried on and not bought is left
+    // in the shop.
+    if (_look.id != widget.start.id && widget.entitlements.owns(_look)) {
       widget.wear(_look);
     } else {
       colourPage(widget.start.table);
@@ -119,9 +141,7 @@ class _LiveryPageState extends State<_LiveryPage> {
     // Left without wearing it: the page's own colour back.
     if (!_worn) colourPage(widget.start.table);
     FrameStats.at = _wasAt;
-    for (final c in _scrolls.values) {
-      c.dispose();
-    }
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -144,6 +164,8 @@ class _LiveryPageState extends State<_LiveryPage> {
           data: look.theme(),
           child: Builder(builder: (context) {
             final skin = context.skin;
+            final price = widget.entitlements.priceOf(look);
+            final windowH = clampD(height * 0.34, 230, 330);
             return Scaffold(
               backgroundColor: skin.feltDeep,
               body: Stack(children: [
@@ -155,34 +177,61 @@ class _LiveryPageState extends State<_LiveryPage> {
                   ),
                 ),
                 SafeArea(
-                  // A column down the middle of a wide screen: the showcase
-                  // and the choices each in a panel of the style's own.
+                  // One case down the middle of a wide screen: the shop
+                  // window at the top (shrinking as the shelves scroll),
+                  // the sections, the shelves, and the counter.
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 760),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                        child: Column(children: [
-                          _Enclosure(
-                              child: SizedBox(height: clampD(height * 0.34, 230, 330), child: _Showcase(look: look))),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: _Enclosure(
-                              child: Column(children: [
-                                _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look),
-                                Container(height: 1.5, color: skin.gold.withValues(alpha: 0.35)),
-                                Expanded(child: _grid(context, look)),
-                              ]),
+                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                        child: _Case(
+                          child: Column(children: [
+                            Expanded(
+                              child: _LiveryScrollbar(
+                                controller: _scroll,
+                                child: CustomScrollView(controller: _scroll, slivers: [
+                                  SliverPersistentHeader(
+                                    pinned: true,
+                                    delegate: _Shrinking(
+                                      max: windowH,
+                                      min: windowH * 0.55,
+                                      child: _Showcase(look: look, price: price),
+                                    ),
+                                  ),
+                                  SliverPersistentHeader(
+                                    pinned: true,
+                                    delegate: _Shrinking(
+                                      max: 54,
+                                      min: 54,
+                                      child: _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look),
+                                    ),
+                                  ),
+                                  SliverPadding(
+                                    // Room on the right for the scrollbar.
+                                    padding: const EdgeInsets.fromLTRB(14, 12, 22, 16),
+                                    sliver: SliverGrid(
+                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                          maxCrossAxisExtent: 132,
+                                          mainAxisExtent: 136,
+                                          crossAxisSpacing: 10,
+                                          mainAxisSpacing: 12),
+                                      delegate: SliverChildListDelegate(_tiles(look)),
+                                    ),
+                                  ),
+                                ]),
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: FilledButton(
-                                style: FilledButton.styleFrom(minimumSize: const Size(200, 46)),
-                                onPressed: _done,
-                                child: const Text('Done')),
-                          ),
-                        ]),
+                            _Counter(
+                              look: look,
+                              price: price,
+                              changed: look.id != widget.start.id,
+                              onWear: _done,
+                              onBuy: () => _buy(price!),
+                              onTakeOff: _takeOff,
+                            ),
+                          ]),
+                        ),
                       ),
                     ),
                   ),
@@ -195,17 +244,23 @@ class _LiveryPageState extends State<_LiveryPage> {
     );
   }
 
-  /// The open tab's choices, in a grid of tiles: the style's own first.
-  Widget _grid(BuildContext context, Skin look) {
+  /// The open section's choices, a tile each: the style's own first.
+  List<Widget> _tiles(Skin look) {
     final base = _base;
     final own = TailoredSkin.of(base);
     final ownName = '${base.name}’s';
     final tiles = <Widget>[
       ...switch (_kind) {
         _Kind.style => [
+            // Every style, those for sale with their price.
             for (final s in skins)
-              if (widget.entitlements.owns(s))
-                _Tile(name: s.name, selected: s.id == base.id, onTap: () => _style(s), child: _TableSwatch(s)),
+              _Tile(
+                  name: s.name,
+                  selected: s.id == base.id,
+                  wearing: s.id == TailoredSkin.baseOf(widget.start).id,
+                  price: widget.entitlements.priceOf(s),
+                  onTap: () => _style(s),
+                  child: _TableSwatch(s)),
           ],
         _Kind.faces => [
             _Tile(name: ownName, selected: _face == null, onTap: () => setState(() => _face = null), child: _Faces(own)),
@@ -260,23 +315,7 @@ class _LiveryPageState extends State<_LiveryPage> {
           ],
       },
     ];
-    final scroll = _scrolls[_kind]!;
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      child: _LiveryScrollbar(
-        key: ValueKey('look-grid-${_kind.name}'),
-        controller: scroll,
-        child: GridView.builder(
-          controller: scroll,
-          // Room on the right for the scrollbar.
-          padding: const EdgeInsets.fromLTRB(14, 14, 22, 18),
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 132, mainAxisExtent: 136, crossAxisSpacing: 10, mainAxisSpacing: 10),
-          itemCount: tiles.length,
-          itemBuilder: (context, i) => tiles[i],
-        ),
-      ),
-    );
+    return tiles;
   }
 }
 
@@ -303,16 +342,26 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    // All in view at once (wrapping if they must), never scrolled away.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 5,
-        runSpacing: 6,
-        children: [
+    // The shop's sections, on the case's own ground (they stay at the top
+    // as the shelves scroll under them), all on one line: smaller on a
+    // narrow screen, never wrapped or scrolled away.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: _Case.ground(skin),
+        border: Border(bottom: BorderSide(color: skin.gold.withValues(alpha: 0.35), width: 1.5)),
+      ),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
           for (final k in _Kind.values)
-            Semantics(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.5),
+              child: Semantics(
               button: true,
               selected: k == kind,
               child: MouseRegion(
@@ -338,7 +387,11 @@ class _Tabs extends StatelessWidget {
                 ),
               ),
             ),
-        ],
+            ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -347,9 +400,21 @@ class _Tabs extends StatelessWidget {
 /// One choice: its picture on the livery's felt over its name, ringed and
 /// lit in the accent when chosen; lit, under a pointer, with the hand.
 class _Tile extends StatefulWidget {
-  const _Tile({required this.name, required this.selected, required this.onTap, required this.child});
+  const _Tile(
+      {required this.name,
+      required this.selected,
+      required this.onTap,
+      required this.child,
+      this.wearing = false,
+      this.price});
   final String name;
   final bool selected;
+
+  /// What's worn now: ribboned.
+  final bool wearing;
+
+  /// For sale: its price, on a tag.
+  final String? price;
   final VoidCallback onTap;
   final Widget child;
 
@@ -367,7 +432,7 @@ class _TileState extends State<_Tile> {
     return Semantics(
       button: true,
       selected: selected,
-      label: widget.name,
+      label: [widget.name, if (widget.wearing) 'wearing', if (widget.price != null) 'for sale, ${widget.price}'].join(', '),
       excludeSemantics: true,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -379,6 +444,8 @@ class _TileState extends State<_Tile> {
             Expanded(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
+                // Lifted off the shelf under a pointer.
+                transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
                 decoration: BoxDecoration(
                   gradient: RadialGradient(radius: 0.9, colors: [skin.feltGlow, skin.feltDeep]),
                   borderRadius: BorderRadius.circular(16),
@@ -401,6 +468,10 @@ class _TileState extends State<_Tile> {
                           scale: _hover ? 1.06 : 1,
                           duration: const Duration(milliseconds: 160),
                           child: RepaintBoundary(child: widget.child))),
+                  if (widget.wearing)
+                    Positioned(left: 6, top: 6, child: _Badge(text: 'Wearing', fill: skin.gold, ink: skin.goldInk)),
+                  if (widget.price case final price?)
+                    Positioned(right: 6, bottom: 6, child: _PriceTag(price: price)),
                   if (selected)
                     Positioned(
                       right: 6,

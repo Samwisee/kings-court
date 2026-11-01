@@ -12,6 +12,7 @@ import '../engine/bot.dart';
 
 import '../platform/page_colour.dart' if (dart.library.js_interop) '../platform/page_colour_web.dart';
 import '../skin/court/court_skin.dart';
+import '../skin/entitlements.dart';
 import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
 import '../skin/tailored.dart';
@@ -19,10 +20,13 @@ import 'table_page.dart';
 import 'widgets/character_token.dart';
 
 class TheKingsCourtApp extends StatefulWidget {
-  const TheKingsCourtApp({super.key, this.skin = const CourtSkin()});
+  const TheKingsCourtApp({super.key, this.skin = const CourtSkin(), this.entitlements = startingEntitlements});
 
   /// The skin it opens in.
   final Skin skin;
+
+  /// Which skins the player may wear, and what the rest cost.
+  final Entitlements entitlements;
 
   @override
   State<TheKingsCourtApp> createState() => _TheKingsCourtAppState();
@@ -115,6 +119,7 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
   @override
   Widget build(BuildContext context) => SkinScope(
         skin: _skin,
+        entitlements: widget.entitlements,
         onChoose: _choose,
         child: MaterialApp(
           title: "The King's Court",

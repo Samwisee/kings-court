@@ -13,6 +13,7 @@ import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/game/state.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
+import 'package:kings_court/skin/entitlements.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
 import 'package:kings_court/skin/harbour/harbour_skin.dart';
 import 'package:kings_court/skin/midnight/midnight_skin.dart';
@@ -445,6 +446,40 @@ void main() {
     }
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/livery-wide.png'));
   });
+
+  // The Livery page as the shop will be (with the preview's sample prices):
+  // on a laptop as it opens, and on a phone with Ballroom, which is for
+  // sale, tried on.
+  for (final (name, size, ratio) in const [
+    ('wide', Size(2800, 1800), 2.0),
+    ('phone', Size(1170, 2532), 3.0),
+  ]) {
+    testWidgets('The Livery page as a shop ($name)', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = ratio;
+      addTearDown(tester.view.reset);
+      HomePageTestHooks.fast();
+      await tester.pumpWidget(const TheKingsCourtApp(skin: HarbourSkin(), entitlements: Shop(samplePrices)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New game'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Livery: Harbour'));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      if (name == 'phone') {
+        await tester.ensureVisible(find.text('Ballroom'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ballroom'));
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 30));
+        }
+      }
+      await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/livery-shop-$name.png'));
+    });
+  }
 
   // Looks mixed from the Livery page's choices, at the table.
   BackChoice back(String id) => backChoices.firstWhere((b) => b.id == id);
