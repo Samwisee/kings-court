@@ -90,6 +90,13 @@ class _LiveryPageState extends State<_LiveryPage> {
         _court = null;
       });
 
+  /// Opens a section at its top: each has its own shelves.
+  void _open(_Kind k) {
+    if (k == _kind) return;
+    setState(() => _kind = k);
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
   void _done() {
     _wearNow();
     Navigator.of(context).pop();
@@ -183,7 +190,7 @@ class _LiveryPageState extends State<_LiveryPage> {
                             SizedBox(height: windowH, child: _Showcase(look: look, price: price)),
                             SizedBox(
                                 height: 54,
-                                child: _Tabs(kind: _kind, onKind: (k) => setState(() => _kind = k), look: look)),
+                                child: _Tabs(kind: _kind, onKind: _open, look: look)),
                             Expanded(
                               child: _LiveryScrollbar(
                                 controller: _scroll,
