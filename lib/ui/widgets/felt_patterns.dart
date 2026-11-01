@@ -389,7 +389,7 @@ class FeltPatternPainter extends CustomPainter {
       final c = Offset(rand.nextDouble() * s.width, rand.nextDouble() * s.height);
       final r = 60 + rand.nextDouble() * 140;
       final light = rand.nextBool();
-      final tint = light ? ink.withValues(alpha: ink.a * 0.22) : const Color(0x2A000000);
+      final tint = light ? ink.withValues(alpha: ink.a * 0.32) : const Color(0x38000000);
       canvas.drawCircle(
           c,
           r,

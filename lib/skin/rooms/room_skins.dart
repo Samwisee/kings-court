@@ -169,7 +169,7 @@ const marbleDesign = SkinDesign(
   token: 'gems',
   task: 'gilt',
   pattern: FeltPattern.marble,
-  patternInk: Color(0x4CEFF4EE),
+  patternInk: Color(0x66EFF4EE),
 );
 
 /// Ballroom: black lacquer and gold fans, as in a ballroom of the twenties.
@@ -366,7 +366,7 @@ const rivieraDesign = SkinDesign(
   token: 'gems',
   task: 'mint',
   pattern: FeltPattern.awning,
-  patternInk: Color(0x1CFFF6E8),
+  patternInk: Color(0x2EFFF6E8),
 );
 
 /// Winter palace: ice and silver, snowflakes on a frosted cloth, and ferns
@@ -434,7 +434,7 @@ const egyptianDesign = SkinDesign(
   token: 'shields',
   task: 'gilt',
   pattern: FeltPattern.lotus,
-  patternInk: Color(0x30E2B53E),
+  patternInk: Color(0x28E2B53E),
 );
 
 /// Galleon: a captain's treasure map on the table, brass fittings, and
@@ -468,7 +468,7 @@ const galleonDesign = SkinDesign(
   token: 'coins',
   task: 'parchment',
   pattern: FeltPattern.map,
-  patternInk: Color(0x38F0DEB4),
+  patternInk: Color(0x4CF0DEB4),
 );
 
 /// Scopa: a trattoria's red-and-white gingham, cream and gold, olive
