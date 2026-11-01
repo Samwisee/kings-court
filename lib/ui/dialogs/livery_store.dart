@@ -31,8 +31,8 @@ class _StoreHeading extends StatelessWidget {
   }
 }
 
-/// One item on the store's shelves: its picture on the style's felt, and
-/// under it a footer with its name and, for sale, its price. Ringed in the
+/// One item on the store's shelves: its picture on the style's felt (with
+/// its price on it, for sale), and its name in a footer under it. Ringed in the
 /// accent when chosen; ribboned when it's the one in use, or new; lifted,
 /// under a pointer, with the hand.
 class _Tile extends StatefulWidget {
@@ -121,6 +121,8 @@ class _TileState extends State<_Tile> {
                   else if (widget.fresh)
                     const Positioned(
                         left: 6, top: 6, child: _Badge(text: 'New', fill: Color(0xFFD9483B), ink: Colors.white)),
+                  if (widget.price case final price?)
+                    Positioned(right: 6, bottom: 6, child: _PriceTag(price: price)),
                   if (selected)
                     Positioned(
                       right: 6,
@@ -134,23 +136,19 @@ class _TileState extends State<_Tile> {
                     ),
                 ]),
               ),
-              // The footer: its name, and its price.
+              // The footer: its name, the whole width of the tile.
               Container(
                 height: 30,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
+                alignment: Alignment.centerLeft,
                 color: Colors.black.withValues(alpha: 0.28),
-                child: Row(children: [
-                  Expanded(
-                    child: Text(widget.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: lit ? skin.gold : Colors.white.withValues(alpha: 0.88))),
-                  ),
-                  if (widget.price case final price?) _PriceTag(price: price),
-                ]),
+                child: Text(widget.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: lit ? skin.gold : Colors.white.withValues(alpha: 0.88))),
               ),
             ]),
           ),
@@ -249,7 +247,7 @@ class _Counter extends StatelessWidget {
   Widget build(BuildContext context) {
     final skin = context.skin;
     final name = TailoredSkin.baseOf(look).name;
-    final button = FilledButton.styleFrom(minimumSize: const Size(180, 46));
+    final button = FilledButton.styleFrom(minimumSize: const Size(150, 46));
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.2),
@@ -276,7 +274,9 @@ class _Counter extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             color: skin.gold)),
                     const SizedBox(height: 2),
-                    Text('Yours to keep, in every game.',
+                    Text('Yours to keep.',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.75))),
                   ]),
                 ),
