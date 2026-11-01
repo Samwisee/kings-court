@@ -186,10 +186,11 @@ class _LiveryPageState extends State<_LiveryPage> {
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                         child: _Case(
-                          child: Column(children: [
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                             Expanded(
                               child: _LiveryScrollbar(
                                 controller: _scroll,
+                                top: windowH * 0.55 + 54,
                                 child: CustomScrollView(key: const ValueKey('livery-shelves'), controller: _scroll, slivers: [
                                   SliverPersistentHeader(
                                     pinned: true,

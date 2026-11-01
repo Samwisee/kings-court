@@ -83,7 +83,9 @@ class _Shrinking extends SliverPersistentHeaderDelegate {
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     if (max == min) return SizedBox(height: max, child: child);
     final h = (max - shrinkOffset).clamp(min, max);
-    return ClipRect(
+    // On the case's own ground: scaled down, it leaves room at its sides,
+    // and the shelves mustn't show through there.
+    return ColoredBox(color: _Case.ground(context.skin), child: ClipRect(
       child: OverflowBox(
         alignment: Alignment.topCenter,
         minHeight: max,
@@ -94,7 +96,7 @@ class _Shrinking extends SliverPersistentHeaderDelegate {
           child: SizedBox(height: max, child: child),
         ),
       ),
-    );
+    ));
   }
 
   @override
@@ -195,9 +197,12 @@ class _PriceTag extends StatelessWidget {
 /// The grid's scrollbar in the livery's own colours: a slim thumb in its
 /// accent on a dark track, always showing, so there's plainly more below.
 class _LiveryScrollbar extends StatelessWidget {
-  const _LiveryScrollbar({required this.controller, required this.child});
+  const _LiveryScrollbar({required this.controller, required this.child, this.top = 0});
   final ScrollController controller;
   final Widget child;
+
+  /// Where its track starts: below what stays pinned at the top.
+  final double top;
 
   @override
   Widget build(BuildContext context) {
@@ -217,6 +222,7 @@ class _LiveryScrollbar extends StatelessWidget {
         trackBorderColor: Colors.transparent,
         crossAxisMargin: 6,
         mainAxisMargin: 10,
+        padding: EdgeInsets.only(top: top),
         child: child,
       ),
     );
