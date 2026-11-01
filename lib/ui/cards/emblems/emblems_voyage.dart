@@ -200,7 +200,7 @@ void _pirate(_Pen pen, int rank) {
         final long = k.isEven;
         final d = Offset(math.cos(a), math.sin(a));
         final side = Offset(-d.dy, d.dx);
-        final c = const Offset(50, 54);
+        const c = Offset(50, 54);
         final point = _poly([c + d * (long ? 42 : 26), c + side * 7, c - side * 7]);
         if (long) {
           pen.gild(point);

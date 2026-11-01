@@ -32,7 +32,6 @@ const setBacks = <BackChoice>[
       back: Color(0xFF2E2E30),
       edge: Color(0xFFECE4D4),
       motif: BackMotif.herringbone,
-      alpha: 0.18,
       rule: false,
       crown: Color(0xFFECE4D4)),
   BackChoice('snow', 'Snowfall',

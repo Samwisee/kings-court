@@ -137,7 +137,7 @@ void _snow(_Pen pen, int rank) {
       for (var k = 0; k < 6; k++) {
         final a = -math.pi / 2 + k * math.pi / 3;
         final d = Offset(math.cos(a), math.sin(a));
-        final c = const Offset(50, 50);
+        const c = Offset(50, 50);
         final arm = Path()
           ..moveTo(c.dx, c.dy)
           ..lineTo((c + d * 42).dx, (c + d * 42).dy);
