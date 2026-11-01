@@ -121,6 +121,8 @@ void main() {
     }
     // A table once chosen apart from the skin is the skin it became.
     expect(skinById('harbour+t:plum').id, 'velvet');
+    // A skin renamed: a look saved under its old name is the new one.
+    expect(skinById('chequers+b:royal').id, 'casino+b:royal');
     expect(skinById('court+t:navy+b:royal').id, 'midnight+b:royal');
     expect(skinById('court+t:gone').id, 'court', reason: 'a table no longer offered is dropped');
     final lacquer = skinById('lacquer+b:ivory');

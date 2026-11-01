@@ -58,6 +58,10 @@ const samplePrices = {
   'velvet': r'A$2',
   'marble': r'A$3',
   'ballroom': r'A$3',
-  'chequers': r'A$3',
+  'casino': r'A$3',
   'salon': r'A$3',
+  'winter': r'A$3',
+  'egyptian': r'A$4',
+  'galleon': r'A$4',
+  'scopa': r'A$2',
 };

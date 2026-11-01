@@ -100,23 +100,30 @@
         counting: {table: '#1A0A0C', glow: '#672C36', deep: '#3A0E16', gold: '#D4A63A', rim: 1},
         library: {table: '#1E140D', glow: '#674D3B', deep: '#3C291B', gold: '#D4A63A', rim: 1},
         tavern: {table: '#1A110A', glow: '#584232', deep: '#2E1F14', gold: '#E0A84E', rim: 0},
-        marble: {table: '#0D1714', glow: '#314B43', deep: '#132621', gold: '#D9C9A0', rim: 1},
+        marble: {table: '#0A1311', glow: '#36584E', deep: '#132B25', gold: '#E3D3A8', rim: 1},
         ballroom: {table: '#000000', glow: '#2A2A2A', deep: '#0C0C0C', gold: '#D4A63A', rim: 1},
         courtyard: {table: '#0A1626', glow: '#2A4A6B', deep: '#0E2640', gold: '#F2C46D', rim: 0},
         campaign: {table: '#1A2012', glow: '#4A583D', deep: '#253019', gold: '#E8D49A', rim: 1},
-        chequers: {table: '#120707', glow: '#4A2C30', deep: '#24100F', gold: '#D4A63A', rim: 1},
-        salon: {table: '#0A0A0A', glow: '#373737', deep: '#171717', gold: '#ECE4D4', rim: 0}
+        casino: {table: '#07140D', glow: '#22674A', deep: '#083823', gold: '#D9B044', rim: 1},
+        salon: {table: '#0A0A0A', glow: '#373737', deep: '#171717', gold: '#ECE4D4', rim: 0},
+        riviera: {table: '#0B2A33', glow: '#3C7F8A', deep: '#1A525C', gold: '#F4906C', rim: 0},
+        winter: {table: '#0A121D', glow: '#44617B', deep: '#1F354B', gold: '#DDE9F5', rim: 1},
+        egyptian: {table: '#0A0E22', glow: '#314A83', deep: '#12224B', gold: '#E2B53E', rim: 1},
+        galleon: {table: '#150E08', glow: '#675441', deep: '#3A2C1D', gold: '#CDA65C', rim: 1},
+        scopa: {table: '#1C0907', glow: '#973B34', deep: '#611A15', gold: '#F0D48A', rim: 0}
       };
       // A table once chosen apart from the skin, saved as "+t:<table>": the
       // skin it became (lib/skin/skins.dart). Remove after 2027-01, with
       // its twin there.
       var tableSkins = {sage: 'garden', teal: 'harbour', navy: 'midnight', plum: 'velvet',
         burgundy: 'counting', walnut: 'library', tavern: 'tavern', marble: 'marble', deco: 'ballroom',
-        tiles: 'courtyard', map: 'campaign', chess: 'chequers', charcoal: 'salon'};
+        tiles: 'courtyard', map: 'campaign', chess: 'casino', charcoal: 'salon'};
+      // Skins renamed, old id to new (with its twin in lib/skin/skins.dart).
+      var renamed = {chequers: 'casino'};
       var id = 'court';
       try { id = JSON.parse(localStorage.getItem('flutter.kingsCourt.skin')) || id; } catch (e) {}
       var parts = String(id).split('+');
-      var room = parts[0];
+      var room = renamed[parts[0]] || parts[0];
       parts.forEach(function (p) {
         if (p.indexOf('t:') === 0 && tableSkins[p.slice(2)]) room = tableSkins[p.slice(2)];
       });

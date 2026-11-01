@@ -26,8 +26,13 @@ const skins = <Skin>[
   BallroomSkin(),
   CourtyardSkin(),
   CampaignSkin(),
-  ChequersSkin(),
+  CasinoSkin(),
   SalonSkin(),
+  RivieraSkin(),
+  WinterSkin(),
+  EgyptianSkin(),
+  GalleonSkin(),
+  ScopaSkin(),
 ];
 
 /// The tables once chosen apart from the skin (`+t:<table>`), and the
@@ -46,9 +51,13 @@ const _tableSkins = {
   'deco': 'ballroom',
   'tiles': 'courtyard',
   'map': 'campaign',
-  'chess': 'chequers',
+  'chess': 'casino',
   'charcoal': 'salon',
 };
+
+/// Skins renamed, from their old id to their new: a look saved under the
+/// old one is the new one. (With its twin in web/index.html.)
+const _renamed = {'chequers': 'casino'};
 
 /// The skin saved as [id] (with any backs and task cards chosen for it, see
 /// tailored.dart); the default for none, or one that's gone.
@@ -56,7 +65,7 @@ Skin skinById(String? id) {
   final parts = (id ?? '').split('+');
   String? chosen(String key) =>
       parts.skip(1).where((p) => p.startsWith('$key:')).map((p) => p.substring(key.length + 1)).firstOrNull;
-  final room = _tableSkins[chosen('t')] ?? parts.first;
+  final room = _tableSkins[chosen('t')] ?? _renamed[parts.first] ?? parts.first;
   final base = skins.firstWhere((s) => s.id == room, orElse: () => skins.first);
   final back = backChoices.where((b) => b.id == chosen('b')).firstOrNull;
   final task = taskChoices.where((k) => k.id == chosen('k')).firstOrNull;
