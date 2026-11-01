@@ -102,15 +102,14 @@ extension _Hand on HomePageState {
   Widget _buildHand() {
     final skin = context.skin;
     final c = _round;
-    // Once a suit is led you may choose your card early; it's played as
-    // soon as your turn comes.
-    final canQueue = _playing &&
-        !_yourPlay &&
-        c.hasCards &&
-        c.current.isNotEmpty &&
-        !c.currentSeats.contains(_you) &&
-        _lastTrick == null;
-    if (!canQueue && !_yourPlay) _queued = null;
+    // You may choose your card early, to be played as soon as your turn
+    // comes: once a card is led, any that follows it (and those stand
+    // out, the rest dimmed, as on your turn); before the lead, any that's
+    // sure to be playable whatever's led (those stand out, nothing dims).
+    final ahead = _playing && !_yourPlay ? c.playableAhead(_you) : const <PlayingCard>{};
+    final led = c.hasCards && c.current.isNotEmpty;
+    final canQueue = ahead.isNotEmpty;
+    if (_queued != null && !_yourPlay && !ahead.contains(_queued)) _queued = null;
     // Showing a card: only those you may show stand out.
     final showing = _revealing || _speakPromptDue;
     final yourTurn = _yourPlay || showing;
@@ -121,7 +120,7 @@ extension _Hand on HomePageState {
           }
         : _yourPlay
             ? c.legalFor(_you).toSet()
-            : const <PlayingCard>{};
+            : ahead;
     return Container(
       width: double.infinity,
       // Room below the cards so they clear the brass trim.
@@ -253,13 +252,17 @@ extension _Hand on HomePageState {
                           return true;
                         }
                         if (!_yourPlay && canQueue) {
-                          final ok = legalPlays(c.hands[_you], c.current.first);
-                          if (!ok.contains(card)) {
-                            final led = c.current.first;
+                          if (!ahead.contains(card)) {
+                            if (!led) {
+                              _showSnack('Wait for the lead: whether you can play that depends on what\u2019s led',
+                                  skin.feltDeep);
+                              return false;
+                            }
+                            final first = c.current.first;
                             _showSnack(
-                                led.isCourt
+                                first.isCourt
                                     ? 'You must follow with a Court Card'
-                                    : 'You must follow ${led.suit.name}',
+                                    : 'You must follow ${first.suit.name}',
                                 skin.feltDeep);
                             return false;
                           }
@@ -327,7 +330,7 @@ extension _Hand on HomePageState {
                             index: i,
                             dealId: game.dealId,
                             lifted: dragging,
-                            dimmed: yourTurn && !legal.contains(card),
+                            dimmed: (yourTurn || led && canQueue) && !legal.contains(card),
                             glow: (yourTurn && card == _tutorialHint) || _queued == card || chosen,
                             marks: _marksFor(card),
                             // With the shortcuts showing: the key that plays it.

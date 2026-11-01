@@ -22,6 +22,26 @@ extension RoundQueries on Round {
     return null;
   }
 
+  /// The cards [seat] may choose before their turn, sure to be playable
+  /// when it comes. Once a card is led: those that follow it (or any, with
+  /// none of its suit). Before the lead, with someone else to lead: those
+  /// playable whatever's led, which is any card when the only suits that
+  /// could be led (held by someone else, not yet played) are its own or
+  /// ones [seat] hasn't got. None when [seat] has played, or leads.
+  Set<PlayingCard> playableAhead(int seat) {
+    if (!hasCards || currentSeats.contains(seat)) return const {};
+    final hand = hands[seat];
+    if (current.isNotEmpty) return legalPlays(hand, current.first).toSet();
+    if (leader == seat) return const {};
+    final gone = {for (final t in tricks) ...t.cards, ...hand};
+    final leadable = {for (final c in inPlay) if (!gone.contains(c)) c.suit};
+    final held = {for (final c in hand) c.suit};
+    return {
+      for (final c in hand)
+        if (leadable.every((s) => s == c.suit || !held.contains(s))) c
+    };
+  }
+
   /// Whether [seat] may take task [i], which nobody holds yet.
   bool canTake(int i, int seat) =>
       tasks[i].owner == null && whyCantTake(tasks[i], seat) == null;

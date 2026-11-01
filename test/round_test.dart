@@ -105,6 +105,28 @@ void main() {
     expect(r.outcome, RoundOutcome.won);
   });
 
+  test('A card can be chosen ahead when it’s sure to be playable', () {
+    final r = table(['Win the first trick'], king: 0);
+    r.assign(r.tasks[0], 0);
+    const h1 = PlayingCard(Suit.hearts, 1), h5 = PlayingCard(Suit.hearts, 5);
+    const s2 = PlayingCard(Suit.spades, 2);
+    r.leader = 0;
+    // Hearts and spades in hand: either suit could be led, so nothing's
+    // sure before the lead.
+    r.hands[1] = [h1, h5, s2];
+    expect(r.playableAhead(1), isEmpty);
+    // Only hearts: playable whatever's led.
+    r.hands[1] = [h1, h5];
+    expect(r.playableAhead(1), {h1, h5});
+    // The one who leads chooses on their turn.
+    expect(r.playableAhead(0), isEmpty);
+    // Once a card is led, what follows it.
+    r.hands[1] = [h1, h5, s2];
+    r.current = [const PlayingCard(Suit.spades, 7)];
+    r.currentSeats = [0];
+    expect(r.playableAhead(1), {s2});
+  });
+
   test('A seat’s view keeps its own hand and hides the others', () {
     final r = table(['Win the 3♥', 'Win the 6♣'], king: 1);
     final v = r.visibleTo(2);
