@@ -368,7 +368,7 @@ void main() {
       }
     }, limit: const Duration(seconds: 200));
 
-    await frames.scene('wearing the new look', () => tap(find.text('Done'), then: 2500));
+    await frames.scene('wearing the new look', () => tap(find.byKey(const ValueKey('livery-wear')), then: 2500));
 
     await frames.scene('the night sky\'s felt: stars twinkling, one shooting', () async {
       state.debugMenuChoice('skin');
@@ -377,7 +377,7 @@ void main() {
       final grid = find.byKey(const ValueKey('look-grid-style'));
       final night = find.descendant(of: grid, matching: find.text('Midnight'));
       if (night.evaluate().isNotEmpty) await tap(night, then: 800);
-      await tap(find.text('Done'), then: 8000);
+      await tap(find.byKey(const ValueKey('livery-wear')), then: 8000);
     });
 
     await frames.scene('changing skin, five times', () async {

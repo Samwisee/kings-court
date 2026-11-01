@@ -190,7 +190,7 @@ class _LiveryPageState extends State<_LiveryPage> {
                             Expanded(
                               child: _LiveryScrollbar(
                                 controller: _scroll,
-                                child: CustomScrollView(controller: _scroll, slivers: [
+                                child: CustomScrollView(key: const ValueKey('livery-shelves'), controller: _scroll, slivers: [
                                   SliverPersistentHeader(
                                     pinned: true,
                                     delegate: _Shrinking(
@@ -211,6 +211,7 @@ class _LiveryPageState extends State<_LiveryPage> {
                                     // Room on the right for the scrollbar.
                                     padding: const EdgeInsets.fromLTRB(14, 12, 22, 16),
                                     sliver: SliverGrid(
+                                      key: ValueKey('look-grid-${_kind.name}'),
                                       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                                           maxCrossAxisExtent: 132,
                                           mainAxisExtent: 136,

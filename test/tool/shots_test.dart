@@ -470,7 +470,11 @@ void main() {
         await tester.pump(const Duration(milliseconds: 30));
       }
       if (name == 'phone') {
-        await tester.ensureVisible(find.text('Ballroom'));
+        // The shelves build their tiles as they come into view.
+        await tester.scrollUntilVisible(find.text('Ballroom'), 120,
+            scrollable: find
+                .descendant(of: find.byKey(const ValueKey('livery-shelves')), matching: find.byType(Scrollable))
+                .first);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Ballroom'));
         for (var i = 0; i < 20; i++) {

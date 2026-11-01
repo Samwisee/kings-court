@@ -87,8 +87,11 @@ void main() {
       await tester.pumpAndSettle();
       final grid = find.byKey(ValueKey('look-grid-$kind'));
       final tile = find.descendant(of: grid, matching: find.text(name));
+      // The shelves build their tiles as they come into view.
       await tester.scrollUntilVisible(tile, 120,
-          scrollable: find.descendant(of: grid, matching: find.byType(Scrollable)).first);
+          scrollable: find
+              .descendant(of: find.byKey(const ValueKey('livery-shelves')), matching: find.byType(Scrollable))
+              .first);
       await tester.pumpAndSettle();
       await tester.tap(tile);
       await tester.pumpAndSettle();
@@ -103,7 +106,8 @@ void main() {
     await choose('tasks', 'Royal decree');
     await choose('faces', 'Antique');
     expect(worn().id, 'court', reason: 'the game behind wears it as the page closes');
-    await tester.tap(find.text('Done'));
+    // The counter names what you'll wear.
+    await tester.tap(find.text('Wear Garden'));
     await tester.pumpAndSettle();
     expect(worn().id, 'garden+k:decree+f:antique');
     expect(worn().cardLook.backMotif, BackMotif.waves, reason: 'Garden’s own backs: rose tide');

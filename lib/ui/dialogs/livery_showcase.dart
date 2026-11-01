@@ -142,6 +142,7 @@ class _Counter extends StatelessWidget {
               TextButton(onPressed: onTakeOff, child: const Text('Take it off')),
             ] else
               FilledButton(
+                  key: const ValueKey('livery-wear'),
                   style: FilledButton.styleFrom(minimumSize: const Size(200, 46)),
                   onPressed: onWear,
                   child: Text(changed ? 'Wear $name' : 'Done')),
