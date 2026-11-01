@@ -154,16 +154,17 @@ def main(args):
     # Where the fair courtiers and an all-seeing one disagree.
     taught = os.path.join(os.path.dirname(path) or '.', 'disagreements.jsonl')
     if os.path.exists(taught):
-        rows = list(read(taught))
-        print(f"\n== disagreements with an all-seeing courtier: {len(rows)} ==")
         by_rung = defaultdict(int)
         by_trick = defaultdict(int)
-        close = sum(1 for d in rows if d.get('close'))
-        for d in rows:
+        close = total = 0
+        for d in read(taught):
+            total += 1
+            close += 1 if d.get('close') else 0
             by_rung[d['rung']] += 1
             by_trick[d['trick']] += 1
+        print(f"\n== disagreements with an all-seeing courtier: {total} ==")
         print('by rung: ' + ', '.join(f"{r} {by_rung[r]}" for r in ORDER if r in by_rung))
-        print(f"on close calls: {pct(close, len(rows))}")
+        print(f"on close calls: {pct(close, total)}")
         print('by trick: ' + ', '.join(f"{t + 1}: {n}" for t, n in sorted(by_trick.items())))
 
 
