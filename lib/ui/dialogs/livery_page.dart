@@ -395,5 +395,3 @@ class _Tabs extends StatelessWidget {
     );
   }
 }
-
-
