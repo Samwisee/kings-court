@@ -38,7 +38,11 @@ if [ ! -x "$driver" ]; then
 fi
 [ -x "$driver" ] || { echo "Couldn't fetch a ChromeDriver for Chrome $chrome."; exit 1; }
 
-adb reverse tcp:8780 tcp:8780 >/dev/null
+# The phone's 127.0.0.1:8780 is this computer's, over the cable. (The
+# address, not "localhost": here that can mean IPv6, which adb doesn't
+# forward to.)
+adb reverse tcp:8780 tcp:8780 || { echo "adb couldn't forward the port to the phone."; exit 1; }
+adb reverse --list | grep -q 8780 || { echo "The port isn't forwarded to the phone."; exit 1; }
 "$driver" --port=4445 >build/chromedriver.log 2>&1 &
 pid=$!
 trap 'kill $pid 2>/dev/null; adb reverse --remove tcp:8780 >/dev/null 2>&1' EXIT
@@ -46,7 +50,7 @@ sleep 2
 
 echo "The game opens in Chrome on the phone. Leave it alone until it's done (about 10 minutes)."
 flutter pub get >/dev/null
-flutter drive --profile -d web-server --web-hostname localhost --web-port 8780 \
+flutter drive --profile -d web-server --web-hostname 127.0.0.1 --web-port 8780 \
   --browser-name=android-chrome --driver-port=4445 \
   --dart-define=FRAMES_REAL_DEVICE=true \
   --driver=test_driver/frames_driver.dart --target=integration_test/frames_test.dart \
