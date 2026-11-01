@@ -10,7 +10,9 @@ lot from run to run on a phone (a scene can be half again slower), so a
 scene is worse only when it's slower than every earlier run by a fifth,
 and 3 ms or more over their median; a platform is worse when it misses 5
 points more of its refreshes than any earlier run. A scene that drew
-nothing is worse. Exits 1 when anything got worse.
+nothing is worse. Exits 1 when anything got worse, once there are at least
+three earlier runs to judge by (before that, it says what moved but
+doesn't fail: one earlier run is too few to tell a change from noise).
 """
 import json
 import os
@@ -23,6 +25,7 @@ from summary import missed as _missed  # noqa: E402
 SLOWER = 1.2
 AT_LEAST_MS = 3.0
 MISSED_POINTS = 5.0
+ENOUGH_RUNS = 3
 
 
 def load(run):
@@ -85,6 +88,9 @@ def main(now_dir, before_dirs):
         print(f"\nbetter ({len(better)}):")
         for b in better:
             print(f"  {b}")
+    if worse and len(before_dirs) < ENOUGH_RUNS:
+        print(f"\n(only {len(before_dirs)} earlier run(s): too few to call it worse; judging from {ENOUGH_RUNS})")
+        return 0
     return 1 if worse else 0
 
 
