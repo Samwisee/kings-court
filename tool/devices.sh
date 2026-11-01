@@ -64,6 +64,9 @@
 #   LIMIT_MIN=30                          minutes before a run is stopped
 #   START_MIN=4                           on the web, minutes for the app to
 #                                         come up before the run is stopped
+#   WASM_PLATFORMS="android-chrome chrome"  web platforms built as WebAssembly
+#                                         (to test what each is served;
+#                                         --wasm builds them all so)
 #   BROWSER_SIZE=1440,900                 this computer's browser windows (a
 #                                         laptop's; a phone is its own size)
 #
@@ -100,6 +103,7 @@ SUMMARY=""
 PLATFORMS=""
 LIMIT_MIN=30
 START_MIN=4
+WASM_PLATFORMS=""
 BROWSER_SIZE=1440,900
 for c in tool/devices.conf devices.conf; do [ -f "$c" ] && . "./$c" && break; done
 [ -n "$TARGET" ] || TARGET=$(ls integration_test/*_test.dart 2>/dev/null | head -1)
@@ -376,6 +380,12 @@ watch_start() {
   done
 }
 
+# The web build's flags for [platform]: WebAssembly with --wasm, or when
+# the project's conf names it in WASM_PLATFORMS.
+web_for() {
+  if [ ${#web_args[@]} -gt 0 ] || [[ " $WASM_PLATFORMS " == *" $1 "* ]]; then echo --wasm; fi
+}
+
 # Runs flutter drive with [args] for [platform], stopped after LIMIT_MIN
 # (on the web, after START_MIN if the app never comes up: set [watch]).
 watch=""
@@ -459,7 +469,7 @@ for p in "${here_too[@]}"; do
         bg "$driver" --port=4445 --verbose --log-path="$dir/driver.log"
         sleep 2
         watch=$dir/driver.log
-        drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8780 \
+        drive "$p" -d web-server --web-hostname 127.0.0.1 $(web_for "$p") --web-port 8780 \
           --browser-name=android-chrome --no-android-emulator --driver-port=4445
         stop_bg
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
@@ -502,7 +512,7 @@ for p in "${here_too[@]}"; do
         bg "$driver" --port=4446 --verbose --enable-chrome-logs --log-path="$dir/driver.log"
         sleep 2
         watch=$dir/driver.log
-        drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8781 \
+        drive "$p" -d web-server --web-hostname 127.0.0.1 $(web_for "$p") --web-port 8781 \
           --browser-name=chrome --no-headless --browser-dimension="$BROWSER_SIZE" --driver-port=4446
         stop_bg
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
@@ -518,7 +528,7 @@ for p in "${here_too[@]}"; do
       bg /usr/bin/safaridriver --port 4447 --diagnose
       sleep 2
       watch=safari
-      drive "$p" -d web-server --web-hostname 127.0.0.1 "${web_args[@]}" --web-port 8782 \
+      drive "$p" -d web-server --web-hostname 127.0.0.1 $(web_for "$p") --web-port 8782 \
         --browser-name=safari --driver-port=4447 --browser-dimension="$BROWSER_SIZE"
       stop_bg
       : >"$dir/driver.log"

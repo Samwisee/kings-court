@@ -203,11 +203,14 @@ class CoronationOverlay extends StatelessWidget {
           if (t == 0 || (t == 1 && !waiting && !keepCover)) return const SizedBox.shrink();
           double iv(double a, double b, [Curve c = Curves.linear]) =>
               c.transform(((t - a) / (b - a)).clamp(0.0, 1.0));
-          final cover = iv(0, 0.3, Curves.easeOut) * (keepCover ? 1 : 1 - iv(0.6, 1, Curves.easeIn));
-          final grow = iv(0.08, 0.42, Curves.easeOutBack);
+          // The felt covers the screen first ([WalkIn.covered]), the
+          // table is set out under it, and only then the crown comes.
+          const c = WalkIn.covered;
+          final cover = iv(0, c, Curves.easeOut) * (keepCover ? 1 : 1 - iv(0.65, 1, Curves.easeIn));
+          final grow = iv(c, 0.6, Curves.easeOutBack);
           // A crown waiting for the King holds still, full size.
-          final lift = waiting ? 0.0 : iv(0.58, 1, Curves.easeInCubic);
-          final spark = iv(0.32, 0.85);
+          final lift = waiting ? 0.0 : iv(0.65, 1, Curves.easeInCubic);
+          final spark = iv(0.4, 0.9);
           final size = MediaQuery.sizeOf(context);
           final crown = math.min(size.width, size.height) * 0.28;
           final centre = Offset(size.width / 2, size.height / 2);
@@ -239,9 +242,9 @@ class CoronationOverlay extends StatelessWidget {
                   left: centre.dx - crown / 2,
                   top: centre.dy - crown * 0.375 - lift * crown * 0.8,
                   child: Opacity(
-                    opacity: iv(0.05, 0.2) * (1 - lift),
+                    opacity: iv(c, c + 0.12) * (1 - lift),
                     child: Transform.scale(
-                      scale: waiting && t > 0.42 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
+                      scale: waiting && t > 0.6 ? 1 : 0.55 + 0.45 * grow + 0.15 * lift,
                       // Drawn once, glow and all, then only moved, scaled and
                       // faded.
                       // A round glow behind it (a gradient: no blur to work out).
@@ -323,17 +326,41 @@ class WalkIn {
   /// The felt stays once the crown has gone (see [CoronationOverlay]).
   bool keepCover = false;
 
+  /// Where the felt has covered the screen and nothing else has begun:
+  /// the still moment [start]'s underCover runs in.
+  static const covered = 0.3;
+
   /// Walks in; with [crowning], the crown stays for the King, while
   /// [stillDue] says the King's still to be chosen (a slow phone may still
   /// be setting out), and goes once it isn't. With [onDone], the felt stays
   /// when the crown has gone, [onDone] puts what comes next over it, and
   /// the felt goes a moment later.
-  void start({required bool crowning, required bool Function() stillDue, VoidCallback? onDone}) {
+  ///
+  /// [underCover] runs once the felt covers the screen, before the crown
+  /// comes: the heavy work of setting out the table goes there, where a
+  /// pause is a still felt nobody sees stop, rather than mid-flight. The
+  /// walk-in goes on when it's done.
+  void start(
+      {required bool crowning,
+      required bool Function() stillDue,
+      VoidCallback? onDone,
+      Future<void> Function()? underCover}) {
     handedOver = false;
     waiting = crowning;
     keepCover = onDone != null;
+    animation.value = 0;
+    _running = true;
     changed();
-    animation.forward(from: 0).whenComplete(() {
+    animation.animateTo(covered).whenCompleteOrCancel(() async {
+      if (_gone) return;
+      if (underCover != null) await underCover();
+      if (!_gone) _finish(onDone, stillDue);
+    });
+  }
+
+  void _finish(VoidCallback? onDone, bool Function() stillDue) {
+    animation.animateTo(1).whenComplete(() {
+      _running = false;
       if (onDone != null) {
         onDone();
         Timer(const Duration(milliseconds: 450), () {
@@ -363,7 +390,7 @@ class WalkIn {
       waiting = false;
       fly();
     }
-    if (!animation.isAnimating) return go();
+    if (!_running) return go();
     void done(AnimationStatus s) {
       if (s != AnimationStatus.completed) return;
       animation.removeStatusListener(done);
@@ -373,6 +400,10 @@ class WalkIn {
   }
 
   bool _gone = false;
+
+  /// From the start to the end of the walk-in, its pause under the felt
+  /// included (when the animation itself is still).
+  bool _running = false;
 
   void dispose() {
     _gone = true;

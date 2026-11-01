@@ -268,9 +268,6 @@ extension _Setup on HomePageState {
   void _startFromSetup(SetupResult r) {
     if (MediaQuery.disableAnimationsOf(context) || !CharacterToken.alive) return _beginFromSetup(r);
     Sfx.fanfare();
-    // The table's felt drawn now, before the walk in moves, so the walk in
-    // doesn't stop to draw it when the table appears beneath it.
-    FeltLight.ready(context.skin);
     // The crown stays for the King on screen, the game set out beneath it;
     // the tutorial's pages come up over the felt once it's gone.
     final tutorial = r.mode == GameMode.tutorial;
@@ -278,8 +275,19 @@ extension _Setup on HomePageState {
     _walkIn.start(
         crowning: r.digital && !tutorial,
         stillDue: () => mounted && _inGame && _choosingKing && _crowning == null,
-        onDone: tutorial ? begin : null);
-    Timer(const Duration(milliseconds: 560), () => mounted && tutorial ? _ui(() => _setupArgs = null) : begin());
+        onDone: tutorial ? begin : null,
+        // Once the felt covers the screen and before the crown comes: the
+        // felt drawn, the table set out and its first frames drawn, all
+        // behind a still screen. Done mid-walk (as it was) it stopped the
+        // walk for half a second on a phone (a frame of 266 ms and one of
+        // 196 ms on a Pixel 6).
+        underCover: () async {
+          if (!mounted) return;
+          FeltLight.ready(context.skin);
+          tutorial ? _ui(() => _setupArgs = null) : begin();
+          await WidgetsBinding.instance.endOfFrame;
+          await WidgetsBinding.instance.endOfFrame;
+        });
   }
 
   void _beginFromSetup(SetupResult r) {
