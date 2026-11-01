@@ -5,6 +5,7 @@
 #   bash tool/devices.sh                     every platform found
 #   bash tool/devices.sh chrome safari       only these
 #   bash tool/devices.sh --list              what's reachable, then stop
+#   bash tool/devices.sh --one-at-a-time     no two platforms at once
 #   bash tool/devices.sh --dart-define=K=V   passed to every build (and named
 #                                            in the run's folder, to compare)
 #
@@ -16,6 +17,12 @@
 #   chrome          Chrome on this computer
 #   safari          Safari on this Mac
 #   macos           the Mac app
+#
+# Phones and this computer take turns separately, side by side: a phone
+# draws on its own chip, so it runs while this computer runs its own
+# platforms (one at a time: they'd share its chip, and a browser behind
+# another window slows its frames). This computer's lane runs in a copy of
+# the project (in $TMPDIR), so the two builds don't meet.
 #
 # Each run gets its own folder, build/devices/<date>_<time>/ (and
 # build/devices/latest), with:
@@ -64,6 +71,7 @@
 #   Mac app  Needs Xcode and a macos/ folder.
 
 set -o pipefail
+self=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
 here=$PWD
 while [ ! -f pubspec.yaml ] && [ "$PWD" != / ]; do cd ..; done
 [ -f pubspec.yaml ] || { cd "$here"; echo "Run this inside a Flutter project."; exit 1; }
@@ -89,13 +97,20 @@ all="android-chrome android-app iphone chrome safari macos"
 want=()
 listing=""
 tag=""
+into=""        # the run's folder, when this is the computer's lane of a run
+lanes=1
+cli_defines=()
+next=""
 for a in "$@"; do
+  if [ "$next" = into ]; then into=$a; next=""; continue; fi
   case "$a" in
     --list) listing=1 ;;
-    --dart-define=*) DEFINES+=("$a"); d=${a#--dart-define=}; tag="$tag-${d%%=*}" ;;
+    --one-at-a-time) lanes="" ;;
+    --into) next=into ;;
+    --dart-define=*) DEFINES+=("$a"); cli_defines+=("$a"); d=${a#--dart-define=}; tag="$tag-${d%%=*}" ;;
     -h|--help) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) if [[ " $all " == *" $a "* ]]; then want+=("$a"); else
-         echo "Don't know \"$a\". Platforms: $all; options: --list, --dart-define=K=V."; exit 1; fi ;;
+         echo "Don't know \"$a\". Platforms: $all; options: --list, --one-at-a-time, --dart-define=K=V."; exit 1; fi ;;
   esac
 done
 [ ${#want[@]} -gt 0 ] || want=(${PLATFORMS:-$all})
@@ -106,14 +121,22 @@ adb=$(command -v adb || echo "$HOME/Library/Android/sdk/platform-tools/adb")
 [ -x "$adb" ] && export PATH="$(dirname "$adb"):$PATH"   # ChromeDriver finds phones through adb
 
 # --- What's reachable ---------------------------------------------------------
-run=build/devices/$(date +%Y-%m-%d_%H%M%S)$tag
-mkdir -p "$run" build/drivers
-ln -sfn "$(basename "$run")" build/devices/latest
-echo "Looking for devices…"
-flutter devices --machine >"$run/devices.json" 2>/dev/null
+drivers=${DEVICES_DRIVERS:-$project/build/drivers}
+if [ -n "$into" ]; then
+  run=$into
+  found=$run/devices-computer.json
+else
+  run=build/devices/$(date +%Y-%m-%d_%H%M%S)$tag
+  found=$run/devices.json
+  mkdir -p build/devices
+  ln -sfn "$(basename "$run")" build/devices/latest
+  echo "Looking for devices…"
+fi
+mkdir -p "$run" "$drivers"
+flutter devices --machine >"$found" 2>/dev/null
 # id, platform, emulator, supported, sdk, name: one line a device
 devices() {
-  python3 - "$run/devices.json" <<'EOF'
+  python3 - "$found" <<'EOF'
 import json, sys
 text = open(sys.argv[1]).read()
 try:
@@ -163,14 +186,18 @@ why_not() {
   esac
 }
 
+phones=()
+computer=()
 for p in "${want[@]}"; do
   w=$(why_not "$p")
-  if [ -z "$w" ]; then echo "  ✓ $p"; else echo "  · $p: $w"; fi
+  [ -n "$into" ] || { if [ -z "$w" ]; then echo "  ✓ $p"; else echo "  · $p: $w"; fi; }
+  [ -n "$w" ] && continue
+  case $p in android-*|iphone) phones+=("$p") ;; *) computer+=("$p") ;; esac
 done
 [ -n "$listing" ] && { rm -rf "$run"; exit 0; }
 
 # --- The run's surroundings ---------------------------------------------------
-{
+[ -n "$into" ] || {
   echo "started   $(date)"
   echo "project   $project"
   echo "commit    $(git rev-parse HEAD 2>/dev/null) $(git status --porcelain 2>/dev/null | grep -q . && echo '(with uncommitted changes)')"
@@ -189,7 +216,7 @@ done
   flutter doctor -v 2>&1
 } >"$run/env.txt" 2>&1
 
-flutter pub get >"$run/pub-get.log" 2>&1 || { echo "flutter pub get failed: $run/pub-get.log"; exit 1; }
+flutter pub get >"$run/pub-get${into:+-computer}.log" 2>&1 || { echo "flutter pub get failed: $run/pub-get.log"; exit 1; }
 
 # --- Helpers ------------------------------------------------------------------
 bg_pids=()
@@ -200,7 +227,8 @@ stop_bg() {
   for p in "${bg_pids[@]}"; do kill -9 "$p" 2>/dev/null; done
   bg_pids=()
 }
-cleanup() { stop_bg; [ -x "$adb" ] && [ -n "$phone" ] && adb -s "$phone" reverse --remove-all >/dev/null 2>&1; }
+lane=""
+cleanup() { stop_bg; [ -n "$lane" ] && kill "$lane" 2>/dev/null; [ -x "$adb" ] && [ -n "$phone" ] && adb -s "$phone" reverse --remove-all >/dev/null 2>&1; }
 trap cleanup EXIT
 trap 'echo; echo "Stopped. What ran is in $run/"; exit 130' INT
 
@@ -208,8 +236,8 @@ trap 'echo; echo "Stopped. What ran is in $run/"; exit 130' INT
 chromedriver_for() {
   command -v npx >/dev/null || return 1
   local d
-  d=$(npx --yes @puppeteer/browsers install "chromedriver@$1" --path "$project/build/drivers" 2>/dev/null | awk 'END {print $NF}')
-  [ -x "$d" ] || d=$(npx --yes @puppeteer/browsers install "chromedriver@${1%%.*}" --path "$project/build/drivers" 2>/dev/null | awk 'END {print $NF}')
+  d=$(npx --yes @puppeteer/browsers install "chromedriver@$1" --path "$drivers" 2>/dev/null | awk 'END {print $NF}')
+  [ -x "$d" ] || d=$(npx --yes @puppeteer/browsers install "chromedriver@${1%%.*}" --path "$drivers" 2>/dev/null | awk 'END {print $NF}')
   [ -x "$d" ] && echo "$d"
 }
 
@@ -269,7 +297,7 @@ drive() {
   local t0=$SECONDS
   flutter drive -v $MODE "$@" "${DEFINES[@]}" --driver="$DRIVER" --target="$TARGET" >"$dir/drive.log" 2>&1 &
   local pid=$!
-  ( sleep $((LIMIT_MIN * 60)) && { echo timedout >"$dir/.timedout"; kill "$pid" 2>/dev/null; } ) &
+  ( sleep $((LIMIT_MIN * 60)) && { echo timedout >"$dir/.timedout"; kill "$pid" 2>/dev/null; } ) 2>/dev/null &
   local dog=$!
   wait "$pid"
   local rc=$?
@@ -292,11 +320,26 @@ drive() {
   ran+=("$p")
 }
 
+here_too=("${phones[@]}" "${computer[@]}")
+if [ -z "$into" ] && [ -n "$lanes" ] && [ ${#phones[@]} -gt 0 ] && [ ${#computer[@]} -gt 0 ]; then
+  # This computer's platforms in a copy of the project, beside the phones.
+  copy=${TMPDIR:-/tmp}/devices-$(basename "$project")
+  copy=${copy%/}
+  echo "Phones and this computer side by side; this computer's lines start [here]."
+  if command -v rsync >/dev/null; then
+    rsync -a --delete --exclude /build --exclude /.dart_tool --exclude /.git ./ "$copy/"
+  else
+    rm -rf "$copy" && mkdir -p "$copy"
+    tar -cf - --exclude ./build --exclude ./.dart_tool --exclude ./.git . | tar -C "$copy" -xf -
+  fi
+  ( cd "$copy" && DEVICES_DRIVERS="$drivers" bash "$self" --into "$project/$run" "${cli_defines[@]}" "${computer[@]}" 2>&1 \
+      | while IFS= read -r l; do echo "[here] $l"; done ) &
+  lane=$!
+  here_too=("${phones[@]}")
+fi
+
 ran=()
-skipped=()
-for p in "${want[@]}"; do
-  w=$(why_not "$p")
-  if [ -n "$w" ]; then skipped+=("$p: $w"); continue; fi
+for p in "${here_too[@]}"; do
   dir=$run/$p
   mkdir -p "$dir"
   case $p in
@@ -317,7 +360,6 @@ for p in "${want[@]}"; do
         android_info >>"$dir/device.txt" 2>&1
       else
         echo "   couldn't fetch a ChromeDriver for Chrome $chrome (needs Node's npx)" | tee "$dir/status.txt"
-        skipped+=("$p: couldn't fetch a ChromeDriver (needs Node's npx)")
       fi ;;
     android-app)
       echo "== $p: $(adb -s "$phone" shell getprop ro.product.model | tr -d '\r')"
@@ -353,7 +395,6 @@ for p in "${want[@]}"; do
         console_from_chromedriver "$dir/driver.log" >"$dir/console.log" 2>&1
       else
         echo "   couldn't fetch a ChromeDriver for Chrome $chrome (needs Node's npx)" | tee "$dir/status.txt"
-        skipped+=("$p: couldn't fetch a ChromeDriver (needs Node's npx)")
       fi ;;
     safari)
       echo "== $p $(defaults read /Applications/Safari.app/Contents/Info CFBundleShortVersionString 2>/dev/null) on this Mac"
@@ -385,16 +426,23 @@ for p in "${want[@]}"; do
   esac
 done
 
+[ -n "$lane" ] && { wait "$lane"; lane=""; }
+[ -n "$into" ] && exit 0
+
 # --- The summary ----------------------------------------------------------------
+done_here=()
+for p in "${want[@]}"; do [ -f "$run/$p/result.json" ] && done_here+=("$p"); done
 {
   echo "$(date): $TARGET, $MODE ${DEFINES[*]}"
   echo
-  for p in "${ran[@]}"; do printf '  %-15s %s\n' "$p" "$(cat "$run/$p/status.txt")"; done
-  for s in "${skipped[@]}"; do echo "  skipped ${s}"; done
-  if [ -n "$SUMMARY" ] && [ ${#ran[@]} -gt 0 ]; then echo; $SUMMARY "$run" "${ran[@]}"; fi
+  for p in "${want[@]}"; do
+    if [ -f "$run/$p/status.txt" ]; then printf '  %-15s %s\n' "$p" "$(head -1 "$run/$p/status.txt")"
+    else w=$(why_not "$p"); printf '  %-15s %s\n' "$p" "${w:+skipped: }${w:-did not finish: see its folder and the lines above}"; fi
+  done
+  if [ -n "$SUMMARY" ] && [ ${#done_here[@]} -gt 0 ]; then echo; $SUMMARY "$run" "${done_here[@]}"; fi
 } >"$run/summary.txt" 2>&1
 echo
 cat "$run/summary.txt"
 echo
 echo "Everything is in $project/$run/ (also build/devices/latest/)."
-[ ${#ran[@]} -gt 0 ] || exit 1
+[ ${#done_here[@]} -gt 0 ] || exit 1
