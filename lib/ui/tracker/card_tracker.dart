@@ -204,6 +204,7 @@ class CardTrackerState extends State<CardTracker> {
           padding: const EdgeInsets.only(bottom: 3),
           child: Row(children: [
             suitLabel(suit),
+            const SizedBox(width: 4),
             Expanded(
               child: g.voids.contains(suit) || cs.isEmpty
                   ? Text(g.voids.contains(suit) ? 'none' : 'none left',
@@ -245,7 +246,11 @@ class CardTrackerState extends State<CardTracker> {
     final picked = [for (final g in guesses) if (g.seat == _seat) g];
     return LayoutBuilder(builder: (context, box) {
       final w = math.min(34.0, (box.maxWidth - 8 * 3 - 1) / 9);
-      final small = clampD(w * 0.7, 20, 34);
+      // A player's possible hand fills the deck's place: the Court Cards
+      // and four suits, a row each under a line of words, up to nine cards
+      // a row beside the suits' signs.
+      final small = clampD(
+          math.min((box.maxWidth - 8 - 26 - 8 * 3) / 9, ((5 * (w * 1.3 + 3) - 24) / 5 - 3) / 1.3), 20, 48);
       // The deck's height: the Court Cards and four suits, a row each.
       final deckHeight = 5 * (w * 1.3 + 3);
       // Its edge turns the colour of whoever's hand is shown.
