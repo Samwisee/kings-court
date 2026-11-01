@@ -1,0 +1,78 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/shots_test.dart
+Warning: A tag was used that wasn't specified in dart_test.yaml.
+  tool was used in the suite itself
+
+00:00 +0: Tutorial
+00:11 +1: A phone, a big round
+00:14 +2: A laptop window during play
+LAPTOP card Offset(240.5, 209.9) Size(162.0, 230.0)
+LAPTOP card Offset(391.0, 182.9) Size(162.0, 230.0)
+LAPTOP card Offset(543.3, 172.4) Size(162.0, 230.0)
+LAPTOP card Offset(198.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(268.0, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(337.5, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(233.4, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(312.8, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(392.2, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(233.4, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(312.8, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(392.2, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(233.4, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(312.8, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(392.2, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(233.4, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(312.8, 638.8) Size(73.4, 104.2)
+LAPTOP card Offset(392.2, 638.8) Size(73.4, 104.2)
+00:16 +3: A wide screen, on-screen cards
+00:19 +4: A wide screen, round table
+00:21 +5: The Plain skin: front page, setup, a round, the menu
+00:22 +6: The Lacquer skin: front page, setup, a round, the menu
+00:24 +7: The Garden skin: front page, setup, a round, the menu
+00:27 +8: The Midnight skin: front page, setup, a round, the menu
+00:28 +9: The Harbour skin: front page, setup, a round, the menu
+00:30 +10: The Velvet skin: front page, setup, a round, the menu
+00:32 +11: The Counting house skin: front page, setup, a round, the menu
+00:34 +12: The Library skin: front page, setup, a round, the menu
+00:36 +13: The Tavern skin: front page, setup, a round, the menu
+00:38 +14: The Marble hall skin: front page, setup, a round, the menu
+00:40 +15: The Ballroom skin: front page, setup, a round, the menu
+00:42 +16: The Courtyard skin: front page, setup, a round, the menu
+00:44 +17: The Campaign skin: front page, setup, a round, the menu
+00:45 +18: The Chequers skin: front page, setup, a round, the menu
+00:47 +19: The Salon skin: front page, setup, a round, the menu
+00:49 +20: The Livery page on a wide screen
+00:49 +21: A look mixed in the Livery page (stars), at the table
+00:50 +22: A look mixed in the Livery page (deco), at the table
+00:50 +23: A look mixed in the Livery page (tavern), at the table
+00:51 +24: A look mixed in the Livery page (tiles), at the table
+00:51 +25: A look mixed in the Livery page (antique), at the table
+00:52 +26: A look mixed in the Livery page (noir), at the table
+00:52 +27: The backs and tables to choose from
+00:53 +28: The Court skin's pieces
+00:53 +29: The Plain skin's pieces
+00:53 +30: The Lacquer skin's pieces
+00:53 +31: The Garden skin's pieces
+00:53 +32: The Midnight skin's pieces
+00:53 +33: The Harbour skin's pieces
+00:53 +34: The Velvet skin's pieces
+00:54 +35: The Counting house skin's pieces
+00:54 +36: The Library skin's pieces
+00:54 +37: The Tavern skin's pieces
+00:54 +38: The Marble hall skin's pieces
+00:54 +39: The Ballroom skin's pieces
+00:54 +40: The Courtyard skin's pieces
+00:54 +41: The Campaign skin's pieces
+00:55 +42: The Chequers skin's pieces
+00:55 +43: The Salon skin's pieces
+00:55 +44: The front page, wide
+00:55 +45: The Court Cards
+00:56 +46: A throne room on its own
+POS Offset(155.0, 483.4) Size(80.0, 65.0)
+POS Offset(155.0, 145.8) Size(80.0, 65.0)
+POS Offset(295.4, 172.1) Size(80.0, 82.0)
+OPA 1.0
+OPA 1.0
+OPA 1.0
+OPA 1.0
+OPA 1.0
+00:56 +47: All tests passed!
