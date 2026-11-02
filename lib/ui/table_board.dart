@@ -113,9 +113,10 @@ extension _Board on HomePageState {
           final shape = game.hasRoles && seat < game.courtiers.length ? game.courtiers[seat].shape : null;
           // Tap a courtier to ask them to show a card (once a round).
           final onTap = _seatTap(seat);
-          // The very same token while nothing it shows changes.
+          // The very same token while nothing it shows changes (on this
+          // table: its tap belongs to it).
           return Same.of(
-              ('seat', seat, player.name, player.colorValue, labels[seat], isKing, size, active, exiled, shape,
+              ('seat', identityHashCode(this), seat, player.name, player.colorValue, labels[seat], isKing, size, active, exiled, shape,
                   tight, onTap != null, game.hasRoles, _digital),
               () => SeatToken(
                     player: player,
@@ -154,7 +155,7 @@ extension _Board on HomePageState {
             final colour = t.owner == null ? skin.inkSoft : game.players[t.owner!].color;
             final focused = _kbRow == 1 && _kbTask == t;
             return Same.of(
-                ('mini', identityHashCode(t), t.description, t.status, points, text, colour.toARGB32(), width,
+                ('mini', identityHashCode(this), identityHashCode(t), t.description, t.status, points, text, colour.toARGB32(), width,
                     fontSize, progress, (struck.toList()..sort()).join(','), focused),
                 () => TaskChip(
                       task: t,
@@ -346,7 +347,7 @@ extension _Board on HomePageState {
             final yourPick = _yourPick;
             // The very same while nothing it shows changes (see _miniTask).
             final chip = Same.of(
-                ('open', identityHashCode(t), t.description, placeKey, taken, faded, points, text, w, big,
+                ('open', identityHashCode(this), identityHashCode(t), t.description, placeKey, taken, faded, points, text, w, big,
                     focused, onlyLine?.$1, onlyLine?.$2.toARGB32(), yourPick),
                 () => OpenTask(
                       placeKey: placeKey,
