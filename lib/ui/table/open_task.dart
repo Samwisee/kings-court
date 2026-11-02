@@ -23,7 +23,7 @@ class OpenTask extends StatelessWidget {
     required this.focused,
     required this.only,
     required this.onTap,
-    required this.onLongPress,
+    this.onDoubleTap,
   });
 
   /// On its place, to measure where it flies from when it's taken.
@@ -46,7 +46,7 @@ class OpenTask extends StatelessWidget {
   /// Who alone may take it (a line saying so, in their colour), or null.
   final (String, Color)? only;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +71,7 @@ class OpenTask extends StatelessWidget {
             fontSize: fontSize,
             focused: focused,
             onTap: onTap,
-            onLongPress: onLongPress,
+            onDoubleTap: onDoubleTap,
           ),
           if (only != null)
             Padding(

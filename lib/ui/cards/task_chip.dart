@@ -88,7 +88,7 @@ class TaskChip extends StatelessWidget {
     this.fontSize = 12,
     this.progress,
     this.onTap,
-    this.onLongPress,
+    this.onDoubleTap,
     this.struck = const {},
     this.focused = false,
   });
@@ -108,8 +108,9 @@ class TaskChip extends StatelessWidget {
   final Set<String> struck;
   final VoidCallback? onTap;
 
-  /// Always opens the task's close-up, even while tapping would take it.
-  final VoidCallback? onLongPress;
+  /// Takes the task, on your pick (a tap reads it). Null otherwise, so a
+  /// tap isn't kept waiting to see if a second follows.
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +236,7 @@ class TaskChip extends StatelessWidget {
       radius: 8,
       child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
       onTap: onTap,
-      onLongPress: onLongPress,
+      onDoubleTap: onDoubleTap,
       child: TweenAnimationBuilder<double>(
         tween: Tween(end: done ? 1 : 0),
         duration: const Duration(milliseconds: 650),

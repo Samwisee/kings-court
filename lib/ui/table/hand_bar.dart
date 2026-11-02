@@ -79,7 +79,7 @@ class HandBar extends StatelessWidget {
                         child: Text(
                             choice == HandChoice.show
                                 ? 'Show a card, or'
-                                : 'Hold a task to take it, or',
+                                : 'Double-tap a task to take it, or',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.right,

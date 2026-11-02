@@ -151,7 +151,6 @@ extension _Board on HomePageState {
             struck: _wonNamed(t),
             focused: _kbRow == 1 && _kbTask == t,
             onTap: () => _showTaskDetail(t, Offset.zero),
-            onLongPress: () => _showTaskDetail(t, Offset.zero),
           ),
           ),
         ),
@@ -336,10 +335,10 @@ extension _Board on HomePageState {
                           : 'Only ${game.players[only].name} can take this',
                       game.players[only].color
                     ),
-              // A tap reads it; press and hold to take it, so taking a
-              // task is always meant.
+              // A tap reads it; a double tap (or click) takes it, on your
+              // pick, so taking a task is always meant.
               onTap: () => _showTaskDetail(t, Offset.zero),
-              onLongPress: () => _yourPick ? _takeTask(t) : _showTaskDetail(t, Offset.zero),
+              onDoubleTap: _yourPick ? () => _takeTask(t) : null,
             );
             if (!measured) return Opacity(opacity: 0, child: chip);
             return DealtTask(

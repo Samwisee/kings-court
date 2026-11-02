@@ -36,10 +36,10 @@ String tableStatus(GameState game,
     if (othersDeciding) return 'Waiting to see if anyone shares a card…';
     if (r.pickTurn == you) {
       return r.decree == Decree.kingsCommand
-          ? "King's Command: hold a task to hand it out"
+          ? "King's Command: double-tap a task to hand it out"
           : r.canPass(you)
-              ? 'Hold a task to take it, or'
-              : 'Hold a task to take it';
+              ? 'Double-tap a task to take it, or'
+              : 'Double-tap a task to take it';
     }
     return '${game.players[r.pickTurn!].name} is choosing a task…';
   }
