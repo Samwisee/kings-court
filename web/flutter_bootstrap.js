@@ -18,6 +18,12 @@ if ('serviceWorker' in navigator) {
 const ua = navigator.userAgent;
 const webkit = /AppleWebKit/.test(ua) && !/(Chrome|Chromium)\//.test(ua);
 
+// When the game's first screen is drawn: the device lab times the page to
+// this mark (performance.mark('ready')).
+window.addEventListener('flutter-first-frame', function () {
+  performance.mark('ready');
+}, { once: true });
+
 // The game runs in its box (#game in index.html), sized to what's on
 // screen, rather than across the whole window.
 _flutter.loader.load({

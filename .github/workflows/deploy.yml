@@ -145,20 +145,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-      # Asks the device lab (a private repo, Samwisee/device-lab) to test
-      # this build on the phones plugged into it. Needs the secret
-      # DEVICE_LAB_TOKEN (see the lab's README); without it, the lab still
-      # finds the build within half an hour.
-      - name: Tell the device lab
-        env:
-          TOKEN: ${{ secrets.DEVICE_LAB_TOKEN }}
-        run: |
-          [ -n "$TOKEN" ] || { echo "No DEVICE_LAB_TOKEN: the lab will find this build on its own"; exit 0; }
-          curl -fsS -X POST https://api.github.com/repos/Samwisee/device-lab/dispatches \
-            -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
-            -d "{\"event_type\":\"test\",\"client_payload\":{\"repo\":\"$GITHUB_REPOSITORY\",\"sha\":\"$GITHUB_SHA\"}}" \
-            || echo "::warning::Couldn't reach the device lab; it will find this build on its own"
-
   # The game, on Cloudflare Pages (the project kings-court, made the first
   # time): where it's played, at kings-court-c8n.pages.dev. Cross-origin
   # isolated (web/_headers), so the WebAssembly build can run on several
@@ -202,6 +188,19 @@ jobs:
             echo "failed: see deploy.txt (the token may need Cloudflare Pages: Edit)" > out/status.txt
             exit 1
           fi
+      # Asks the device lab (a private repo, Samwisee/device-lab) to test
+      # this build, now it's live, on the phones plugged into it. Needs the secret
+      # DEVICE_LAB_TOKEN (see the lab's README); without it, the lab still
+      # finds the build within half an hour.
+      - name: Tell the device lab
+        env:
+          TOKEN: ${{ secrets.DEVICE_LAB_TOKEN }}
+        run: |
+          [ -n "$TOKEN" ] || { echo "No DEVICE_LAB_TOKEN: the lab will find this build on its own"; exit 0; }
+          curl -fsS -X POST https://api.github.com/repos/Samwisee/device-lab/dispatches \
+            -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+            -d "{\"event_type\":\"test\",\"client_payload\":{\"repo\":\"$GITHUB_REPOSITORY\",\"sha\":\"$GITHUB_SHA\"}}" \
+            || echo "::warning::Couldn't reach the device lab; it will find this build on its own"
       - name: Publish to the cloudflare branch
         if: always()
         run: |
