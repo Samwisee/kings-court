@@ -80,7 +80,7 @@ jobs:
           ROUNDS_READ_KEY: ${{ secrets.ROUNDS_READ_KEY }}
         run: |
           sleep 5
-          cors=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS -H 'Origin: https://samwisee.github.io' "$URL/rounds")
+          cors=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS -H 'Origin: https://kings-court-c8n.pages.dev' "$URL/rounds")
           read=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $ROUNDS_READ_KEY" "$URL/rounds?after=0")
           rounds=$(curl -s -H "Authorization: Bearer $ROUNDS_READ_KEY" "$URL/rounds?after=0" | grep -c . || true)
           echo "answers: OPTIONS $cors (want 204), reading rounds $read (want 200), $rounds rounds kept so far" | tee -a out/status.txt

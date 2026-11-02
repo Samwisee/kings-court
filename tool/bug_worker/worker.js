@@ -10,7 +10,8 @@
 // Secrets / variables (Cloudflare dashboard > Worker > Settings > Variables):
 //   GITHUB_TOKEN  (secret) fine-grained token: kings-court repo, Issues: read & write
 //   REPO          (text)   Samwisee/kings-court
-//   ALLOW_ORIGIN  (text)   https://samwisee.github.io
+//   ALLOW_ORIGIN  (text)   the game's web addresses, comma-separated (each
+//                          deployment's own *.pages.dev address too)
 //   READ_KEY      (secret) any long random string; tool/games/pull.py sends it
 // Bindings: DB, the D1 database "kings-court-rounds" (schema.sql).
 
@@ -27,9 +28,11 @@ export default {
     // The web game sends its page's origin; the iOS and Android apps send
     // none (only browsers do), so no origin is the apps. Any other origin
     // is some other web page, turned away.
-    const allowed = origin === "" || origin === env.ALLOW_ORIGIN || origin.startsWith("http://localhost");
+    const homes = (env.ALLOW_ORIGIN || "").split(",").map((o) => o.trim()).filter(Boolean);
+    const allowed = origin === "" || origin.startsWith("http://localhost") ||
+      homes.some((h) => origin === h || (h.endsWith(".pages.dev") && origin.endsWith("." + h.replace("https://", ""))));
     const cors = {
-      "Access-Control-Allow-Origin": allowed ? origin : env.ALLOW_ORIGIN,
+      "Access-Control-Allow-Origin": allowed ? origin : homes[0] || "",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Vary": "Origin",

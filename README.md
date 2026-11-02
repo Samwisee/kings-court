@@ -5,7 +5,7 @@ Everyone plays together: each round deals tasks ("Win the 3♥", "Win the
 first trick"), the court shares them out, and the round is won only if
 every task is done.
 
-**Play it:** https://samwisee.github.io/kings-court/ (the web build, for
+**Play it:** https://kings-court-c8n.pages.dev/ (the web build, for
 desktop, iPad and phone browsers; add it to the home screen for full
 screen).
 

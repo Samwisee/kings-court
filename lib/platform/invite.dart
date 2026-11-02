@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'share_text.dart' if (dart.library.js_interop) 'share_text_web.dart' as native;
 
 /// Where the game is played, for a link made off the web (an app).
-const gameUrl = 'https://samwisee.github.io/kings-court/';
+const gameUrl = 'https://kings-court-c8n.pages.dev/';
 
 /// The room an invite link opened the game with ([at] is the page's
 /// address; the one open, by default), or null.

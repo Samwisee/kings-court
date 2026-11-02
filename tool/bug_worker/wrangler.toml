@@ -7,7 +7,7 @@ workers_dev = true
 
 [vars]
 REPO = "Samwisee/kings-court"
-ALLOW_ORIGIN = "https://samwisee.github.io"
+ALLOW_ORIGIN = "https://kings-court-c8n.pages.dev,https://samwisee.github.io"
 
 [[d1_databases]]
 binding = "DB"
