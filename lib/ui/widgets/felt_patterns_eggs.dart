@@ -119,7 +119,11 @@ extension _Eggs on FeltPatternPainter {
       text: TextSpan(
         text: 'here be dragons',
         style: TextStyle(
-            fontSize: 9, fontStyle: FontStyle.italic, letterSpacing: 0.6, color: ink.withValues(alpha: ink.a * 0.75)),
+            fontFamily: 'AlegreyaSans',
+            fontSize: 10,
+            fontStyle: FontStyle.italic,
+            letterSpacing: 0.6,
+            color: ink.withValues(alpha: ink.a * 0.75)),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
