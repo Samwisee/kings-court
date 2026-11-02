@@ -376,7 +376,10 @@ class _Tabs extends StatelessWidget {
     // own buttons, cut as it cuts them: the open one filled.
     const compact = Size(0, 36);
     const pad = EdgeInsets.symmetric(horizontal: 12);
-    const label = TextStyle(fontSize: 14.5);
+    // The style's own button lettering, a little smaller.
+    final label = (Theme.of(context).filledButtonTheme.style?.textStyle?.resolve(const {}) ??
+            TextStyle(fontFamily: skin.bodyFont, fontWeight: FontWeight.w700))
+        .copyWith(fontSize: 14.5);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: skin.gold.withValues(alpha: 0.35), width: 1.5)),
