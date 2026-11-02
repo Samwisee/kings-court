@@ -761,8 +761,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('to-court')));
       await frames(tester, 30);
       if (run.petition case final p?) {
-        await tapCourtUntil(tester, find.text(p.choices.last.label));
-        await frames(tester, 20);
+        await tapCourtUntil(tester, find.text(p.lines.first.text));
+        await hearAll(tester);
         await snap('4-petition');
         await tester.tap(find.text(p.choices.indexWhere(run.affords) == 0 ? p.choices.first.label : p.choices.last.label));
         await frames(tester, 20);

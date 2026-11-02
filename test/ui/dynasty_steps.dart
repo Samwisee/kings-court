@@ -41,6 +41,16 @@ Future<void> tapCourtUntil(WidgetTester tester, Finder stop, {int guard = 40}) a
   expect(stop, findsWidgets);
 }
 
+/// Taps through what the throne room has to say, until it waits (for a
+/// petition's answer, or a tap to go on).
+Future<void> hearAll(WidgetTester tester) async {
+  for (var i = 0; i < 20 && find.text('Tap to hear more').evaluate().isNotEmpty; i++) {
+    await tester.tap(find.byKey(const ValueKey('court')), warnIfMissed: false);
+    await frames(tester, 12);
+  }
+  await frames(tester, 20);
+}
+
 /// Picks the project called [title], and begins the hand.
 Future<void> pickAndBegin(WidgetTester tester, String title) async {
   await tester.tap(find.text(title));

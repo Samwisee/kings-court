@@ -107,16 +107,18 @@ class _CourtState extends State<_Court> {
           _Stage.pick => _pick(context),
           _ => _room(context),
         },
-        // The realm, always in view.
-        SafeArea(
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 62, 16, 0),
-              child: IgnorePointer(child: _Meters(run: run, colour: skin.gold)),
+        // The realm, always in view (the pick lists it in its column).
+        if (_stage != _Stage.pick)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 62, 16, 0),
+                child: IgnorePointer(
+                    child: Material(type: MaterialType.transparency, child: _Meters(run: run, colour: skin.gold))),
+              ),
             ),
           ),
-        ),
       ]),
     );
   }
@@ -141,9 +143,11 @@ class _CourtState extends State<_Court> {
               : [for (final l in widget.report?.lines ?? const <String>[]) HallLine(l)],
         ),
       _Stage.petition => (
-          run.petition!.visitor
-              ? 'A visitor: ${run.petition!.bringer.title}'
-              : 'A petition from ${run.petition!.bringer.title}',
+          run.petition!.id == 'treason'
+              ? 'Treason'
+              : run.petition!.visitor
+                  ? 'A visitor'
+                  : '${run.petition!.bringer.title} asks',
           [
             ..._court,
             if (run.petition!.visitor && run.petition!.id != 'treason')
@@ -215,7 +219,7 @@ class _CourtState extends State<_Court> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Row(children: [
                     Expanded(
-                      child: Text('The works of the realm',
+                      child: Text('The works',
                           style: TextStyle(
                               fontFamily: skin.displayFont,
                               fontWeight: FontWeight.w900,
@@ -224,7 +228,9 @@ class _CourtState extends State<_Court> {
                     ),
                     Coffers(run.coffers),
                   ]),
-                  const SizedBox(height: 44),
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerLeft, child: _Meters(run: run, colour: skin.gold)),
+                  const SizedBox(height: 12),
                   Text(
                       'Pick up to ${run.picks} for hand ${run.hand + 1}. Each deals a task. '
                       'At your table: $seated.',
@@ -323,9 +329,10 @@ class _ProjectCard extends StatelessWidget {
                     SuitText(work.task,
                         style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
                     const SizedBox(height: 3),
-                    Text(
+                    SuitText(
                         '${p.keystone ? 'Wins the act. ' : ''}Done: ${effectWords(p.reward)}. '
                         'Failed: ${effectWords(p.failure)}.',
+                        keywords: false,
                         style: TextStyle(fontSize: 12.5, color: Colors.white.withValues(alpha: 0.65))),
                   ]),
                 ),
