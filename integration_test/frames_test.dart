@@ -300,6 +300,14 @@ void main() {
       }
     });
 
+    // A few more moves with every widget timed: what a move still builds.
+    await frames.scene('tricks, in detail (slower: every widget timed)', () async {
+      for (var i = 0; i < 6; i++) {
+        state.debugYourMove();
+        await wait(400);
+      }
+    }, detail: true);
+
     await frames.scene('the card tracker sliding in and out', () async {
       await tap(find.byTooltip('Card tracker'), then: 1500);
       // A tap on the felt above it puts it away.
