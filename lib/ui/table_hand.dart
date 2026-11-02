@@ -2,7 +2,7 @@ part of 'table_page.dart';
 
 /// How solid the hand's area is over the felt: 1 hides it, less lets its
 /// pattern show through.
-double handShade = 1;
+double handShade = 0.7;
 
 /// Your hand, and the card tracker beside it, with what each task needs and has.
 extension _Hand on HomePageState {

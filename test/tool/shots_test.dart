@@ -432,7 +432,7 @@ void main() {
       tester.view.physicalSize = const Size(1170, 2532);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
-      addTearDown(() => handShade = 1);
+      addTearDown(() => handShade = 0.7);
       HomePageTestHooks.fast();
       await tester.pumpWidget(TheKingsCourtApp(skin: skins.firstWhere((s) => s.id == id)));
       await tester.pumpAndSettle();
