@@ -129,6 +129,7 @@ class _OnlineSetupState extends State<OnlineSetup> {
       return;
     }
     OnlineSetup.lastName = _name.text.trim();
+    final look = context.skin.id;
     setState(() {
       _connecting = true;
       _problem = null;
@@ -144,9 +145,10 @@ class _OnlineSetupState extends State<OnlineSetup> {
                 surprise: surprise),
             session: widget.session,
             name: _yourName,
-            build: widget.build)
+            build: widget.build,
+            look: look)
         : await OnlineTable.join(widget.open, widget.service,
-            code: _code.text, session: widget.session, name: _yourName, build: widget.build);
+            code: _code.text, session: widget.session, name: _yourName, build: widget.build, look: look);
     if (!mounted) {
       room.dispose();
       return;

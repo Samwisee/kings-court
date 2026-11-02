@@ -55,8 +55,9 @@ async function room(ctx = fakeCtx()) {
 }
 
 /// Connects [session]: the client's end, whose .sent is what it received.
-async function connect(r, session, { create = false, after, build = "b1", name = session, rejoin = false } = {}) {
+async function connect(r, session, { create = false, after, build = "b1", name = session, rejoin = false, look } = {}) {
   const q = new URLSearchParams({ session, name, build });
+  if (look) q.set("look", look);
   if (rejoin) q.set("rejoin", "1");
   if (create) { q.set("create", "1"); q.set("setup", JSON.stringify(setup)); }
   if (after !== undefined) q.set("after", String(after));
@@ -236,4 +237,16 @@ test("A move writes only itself", async () => {
   const before = ctx.storage.writes;
   for (let i = 0; i < 10; i++) await say(r, "ann", { t: "move", a: { type: "pass", seat: 1 } });
   assert.equal(ctx.storage.writes - before, 10);
+});
+
+test("Each person's look goes round with the seats, and a new one when it's put on", async () => {
+  const r = await room();
+  const ann = await connect(r, "ann", { create: true, look: "galleon" });
+  const ben = await connect(r, "ben", { look: "casino+b:royal" });
+  assert.deepEqual(last(ben, "hello").looks, { ann: "galleon", ben: "casino+b:royal" });
+  assert.equal(last(ann, "seats").looks.ben, "casino+b:royal");
+  await say(r, "ann", { t: "look", look: "winter" });
+  assert.equal(last(ben, "seats").looks.ann, "winter");
+  await say(r, "ann", { t: "look", look: "x".repeat(500) });
+  assert.equal(last(ben, "seats").looks.ann, "winter", "too long: ignored");
 });

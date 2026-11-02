@@ -14,6 +14,7 @@ import 'package:kings_court/skin/skin_scope.dart';
 import 'package:kings_court/skin/skins.dart';
 import 'package:kings_court/skin/tailored.dart';
 import 'package:kings_court/ui/app.dart';
+import 'package:kings_court/ui/table/seat_look.dart';
 import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/cards/mini_card.dart';
 import 'package:kings_court/ui/table_page.dart';
@@ -184,4 +185,23 @@ void main() {
       expect(find.byType(PlayingCardView), findsWidgets);
     });
   }
+
+  testWidgets('Another person\'s cards are in the look they play in; yours and the courtiers\' in the table\'s', (tester) async {
+    final galleon = skins.firstWhere((s) => s.id == 'galleon');
+    final seen = <int, String>{};
+    await tester.pumpWidget(SkinScope(
+      skin: skins.first,
+      child: SeatLooks(
+        of: (seat) => seat == 1 ? galleon : null,
+        child: Column(children: [
+          for (final seat in [0, 1, 2])
+            SeatLook(seat: seat, child: Builder(builder: (c) {
+              seen[seat] = c.skin.id;
+              return const SizedBox();
+            })),
+        ]),
+      ),
+    ));
+    expect(seen, {0: skins.first.id, 1: 'galleon', 2: skins.first.id});
+  });
 }

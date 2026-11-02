@@ -426,6 +426,40 @@ void main() {
   });
   }
 
+  // The hand's area over the felt, at a few shades, to choose one.
+  for (final id in ['court', 'galleon', 'casino', 'midnight']) {
+    testWidgets('The hand\'s area at different shades ($id)', (tester) async {
+      tester.view.physicalSize = const Size(1170, 2532);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      addTearDown(() => handShade = 1);
+      HomePageTestHooks.fast();
+      await tester.pumpWidget(TheKingsCourtApp(skin: skins.firstWhere((s) => s.id == id)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New game'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Single player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Free play'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('4').last);
+      await tester.pumpAndSettle();
+      if (find.text('Next').evaluate().isNotEmpty) await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      for (var i = 0; i < 160; i++) {
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      for (final shade in [1.0, 0.85, 0.7, 0.5, 0.3]) {
+        handShade = shade;
+        tester.element(find.byType(HomePage)).markNeedsBuild();
+        await tester.pump();
+        await expectLater(
+            find.byType(MaterialApp), matchesGoldenFile('goldens/hand-$id-${(shade * 100).round()}.png'));
+      }
+    });
+  }
+
   // The Livery page on a laptop: a column down the middle, every choice
   // showing.
   testWidgets('The Livery page on a wide screen', (tester) async {

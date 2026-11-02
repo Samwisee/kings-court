@@ -14,6 +14,9 @@ import '../cards/card_view.dart';
 import '../cards/mini_card.dart';
 import '../welcome/welcome.dart';
 import '../widgets.dart';
+import 'seat_look.dart';
+
+export 'seat_look.dart';
 
 /// A task in front of its owner, at a width and type size.
 typedef TaskBuilder = Widget Function(RoundTask task, double width, {double fontSize});
@@ -123,7 +126,7 @@ class OpponentsRow extends StatelessWidget {
                                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                                   KeyedSubtree(
                                       key: pileKey(seat),
-                                      child: TrickPile(won: tallyShown ? won(seat) : 0, cardWidth: pileCard)),
+                                      child: SeatLook(seat: seat, child: TrickPile(won: tallyShown ? won(seat) : 0, cardWidth: pileCard))),
                                   if (tallyShown && won(seat) > 0) const SizedBox(width: 6),
                                   Text(tally(seat),
                                       maxLines: 1,
@@ -377,8 +380,8 @@ Widget? shownCard(Skin skin, Round round, int seat, Color colour, {double height
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             FlipIn(
                 t: flip,
-                front: MiniCard(card: card, width: height / 1.3, edge: colour),
-                back: CardBack(width: height / 1.3)),
+                front: SeatLook(seat: seat, child: MiniCard(card: card, width: height / 1.3, edge: colour)),
+                back: SeatLook(seat: seat, child: CardBack(width: height / 1.3))),
             Opacity(opacity: clampD((t - 0.6) / 0.4, 0, 1), child: child),
           ]),
         ),

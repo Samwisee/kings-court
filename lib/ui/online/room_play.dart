@@ -22,6 +22,8 @@ import '../../platform/game_log.dart';
 import '../../platform/invite.dart';
 import '../../platform/room_socket.dart';
 import '../../platform/service.dart';
+import '../../skin/skin.dart';
+import '../../skin/skins.dart';
 import 'online_setup.dart';
 
 class RoomPlay {
@@ -130,6 +132,23 @@ class RoomPlay {
   /// people's seats named after them.
   GameState start(ModeRules rules) =>
       nameSeats(replay(room.setup!, room.history, rules: rules, you: seat));
+
+  /// The look the person in [s] plays in, when it's someone else's and
+  /// they've said: their cards are shown in its faces and backs.
+  Skin? lookAt(int s) {
+    if (s == seat || s >= room.seats.count) return null;
+    if (room.seats.holders[s] case Person(:final id)) {
+      final look = room.looks[id];
+      if (look == null || look.isEmpty) return null;
+      return _looks[look] ??= skinById(look);
+    }
+    return null;
+  }
+
+  final _looks = <String, Skin>{};
+
+  /// This device plays in [look] (sent to the room when it changes).
+  void wearing(Skin look) => room.wear(look.id);
 
   /// People's seats go by their names (yours stays "You"); courtiers keep
   /// theirs.

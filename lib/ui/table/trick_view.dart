@@ -92,12 +92,15 @@ List<Widget> trickCards({
             area.width / 2 + (i - (n - 1) / 2) * (cardW + 8),
             area.height / 2);
         final seat = seats[i];
-        final view = PlayingCardView(
-          card: cards[i],
-          width: cardW,
-          // Edged in the colour of whoever played it.
-          edge: players[seat].color,
-          glow: trick != null && trick.winner == seat,
+        // In the look of whoever played it, edged in their colour.
+        final view = SeatLook(
+          seat: seat,
+          child: PlayingCardView(
+            card: cards[i],
+            width: cardW,
+            edge: players[seat].color,
+            glow: trick != null && trick.winner == seat,
+          ),
         );
         if (trick != null && collecting) {
           final heap = pile?.call(trick.winner);
@@ -124,7 +127,7 @@ List<Widget> trickCards({
                       angle: t * (i.isEven ? -0.07 : 0.07),
                       child: Transform.scale(
                         scale: 1 - (1 - small) * t,
-                        child: FlipIn(t: 1 - clampD(t * 1.8, 0, 1), front: child!, back: CardBack(width: cardW)),
+                        child: FlipIn(t: 1 - clampD(t * 1.8, 0, 1), front: child!, back: SeatLook(seat: trick.winner, child: CardBack(width: cardW))),
                       ),
                     ),
                   ),

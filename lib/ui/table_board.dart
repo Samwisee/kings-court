@@ -28,7 +28,10 @@ extension _Board on HomePageState {
   }
 
   Widget _buildDigitalTable() {
-    return MediaQuery.withClampedTextScaling(
+    // With other people: the room hears the look you play in, and theirs
+    // dress their cards here (table/seat_look.dart).
+    _room?.wearing(context.skin);
+    return SeatLooks(of: (seat) => _room?.lookAt(seat), child: MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.0,
       child: LayoutBuilder(builder: (context, c) {
         _table.tableSize = Size(c.maxWidth, c.maxHeight);
@@ -74,7 +77,7 @@ extension _Board on HomePageState {
           ],
         );
       }),
-    );
+    ));
   }
 
   bool _seatActive(int seat) =>

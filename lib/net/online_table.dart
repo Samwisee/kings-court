@@ -82,9 +82,11 @@ class OnlineTable implements TableLink {
           {required GameSetup setup,
           required String session,
           required String name,
-          required String build}) =>
+          required String build,
+          String look = ''}) =>
       _connect(OnlineTable._(open, service, session, name, build,
-          _address(service, 'new', {'setup': jsonEncode(setup.toJson())})));
+          _address(service, 'new', {'setup': jsonEncode(setup.toJson())}))
+        ..look = look);
 
   /// Joins the room [code] (or comes back to it, in the same seat). With
   /// [rejoin], only to take back the seat [session] had: turned away
@@ -94,9 +96,11 @@ class OnlineTable implements TableLink {
           required String session,
           required String name,
           required String build,
+          String look = '',
           bool rejoin = false}) =>
       _connect(OnlineTable._(open, service, session, name, build,
-          _address(service, code.trim().toUpperCase(), {if (rejoin) 'rejoin': '1'})));
+          _address(service, code.trim().toUpperCase(), {if (rejoin) 'rejoin': '1'}))
+        ..look = look);
 
   static Uri _address(Uri service, String room, Map<String, String> extra) => service.replace(
         scheme: service.scheme == 'http' ? 'ws' : 'wss',
@@ -141,6 +145,21 @@ class OnlineTable implements TableLink {
 
   /// What each person is called, by their session.
   Map<String, String> names = const {};
+
+  /// The look each person plays in (a skin's id: their cards' faces and
+  /// backs, as everyone sees them), by their session.
+  Map<String, String> looks = const {};
+
+  /// The look this device plays in, as the room was last told.
+  String look = '';
+
+  /// Tells the room this device now plays in [id]; the others see its
+  /// cards in it.
+  void wear(String id) {
+    if (id == look) return;
+    look = id;
+    if (status == TableStatus.open) _write({'t': 'look', 'look': id});
+  }
 
   /// The session hosting: its device plays the courtiers and anyone away.
   String host = '';
@@ -241,7 +260,13 @@ class OnlineTable implements TableLink {
   void _write(Map<String, dynamic> msg) => _socket?.send(jsonEncode(msg));
 
   Future<void> _openSocket(Uri uri) async {
-    final q = {...uri.queryParameters, 'session': session, 'name': name, 'build': build};
+    final q = {
+      ...uri.queryParameters,
+      'session': session,
+      'name': name,
+      'build': build,
+      if (look.isNotEmpty) 'look': look,
+    };
     if (_history.isNotEmpty) q['after'] = '$lastSeq';
     try {
       final s = await _open(uri.replace(queryParameters: q));
@@ -303,6 +328,9 @@ class OnlineTable implements TableLink {
     seats = Seats.fromJson(msg['seats'] as List);
     names = {
       for (final e in ((msg['names'] as Map?) ?? const {}).entries) '${e.key}': '${e.value}'
+    };
+    looks = {
+      for (final e in ((msg['looks'] as Map?) ?? const {}).entries) '${e.key}': '${e.value}'
     };
     host = (msg['host'] as String?) ?? host;
     started = (msg['started'] as bool?) ?? started;

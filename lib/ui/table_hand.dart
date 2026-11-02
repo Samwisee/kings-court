@@ -1,5 +1,9 @@
 part of 'table_page.dart';
 
+/// How solid the hand's area is over the felt: 1 hides it, less lets its
+/// pattern show through.
+double handShade = 1;
+
 /// Your hand, and the card tracker beside it, with what each task needs and has.
 extension _Hand on HomePageState {
   /// How far along an on-screen task is ("2/4"), for the card's corner.
@@ -126,7 +130,8 @@ extension _Hand on HomePageState {
       // Room below the cards so they clear the brass trim.
       padding: const EdgeInsets.fromLTRB(14, 2, 14, 16),
       decoration: BoxDecoration(
-        color: skin.feltDeep,
+        // Over the felt, which shows through as much as [handShade] lets it.
+        color: skin.feltDeep.withValues(alpha: handShade),
         border: Border(top: BorderSide(color: skin.gold.withValues(alpha: 0x66 / 255))),
       ),
       child: Center(

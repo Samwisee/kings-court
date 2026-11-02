@@ -9,9 +9,9 @@
 // table refuses a move the rules don't allow, the same way on every
 // device, because they all see the same moves in the same order.
 //
-//   GET /rooms/new?session=&name=&build=&setup=   (WebSocket) a new room;
+//   GET /rooms/new?session=&name=&look=&build=&setup=   (WebSocket) a new room;
 //       the creator hosts it, in seat 0
-//   GET /rooms/CODE?session=&name=&build=&after=  (WebSocket) join, or come
+//   GET /rooms/CODE?session=&name=&look=&build=&after=  (WebSocket) join, or come
 //       back after a drop and catch up on the moves after `after`;
 //       with &rejoin=1, only to take back the seat this session had
 //
@@ -27,10 +27,12 @@
 //                            courtiers
 //   {t:"leave"}              gone for good: a courtier takes the seat
 //   {t:"ping"}               answered with {t:"pong"}
+//   {t:"look", look}         this person now plays in another look (a skin id)
 // To a device:
-//   {t:"hello", code, setup, seats, names, host, started, seat, moves}
+//   {t:"hello", code, setup, seats, names, looks, host, started, seat, moves}
 //                            moves: every move after `after`, in order
-//   {t:"seats", seats, names, host, started}   who sits where, changed
+//   {t:"seats", seats, names, looks, host, started}   who sits where (and
+//                            the look each plays in), changed
 //   {t:"move", m:<move>}     a move, numbered: {seq, ...action}
 //   {t:"error", why}         then the socket closes: no-room, full,
 //                            version, gone (rejoin: the seat's been taken), bad
@@ -40,6 +42,7 @@ const LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ"; // no I, L or O: easy to read out
 const IDLE = 2 * 24 * 60 * 60 * 1000; // a room unused this long is cleared
 const AWAY = 2 * 60 * 1000; // a seat away this long may be taken by someone new
 const HOUR = 60 * 60 * 1000;
+const MAX_LOOK = 120;
 const MAX_MESSAGE = 20_000;
 
 /// A new room's code.
@@ -104,6 +107,7 @@ export class Room {
     const q = url.searchParams;
     const session = (q.get("session") || "").slice(0, 64);
     const name = (q.get("name") || "").trim().slice(0, 24) || "Player";
+    const look = (q.get("look") || "").slice(0, MAX_LOOK);
     const build = q.get("build") || "";
     const code = url.pathname.split("/").pop();
 
@@ -138,6 +142,10 @@ export class Room {
     }
     m.seats[seat] = { who: "person", id: session, connected: true };
     m.names[session] = name;
+    // The look each person plays in: their cards' faces and backs, as the
+    // others see them.
+    m.looks = m.looks || {};
+    if (look) m.looks[session] = look;
     // A room whose host has gone is hosted by whoever comes in.
     if (!this.connected(m.host) && m.host !== session) {
       const hostSeat = m.seats.findIndex((h) => h.who === "person" && h.id === m.host);
@@ -156,9 +164,8 @@ export class Room {
     const moves = from < this.count
       ? [...(await this.ctx.storage.list({ prefix: MOVES, start: moveKey(from) })).values()]
       : [];
-    server.send(JSON.stringify({ t: "hello", code: m.code, setup: m.setup, seats: m.seats,
-      names: m.names, host: m.host, started: m.started, seat, moves }));
-    this.broadcast({ t: "seats", seats: m.seats, names: m.names, host: m.host, started: m.started }, server);
+    server.send(JSON.stringify({ ...this.seatsMessage(), t: "hello", code: m.code, setup: m.setup, seat, moves }));
+    this.broadcast(this.seatsMessage(), server);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -190,8 +197,18 @@ export class Room {
         m.seats = m.seats.map((h) => (h.who === "empty" ? { who: "courtier" } : h));
         m.started = true;
         await this.save();
-        this.broadcast({ t: "seats", seats: m.seats, names: m.names, host: m.host, started: true });
+        this.broadcast(this.seatsMessage());
         return;
+      case "look": {
+        // A new look put on: the others see their cards in it.
+        if (typeof msg.look !== "string" || !msg.look || msg.look.length > MAX_LOOK) return;
+        m.looks = m.looks || {};
+        if (m.looks[session] === msg.look) return;
+        m.looks[session] = msg.look;
+        await this.save();
+        this.broadcast(this.seatsMessage());
+        return;
+      }
       case "leave": {
         if (seat < 0) return;
         m.seats[seat] = m.started ? { who: "courtier" } : { who: "empty" };
@@ -244,7 +261,7 @@ export class Room {
       if (next) m.host = next.id;
     }
     await this.save();
-    this.broadcast({ t: "seats", seats: m.seats, names: m.names, host: m.host, started: m.started }, ws);
+    this.broadcast(this.seatsMessage(), ws);
   }
 
   /// Whether [session] has a socket open (other than [except]).
@@ -268,7 +285,7 @@ export class Room {
 
   seatsMessage() {
     const m = this.meta;
-    return { t: "seats", seats: m.seats, names: m.names, host: m.host, started: m.started };
+    return { t: "seats", seats: m.seats, names: m.names, looks: m.looks || {}, host: m.host, started: m.started };
   }
 
   /// The room's details changed (seats, the host, the start).
