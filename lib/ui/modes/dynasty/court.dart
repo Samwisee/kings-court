@@ -304,7 +304,7 @@ class _ProjectCard extends StatelessWidget {
             onTap: enabled ? onTap : null,
             child: MouseRegion(
               cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-              child: Container(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: look.face,
                   borderRadius: BorderRadius.circular(radius),
