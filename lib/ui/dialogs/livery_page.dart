@@ -195,7 +195,7 @@ class _LiveryPageState extends State<_LiveryPage> {
         skin: look,
         entitlements: widget.entitlements,
         child: Theme(
-          data: look.theme(),
+          data: look.themeData,
           child: Builder(builder: (context) {
             final skin = context.skin;
             final price = widget.entitlements.priceOf(look);

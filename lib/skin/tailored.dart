@@ -262,3 +262,14 @@ class TailoredSkin extends Skin {
   @override
   Color get sheen => base.sheen;
 }
+
+final _themes = <String, ThemeData>{};
+
+extension SkinTheme on Skin {
+  /// The skin's Material theme, made once for each style (a tailored one
+  /// shares its style's). Making one is slow (its colour scheme is worked
+  /// out from a seed), and a new one, even an equal one, has everything
+  /// under it compare it with the last: both on every rebuild of the page
+  /// it's given to.
+  ThemeData get themeData => _themes[TailoredSkin.baseOf(this).id] ??= theme();
+}

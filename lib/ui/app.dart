@@ -126,7 +126,7 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
         child: MaterialApp(
           title: "The King's Court",
           debugShowCheckedModeBanner: false,
-          theme: _skin.theme(),
+          theme: _skin.themeData,
           // The skin's own colours change at once; the theme does too,
           // rather than easing on its own (which rebuilt every widget for a
           // dozen frames, half in one look and half the other).
