@@ -33,7 +33,7 @@ class _ClosePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final s = size.width;
     final c = Offset(s / 2, s / 2);
-    final reach = mark == TrimMark.round ? s * 0.32 : s * 0.26;
+    final reach = mark == TrimMark.round ? s * 0.32 : s * 0.22;
     final line = Paint()
       ..strokeWidth = s * 0.1
       ..strokeCap = StrokeCap.round
@@ -43,7 +43,7 @@ class _ClosePainter extends CustomPainter {
       final d = Offset(math.cos(a), math.sin(a)) * reach;
       canvas.drawLine(c - d, c + d, line);
       for (final end in [c - d, c + d]) {
-        paintMark(canvas, mark, end + (end - c) * 0.22, s * 0.075, fill);
+        paintMark(canvas, mark, end + (end - c) * 0.3, s * 0.11, fill);
       }
     }
   }

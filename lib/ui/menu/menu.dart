@@ -268,12 +268,12 @@ class _TrimMenuPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..color = skin.gold.withValues(alpha: t);
       final fill = Paint()..color = line.color;
-      final reach = size.width * 0.26 * t;
+      final reach = size.width * 0.22 * t;
       for (final a in [math.pi / 4, 3 * math.pi / 4]) {
         final d = Offset(math.cos(a), math.sin(a)) * reach;
         canvas.drawLine(c - d, c + d, line);
         for (final end in [c - d, c + d]) {
-          paintMark(canvas, mark, end + (end - c) * 0.22, size.width * 0.07, fill);
+          paintMark(canvas, mark, end + (end - c) * 0.3, size.width * 0.09, fill);
         }
       }
     }

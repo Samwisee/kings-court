@@ -139,11 +139,14 @@ void paintMenuGlyph(Canvas canvas, Size size, Trim trim, Color c, Color back) {
         canvas.drawLine(p(0.5, 0.36) + d * s * 0.06, p(0.5, 0.36) + d * s * 0.2, thin..strokeWidth = w * 0.5);
       }
     case Trim.courtyard:
-      // Three rows of tiles.
+      // A list set with tiles: a tile, then a bar, three times.
       for (final y in [0.28, 0.5, 0.72]) {
-        for (var i = 0; i < 4; i++) {
-          canvas.drawRect(Rect.fromCenter(center: p(0.23 + i * 0.18, y), width: s * 0.14, height: s * 0.14), fill);
-        }
+        canvas.save();
+        canvas.translate(s * 0.22, s * y);
+        canvas.rotate(math.pi / 4);
+        canvas.drawRect(Rect.fromCenter(center: Offset.zero, width: s * 0.13, height: s * 0.13), fill);
+        canvas.restore();
+        canvas.drawLine(p(0.4, y), p(0.84, y), line);
       }
     case Trim.campaign:
       // A folded map, with its route.
@@ -169,10 +172,12 @@ void paintMenuGlyph(Canvas canvas, Size size, Trim trim, Color c, Color back) {
     case Trim.casino:
       // A stack of three chips.
       for (final y in [0.72, 0.5, 0.28]) {
-        final chip = RRect.fromRectAndRadius(Rect.fromCenter(center: p(0.5, y), width: s * 0.74, height: s * 0.17), Radius.circular(s * 0.085));
+        final chip = RRect.fromRectAndRadius(Rect.fromCenter(center: p(0.5, y), width: s * 0.74, height: s * 0.16), Radius.circular(s * 0.08));
+        // A rim of the felt between chips, so the stack reads as three.
+        canvas.drawRRect(chip.inflate(s * 0.03), gap);
         canvas.drawRRect(chip, fill);
         for (final x in [0.26, 0.5, 0.74]) {
-          canvas.drawRect(Rect.fromCenter(center: p(x, y), width: s * 0.07, height: s * 0.17), gap);
+          canvas.drawRect(Rect.fromCenter(center: p(x, y), width: s * 0.045, height: s * 0.17), gap);
         }
       }
     case Trim.salon:

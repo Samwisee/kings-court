@@ -302,15 +302,16 @@ class TrimBorder extends OutlinedBorder {
         canvas.drawLine(Offset(x, r.top + 6), Offset(x, r.bottom - 6), stroke(ink, 2));
       case Trim.galleon:
         // Bound in rope: a twist all the way round.
-        final rope = stroke(const Color(0xFFC9A46A), 1.6)..strokeCap = StrokeCap.round;
-        for (final m in outline(r.deflate(2.5)).computeMetrics()) {
-          for (var d = 0.0; d < m.length; d += 4.5) {
+        // A cord under its twists, then the twists, dark and light.
+        final band = outline(r.deflate(3.5));
+        canvas.drawPath(band, stroke(const Color(0xFF6B4A22), 4));
+        final twist = stroke(const Color(0xFFE2C48C), 1.4)..strokeCap = StrokeCap.round;
+        for (final m in band.computeMetrics()) {
+          for (var d = 0.0; d < m.length; d += 4) {
             final t = m.getTangentForOffset(d);
             if (t == null) continue;
             final n = Offset(-t.vector.dy, t.vector.dx);
-            final a = t.position - t.vector * 1.6 - n * 1.6;
-            final b = t.position + t.vector * 1.6 + n * 1.6;
-            canvas.drawLine(a, b, rope);
+            canvas.drawLine(t.position - t.vector * 1.3 - n * 1.5, t.position + t.vector * 1.3 + n * 1.5, twist);
           }
         }
       case Trim.scopa:
