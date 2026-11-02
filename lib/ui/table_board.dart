@@ -107,20 +107,28 @@ extension _Board on HomePageState {
         size: size,
         child: KeyedSubtree(
         key: _seatKey(seat),
-        child: SeatToken(
-        player: game.players[seat],
-        label: labels[seat],
-        isKing: _round.king == seat,
-        size: size,
-        highlighted: _seatActive(seat),
-        exiled: _round.exiledSeat == seat,
-        shape: game.hasRoles && seat < game.courtiers.length
-            ? game.courtiers[seat].shape
-            : null,
-        // Tap a courtier to ask them to show a card (once a round).
-        onTap: _seatTap(seat),
-        tight: tight,
-      ),
+        child: () {
+          final player = game.players[seat];
+          final isKing = _round.king == seat, active = _seatActive(seat), exiled = _round.exiledSeat == seat;
+          final shape = game.hasRoles && seat < game.courtiers.length ? game.courtiers[seat].shape : null;
+          // Tap a courtier to ask them to show a card (once a round).
+          final onTap = _seatTap(seat);
+          // The very same token while nothing it shows changes.
+          return Same.of(
+              ('seat', seat, player.name, player.colorValue, labels[seat], isKing, size, active, exiled, shape,
+                  tight, onTap != null, game.hasRoles, _digital),
+              () => SeatToken(
+                    player: player,
+                    label: labels[seat],
+                    isKing: isKing,
+                    size: size,
+                    highlighted: active,
+                    exiled: exiled,
+                    shape: shape,
+                    onTap: onTap,
+                    tight: tight,
+                  ));
+        }(),
       ),
     );
   }
@@ -138,20 +146,29 @@ extension _Board on HomePageState {
           padding: const EdgeInsets.only(top: 3),
           child: KeyedSubtree(
             key: _tasks.destKeys.putIfAbsent(t, GlobalKey.new),
-            child: TaskChip(
-            task: t,
-            points: _points(t),
-            text: _cardText(t),
-            color: t.owner == null
-                ? skin.inkSoft
-                : game.players[t.owner!].color,
-            width: width,
-            fontSize: fontSize,
-            progress: _progressOf(t),
-            struck: _wonNamed(t),
-            focused: _kbRow == 1 && _kbTask == t,
-            onTap: () => _showTaskDetail(t, Offset.zero),
-          ),
+            // The very same chip while nothing it shows changes: every move
+            // rebuilds the table, and a task's words laid out again each
+            // time were much of a move's work.
+            child: () {
+            final points = _points(t), text = _cardText(t), progress = _progressOf(t), struck = _wonNamed(t);
+            final colour = t.owner == null ? skin.inkSoft : game.players[t.owner!].color;
+            final focused = _kbRow == 1 && _kbTask == t;
+            return Same.of(
+                ('mini', identityHashCode(t), t.description, t.status, points, text, colour.toARGB32(), width,
+                    fontSize, progress, (struck.toList()..sort()).join(','), focused),
+                () => TaskChip(
+                      task: t,
+                      points: points,
+                      text: text,
+                      color: colour,
+                      width: width,
+                      fontSize: fontSize,
+                      progress: progress,
+                      struck: struck,
+                      focused: focused,
+                      onTap: () => _showTaskDetail(t, Offset.zero),
+                    ));
+          }(),
           ),
         ),
       );
@@ -317,29 +334,36 @@ extension _Board on HomePageState {
                   s
             ];
             final only = !taken && able.length == 1 ? able.single : null;
-            final chip = OpenTask(
-              placeKey: _tasks.openKeys.putIfAbsent(t, GlobalKey.new),
-              task: t,
-              taken: taken,
-              faded: _yourPick && !_mayTake(t) && only == null,
-              points: _points(t),
-              text: _cardText(t),
-              width: w,
-              fontSize: big ? 16 : 13,
-              focused: _kbRow == 1 && _kbTask == t,
-              only: only == null
-                  ? null
-                  : (
-                      only == _you
-                          ? 'Only you can take this'
-                          : 'Only ${game.players[only].name} can take this',
-                      game.players[only].color
-                    ),
-              // A tap reads it; a double tap (or click) takes it, on your
-              // pick, so taking a task is always meant.
-              onTap: () => _showTaskDetail(t, Offset.zero),
-              onDoubleTap: _yourPick ? () => _takeTask(t) : null,
-            );
+            final placeKey = _tasks.openKeys.putIfAbsent(t, GlobalKey.new);
+            final faded = _yourPick && !_mayTake(t) && only == null;
+            final points = _points(t), text = _cardText(t), focused = _kbRow == 1 && _kbTask == t;
+            final onlyLine = only == null
+                ? null
+                : (
+                    only == _you ? 'Only you can take this' : 'Only ${game.players[only].name} can take this',
+                    game.players[only].color
+                  );
+            final yourPick = _yourPick;
+            // The very same while nothing it shows changes (see _miniTask).
+            final chip = Same.of(
+                ('open', identityHashCode(t), t.description, placeKey, taken, faded, points, text, w, big,
+                    focused, onlyLine?.$1, onlyLine?.$2.toARGB32(), yourPick),
+                () => OpenTask(
+                      placeKey: placeKey,
+                      task: t,
+                      taken: taken,
+                      faded: faded,
+                      points: points,
+                      text: text,
+                      width: w,
+                      fontSize: big ? 16 : 13,
+                      focused: focused,
+                      only: onlyLine,
+                      // A tap reads it; a double tap (or click) takes it, on
+                      // your pick, so taking a task is always meant.
+                      onTap: () => _showTaskDetail(t, Offset.zero),
+                      onDoubleTap: yourPick ? () => _takeTask(t) : null,
+                    ));
             if (!measured) return Opacity(opacity: 0, child: chip);
             return DealtTask(
               key: ValueKey('deal-${game.dealId}-${t.description}'),

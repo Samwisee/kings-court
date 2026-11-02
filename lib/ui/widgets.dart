@@ -15,6 +15,7 @@ export 'widgets/masonry.dart';
 export 'widgets/painted_once.dart';
 export 'widgets/panels.dart';
 export 'widgets/pips.dart';
+export 'widgets/same.dart';
 export 'widgets/seals.dart';
 export 'widgets/suit_text.dart';
 export 'widgets/table.dart';

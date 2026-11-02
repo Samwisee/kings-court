@@ -94,7 +94,9 @@ class _BackRule extends CustomPainter {
 ///
 /// The transform stays once it's face up, as no transform at all (a plain
 /// one: no perspective, which on the web can cut a card off as it's
-/// drawn), so landing doesn't build the card again either.
+/// drawn), so landing doesn't build the card again either. Face up and
+/// still, it keeps no back: every task on the table is one of these, and
+/// each kept its back built (and rebuilt with every move) for nothing.
 class FlipIn extends StatelessWidget {
   const FlipIn({super.key, required this.t, required this.front, required this.back, this.backFillsFront = false});
   final double t;
@@ -118,7 +120,7 @@ class FlipIn extends StatelessWidget {
       child: backFillsFront
           ? Stack(children: [
               _Side(shown: !showBack, child: front),
-              Positioned.fill(child: _Side(shown: showBack, child: turned)),
+              if (!done) Positioned.fill(child: _Side(shown: showBack, child: turned)),
             ])
           : showBack
               ? turned

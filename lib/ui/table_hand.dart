@@ -329,18 +329,29 @@ extension _Hand on HomePageState {
                             _drag.card = null;
                             _drag.snapBack(card.id);
                           },
-                          child: HandCard(
-                            card: card,
-                            width: cardW,
-                            index: i,
-                            dealId: game.dealId,
-                            lifted: dragging,
-                            dimmed: (yourTurn || led && canQueue) && !legal.contains(card),
-                            glow: (yourTurn && card == _tutorialHint) || _queued == card || chosen,
-                            marks: _marksFor(card),
+                          // The very same card while nothing about it
+                          // changes: every move rebuilds the hand.
+                          child: () {
+                            final dimmed = (yourTurn || led && canQueue) && !legal.contains(card);
+                            final glow = (yourTurn && card == _tutorialHint) || _queued == card || chosen;
+                            final marks = _marksFor(card);
                             // With the shortcuts showing: the key that plays it.
-                            keyLabel: _keysShown && i < cardKeyLabels.length ? cardKeyLabels[i] : null,
-                          ),
+                            final keyLabel = _keysShown && i < cardKeyLabels.length ? cardKeyLabels[i] : null;
+                            return Same.of(
+                                ('hand card', card.id, cardW, i, game.dealId, dragging, dimmed, glow,
+                                    [for (final m in marks) m.toARGB32()].join(','), keyLabel),
+                                () => HandCard(
+                                      card: card,
+                                      width: cardW,
+                                      index: i,
+                                      dealId: game.dealId,
+                                      lifted: dragging,
+                                      dimmed: dimmed,
+                                      glow: glow,
+                                      marks: marks,
+                                      keyLabel: keyLabel,
+                                    ));
+                          }(),
                         )),
                         ),
                       );

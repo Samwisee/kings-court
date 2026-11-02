@@ -126,7 +126,10 @@ class OpponentsRow extends StatelessWidget {
                                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                                   KeyedSubtree(
                                       key: pileKey(seat),
-                                      child: SeatLook(seat: seat, child: TrickPile(won: tallyShown ? won(seat) : 0, cardWidth: pileCard))),
+                                      child: SeatLook(seat: seat, child: () {
+                                        final n = tallyShown ? won(seat) : 0;
+                                        return Same.of(('pile', n, pileCard), () => TrickPile(won: n, cardWidth: pileCard));
+                                      }())),
                                   if (tallyShown && won(seat) > 0) const SizedBox(width: 6),
                                   Text(tally(seat),
                                       maxLines: 1,
@@ -240,7 +243,7 @@ class YourSeat extends StatelessWidget {
               // Room kept from the start, so nothing shifts when it appears.
               Opacity(
                   opacity: tallyShown ? 1 : 0,
-                  child: KeyedSubtree(key: pileKey, child: TrickPile(won: tallyShown ? won : 0, cardWidth: pileCard))),
+                  child: KeyedSubtree(key: pileKey, child: Same.of(('pile', tallyShown ? won : 0, pileCard), () => TrickPile(won: tallyShown ? won : 0, cardWidth: pileCard)))),
             ],
           ),
         ),
