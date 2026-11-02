@@ -1,0 +1,14 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/test/tool/balance_test.dart
+Warning: A tag was used that wasn't specified in dart_test.yaml.
+  tool was used in the suite itself
+
+00:00 +0: Balance report
+00:37 +0 -1: Balance report [E]
+  Bad state: The round is lost
+  package:kings_court/engine/round.dart 466:22   Round.apply
+  package:kings_court/game/self_play.dart 105:7  playRound.apply
+  package:kings_court/game/self_play.dart 188:9  playRound
+  test/tool/play_round.dart 15:22                playRound
+  test/tool/balance_test.dart 64:36              main.<fn>
+  
+00:37 +0 -1: Some tests failed.

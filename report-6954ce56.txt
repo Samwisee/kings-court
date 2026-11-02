@@ -1,0 +1,17 @@
+00:00 +0: loading /home/runner/work/kings-court/kings-court/tool/balance/balance_test.dart
+tool/balance/play_round.dart:21:44: Error: Type 'PlayingCard' not found.
+    {void Function(MatchState s, int seat, PlayingCard card)? onPlay}) {
+                                           ^^^^^^^^^^^
+tool/balance/play_round.dart:21:44: Error: 'PlayingCard' isn't a type.
+    {void Function(MatchState s, int seat, PlayingCard card)? onPlay}) {
+                                           ^^^^^^^^^^^
+00:00 +0 -1: loading /home/runner/work/kings-court/kings-court/tool/balance/balance_test.dart [E]
+  Failed to load "/home/runner/work/kings-court/kings-court/tool/balance/balance_test.dart":
+  Compilation failed for testPath=/home/runner/work/kings-court/kings-court/tool/balance/balance_test.dart: tool/balance/play_round.dart:21:44: Error: Type 'PlayingCard' not found.
+      {void Function(MatchState s, int seat, PlayingCard card)? onPlay}) {
+                                             ^^^^^^^^^^^
+  tool/balance/play_round.dart:21:44: Error: 'PlayingCard' isn't a type.
+      {void Function(MatchState s, int seat, PlayingCard card)? onPlay}) {
+                                             ^^^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.
