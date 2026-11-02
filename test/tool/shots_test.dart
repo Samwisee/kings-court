@@ -28,8 +28,8 @@ import 'package:kings_court/ui/cards/card_view.dart';
 import 'package:kings_court/ui/cards/task_chip.dart';
 import 'package:kings_court/ui/dynasty/hall_pieces.dart';
 import 'package:kings_court/ui/dynasty/throne_room.dart';
-import 'package:kings_court/ui/table_page.dart';
 import 'package:kings_court/ui/setup/setup_panel.dart';
+import 'package:kings_court/ui/table_page.dart';
 import 'package:kings_court/ui/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

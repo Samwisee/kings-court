@@ -170,7 +170,7 @@ extension _Menu on HomePageState {
       won: won,
       dealId: game.dealId,
       child: game.isDynasty && runOf(game) != null
-          ? HandOverCard(won: won, onCourt: () => _toCourt())
+          ? HandOverCard(won: won, onCourt: _toCourt)
           : game.isTutorial
           ? LessonCard(
               lesson: game.lesson, won: won, onRetry: _retryRound, onNext: _nextLesson)

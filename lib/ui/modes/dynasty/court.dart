@@ -21,7 +21,6 @@ import '../../widgets.dart';
 Future<bool> showCourt(BuildContext context, DynastyRun run, {HandReport? report}) async {
   final go = await Navigator.of(context).push<bool>(PageRouteBuilder<bool>(
     transitionDuration: const Duration(milliseconds: 400),
-    reverseTransitionDuration: const Duration(milliseconds: 300),
     pageBuilder: (context, a, b) => _Court(run: run, report: report),
     transitionsBuilder: (context, a, b, child) => FadeTransition(opacity: a, child: child),
   ));
