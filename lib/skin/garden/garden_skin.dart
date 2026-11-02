@@ -15,6 +15,7 @@ class GardenSkin extends DesignSkin {
 
 const gardenDesign = SkinDesign(
   id: 'garden',
+  trim: Trim.garden,
   name: 'Garden',
   ground: Color(0xFF1B2418),
   felt: Color(0xFF3F5E45),

@@ -142,7 +142,7 @@ class HandBar extends StatelessWidget {
                       : 'Show a card (once a round)',
               onPressed: onSpeak,
               icon: closing
-                  ? Icon(Icons.close_rounded, color: skin.gold)
+                  ? TrimCloseIcon(color: skin.gold)
                   : ShowCardIcon(
                       size: 28,
                       used: speech.used,

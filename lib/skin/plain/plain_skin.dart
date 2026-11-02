@@ -7,6 +7,7 @@ library;
 import 'package:flutter/painting.dart';
 
 import '../design_skin.dart';
+import '../trim.dart';
 
 class PlainSkin extends DesignSkin {
   const PlainSkin() : super(plainDesign);
@@ -14,6 +15,7 @@ class PlainSkin extends DesignSkin {
 
 const plainDesign = SkinDesign(
   id: 'plain',
+  trim: Trim.plain,
   name: 'Plain',
   ground: Color(0xFF151B24),
   felt: Color(0xFF253041),

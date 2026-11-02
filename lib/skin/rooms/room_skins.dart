@@ -15,6 +15,7 @@ class VelvetSkin extends DesignSkin {
 
 const velvetDesign = SkinDesign(
   id: 'velvet',
+  trim: Trim.velvet,
   name: 'Velvet',
   ground: Color(0xFF140A18),
   felt: Color(0xFF3E2347),
@@ -48,6 +49,7 @@ class CountingSkin extends DesignSkin {
 
 const countingDesign = SkinDesign(
   id: 'counting',
+  trim: Trim.counting,
   name: 'Counting house',
   ground: Color(0xFF1A0A0C),
   felt: Color(0xFF5A1A24),
@@ -81,6 +83,7 @@ class LibrarySkin extends DesignSkin {
 
 const libraryDesign = SkinDesign(
   id: 'library',
+  trim: Trim.library,
   name: 'Library',
   ground: Color(0xFF1E140D),
   felt: Color(0xFF5A3E2A),
@@ -114,6 +117,7 @@ class TavernSkin extends DesignSkin {
 
 const tavernDesign = SkinDesign(
   id: 'tavern',
+  trim: Trim.tavern,
   name: 'Tavern',
   ground: Color(0xFF1A110A),
   felt: Color(0xFF4A3220),
@@ -146,6 +150,7 @@ class MarbleSkin extends DesignSkin {
 
 const marbleDesign = SkinDesign(
   id: 'marble',
+  trim: Trim.marble,
   name: 'Marble hall',
   ground: Color(0xFF0A1311),
   felt: Color(0xFF24493F),
@@ -179,6 +184,7 @@ class BallroomSkin extends DesignSkin {
 
 const ballroomDesign = SkinDesign(
   id: 'ballroom',
+  trim: Trim.ballroom,
   name: 'Ballroom',
   ground: Color(0xFF000000),
   felt: Color(0xFF181818),
@@ -212,6 +218,7 @@ class CourtyardSkin extends DesignSkin {
 
 const courtyardDesign = SkinDesign(
   id: 'courtyard',
+  trim: Trim.courtyard,
   name: 'Courtyard',
   ground: Color(0xFF0A1626),
   felt: Color(0xFF173A5E),
@@ -244,6 +251,7 @@ class CampaignSkin extends DesignSkin {
 
 const campaignDesign = SkinDesign(
   id: 'campaign',
+  trim: Trim.campaign,
   name: 'Campaign',
   ground: Color(0xFF1A2012),
   felt: Color(0xFF3A4A2C),
@@ -279,6 +287,7 @@ class CasinoSkin extends DesignSkin {
 
 const casinoDesign = SkinDesign(
   id: 'casino',
+  trim: Trim.casino,
   name: 'Casino',
   ground: Color(0xFF07140D),
   felt: Color(0xFF0F5A3A),
@@ -312,6 +321,7 @@ class SalonSkin extends DesignSkin {
 
 const salonDesign = SkinDesign(
   id: 'salon',
+  trim: Trim.salon,
   name: 'Salon',
   ground: Color(0xFF0A0A0A),
   felt: Color(0xFF262626),
@@ -345,6 +355,7 @@ class RivieraSkin extends DesignSkin {
 
 const rivieraDesign = SkinDesign(
   id: 'riviera',
+  trim: Trim.riviera,
   name: 'Riviera',
   ground: Color(0xFF0B2A33),
   felt: Color(0xFF2B7480),
@@ -378,6 +389,7 @@ class WinterSkin extends DesignSkin {
 
 const winterDesign = SkinDesign(
   id: 'winter',
+  trim: Trim.winter,
   name: 'Winter palace',
   ground: Color(0xFF0A121D),
   felt: Color(0xFF34536F),
@@ -412,6 +424,7 @@ class EgyptianSkin extends DesignSkin {
 
 const egyptianDesign = SkinDesign(
   id: 'egyptian',
+  trim: Trim.egyptian,
   name: 'Egyptian',
   ground: Color(0xFF0A0E22),
   felt: Color(0xFF1F3A78),
@@ -446,6 +459,7 @@ class GalleonSkin extends DesignSkin {
 
 const galleonDesign = SkinDesign(
   id: 'galleon',
+  trim: Trim.galleon,
   name: 'Galleon',
   ground: Color(0xFF150E08),
   felt: Color(0xFF5A4530),
@@ -480,6 +494,7 @@ class ScopaSkin extends DesignSkin {
 
 const scopaDesign = SkinDesign(
   id: 'scopa',
+  trim: Trim.scopa,
   name: 'Scopa',
   ground: Color(0xFF1C0907),
   felt: Color(0xFF8E2A22),

@@ -14,6 +14,7 @@ class MidnightSkin extends DesignSkin {
 
 const midnightDesign = SkinDesign(
   id: 'midnight',
+  trim: Trim.midnight,
   name: 'Midnight',
   ground: Color(0xFF07090F),
   felt: Color(0xFF17233F),

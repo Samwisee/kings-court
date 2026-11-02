@@ -10,6 +10,7 @@ import '../../skin/court/suits.g.dart';
 import '../../skin/parts.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
+import 'trim_glyphs.dart';
 
 /// A small five-point crown, drawn so it looks the same on every platform.
 class CrownIcon extends StatelessWidget {
@@ -61,12 +62,17 @@ class TrackerIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _TrackerPainter(color ?? context.skin.gold));
+      CustomPaint(
+          size: Size.square(size),
+          painter: _TrackerPainter(color ?? context.skin.gold, markOf(context.skin.buttonLook.trim)));
 }
 
+/// Its cards cut to the room's mark: round as chips, square as tiles, cut
+/// at the corners at court.
 class _TrackerPainter extends CustomPainter {
-  _TrackerPainter(this.color);
+  _TrackerPainter(this.color, this.mark);
   final Color color;
+  final TrimMark mark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -80,15 +86,41 @@ class _TrackerPainter extends CustomPainter {
     final fill = Paint()..color = color;
     const filled = [true, true, false, true, false, false];
     for (var i = 0; i < 6; i++) {
-      final r = RRect.fromRectAndRadius(
-          Rect.fromLTWH(left + (i % 3) * (w + gap), top + (i ~/ 3) * (h + gap), w, h),
-          Radius.circular(s * 0.05));
-      canvas.drawRRect(r, filled[i] ? fill : line);
+      final box = Rect.fromLTWH(left + (i % 3) * (w + gap), top + (i ~/ 3) * (h + gap), w, h);
+      final paint = filled[i] ? fill : line;
+      switch (mark) {
+        case TrimMark.dot:
+          canvas.drawRRect(RRect.fromRectAndRadius(box, Radius.circular(w / 2)), paint);
+        case TrimMark.square:
+          canvas.drawRect(box, paint);
+        case TrimMark.diamond:
+          final k = w * 0.28;
+          canvas.drawPath(
+              Path()
+                ..moveTo(box.left + k, box.top)
+                ..lineTo(box.right - k, box.top)
+                ..lineTo(box.right, box.top + k)
+                ..lineTo(box.right, box.bottom - k)
+                ..lineTo(box.right - k, box.bottom)
+                ..lineTo(box.left + k, box.bottom)
+                ..lineTo(box.left, box.bottom - k)
+                ..lineTo(box.left, box.top + k)
+                ..close(),
+              paint);
+        case TrimMark.leaf:
+          canvas.drawRRect(
+              RRect.fromRectAndCorners(box,
+                  topLeft: Radius.circular(w / 2), bottomRight: Radius.circular(w / 2)),
+              paint);
+        case TrimMark.round:
+        case TrimMark.star:
+          canvas.drawRRect(RRect.fromRectAndRadius(box, Radius.circular(s * 0.05)), paint);
+      }
     }
   }
 
   @override
-  bool shouldRepaint(_TrackerPainter old) => old.color != color;
+  bool shouldRepaint(_TrackerPainter old) => old.color != color || old.mark != mark;
 }
 
 /// Court Cards fanned out, the front one gold with a crown; struck out by

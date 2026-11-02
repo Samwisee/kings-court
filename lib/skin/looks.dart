@@ -9,8 +9,10 @@ library;
 import 'package:flutter/painting.dart';
 
 import 'card_look.dart';
+import 'trim.dart';
 
 export 'card_look.dart';
+export 'trim.dart';
 
 /// How dressed up a panel or dialog is. Everything is [low] unless it's an
 /// occasion:
@@ -398,11 +400,14 @@ class TokenLook {
 }
 
 class ButtonLook {
-  const ButtonLook({this.bevelled = true, this.glow = true});
+  const ButtonLook({this.bevelled = true, this.glow = true, this.trim = Trim.court});
 
   /// Cut corners, like plaques at court; otherwise rounded.
   final bool bevelled;
 
   /// The pulsing light round the button that's waiting to be pressed.
   final bool glow;
+
+  /// The room's own cut of button, and its icons (trim.dart).
+  final Trim trim;
 }

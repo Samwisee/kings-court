@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import '../design_skin.dart';
 import '../effects.dart';
 import '../parts.dart';
+import '../trim.dart';
 
 class LacquerSkin extends DesignSkin {
   const LacquerSkin() : super(lacquerDesign);
@@ -20,6 +21,7 @@ class LacquerSkin extends DesignSkin {
 
 const lacquerDesign = SkinDesign(
   id: 'lacquer',
+  trim: Trim.lacquer,
   name: 'Lacquer',
   ground: Color(0xFF0D0606),
   felt: Color(0xFF3C1013),

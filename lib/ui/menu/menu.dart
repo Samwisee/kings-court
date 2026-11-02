@@ -233,9 +233,54 @@ class OrnateMenuIcon extends StatelessWidget {
         tween: Tween(end: open ? 1 : 0),
         duration: const Duration(milliseconds: 320),
         curve: Curves.easeInOutCubic,
-        builder: (context, t, _) =>
-            CustomPaint(size: const Size.square(size), painter: _OrnateMenuPainter(t, context.skin)),
+        builder: (context, t, _) => CustomPaint(
+            size: const Size.square(size),
+            painter: context.skin.buttonLook.trim == Trim.court
+                ? _OrnateMenuPainter(t, context.skin)
+                : _TrimMenuPainter(t, context.skin)),
       );
+}
+
+/// A room's own menu glyph (trim_glyphs.dart); while the menu is open it
+/// turns and fades into the room's cross.
+class _TrimMenuPainter extends CustomPainter {
+  _TrimMenuPainter(this.t, this.skin);
+  final Skin skin;
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final trim = skin.buttonLook.trim;
+    final c = size.center(Offset.zero);
+    if (t < 1) {
+      canvas.saveLayer(Offset.zero & size, Paint()..color = Color.fromRGBO(0, 0, 0, 1 - t));
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(t * math.pi / 4);
+      canvas.scale(1 - 0.3 * t);
+      canvas.translate(-c.dx, -c.dy);
+      paintMenuGlyph(canvas, size, trim, skin.gold, skin.feltDeep);
+      canvas.restore();
+    }
+    if (t > 0) {
+      final mark = markOf(trim);
+      final line = Paint()
+        ..strokeWidth = size.width * 0.09
+        ..strokeCap = StrokeCap.round
+        ..color = skin.gold.withValues(alpha: t);
+      final fill = Paint()..color = line.color;
+      final reach = size.width * 0.26 * t;
+      for (final a in [math.pi / 4, 3 * math.pi / 4]) {
+        final d = Offset(math.cos(a), math.sin(a)) * reach;
+        canvas.drawLine(c - d, c + d, line);
+        for (final end in [c - d, c + d]) {
+          paintMark(canvas, mark, end + (end - c) * 0.22, size.width * 0.07, fill);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TrimMenuPainter old) => old.t != t || old.skin != skin;
 }
 
 class _OrnateMenuPainter extends CustomPainter {

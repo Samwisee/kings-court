@@ -52,6 +52,7 @@ class SkinDesign {
     this.task,
     this.token,
     this.onAccent,
+    this.trim = Trim.court,
     this.cloth = const [
       [Color(0xFF5A2F87), Color(0xFF241238)],
       [Color(0xFF13734A), Color(0xFF062A1B)],
@@ -120,6 +121,9 @@ class SkinDesign {
 
   /// The corner radius of panels and buttons; cards keep their own.
   final double radius;
+
+  /// The cut of its buttons, and its icons' family (trim.dart).
+  final Trim trim;
 
   /// The Court Cards' colours, Joker, Jack, Queen, King: light then dark.
   final List<List<Color>> cloth;
@@ -331,7 +335,7 @@ class DesignSkin extends Skin {
   TokenLook get tokenLook => TokenLook(shaped: _rich);
 
   @override
-  ButtonLook get buttonLook => ButtonLook(bevelled: _rich, glow: _rich);
+  ButtonLook get buttonLook => ButtonLook(bevelled: _rich, glow: _rich, trim: design.trim);
 
   @override
   ThemeData theme() {
@@ -344,9 +348,16 @@ class DesignSkin extends Skin {
       fontFamily: bodyFont,
       scaffoldBackgroundColor: felt,
     );
-    final shape = _rich
-        ? BeveledRectangleBorder(borderRadius: BorderRadius.circular(design.radius))
-        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(design.radius));
+    final trim = design.trim;
+    final shape = TrimBorder(trim, radius: design.radius);
+    // Its edge: the accent's dark rim, a hairline for the lightest trims,
+    // and none for the plainest.
+    final rim = switch (trim) {
+      Trim.plain => BorderSide.none,
+      Trim.salon => BorderSide(color: goldRim, width: 1),
+      Trim.scopa => const BorderSide(color: chalkFrame, width: 2),
+      _ => BorderSide(color: goldRim, width: 1.5),
+    };
     final label = TextStyle(
         fontFamily: _rich ? displayFont : bodyFont,
         fontSize: _rich ? 15 : 16,
@@ -361,14 +372,14 @@ class DesignSkin extends Skin {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: gold,
-          foregroundColor: onAccent,
+          backgroundColor: trim.chalk ? chalkBoard : gold,
+          foregroundColor: trim.chalk ? chalkInk : onAccent,
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 22),
           elevation: _rich ? 3 : 0,
           shadowColor: Colors.black,
           textStyle: label,
-          side: _rich ? BorderSide(color: goldRim, width: 1.5) : BorderSide.none,
+          side: rim,
           shape: shape,
         ),
       ),
@@ -376,7 +387,7 @@ class DesignSkin extends Skin {
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
           backgroundColor: _rich ? const Color(0x22000000) : Colors.transparent,
-          side: BorderSide(color: gold.withValues(alpha: 0.7), width: 1.5),
+          side: trim.chalk ? rim : BorderSide(color: gold.withValues(alpha: 0.7), width: trim == Trim.salon ? 1 : 1.5),
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           textStyle: label,

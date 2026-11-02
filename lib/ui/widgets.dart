@@ -23,3 +23,5 @@ export 'widgets/task_faces.dart';
 export 'widgets/token_shapes.dart';
 export 'widgets/token_styles.dart';
 export 'widgets/tokens.dart';
+export 'widgets/trim_glyphs.dart';
+export 'widgets/trim_icons.dart';

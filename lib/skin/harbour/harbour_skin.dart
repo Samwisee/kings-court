@@ -14,6 +14,7 @@ class HarbourSkin extends DesignSkin {
 
 const harbourDesign = SkinDesign(
   id: 'harbour',
+  trim: Trim.harbour,
   name: 'Harbour',
   ground: Color(0xFF0B1A22),
   felt: Color(0xFF14404F),
