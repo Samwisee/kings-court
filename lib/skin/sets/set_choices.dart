@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 /// Each room for sale comes with a set of its own: Court Cards with their
 /// own emblems, number cards, a card back, tokens and task cards, all
 /// chosen by the room's id (design_skin.dart) and offered beside the rest

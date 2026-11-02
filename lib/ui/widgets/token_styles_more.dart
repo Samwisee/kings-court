@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 /// The rooms' own seat tokens (looks.dart: [TokenStyle]): a ringed
 /// planet, tufted velvet, a cameo, a deco sunburst, a die, an enamel pin,
 /// ice, a faience scarab, a hammered doubloon and a bottle's crown cap. In

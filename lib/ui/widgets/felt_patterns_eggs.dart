@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 part of 'felt_patterns.dart';
 
 /// Little things hidden in the maps and walls, faint as the rest of the

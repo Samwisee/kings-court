@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 /// Rooms of the palace to play in, each a skin made from a design alone
 /// (design_skin.dart): its table, with something worked into the felt
 /// (looks.dart: [FeltPattern]), and the menus and pages dressed to match.

@@ -353,5 +353,7 @@ The engine was built for this:
 
 ## Licence
 
-All rights reserved: see [LICENSE](LICENSE). The repository is public
-to view, not to reuse. The fonts keep their own licence (SIL OFL).
+The code is open under the [Apache License 2.0](LICENSE), except the
+rooms' art (the styles players choose, some of them sold), the game's name
+and logo, and its sounds: see [LICENSE-ROOMS.md](LICENSE-ROOMS.md) for
+exactly which files. The fonts keep their own licence (SIL OFL).

@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 part of 'set_emblems.dart';
 
 const _velvetRed = Color(0xFFA81E44);

@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 /// The rooms' own motifs for a card's back, a number card's face or a task
 /// card (looks.dart: [BackMotif]): stars, damask, marble's veins, deco
 /// fans, a casino's diamonds, herringbone, snow, zigzags, a sea chart, a

@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 /// Midnight: cards by candlelight in the King's own rooms. Deep navy felt
 /// set in black, silver for the accent, and the court's own dress.
 /// Made from a design alone (design_skin.dart).

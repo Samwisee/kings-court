@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 /// The rooms' own Court Card emblems (card_look.dart: [EmblemSet]), in
 /// place of the court's jester, sword, tiara and crown. Each is drawn in a
 /// box 100 units square, centred on (50, 50), in its set's metal with a

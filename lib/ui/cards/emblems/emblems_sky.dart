@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 part of 'set_emblems.dart';
 
 /// Midnight's: a comet for the Joker, a crescent moon for the Jack, a

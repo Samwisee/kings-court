@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 part of 'set_emblems.dart';
 
 const _feltRed = Color(0xFFC8102E);

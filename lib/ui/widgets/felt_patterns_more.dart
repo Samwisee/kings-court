@@ -1,3 +1,4 @@
+// Not under the Apache licence: the rooms' art, all rights reserved (LICENSE-ROOMS.md).
 part of 'felt_patterns.dart';
 
 /// The patterns of the later rooms (Riviera, Winter palace, Egyptian,
