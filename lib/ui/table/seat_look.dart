@@ -9,14 +9,18 @@ import '../../skin/entitlements.dart';
 import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 
-/// The look each seat plays in (null: the table's own), for the table
-/// under it.
+/// The look each seat plays in (a seat not in [looks]: the table's own),
+/// for the table under it. Its cards rebuild only when a look changes, not
+/// with every move.
 class SeatLooks extends InheritedWidget {
-  const SeatLooks({super.key, required this.of, required super.child});
-  final Skin? Function(int seat) of;
+  const SeatLooks({super.key, required this.looks, required super.child});
+  final Map<int, Skin> looks;
+
+  Skin? of(int seat) => looks[seat];
 
   @override
-  bool updateShouldNotify(SeatLooks old) => true;
+  bool updateShouldNotify(SeatLooks old) =>
+      old.looks.length != looks.length || looks.entries.any((e) => old.looks[e.key]?.id != e.value.id);
 }
 
 /// [child] (a card, or a pile of them) in the look the person in [seat]

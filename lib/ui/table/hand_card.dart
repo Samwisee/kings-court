@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../engine/cards.dart';
 import '../cards/card_view.dart';
 import '../widgets/buttons.dart';
+import '../widgets/same.dart';
 
 class HandCard extends StatelessWidget {
   const HandCard({
@@ -55,9 +56,12 @@ class HandCard extends StatelessWidget {
         duration: Duration(milliseconds: 420 + index * 70),
         curve: Interval((index * 70) / (420 + index * 70), 1, curve: Curves.easeOut),
         builder: (context, f, child) =>
-            FlipIn(t: f, front: child!, back: CardBack(width: width)),
+            FlipIn(t: f, front: child!, back: Same.of(('hand-back', width), () => CardBack(width: width))),
         child: Stack(clipBehavior: Clip.none, children: [
-          PlayingCardView(card: card, width: width, dimmed: dimmed, glow: glow, marks: marks),
+          // The very same card while nothing about it changes: every move
+          // rebuilds the hand, and a card built again is drawn again.
+          Same.of(('hand', card.id, width, dimmed, glow, [for (final m in marks) m.toARGB32()].join(',')),
+              () => PlayingCardView(card: card, width: width, dimmed: dimmed, glow: glow, marks: marks)),
           if (key != null)
             Positioned(
               left: width * 0.08,

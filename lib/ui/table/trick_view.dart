@@ -11,6 +11,7 @@ import '../../game/state.dart';
 import '../../skin/theme.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
+import '../widgets/same.dart';
 import 'seats.dart';
 
 /// How wide trick cards are for a table [width] across with [n] players.
@@ -93,15 +94,14 @@ List<Widget> trickCards({
             area.height / 2);
         final seat = seats[i];
         // In the look of whoever played it, edged in their colour.
-        final view = SeatLook(
-          seat: seat,
-          child: PlayingCardView(
-            card: cards[i],
-            width: cardW,
-            edge: players[seat].color,
-            glow: trick != null && trick.winner == seat,
-          ),
-        );
+        final glow = trick != null && trick.winner == seat;
+        final edge = players[seat].color;
+        final view = Same.of(
+            ('trick', cards[i].id, seat, cardW, glow, edge.toARGB32()),
+            () => SeatLook(
+                  seat: seat,
+                  child: PlayingCardView(card: cards[i], width: cardW, edge: edge, glow: glow),
+                ));
         if (trick != null && collecting) {
           final heap = pile?.call(trick.winner);
           final to = heap?.at ?? origin(trick.winner, cards[i]) ?? target;

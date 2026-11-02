@@ -31,7 +31,7 @@ extension _Board on HomePageState {
     // With other people: the room hears the look you play in, and theirs
     // dress their cards here (table/seat_look.dart).
     _room?.wearing(context.skin);
-    return SeatLooks(of: (seat) => _room?.lookAt(seat), child: MediaQuery.withClampedTextScaling(
+    return SeatLooks(looks: {for (var s = 0; s < game.players.length; s++) if (_room?.lookAt(s) case final l?) s: l}, child: MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.0,
       child: LayoutBuilder(builder: (context, c) {
         _table.tableSize = Size(c.maxWidth, c.maxHeight);

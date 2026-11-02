@@ -192,7 +192,7 @@ void main() {
     await tester.pumpWidget(SkinScope(
       skin: skins.first,
       child: SeatLooks(
-        of: (seat) => seat == 1 ? galleon : null,
+        looks: {1: galleon},
         child: Column(children: [
           for (final seat in [0, 1, 2])
             SeatLook(seat: seat, child: Builder(builder: (c) {
