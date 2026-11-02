@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kings_court/engine/bot.dart';
 import 'package:kings_court/engine/cards.dart';
@@ -180,7 +182,8 @@ void main() {
       ..pickTurn = picker;
     expect(r.canPass(picker), isTrue);
     expect(r.nextPicker(picker), king);
-    final d = await botDecision(g, Bot()..budget = 200, you: you);
+    // A fixed seed: the courtier's guesses are sampled, so a seed keeps the test the same every run.
+    final d = await botDecision(g, Bot(Random(1))..budget = 200, you: you);
     expect(d, isA<BotPasses>(), reason: 'the King holds the King card: the Joker is theirs to win');
   });
 }
