@@ -354,7 +354,7 @@ class DesignSkin extends Skin {
     // and none for the plainest.
     final rim = switch (trim) {
       Trim.plain => BorderSide.none,
-      Trim.salon => BorderSide(color: goldRim, width: 1),
+      Trim.salon => BorderSide(color: goldRim),
       Trim.scopa => const BorderSide(color: chalkFrame, width: 2),
       _ => BorderSide(color: goldRim, width: 1.5),
     };
