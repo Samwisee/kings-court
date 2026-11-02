@@ -122,7 +122,7 @@ class _TileState extends State<_Tile> {
                         // Its own layer: drawn once, not again as the shelves
                         // scroll. (Not a snapshot: on the web, turning it into
                         // a picture stalls the frame it's made in, by far more.)
-                        child: RepaintBoundary(child: widget.child)),
+                        child: RepaintBoundary(child: _Later(child: widget.child))),
                   ),
                   if (widget.inUse)
                     Positioned(left: 6, top: 6, child: _Badge(text: 'In use', fill: skin.gold, ink: skin.goldInk))
@@ -358,4 +358,58 @@ class _PriceTag extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// A tile's picture, built a few frames later when many come at once (a
+/// section opening): a few tiles a frame, so no one frame builds them all.
+/// Until then, the tile's own felt shows through.
+class _Later extends StatefulWidget {
+  const _Later({required this.child});
+  final Widget child;
+
+  /// How many pictures are built in a frame.
+  static const _perFrame = 4;
+  static final _waiting = <_LaterState>[];
+  static bool _due = false;
+
+  static void _wait(_LaterState s) {
+    _waiting.add(s);
+    if (_due) return;
+    _due = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _next());
+  }
+
+  static void _next() {
+    _due = false;
+    _waiting.removeWhere((s) => !s.mounted);
+    for (final s in _waiting.take(_perFrame).toList()) {
+      _waiting.remove(s);
+      s._show();
+    }
+    if (_waiting.isNotEmpty) {
+      _due = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _next());
+      WidgetsBinding.instance.scheduleFrame();
+    }
+  }
+
+  @override
+  State<_Later> createState() => _LaterState();
+}
+
+class _LaterState extends State<_Later> {
+  bool _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _Later._wait(this);
+  }
+
+  void _show() {
+    if (mounted) setState(() => _shown = true);
+  }
+
+  @override
+  Widget build(BuildContext context) => _shown ? widget.child : const SizedBox.expand();
 }
