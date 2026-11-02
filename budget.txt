@@ -1,0 +1,6 @@
+::error::Frame budget: the Livery page: 44 frames over 16 ms (budget 20)
+::error::Frame budget: the Livery page: a 1009 ms frame (budget 120 ms)
+
+over budget:
+  the Livery page: 44 frames over 16 ms (budget 20)
+  the Livery page: a 1009 ms frame (budget 120 ms)
