@@ -1,0 +1,265 @@
+{
+ "game": {
+  "version": 2,
+  "players": [
+   {
+    "name": "You",
+    "color": 4293304064
+   },
+   {
+    "name": "The Jester",
+    "color": 4283872489
+   },
+   {
+    "name": "The Bishop",
+    "color": 4291590567
+   },
+   {
+    "name": "The Merchant",
+    "color": 4278230643
+   }
+  ],
+  "courtiers": [
+   2,
+   5,
+   1,
+   4
+  ],
+  "mode": 2,
+  "target": 7,
+  "chapter": 6,
+  "lesson": 0,
+  "surprise": false,
+  "roles": true,
+  "digital": true,
+  "round": {
+   "players": 4,
+   "target": 5,
+   "hands": [
+    [
+     20,
+     23,
+     12,
+     17,
+     29,
+     30,
+     34,
+     35,
+     38
+    ],
+    [
+     7,
+     18,
+     21,
+     25,
+     11,
+     15,
+     27,
+     32,
+     39
+    ],
+    [
+     3,
+     6,
+     8,
+     22,
+     24,
+     10,
+     14,
+     31,
+     36
+    ],
+    [
+     5,
+     19,
+     26,
+     9,
+     13,
+     16,
+     28,
+     33,
+     37
+    ]
+   ],
+   "setAside": [],
+   "king": 1,
+   "tasks": [
+    {
+     "d": "Win the 7♥ and the 7♣",
+     "owner": 1,
+     "x": null,
+     "seal": 2,
+     "status": 0
+    },
+    {
+     "d": "Win the 3♦, 6♦ and 9♦",
+     "owner": 2,
+     "x": null,
+     "seal": 1,
+     "status": 0
+    },
+    {
+     "d": "Win the last trick a Court Card falls in",
+     "owner": 3,
+     "x": null,
+     "seal": null,
+     "status": 0
+    }
+   ],
+   "pickTurn": null,
+   "passed": [],
+   "spoke": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "picksMade": 0,
+   "sealCount": 2,
+   "decree": 2,
+   "exiled": null,
+   "passing": true,
+   "tricks": [
+    {
+     "leader": 1,
+     "seats": [
+      1,
+      2,
+      3,
+      0
+     ],
+     "cards": [
+      1,
+      2,
+      4,
+      0
+     ],
+     "winner": 3
+    }
+   ],
+   "leader": 3,
+   "currentSeats": [],
+   "current": [],
+   "phase": 2,
+   "dealId": 1,
+   "revealed": {},
+   "revealHint": {},
+   "revealedAt": {}
+  },
+  "roundNumber": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "bestStreak": 0,
+  "dealId": 1,
+  "seed": 2,
+  "resultRecorded": false
+ },
+ "cardWidth": 120.0,
+ "dealt": true,
+ "pos": [
+  null,
+  null,
+  null
+ ],
+ "tilt": [
+  0.0,
+  0.0,
+  0.0
+ ],
+ "savedAt": 1761600000000,
+ "facts": {
+  "mode": "chronicle",
+  "players": [
+   "You",
+   "The Jester",
+   "The Bishop",
+   "The Merchant"
+  ],
+  "playerCount": 4,
+  "target": 7,
+  "round": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "king": 1,
+  "pickTurn": null,
+  "seals": 2,
+  "decree": "lateCounsel",
+  "exiled": null,
+  "tasks": [
+   {
+    "d": "Win the 7♥ and the 7♣",
+    "owner": 1,
+    "status": "pending",
+    "seal": 2
+   },
+   {
+    "d": "Win the 3♦, 6♦ and 9♦",
+    "owner": 2,
+    "status": "pending",
+    "seal": 1
+   },
+   {
+    "d": "Win the last trick a Court Card falls in",
+    "owner": 3,
+    "status": "pending",
+    "seal": null
+   }
+  ],
+  "outcome": "inProgress",
+  "dealId": 1,
+  "seed": 2,
+  "hands": [
+   [
+    "3♠",
+    "6♠",
+    "4♦",
+    "9♦",
+    "3♣",
+    "4♣",
+    "8♣",
+    "9♣",
+    "Queen"
+   ],
+   [
+    "8♥",
+    "A♠",
+    "4♠",
+    "8♠",
+    "3♦",
+    "7♦",
+    "A♣",
+    "6♣",
+    "King"
+   ],
+   [
+    "4♥",
+    "7♥",
+    "9♥",
+    "5♠",
+    "7♠",
+    "2♦",
+    "6♦",
+    "5♣",
+    "Joker"
+   ],
+   [
+    "6♥",
+    "2♠",
+    "9♠",
+    "A♦",
+    "5♦",
+    "8♦",
+    "2♣",
+    "7♣",
+    "Jack"
+   ]
+  ],
+  "tricks": 1,
+  "current": [],
+  "turn": 3,
+  "announced": {},
+  "shown": {}
+ }
+}
