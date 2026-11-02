@@ -13,7 +13,6 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../../skin/theme.dart';
 import '../widgets.dart';
-import '../widgets/same.dart';
 import 'card_view.dart';
 import 'mini_card.dart';
 

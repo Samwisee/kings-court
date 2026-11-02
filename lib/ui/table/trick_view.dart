@@ -11,7 +11,6 @@ import '../../game/state.dart';
 import '../../skin/theme.dart';
 import '../cards/card_view.dart';
 import '../widgets.dart';
-import '../widgets/same.dart';
 import 'seats.dart';
 
 /// How wide trick cards are for a table [width] across with [n] players.
