@@ -1,0 +1,349 @@
+{
+ "game": {
+  "version": 2,
+  "players": [
+   {
+    "name": "You",
+    "color": 4293304064
+   },
+   {
+    "name": "The Merchant",
+    "color": 4283872489
+   },
+   {
+    "name": "The Duke",
+    "color": 4291590567
+   },
+   {
+    "name": "The Spymaster",
+    "color": 4278230643
+   }
+  ],
+  "courtiers": [
+   1,
+   4,
+   0,
+   3
+  ],
+  "mode": 0,
+  "target": 10,
+  "chapter": null,
+  "lesson": 0,
+  "surprise": false,
+  "roles": true,
+  "digital": true,
+  "round": {
+   "players": 4,
+   "target": 5,
+   "hands": [
+    [
+     4,
+     7,
+     25,
+     26,
+     12,
+     17,
+     35
+    ],
+    [
+     8,
+     14,
+     15,
+     30,
+     31,
+     36,
+     39
+    ],
+    [
+     11,
+     13,
+     16,
+     27,
+     34,
+     37,
+     38
+    ],
+    [
+     23,
+     9,
+     10,
+     28,
+     29,
+     32,
+     33
+    ]
+   ],
+   "setAside": [],
+   "king": 1,
+   "tasks": [
+    {
+     "d": "Don't win any Aces",
+     "owner": 1,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the 9♠",
+     "owner": 2,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win the last trick with a plain card",
+     "owner": 3,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win no ♦ cards",
+     "owner": 0,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Don't win the card you showed",
+     "owner": 1,
+     "x": null,
+     "seal": null,
+     "status": 1
+    },
+    {
+     "d": "Win a trick led with a Court Card",
+     "owner": 2,
+     "x": null,
+     "seal": null,
+     "status": 0
+    },
+    {
+     "d": "Win a trick with three different suits in it",
+     "owner": 3,
+     "x": null,
+     "seal": null,
+     "status": 0
+    }
+   ],
+   "pickTurn": null,
+   "passed": [],
+   "spoke": [
+    false,
+    false,
+    false,
+    false
+   ],
+   "picksMade": 0,
+   "sealCount": 0,
+   "decree": null,
+   "exiled": null,
+   "passing": true,
+   "tricks": [
+    {
+     "leader": 1,
+     "seats": [
+      1,
+      2,
+      3,
+      0
+     ],
+     "cards": [
+      1,
+      5,
+      2,
+      0
+     ],
+     "winner": 2
+    },
+    {
+     "leader": 2,
+     "seats": [
+      2,
+      3,
+      0,
+      1
+     ],
+     "cards": [
+      19,
+      21,
+      18,
+      3
+     ],
+     "winner": 3
+    },
+    {
+     "leader": 3,
+     "seats": [
+      3,
+      0,
+      1,
+      2
+     ],
+     "cards": [
+      22,
+      20,
+      6,
+      24
+     ],
+     "winner": 2
+    }
+   ],
+   "leader": 2,
+   "currentSeats": [],
+   "current": [],
+   "phase": 2,
+   "dealId": 1,
+   "revealed": {
+    "1": 1
+   },
+   "revealHint": {
+    "1": "lowest"
+   },
+   "revealedAt": {
+    "1": 0
+   }
+  },
+  "roundNumber": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "bestStreak": 0,
+  "dealId": 1,
+  "seed": 11,
+  "resultRecorded": false
+ },
+ "cardWidth": 120.0,
+ "dealt": true,
+ "pos": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "tilt": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "savedAt": 1761600000000,
+ "facts": {
+  "mode": "free",
+  "players": [
+   "You",
+   "The Merchant",
+   "The Duke",
+   "The Spymaster"
+  ],
+  "playerCount": 4,
+  "target": 10,
+  "round": 1,
+  "wins": 0,
+  "losses": 0,
+  "streak": 0,
+  "king": 1,
+  "pickTurn": null,
+  "seals": 0,
+  "decree": null,
+  "exiled": null,
+  "tasks": [
+   {
+    "d": "Don't win any Aces",
+    "owner": 1,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the 9♠",
+    "owner": 2,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win the last trick with a plain card",
+    "owner": 3,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win no ♦ cards",
+    "owner": 0,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Don't win the card you showed",
+    "owner": 1,
+    "status": "completed",
+    "seal": null
+   },
+   {
+    "d": "Win a trick led with a Court Card",
+    "owner": 2,
+    "status": "pending",
+    "seal": null
+   },
+   {
+    "d": "Win a trick with three different suits in it",
+    "owner": 3,
+    "status": "pending",
+    "seal": null
+   }
+  ],
+  "outcome": "inProgress",
+  "dealId": 1,
+  "seed": 11,
+  "hands": [
+   [
+    "5♥",
+    "8♥",
+    "8♠",
+    "9♠",
+    "4♦",
+    "9♦",
+    "9♣"
+   ],
+   [
+    "9♥",
+    "6♦",
+    "7♦",
+    "4♣",
+    "5♣",
+    "Joker",
+    "King"
+   ],
+   [
+    "3♦",
+    "5♦",
+    "8♦",
+    "A♣",
+    "8♣",
+    "Jack",
+    "Queen"
+   ],
+   [
+    "6♠",
+    "A♦",
+    "2♦",
+    "2♣",
+    "3♣",
+    "6♣",
+    "7♣"
+   ]
+  ],
+  "tricks": 3,
+  "current": [],
+  "turn": 2,
+  "announced": {},
+  "shown": {
+   "1": "2♥"
+  }
+ }
+}
