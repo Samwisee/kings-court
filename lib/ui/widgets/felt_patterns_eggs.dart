@@ -65,7 +65,7 @@ extension _Eggs on FeltPatternPainter {
         fill);
 
     // A sea serpent: three humps and a head, out past the island.
-    final sea = Offset(s.width * 0.66, s.height * 0.78);
+    final sea = Offset(s.width * 0.62, s.height * 0.6);
     final serpent = Path()..moveTo(sea.dx, sea.dy);
     for (var k = 0; k < 3; k++) {
       final x = sea.dx + k * 14;
@@ -91,8 +91,8 @@ extension _Eggs on FeltPatternPainter {
         fill);
     canvas.drawLine(whale + const Offset(-7, 1), whale + const Offset(10, 1), _line(0.7, 0.5));
 
-    // A kraken's arm, curling up from the bottom edge.
-    final arm = Offset(s.width * 0.97, s.height);
+    // A kraken's arm, curling up out of the sea.
+    final arm = Offset(s.width * 0.95, s.height * 0.68);
     canvas.drawPath(
         Path()
           ..moveTo(arm.dx - 6, arm.dy)
@@ -104,7 +104,7 @@ extension _Eggs on FeltPatternPainter {
     }
 
     // A bottle with a message in it, bobbing.
-    final bottle = Offset(s.width * 0.47, s.height * 0.9);
+    final bottle = Offset(s.width * 0.55, s.height * 0.66);
     canvas.save();
     canvas.translate(bottle.dx, bottle.dy);
     canvas.rotate(-0.5);
@@ -123,7 +123,7 @@ extension _Eggs on FeltPatternPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    words.paint(canvas, Offset(s.width * 0.62, s.height * 0.92));
+    words.paint(canvas, Offset(s.width * 0.56, s.height * 0.73));
   }
 
   /// The campaign map's: a fort on the hill [top], a camp of tents and
@@ -155,7 +155,7 @@ extension _Eggs on FeltPatternPainter {
         fill);
 
     // A camp: three tents in a row.
-    final camp = Offset(s.width * 0.14, s.height * 0.86);
+    final camp = Offset(s.width * 0.5, s.height * 0.42);
     for (var k = 0; k < 3; k++) {
       final t = camp + Offset(k * 13.0, k.isOdd ? 3 : 0);
       canvas.drawPath(

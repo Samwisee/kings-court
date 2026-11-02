@@ -183,7 +183,7 @@ extension _MorePatterns on FeltPatternPainter {
     }
     island.close();
     // The land in parchment, the sea round it the table's own blue.
-    canvas.drawPath(island, Paint()..color = const Color(0xFFE3CC97).withValues(alpha: math.min(0.5, ink.a * 1.7)));
+    canvas.drawPath(island, Paint()..color = const Color(0xFFE6CF98).withValues(alpha: math.min(0.82, ink.a * 2.7)));
     canvas.drawPath(island, line);
     for (var k = 0; k < 60; k++) {
       final a = k / 60 * math.pi * 2;
