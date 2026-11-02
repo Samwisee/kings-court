@@ -119,7 +119,12 @@ class _TileState extends State<_Tile> {
                         scale: _hover ? 1.05 : 1,
                         duration: const Duration(milliseconds: 160),
                         // Its own layer: drawn once, not again as the shelves scroll.
-                        child: RepaintBoundary(child: widget.child)),
+                        // Drawn once into a picture and shown as that
+                        // from then on: scrolling, or the tile lifting
+                        // under the pointer, doesn't draw its little
+                        // cards again.
+                        child: SnapshotWidget(
+                            controller: _Store.snapshots, mode: SnapshotMode.permissive, child: widget.child)),
                   ),
                   if (widget.inUse)
                     Positioned(left: 6, top: 6, child: _Badge(text: 'In use', fill: skin.gold, ink: skin.goldInk))
@@ -169,6 +174,9 @@ abstract final class _Store {
   static const caseRadius = 20.0;
   static const tileRadius = 12.0;
   static const gutter = 12.0;
+
+  /// Every tile's picture kept as a snapshot.
+  static final snapshots = SnapshotController(allowSnapshotting: true);
 }
 
 /// A heading over a shelf, with an offer beside it if there is one.

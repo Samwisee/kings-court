@@ -147,6 +147,29 @@ class _LiveryPageState extends State<_LiveryPage> {
     FrameStats.at = 'livery';
   }
 
+  /// The shelves wait for the page to finish coming in: building every
+  /// tile in the same frame as the window was the page's slowest frame.
+  bool _shelvesIn = false;
+  Animation<double>? _coming;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shelvesIn || _coming != null) return;
+    final coming = ModalRoute.of(context)?.animation;
+    if (coming == null || coming.isCompleted) {
+      _shelvesIn = true;
+      return;
+    }
+    _coming = coming;
+    void arrived(AnimationStatus s) {
+      if (s != AnimationStatus.completed) return;
+      coming.removeStatusListener(arrived);
+      if (mounted) setState(() => _shelvesIn = true);
+    }
+    coming.addStatusListener(arrived);
+  }
+
   @override
   void dispose() {
     // Left without wearing it: the page's own colour back.
@@ -208,8 +231,15 @@ class _LiveryPageState extends State<_LiveryPage> {
                             Expanded(
                               child: _LiveryScrollbar(
                                 controller: _scroll,
-                                child: CustomScrollView(key: const ValueKey('livery-shelves'), controller: _scroll, slivers: [
-                                  SliverPadding(
+                                child: CustomScrollView(
+                                    key: const ValueKey('livery-shelves'),
+                                    controller: _scroll,
+                                    // Only a little beyond what shows is built
+                                    // ahead: a new section builds about a
+                                    // screenful of tiles, not two.
+                                    cacheExtent: 80,
+                                    slivers: [
+                                  if (_shelvesIn) SliverPadding(
                                     // Room on the right for the scrollbar.
                                     padding: const EdgeInsets.fromLTRB(_Store.gutter, 14, _Store.gutter + 10, 16),
                                     sliver: SliverMainAxisGroup(
