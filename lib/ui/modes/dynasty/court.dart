@@ -274,8 +274,10 @@ class _CourtState extends State<_Court> {
   }
 }
 
-/// A project in the pool: its suit, name, how far along, the task its next
-/// stage deals, and what it brings or costs.
+/// A project in the pool, as a task card in the style's own task cards:
+/// its suit and name, how far along (a pip a stage), the task its next stage
+/// deals, and what it brings or costs. Chosen: ringed in the accent and
+/// lifted a little, as a task taken is.
 class _ProjectCard extends StatelessWidget {
   const _ProjectCard(
       {required this.work, required this.chosen, required this.enabled, required this.onTap});
@@ -286,57 +288,77 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final look = skin.taskLook;
     final p = work.project;
+    const radius = 10.0;
     return Semantics(
       button: true,
       selected: chosen,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.45,
-        child: Material(
-          color: chosen ? skin.gold.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: chosen ? skin.gold : skin.gold.withValues(alpha: 0.35), width: chosen ? 2 : 1),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
+      label: '${p.title}: ${work.task}',
+      child: AnimatedScale(
+        scale: chosen ? 1.02 : 1,
+        duration: const Duration(milliseconds: 140),
+        child: Opacity(
+          opacity: enabled ? 1 : 0.45,
+          child: GestureDetector(
             onTap: enabled ? onTap : null,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                SizedBox(
-                  width: 30,
-                  child: SuitText(p.mark, keywords: false, style: const TextStyle(fontSize: 22)),
+            child: MouseRegion(
+              cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: look.face,
+                  borderRadius: BorderRadius.circular(radius),
+                  border: Border.all(
+                      color: chosen ? skin.gold : (look.frameColour ?? skin.outlineColour),
+                      width: chosen ? 3 : 1.5),
+                  boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 3))],
                 ),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      Expanded(
-                        child: Text(p.title,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                                color: p.keystone ? skin.gold : Colors.white)),
-                      ),
-                      for (var i = 0; i < p.stages.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: Icon(i < work.stage ? Icons.circle : Icons.circle_outlined,
-                              size: 10, color: skin.gold),
+                child: CustomPaint(
+                  // What the style prints on its task cards.
+                  painter: TaskFacePainter.prints(look)
+                      ? TaskFacePainter(look, reach: EdgeInsets.zero, radius: radius - 2)
+                      : null,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        SuitText(p.mark, keywords: false, style: const TextStyle(fontSize: 18, height: 1)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(p.title,
+                              style: TextStyle(
+                                  fontFamily: skin.displayFont,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  height: 1.15,
+                                  color: p.keystone ? (look.crown ?? skin.goldDeep) : look.ink)),
                         ),
+                        // How far along: a pip a stage, filled when done.
+                        for (var i = 0; i < p.stages.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 3),
+                            child: Icon(i < work.stage ? Icons.circle : Icons.circle_outlined,
+                                size: 10, color: look.crown ?? skin.goldDeep),
+                          ),
+                        if (chosen) ...[
+                          const SizedBox(width: 6),
+                          Icon(Icons.check_circle_rounded, size: 18, color: skin.goldDeep),
+                        ],
+                      ]),
+                      const SizedBox(height: 6),
+                      // The task this stage deals, as a task card words it.
+                      SuitText(work.task,
+                          style: TextStyle(fontSize: 14.5, height: 1.25, fontWeight: FontWeight.w600, color: look.ink)),
+                      const SizedBox(height: 5),
+                      SuitText(
+                          '${p.keystone ? 'Wins the act. ' : ''}Done: ${effectWords(p.reward)}. '
+                          'Failed: ${effectWords(p.failure)}.',
+                          keywords: false,
+                          style: TextStyle(fontSize: 12.5, height: 1.25, color: look.inkSoft)),
                     ]),
-                    const SizedBox(height: 3),
-                    SuitText(work.task,
-                        style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
-                    const SizedBox(height: 3),
-                    SuitText(
-                        '${p.keystone ? 'Wins the act. ' : ''}Done: ${effectWords(p.reward)}. '
-                        'Failed: ${effectWords(p.failure)}.',
-                        keywords: false,
-                        style: TextStyle(fontSize: 12.5, color: Colors.white.withValues(alpha: 0.65))),
-                  ]),
+                  ),
                 ),
-              ]),
+              ),
             ),
           ),
         ),

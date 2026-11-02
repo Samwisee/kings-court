@@ -48,7 +48,9 @@ class GameBar extends StatelessWidget implements PreferredSizeWidget {
       ? 'Chapter ${game.chapter! + 1}'
       : game.isTutorial
           ? 'Lesson ${game.lesson + 1}'
-          : 'Round ${game.roundNumber}';
+          : game.isDynasty
+              ? 'Hand ${game.roundNumber}'
+              : 'Round ${game.roundNumber}';
 
   /// At a real table, whoever's picking may pass, once a round: their name.
   static String? passerOf(GameState game) {

@@ -341,7 +341,9 @@ class _ThroneRoomState extends State<ThroneRoom> {
             child: Text(_done ? 'Tap to continue' : 'Tap to hear more',
                 style: const TextStyle(fontSize: 12, color: Colors.white38)),
           ),
-        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        // The throne between the answers: no wider than a phone held
+        // sideways, so on a laptop the answers sit by the throne.
+        Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 620), child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
           slot(widget.left),
           SizedBox(
             width: 116,
@@ -361,7 +363,7 @@ class _ThroneRoomState extends State<ThroneRoom> {
             ]),
           ),
           slot(widget.right),
-        ]),
+        ]))),
       ]),
     );
   }
