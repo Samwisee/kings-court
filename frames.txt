@@ -1,0 +1,353 @@
+scene                                                      frames dropped  gap ms  work ms:   p50   p90   p99    max    >8  >16
+starting up                                                    26      39   583.4             3.0  15.4 418.6  418.6     3    2   slowest [418.6, 17.2, 15.4, 4.4, 3.9]
+    slow frame 418.6 ms: BUILD 357.5, COMPOSITING 31.3, LAYOUT 18.3, PAINT (root) 5.4, SEMANTICS 1.7, Semantics.updateChildren 1.5, UPDATING COMPOSITING BITS 0.6, RenderSemanticsAnnotations.getDryBaseline 0.4
+    slow frame 15.4 ms: BUILD 11.5, PAINT 0.7, Semantics.updateChildren 0.6, LAYOUT 0.6, COMPOSITING 0.5, Animate 0.4, SEMANTICS 0.3, Semantics.ensureSemanticsNode 0.2
+    slow frame 17.2 ms: LAYOUT 13.2, BUILD 1.3, Animate 0.8, COMPOSITING 0.5, Semantics.updateChildren 0.4, RenderSemanticsAnnotations.getDryBaseline 0.2, SEMANTICS (root) 0.2, LAYOUT (root) 0.1
+    long frame at 0.00 s: 560 ms (work 431, drawing 127)  engine p90 32.2 max 560.0
+front page: the crown, the flourish, the glitter               26     225  1066.6             2.0   6.4  31.3   31.3     2    2   slowest [31.3, 24.5, 6.4, 5, 2.5]
+    slow frame 24.5 ms: PAINT 18.2, SEMANTICS 2.3, BUILD 1.3, COMPOSITING 0.5, Semantics.ensureGeometry 0.4, Semantics.ensureSemanticsNode 0.4, Semantics.updateChildren 0.3, LAYOUT 0.2
+    slow frame 31.3 ms: BUILD 17.4, PAINT 7.0, SEMANTICS 3.1, Semantics.updateChildren 1.0, COMPOSITING 0.8, LAYOUT (root) 0.5, Semantics.ensureGeometry 0.5, Animate 0.3
+    long frame at 0.28 s: 1073 ms (work 26, drawing 1047)
+    long frame at 1.36 s: 687 ms (work 7, drawing 679)
+    long frame at 2.04 s: 411 ms (work 34, drawing 376)
+    long frame at 2.46 s: 222 ms (work 6, drawing 216)
+    long frame at 2.69 s: 192 ms (work 3, drawing 188)
+    long frame at 2.89 s: 195 ms (work 2, drawing 192)
+    long frame at 3.08 s: 190 ms (work 2, drawing 188)
+    long frame at 3.27 s: 193 ms (work 2, drawing 191)
+    long frame at 3.47 s: 187 ms (work 2, drawing 185)
+    long frame at 3.66 s: 193 ms (work 2, drawing 191)
+    long frame at 3.85 s: 189 ms (work 2, drawing 188)
+    long frame at 4.04 s: 188 ms (work 2, drawing 186)
+    long frame at 4.23 s: 188 ms (work 2, drawing 186)  engine p90 410.5 max 1072.8
+setup: its panels sliding in                                  130      97   233.3             0.9   2.8  23.9   30.4     4    2   slowest [30.4, 23.9, 14.8, 9.4, 8]
+    slow frame 30.4 ms: BUILD 16.0, LAYOUT (root) 11.6, PAINT 1.1, Semantics.updateChildren 0.3, Semantics.ensureSemanticsNode 0.2, COMPOSITING 0.2, Semantics.ensureGeometry 0.2, UPDATING COMPOSITING BITS (root) 0.1
+    slow frame 14.8 ms: BUILD 7.2, LAYOUT 5.3, PAINT (root) 0.7, Semantics.ensureGeometry 0.4, Semantics.updateChildren 0.3, Animate 0.2, UPDATING COMPOSITING BITS (root) 0.1, SEMANTICS (root) 0.1
+    slow frame 23.9 ms: BUILD 11.2, LAYOUT 7.9, PAINT 1.4, SEMANTICS 0.6, Semantics.updateChildren 0.6, COMPOSITING 0.4, Semantics.ensureSemanticsNode 0.3, LAYOUT (root) 0.2
+    long frame at 0.00 s: 220 ms (work 32, drawing 188)
+    long frame at 0.22 s: 144 ms (work 9, drawing 135)
+    long frame at 1.31 s: 64 ms (work 3, drawing 60)
+    long frame at 2.20 s: 58 ms (work 9, drawing 48)
+    long frame at 2.40 s: 142 ms (work 10, drawing 132)
+    long frame at 2.63 s: 73 ms (work 5, drawing 68)
+    long frame at 3.03 s: 50 ms (work 2, drawing 49)  engine p90 36.9 max 220.0
+Start: its first second (the walk in begins)                   12      22   300.1             2.1  20.0  75.7   75.7     4    3   slowest [75.7, 20, 19.9, 11.5, 2.9]
+    slow frame 75.7 ms: BUILD 41.3, LAYOUT 13.7, PAINT 9.4, SEMANTICS 4.2, Semantics.updateChildren 3.5, FINALIZE TREE 1.1, Semantics.ensureGeometry 0.9, Semantics.ensureSemanticsNode 0.6
+    slow frame 19.9 ms: PAINT 6.2, BUILD 3.2, SEMANTICS 3.2, FINALIZE TREE 2.3, LAYOUT 2.1, Semantics.updateChildren 1.2, Animate 0.5, Semantics.ensureSemanticsNode 0.3
+    slow frame 20.0 ms: BUILD 10.5, PAINT (root) 4.2, LAYOUT (root) 2.6, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.3, SEMANTICS 0.3, Animate 0.3, COMPOSITING 0.2
+    long frame at 0.04 s: 104 ms (work 4, drawing 100)
+    long frame at 0.45 s: 59 ms (work 2, drawing 57)
+    long frame at 0.51 s: 62 ms (work 30, drawing 31)
+    long frame at 0.57 s: 291 ms (work 77, drawing 213)
+    long frame at 0.86 s: 281 ms (work 21, drawing 260)
+    long frame at 1.15 s: 230 ms (work 21, drawing 209)  engine p90 280.9 max 290.6
+the walk in, its next two seconds                              46      21   183.3             3.1   5.1  18.3   18.3     2    1   slowest [18.3, 12.7, 6.4, 6.1, 5.1]
+    slow frame 18.3 ms: BUILD 9.1, PAINT 2.2, LAYOUT (root) 2.1, SEMANTICS 1.6, Semantics.updateChildren 1.4, Semantics.ensureGeometry 0.6, Animate 0.3, Semantics.ensureSemanticsNode 0.3
+    slow frame 12.7 ms: BUILD 7.4, LAYOUT (root) 1.8, PAINT 1.3, Semantics.updateChildren 0.6, Semantics.ensureGeometry 0.5, Animate 0.4, Semantics.ensureSemanticsNode 0.3, COMPOSITING 0.2
+    long frame at 0.00 s: 107 ms (work 19, drawing 87)
+    long frame at 0.11 s: 180 ms (work 7, drawing 172)
+    long frame at 0.29 s: 136 ms (work 5, drawing 130)
+    long frame at 1.25 s: 51 ms (work 5, drawing 45)
+    long frame at 1.71 s: 67 ms (work 4, drawing 63)  engine p90 50.7 max 179.9
+crowning the King, the deal                                    73      10   150.1             3.7   7.0  43.0   43.0     5    3   slowest [43, 33.6, 23.5, 9.4, 8.2]
+    slow frame 43.0 ms: LAYOUT 33.7, PAINT (root) 4.2, SEMANTICS 1.1, Animate 1.1, BUILD 1.0, Semantics.updateChildren 0.5, Semantics.ensureGeometry 0.4, COMPOSITING 0.3
+    slow frame 33.6 ms: BUILD 17.3, LAYOUT 7.6, SEMANTICS 3.1, PAINT (root) 3.0, Semantics.updateChildren 0.8, Semantics.ensureGeometry 0.3, FINALIZE TREE 0.3, Semantics.ensureSemanticsNode 0.3
+    slow frame 23.5 ms: BUILD 16.1, PAINT 2.8, LAYOUT (root) 1.8, Semantics.updateChildren 0.9, SEMANTICS 0.5, Animate 0.4, COMPOSITING 0.3, Semantics.ensureGeometry 0.3
+    long frame at 0.25 s: 145 ms (work 9, drawing 136)
+    long frame at 0.40 s: 58 ms (work 8, drawing 50)
+    long frame at 0.46 s: 62 ms (work 7, drawing 55)
+    long frame at 0.54 s: 59 ms (work 5, drawing 54)
+    long frame at 0.60 s: 104 ms (work 44, drawing 60)
+    long frame at 0.71 s: 68 ms (work 5, drawing 62)
+    long frame at 0.78 s: 112 ms (work 8, drawing 103)
+    long frame at 0.89 s: 55 ms (work 9, drawing 45)
+    long frame at 0.95 s: 52 ms (work 5, drawing 47)
+    long frame at 1.04 s: 128 ms (work 35, drawing 93)
+    long frame at 1.17 s: 121 ms (work 25, drawing 96)
+    long frame at 1.29 s: 50 ms (work 6, drawing 44)
+    long frame at 1.72 s: 121 ms (work 6, drawing 114)
+    long frame at 1.85 s: 57 ms (work 6, drawing 51)
+    long frame at 1.90 s: 53 ms (work 7, drawing 45)
+    long frame at 1.96 s: 52 ms (work 6, drawing 46)
+    long frame at 2.06 s: 52 ms (work 7, drawing 45)
+    long frame at 2.50 s: 50 ms (work 5, drawing 45)
+    long frame at 3.19 s: 54 ms (work 3, drawing 50)
+    long frame at 3.25 s: 57 ms (work 3, drawing 54)  engine p90 66.0 max 145.3
+picking tasks, in detail (slower: every widget timed)          75      20   233.4             0.9  61.2  76.5   76.5    18   12   slowest [76.5, 75.9, 71.7, 67.1, 64.1]
+    thinking: 64 slices, at most 1 between two frames, the longest 6.4 ms
+    slow frame 67.1 ms: Positioned 3.5, RenderParagraph 2.1, Transform 1.9, Text 1.8, Semantics 1.7, _GestureSemantics 1.7, SizedBox 1.7, RenderPositionedBox 1.5
+    slow frame 64.1 ms: Positioned 2.6, RenderParagraph 2.1, RenderTransform 1.9, Transform 1.9, SEMANTICS 1.9, RenderConstrainedBox 1.8, Stack 1.6, IgnorePointer 1.4
+    slow frame 75.9 ms: KeyedSubtree 3.1, Positioned 2.9, RenderConstrainedBox 2.3, RenderTransform 2.3, CustomPaint 2.2, Transform 2.0, SizedBox 1.9, RenderParagraph 1.8
+    slow frame 71.7 ms: Positioned 2.4, RenderConstrainedBox 2.4, RenderTransform 2.3, SEMANTICS 2.3, Transform 2.2, Padding 2.2, RenderParagraph 1.8, Text 1.7
+    slow frame 76.5 ms: Positioned 2.9, RenderTransform 2.5, Text 2.2, Padding 1.9, SizedBox 1.9, _Side 1.9, RenderConstrainedBox 1.8, SEMANTICS 1.8
+    slow frame 19.8 ms: RenderConstrainedBox 2.1, RenderTransform 0.8, SEMANTICS (root) 0.8, RenderIgnorePointer 0.7, _Side 0.7, SizedBox 0.6, CustomPaint 0.6, TweenAnimationBuilder<double> 0.6
+    slow frame 61.2 ms: Positioned 3.0, OpponentsRow 2.7, SEMANTICS 1.9, RenderTransform 1.7, RenderConstrainedBox 1.5, Semantics 1.5, SizedBox 1.4, Stack 1.4
+    slow frame 14.0 ms: RenderTransform 1.4, RenderConstrainedBox 1.3, RenderMouseRegion 0.6, Semantics.updateChildren 0.6, RenderCustomPaint 0.5, Text 0.4, Transform 0.4, Semantics.ensureGeometry 0.4
+    slow frame 62.3 ms: _FocusInheritedScope 3.5, Semantics.updateChildren 3.0, Transform 2.4, Positioned 1.9, RenderParagraph 1.9, SEMANTICS 1.6, Text 1.6, RenderConstrainedBox 1.5
+    slow frame 56.3 ms: RenderConstrainedBox 2.4, Positioned 2.2, Text 2.0, Semantics.updateChildren 1.8, RenderTransform 1.7, Transform 1.5, SEMANTICS 1.5, RenderParagraph 1.5
+    slow frame 63.2 ms: Positioned 2.3, _GestureSemantics 2.2, Transform 2.1, SizedBox 2.1, Semantics.updateChildren 1.9, RenderConstrainedBox 1.7, RenderTransform 1.7, SEMANTICS 1.5
+    slow frame 23.8 ms: SEMANTICS 2.2, RenderTransform 2.1, RenderConstrainedBox 1.7, Semantics.updateChildren 1.2, RenderStack 1.0, RenderPadding 0.8, RenderSemanticsGestureHandler 0.8, RenderIgnorePointer 0.6
+    long frame at 0.00 s: 58 ms (work 4, drawing 55)
+    long frame at 0.06 s: 123 ms (work 69, drawing 54)
+    long frame at 0.19 s: 73 ms (work 11, drawing 62)
+    long frame at 0.27 s: 65 ms (work 11, drawing 54)
+    long frame at 0.34 s: 62 ms (work 10, drawing 52)
+    long frame at 0.40 s: 57 ms (work 2, drawing 55)
+    long frame at 0.46 s: 55 ms (work 1, drawing 53)
+    long frame at 0.52 s: 56 ms (work 2, drawing 55)
+    long frame at 0.58 s: 54 ms (work 1, drawing 53)
+    long frame at 0.63 s: 54 ms (work 1, drawing 53)
+    long frame at 0.69 s: 51 ms (work 1, drawing 50)
+    long frame at 0.74 s: 55 ms (work 1, drawing 53)
+    long frame at 0.79 s: 61 ms (work 1, drawing 60)
+    long frame at 0.86 s: 54 ms (work 1, drawing 53)
+    long frame at 0.91 s: 53 ms (work 1, drawing 52)
+    long frame at 0.96 s: 56 ms (work 1, drawing 54)
+    long frame at 1.02 s: 54 ms (work 2, drawing 52)
+    long frame at 1.08 s: 54 ms (work 1, drawing 52)
+    long frame at 1.13 s: 54 ms (work 2, drawing 52)
+    long frame at 1.19 s: 54 ms (work 2, drawing 52)
+    own time by name (ms, summed over the scene): RenderTransform 32, RenderConstrainedBox 30, Positioned 26, SEMANTICS 23, Semantics.updateChildren 18, Transform 18, Text 16, COMPOSITING 15, SizedBox 15, RenderParagraph 15, _Side 13, CustomPaint 13, _FocusInheritedScope 13, Padding 12, Stack 12, RenderStack 12, Semantics 11, AnimatedPositioned 11, RenderPadding 11, KeyedSubtree 11, Listener0 11, _GestureSemantics 11, BUILD 11, SEMANTICS (root) 10, AnimatedScale 9, RawGestureDetector 9, MouseRegion 8, DecoratedBox 8, RenderSemanticsAnnotations 8, RenderCustomPaint 8, RenderIgnorePointer 8, IgnorePointer 8, Semantics.ensureGeometry 8, Opacity 8, LAYOUT (root) 8, GestureDetector 7, _RenderLayoutBuilder 7, PAINT (root) 7, RenderDecoratedBox 7, ConstrainedBox 6, Container 6, Focus 6, RenderMouseRegion 6, ScaleTransition 6, Visibility 6  engine p90 104.7 max 224.7
+picking tasks: tasks flying to their seats                     39       3    83.3             2.4  16.6  23.8   23.8     5    4   slowest [23.8, 23.4, 19.6, 16.6, 14.7]
+    thinking: 32 slices, at most 1 between two frames, the longest 5.2 ms
+    slow frame 23.4 ms: BUILD 13.5, LAYOUT (root) 3.1, PAINT (root) 2.1, Semantics.updateChildren 1.5, SEMANTICS 1.4, Semantics.ensureGeometry 0.6, COMPOSITING 0.3, Semantics.ensureSemanticsNode 0.2
+    slow frame 23.8 ms: BUILD 14.3, LAYOUT 3.0, PAINT (root) 2.2, SEMANTICS 1.4, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.4, SEMANTICS (root) 0.4, COMPOSITING 0.2
+    slow frame 16.6 ms: BUILD 9.3, PAINT 1.7, SEMANTICS 1.4, LAYOUT (root) 1.4, Semantics.updateChildren 1.0, FINALIZE TREE 0.6, Semantics.ensureGeometry 0.4, Semantics.ensureSemanticsNode 0.3
+    slow frame 14.7 ms: BUILD 8.7, PAINT (root) 1.3, SEMANTICS 1.0, LAYOUT 0.9, Semantics.updateChildren 0.9, FINALIZE TREE 0.6, Semantics.ensureGeometry 0.4, COMPOSITING 0.2
+    slow frame 19.6 ms: BUILD 10.0, LAYOUT (root) 3.5, PAINT (root) 2.0, SEMANTICS (root) 1.5, Semantics.updateChildren 1.1, COMPOSITING 0.3, Semantics.ensureGeometry 0.3, FINALIZE TREE 0.3
+    long frame at 0.00 s: 74 ms (work 25, drawing 49)
+    long frame at 0.08 s: 75 ms (work 25, drawing 50)
+    long frame at 0.15 s: 70 ms (work 17, drawing 53)
+    long frame at 0.22 s: 59 ms (work 6, drawing 53)
+    long frame at 0.29 s: 63 ms (work 6, drawing 57)
+    long frame at 0.35 s: 61 ms (work 5, drawing 56)
+    long frame at 0.42 s: 60 ms (work 7, drawing 54)
+    long frame at 0.48 s: 63 ms (work 5, drawing 58)
+    long frame at 0.54 s: 60 ms (work 6, drawing 54)
+    long frame at 0.60 s: 53 ms (work 5, drawing 48)
+    long frame at 0.66 s: 58 ms (work 15, drawing 42)
+    long frame at 1.83 s: 60 ms (work 20, drawing 39)  engine p90 62.9 max 74.8
+tricks: cards played, flown to the piles                      418     190   233.3             0.8   3.6  16.7   29.8    14    7   slowest [29.8, 20.3, 17.7, 17.2, 16.7]
+    thinking: 195 slices, at most 1 between two frames, the longest 5.7 ms
+    slow frame 20.3 ms: BUILD 11.3, LAYOUT (root) 2.9, PAINT 2.1, SEMANTICS (root) 1.5, Semantics.updateChildren 1.0, Semantics.ensureGeometry 0.4, FINALIZE TREE 0.4, Animate 0.2
+    slow frame 16.6 ms: BUILD 9.4, LAYOUT 2.5, PAINT (root) 1.4, SEMANTICS 1.1, Semantics.updateChildren 0.9, Animate 0.2, Semantics.ensureGeometry 0.2, COMPOSITING 0.2
+    slow frame 17.2 ms: BUILD 9.5, LAYOUT (root) 2.3, SEMANTICS (root) 2.0, PAINT (root) 1.4, Semantics.updateChildren 0.9, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, UPDATING COMPOSITING BITS (root) 0.1
+    slow frame 17.7 ms: BUILD 9.5, LAYOUT 2.4, PAINT 1.5, Semantics.updateChildren 1.3, SEMANTICS 1.2, Semantics.ensureGeometry 0.5, Semantics.ensureSemanticsNode 0.3, FINALIZE TREE 0.3
+    slow frame 16.6 ms: BUILD 8.3, LAYOUT 3.3, PAINT (root) 1.5, SEMANTICS 1.2, Semantics.updateChildren 0.9, Semantics.ensureGeometry 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 13.9 ms: BUILD 7.9, LAYOUT (root) 1.4, SEMANTICS (root) 1.3, PAINT 1.2, Semantics.updateChildren 0.8, COMPOSITING 0.3, Semantics.ensureGeometry 0.3, Animate 0.2
+    slow frame 13.7 ms: BUILD 6.9, LAYOUT (root) 2.2, PAINT (root) 1.3, SEMANTICS 1.1, Semantics.updateChildren 0.8, Semantics.ensureGeometry 0.5, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 13.5 ms: BUILD 7.1, LAYOUT (root) 2.0, SEMANTICS 1.2, PAINT (root) 1.2, Semantics.updateChildren 0.8, COMPOSITING 0.3, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2
+    slow frame 16.7 ms: BUILD 7.8, LAYOUT (root) 2.7, PAINT 1.8, SEMANTICS 1.8, Semantics.updateChildren 1.4, COMPOSITING 0.3, Semantics.ensureGeometry 0.2, SEMANTICS (root) 0.2
+    slow frame 15.0 ms: BUILD 8.2, LAYOUT (root) 1.8, PAINT (root) 1.5, SEMANTICS 1.1, Semantics.updateChildren 0.9, FINALIZE TREE 0.4, Semantics.ensureSemanticsNode 0.3, COMPOSITING 0.2
+    slow frame 14.8 ms: BUILD 8.5, LAYOUT 2.2, PAINT 1.5, Semantics.updateChildren 0.9, Semantics.ensureGeometry 0.3, SEMANTICS (root) 0.3, Semantics.ensureSemanticsNode 0.2, FINALIZE TREE 0.2
+    slow frame 29.8 ms: BUILD 17.8, LAYOUT 7.7, PAINT 1.3, Semantics.updateChildren 0.8, Semantics.ensureGeometry 0.4, SEMANTICS 0.3, FINALIZE TREE 0.3, LAYOUT (root) 0.2
+    long frame at 0.05 s: 66 ms (work 21, drawing 45)
+    long frame at 0.12 s: 51 ms (work 5, drawing 46)
+    long frame at 0.23 s: 59 ms (work 5, drawing 54)
+    long frame at 0.29 s: 59 ms (work 7, drawing 52)
+    long frame at 0.35 s: 61 ms (work 17, drawing 43)
+    long frame at 1.31 s: 53 ms (work 2, drawing 51)
+    long frame at 3.15 s: 50 ms (work 1, drawing 48)
+    long frame at 3.93 s: 52 ms (work 19, drawing 33)
+    long frame at 4.90 s: 66 ms (work 4, drawing 62)
+    long frame at 5.24 s: 64 ms (work 17, drawing 46)
+    long frame at 5.35 s: 51 ms (work 15, drawing 36)
+    long frame at 10.30 s: 79 ms (work 18, drawing 61)
+    long frame at 11.17 s: 60 ms (work 3, drawing 57)
+    long frame at 11.28 s: 58 ms (work 4, drawing 54)
+    long frame at 11.33 s: 109 ms (work 5, drawing 103)
+    long frame at 11.45 s: 51 ms (work 9, drawing 42)
+    long frame at 12.17 s: 76 ms (work 30, drawing 45)
+    long frame at 12.25 s: 184 ms (work 13, drawing 171)
+    long frame at 12.44 s: 71 ms (work 6, drawing 65)
+    long frame at 12.51 s: 243 ms (work 7, drawing 235)  engine p90 55.4 max 242.9
+the card tracker sliding in and out                            52       0    66.7             0.7   0.9   1.2    1.2     0    0   slowest [1.2, 1, 1, 1, 0.9]
+    long frame at 0.00 s: 56 ms (work 2, drawing 54)
+    long frame at 0.06 s: 55 ms (work 2, drawing 53)
+    long frame at 0.11 s: 54 ms (work 1, drawing 52)
+    long frame at 0.17 s: 54 ms (work 1, drawing 52)
+    long frame at 0.22 s: 55 ms (work 1, drawing 53)
+    long frame at 0.28 s: 56 ms (work 1, drawing 54)
+    long frame at 0.33 s: 55 ms (work 2, drawing 53)
+    long frame at 0.39 s: 56 ms (work 2, drawing 54)
+    long frame at 0.45 s: 55 ms (work 2, drawing 53)
+    long frame at 0.50 s: 55 ms (work 1, drawing 53)
+    long frame at 0.56 s: 54 ms (work 2, drawing 52)
+    long frame at 0.61 s: 55 ms (work 2, drawing 53)
+    long frame at 0.67 s: 55 ms (work 2, drawing 53)
+    long frame at 0.72 s: 54 ms (work 1, drawing 52)
+    long frame at 0.78 s: 54 ms (work 1, drawing 52)
+    long frame at 0.83 s: 59 ms (work 4, drawing 55)
+    long frame at 0.89 s: 55 ms (work 1, drawing 53)
+    long frame at 0.95 s: 56 ms (work 1, drawing 54)
+    long frame at 1.00 s: 55 ms (work 1, drawing 53)
+    long frame at 1.06 s: 54 ms (work 2, drawing 52)  engine p90 55.8 max 58.6
+the rest of the round, the tasks judged, the outcome           74       0    66.8             0.7   0.9   1.8    1.8     0    0   slowest [1.8, 1.3, 1.1, 1, 0.9]
+    long frame at 0.00 s: 56 ms (work 2, drawing 53)
+    long frame at 0.06 s: 56 ms (work 1, drawing 54)
+    long frame at 0.11 s: 54 ms (work 1, drawing 52)
+    long frame at 0.17 s: 55 ms (work 2, drawing 53)
+    long frame at 0.22 s: 54 ms (work 2, drawing 53)
+    long frame at 0.28 s: 53 ms (work 2, drawing 52)
+    long frame at 0.33 s: 54 ms (work 1, drawing 52)
+    long frame at 0.39 s: 53 ms (work 1, drawing 52)
+    long frame at 0.44 s: 56 ms (work 1, drawing 54)
+    long frame at 0.50 s: 55 ms (work 2, drawing 53)
+    long frame at 0.55 s: 54 ms (work 2, drawing 53)
+    long frame at 0.61 s: 54 ms (work 1, drawing 52)
+    long frame at 0.66 s: 55 ms (work 2, drawing 53)
+    long frame at 0.72 s: 54 ms (work 1, drawing 52)
+    long frame at 0.77 s: 56 ms (work 2, drawing 54)
+    long frame at 0.83 s: 55 ms (work 1, drawing 54)
+    long frame at 0.89 s: 54 ms (work 1, drawing 53)
+    long frame at 0.94 s: 56 ms (work 1, drawing 54)
+    long frame at 1.00 s: 55 ms (work 1, drawing 53)
+    long frame at 1.05 s: 54 ms (work 2, drawing 52)  engine p90 55.8 max 59.1
+the menu opening and closing                                   41       0    66.8             0.7   0.9   1.3    1.3     0    0   slowest [1.3, 1, 0.9, 0.9, 0.9]
+    long frame at 0.00 s: 52 ms (work 1, drawing 51)
+    long frame at 0.05 s: 55 ms (work 2, drawing 54)
+    long frame at 0.11 s: 54 ms (work 1, drawing 52)
+    long frame at 0.16 s: 52 ms (work 1, drawing 51)
+    long frame at 0.22 s: 54 ms (work 1, drawing 52)
+    long frame at 0.27 s: 55 ms (work 1, drawing 53)
+    long frame at 0.33 s: 54 ms (work 1, drawing 53)
+    long frame at 0.38 s: 54 ms (work 1, drawing 53)
+    long frame at 0.44 s: 53 ms (work 2, drawing 51)
+    long frame at 0.49 s: 55 ms (work 1, drawing 53)
+    long frame at 0.55 s: 54 ms (work 2, drawing 52)
+    long frame at 0.60 s: 53 ms (work 1, drawing 51)
+    long frame at 0.65 s: 55 ms (work 2, drawing 53)
+    long frame at 0.71 s: 55 ms (work 1, drawing 53)
+    long frame at 0.76 s: 54 ms (work 2, drawing 52)
+    long frame at 0.82 s: 57 ms (work 2, drawing 55)
+    long frame at 0.88 s: 53 ms (work 2, drawing 51)
+    long frame at 0.93 s: 54 ms (work 1, drawing 52)
+    long frame at 0.98 s: 56 ms (work 1, drawing 54)
+    long frame at 1.04 s: 55 ms (work 2, drawing 53)  engine p90 55.5 max 58.7
+the Livery page: opening, each tab, a choice in each          600     193   916.7             1.1   7.5  40.5   87.5    53   18   slowest [87.5, 50.6, 42.3, 40.8, 40.8]
+    slow frame 87.5 ms: BUILD 63.9, LAYOUT (root) 20.1, SEMANTICS 0.8, Semantics.updateChildren 0.5, UPDATING COMPOSITING BITS 0.4, Semantics.ensureSemanticsNode 0.3, SEMANTICS (root) 0.3, COMPOSITING 0.2
+    slow frame 26.2 ms: PAINT (root) 14.1, SEMANTICS 5.2, Semantics.updateChildren 2.2, BUILD 1.6, Semantics.ensureGeometry 1.2, Semantics.ensureSemanticsNode 0.8, COMPOSITING 0.3, Animate 0.1
+    slow frame 40.8 ms: BUILD 19.1, LAYOUT (root) 10.3, PAINT (root) 6.3, SEMANTICS (root) 1.6, FINALIZE TREE 1.4, Semantics.updateChildren 0.6, Semantics.ensureGeometry 0.6, Animate 0.2
+    slow frame 13.8 ms: BUILD 11.3, Semantics.updateChildren 0.7, Semantics.ensureGeometry 0.6, Semantics.ensureSemanticsNode 0.4, SEMANTICS (root) 0.2, PAINT (root) 0.1, COMPOSITING 0.1, SEMANTICS 0.1
+    slow frame 15.6 ms: PAINT 4.6, BUILD 4.5, LAYOUT (root) 3.0, SEMANTICS 1.4, FINALIZE TREE 0.6, Animate 0.3, COMPOSITING 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 18.5 ms: PAINT (root) 6.3, BUILD 5.3, LAYOUT 4.2, SEMANTICS (root) 1.4, FINALIZE TREE 0.4, LAYOUT (root) 0.2, COMPOSITING 0.2, Animate 0.2
+    slow frame 29.9 ms: BUILD 21.2, LAYOUT 5.4, SEMANTICS (root) 1.5, PAINT 0.4, COMPOSITING 0.2, Semantics.updateChildren 0.2, Semantics.ensureGeometry 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 50.6 ms: BUILD 18.5, PAINT (root) 17.7, LAYOUT 9.0, FINALIZE TREE 1.8, SEMANTICS 1.6, Semantics.updateChildren 0.6, Semantics.ensureGeometry 0.4, COMPOSITING 0.3
+    slow frame 15.1 ms: PAINT (root) 12.9, SEMANTICS 1.1, LAYOUT (root) 0.3, Semantics.ensureSemanticsNode 0.2, UPDATING COMPOSITING BITS (root) 0.1, COMPOSITING 0.1, Semantics.ensureGeometry 0.1, Semantics.updateChildren 0.1
+    slow frame 15.5 ms: PAINT (root) 13.2, SEMANTICS 1.3, LAYOUT (root) 0.3, COMPOSITING 0.2, SEMANTICS (root) 0.2, LAYOUT 0.1, Semantics.updateChildren 0.1, Semantics.ensureGeometry 0.1
+    slow frame 36.7 ms: PAINT 21.6, BUILD 7.3, LAYOUT (root) 4.3, SEMANTICS 1.5, FINALIZE TREE 0.7, COMPOSITING 0.3, Animate 0.2, Semantics.ensureGeometry 0.2
+    slow frame 24.9 ms: PAINT (root) 12.2, BUILD 5.6, LAYOUT (root) 3.2, SEMANTICS 1.8, FINALIZE TREE 0.5, Semantics.updateChildren 0.4, Animate 0.3, Semantics.ensureGeometry 0.2
+    long frame at 0.00 s: 54 ms (work 1, drawing 53)
+    long frame at 0.06 s: 147 ms (work 92, drawing 54)
+    long frame at 0.21 s: 781 ms (work 29, drawing 752)
+    long frame at 0.99 s: 309 ms (work 8, drawing 301)
+    long frame at 1.30 s: 117 ms (work 3, drawing 114)
+    long frame at 1.42 s: 113 ms (work 2, drawing 111)
+    long frame at 1.54 s: 112 ms (work 2, drawing 110)
+    long frame at 1.65 s: 115 ms (work 2, drawing 113)
+    long frame at 1.77 s: 268 ms (work 42, drawing 226)
+    long frame at 2.04 s: 130 ms (work 4, drawing 125)
+    long frame at 2.17 s: 124 ms (work 2, drawing 122)
+    long frame at 2.30 s: 125 ms (work 2, drawing 122)
+    long frame at 2.42 s: 126 ms (work 2, drawing 123)
+    long frame at 2.55 s: 126 ms (work 2, drawing 124)
+    long frame at 2.69 s: 141 ms (work 16, drawing 125)
+    long frame at 2.84 s: 136 ms (work 3, drawing 132)
+    long frame at 2.97 s: 132 ms (work 2, drawing 128)
+    long frame at 3.11 s: 124 ms (work 2, drawing 122)
+    long frame at 3.23 s: 125 ms (work 2, drawing 123)
+    long frame at 3.36 s: 125 ms (work 2, drawing 122)  engine p90 269.8 max 909.9
+wearing the new look                                           72      53  1716.7             0.7   2.2  44.8   44.8     2    1   slowest [44.8, 15.5, 4, 2.6, 2.5]
+    slow frame 44.8 ms: BUILD 24.7, LAYOUT (root) 8.3, PAINT 7.1, Semantics.updateChildren 1.4, SEMANTICS 0.9, FINALIZE TREE 0.8, COMPOSITING 0.5, Semantics.ensureGeometry 0.4
+    slow frame 15.5 ms: SEMANTICS (root) 4.2, BUILD 3.2, FINALIZE TREE 2.8, Semantics.updateChildren 1.4, PAINT 1.3, LAYOUT 1.2, Animate 1.1, Semantics.ensureSemanticsNode 0.3
+    long frame at 0.00 s: 197 ms (work 47, drawing 149)
+    long frame at 0.20 s: 60 ms (work 17, drawing 42)  engine p90 35.6 max 196.7
+the night sky's felt: stars twinkling, one shooting           137      44   833.2             1.0   2.6 102.5  105.6     6    6   slowest [105.6, 102.5, 26.9, 19.4, 18.3]
+    slow frame 26.9 ms: BUILD 17.7, LAYOUT 6.5, SEMANTICS 1.1, UPDATING COMPOSITING BITS (root) 0.4, Semantics.updateChildren 0.4, COMPOSITING 0.3, PAINT (root) 0.2, Semantics.ensureSemanticsNode 0.2
+    slow frame 16.4 ms: PAINT (root) 10.7, SEMANTICS 2.2, BUILD 1.0, Semantics.updateChildren 0.9, Semantics.ensureSemanticsNode 0.3, COMPOSITING 0.3, Semantics.ensureGeometry 0.3, SEMANTICS (root) 0.2
+    slow frame 102.5 ms: BUILD 93.7, LAYOUT 3.0, PAINT (root) 2.5, Semantics.updateChildren 0.8, SEMANTICS 0.8, COMPOSITING 0.5, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2
+    slow frame 19.4 ms: PAINT (root) 9.2, BUILD 4.0, SEMANTICS 2.4, LAYOUT (root) 2.0, Semantics.updateChildren 0.7, Animate 0.6, Semantics.ensureGeometry 0.4, COMPOSITING 0.2
+    slow frame 105.6 ms: BUILD 65.6, LAYOUT (root) 20.6, PAINT 14.4, Semantics.updateChildren 1.3, FINALIZE TREE 0.8, SEMANTICS 0.8, Semantics.ensureGeometry 0.4, UPDATING COMPOSITING BITS (root) 0.3
+    slow frame 18.3 ms: SEMANTICS 4.1, PAINT 3.2, BUILD 3.1, FINALIZE TREE 2.9, LAYOUT (root) 2.3, Semantics.updateChildren 1.4, Animate 0.6, Semantics.ensureGeometry 0.3
+    long frame at 0.00 s: 60 ms (work 29, drawing 30)
+    long frame at 0.06 s: 162 ms (work 18, drawing 144)
+    long frame at 0.23 s: 136 ms (work 4, drawing 132)
+    long frame at 0.36 s: 108 ms (work 4, drawing 103)
+    long frame at 0.47 s: 106 ms (work 2, drawing 104)
+    long frame at 0.58 s: 108 ms (work 2, drawing 106)
+    long frame at 0.69 s: 109 ms (work 5, drawing 104)
+    long frame at 0.80 s: 106 ms (work 1, drawing 104)
+    long frame at 0.91 s: 108 ms (work 2, drawing 105)
+    long frame at 1.01 s: 110 ms (work 2, drawing 107)
+    long frame at 1.13 s: 111 ms (work 3, drawing 108)
+    long frame at 1.24 s: 110 ms (work 2, drawing 107)
+    long frame at 1.35 s: 112 ms (work 3, drawing 108)
+    long frame at 1.46 s: 110 ms (work 5, drawing 105)
+    long frame at 1.58 s: 112 ms (work 4, drawing 107)
+    long frame at 1.69 s: 109 ms (work 3, drawing 105)
+    long frame at 1.80 s: 107 ms (work 3, drawing 104)
+    long frame at 1.91 s: 112 ms (work 2, drawing 109)
+    long frame at 2.02 s: 111 ms (work 2, drawing 108)
+    long frame at 2.14 s: 213 ms (work 103, drawing 109)  engine p90 110.3 max 308.6
+changing skin, five times                                      90      71  1000.0             0.9   7.6 132.5  132.5     7    5   slowest [132.5, 88.4, 73.8, 60.2, 50.3]
+    slow frame 73.8 ms: BUILD 53.0, PAINT (root) 8.1, LAYOUT 7.2, SEMANTICS 1.5, Semantics.updateChildren 1.3, COMPOSITING 0.6, FINALIZE TREE 0.6, Semantics.ensureGeometry 0.4
+    slow frame 132.5 ms: BUILD 101.7, PAINT (root) 19.1, LAYOUT (root) 6.4, SEMANTICS 1.6, Semantics.updateChildren 1.4, FINALIZE TREE 0.7, COMPOSITING 0.6, Semantics.ensureSemanticsNode 0.4
+    slow frame 50.3 ms: BUILD 34.2, PAINT 9.4, LAYOUT (root) 3.1, Semantics.updateChildren 1.5, COMPOSITING 0.7, Semantics.ensureSemanticsNode 0.3, Semantics.ensureGeometry 0.2, SEMANTICS (root) 0.2
+    slow frame 88.4 ms: BUILD 74.7, PAINT 8.8, LAYOUT (root) 1.9, Semantics.updateChildren 1.3, COMPOSITING 0.5, Semantics.ensureGeometry 0.3, Semantics.ensureSemanticsNode 0.2, UPDATING COMPOSITING BITS (root) 0.1
+    slow frame 60.2 ms: BUILD 40.0, PAINT 8.7, LAYOUT (root) 5.5, SEMANTICS 1.8, Semantics.updateChildren 1.4, COMPOSITING 0.7, FINALIZE TREE 0.6, Semantics.ensureGeometry 0.4
+    long frame at 0.00 s: 372 ms (work 75, drawing 297)
+    long frame at 0.38 s: 57 ms (work 10, drawing 46)
+    long frame at 1.97 s: 299 ms (work 134, drawing 165)
+    long frame at 2.27 s: 92 ms (work 11, drawing 81)
+    long frame at 2.36 s: 83 ms (work 4, drawing 79)
+    long frame at 2.44 s: 82 ms (work 3, drawing 79)
+    long frame at 2.53 s: 82 ms (work 3, drawing 79)
+    long frame at 2.61 s: 82 ms (work 3, drawing 79)
+    long frame at 2.69 s: 80 ms (work 5, drawing 75)
+    long frame at 2.77 s: 78 ms (work 1, drawing 76)
+    long frame at 2.85 s: 74 ms (work 1, drawing 73)
+    long frame at 2.93 s: 78 ms (work 2, drawing 77)
+    long frame at 3.01 s: 79 ms (work 1, drawing 78)
+    long frame at 3.09 s: 76 ms (work 1, drawing 75)
+    long frame at 3.16 s: 76 ms (work 2, drawing 74)
+    long frame at 3.24 s: 78 ms (work 2, drawing 76)
+    long frame at 3.66 s: 124 ms (work 51, drawing 73)
+    long frame at 3.79 s: 82 ms (work 7, drawing 75)
+    long frame at 3.87 s: 59 ms (work 2, drawing 57)
+    long frame at 3.93 s: 57 ms (work 2, drawing 55)  engine p90 82.0 max 372.4
+back to the front page                                         18       0   216.7             2.7   5.5  54.2   54.2     1    1   slowest [54.2, 5.5, 3.8, 3.4, 3.3]
+    slow frame 54.2 ms: BUILD 42.3, LAYOUT 4.3, FINALIZE TREE 2.9, Semantics.ensureSemanticsNode 2.6, SEMANTICS 0.5, PAINT (root) 0.5, Semantics.updateChildren 0.3, UPDATING COMPOSITING BITS (root) 0.2
+    long frame at 0.00 s: 62 ms (work 55, drawing 8)
+    long frame at 0.06 s: 215 ms (work 6, drawing 208)
+    long frame at 0.28 s: 205 ms (work 3, drawing 202)
+    long frame at 0.49 s: 194 ms (work 5, drawing 189)
+    long frame at 0.68 s: 179 ms (work 3, drawing 176)
+    long frame at 0.86 s: 180 ms (work 3, drawing 177)
+    long frame at 1.04 s: 180 ms (work 4, drawing 177)
+    long frame at 1.23 s: 200 ms (work 4, drawing 196)
+    long frame at 1.43 s: 181 ms (work 3, drawing 178)
+    long frame at 1.61 s: 188 ms (work 4, drawing 184)
+    long frame at 1.80 s: 195 ms (work 4, drawing 191)
+    long frame at 1.99 s: 185 ms (work 3, drawing 182)
+    long frame at 2.18 s: 194 ms (work 3, drawing 191)
+    long frame at 2.38 s: 180 ms (work 3, drawing 177)
+    long frame at 2.56 s: 179 ms (work 3, drawing 177)
+    long frame at 2.74 s: 178 ms (work 1, drawing 177)
+    long frame at 2.92 s: 180 ms (work 1, drawing 178)
+    long frame at 3.10 s: 181 ms (work 1, drawing 180)  engine p90 205.3 max 214.5
+changing skin, in detail (slower: every widget timed)          10      12  1666.7             4.9 226.5 226.5  226.5     2    2   slowest [226.5, 192.7, 6, 5.7, 4.9]
+    slow frame 192.7 ms: BUILD 159.0, RenderCustomPaint 5.6, Positioned 2.0, TheKingsCourtApp 1.4, RenderParagraph 1.1, RenderFlex 1.0, Semantics 1.0, RenderRepaintBoundary 1.0
+    slow frame 226.5 ms: BUILD 193.8, RenderCustomPaint 5.4, Positioned 2.1, RenderClipRRect 1.9, TheKingsCourtApp 1.6, RenderPadding 1.2, RenderRepaintBoundary 1.0, Semantics 0.9
+    long frame at 0.00 s: 452 ms (work 194, drawing 258)
+    long frame at 0.46 s: 224 ms (work 6, drawing 219)
+    long frame at 0.68 s: 215 ms (work 1, drawing 214)
+    long frame at 0.90 s: 216 ms (work 7, drawing 209)
+    long frame at 1.11 s: 210 ms (work 1, drawing 209)
+    long frame at 1.33 s: 212 ms (work 1, drawing 211)
+    long frame at 1.54 s: 210 ms (work 1, drawing 208)
+    long frame at 2.25 s: 1157 ms (work 228, drawing 929)
+    long frame at 3.41 s: 718 ms (work 5, drawing 713)
+    long frame at 4.13 s: 692 ms (work 7, drawing 685)
+    own time by name (ms, summed over the scene): BUILD 353, RenderCustomPaint 11, Positioned 4, TheKingsCourtApp 3, RenderClipRRect 2, Semantics 2, RenderRepaintBoundary 2, RenderParagraph 2, RenderFlex 2, RenderPadding 2, RepaintBoundary 2, COMPOSITING 2, SEMANTICS (root) 2, PAINT (root) 2, Focus 2, RenderConstrainedBox 1, _FocusInheritedScope 1, LAYOUT (root) 1, Stack 1, Semantics.updateChildren 1, RenderSemanticsAnnotations 1, Padding 1, RenderOpacity 1, Animate 1, FadeTransition 1, IgnorePointer 1, Builder 1, _OverlayEntryWidget 1, RenderPositionedBox 1, DecoratedBox 1, _ActionsScope 1, _RenderLayoutBuilder 1, Text 1, AnimatedTheme 1, SizedBox 1, LAYOUT 1, IconTheme 1, RenderStack 1, Semantics.ensureGeometry 1, CupertinoTheme 1, LayoutId 1, RenderDecoratedBox 1, _InkResponseStateWidget 1, Actions 1, _MaterialInterior 1  engine p90 1156.8 max 1156.8
+
+in all: 1939 frames drawn, 1000 refreshes missed (34.0%)
