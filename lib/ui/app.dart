@@ -15,6 +15,7 @@ import '../skin/court/court_skin.dart';
 import '../skin/entitlements.dart';
 import '../skin/skin.dart';
 import '../skin/skin_scope.dart';
+import '../skin/skins.dart';
 import '../skin/tailored.dart';
 import 'table_page.dart';
 import 'widgets/character_token.dart';
@@ -59,6 +60,18 @@ class _TheKingsCourtAppState extends State<TheKingsCourtApp>
         if (s == AnimationStatus.completed) _drop();
       });
     _fading = ReverseAnimation(CurvedAnimation(parent: _dissolve, curve: Curves.easeInOut));
+    if (!CharacterToken.underTest) _warmThemes(0);
+  }
+
+  /// Every style's theme made ahead, one at a time, whenever nothing's
+  /// moving: making one is slow (its colour scheme worked out from a seed),
+  /// and changing the look would otherwise make it in the very frame that
+  /// rebuilds everything.
+  void _warmThemes(int k) {
+    if (k >= skins.length) return;
+    SchedulerBinding.instance.scheduleTask(() => skins[k].themeData, Priority.idle).then((_) {
+      if (mounted) _warmThemes(k + 1);
+    });
   }
 
   /// Changes the look in one go: the new one is built under a still of the
