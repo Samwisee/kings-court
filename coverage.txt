@@ -1,0 +1,37 @@
+lib/ (code): 79.4% of 15022 lines
+lib/ (with art and data): 80.0% of 15979 lines
+
+engine      96.4% of  1414 lines
+game        94.6% of   800 lines
+modes       98.6% of    73 lines
+net         94.0% of   365 lines
+platform    65.7% of   175 lines
+skin        84.6% of   956 lines
+ui          75.3% of 11239 lines
+
+Least covered (code files of 40+ lines):
+    0.0%  ui/cards/emblems/emblems_play.dart (114 lines)
+    0.0%  ui/cards/emblems/emblems_salon.dart (289 lines)
+    0.0%  ui/cards/emblems/emblems_voyage.dart (181 lines)
+    0.0%  ui/modes/tutorial/intro_preview.dart (40 lines)
+    0.0%  ui/widgets/candles.dart (73 lines)
+   19.0%  ui/widgets/felt_motion.dart (105 lines)
+   19.4%  ui/setup/transitions.dart (67 lines)
+   20.0%  ui/widgets/token_styles_more.dart (160 lines)
+   23.9%  ui/widgets/trim_glyphs.dart (218 lines)
+   24.1%  ui/widgets/character_token.dart (195 lines)
+   33.3%  ui/table/table_words.dart (66 lines)
+   34.8%  ui/widgets/back_motifs_more.dart (155 lines)
+   42.4%  ui/cards/emblems/emblems_sky.dart (139 lines)
+   46.2%  ui/cards/emblems/set_emblems.dart (117 lines)
+   46.5%  ui/widgets/token_styles.dart (172 lines)
+   53.5%  ui/table_turns.dart (101 lines)
+   57.4%  ui/widgets/trim_icons.dart (47 lines)
+   59.1%  ui/widgets/pips.dart (93 lines)
+   60.5%  skin/tailored.dart (177 lines)
+   61.4%  ui/table_hand.dart (202 lines)
+   61.4%  ui/rules/rules_page.dart (210 lines)
+   62.4%  ui/tracker/card_tracker.dart (186 lines)
+   62.7%  ui/dialogs/task_close_up.dart (118 lines)
+   64.2%  ui/table/trick_view.dart (67 lines)
+   66.8%  ui/widgets/icons.dart (208 lines)
