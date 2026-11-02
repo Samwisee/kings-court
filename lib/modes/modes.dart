@@ -9,6 +9,7 @@ import 'free/free_play.dart';
 import 'mode.dart';
 import 'tutorial/tutorial.dart';
 
+export 'dynasty/dynasty.dart' show DynastyRun, Ending, HandReport, Work, attachRun, handSetup, runOf;
 export 'mode.dart';
 
 const modes = <GameMode, Mode>{

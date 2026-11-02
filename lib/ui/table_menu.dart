@@ -169,7 +169,9 @@ extension _Menu on HomePageState {
       animation: _outcome,
       won: won,
       dealId: game.dealId,
-      child: game.isTutorial
+      child: game.isDynasty && runOf(game) != null
+          ? HandOverCard(won: won, onCourt: () => _toCourt())
+          : game.isTutorial
           ? LessonCard(
               lesson: game.lesson, won: won, onRetry: _retryRound, onNext: _nextLesson)
           : OutcomeCard(

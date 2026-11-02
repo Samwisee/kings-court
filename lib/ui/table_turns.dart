@@ -65,7 +65,8 @@ extension _Turns on HomePageState {
       // Long live the King first; the tasks are shuffled out after.
       _crownTimer = Timer(const Duration(milliseconds: 350), () {
         _crownTimer = null;
-        final holder = _round.kingCardHolder;
+        // In Dynasty you are the King, whoever holds the King card.
+        final holder = game.isDynasty ? _you : _round.kingCardHolder;
         if (mounted && _choosingKing && holder != null) _sendCrown(holder);
       });
     }

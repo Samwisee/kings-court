@@ -57,8 +57,7 @@ import 'dialogs/table_dialogs.dart';
 import 'dialogs/task_close_up.dart';
 import 'menu/menu.dart';
 import 'menu/menu_entries.dart';
-import 'modes/tutorial/coach.dart';
-import 'modes/tutorial/tutorial_intro.dart';
+import 'modes/screens.dart';
 import 'online/room_play.dart';
 import 'overlays/crowning.dart';
 import 'overlays/decree.dart';
@@ -420,7 +419,7 @@ class HomePageState extends State<HomePage>
   /// sending it. The page keeps only its own pauses and the timers.
   late Host _host = _newHost();
   Host _newHost() =>
-      Host(bot: Bot(), you: _you, seats: _room?.seats, send: (a) => _link.send(a));
+      Host(bot: Bot()..omniscient = game.isDynasty, you: _you, seats: _room?.seats, send: (a) => _link.send(a));
   Timer? _botTimer;
   Timer? _crownTimer;
   final _trickTimers = <Timer>[];

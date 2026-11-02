@@ -86,7 +86,7 @@ Project projectById(String id) => projects.firstWhere((p) => p.id == id);
 
 /// The petitions, brought at random between hands (see run.dart).
 final petitions = <Petition>[
-  Petition('roads', _g, [
+  const Petition('roads', _g, [
     (who: _g, text: 'Bandits on the north road, Your Grace. Give me men and I will clear it.'),
   ], [
     Choice('Send the army', Effect(meters: {_army: -1}, project: 'bandits', sits: [_g], loyalty: {_g: 1}),
@@ -94,14 +94,14 @@ final petitions = <Petition>[
     Choice('Let the villages fend', Effect(meters: {_people: -1}, loyalty: {_g: -1}),
         said: 'The villages fend, badly.'),
   ]),
-  Petition('loan', _m, [
+  const Petition('loan', _m, [
     (who: _m, text: 'A loan, Your Grace. Fair interest. Practically a gift.'),
   ], [
     Choice('Take the loan', Effect(coffers: 8, loyalty: {_m: 1}, sits: [_m]),
         said: 'Gold comes in. The Merchant smiles a little too long.'),
     Choice('Refuse', Effect(loyalty: {_m: -1}), said: 'The Merchant bows, stiffly.'),
   ]),
-  Petition('roof', _b, [
+  const Petition('roof', _b, [
     (who: _b, text: 'The temple roof leaks on the faithful. They pray in puddles.'),
   ], [
     Choice('Pay for the work', Effect(project: 'temple', loyalty: {_b: 1}, sits: [_b]),
@@ -109,14 +109,14 @@ final petitions = <Petition>[
     Choice('Pray for dry weather', Effect(meters: {_people: -1}, loyalty: {_b: -1}),
         said: 'It rains.'),
   ]),
-  Petition('tenants', _d, [
+  const Petition('tenants', _d, [
     (who: _d, text: 'My tenants refuse their rents. Lend me your soldiers.'),
   ], [
     Choice('Send soldiers', Effect(meters: {_army: -1, _people: -1}, coffers: 3, loyalty: {_d: 1}, sits: [_d]),
         said: 'The rents are paid, and resented.'),
     Choice('Refuse', Effect(loyalty: {_d: -1}), said: 'The Duke will remember this.'),
   ]),
-  Petition('miller', _s, visitor: true, [
+  const Petition('miller', _s, visitor: true, [
     (who: _s, text: 'A miller’s daughter is missing. She saw something she should not have.'),
     (who: null, text: 'The Spymaster waits, as if they already know your answer.'),
   ], [
@@ -124,21 +124,21 @@ final petitions = <Petition>[
         said: 'The Spymaster takes a seat at your table.'),
     Choice('Leave it', Effect(meters: {_people: -1}), said: 'The village hears the crown did nothing.'),
   ]),
-  Petition('jest', _j, visitor: true, [
+  const Petition('jest', _j, visitor: true, [
     (who: _j, text: 'Your Grace’s crown sits crooked! Shall I make the court laugh?'),
   ], [
     Choice('Let them perform', Effect(meters: {_people: 1}, joins: _j, sits: [_j]),
         cost: 2, said: 'The court laughs. Even the Duke.'),
     Choice('Send them away', Effect(), said: 'The Jester cartwheels out, unbothered.'),
   ]),
-  Petition('harvest', _m, [
+  const Petition('harvest', _m, [
     (who: _m, text: 'The harvest fair needs coin, or there is no fair.'),
   ], [
     Choice('Fund the fair', Effect(project: 'feast', meters: {_people: 1}, loyalty: {_m: 1}),
         cost: 4, said: 'Stalls go up in the square.'),
     Choice('No fair this year', Effect(meters: {_people: -1}), said: 'The square stays empty.'),
   ]),
-  Petition('forts', _g, [
+  const Petition('forts', _g, [
     (who: _g, text: 'The border forts are crumbling. One good push and they fall.'),
   ], [
     Choice('Rebuild them', Effect(project: 'border', sits: [_g], loyalty: {_g: 1}),
@@ -146,7 +146,7 @@ final petitions = <Petition>[
     Choice('They’ll hold', Effect(meters: {_army: -1}, loyalty: {_g: -1}),
         said: 'They do not quite hold.'),
   ]),
-  Petition('abbey', _d, [
+  const Petition('abbey', _d, [
     (who: _d, text: 'The abbey’s fields border mine. They would be better farmed by me.'),
     (who: _b, text: 'Those fields feed the poor, Your Grace.'),
   ], [
@@ -155,7 +155,7 @@ final petitions = <Petition>[
     Choice('Side with the Bishop', Effect(meters: {_people: 1}, loyalty: {_b: 1, _d: -2}, sits: [_b], away: [_d]),
         said: 'The Duke smiles, the way a knife does.'),
   ]),
-  Petition('winter', _b, [
+  const Petition('winter', _b, [
     (who: _b, text: 'Winter comes early, and the granaries are low.'),
   ], [
     Choice('Fill the granaries', Effect(project: 'granaries', sits: [_b, _d]),
@@ -163,7 +163,7 @@ final petitions = <Petition>[
     Choice('Ration the city', Effect(meters: {_stores: 1, _people: -2}),
         said: 'Bread is short in the city.'),
   ]),
-  Petition('guilds', _m, [
+  const Petition('guilds', _m, [
     (who: _m, text: 'The soldiers want paying. The guilds could pay… or your coffers could.'),
   ], [
     Choice('Tax the guilds', Effect(project: 'tax', loyalty: {_m: -2, _g: 1}),
@@ -174,7 +174,7 @@ final petitions = <Petition>[
   Petition('bridge', _d, when: (m, c) => (m[_stores] ?? 0) < 6, [
     (who: _d, text: 'The river bridge is failing. Trade will stop with it.'),
   ], [
-    Choice('Mend it', Effect(project: 'bridge', sits: [_d]), cost: 2, said: 'Timber is hauled to the river.'),
-    Choice('Use the ford', Effect(meters: {_stores: -1}), said: 'Carts are lost in the ford.'),
+    const Choice('Mend it', Effect(project: 'bridge', sits: [_d]), cost: 2, said: 'Timber is hauled to the river.'),
+    const Choice('Use the ford', Effect(meters: {_stores: -1}), said: 'Carts are lost in the ford.'),
   ]),
 ];

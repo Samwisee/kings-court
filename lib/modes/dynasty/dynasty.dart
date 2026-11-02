@@ -6,6 +6,8 @@ library;
 
 import 'dart:math';
 
+import '../../game/courtiers.dart';
+import '../../game/setup.dart';
 import '../../game/state.dart';
 import '../mode.dart';
 import 'run.dart';
@@ -19,6 +21,21 @@ DynastyRun? runOf(GameState g) => _runs[g];
 
 /// Ties [g]'s hand to [run].
 void attachRun(GameState g, DynastyRun run) => _runs[g] = run;
+
+/// The hand [run] plays next: you, the King, in seat 0, and its table in
+/// the seats after, each named as their house. Seeded from the run and the
+/// hand, so a run plays the same deals every time.
+GameSetup handSetup(DynastyRun run) {
+  final names = ['You', for (final c in run.table) c.title];
+  return GameSetup(
+      mode: GameMode.dynasty,
+      names: names,
+      target: 1,
+      seed: run.seed * 101 + run.hand,
+      digital: true,
+      courtiers: [Courtier.king, ...run.table],
+      botNames: names);
+}
 
 class Dynasty extends Mode {
   const Dynasty();

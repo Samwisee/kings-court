@@ -13,6 +13,7 @@ import '../../skin/skin.dart';
 import '../../skin/skin_scope.dart';
 import '../widgets.dart';
 import 'chapter_picker.dart';
+import 'mode_info.dart';
 import 'saves.dart';
 import 'setup_frame.dart';
 import 'setup_tiles.dart';
@@ -85,33 +86,14 @@ class SetupPanel extends StatefulWidget {
   /// Start with on-screen cards switched on.
   final bool digital;
 
+  /// Dynasty, opened for this session by tapping its tile five times
+  /// (it's in alpha: the setup shows it as coming soon until then).
+  static bool dynastyOpen = false;
+
   @override
   State<SetupPanel> createState() => _SetupPanelState();
 }
 
-/// What each way to play is about, shown on the first step.
-const _modeInfo = {
-  GameMode.free: (
-    'Free play',
-    'Choose a points target; add surprise seals and decrees if you like.'
-  ),
-  GameMode.endless: (
-    'Endless',
-    'Each win adds a point to the next round. How long can your streak last?'
-  ),
-  GameMode.chronicle: (
-    'The Chronicle',
-    '24 chapters of rising difficulty. Earn up to three crowns for each.'
-  ),
-  GameMode.dynasty: (
-    'Dynasty',
-    'A story of kings. Rule until wounds bring you down; face dilemmas, keep your courtiers loyal, watch for traitors.'
-  ),
-  GameMode.tutorial: (
-    'Tutorial',
-    'New to the court? Four short, guided rounds teach you to lead, follow, use Court Cards and help each other.'
-  ),
-};
 
 class _SetupPanelState extends State<SetupPanel> {
   late int count =
@@ -126,6 +108,33 @@ class _SetupPanelState extends State<SetupPanel> {
   late bool roles = widget.roles;
   late int chapter = widget.chapter;
   int step = 0;
+
+  /// Recent taps on the closed Dynasty tile.
+  final _dynastyTaps = <DateTime>[];
+
+  /// The Dynasty tile: five taps within a few seconds open it; once open,
+  /// a tap starts a reign (no more steps: you're the King, the court
+  /// comes with the story).
+  void _tapDynasty() {
+    if (SetupPanel.dynastyOpen) {
+      widget.onStart((
+        count: 4,
+        target: 1,
+        names: const ['You'],
+        mode: GameMode.dynasty,
+        surprise: false,
+        roles: true,
+        digital: true,
+        chapter: null,
+      ));
+      return;
+    }
+    final now = DateTime.now();
+    _dynastyTaps
+      ..removeWhere((t) => now.difference(t) > const Duration(seconds: 4))
+      ..add(now);
+    if (_dynastyTaps.length >= 5) setState(() => SetupPanel.dynastyOpen = true);
+  }
 
   /// Play the cards on screen against bots, instead of using the app at a
   /// real table.
@@ -208,16 +217,23 @@ class _SetupPanelState extends State<SetupPanel> {
         ])
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            // Dynasty is being remade as a story mode; its tile waits.
+            // Dynasty is being remade as a roguelike; its tile waits, until
+            // it's tapped five times (see _tapDynasty).
             child: Opacity(
-              opacity: m == GameMode.dynasty ? 0.55 : 1,
+              opacity: m == GameMode.dynasty && !SetupPanel.dynastyOpen ? 0.55 : 1,
               child: ModeTile(
-                title: _modeInfo[m]!.$1,
-                badge: m == GameMode.dynasty ? '(Coming soon)' : null,
-                description: _modeInfo[m]!.$2,
+                title: modeInfo[m]!.$1,
+                badge: m == GameMode.dynasty
+                    ? SetupPanel.dynastyOpen
+                        ? '(Alpha)'
+                        : '(Coming soon)'
+                    : null,
+                description: m == GameMode.dynasty && SetupPanel.dynastyOpen
+                    ? 'You are the King. Set the realm’s works, answer the court, and keep your crown.'
+                    : modeInfo[m]!.$2,
                 selected: false,
                 onTap: m == GameMode.dynasty
-                    ? () {}
+                    ? _tapDynasty
                     : () => setState(() {
                           mode = m;
                           step++;

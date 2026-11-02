@@ -11,6 +11,8 @@ import 'package:kings_court/engine/cards.dart';
 import 'package:kings_court/engine/round.dart';
 import 'package:kings_court/game/courtiers.dart';
 import 'package:kings_court/game/state.dart';
+import 'package:kings_court/modes/dynasty/realm.dart';
+import 'package:kings_court/modes/modes.dart';
 import 'package:kings_court/modes/tutorial/lessons.dart';
 import 'package:kings_court/platform/sfx.dart';
 import 'package:kings_court/skin/court/court_skin.dart';
@@ -27,8 +29,11 @@ import 'package:kings_court/ui/cards/task_chip.dart';
 import 'package:kings_court/ui/dynasty/hall_pieces.dart';
 import 'package:kings_court/ui/dynasty/throne_room.dart';
 import 'package:kings_court/ui/table_page.dart';
+import 'package:kings_court/ui/setup/setup_panel.dart';
 import 'package:kings_court/ui/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../ui/dynasty_steps.dart';
 
 Future<void> loadFonts() async {
   Future<void> family(String name, List<String> files) async {
@@ -725,6 +730,60 @@ void main() {
     await tester.pump();
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/court-cards.png'));
   });
+
+  // Dynasty (Alpha), opened by five taps: the court's news, the pool to
+  // pick from, the hand at the table, a petition, and a reign's end.
+  for (final (name, size, ratio) in [('phone', const Size(1170, 2532), 3.0), ('laptop', const Size(2800, 1800), 2.0)]) {
+    testWidgets('Dynasty on a $name', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = ratio;
+      addTearDown(tester.view.reset);
+      addTearDown(() => SetupPanel.dynastyOpen = false);
+      HomePageTestHooks.fast();
+      Future<void> snap(String shot) =>
+          expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/dyn-$name-$shot.png'));
+      await tester.pumpWidget(const TheKingsCourtApp());
+      await tester.pumpAndSettle();
+      await openDynasty(tester);
+      await frames(tester, 40);
+      await snap('0-news');
+      await tapCourtUntil(tester, find.byKey(const ValueKey('begin-hand')));
+      await tester.tap(find.text('Raise the cathedral'));
+      await tester.pump();
+      await snap('1-pick');
+      await tester.tap(find.byKey(const ValueKey('begin-hand')));
+      await frames(tester, 100);
+      await snap('2-table');
+      await playHand(tester);
+      await snap('3-hand-over');
+      final state = tester.state<HomePageState>(find.byType(HomePage));
+      final run = runOf(state.game)!;
+      await tester.tap(find.byKey(const ValueKey('to-court')));
+      await frames(tester, 30);
+      if (run.petition case final p?) {
+        await tapCourtUntil(tester, find.text(p.choices.last.label));
+        await frames(tester, 20);
+        await snap('4-petition');
+        await tester.tap(find.text(p.choices.indexWhere(run.affords) == 0 ? p.choices.first.label : p.choices.last.label));
+        await frames(tester, 20);
+      }
+      await tapCourtUntil(tester, find.byKey(const ValueKey('begin-hand')));
+      await tester.tap(find.text(run.pool.first.project.title));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('begin-hand')));
+      await frames(tester, 60);
+      await playHand(tester);
+      // The people rise: the reign's end.
+      runOf(state.game)!.meters[Meter.people] = 0;
+      await tester.tap(find.byKey(const ValueKey('to-court')));
+      await frames(tester, 30);
+      await tapCourtUntil(tester, find.text(Ending.revolt.words));
+      await frames(tester, 30);
+      await snap('5-end');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 6));
+    });
+  }
 
   testWidgets('A throne room on its own', (tester) async {
     tester.view.physicalSize = const Size(780, 1688);

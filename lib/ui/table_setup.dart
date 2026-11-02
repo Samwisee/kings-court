@@ -107,6 +107,8 @@ extension _Setup on HomePageState {
       if (mode != GameMode.tutorial && mode != GameMode.dynasty) roles ? 'roles' : 'plain',
     ]);
     _set(() {
+      // The courtiers as the mode has them (all-seeing in Dynasty only).
+      _host = _newHost();
       _setupCount = count;
       _setupTarget = target;
       // The tutorial's courtiers are always the same: you, the Duke and
@@ -270,7 +272,8 @@ extension _Setup on HomePageState {
     Sfx.fanfare();
     // The crown stays for the King on screen, the game set out beneath it;
     // the tutorial's pages come up over the felt once it's gone.
-    final tutorial = r.mode == GameMode.tutorial;
+    // The tutorial's pages, and Dynasty's court, come up once it's gone.
+    final tutorial = r.mode == GameMode.tutorial || r.mode == GameMode.dynasty;
     void begin() { if (mounted) _beginFromSetup(r); }
     _walkIn.start(
         crowning: r.digital && !tutorial,
@@ -294,6 +297,10 @@ extension _Setup on HomePageState {
     _set(() => _setupArgs = null);
     if (r.mode == GameMode.tutorial) {
       _startTutorial();
+      return;
+    }
+    if (r.mode == GameMode.dynasty) {
+      _startDynasty();
       return;
     }
     _startGame(r.count, r.target, r.names, r.mode,
@@ -359,6 +366,60 @@ extension _Setup on HomePageState {
       _continueSaved(_saves.first);
     } else if (_saves.isNotEmpty) {
       _showSetupDialog(continuing: true);
+    }
+  }
+
+  // ------------------------------------------------------------ Dynasty
+
+  /// A new reign (modes/dynasty/run.dart): the court gathers, the King
+  /// picks the first hand's works, and the hand is dealt.
+  Future<void> _startDynasty() async {
+    Analytics.event(['start', 'dynasty', 'screen']);
+    final run = DynastyRun(HomePageTestHooks.seed ?? math.Random().nextInt(1 << 30));
+    if (await showCourt(context, run) && mounted) {
+      _dynastyHand(run);
+    } else if (mounted) {
+      await _mainMenu();
+    }
+  }
+
+  /// Deals [run]'s next hand: you as King, its table about you, a task for
+  /// each work picked, all-seeing courtiers.
+  void _dynastyHand(DynastyRun run) {
+    _leaveRoom();
+    final setup = handSetup(run);
+    _set(() {
+      _setupCount = setup.players;
+      final g = setup.start(modeOf(GameMode.dynasty).rules, you: _you);
+      attachRun(g, run);
+      // Dealt again, now the run rides with it: the works' tasks.
+      g.startRound(setup.players, 1, setup: (rand) => modeOf(GameMode.dynasty).rules.roundSetup(g, rand), countRound: false);
+      game = g..roundNumber = run.hand + 1;
+      _host = _newHost();
+      _resetTable();
+    });
+    _keepAwake(true);
+  }
+
+  /// From a finished hand to court: the works moved on and the realm
+  /// changed, then the petition and the next hand's works; or the end.
+  Future<void> _toCourt() async {
+    final run = runOf(game);
+    if (run == null) return;
+    final done = [
+      for (final t in game.tasks)
+        switch (t.status) {
+          TaskStatus.completed => true,
+          TaskStatus.failed => false,
+          TaskStatus.pending => null,
+        }
+    ];
+    final report = run.afterHand(done);
+    if (run.over) Analytics.event(['dynasty', run.ending!.name, 'h${run.hand}']);
+    if (await showCourt(context, run, report: report) && mounted) {
+      _dynastyHand(run);
+    } else if (mounted) {
+      await _mainMenu();
     }
   }
 }
