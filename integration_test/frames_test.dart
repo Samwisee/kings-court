@@ -293,20 +293,20 @@ void main() {
       await wait(1500);
     });
 
+    // The first few moves with every widget timed: what a move builds.
+    await frames.scene('tricks, in detail (slower: every widget timed)', () async {
+      for (var i = 0; i < 5; i++) {
+        state.debugYourMove();
+        await wait(400);
+      }
+    }, detail: true);
+
     await frames.scene('tricks: cards played, flown to the piles', () async {
       for (var i = 0; i < 40; i++) {
         state.debugYourMove();
         await wait(400);
       }
     });
-
-    // A few more moves with every widget timed: what a move still builds.
-    await frames.scene('tricks, in detail (slower: every widget timed)', () async {
-      for (var i = 0; i < 6; i++) {
-        state.debugYourMove();
-        await wait(400);
-      }
-    }, detail: true);
 
     await frames.scene('the card tracker sliding in and out', () async {
       await tap(find.byTooltip('Card tracker'), then: 1500);
