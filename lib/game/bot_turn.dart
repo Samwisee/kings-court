@@ -122,11 +122,14 @@ Future<BotDecision?> botDecision(GameState game, Bot bot,
     final shown = botShows(r, picker);
     if (shown != null) return BotShows(picker, shown);
     final pick = await bot.choosePickAsync(r, picker);
-    // Nothing suits their hand: pass the pick on, once a round.
-    // (Fair courtiers see only their own hand, so they rate every pick
-    // lower than all-seeing ones did; the bar is set to match.)
-    if (r.canPass(picker) && bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) {
-      return BotPasses(picker);
+    if (r.canPass(picker)) {
+      // Nothing suits their hand: pass the pick on, once a round.
+      // (Fair courtiers see only their own hand, so they rate every pick
+      // lower than all-seeing ones did; the bar is set to match.)
+      if (bot.lastPickScore < (bot.omniscient ? 0.12 : 0.04)) return BotPasses(picker);
+      // Or the next to pick is plainly better placed for it (the King
+      // card's holder for a Court Card task, say): pass it to them.
+      if (await _betterNext(bot, r, picker, pick)) return BotPasses(picker);
     }
     return BotPicks(picker, pick);
   }
@@ -179,4 +182,20 @@ PlayingCard? botShows(Round r, int seat) {
     if (needed) return card;
   }
   return null;
+}
+
+/// Whether the round goes clearly better with task [i] held by whoever
+/// picks after [picker] than by [picker], as [picker] sees it (their own
+/// hand, and what's known of the others').
+Future<bool> _betterNext(Bot bot, Round r, int picker, int i) async {
+  final next = r.nextPicker(picker);
+  if (next == null || next == picker || !r.mayTake(r.tasks[i], next)) return false;
+  Map<int, int> holding(int seat) => {
+        for (var t = 0; t < r.tasks.length; t++)
+          if (r.tasks[t].owner != null) t: r.tasks[t].owner!,
+        i: seat,
+      };
+  final mine = await bot.scoreAsync(r, picker, holding(picker), 120);
+  final theirs = await bot.scoreAsync(r, picker, holding(next), 120);
+  return theirs >= mine + 0.15;
 }

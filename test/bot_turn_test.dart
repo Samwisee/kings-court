@@ -152,4 +152,35 @@ void main() {
     expect(d, anyOf(isNull, isA<BotPlays>()));
     if (d is BotPlays) expect(r.legalFor(r.turn), contains(d.card));
   });
+
+  test('A courtier passes a task on to the next picker who is plainly better placed for it', () async {
+    final g = table();
+    final r = g.round!;
+    final n = r.players;
+    final king = r.king!;
+    // The last to pick, just before the King; the Joker in someone else's
+    // hand (yours), the King card with the King, the picker's best the Queen.
+    final picker = (king + n - 1) % n;
+    final you = (king + 1) % n;
+    void give(PlayingCard card, int seat) {
+      final from = r.hands.indexWhere((h) => h.contains(card));
+      if (from == seat) return;
+      final swap = r.hands[seat].firstWhere((c) => !c.isCourt);
+      r.hands[from][r.hands[from].indexOf(card)] = swap;
+      r.hands[seat][r.hands[seat].indexOf(swap)] = card;
+    }
+    give(PlayingCard.king, king);
+    give(PlayingCard.joker, you);
+    give(PlayingCard.queen, picker);
+    give(PlayingCard.jack, you);
+    r
+      ..tasks = [RoundTask(taskByDescription('Win the Joker'))]
+      ..passing = true
+      ..passed = {}
+      ..pickTurn = picker;
+    expect(r.canPass(picker), isTrue);
+    expect(r.nextPicker(picker), king);
+    final d = await botDecision(g, Bot()..budget = 200, you: you);
+    expect(d, isA<BotPasses>(), reason: 'the King holds the King card: the Joker is theirs to win');
+  });
 }
