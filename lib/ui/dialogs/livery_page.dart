@@ -90,6 +90,20 @@ class _LiveryPageState extends State<_LiveryPage> {
         _court = null;
       });
 
+  /// The shop window, kept while the look and its price don't change: a
+  /// new section, or the shelves scrolling, doesn't build it again.
+  Widget _window(Skin look, String? price) {
+    final key = '${look.id}|$price';
+    if (key != _windowFor) {
+      _windowFor = key;
+      _windowNow = _Showcase(look: look, price: price);
+    }
+    return _windowNow!;
+  }
+
+  String? _windowFor;
+  Widget? _windowNow;
+
   /// Opens a section at its top: each has its own shelves.
   void _open(_Kind k) {
     if (k == _kind) return;
@@ -187,7 +201,7 @@ class _LiveryPageState extends State<_LiveryPage> {
                             // The store's name, the window, and the sections
                             // stay put; only the shelves scroll.
                             const _StoreHeading(),
-                            SizedBox(height: windowH, child: _Showcase(look: look, price: price)),
+                            SizedBox(height: windowH, child: _window(look, price)),
                             SizedBox(
                                 height: 54,
                                 child: _Tabs(kind: _kind, onKind: _open, look: look)),
@@ -247,7 +261,7 @@ class _LiveryPageState extends State<_LiveryPage> {
         fresh: _newStyles.contains(s.id),
         price: widget.entitlements.priceOf(s),
         onTap: () => _style(s),
-        child: _TableSwatch(s));
+        child: _pics.putIfAbsent('table|${s.id}', () => _TableSwatch(s)));
     if (forSale.isEmpty) return [_grid([for (final s in yours) tile(s)])];
     return [
       SliverToBoxAdapter(
@@ -262,6 +276,13 @@ class _LiveryPageState extends State<_LiveryPage> {
   }
 
   /// The open section's choices, a tile each: the style's own first.
+  /// A tile's picture, made once for each style and choice: choosing
+  /// another tile, or opening a section again, doesn't build it again.
+  Widget _pic(String what, Widget Function(Skin) make, Skin skin) =>
+      _pics.putIfAbsent('${_base.id}|$what', () => make(skin));
+
+  final _pics = <String, Widget>{};
+
   List<Widget> _tiles(Skin look) {
     final base = _base;
     final own = TailoredSkin.of(base);
@@ -270,42 +291,42 @@ class _LiveryPageState extends State<_LiveryPage> {
       ...switch (_kind) {
         _Kind.style => <Widget>[],
         _Kind.faces => [
-            _Tile(name: ownName, selected: _face == null, onTap: () => setState(() => _face = null), child: _Faces(own)),
+            _Tile(name: ownName, selected: _face == null, onTap: () => setState(() => _face = null), child: _pic('faces', _Faces.new, own)),
             for (final f in faceChoices)
               _Tile(
                   name: f.name,
                   selected: _face?.id == f.id,
                   onTap: () => setState(() => _face = f),
-                  child: _Faces(TailoredSkin(base, faceChoice: f))),
+                  child: _pic('faces-${f.id}', _Faces.new, TailoredSkin(base, faceChoice: f))),
           ],
         _Kind.court => [
             _Tile(
-                name: ownName, selected: _court == null, onTap: () => setState(() => _court = null), child: _Courts(own)),
+                name: ownName, selected: _court == null, onTap: () => setState(() => _court = null), child: _pic('court', _Courts.new, own)),
             for (final c in courtChoices)
               _Tile(
                   name: c.name,
                   selected: _court?.id == c.id,
                   onTap: () => setState(() => _court = c),
-                  child: _Courts(TailoredSkin(base, courtChoice: c))),
+                  child: _pic('court-${c.id}', _Courts.new, TailoredSkin(base, courtChoice: c))),
           ],
         _Kind.backs => [
-            _Tile(name: ownName, selected: _back == null, onTap: () => setState(() => _back = null), child: _Back(own)),
+            _Tile(name: ownName, selected: _back == null, onTap: () => setState(() => _back = null), child: _pic('back', _Back.new, own)),
             for (final b in backChoices)
               _Tile(
                   name: b.name,
                   selected: _back?.id == b.id,
                   onTap: () => setState(() => _back = b),
-                  child: _Back(TailoredSkin(base, backChoice: b))),
+                  child: _pic('back-${b.id}', _Back.new, TailoredSkin(base, backChoice: b))),
           ],
         _Kind.tokens => [
             _Tile(
-                name: ownName, selected: _token == null, onTap: () => setState(() => _token = null), child: _Tokens(own)),
+                name: ownName, selected: _token == null, onTap: () => setState(() => _token = null), child: _pic('tokens', _Tokens.new, own)),
             for (final t in tokenChoices)
               _Tile(
                   name: t.name,
                   selected: _token?.id == t.id,
                   onTap: () => setState(() => _token = t),
-                  child: _Tokens(TailoredSkin(base, tokenChoice: t))),
+                  child: _pic('tokens-${t.id}', _Tokens.new, TailoredSkin(base, tokenChoice: t))),
           ],
         _Kind.tasks => [
             _Tile(
