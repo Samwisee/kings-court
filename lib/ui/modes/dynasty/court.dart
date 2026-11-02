@@ -255,6 +255,9 @@ class _CourtState extends State<_Court> {
                   Center(
                     child: FilledButton(
                       key: const ValueKey('begin-hand'),
+                      // The accent's own ink: the hall's light lettering
+                      // made it look switched off.
+                      style: FilledButton.styleFrom(foregroundColor: skin.goldInk),
                       onPressed: _chosen.isEmpty
                           ? null
                           : () {
