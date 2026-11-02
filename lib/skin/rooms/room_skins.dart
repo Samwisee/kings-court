@@ -347,8 +347,8 @@ const salonDesign = SkinDesign(
   patternInk: Color(0x14FFFFFF),
 );
 
-/// Riviera: a seaside summer under a cabana's striped awning, in sea-glass
-/// blue and coral.
+/// Riviera: a summer terrace by the sea, glazed tiles with lemons and
+/// suns, in sea-glass blue and coral.
 class RivieraSkin extends DesignSkin {
   const RivieraSkin() : super(rivieraDesign);
 }
@@ -451,8 +451,8 @@ const egyptianDesign = SkinDesign(
   patternInk: Color(0x28E2B53E),
 );
 
-/// Galleon: a captain's treasure map on the table, brass fittings, and
-/// doubloons for the seats.
+/// Galleon: a captain's sea chart on the table, an island of parchment in
+/// blue water, brass fittings, and doubloons for the seats.
 class GalleonSkin extends DesignSkin {
   const GalleonSkin() : super(galleonDesign);
 }
@@ -461,10 +461,10 @@ const galleonDesign = SkinDesign(
   id: 'galleon',
   trim: Trim.galleon,
   name: 'Galleon',
-  ground: Color(0xFF150E08),
-  felt: Color(0xFF5A4530),
-  feltDeep: Color(0xFF3A2C1D),
-  surface: Color(0xFF30241A),
+  ground: Color(0xFF06121C),
+  felt: Color(0xFF285C78),
+  feltDeep: Color(0xFF173E55),
+  surface: Color(0xFF14354A),
   card: Color(0xFFF6EEDB),
   ink: Color(0xFF2A1C10),
   inkSoft: Color(0xFF6E5A44),

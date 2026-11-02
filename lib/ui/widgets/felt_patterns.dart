@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../skin/looks.dart';
 
+part 'felt_patterns_eggs.dart';
 part 'felt_patterns_more.dart';
 
 /// Draws [pattern] in [ink] over a felt of [ground], at [scale] (smaller
@@ -552,9 +553,13 @@ class FeltPatternPainter extends CustomPainter {
         }
         canvas.drawPath(path, ring % 4 == 0 ? bold : line);
       }
-      // The top: a small cross.
-      canvas.drawLine(c - const Offset(4, 0), c + const Offset(4, 0), bold);
-      canvas.drawLine(c - const Offset(0, 4), c + const Offset(0, 4), bold);
+      // The top: a small cross (and, on one hill, a fort: felt_patterns_eggs.dart).
+      if (h == 0) {
+        _campaignEggs(canvas, s, c);
+      } else {
+        canvas.drawLine(c - const Offset(4, 0), c + const Offset(4, 0), bold);
+        canvas.drawLine(c - const Offset(0, 4), c + const Offset(0, 4), bold);
+      }
     }
   }
 

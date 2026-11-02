@@ -136,7 +136,9 @@ enum FeltPattern {
   /// Herringbone parquet.
   herringbone,
 
-  /// A cabana's awning: broad stripes under a scalloped valance.
+  /// A Riviera terrace: glazed tiles with lemons and suns, a ring traced
+  /// across every four, a few bleached by the sun. (Once an awning: its
+  /// name kept, as saved looks know it.)
   awning,
 
   /// Frost: snowflakes, and ice ferns grown in from the corners.
@@ -145,8 +147,9 @@ enum FeltPattern {
   /// Egyptian bands: rows of lotus and papyrus between zigzag borders.
   lotus,
 
-  /// A treasure map: a coastline, a dashed course to an X, a compass rose
-  /// and a rope round the edge.
+  /// A treasure map: an island of parchment in the table's sea, a dashed
+  /// course to an X, a compass rose, a rope round the edge, and a few
+  /// things hidden in it.
   map,
 
   /// A gingham tablecloth.
