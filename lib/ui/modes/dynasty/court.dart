@@ -380,7 +380,7 @@ class _Meters extends StatelessWidget {
                     color: (run.meters[m] ?? 0) <= 2 ? context.skin.lost : colour.withValues(alpha: 0.6)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                SuitText(m.suit, keywords: false, style: const TextStyle(fontSize: 15)),
+                SuitText(m.suit, keywords: false, style: const TextStyle(fontSize: 15, color: Colors.white)),
                 const SizedBox(width: 4),
                 Text('${run.meters[m]}',
                     style: TextStyle(
