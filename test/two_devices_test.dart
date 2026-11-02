@@ -89,7 +89,8 @@ void main() {
         linkB.disconnect();
         seats.drop('ben');
       }
-      if (dropped && !back && linkA.history.length >= benMoves + 25) {
+      // (Back after ten moves: a round can be lost early, so not much later.)
+      if (dropped && !back && linkA.history.length >= benMoves + 10) {
         linkB.reconnect();
         seats.rejoin('ben');
         b.resync();
