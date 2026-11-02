@@ -195,7 +195,10 @@ Future<bool> _betterNext(Bot bot, Round r, int picker, int i) async {
           if (r.tasks[t].owner != null) t: r.tasks[t].owner!,
         i: seat,
       };
-  final mine = await bot.scoreAsync(r, picker, holding(picker), 120);
-  final theirs = await bot.scoreAsync(r, picker, holding(next), 120);
-  return theirs >= mine + 0.15;
+  // More playouts than a pick's: the two are compared, and a pass should
+  // come from a real difference, not the dice. (In the bug report's deal,
+  // the King card's holder came out 13 to 44 points ahead.)
+  final mine = await bot.scoreAsync(r, picker, holding(picker), 240);
+  final theirs = await bot.scoreAsync(r, picker, holding(next), 240);
+  return theirs >= mine + 0.1;
 }

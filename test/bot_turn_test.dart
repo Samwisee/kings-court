@@ -183,12 +183,6 @@ void main() {
     expect(r.canPass(picker), isTrue);
     expect(r.nextPicker(picker), king);
     // A fixed seed: the courtier's guesses are sampled, so a seed keeps the test the same every run.
-    for (final seed in [1, 2, 3, 4, 5]) {
-      final b = Bot(Random(seed))..budget = 200;
-      Future<double> holding(int s) => b.scoreAsync(r, picker, {0: s}, 120);
-      // ignore: avoid_print
-      print('PASS-SCORES seed $seed: picker ${await holding(picker)} next ${await holding(king)}');
-    }
     final d = await botDecision(g, Bot(Random(1))..budget = 200, you: you);
     expect(d, isA<BotPasses>(), reason: 'the King holds the King card: the Joker is theirs to win');
   });
