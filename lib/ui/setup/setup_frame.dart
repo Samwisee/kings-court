@@ -58,26 +58,12 @@ class SetupFrame extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
         child: Column(
           children: [
-            // Progress: one pip per step, with a way back on the first
-            // two (which go on as soon as you choose).
+            // Progress: one pip per step.
             Row(
               children: [
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: AnimatedOpacity(
-                    opacity: choosing && step == 0 && canCancel ? 1 : 0,
-                    duration: const Duration(milliseconds: 250),
-                    child: IgnorePointer(
-                      ignoring: !(choosing && step == 0 && canCancel),
-                      child: IconButton(
-                        tooltip: 'Cancel',
-                        onPressed: onBack,
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ),
-                  ),
-                ),
+                // Room either side, so the pips stay in the middle (Back,
+                // at the foot, is the way out).
+                const SizedBox(width: 48, height: 48),
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,

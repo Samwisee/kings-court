@@ -90,13 +90,13 @@ class _LiveryPageState extends State<_LiveryPage> {
         _court = null;
       });
 
-  /// The shop window, kept while the look and its price don't change: a
+  /// The shop window, kept while the look doesn't change: a
   /// new section, or the shelves scrolling, doesn't build it again.
-  Widget _window(Skin look, String? price) {
-    final key = '${look.id}|$price';
+  Widget _window(Skin look) {
+    final key = look.id;
     if (key != _windowFor) {
       _windowFor = key;
-      _windowNow = _Showcase(look: look, price: price);
+      _windowNow = _Showcase(look: look);
     }
     return _windowNow!;
   }
@@ -176,7 +176,7 @@ class _LiveryPageState extends State<_LiveryPage> {
           child: Builder(builder: (context) {
             final skin = context.skin;
             final price = widget.entitlements.priceOf(look);
-            final windowH = clampD(height * 0.3, 200, 300);
+            final windowH = clampD(height * 0.3, 190, 300);
             return Scaffold(
               backgroundColor: skin.feltDeep,
               body: Stack(children: [
@@ -200,11 +200,11 @@ class _LiveryPageState extends State<_LiveryPage> {
                           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                             // The store's name, the window, and the sections
                             // stay put; only the shelves scroll.
-                            const _StoreHeading(),
-                            SizedBox(height: windowH, child: _window(look, price)),
-                            SizedBox(
-                                height: 54,
-                                child: _Tabs(kind: _kind, onKind: _open, look: look)),
+                            _StoreTop(children: [
+                              const _StoreHeading(),
+                              SizedBox(height: windowH, child: _window(look)),
+                              SizedBox(height: 54, child: _Tabs(kind: _kind, onKind: _open, look: look)),
+                            ]),
                             Expanded(
                               child: _LiveryScrollbar(
                                 controller: _scroll,
@@ -370,12 +370,15 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    // The shop's sections, on the case's own ground (they stay at the top
-    // as the shelves scroll under them), all on one line: smaller on a
-    // narrow screen, never wrapped or scrolled away.
+    // The shop's sections, over the store's top (they stay put as the
+    // shelves scroll under them), all on one line: smaller on a narrow
+    // screen, never wrapped or scrolled away. Each is one of the style's
+    // own buttons, cut as it cuts them: the open one filled.
+    const compact = Size(0, 36);
+    const pad = EdgeInsets.symmetric(horizontal: 12);
+    const label = TextStyle(fontSize: 14.5);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: _Case.ground(skin),
         border: Border(bottom: BorderSide(color: skin.gold.withValues(alpha: 0.35), width: 1.5)),
       ),
       child: Center(
@@ -383,41 +386,36 @@ class _Tabs extends StatelessWidget {
           fit: BoxFit.scaleDown,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-          for (final k in _Kind.values)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2.5),
-              child: Semantics(
-              button: true,
-              selected: k == kind,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () => onKind(k),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    // As wide as its word: no alignment, which would stretch it.
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: k == kind ? skin.gold : Colors.black.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: skin.gold.withValues(alpha: k == kind ? 1 : 0.35)),
-                    ),
-                    child: Text(k.label,
-                        style: TextStyle(
-                            fontFamily: skin.bodyFont,
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
-                            color: k == kind ? skin.goldInk : Colors.white.withValues(alpha: 0.85))),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              for (final k in _Kind.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Semantics(
+                    selected: k == kind,
+                    child: k == kind
+                        ? FilledButton(
+                            style: FilledButton.styleFrom(
+                                minimumSize: compact,
+                                padding: pad,
+                                elevation: 0,
+                                textStyle: label,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                            onPressed: () => onKind(k),
+                            child: Text(k.label))
+                        : OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                                minimumSize: compact,
+                                padding: pad,
+                                textStyle: label,
+                                backgroundColor: Colors.black.withValues(alpha: 0.28),
+                                foregroundColor: Colors.white.withValues(alpha: 0.9),
+                                side: BorderSide(color: skin.gold.withValues(alpha: 0.45)),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                            onPressed: () => onKind(k),
+                            child: Text(k.label)),
                   ),
                 ),
-              ),
-            ),
-            ),
-              ],
-            ),
+            ]),
           ),
         ),
       ),

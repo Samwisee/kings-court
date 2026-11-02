@@ -85,18 +85,14 @@ class _LiveryScrollbar extends StatelessWidget {
   }
 }
 
-/// The shop window: the livery put together on its own table, under the
-/// store's hanging sign and the style's name; a hand of the Court Cards
-/// over the Ace to the 4 (the 4 face down, to show the backs), the seats'
-/// tokens and a task. A style for sale says it's being tried on, and its
-/// price. Each part changes on its own, as
-/// its own choice does, and the lot only when the style does.
+/// The shop window: the livery put together on the style's own table
+/// (under the store's top, [_StoreTop]): a hand of the Court Cards over
+/// the Ace to the 4 (the 4 face down, to show the backs), the seats'
+/// tokens and a task, as large as the window allows. Each part changes on
+/// its own, as its own choice does, and the lot only when the style does.
 class _Showcase extends StatelessWidget {
-  const _Showcase({required this.look, this.price});
+  const _Showcase({required this.look});
   final Skin look;
-
-  /// Its price, when it's for sale and being tried on.
-  final String? price;
 
   static const _courts = [PlayingCard.joker, PlayingCard.jack, PlayingCard.queen, PlayingCard.king];
   static const _numbers = [
@@ -117,7 +113,7 @@ class _Showcase extends StatelessWidget {
         return LayoutBuilder(builder: (context, c) {
           final h = c.maxHeight, w = c.maxWidth;
           final wide = w >= 520;
-          final cardW = clampD(math.min((h - 104) / (1.42 * 1.85), w * (wide ? 0.11 : 0.13)), 40, wide ? 74 : 66);
+          final cardW = clampD(math.min((h - 28) / (1.42 * 1.85), w * (wide ? 0.12 : 0.14)), 40, wide ? 92 : 76);
           final cardH = PlayingCardView.heightFor(cardW);
           final step = cardW * 0.66;
           final fanW = 3 * step + cardW + 10;
@@ -171,49 +167,9 @@ class _Showcase extends StatelessWidget {
             SizedBox(width: gap),
             Column(mainAxisSize: MainAxisSize.min, children: [tokens, SizedBox(height: wide ? 18 : 14), task]),
           ]);
-          final frame = BorderRadius.circular(_Store.windowRadius);
           return Padding(
-            // The window, set into the case.
-            padding: const EdgeInsets.fromLTRB(_Store.gutter, 6, _Store.gutter, 4),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: frame,
-                border: Border.all(color: skin.gold.withValues(alpha: 0.35)),
-                color: skin.felt,
-              ),
-              child: ClipRRect(
-                borderRadius: frame,
-                child: Stack(fit: StackFit.expand, children: [
-                  // The style's own table, its pattern and lamp (drawn once
-                  // into a picture, and still).
-                  _Swap(id: 'felt-$base', child: const FeltLight()),
-                  // A spotlight from above.
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                          center: const Alignment(0, -1.3),
-                          radius: 1.5,
-                          colors: [skin.gold.withValues(alpha: 0.18), skin.gold.withValues(alpha: 0)]),
-                    ),
-                  ),
-                  Column(children: [
-                    Expanded(
-                        child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
-                      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: scene)),
-                    )),
-                    // The nameplate: the style, and its price if it's for sale.
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                      child: Align(
-                        alignment: Alignment.bottomLeft,
-                        child: _Swap(id: '$base-$price', child: _Nameplate(name: skin.name, price: price)),
-                      ),
-                    ),
-                  ]),
-                ]),
-              ),
-            ),
+            padding: const EdgeInsets.fromLTRB(_Store.gutter, 4, _Store.gutter, 8),
+            child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: scene)),
           );
         });
       }),
@@ -221,31 +177,34 @@ class _Showcase extends StatelessWidget {
   }
 }
 
-/// The window's nameplate: the style's name, and its price if it's for
-/// sale, on a dark plate.
-class _Nameplate extends StatelessWidget {
-  const _Nameplate({required this.name, this.price});
-  final String name;
-  final String? price;
+/// The top of the store, all on the style's own table: its name, the
+/// window and the sections, over the felt's pattern (drawn once into a
+/// picture, and still) with a spotlight from above.
+class _StoreTop extends StatelessWidget {
+  const _StoreTop({required this.children});
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 4, 8, 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: skin.gold.withValues(alpha: 0.45)),
+    final base = TailoredSkin.baseOf(skin).id;
+    return Stack(children: [
+      Positioned.fill(child: ColoredBox(color: skin.felt)),
+      Positioned.fill(child: _Swap(id: 'felt-$base', child: const FeltLight())),
+      Positioned.fill(
+        child: IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                  center: const Alignment(0, -1.1),
+                  radius: 1.3,
+                  colors: [skin.gold.withValues(alpha: 0.16), skin.gold.withValues(alpha: 0)]),
+            ),
+          ),
+        ),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(name,
-            style: TextStyle(
-                fontFamily: skin.displayFont, fontSize: 17, fontWeight: FontWeight.w800, color: skin.gold)),
-        if (price case final price?) ...[const SizedBox(width: 10), _PriceTag(price: price)],
-        if (price == null) const SizedBox(width: 4),
-      ]),
-    );
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+    ]);
   }
 }
 

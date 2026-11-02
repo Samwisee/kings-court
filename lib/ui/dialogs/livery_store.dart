@@ -167,7 +167,6 @@ class _TileState extends State<_Tile> {
 /// and the tiles nest.
 abstract final class _Store {
   static const caseRadius = 20.0;
-  static const windowRadius = 14.0;
   static const tileRadius = 12.0;
   static const gutter = 12.0;
 }
