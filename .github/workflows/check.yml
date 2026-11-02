@@ -64,7 +64,7 @@ jobs:
           rm -rf out/selfplay
       - name: Build
         if: success() || failure()
-        run: flutter build web --release --wasm --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8} > out/build.txt 2>&1 || (tail -20 out/build.txt; exit 1)
+        run: flutter build web --release --wasm --no-web-resources-cdn --base-href /kings-court/ --dart-define=BUILD=${GITHUB_SHA::8} > out/build.txt 2>&1 || (tail -20 out/build.txt; exit 1)
       - name: Publish the output to ci-${{ github.ref_name }}
         if: always()
         run: |

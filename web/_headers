@@ -1,0 +1,5 @@
+# Cloudflare Pages: the game cross-origin isolated, so the WebAssembly
+# build can run on several threads. (GitHub Pages ignores this file.)
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

@@ -80,7 +80,10 @@ jobs:
           set -o pipefail
           # --wasm: WebAssembly as well as JavaScript; web/flutter_bootstrap.js
           # picks which a browser gets.
-          flutter build web --release --wasm --base-href /kings-court/ \
+          # --no-web-resources-cdn: the renderer from the site itself, not
+          # Google's servers, so a host that isolates the page (Cloudflare,
+          # below) can load it.
+          flutter build web --release --wasm --no-web-resources-cdn --base-href /kings-court/ \
             --dart-define=BUILD=${GITHUB_SHA::8} \
             --dart-define=BUG_URL=${{ vars.BUG_REPORT_URL }} \
             --dart-define=SENTRY_DSN=${{ vars.SENTRY_DSN }} \
@@ -115,6 +118,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
+      # The same site for Cloudflare Pages (the cloudflare job).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: build/web
+          retention-days: 3
       - name: Publish to the ci-main-build branch
         if: always()
         run: |
@@ -147,3 +156,57 @@ jobs:
             -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
             -d "{\"event_type\":\"test\",\"client_payload\":{\"repo\":\"$GITHUB_REPOSITORY\",\"sha\":\"$GITHUB_SHA\"}}" \
             || echo "::warning::Couldn't reach the device lab; it will find this build on its own"
+
+  # The same build on Cloudflare Pages too (the project kings-court, made
+  # the first time), at the root of its own address and cross-origin
+  # isolated (web/_headers), so the WebAssembly build can run on several
+  # threads, which GitHub Pages can't allow. Uses the Cloudflare secrets the
+  # web service does (its token needs Cloudflare Pages: Edit). What
+  # happened goes to the cloudflare branch (status.txt).
+  cloudflare:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4.86.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Deploy
+        run: |
+          mkdir -p out
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Not set up: no Cloudflare secrets" | tee out/status.txt; exit 0
+          fi
+          # At the root of its own address, not under /kings-court/.
+          sed -i 's|<base href="/kings-court/">|<base href="/">|' site/index.html
+          cp web/_headers site/_headers
+          $WRANGLER pages project list 2>&1 | tee out/projects.txt | grep -q ' kings-court ' \
+            || $WRANGLER pages project create kings-court --production-branch main 2>&1 | tee -a out/projects.txt
+          set -o pipefail
+          if $WRANGLER pages deploy site --project-name kings-court --branch main \
+               --commit-hash "$GITHUB_SHA" --commit-message "${GITHUB_SHA::8}" 2>&1 | tee out/deploy.txt; then
+            echo "deployed ${GITHUB_SHA::8}" > out/status.txt
+            grep -oE 'https://[a-z0-9.-]+\.pages\.dev' out/deploy.txt | head -1 >> out/status.txt
+          else
+            echo "failed: see deploy.txt (the token may need Cloudflare Pages: Edit)" > out/status.txt
+            exit 1
+          fi
+      - name: Publish to the cloudflare branch
+        if: always()
+        run: |
+          mkdir -p out && cd out
+          git init -q -b cloudflare
+          git config user.name ci && git config user.email ci@example.com
+          git add -A && git commit -qm "Cloudflare Pages for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" cloudflare || true
