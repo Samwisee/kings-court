@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import '../../platform/account.dart';
 import '../../skin/skin_scope.dart';
 
+export '../../platform/account.dart' show Account;
+
 Future<void> showAccount(BuildContext context) => Navigator.of(context).push<void>(PageRouteBuilder(
       opaque: false,
       pageBuilder: (context, a, b) => const AccountSheet(),

@@ -36,7 +36,6 @@ import '../modes/progress.dart';
 import '../modes/tutorial/lessons.dart';
 import '../net/online_table.dart';
 import '../net/table_link.dart';
-import '../platform/account.dart';
 import '../platform/analytics.dart';
 import '../platform/frame_stats.dart';
 import '../platform/game_log.dart';
