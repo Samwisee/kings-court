@@ -23,16 +23,16 @@ var name = 'Ann';
 http.Client fakeService({bool google = true}) => MockClient((r) async {
       final path = r.url.path;
       asked.add('${r.method} $path ${r.headers['authorization'] ?? ''}');
-      final me = {'id': 'a1', 'name': name, 'owns': [], 'look': null, 'logins': [{'kind': 'google'}]};
+      final me = {'id': 'a1', 'name': name, 'owns': <String>[], 'look': null, 'logins': [{'kind': 'google'}]};
       return switch (path) {
         '/auth/config' => http.Response(jsonEncode({'google': google, 'passkey': true}), 200),
-        '/auth/ticket' => jsonDecode(r.body)['ticket'] == 't1'
+        '/auth/ticket' => (jsonDecode(r.body) as Map)['ticket'] == 't1'
             ? http.Response(jsonEncode({'token': 'tok', 'me': me}), 200)
             : http.Response(jsonEncode({'error': 'That sign-in had expired'}), 401),
         '/me' when r.method == 'GET' => r.headers['authorization'] == 'Bearer tok'
             ? http.Response(jsonEncode(me), 200)
             : http.Response('{}', 401),
-        '/me' => http.Response(jsonEncode({...me, 'name': name = jsonDecode(r.body)['name'] as String}), 200),
+        '/me' => http.Response(jsonEncode({...me, 'name': name = (jsonDecode(r.body) as Map)['name'] as String}), 200),
         '/auth/out' => http.Response('{"ok":true}', 200),
         _ => http.Response('{}', 404),
       };
