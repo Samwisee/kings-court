@@ -1,0 +1,12 @@
+diff --git a/lib/platform/passkey_web.dart b/lib/platform/passkey_web.dart
+index 58d9b29..4a78f03 100644
+--- a/lib/platform/passkey_web.dart
++++ b/lib/platform/passkey_web.dart
+@@ -7,7 +7,6 @@ library;
+ import 'dart:convert';
+ import 'dart:js_interop';
+ import 'dart:js_interop_unsafe';
+-import 'dart:typed_data';
+ 
+ import 'package:web/web.dart' as web;
+ 

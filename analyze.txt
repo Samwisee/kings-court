@@ -1,0 +1,3 @@
+WARNING|STATIC_WARNING|INFERENCE_FAILURE_ON_COLLECTION_LITERAL|/home/runner/work/kings-court/kings-court/test/ui/account_test.dart|26|53|2|The type argument(s) of 'List' can't be inferred.
+INFO|LINT|AVOID_DYNAMIC_CALLS|/home/runner/work/kings-court/kings-court/test/ui/account_test.dart|29|27|18|Method invocation or property access on a 'dynamic' target.
+INFO|LINT|AVOID_DYNAMIC_CALLS|/home/runner/work/kings-court/kings-court/test/ui/account_test.dart|35|66|18|Method invocation or property access on a 'dynamic' target.
