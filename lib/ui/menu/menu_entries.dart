@@ -17,7 +17,8 @@ MenuEntry _item(String value, IconData icon, String title, {bool? on}) =>
 /// then the switches: sounds, four-colour suits, the keyboard shortcuts on
 /// a computer ([keys], or null elsewhere), sharing play data; and in an
 /// online game, inviting someone to its room ([room], its code) and
-/// leaving it.
+/// leaving it. Signing in ([account]: the name signed in as, '' when
+/// signed out, null when it isn't offered) after the store.
 List<MenuEntry> menuEntries({
   String? room,
   required bool mainMenu,
@@ -26,6 +27,7 @@ List<MenuEntry> menuEntries({
   required String look,
   required bool? keys,
   required bool share,
+  String? account,
 }) =>
     [
       if (mainMenu) _item('main', Icons.home_outlined, Strings.mainMenu),
@@ -37,6 +39,8 @@ List<MenuEntry> menuEntries({
             upright ? Strings.laptopView : Strings.tableView),
       // The store (the Livery page): looks to choose, and to buy.
       _item('skin', Icons.storefront_outlined, Strings.livery(look)),
+      if (account != null)
+        _item('account', Icons.account_circle_outlined, account.isEmpty ? Strings.signIn : account),
       _item('sound', Sfx.enabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
           Strings.sounds,
           on: Sfx.enabled),

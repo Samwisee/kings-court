@@ -27,6 +27,7 @@ abstract final class Strings {
   static const mainMenu = 'Main menu';
   static String inviteTo(String room) => 'Invite to room $room';
   static const sharePlayData = 'Share play data';
+  static const signIn = 'Sign in';
 
   // The front page.
   static const continueGame = 'Continue';

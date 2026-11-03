@@ -5,6 +5,7 @@
 //                   in the D1 database for balancing the game
 //   GET  /rounds    the rounds kept, for tool/games/pull.py (needs READ_KEY)
 //   GET  /rooms/... multiplayer rooms, over WebSockets (rooms.js)
+//   /auth/..., /me  accounts: signing in with Google or a passkey (auth.js)
 // Tokens live here, as Worker secrets, never in the game.
 //
 // Secrets / variables (Cloudflare dashboard > Worker > Settings > Variables):
@@ -13,8 +14,10 @@
 //   ALLOW_ORIGIN  (text)   the game's web addresses, comma-separated (each
 //                          deployment's own *.pages.dev address too)
 //   READ_KEY      (secret) any long random string; tool/games/pull.py sends it
+//   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (secrets) Google sign-in (auth.js)
 // Bindings: DB, the D1 database "kings-court-rounds" (schema.sql).
 
+import { handleAuth } from "./auth.js";
 import { handleRooms } from "./rooms.js";
 
 export { Room } from "./rooms.js";
@@ -33,13 +36,19 @@ export default {
       homes.some((h) => origin === h || (h.endsWith(".pages.dev") && origin.endsWith("." + h.replace("https://", ""))));
     const cors = {
       "Access-Control-Allow-Origin": allowed ? origin : homes[0] || "",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Vary": "Origin",
     };
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     const path = new URL(request.url).pathname.replace(/\/+$/, "");
     if (path === "/rounds" && request.method === "GET") return readRounds(request, env);
+    // Google's redirect back has no origin of the game's; the rest do.
+    if (path === "/auth/google/back" || path === "/auth/google/start") return handleAuth(request, env, path, { cors, origin, homes });
+    if (path.startsWith("/auth/") || path === "/me") {
+      if (!allowed || !origin) return new Response("Not from the game", { status: 403, headers: cors });
+      return handleAuth(request, env, path, { cors, origin, homes });
+    }
     if (path.startsWith("/rooms/")) {
       if (!allowed) return new Response("Not from the game", { status: 403 });
       return handleRooms(request, env, path);

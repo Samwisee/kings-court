@@ -1,12 +1,15 @@
 # The game's web service
 
-A Cloudflare Worker that does two things:
+A Cloudflare Worker that does three things:
 
 - turns "Report a bug" in the game into a GitHub issue labelled `bug`
   and `from-game`, with the whole game state attached;
 - keeps every round people play (`POST /rounds`), in a D1 database, for
   balancing the game (`lib/platform/game_log.dart`; turned off with Share
-  play data in the menu).
+  play data in the menu);
+- keeps accounts, for signing in with Google or a passkey (`auth.js`,
+  `lib/platform/account.dart`; still behind `?login=1`): an id, a name to
+  show, what's owned and worn. No email addresses.
 
 ## Set up (once)
 
@@ -23,6 +26,7 @@ secrets (Settings > Secrets and variables > Actions > Secrets):
 | `CLOUDFLARE_ACCOUNT_ID` | The Cloudflare account it deploys to |
 | `ISSUES_TOKEN` | A GitHub fine-grained token: this repo only, Issues read and write (bug reports) |
 | `ROUNDS_READ_KEY` | Any long random string (reading the rounds back) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | A Google OAuth client (Web application) whose redirect URI is `<the worker's URL>/auth/google/back`: signing in with Google. Without them, only passkeys |
 
 and one repository variable (the Variables tab), `BUG_REPORT_URL`: the
 worker's URL from `status.txt`, which the game's build sends reports and

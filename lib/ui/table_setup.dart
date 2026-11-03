@@ -16,6 +16,10 @@ extension _Setup on HomePageState {
       Settings.fourColourSuits = prefs.getBool(HomePageState._suitsKey) ?? false;
       _showKeys = prefs.getBool(HomePageState._keysKey) ?? false;
       await GameLog.load(prefs);
+      // Signing in (off unless ?login=1): never in the way of starting up.
+      unawaited(Account.load(prefs).then((said) {
+        if (said != null && mounted) _showSnack(said, context.skin.feltDeep);
+      }, onError: (_) {}));
       final skin = prefs.getString(HomePageState._skinKey);
       if (skin != null && mounted) SkinScope.restore(context, skinById(skin));
       final saves = await readSaves(prefs);

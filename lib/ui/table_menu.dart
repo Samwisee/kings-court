@@ -76,6 +76,8 @@ extension _Menu on HomePageState {
             _leaveRoom();
             _set(() => game = GameState());
             _keepAwake(false);
+          case 'account':
+            showAccount(context);
           case 'skin':
             showLivery(context, wear: _wear);
           case 'nextLivery': // the benchmark's way through every skin
@@ -105,6 +107,7 @@ extension _Menu on HomePageState {
         look: context.skin.name,
         keys: HomePageState._desktop ? _showKeys : null,
         share: GameLog.sharing,
+        account: Account.offered ? (Account.me.value?.name ?? '') : null,
       );
 
   Map<String, dynamic> _bugDetails() => bugDetails(_inGame ? game : null,
