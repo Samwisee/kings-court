@@ -1,0 +1,7 @@
+analyzer issues: 0
+lib/ (code): 80.3% of 15973 lines
+01:08 +312: /home/runner/work/kings-court/kings-court/test/dynasty_test.dart: A meter run out ends the reign
+01:08 +313: /home/runner/work/kings-court/kings-court/test/dynasty_test.dart: A petition’s answer costs gold, moves the realm and seats the next table
+01:08 +314: /home/runner/work/kings-court/kings-court/test/dynasty_test.dart: A courtier out of loyalty turns traitor, and is dealt with first
+01:08 +315: /home/runner/work/kings-court/kings-court/test/dynasty_test.dart: A seeded run, played to its end by all-seeing courtiers, ends
+01:09 +316: All tests passed!
