@@ -113,6 +113,9 @@ jobs:
           v=${GITHUB_SHA::8}
           sed -i "s/main\.dart\.js/main.dart.js?v=$v/g; s/main\.dart\.wasm/main.dart.wasm?v=$v/g; s/main\.dart\.mjs/main.dart.mjs?v=$v/g" build/web/flutter_bootstrap.js
           sed -i "s/flutter_bootstrap\.js/flutter_bootstrap.js?v=$v/" build/web/index.html
+          # The commit this page was built from, for Pocket Lab's results.
+          sed -i "s|<meta charset=\"UTF-8\">|<meta charset=\"UTF-8\">\n  <meta name=\"build\" content=\"$GITHUB_SHA\">|" build/web/index.html
+          grep -c 'name="build"' build/web/index.html
           rm -f build/web/flutter_service_worker.js
           grep -o 'main.dart.[a-z]*js[^"]*\|main.dart.wasm[^"]*' build/web/flutter_bootstrap.js | head -4
       # GitHub Pages now only sends old addresses on to Cloudflare Pages,
