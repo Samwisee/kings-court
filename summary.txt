@@ -1,0 +1,5 @@
+commit 2092d6e10dec17d36367d29c568c6662b36dbb04
+analyzer issues: 0
+00:59 +314: /home/runner/work/kings-court/kings-court/test/dynasty_test.dart: A courtier out of loyalty turns traitor, and is dealt with first
+00:59 +315: /home/runner/work/kings-court/kings-court/test/dynasty_test.dart: A seeded run, played to its end by all-seeing courtiers, ends
+01:00 +316: All tests passed!
