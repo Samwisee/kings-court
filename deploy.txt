@@ -1,0 +1,17 @@
+
+ ⛅️ wrangler 4.86.0 (update available 4.157.0)
+──────────────────────────────────────────────
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mWarning: Your working directory is a git repo and has uncommitted changes[0m
+
+  To silence this warning, pass in --commit-dirty=true
+
+
+Uploading... (51/55)
+Uploading... (52/55)
+Uploading... (53/55)
+Uploading... (55/55)
+✨ Success! Uploaded 4 files (51 already uploaded) (2.26 sec)
+
+✨ Uploading _headers
+🌎 Deploying...
+✨ Deployment complete! Take a peek over at https://a54f1d83.kings-court-c8n.pages.dev
