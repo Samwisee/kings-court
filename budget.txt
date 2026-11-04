@@ -1,0 +1,6 @@
+ok     bots, 3 players (playouts/s): run 1: main 11354, branch 11500 (-1%); run 2: main 11354, branch 11549 (-2%)
+ok     bots, 4 players (playouts/s): run 1: main 20149, branch 21260 (-6%); run 2: main 21951, branch 21951 (+0%)
+ok     bots, 5 players (playouts/s): run 1: main 32000, branch 34909 (-9%); run 2: main 32000, branch 35368 (-11%)
+ok     frame after a change to the game (ms): run 1: main 11, branch 10.6 (-4%); run 2: main 11.3, branch 10.7 (-5%)
+ok     frame after a change to the screen (ms): run 1: main 10.1, branch 9.8 (-3%); run 2: main 9.9, branch 10.1 (+2%)
+budget kept
