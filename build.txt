@@ -1,0 +1,168 @@
+Resolving dependencies...
+Downloading packages...
+  async 2.11.0 (2.13.1 available)
+  audioplayers 6.7.1 (6.8.1 available)
+  audioplayers_android 5.2.1 (5.3.0 available)
+  audioplayers_darwin 6.4.0 (6.5.0 available)
+  audioplayers_linux 4.2.1 (4.3.0 available)
+  audioplayers_platform_interface 7.1.1 (7.2.0 available)
+  audioplayers_web 5.2.1 (5.3.0 available)
+  audioplayers_windows 4.3.1 (4.4.1 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  clock 1.1.2 (1.1.3 available)
+  code_assets 1.2.1 (2.1.0 available)
+  crypto 3.0.7 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  flutter_lints 4.0.0 (6.0.0 available)
+  hooks 2.0.2 (2.2.0 available)
+  injector 3.0.0 (4.0.0 available)
+  jni 0.14.2 (1.1.1 available)
+  leak_tracker 11.0.1 (11.0.2 available)
+  lints 4.0.0 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.17.0 (1.19.0 available)
+  objective_c 9.5.0 (9.6.2 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_android 2.2.23 (2.3.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  record_use 0.6.0 (1.1.1 available)
+  sentry 9.30.1 (10.2.0 available)
+  sentry_flutter 9.30.1 (10.2.0 available)
+  shared_preferences_android 2.4.23 (2.5.4 available)
+  shared_preferences_foundation 2.5.7 (2.6.1 available)
+  source_span 1.10.0 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  synchronized 3.4.0+1 (3.5.0 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.10 (0.7.15 available)
+  vector_math 2.2.0 (2.4.4 available)
+  vm_service 14.2.5 (15.4.0 available)
+  wakelock_plus 1.7.0 (1.8.2 available)
+  wakelock_plus_platform_interface 1.6.0 (1.7.0 available)
+  web 1.1.1 (1.1.2 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+45 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+
+┌─ New feature ────────────────────────────────────────────────────────────────────────────┐
+│   WebAssembly compilation is new. Understand the details before deploying to production. │
+│   See https://flutter.dev/to/wasm for more information.                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+Compiling lib/main.dart for the Web...                          
+Target dart2wasm failed: ProcessException: Process exited abnormally with exit code 254:
+lib/main.dart:14:1: Error: Type 'SemanticsHandle' not found.
+SemanticsHandle? _semantics;
+^^^^^^^^^^^^^^^
+lib/main.dart:14:1: Error: 'SemanticsHandle' isn't a type.
+SemanticsHandle? _semantics;
+^^^^^^^^^^^^^^^
+lib/main.dart:23:18: Error: Undefined name 'SemanticsBinding'.
+    _semantics = SemanticsBinding.instance.ensureSemantics();
+                 ^^^^^^^^^^^^^^^^
+  Command: /opt/hostedtoolcache/flutter/stable-3.41.4-x64/flutter/bin/cache/dart-sdk/bin/dart compile wasm --packages=/home/runner/work/kings-court/kings-court/.dart_tool/package_config.json --extra-compiler-option=--platform=/opt/hostedtoolcache/flutter/stable-3.41.4-x64/flutter/bin/cache/flutter_web_sdk/kernel/dart2wasm_platform.dill -Ddart.vm.profile=false -Ddart.vm.product=true --extra-compiler-option=--delete-tostring-package-uri=dart:ui --extra-compiler-option=--delete-tostring-package-uri=package:flutter --extra-compiler-option=--import-shared-memory --extra-compiler-option=--shared-memory-max-pages=32768 -DBUILD=a6bba661 -DFLUTTER_VERSION=3.41.4 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=ff37bef603 -DFLUTTER_ENGINE_REVISION=e4b8dca3f1 -DFLUTTER_DART_VERSION=3.11.1 -DFLUTTER_WEB_USE_SKIA=false -DFLUTTER_WEB_USE_SKWASM=true --extra-compiler-option=--depfile=/home/runner/work/kings-court/kings-court/.dart_tool/flutter_build/4f07596bbc42597933114070955a6365/dart2wasm.d -O2 --strip-wasm --no-source-maps --minify -o /home/runner/work/kings-court/kings-court/.dart_tool/flutter_build/4f07596bbc42597933114070955a6365/main.dart.wasm /home/runner/work/kings-court/kings-court/.dart_tool/flutter_build/4f07596bbc42597933114070955a6365/main.dart
+#0      RunResult.throwException (package:flutter_tools/src/base/process.dart:153:5)
+#1      _DefaultProcessUtils.run (package:flutter_tools/src/base/process.dart:379:19)
+<asynchronous suspension>
+#2      Dart2WasmTarget.build (package:flutter_tools/src/build_system/targets/web.dart:361:33)
+<asynchronous suspension>
+#3      _BuildInstance._invokeInternal (package:flutter_tools/src/build_system/build_system.dart:937:9)
+<asynchronous suspension>
+#4      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#5      _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:875:32)
+<asynchronous suspension>
+#6      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#7      _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:875:32)
+<asynchronous suspension>
+#8      FlutterBuildSystem.build (package:flutter_tools/src/build_system/build_system.dart:684:16)
+<asynchronous suspension>
+#9      WebBuilder.buildWeb (package:flutter_tools/src/web/compile.dart:107:34)
+<asynchronous suspension>
+#10     BuildWebCommand.runCommand (package:flutter_tools/src/commands/build_web.dart:300:5)
+<asynchronous suspension>
+#11     FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1590:27)
+<asynchronous suspension>
+#12     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#13     CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+<asynchronous suspension>
+#14     FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
+<asynchronous suspension>
+#15     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#16     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+<asynchronous suspension>
+#17     FlutterCommandRunner.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:307:33)
+<asynchronous suspension>
+#18     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+<asynchronous suspension>
+#19     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#20     main (package:flutter_tools/executable.dart:103:3)
+<asynchronous suspension>
+
+Target dart2js failed: ProcessException: Process exited abnormally with exit code 1:
+lib/main.dart:14:1:
+Error: Type 'SemanticsHandle' not found.
+SemanticsHandle? _semantics;
+^^^^^^^^^^^^^^^
+lib/main.dart:14:1:
+Error: 'SemanticsHandle' isn't a type.
+SemanticsHandle? _semantics;
+^^^^^^^^^^^^^^^
+lib/main.dart:23:18:
+Error: Undefined name 'SemanticsBinding'.
+    _semantics = SemanticsBinding.instance.ensureSemantics();
+                 ^^^^^^^^^^^^^^^^
+Error: Compilation failed.
+  Command: /opt/hostedtoolcache/flutter/stable-3.41.4-x64/flutter/bin/cache/dart-sdk/bin/dart compile js --platform-binaries=/opt/hostedtoolcache/flutter/stable-3.41.4-x64/flutter/bin/cache/flutter_web_sdk/kernel --invoker=flutter_tool -Ddart.vm.product=true -DBUILD=a6bba661 -DFLUTTER_VERSION=3.41.4 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=ff37bef603 -DFLUTTER_ENGINE_REVISION=e4b8dca3f1 -DFLUTTER_DART_VERSION=3.11.1 -DFLUTTER_WEB_USE_SKIA=true -DFLUTTER_WEB_USE_SKWASM=false --native-null-assertions --no-source-maps -O4 --minify -o /home/runner/work/kings-court/kings-court/.dart_tool/flutter_build/4f07596bbc42597933114070955a6365/app.dill --packages=/home/runner/work/kings-court/kings-court/.dart_tool/package_config.json --cfe-only /home/runner/work/kings-court/kings-court/.dart_tool/flutter_build/4f07596bbc42597933114070955a6365/main.dart
+#0      RunResult.throwException (package:flutter_tools/src/base/process.dart:153:5)
+#1      _DefaultProcessUtils.run (package:flutter_tools/src/base/process.dart:379:19)
+<asynchronous suspension>
+#2      Dart2JSTarget.build (package:flutter_tools/src/build_system/targets/web.dart:208:5)
+<asynchronous suspension>
+#3      _BuildInstance._invokeInternal (package:flutter_tools/src/build_system/build_system.dart:937:9)
+<asynchronous suspension>
+#4      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#5      _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:875:32)
+<asynchronous suspension>
+#6      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#7      _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:875:32)
+<asynchronous suspension>
+#8      FlutterBuildSystem.build (package:flutter_tools/src/build_system/build_system.dart:684:16)
+<asynchronous suspension>
+#9      WebBuilder.buildWeb (package:flutter_tools/src/web/compile.dart:107:34)
+<asynchronous suspension>
+#10     BuildWebCommand.runCommand (package:flutter_tools/src/commands/build_web.dart:300:5)
+<asynchronous suspension>
+#11     FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1590:27)
+<asynchronous suspension>
+#12     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#13     CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+<asynchronous suspension>
+#14     FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
+<asynchronous suspension>
+#15     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#16     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+<asynchronous suspension>
+#17     FlutterCommandRunner.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:307:33)
+<asynchronous suspension>
+#18     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+<asynchronous suspension>
+#19     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#20     main (package:flutter_tools/executable.dart:103:3)
+<asynchronous suspension>
+
+Compiling lib/main.dart for the Web...                              8.1s
+Error: Failed to compile application for the Web.

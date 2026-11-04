@@ -1,0 +1,3 @@
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_CLASS|/home/runner/work/kings-court/kings-court/lib/main.dart|14|1|15|Undefined class 'SemanticsHandle'.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|/home/runner/work/kings-court/kings-court/lib/main.dart|23|18|16|Undefined name 'SemanticsBinding'.
+INFO|HINT|UNNECESSARY_IMPORT|/home/runner/work/kings-court/kings-court/test/ui/account_test.dart|12|8|43|The import of 'package:kings_court/platform/account.dart' is unnecessary because all of the used elements are also provided by the import of 'package:kings_court/ui/dialogs/account_sheet.dart'.

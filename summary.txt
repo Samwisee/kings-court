@@ -1,0 +1,7 @@
+analyzer issues: 3
+lib/ (code): 80.1% of 15973 lines
+00:57 +312: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Shuffling mid-round keeps the round number and King
+00:57 +313: /home/runner/work/kings-court/kings-court/test/widget_test.dart: A task only one player can take goes straight to them
+00:57 +314: /home/runner/work/kings-court/kings-court/test/widget_test.dart: The King cannot take King-relative tasks
+00:57 +315: /home/runner/work/kings-court/kings-court/test/widget_test.dart: Every task has 6-player points
+00:58 +316: All tests passed!
