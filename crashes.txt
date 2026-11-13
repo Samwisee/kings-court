@@ -1,0 +1,1 @@
+Not set up: needs the SENTRY_AUTH_TOKEN secret and the SENTRY_ORG and SENTRY_PROJECT variables
